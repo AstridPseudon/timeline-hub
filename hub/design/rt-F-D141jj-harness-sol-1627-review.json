@@ -1,0 +1,249 @@
+{
+  "qualification": "FAIL",
+  "verdict": "NOT_READY_CONTROL_HARNESS_MORE_THAN_ISOLATION_REQUIRED",
+  "worker": "rt-F-D141jj-harness-sol-1627",
+  "at": "2026-10-26T16:33:59.284027+00:00",
+  "scope": "Private checker derivative and fixtures only; no product integration or source qualification PASS.",
+  "results": {
+    "fixture_isolation": "PASS; positive and stale invocation have separate real private TMPDIR/KEEP traces",
+    "complete_new_checker": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/check_jj.py",
+      "exit_code": 1,
+      "failure": "AssertionError: stale-nonapp-upstream",
+      "exact_stale_upstream_guard_reached": false
+    },
+    "actual_positive": "PASS",
+    "stale_source_manifest": "PASS",
+    "no_install_preimage_outside_four_row_poisoned_caller": "PASS",
+    "gate_source_root_mismatch": "PASS",
+    "stale_nonapp_upstream": "FAIL; incorrect fixture accepted",
+    "later_negative_controls": "NOT_EXECUTED after preserved assertion failure",
+    "same33": "Prior actual PASS retained by exact source and SAFE13 verification; not rerun",
+    "ruff_F": "PASS",
+    "AST_private_compile_JSON": "PASS",
+    "diff_whitespace": "PASS; no-index exit1 denotes expected differences, empty diagnostics",
+    "types": "N/A"
+  },
+  "conservation": {
+    "original_checker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py",
+      "sha256": "0fae07c6eeafc4c8081b84e65ecd9e2518f54c79d5d8c8132a4396974c8b9595",
+      "mode": "0o644"
+    },
+    "candidate11": [
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/check.sh",
+        "sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+        "mode": "0o755",
+        "bytes": 20995
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/core-inventory.json",
+        "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+        "mode": "0o644",
+        "bytes": 25664
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery_gate_build.py",
+        "sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+        "mode": "0o755",
+        "bytes": 19914
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery_lifecycle.py",
+        "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+        "mode": "0o644",
+        "bytes": 23186
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/inherited-runtime-final-service-rows.txt",
+        "sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+        "mode": "0o644",
+        "bytes": 5513
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/install-final-services.py",
+        "sha256": "41d963bb400f115a872a7f433f58e1291849dc5cd6c575eb5fe1a61eb4ed3959",
+        "mode": "0o644",
+        "bytes": 13245
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/install-map.json",
+        "sha256": "c262a1ea4255f371cbe4bcbe2729743dd63ace8101200f2c64dac9dbd35ab308",
+        "mode": "0o644",
+        "bytes": 3349
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/receiving_controls.py",
+        "sha256": "fd8c1a24fac14d8690a24e9810e1e20888ea1cd4c5ddc6ae229de69851a54be0",
+        "mode": "0o644",
+        "bytes": 3695
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/run-final-delivery.py",
+        "sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+        "mode": "0o644",
+        "bytes": 14375
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/run-final-services.py",
+        "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+        "mode": "0o644",
+        "bytes": 18055
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/runtime-final-service-rows.txt",
+        "sha256": "251dc22826a7b42314c77b51e49b5e7cc3f44a9a17246eb3c92e40c370ecad81",
+        "mode": "0o644",
+        "bytes": 5461
+      }
+    ],
+    "all_original_bytes_modes_unchanged": true,
+    "all_40_assertions_3_handlers_3_raises_unchanged": true,
+    "original_manifest_copied_byte_exact_no_refresh": true,
+    "manifest_sha256": "7c3fa7c10dd4afb7e01f6af32aaf28ffb94a16c81730095d36bc514683b27852",
+    "SAFE13_verified": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/tmp/safe13-verification.json",
+    "source_tuple": {
+      "agent": {
+        "root": "/home/user/work/agent",
+        "branch": "tl/integration",
+        "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+        "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+        "origin_main": "64197afa297f86f1e738238d5e80aff6d33e303a"
+      },
+      "runtime": {
+        "root": "/home/user/work/runtime",
+        "branch": "tl/integration",
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "origin_main": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+      },
+      "app": {
+        "root": "/home/user/work/app",
+        "branch": "tl/integration",
+        "head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+        "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+        "origin_main": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671",
+        "owner_base": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+        "owner_base_tree": "faf477adef3ec24c9cc359486ac16866500ab219"
+      },
+      "composition": {
+        "root": "/home/user/work/composition",
+        "branch": "tl/integration",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "origin_main": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+      }
+    }
+  },
+  "heavy_accounting": {
+    "operation": "one complete private check_jj.py invocation",
+    "count": 1,
+    "concurrent_heavy_limit": 1,
+    "prestage_available_bytes": 5213335552,
+    "prestage_floor": 4960000000,
+    "poststage_floor": 4860000000,
+    "staging_budget_bytes": 100000000,
+    "start_utc": 1793032175.5892372,
+    "original_same33": "retained, not rerun; source/lifecycle bytes unchanged",
+    "complete_checker_invocations": 1,
+    "checker_exit_code": 1,
+    "d68_staging_operations": 2,
+    "unexpected_successful_negative_staging": true,
+    "total_measured_staging_bytes": 1880490,
+    "receipts_staging": [
+      {
+        "admission_free_bytes": 5213392896,
+        "free_bytes": 5211492352,
+        "full_history_copied": false,
+        "max_bytes": 100000000,
+        "measured_bytes": 1126664,
+        "method": "alternates-backed private Git no-checkout worktree",
+        "min_free_after_bytes": 4860000000,
+        "stage_parent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/tmp/d141jj-check-q1zih463/service-tmp/timeline-d68-receipt-nx418hi2"
+      },
+      {
+        "admission_free_bytes": 5210284032,
+        "free_bytes": 5208756224,
+        "full_history_copied": false,
+        "max_bytes": 100000000,
+        "measured_bytes": 753826,
+        "method": "alternates-backed private Git no-checkout worktree",
+        "min_free_after_bytes": 4860000000,
+        "stage_parent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/tmp/d141jj-check-q1zih463/stale-nonapp-upstream-service-pl81ujoz/timeline-d68-receipt-zmnvhsi2"
+      }
+    ],
+    "bytes_owned": 2752330,
+    "finished_utc": 1793032439.283108
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "status": "observed",
+      "finding": "Isolation removes the reused fixed trace collision, but complete checker still exits 1 at preserved stale-nonapp-upstream assertion.",
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/tmp/check_jj.log"
+    },
+    {
+      "id": "F2",
+      "severity": "blocking",
+      "status": "observed and source inspection",
+      "finding": "Stale fixture commits current.txt on HEAD but leaves origin/main and tl/integration at stale_base. Thus recorded upstream_base equals current origin/main; D68 exact stale-upstream guard does not fire. The mislabeled negative is accepted and creates a PASS receipt.",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py:438-448; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery_gate_build.py:240-241"
+    },
+    {
+      "id": "F3",
+      "severity": "blocking",
+      "status": "static, genuine stale case not executed",
+      "finding": "invoke only converts OSError/ValueError into failure. D68 subprocess refusal instead returns nonzero through run_wrapper; caller.main writes a FAIL receipt and returns code. Existing negative asserts exception and no target receipt. Merely making origin/main stale will still not satisfy these preserved assertions. No production contract or assertion changed.",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py:116-122,431-432; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/run-final-delivery.py:295-324"
+    },
+    {
+      "id": "F4",
+      "severity": "coverage",
+      "status": "static, later case unexecuted",
+      "finding": "wrong-stage-owner patches caller.os.geteuid to 65534 before main. Shared os.geteuid is consulted in source_identity first, so real source root ownership fails before stage ownership is checked. Existing helper can report this case for an earlier refusal, failing to establish its stated stage-owner purpose.",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py:477-484; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/run-final-delivery.py:106,270-274"
+    },
+    {
+      "id": "F5",
+      "severity": "monitoring limitation",
+      "status": "observed",
+      "finding": "Detached first sampler and first replacement launch failed before persistent supervised monitor. Coverage gap disclosed in sampler-lifecycle.json and timestamps; no heavy execution during gap. Persistent 5s sampler covers the sole checker run and validations; do not call whole-worker coverage complete."
+    },
+    {
+      "id": "F6",
+      "severity": "scope",
+      "status": "observed",
+      "finding": "One complete checker command was launched once. Its preserved failure stops remaining negatives, so seven refusal purposes are preserved in code but not all verified in this run. Negative fixture unexpectedly caused a second sequential bounded D68 staging operation within that single heavy checker invocation. No concurrent heavy, full source copy, retry or deletion."
+    }
+  ],
+  "limits": [
+    "No real builder, rehearsal, installation, activation, registry/hub writes, publication, ZIP or integration.",
+    "No source guard or lifecycle change.",
+    "No candidate hash refresh; original source-manifest.json reused byte-for-byte.",
+    "Sampler has an early setup gap; initial detached samplers cannot be waited by replacement parent.",
+    "Full checker did not complete all controls; complete new checker exit1 is decisive."
+  ],
+  "next_step": "Manager review findings and authorize separately scoped fixture/negative-entry-point correction if desired; no installation. No further attempt made.",
+  "sampler_final": {
+    "durable_samples": 82,
+    "first_sample_utc": 1793032080.9719052,
+    "last_sample_utc": 1793032487.352439,
+    "max_observed_interval_seconds": 5.129430294036865,
+    "minimum_available_bytes": 5208170496,
+    "floor_tripped": false,
+    "monitored_group_scope": "Persistent supervisor, sampler, checker and final static validation. D68 child groups retained original lifecycle stop propagation. Other tools/read-only preparation were outside that process group.",
+    "post_stop_activity": "Only final small report/lifecycle bookkeeping; not sampled.",
+    "whole_worker_coverage": "INCOMPLETE; initial detached launch failure/gap and final bookkeeping disclosed.",
+    "initial_monitor_requested_utc": 1793032029.753981
+  },
+  "sampler_wait_reap": {
+    "supervisor_exit": 0,
+    "sampler_exit": 0,
+    "sampler_waited": true,
+    "sampler_reaped": true
+  },
+  "control_checker_sha256": "616f3e23382da003d435053ff3f1aec6b8fc6893ce4d7a0e2794ffefc3617859",
+  "blocked_marker": "../BLOCKED"
+}

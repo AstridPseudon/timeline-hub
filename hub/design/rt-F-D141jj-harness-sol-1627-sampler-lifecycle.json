@@ -1,0 +1,62 @@
+{
+  "previous_launches": {
+    "initial_sampler": {
+      "pid": 10,
+      "pgid": 10,
+      "started_utc": 1793032029.753981,
+      "interval_seconds": 5,
+      "floor_bytes": 4000000000,
+      "coverage": "Started before plan/source inspection; monitored group is sampler group; checker will join this process group via supervisor.",
+      "state": "did_not_survive_exec_launch; exit/wait unavailable to replacement parent"
+    },
+    "supervisor_pid": 8,
+    "pgid": 8,
+    "pid": 9,
+    "started_utc": 1793032063.511666,
+    "interval_seconds": 5,
+    "floor_bytes": 4000000000,
+    "state": "failed_before_supervised_loop",
+    "commands": [],
+    "superseded_launch_claim": "No sampling gap at handover: replacement started before initial monitor stop. Initial monitor detached parent already exited; its reaping belongs to init, not this supervisor. Replacement sampler and checker children are waited/reaped here."
+  },
+  "supervisor_pid": 8,
+  "pgid": 8,
+  "pid": 9,
+  "started_utc": 1793032080.9362848,
+  "interval_seconds": 5,
+  "floor_bytes": 4000000000,
+  "state": "stopped",
+  "gap": "Initial detached sampler did not survive exec call; replacement attempt failed stopping absent initial PID. Samples disclose gap before this supervised launch. No heavy work or checker execution occurred in gap. Initial samplers have no parent here and cannot be waited here. This supervised sampler and checker children are waited/reaped.",
+  "commands": [
+    {
+      "request": "run-checker.json",
+      "exit_code": 1,
+      "waited": true,
+      "reaped": true,
+      "finished_utc": 1793032180.7481678
+    },
+    {
+      "request": "run-validation.json",
+      "exit_code": 0,
+      "waited": true,
+      "reaped": true,
+      "finished_utc": 1793032461.0325205
+    }
+  ],
+  "sampler_exit_code": 0,
+  "waited": true,
+  "reaped": true,
+  "ended_utc": 1793032490.3724892,
+  "statistics": {
+    "durable_samples": 82,
+    "first_sample_utc": 1793032080.9719052,
+    "last_sample_utc": 1793032487.352439,
+    "max_observed_interval_seconds": 5.129430294036865,
+    "minimum_available_bytes": 5208170496,
+    "floor_tripped": false,
+    "monitored_group_scope": "Persistent supervisor, sampler, checker and final static validation. D68 child groups retained original lifecycle stop propagation. Other tools/read-only preparation were outside that process group.",
+    "post_stop_activity": "Only final small report/lifecycle bookkeeping; not sampled.",
+    "whole_worker_coverage": "INCOMPLETE; initial detached launch failure/gap and final bookkeeping disclosed.",
+    "initial_monitor_requested_utc": 1793032029.753981
+  }
+}

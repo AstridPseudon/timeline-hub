@@ -1,0 +1,44 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/check_jj.py
+@@ -20,7 +20,7 @@
+ from typing import Any
+ 
+ HERE = Path(__file__).resolve().parent
+-CANDIDATE = HERE / "candidate"
++CANDIDATE = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate")
+ CALLER_PATH = CANDIDATE / "run-final-delivery.py"
+ INSTALLER_PATH = CANDIDATE / "install-final-services.py"
+ WRAPPER_PATH = CANDIDATE / "delivery_gate_build.py"
+@@ -220,8 +220,9 @@
+         ssha = write_json(spath, changed_source if changed_source is not None else source)
+         target = work / f"{label}-receipt.json"
+         old_tmp = os.environ.get("TMPDIR")
+-        if service_root is not None:
+-            os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
++        if service_root is None:
++            service_root = Path(tempfile.mkdtemp(prefix=f"{label}-service-", dir=work))
++        os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
+         try:
+             failure = invoke(caller, [
+                 "--source-tuple", str(spath), "--tuple-sha", ssha,
+@@ -318,7 +319,7 @@
+     mark = work / "builder-called"
+     os.environ["D141JJ_BUILDER_MARK"] = str(mark)
+     service_tmp = work / "service-tmp"
+-    service_tmp.mkdir()
++    service_tmp.mkdir(mode=0o700)
+     os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_tmp)
+     receipt = work / "positive-receipt.json"
+     if shutil.disk_usage(service_tmp).free < 4_960_000_000:
+@@ -411,8 +412,9 @@
+         ssha = write_json(spath, changed_source if changed_source is not None else source)
+         target = work / f"{label}-receipt.json"
+         old_tmp = os.environ.get("TMPDIR")
+-        if service_root is not None:
+-            os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
++        if service_root is None:
++            service_root = Path(tempfile.mkdtemp(prefix=f"{label}-service-", dir=work))
++        os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
+         try:
+             failure = invoke(caller, [
+                 "--source-tuple", str(spath), "--tuple-sha", ssha,

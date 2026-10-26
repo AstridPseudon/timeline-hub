@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T16:35:14Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 3 | status age 7m -->
-# runtime board, 2026-10-26T16:27:33.038486+00:00
+<!-- main | 2026-10-26T16:40:51Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 0m -->
+# runtime board, 2026-10-26T16:40:43.088790+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -83,7 +83,7 @@
 
 | OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
-| F D141jj App base | Close control fixture collision | Sol after Luna failure | Actual positive and 33 controls PASS; full checker NOT_READY | doing | rt-F-D141jj-harness-sol-1627 | [Original exact result](../../design/runtime-D141jj-positive-NOTREADY-publication-1625.json). Source unchanged; stale-upstream refusal hit reused trace. | Private checker only |
+| F D141jj App base | Complete private control fixtures | Sol after failed qualification | Isolation fixed; stale and owner fixtures still invalid | doing | rt-F-D141jj-harness-complete-sol-1637 | [Prior complete FAIL](../../design/runtime-D141jj-harness-Sol-FAIL-publication-1637.json). All 11 production source files remain exact. | Private checker only |
 | F D141jj notes | Retain qualified App base note installation | Luna and independent Luna | Bounded clarification PASS | merged | CAS resume; review and clarification next | [Receipt](../../design/runtime-D141jj-notes-installed-publication-1428.json). Exact pair and568 conserved. Original FAIL and reviewer monitor gap retained. | Actual60b938 /7cacdb |
 
 | P5 final Agent applicability | Qualify ec0a source boundaries | Luna | Final Agent ec0a HOME | merged | rt-P5-D141-ec0-applicability-next | [PASS source applicability](../../design/runtime-P5-ec0-applicability-publication-1437.json). Original 38-case receipt unchanged; relative-output gap disclosed. | Agent ec0a / Runtime95d |
@@ -96,8 +96,8 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: Independent protected check of actual repaired harness; then existing final installer, installation review, one build and artifact review.
-live 2 / cap 6; ready-undispatched 0. One heavy bounded checker repair and one independent read-only path investigation at more than 5.0 GB.
-| F D141jj harness path | Investigate second failed gate fix | Luna read only | Same source and actual failure | doing | rt-F-D141jj-harness-wholepath-1627 | Complete caller to D68 to refusal investigation; no staging, authoring or final review. | Evidence only |
+live 2 / cap 6; ready-undispatched 0. One heavy private checker author and one independent read-only phase investigation above 5.0 GB.
+| F D141jj harness path | Complete phase and refusal investigation | Luna read only | Finite Sol F1 to F6 | doing | rt-F-D141jj-harness-wholepath-return-1637 | Earlier map retained; new return audits all seven branches and actual failure receipt semantics. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
 
@@ -119,4 +119,7 @@ Prior watch receipts: [15:30](rounds/20261026T1530Z-pass.json), [15:50](rounds/2
 
 
 
-Current pass 2026-10-26T16:27:33.038486+00:00: Source continuation terminal exit 0 but substantive NOT_READY. Actual caller to D68 to bounded stub PASS and unchanged 33 lifecycle controls PASS. Complete author check exited 1 when stale-nonapp-upstream reused the positive trace path, so no source qualification or install credit. Thirteen SAFE original Git blobs published exactly; relative evidence coordinates and late four-sample monitor disclosed. Normal fresh Sol harness-only author plus independent Luna read-only whole-path investigation dispatched immediately. [Dispatch](rounds/20261026T1627Z-harness-dispatch.json). No production source change, floor trip, further cleanup, activation or ZIP. Actual free 5215588352. Main 16:18 permission decision remains resolved; this is an ordinary bounded control-harness fix, not a new approval ask.
+
+Current pass 2026-10-26T16:38:29.574529+00:00: Initial bounded Sol correction terminal16:35:36 FAIL/NOT_READY, no disk-floor trip. Trace isolation succeeded; actual positive and scoped-CAS passed, but stale-upstream fixture advanced HEAD rather than origin/main. Further exact findings: child refusal is nonzero plus diagnostic receipt; owner fixture could fail earlier source ownership. Source11 and original checker remain unchanged. Ten exact SAFE originals published in1637. New complete private fixture/phase correction Sol and mandatory finite read-only Luna map requested immediately under D120, all purposes kept and each intended branch required. [Dispatch](rounds/20261026T1637Z-complete-harness-dispatch.json). New protected-review brief ready; no installation or builder. Main16:18 no further cleanup stays. Free 5202939904. INBOX1933303 and HEADER255678 consumed.
+
+Current pass 2026-10-26T16:40:43.088790+00:00: Resumed manager read PLAN and MANAGER-COMMON, consumed INBOX1934514 and HEADER255678. Main16:18 GO and16:29 harness-only rule retained. Existing Sol1637 author and Luna1637 whole-path reader active; no duplicate dispatch. All final metadata and peer receiving clear. Installation, build and artifact briefs ready behind actual protected source PASS. Free 5198704640 bytes; no cleanup performed or permitted on a floor trip.
