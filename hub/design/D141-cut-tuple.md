@@ -28,3 +28,5 @@ These are source qualifications only: no GO, REG0, build or ZIP claim. Still owe
 App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just before F-final (D141l item 5).
 
 **Update 05:39Z:** the Runtime integration head moved to 95d98f0383 after two REG fixes (857e4c3b, 95d98f03). App and Agent re-pin to it through their normal receiving rows.
+
+**Update 05:48Z:** App integration head = 4de54db14bdc9ddc2ce2e5887258b03acbffd30d (tree 84c3fb7f73f08c22220f8e808962fe3f24aaa0aa). It supersedes 5344c53e and is pinned to Runtime 95d98f03 (tree 78df31d6) and Agent 8585ed9c (tree 92a3ffdb). Review 0540 PASS; receipt design/app-D141s-postREG-source-home-0545.json. Current freeze-2 tuple: **App 4de54db1 / Agent 8585ed9c / Runtime 95d98f03 / Composition 635f4de0.** Agent still has to adopt Runtime 95d98f03 (U4a post-REG row, queued behind the REG author on the disk-held box).

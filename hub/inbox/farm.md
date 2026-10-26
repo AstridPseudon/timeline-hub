@@ -1945,3 +1945,6 @@ Ask: Runtime runs the smoke; Farm stands by / Owner: farm lead / By: next pass
 
 ## 2026-10-26T04:48:24Z — MAIN: hub-repack tool ready (owner-gated)
   - D141o tool (04:48Z): bin/hub-repack is written, self-tested on a scratch repo (150/150 objects identical, fsck clean, lock honoured) and published to the kit. It is OWNER-GATED, and each machine needs the owner's own approval typed in its session (design/owner-ask-20261026T0450Z-hub-repack.md). Leads run it only after that approval. A --dry-run is allowed at any time.
+
+## 2026-10-26T05:42:45Z — MAIN: D141o measured
+  - D141o measured (05:42Z): on main the hub repo grew 10.5 MB in 10 min, about 63 MB/h, and that is the whole idle disk drain (Agent sees about 65 MB/h). Commits in the last hour: about 31 MB of one-off evidence JSON (join 0455) and about 25 MB from re-committing hub/inbox/agent.md (1.4 MB × 11) and inbox/app.md (1.4 MB × 7) as full new loose blobs. Mitigation, config only: hub-sync now sets core.looseCompression=9, which shrinks new objects about 17%. It is in the kit. The real fix is still the owner-gated hub-repack, because packs store successive INBOX versions as tiny deltas. Possible later fix, not tonight: rotate the large INBOX files. Managers track byte offsets in them, so that needs a designed change.
