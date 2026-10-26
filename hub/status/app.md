@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T10:20:27Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 2m -->
-# app board, 2026-10-26T10:18:36.901941+00:00
+<!-- app | 2026-10-26T10:25:56Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# app board, 2026-10-26T10:24:10.470499+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,6 +15,7 @@
 | D141z hosted author | Qualify native cancellation repair | HARD Sol and independent Luna | Independent0944 PASS bounded source | merged | Sol0924; independent0944 | Same33 controls and static checks PASS. Actual61f915/tree28047. Runtime canonical intake and live admission remain unverified. | Private61f91572 |
 | D141z canonical intake | Receive reviewed final stop source | Runtime Luna reserved | Published0954; Main ordinary admission met | ready | Existing Runtime final-install-next | Exact accepted source and install brief delivered1005. Main5.56GB clears floor; sole Main installer owns canonical intake. | Private61f91572 |
 | D141bb install brief | Stage Main exact reviewed source intake | Manager brief; Runtime worker reserved | D141bb and independent0944 PASS | merged | Existing Main final-install-next | Exact brief published0958; new owned candidate, source hashes, same33 controls and canonicalCAS owned by Runtime. No install claim. | Source61f915 |
+| D141bb exact install map | Complete Main destination and preimage handoff | Luna | Runtime1008 finite receiving ask | doing | app-F-D141bb-main-install-map-1024 | Source continuation queued at5943095296 bytes. Main-only installer, rows and actual preimages requested normally; no invented target. | Source61f915 |
 | D141v pin briefs | Stage final metadata author and review | Luna and independent Luna reserved | Agent definitive REG0 and all fixes merged | gated:D141v | app-U4p-D141v-final-pin-next; review-next | Both exact briefs ready. Normal updater and provenance, three metadata paths, installer and lock tests only. No dispatch. | Pending82e9 |
 | D141z whole path | Deliver complete failed versus passing path map | Luna read only | Existing0847 FAIL6 retained | merged | app-F-D141z-build-stop-wholepath-0855 | All5 intrinsic findings and host input gap mapped; donor hashes exact. Own attempted monitor is not a qualified disk trace. | Evidence only |
 | D141z native whole path | Deliver complete native cancellation map | Luna read only | Second failed return0920 | merged | app-F-D141z-native-wholepath-0924 | Eight originals identify F5 mounted cancellation and parent-control gap; outer ownership needs actual mounting. Original F1 absence corrected by later0929 receiving. | Evidence only |
@@ -82,11 +83,12 @@ D141x cancellation: exact obsolete app-pin-867cb273-d141-p2-transition-none-sing
 Maintenance0735 and0757: Compact1 additionally gzipped4 ended worker logs; packed0 scratch/0 test dirs. Only host0750-authorized empty d822/8585 sourceKEEP removed; all33 others exact. [Later normal cleanup](../../design/app-D141-compact1-result-0757.json). Earlier pass: guarded sweep3 exit0 removed0; existing helper printed Broken-pipe diagnostics. Compact20 exit0 packed0 scratch/0 test dirs and gzipped0logs. All35 preexisting KEEP markers preserve exact hashes/modes. Finished0707 source auto-recycled normally; no eligible clean ended App source remains except tiny Composition0606 held for the still-open comparison. Previous guarded5344/867/28e/6a releases remain recorded. DirtyU3, lockedU3c, bundles without metadata, hardlink cache and refused orphan graph remain held. No raw removal, hub operation or repack. [Current maintenance](../../design/app-D141-maintenance-result-0735.json).
 
 
+Blockers: Runtime inputs — Exact Main-only qualified installer/rows/current preimages requested for sole map1024. Core/inventory/D68 inputs already exact; no stale F1 wait.
 Blockers: Agent — Fresh independent source check PASS; owning fullpair controller active10:03:10. Definitive comparison and later serial CLI still owed; no App duplicate.
 Blockers: Safety — D130 absolute hold. Lead completed the one owner-approved repack; no further hub operation. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Admitted serial App journeys now queued, corrected placement first. Runtime source intake stays owning Main floor. D141v waits definitive Agent REG closure.
-live 1 / cap 1 heavy controller; ready-undispatched 0. Actual start10:15:11; serial ordinary journeys, no second heavy body.
+live 1 plus 1 queued / cap 6 source; heavy 1 of 1; ready-undispatched 0. One source map continuation alongside serial journey controller.
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
@@ -171,3 +173,5 @@ Actual start 2026-10-26T10:16:26.961167+00:00: harness meta10:15:11 confirms ONE
 Live journey 2026-10-26T10:17:41.986695+00:00: corrected placement preflight actual6758 PASS; actual body9168 RUNNING, not a result. Full IDs retained in reviewed0747 controller-output submit-plan.json and worker log. Both raw test directories now KEEP-protected by manager10:17 upon actualID observation, not backdated; controller-output parent KEEP exists from10:15. Own5s bodytrace present, available above5.9GB; standing4GBstop unchanged. No duplicate request, futureID or receipt retarget.
 
 H6 owner readiness 2026-10-26T10:18:36.901941+00:00: latest owning Agent10:04 board supersedes static0957 wait: fresh independent10/38/10 plus17/1,1/0 PASS, fullpair controller actually active10:03:10. Dependent App finalpins still require actual REG0. Runtime10:05 now confirms Main source admission met and existing notes CAS dispatched; App canonical notes row doing, canonical stop intake ready for sole existing Main final-install-next. Earlier floor blocker clears; no App canonical writer or duplicate source allocation. Own placement body9168 remains RUNNING above5.7GB, genuine sameID wait.
+
+Pass 2026-10-26T10:24:10.470499+00:00: new Runtime1004 notes dispatch and1008 exact Main map ask consumed through2889302bytes. New map row and ONE source-only Luna1024 queued immediately; source cap allows this independent work beside sole journeyheavy. Actualplacement9168 PASS0/259s, native readiness and guardedUndo exact. RawKEEP protected, final independentcustody still owed. Terminal and finite Main-input request sent in peer1024. No new lifecycle mechanism, installer activation, wholeP2GO, REG orZIP claim.

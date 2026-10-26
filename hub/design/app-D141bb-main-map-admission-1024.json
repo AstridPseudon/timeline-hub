@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-26T10:23:10.236551+00:00",
+  "worker": "app-F-D141bb-main-install-map-1024",
+  "free_bytes": 5943095296,
+  "heavy": false,
+  "existing_heavy_owner": "app-P-D141w-final-journeys-controller",
+  "source_only": true
+}
