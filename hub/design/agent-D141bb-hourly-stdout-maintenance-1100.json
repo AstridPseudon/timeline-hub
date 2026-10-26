@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-26T10:59:12.886119+00:00",
+  "free_before": 7417331712,
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0739Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0739Z.log.xz",
+      "decoded_sha256": "18e16d5d98006248c5da7e9153d4c4683f9d845dc5ccda08cf9e355363b1fb1b",
+      "original_bytes": 1371028,
+      "compressed_bytes": 261308,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0754Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0754Z.log.xz",
+      "decoded_sha256": "1a2a346c7c826994f2381eac8d4955b0069d0175f80fcfeacf5a77e5bf4979fa",
+      "original_bytes": 1002172,
+      "compressed_bytes": 184432,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0908Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0908Z.log.xz",
+      "decoded_sha256": "91775d7e4411d0dcdc70e54de9c2ebff1477374b3486d05a383cd2bc1dad7485",
+      "original_bytes": 1520225,
+      "compressed_bytes": 288676,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0807Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0807Z.log.xz",
+      "decoded_sha256": "119b513534558a89b2aa14a06cf458a9b22878e88c4905d2d2d4f50356ed3ebd",
+      "original_bytes": 1516199,
+      "compressed_bytes": 284140,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0832Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0832Z.log.xz",
+      "decoded_sha256": "f57391341791fab5cd32abc5ce03281c48ac0f6ae5fa059d1dd848dc5ddd8a6c",
+      "original_bytes": 1566999,
+      "compressed_bytes": 292852,
+      "mode": "0o644"
+    }
+  ],
+  "scope": "closed manager stdout only; raw workers/tests/KEEP untouched",
+  "free_after": 7422988288
+}

@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T10:57:28Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 5m -->
-# agent board, 2026-10-26T10:52:11.017291+00:00
+<!-- agent | 2026-10-26T11:02:12Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
+# agent board, 2026-10-26T10:57:53.112400+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -39,7 +39,7 @@
 | D130 SWAP | Preserve automatic refusal | Runtime owner | Owner disposition | blocked:orchestrator | Existing Runtime1537 escalation | No retry, transfer, alternate qualification or rollback. | Held |
 | D141 stops | Retain known gaps and UNKNOWNs | Existing owners | D141 stop | gated:D141-stop | No new worker | Original9/B022,Gate3,D118,Element,cost,D77 and own investigations stopped. No test weakening or retirement. | Retained |
 | Store staging hub | Preserve deferred protected data | Runtime and owner | D140/D141n/o withdrawal | gated:deferred | No author or cleanup | Child3e163 stays; Store/staging held; no KEEP packing/removal or hub operation without owner approval. | Held |
-| D141 current join | Complete current source comparison | Luna and independent Luna | Limited independent PASS | doing | source-accounting-return-1051 | Counts reconciled; 5 UNKNOWN and 64 pristine-only need source identity evidence. No REG0. | Evidence only |
+| D141 current join | Complete source identity comparison | Luna and independent Luna | Source1051 terminal; independent review | review | source-accounting-review-next | Five source-backed N/A; 64 pristine-only remain unresolved. All 397 bad outcomes conserved. No REG0. | Evidence only |
 | D141 current custody | Qualify actual native pair association | Independent Luna | Both native terminals and actual source | merged | agt-F-D141l-fullpair-custody-next | PASS_EVIDENCE: actual bindings and native traces. Outer sampler defect disclosed. No REG verdict. | Evidence only |
 
 Integration: Agent ecdc242ed9b673f641759ecf029f95e89a2c6f92 / tree d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735, clean. Runtime95d98f038320d5d46bd679ac000ab3e15825c935 / tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. App82e9e13ddf1d7ec6c736521b2eb091dca9877598 / tree6a6e49eb4461b5ca1a7fa1247653bc794f26d710. ProductComposition635f4de06fda22a85fc2e4cfc764d0153a4c9f40 / tree5ab5191a296980a0a6bcd1178ab6902d6478a148. OperationalComposition6a2d/tree57f68 is separate. PristineAgent64197afa297f86f1e738238d5e80aff6d33e303a and Runtimefa9cd5464a8b37b02f971de375e56be846cd69e2 normalcheckouts protected. No upstreamchase. D141v finalAgentRuntime/App pins remain gated allREGfixes and preF-final; App8585pointer is expected.
@@ -60,10 +60,12 @@ Disk: 7477936128 available bytes at 2026-10-26T10:52:11.017445+00:00. Guarded cu
 
 Later/held: original9/B022,Gate3,D118,Element,cost,D77 and own investigations STOPPED. OriginalTrue redo,graphchildbirthalias,fork18ABI1history,transcriptauthority,missingword/native records UNKNOWN. Managed105/media48/30/CLI22/fork18/identity16/PARAMword retain actual limits, no source-onlydeduction. D23/D14deferred; D69Windows/wheel/installedrender unqualified;D123held;D127noprofiling. D130SWAP classifierrefusal absolute: no retry/transfer/alternatequalification/rollback, existingRuntime1537escalationcontrols. Store/stagingdeferred,child3e163protected; no cleanupauthorityinferred. All rawKEEPprotected.
 
-Blockers: Proof source accounting — Mechanical counts independently reconciled. Sole source-accounting-return-1051 resolves 5 UNKNOWN and 64 pristine-only identities; no REG0.
+Blockers: Proof source accounting — Independent review-next qualifies five N/A and 64 pristine-only dispositions; source1051 alone does not prove preservation or REG0.
 Blockers: App P4 verdict — CurrentCLI14092 and independentcustodyPASS; exactSAFE XML and packet sent1048. App owns cumulative applicability.
 Blockers: SWAP safety — Existing Runtime1537 classifierrefusal held, no retry or alternate route.
-Next ready: Source accounting terminal then one bounded independent completion; final pins only after actual REG0 and all fixes. App owns cumulative P4 verdict.
-live 1 queued / cap 6; ready-undispatched 0. Sole source accounting return; native pair and CLI bodies complete, no heavy body.
+Next ready: Independent source completion, then finite owning actions for any unresolved upstream behavior. Final pins require actual REG0 and all fixes. App owns cumulative P4 verdict.
+live 1 / cap 6; ready-undispatched 0. Sole independent source accounting completion; native pair and CLI bodies complete, no heavy body.
 
 Inbox consumed through2173759bytes; no new items at10:47. PLAN/common/header/contract read. H6 Runtime10:30/App10:32 boards rechecked; no new admitted Agent row, safety/final gates retained. Manager writes board/briefs/peers/SAFE publication/authorized maintenance only; no product/test/generated pin/Git/hub/upstream/credentials/M5 action.
+
+Current pass 2026-10-26T10:57:53.112400+00:00: source1051 terminal exit0. Fresh checker now reconciles all final packets: five exact target functions absent at pristine, cut bad N_A378/UNKNOWN0 plus19FAILS_BOTH. Actual201FAIL196ERROR remain. All64 pristine-only individually inventoried:9 exact current identities,17 unresolved current functions,38 absent current inverse-file IDs; source inventory is not preservation. ONE independent review-next queued immediately at7447375872bytes on same terminal1051 lineage, no body or duplicate investigator. Review must qualify genuine current counterparts/approved migrations or return finite unresolved IDs and next actions; finalREG0 not inferred. New prospective manager5s trace starts10:56:15.601186; earlier1053manager trace ended10:53:10, gap disclosed and no backfill. Author trace assessed separately. H6 owning App10:41/Runtime10:43 boards reread: App operational1032 review pending; Runtime REG closed and final install gated. SWAP still owner-held, no retry. Fresh worktree census only nonKEEP ended target is protected dirtyG2, no eligible recycle target. Compact0/sweep3 active, allKEEP protected. Disk 7441571840bytes. Inbox unchanged2173759bytes. No product/test/pin/Git/hub/Store/M5 action.
