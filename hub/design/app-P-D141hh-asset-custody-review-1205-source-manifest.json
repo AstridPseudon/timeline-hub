@@ -1,0 +1,43 @@
+{
+  "schema": "d141hh-asset-custody-source-manifest-v1",
+  "selector": "p2-register-asset",
+  "attempt_scope": "original",
+  "dispatch_index": 4,
+  "recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d"
+  },
+  "review_publication": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141dd-final-review-publication-1110.json",
+    "sha256": "cf938a6ae2157e14fba7788c29bb8535ad20050858f2b4acb0a6777f80aad6ea",
+    "status": "PASS_SOURCE_ONLY",
+    "controls": 43
+  },
+  "pins": {
+    "app": {"checkout": "/home/user/work/wt/app-pin-82e9e13d", "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"checkout": "/home/user/work/wt/agt-pin-ecdc242e", "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"checkout": "/home/user/work/wt/rt-pin-95d98f03", "head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"checkout": "/home/user/work/wt/vw-pin-635f4de0", "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "native": {
+    "argv": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "p2-register-asset", "--submit"],
+    "cwd": "/home/user/work/app",
+    "environment_unset": ["D66_SUITE_REGISTRY", "D66_CHECKOUT_ROOT", "D66_NORMAL_AGENT_HOME", "D66_NORMAL_RUNTIME_HOME", "D66_NORMAL_COMPOSITION_HOME", "D66_P2_COMMIT_PHASE_CAPTURE_HELPER", "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256", "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER", "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256", "D66_ELEMENT_VERIFICATION_ONLY"],
+    "operational_environment": {"GIT_OPTIONAL_LOCKS": "0"},
+    "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json",
+    "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stdout.log",
+    "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stderr.log",
+    "native_exit": 0,
+    "one_invocation": true,
+    "same_id_wait": true
+  },
+  "source_clean_detached": true,
+  "product_worktree_changed": false,
+  "register_asset_source_sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e",
+  "wire_change": false
+}

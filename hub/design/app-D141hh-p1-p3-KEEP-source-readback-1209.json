@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-26T12:08:02.709556+00:00",
+  "request_test_sha256": "9408dc44636db0e69ee64c59c373f5cd09cf7c82196a83167182227706d443cb",
+  "TEST_KEEP_present": true,
+  "future_parent_markers": [
+    {
+      "selector": "p1",
+      "future_parent_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/KEEP",
+      "created_before_controller": true
+    },
+    {
+      "selector": "p3",
+      "future_parent_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/KEEP",
+      "created_before_controller": true
+    }
+  ],
+  "raw_IDs_not_invented": true,
+  "no_kit_edit": true
+}

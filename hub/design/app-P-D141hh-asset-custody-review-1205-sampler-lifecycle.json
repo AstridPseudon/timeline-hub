@@ -1,0 +1,26 @@
+{
+  "schema": "d141hh-asset-custody-sampler-lifecycle-v1",
+  "scope": "reviewer-owned trace plus source-terminal sampler lifecycle",
+  "source_terminal": {
+    "first_failed_command": "mkdir own evidence and KEEP; foreground df loop to stdout (no direct trace redirection)",
+    "first_failed_command_exit": 1,
+    "first_failed_command_at": "2026-10-26T11:55:58Z",
+    "real_sampler_start": "2026-10-26T11:56:04+00:00",
+    "native_start": "2026-10-26T11:57:29Z",
+    "native_finish": "2026-10-26T11:58:01Z",
+    "corrected_direct_sampler_before_native": true,
+    "first_tool_coverage_claim": false,
+    "stop_action": "SIGINT",
+    "wait_reap_completed": true,
+    "reaped_exit_code": 1,
+    "sample_count": 81,
+    "minimum_available_bytes": 4861698048,
+    "maximum_gap_seconds": 5
+  },
+  "reviewer_trace": {
+    "capture": "first-tool stdout only; direct-file redirection was omitted",
+    "first_tool_coverage_claim": false,
+    "no_backfill_claim": true,
+    "note": "The reviewer does not use this supplemental trace to establish source custody; the source terminal trace and its accepted gaps are reported above."
+  }
+}

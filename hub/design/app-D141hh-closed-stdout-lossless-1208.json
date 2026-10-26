@@ -1,0 +1,19 @@
+{
+  "started": "2026-10-26T12:07:28.830394+00:00",
+  "ended": "2026-10-26T12:09:01.480486+00:00",
+  "kind": "LOSSLESS_CLOSED_STDOUT_ONLY",
+  "original_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-live-compose/log.txt.gz",
+  "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-live-compose/log.txt.xz",
+  "original_compressed_sha256": "9a3b22da417044b4b917101c86180be659e817963be77cff843e2daf63225ad1",
+  "new_compressed_sha256": "02c7b920f37607902a4417633a147fa5cf07a9fe1282d5bafcf21c1a12f4fa66",
+  "decoded_sha256": "0bba8343bd0303c6f77df56067ddc91ea2ca790c33deb66c9982bff9a938146c",
+  "decoded_bytes": 287965749,
+  "original_bytes": 70568021,
+  "new_bytes": 1325100,
+  "saved_bytes": 69242921,
+  "mode": "0o644",
+  "mtime_ns": 1792713939747795989,
+  "worktree_touched": false,
+  "raw_tests_KEEP_touched": false,
+  "guards": "Ended over24h, no running/KEEP/live board or lease reference, regular singlelink and source stable; decoded bytes SHA identical."
+}

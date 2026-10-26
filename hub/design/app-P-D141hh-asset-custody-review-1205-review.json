@@ -1,0 +1,72 @@
+{
+  "schema": "d141hh-asset-custody-review-v1",
+  "status": "PASS_CUSTODY_TEST_PASS",
+  "scope": "One finite independent custody review of p2-register-asset@original",
+  "terminal": {
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-preflight-1026115730-3534",
+    "preflight_status": "pass",
+    "preflight_exit": 0,
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328",
+    "normal_status": "pass",
+    "normal_exit": 0,
+    "normal_duration_seconds": 260,
+    "readiness_pass": 1,
+    "register_asset_pass": 1,
+    "failures": 0
+  },
+  "findings": [
+    {
+      "id": "D141hh-G1",
+      "severity": "accepted-procedural-gap",
+      "status": "disclosed",
+      "finding": "The source author’s first sampler command wrote df output to stdout, exited 1 at 2026-10-26T11:55:58Z, and did not provide first-tool coverage.",
+      "evidence": "A corrected retained foreground sampler wrote directly to the assigned source evidence path, began sampling at 2026-10-26T11:56:04Z, preceded native start at 2026-10-26T11:57:29Z, and was stopped/waited/reaped.",
+      "waived_by": "D141hh 12:02 acceptance; no backfill or first-tool coverage claim"
+    },
+    {
+      "id": "D141hh-G2",
+      "severity": "accepted-procedural-gap",
+      "status": "disclosed",
+      "finding": "The preflight raw KEEP marker was absent initially and was added by the manager at 2026-10-26T11:58:20.303196Z after actual discovery.",
+      "evidence": "The preflight raw directory and marker remain retained; filesystem mtime is 2026-10-26T11:58:20.306385522Z. The normal marker was authored at genuine ID discovery (progress record 11:58:01Z; filesystem mtime 11:58:01.709317174Z).",
+      "waived_by": "D141hh 12:02 acceptance; no fabricated earlier protection claim"
+    }
+  ],
+  "verification": {
+    "source_recipe": "dispatches[4] only; SHA256 d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "source_review": "app-D141dd-final-review-publication-1110.json PASS_SOURCE_ONLY, 43 controls, SHA256 cf938a6ae2157e14fba7788c29bb8535ad20050858f2b4acb0a6777f80aad6ea",
+    "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "builder_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "pins": {
+      "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+      "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+      "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+      "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "source_clean_detached": true,
+    "product_worktree_changed": false,
+    "original_register_asset_spec_unchanged": true,
+    "one_native_invocation": true,
+    "same_id_wait": true,
+    "manual_request_creation": false,
+    "second_submit": false,
+    "old_route_predicates": true,
+    "intended_delta_reload_guarded_undo_history": true,
+    "c0_wire_unchanged": true
+  },
+  "trace": {
+    "source_trace_samples": 81,
+    "source_trace_min_available_bytes": 4861698048,
+    "source_trace_max_gap_seconds": 5,
+    "source_trace_first": "2026-10-26T11:56:04+00:00",
+    "source_trace_last": "2026-10-26T12:02:44+00:00",
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_reached": false,
+    "source_sampler_session_only": true
+  },
+  "limits": [
+    "No body rerun, retry, alternate selector, source repair, wire change, or product mutation.",
+    "No overall P2/platform GO, final build, ZIP, or unrelated journey claim.",
+    "Product tests/types/lint were not rerun; the product tree was unchanged."
+  ]
+}

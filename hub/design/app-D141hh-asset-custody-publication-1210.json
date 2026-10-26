@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-26T12:10:34.648658+00:00",
+  "worker": "app-P-D141hh-asset-custody-review-1205",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "limits": "First output-only sampler failed; corrected81 sample trace before native request, preflight rawKEEP manager-added late. All original gaps disclosed, no backfill.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-report.md",
+      "sha256": "dcf4356eef5347091371a00332ca081ba7bbb7c38b12c1b83e97e244c0e48009",
+      "bytes": 1125
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-review.json",
+      "sha256": "9a36b8b58a48e24dfe6e3c142f265a89783c10329126f37eb504e4400fcd2883",
+      "bytes": 3831
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-findings.md",
+      "sha256": "1aec374577d43d7e274031402b089f51a0e28f9d482010ba6a34b57b1861378b",
+      "bytes": 1616
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-source-manifest.json",
+      "sha256": "e08cb6586eb37fbb6c10199aad5ce31e9715ffe219659322fcb033a197ad09a2",
+      "bytes": 3385
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-validation.md",
+      "sha256": "148643556e22a86053573b7b056a4902df91ed3850fb8b0c987f71d2bea5611b",
+      "bytes": 2031
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-handoff.md",
+      "sha256": "1f9daa7ed30039106440f4ba74f8384eed194aa8e70b3f95f74cfb052b4e9cf7",
+      "bytes": 737
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-disk-trace.txt",
+      "sha256": "0bc0634b5ccd9dc9dca62d24a2717c7db6fc40edbc57c1e9c4dbb2f06b8dbcca",
+      "bytes": 1537
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-asset-custody-review-1205/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-asset-custody-review-1205-sampler-lifecycle.json",
+      "sha256": "b2d28d919c902830966f0ed1e846c0d353d0e60917afafe5c349613ad5a7ff01",
+      "bytes": 1130
+    }
+  ]
+}
