@@ -1,0 +1,360 @@
+{
+  "utc": "2026-10-26T14:13:37.407304+00:00",
+  "rows": [
+    {
+      "worker": "agt-U2-D141ii-writers-caller-sol-1331",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141l-command-sol-0638",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-installer2-scope-1134",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-ab1e4f61",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-installer2-decision-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-inverse38-decision-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-inverse38-scope-review-1137",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141b-pristine-controller-0035",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-20207411",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-writers-caller-wholepath-1331",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-integrated-kept53-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-m2-track-public-export",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-6a011d58",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-fa9cd546",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-m2-null-speed-clean-candidate",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-1134",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-final-source-join-0816",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-writers-caller-review-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-a6a11a80",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-2c4ac180",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-review-1137",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-68935201",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-writers15-return-1319",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141l-fullpair-controller-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-writers15-return-review-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-return-review-1148",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ii-integrated-kept53-review-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-writers15-decision-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141l-binding-return-0735",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-P4-D141-body-continuation-0105",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-installer2-decision-next-review",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-7d1cfa6b",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "vw-pin-67b8aa3d",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U4a-D141v-final-pin-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-a0dca169",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-94114269",
+      "local_meta": false,
+      "keep": false,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-installer2-scope-review-1137",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-5e9ad1c6",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-369ffa7c",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-bc04caa2",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-return-1143",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-inverse38-decision-next-review",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141l-sol-review-0707",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-dc55b8bc",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U4a-D141v-final-pin-review-next",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-732c48c6",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141i-corrected-controller-0321",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-G2-open-commit",
+      "local_meta": true,
+      "keep": false,
+      "running": false,
+      "git_exit": 0,
+      "dirty": " M astrid/sdk/timeline/sync.py\n"
+    },
+    {
+      "worker": "vw-pin-635f4de0",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141i-terminal-final-review-0318",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-P4-D141-bound-proof-controller-0128",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-pin-64197afa",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-U2-D141ee-writers15-decision-next-review",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141ee-inverse38-scope-1134",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-d23a8e0d",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "rt-pin-1daca2a3",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    },
+    {
+      "worker": "agt-F-D141l-controller-binding-prep-0718",
+      "local_meta": true,
+      "keep": true,
+      "running": false
+    }
+  ],
+  "possible": [
+    {
+      "worker": "agt-G2-open-commit",
+      "local_meta": true,
+      "keep": false,
+      "running": false,
+      "git_exit": 0,
+      "dirty": " M astrid/sdk/timeline/sync.py\n"
+    }
+  ],
+  "raw_KEEP": "unchanged; no eligible clean ended nonKEEP Agent worktree"
+}
