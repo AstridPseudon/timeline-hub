@@ -15,7 +15,6 @@ import os
 import re
 import shlex
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -281,19 +280,51 @@ def render_rows(config: dict[str, Any]) -> list[str]:
     agent = _derive_agent(route["agent"])
     runtime = _verify_runtime(route["runtime"])
     _verify_source_membership(runtime)
+    return [f"runtime d141-p5-cut {_command_body(config, agent)}"]
+
+
+def _origins(runtime: Path, agent: Path) -> dict[str, str]:
+    return {
+        "runtime_protocol": str(runtime / "runtime_protocol/__init__.py"),
+        "runtime_metadata": str(runtime / "runtime_protocol/contract_metadata.py"),
+        "runtime_contract": str(runtime / "contract/artifacts.json"),
+        "agent_provider": str(agent / PROVIDER_RELATIVE),
+        "agent_client": str(agent / CLIENT_RELATIVE),
+        "agent_metadata": str(agent / METADATA_RELATIVE),
+    }
+
+
+def _pytest_command(config: dict[str, Any]) -> str:
     command = " ".join(shlex.quote(part) for part in config["pytest"]["arguments"])
+    return (
+        f"{shlex.quote(config['pytest']['interpreter'])} {command} "
+        f'--junitxml="$D66_OUTPUT_DIR/{config["pytest"]["junit_name"]}"'
+    )
+
+
+def _command_body(config: dict[str, Any], agent: dict[str, Any]) -> str:
+    origins = _origins(Path(config["route"]["runtime"]["checkout"]), Path(agent["checkout"]))
+    # Retain the bound checkout witnesses before the service removes its snapshot.
+    witness = (
+        "import hashlib,json,sys; from pathlib import Path; "
+        "out=Path(sys.argv[1]); out.mkdir(mode=0o700); "
+        f"origins={origins!r}; "
+        "values={'argv.json':sys.argv[2:], 'module-origin.json':origins, "
+        "'source-hashes.json':{p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in origins.values()}}; "
+        "[(out/name).write_text(json.dumps(value,sort_keys=True)+'\\n') for name,value in values.items()]"
+    )
     unset = " ".join(f"-u {name}" for name in config["pytest"]["environment_unset"])
-    junit = f'"$D66_OUTPUT_DIR/{config["pytest"]["junit_name"]}"'
-    body = (
-        f"{_source_guard(route['runtime'], agent)} && "
+    return (
+        f"{_source_guard(config['route']['runtime'], agent)} && "
+        f"{shlex.quote(config['pytest']['interpreter'])} -c {shlex.quote(witness)} "
+        f'"$D66_OUTPUT_DIR" {_pytest_command(config)} && '
         f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-start\" && "
         f"env {unset} ASTRID_CHECKOUT={shlex.quote(agent['checkout'])} "
-        f"{shlex.quote(config['pytest']['interpreter'])} {command} --junitxml={junit}; rc=$?; "
+        f"{_pytest_command(config)}; rc=$?; "
         f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-stop\"; "
         f"printf '%s\\n' \"$rc\" > \"$D66_OUTPUT_DIR/runner-exit\"; "
         f"printf '%s\\n' 'KEEP before service cleanup' > \"$D66_OUTPUT_DIR/KEEP\"; exit \"$rc\""
     )
-    return [f"runtime d141-p5-cut {body}"]
 
 
 def _check_owner_mode(path: Path, label: str, *, directory: bool = False) -> None:
@@ -301,7 +332,7 @@ def _check_owner_mode(path: Path, label: str, *, directory: bool = False) -> Non
     if stat.st_uid != os.getuid() or stat.st_mode & 0o022:
         raise RouteError(f"{label} has unsafe owner or mode")
     expected = 0o700 if directory else 0o600
-    if not directory and (stat.st_mode & 0o777) != expected:
+    if (stat.st_mode & 0o7777) != expected:
         raise RouteError(f"{label} has unsafe mode")
 
 
@@ -376,45 +407,43 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
         _check_owner_mode(destination, "installer destination", directory=True)
 
 
-def run_control(output: Path, *, poison: bool = False) -> int:
-    """Run one harmless subprocess and retain normal D66-shaped evidence."""
+def run_control(output: Path, *, poison: bool = False, config: dict[str, Any] | None = None) -> int:
+    """Exercise the actual row with only its product pytest invocation replaced."""
     if poison:
         raise RouteError("poison control refused before subprocess and artifacts")
-    if not output.is_absolute() or output.exists():
+    if not output.is_absolute() or output.exists() or output.is_symlink():
         raise RouteError("control output must be a new absolute path")
-    command = [sys.executable, "-c", "print('D141_P5_CONTROL_ONCE')"]
-    completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=False)
-    if completed.returncode != 0 or completed.stdout != "D141_P5_CONTROL_ONCE\n":
-        raise RouteError("harmless control did not complete exactly once")
+    config = load_config() if config is None else config
+    row = render_rows(config)[0]
+    agent = _derive_agent(config["route"]["agent"])
+    body = row.split(" ", 2)[2]
+    scratch = Path(tempfile.mkdtemp(prefix="d141-p5-control-"))
+    control = scratch / "test_control.py"
+    control.write_text("def test_D141_P5_CONTROL_ONCE():\n    print('D141_P5_CONTROL_ONCE')\n")
+    # Pytest itself supplies its normal JUnit suite name, IDs and counters.
+    harmless = (
+        f"{shlex.quote(config['pytest']['interpreter'])} -m pytest -q -s "
+        f"-p no:cacheprovider -c /dev/null --rootdir={shlex.quote(str(scratch))} --confcutdir={shlex.quote(str(scratch))} "
+        f'{shlex.quote(str(control))} --junitxml="$D66_OUTPUT_DIR/d141-p5-cut.xml"'
+    )
+    invocation = f"env -u NODE_OPTIONS -u NODE_PATH ASTRID_CHECKOUT={shlex.quote(agent['checkout'])} {_pytest_command(config)}"
+    if body.count(invocation) != 1:
+        raise RouteError("control cannot isolate the product invocation")
     output.mkdir(parents=True)
-    d66 = output / "d66"
-    d66.mkdir()
-    runtime = Path("/home/user/work/runtime")
-    agent = Path("/home/user/work/agent")
-    source_paths = {
-        "runtime_protocol": runtime / "runtime_protocol" / "__init__.py",
-        "runtime_metadata": runtime / "runtime_protocol" / "contract_metadata.py",
-        "runtime_contract": runtime / "contract" / "artifacts.json",
-        "agent_provider": agent / PROVIDER_RELATIVE,
-        "agent_client": agent / CLIENT_RELATIVE,
-        "agent_metadata": agent / METADATA_RELATIVE,
-    }
-    argv = ["/home/user/work/venv-runtime/bin/python", *EXPECTED_ARGS, "--junitxml=$D66_OUTPUT_DIR/d141-p5-cut.xml"]
-    shell = "env -u NODE_OPTIONS -u NODE_PATH ASTRID_CHECKOUT=" + str(agent) + " " + " ".join(shlex.quote(value) for value in argv)
+    completed = subprocess.run(
+        ["bash", "-c", body.replace(invocation, harmless)],
+        cwd=config["route"]["runtime"]["checkout"],
+        env={**os.environ, "D66_OUTPUT_DIR": str(output / "d66"), "PYTHONDONTWRITEBYTECODE": "1", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
+        capture_output=True, text=True, check=False,
+    )
     (output / "exit").write_text(f"{completed.returncode}\n")
-    (output / "log.txt").write_text(completed.stdout)
+    (output / "log.txt").write_text(completed.stdout + completed.stderr)
     (output / "request").write_text("repo=runtime\nsuite=d141-p5-cut\n")
-    tree = _git(runtime, "rev-parse", "HEAD^{tree}")
-    (output / "snap").write_text(f"tree={tree}\nworktree={runtime}\n")
-    (output / "summary").write_text(f"cmd: {shell}; df -B1 --output=avail /home/user > $D66_OUTPUT_DIR/disk-start; rc=$?; df -B1 --output=avail /home/user > $D66_OUTPUT_DIR/disk-stop; printf '%s' $rc > $D66_OUTPUT_DIR/runner-exit; printf KEEP > $D66_OUTPUT_DIR/KEEP\n")
-    (d66 / "argv.json").write_text(json.dumps(argv) + "\n")
-    (d66 / "module-origin.json").write_text(json.dumps({key: str(path) for key, path in source_paths.items()}, sort_keys=True) + "\n")
-    (d66 / "source-hashes.json").write_text(json.dumps({str(path): _sha256(path) for path in source_paths.values()}, sort_keys=True) + "\n")
-    (d66 / "disk-start").write_text("Filesystem\n9000000000\n")
-    (d66 / "disk-stop").write_text("Filesystem\n8999999999\n")
-    (d66 / "runner-exit").write_text(f"{completed.returncode}\n")
-    (d66 / "d141-p5-cut.xml").write_text('<?xml version="1.0"?><testsuite name="d141-p5-cut" tests="1"><testcase classname="control" name="D141_P5_CONTROL_ONCE"/></testsuite>\n')
-    (d66 / "KEEP").write_text("retain D141 P5 control evidence\n")
+    tree = _git(Path(config["route"]["runtime"]["checkout"]), "rev-parse", "HEAD^{tree}")
+    (output / "snap").write_text(f"tree={tree}\nworktree={config['route']['runtime']['checkout']}\n")
+    (output / "summary").write_text(f"cmd: {body}\n")
+    if completed.returncode != 0 or completed.stdout.count("D141_P5_CONTROL_ONCE") != 1:
+        raise RouteError("harmless control did not complete exactly once")
     return completed.returncode
 
 
@@ -422,9 +451,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("status", "render", "install", "control"))
     parser.add_argument("path", nargs="?", type=Path)
+    parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--poison", action="store_true")
     args = parser.parse_args(argv)
-    config = load_config()
+    config = load_config(args.config)
     if args.command == "status":
         status, missing = route_status(config)
         print(json.dumps({"status": status, "missing": missing}, sort_keys=True))
@@ -437,7 +467,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "install":
         install_candidate(config, args.path)
         return 0
-    return run_control(args.path, poison=args.poison)
+    return run_control(args.path, poison=args.poison, config=config)
 
 
 if __name__ == "__main__":
