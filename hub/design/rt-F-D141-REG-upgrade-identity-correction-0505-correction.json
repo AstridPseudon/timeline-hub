@@ -1,0 +1,125 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-identity-correction.v1",
+  "task": "rt-F-D141-REG-upgrade-identity-correction-0505",
+  "base_task": "rt-F-D141-REG-upgrade-review-0458",
+  "mode": "immutable_evidence_only_derivative",
+  "overall": "PASS_CORRECTED_IDENTITY_ONLY",
+  "product_acceptance": "NOT_CLAIMED",
+  "source_verdict_for_actual_head": "PASS",
+  "remaining_findings": [],
+  "scope": {
+    "change": "Create a correction receipt for the false requested-commit identity in the independent review metadata.",
+    "product_or_behavior_work": false,
+    "historical_receipts_rewritten": false,
+    "historical_artifacts_rewritten": false,
+    "source_or_callgraph_changed": false,
+    "new_semantic_review": false,
+    "new_test_run": false,
+    "new_head_proof_claim": false,
+    "product_fix_requested": false
+  },
+  "identity_correction": {
+    "finding_id": "D141-REG-IDENTITY-001",
+    "original_status": "blocking",
+    "original_recorded_requested_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc6",
+    "requested_commit_object_exists": false,
+    "withdrawn_attribution": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc6",
+    "confirmed_intended_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "reason": "The independent review metadata named absent commit ...ccc6, while the manager brief, dispatched worker brief, worker meta base, and actual immutable Git HEAD all identify ...ccc7.",
+    "corrected_status": "closed_by_immutable_identity_correction",
+    "original_review_gate": "FAIL_exact_requested_identity_only",
+    "corrected_gate": "PASS_exact_intended_identity"
+  },
+  "carried_forward_review_fields": {
+    "review_task": "rt-F-D141-REG-upgrade-review-0458",
+    "source_verdict_for_actual_head": "PASS",
+    "reg_result": "13 passed in 7.77s, 0 failed, 0 errors, 0 skipped, 0 xfail",
+    "reg_selector_set": "exact 13 unchanged upgrade selectors from author fix.json and independent reg.json",
+    "actual_changed_paths": ["runtime_protocol/upgrade.py"],
+    "actual_changed_path_diff": "3 insertions, 1 deletion",
+    "contract_and_clients_unchanged": true,
+    "p5_new_head_proof": false,
+    "old_receipt_retargeted": false
+  },
+  "actual_git_identity": {
+    "repo": "/home/user/work/wt/rt-F-D141-REG-upgrade-identity-correction-0505",
+    "head_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "head_tree": "f71c60df29ab29cbea678794e882db8c0d053214",
+    "parent_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "parent_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "subject": "fix(runtime): repair U1 D141 REG upgrade inspector",
+    "changed_path": "runtime_protocol/upgrade.py",
+    "preimage_path_git_blob_sha1": "d2cb5afb56ebacbc09c3b59e41c44de4626182ae",
+    "preimage_path_sha256": "c3f44783b1145877ceec913a4bddeb925e711275296550570fa58a1bc8648cdb",
+    "actual_path_git_blob_sha1": "4daea429c71a1e96ee2649bd14d9e6b742923162",
+    "actual_path_sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50",
+    "worktree_path_sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50",
+    "parent_match": true,
+    "diff_paths": ["runtime_protocol/upgrade.py"],
+    "diff_stat": "1 file changed, 3 insertions(+), 1 deletion(-)"
+  },
+  "preserved_original_evidence": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/review.json",
+      "sha256": "3ea8ee267f2a5d5862995e549ae8cb1c18d4893b6f9f54ffbaae3ac2def9db1a",
+      "bytes": 3730,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/source-manifest.json",
+      "sha256": "ba77e669110c22b8e2066d9cde65c04daf64578c1463f062ac714c9646ac36af",
+      "bytes": 1734,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/findings.md",
+      "sha256": "19c20e168aaa091171905c370875d7140a2ab8e2e75e43a1be2b4b3961498c7a",
+      "bytes": 2114,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/validation.md",
+      "sha256": "2761119d98e91a2495919f2b0c3e841f2f1401cefbc918fdc254e0a6d5382842",
+      "bytes": 3814,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/handoff.md",
+      "sha256": "6fe644ab340a56a15e67b028cd96a40e900697ae7202e0c051747b74cf179ae7",
+      "bytes": 1149,
+      "immutable": true
+    }
+  ],
+  "preserved_identity_inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/briefs/rt-F-D141-REG-upgrade-review-0458.md",
+      "sha256": "7a30ebdbbe7e6de60248602c79a171197b84143a424d4c94fe40a92dc745e059",
+      "bytes": 2269,
+      "contains_confirmed_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "contains_withdrawn_commit": false,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/brief.md",
+      "sha256": "7a30ebdbbe7e6de60248602c79a171197b84143a424d4c94fe40a92dc745e059",
+      "bytes": 2269,
+      "contains_confirmed_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "contains_withdrawn_commit": false,
+      "immutable": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/meta",
+      "sha256": "1a85f714266bda3dec54ea7bca1af45954f2d91b42d6a7595cee72518d4acedd",
+      "bytes": 248,
+      "contains_confirmed_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "contains_withdrawn_commit": false,
+      "immutable": true
+    }
+  ],
+  "limits": [
+    "Original review artifacts were not overwritten.",
+    "No source, test, contract, client, product, pin, package, environment, service, registry, Store, queue, hub, or Git object was changed.",
+    "No repeated semantic review or test/typecheck/lint run was performed.",
+    "The original exact 13-test PASS is reused as qualification; no new-head proof is claimed."
+  ]
+}

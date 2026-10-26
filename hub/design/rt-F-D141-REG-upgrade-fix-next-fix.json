@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-fix.v1",
+  "base_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "scope": {
+    "allowed_changed_paths": ["runtime_protocol/upgrade.py"],
+    "actual_changed_paths": ["runtime_protocol/upgrade.py"],
+    "contract_changed": false,
+    "tests_changed": false
+  },
+  "cause": {
+    "validated": "_validate_candidate stages RealmStore for canonical integrity inspection without the production db_path and mutex fields.",
+    "failure_frames": [
+      "runtime_protocol/upgrade.py:_validate_candidate",
+      "runtime_protocol/timeline_commit_store.py:261 (db_path access)",
+      "runtime_protocol/timeline_commit_store.py:267 (mutex context manager after db_path repair)"
+    ],
+    "correction": "Stage inspector.db_path as root / 'realm.sqlite3' and inspector._mutex as threading.RLock(), matching RealmStore production initialization."
+  },
+  "environment": {
+    "python": "/home/user/work/venv-runtime/bin/python",
+    "python_env": "PYTHONDONTWRITEBYTECODE=1",
+    "agent_checkout": "/home/user/work/wt/agt-pin-28e56cac",
+    "test_cache": "/tmp/rt-F-D141-REG-upgrade-fix-next.meANQN/pytest-cache-after",
+    "basetemp": "/tmp/rt-F-D141-REG-upgrade-fix-next.meANQN/basetemp-after"
+  },
+  "acceptance": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-28e56cac /home/user/work/venv-runtime/bin/python -m pytest -q --basetemp=/tmp/rt-F-D141-REG-upgrade-fix-next.meANQN/basetemp-after -o cache_dir=/tmp/rt-F-D141-REG-upgrade-fix-next.meANQN/pytest-cache-after [the 13 selectors listed below]",
+    "selectors": [
+      "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars"
+    ],
+    "result": "13 passed in 4.12s",
+    "exit_code": 0,
+    "counts": {"passed": 13, "failed": 0, "errors": 0, "skipped": 0, "xfail": 0}
+  },
+  "validation": {
+    "git_diff_check": "PASS",
+    "scoped_ast": "PASS",
+    "lint": "not configured in pyproject.toml",
+    "typecheck": "not configured in pyproject.toml",
+    "full_suite": "not run per task scope"
+  },
+  "p5_applicability": {
+    "executed_p5_sources": ["tests/test_timeline_commit_integration.py", "tests/test_timeline_commit_crash.py"],
+    "upgrade_call_present_in_p5_sources": false,
+    "applies_to": "operator upgrade_realm staged-candidate canonical integrity validation",
+    "does_not_modify": "P5 commit-door, renderer-off, authorization, retry, changed-payload, or crash/recovery paths",
+    "new_head_p5_proof": false,
+    "note": "The original P5 receipt remains the prior cut proof; this narrow upgrade fix was not claimed as a new-head P5 run."
+  },
+  "non_acceptance_attempt": {
+    "status": "setup_only",
+    "reason": "The harness worker tmpdir marker is a regular file; the first basetemp path could not be created. No product code or tests were changed by that attempt."
+  }
+}

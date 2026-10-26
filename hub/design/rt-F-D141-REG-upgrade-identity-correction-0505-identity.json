@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-identity.v1",
+  "task": "rt-F-D141-REG-upgrade-identity-correction-0505",
+  "result": "PASS",
+  "check": "D141-REG-IDENTITY-001",
+  "requested_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc6",
+  "requested_commit_object": {
+    "exists": false,
+    "command": "git cat-file -e 012889c1b0bbfe5f290f757cb6d31dd7d995ccc6^{commit}",
+    "exit": 128,
+    "meaning": "absent Git commit object"
+  },
+  "confirmed_actual": {
+    "commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "tree": "f71c60df29ab29cbea678794e882db8c0d053214",
+    "parent": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "parent_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "subject": "fix(runtime): repair U1 D141 REG upgrade inspector",
+    "object_type": "commit"
+  },
+  "source_path_identity": {
+    "path": "runtime_protocol/upgrade.py",
+    "preimage_git_blob_sha1": "d2cb5afb56ebacbc09c3b59e41c44de4626182ae",
+    "preimage_sha256": "c3f44783b1145877ceec913a4bddeb925e711275296550570fa58a1bc8648cdb",
+    "actual_git_blob_sha1": "4daea429c71a1e96ee2649bd14d9e6b742923162",
+    "actual_sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50",
+    "diff_name_status": "M runtime_protocol/upgrade.py",
+    "diff_stat": "1 file changed, 3 insertions(+), 1 deletion(-)",
+    "diff_check": "PASS"
+  },
+  "brief_identity": {
+    "manager_brief_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "dispatched_brief_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "meta_base_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+    "manager_and_dispatched_brief_sha256": "7a30ebdbbe7e6de60248602c79a171197b84143a424d4c94fe40a92dc745e059",
+    "meta_sha256": "1a85f714266bda3dec54ea7bca1af45954f2d91b42d6a7595cee72518d4acedd"
+  },
+  "carried_forward_source_qualification": {
+    "source_verdict_for_actual_head": "PASS",
+    "tests": "exact 13 independent upgrade selectors: 13 passed in 7.77s",
+    "tests_rerun_by_correction": false,
+    "new_head_proof": false,
+    "remaining_findings": []
+  },
+  "original_false_attribution": {
+    "review_json_sha256": "3ea8ee267f2a5d5862995e549ae8cb1c18d4893b6f9f54ffbaae3ac2def9db1a",
+    "source_manifest_json_sha256": "ba77e669110c22b8e2066d9cde65c04daf64578c1463f062ac714c9646ac36af",
+    "reason": "The review/source-manifest requested_commit fields recorded absent ...ccc6 even though actual_commit and the dispatched identity inputs were ...ccc7.",
+    "withdrawal": "The ...ccc6 requested attribution is withdrawn; the original files remain byte-preserved."
+  }
+}

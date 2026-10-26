@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-source-manifest.v1",
+  "read_only": true,
+  "requested_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc6",
+  "requested_commit_exists": false,
+  "actual_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+  "actual_tree": "f71c60df29ab29cbea678794e882db8c0d053214",
+  "base_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "base_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "commit_parent_match": true,
+  "commit_subject": "fix(runtime): repair U1 D141 REG upgrade inspector",
+  "changed_paths": [
+    {
+      "path": "runtime_protocol/upgrade.py",
+      "status": "M",
+      "diff": "3 insertions, 1 deletion",
+      "base_sha256": "c3f44783b1145877ceec913a4bddeb925e711275296550570fa58a1bc8648cdb",
+      "actual_sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50"
+    }
+  ],
+  "exact_unchanged_hashes": {
+    "tests/test_runtime_upgrade.py": "7d1857338a95da5c57f54aa23980c3b8db11a0591a5c7d452f591acac82214a9",
+    "tests/test_timeline_commit_integration.py": "867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534",
+    "tests/test_timeline_commit_crash.py": "9a7d201f6d3e2d66898ab6f901a5567c9808bf23520be5b50d06a148813f1e63",
+    "contract_and_clients": "git diff --quiet base..actual over contract runtime_protocol/contract_metadata.py packages conformance tests: PASS",
+    "outside_tree_blob_manifest_sha256": "3c7de491966335f11caddd1d1a4e74082a110ad357c0315315a3991e8607848e"
+  },
+  "notes": [
+    "The test_runtime_upgrade hash is identical at base and actual; the two P5 source hashes match the retained prep/custody source hashes.",
+    "No generated/client/contract/test assertion/input/fixture/skip changes are present."
+  ]
+}

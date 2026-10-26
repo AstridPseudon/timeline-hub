@@ -1,0 +1,54 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-independent-review.v1",
+  "task": "rt-F-D141-REG-upgrade-review-0458",
+  "status": "FAIL",
+  "verdict_basis": "The actual checked-out source passes the independent REG review, but the immutable author hash named by the brief is absent. Exact certification of the requested target is therefore not possible.",
+  "requested_author_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc6",
+  "requested_author_object": "ABSENT: git cat-file -e requested hash^{commit} fails",
+  "reviewed_actual_commit": "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+  "reviewed_actual_tree": "f71c60df29ab29cbea678794e882db8c0d053214",
+  "base_runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "base_runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "source_verdict_for_actual_head": "PASS",
+  "scope": {
+    "allowed_source_delta": ["runtime_protocol/upgrade.py"],
+    "actual_changed_paths": ["runtime_protocol/upgrade.py"],
+    "source_edits_by_reviewer": false,
+    "tests_or_fixtures_changed": false,
+    "contract_or_client_paths_changed": false,
+    "p5_sources_changed": false,
+    "full_suite_run": false,
+    "service_or_live_body_run": false
+  },
+  "source_review": {
+    "diff": "PASS: 3 insertions, 1 deletion; import threading; staged inspector db_path=root / realm.sqlite3; staged inspector _mutex=threading.RLock()",
+    "constructor_match": "PASS: matches RealmStore production initialization and existing inspect_realm staged-inspector pattern",
+    "fail_closed": "PASS: quick_check, foreign_key_check, canonical _integrity_report failure paths remain unchanged",
+    "schema_version": "PASS: SCHEMA_VERSION remains 32",
+    "journal_rollback": "PASS: WAL checkpoint, publication, restore_required and rollback bodies unchanged",
+    "production_caller": "PASS: astrid_runtime/operator_upgrade.py:275 calls upgrade_realm for v23 realms",
+    "c0_wire_behavior": "PASS: contract, generated/client, metadata, conformance and test paths are byte-identical to Runtime6a011d58",
+    "p5_applicability": "BOUNDARY: retained P5 tests call migrate_canonical_to_current, whose body does not call _validate_candidate; the fix applies to the operator v23 upgrade_realm route, not the retained P5 commit/crash route",
+    "p5_new_head_proof": false,
+    "old_receipt_retargeted": false
+  },
+  "reg": {
+    "prior_reg": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/reg.json",
+    "author_fix": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-fix-next/evidence/fix.json",
+    "selector_sets": "PASS: exact 13 upgrade selectors match between prior independent reg.json and author fix.json",
+    "result": "PASS: 13 passed in 7.77s, 0 failed, 0 errors, 0 skipped, 0 xfail"
+  },
+  "identity_finding": {
+    "id": "D141-REG-IDENTITY-001",
+    "severity": "blocking",
+    "status": "reproduced",
+    "summary": "Brief names an absent commit ending c6 while the checked-out immutable author commit ends c7",
+    "evidence": "git rev-parse HEAD=012889c1b0bbfe5f290f757cb6d31dd7d995ccc7; git cat-file -e 012889c1b0bbfe5f290f757cb6d31dd7d995ccc6^{commit} fails",
+    "impact": "The review can certify only the actual c7 commit, not the exact hash requested in the brief",
+    "required_action": "Correct or confirm the intended immutable author hash before treating this gate as exact-target PASS"
+  },
+  "excluded": [
+    "No source, test, assertion, input, fixture, skip, generated file, contract, pin, package, environment, service, registry, network, Store, hub, Git write, D130 or stopped-work action",
+    "No files deleted"
+  ]
+}

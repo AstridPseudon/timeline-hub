@@ -1,0 +1,83 @@
+{
+  "schema": "timeline.f.d141.p5-custody-publication-manifest.v1",
+  "read_only": true,
+  "immutable": true,
+  "scope": "metadata correction and safe controller-blob recovery only",
+  "artifacts": [
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/correction.json",
+      "SHA256": "dd7351d6ef57709d006f9ec78b1a1cc86c997dc097bb463b1e3fcb1360d2aebf",
+      "size": 18004,
+      "role": "new immutable derivative"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/p5-custody-corrected.json",
+      "SHA256": "ee13778f68e1582c97296be0f5e7363143c120b512d7d686ee9bce0c43cd19eb",
+      "size": 13054,
+      "role": "new immutable derivative"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/validation.md",
+      "SHA256": "8dd6b92048e3eaa602543f5f71d5ace02edd18437c28735dd8c2b1df5ae1d9d2",
+      "size": 4676,
+      "role": "new immutable derivative"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/handoff.md",
+      "SHA256": "1d946efa8ac3c9d194b7cc1e47dc2f75803f749687d4f913fc5c1a6b5803b0da",
+      "size": 2459,
+      "role": "new immutable derivative"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/recovered/p5-result.json",
+      "donorGitblob": "2ece450dda33be64fce6c1356bfd3cf5d1417972:evidence/p5-result.json",
+      "git_blob_sha1": "6fe5ec40a338a660cd945ed03d415b85b2140580",
+      "SHA256": "454b9f4f8f01296887c4b171532e0cd7548266e48211f2fced28738af58bbaec",
+      "size": 1156,
+      "role": "recovered safe authored controller blob"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/recovered/targeted15-result.json",
+      "donorGitblob": "2ece450dda33be64fce6c1356bfd3cf5d1417972:evidence/targeted15-result.json",
+      "git_blob_sha1": "6c18b7e170c5f39f81c8de274ca318143b28555a",
+      "SHA256": "63acf2bf34a7922f7adae06a4ec5190290879c8c2f7b6021a553e1498028f7e7",
+      "size": 3556,
+      "role": "recovered safe authored controller blob"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/recovered/source-manifest.json",
+      "donorGitblob": "2ece450dda33be64fce6c1356bfd3cf5d1417972:evidence/source-manifest.json",
+      "git_blob_sha1": "1bc2f2d419c0716d90832ead47b9f7a660fcf85c",
+      "SHA256": "199bc739207972ed0d6d1014198c4fea724f8306938548ec4ce27b21c66f93c5",
+      "size": 2122,
+      "role": "recovered safe authored controller blob"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/recovered/validation.md",
+      "donorGitblob": "2ece450dda33be64fce6c1356bfd3cf5d1417972:evidence/validation.md",
+      "git_blob_sha1": "8add295685a39d51887daa367b2f2d92489759a7",
+      "SHA256": "45b8371607e0fc025526f2cda963370c931ed2abf6787e7d2e0a9aeb64eb3b5e",
+      "size": 1649,
+      "role": "recovered safe authored controller blob"
+    },
+    {
+      "actualtarget": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/recovered/handoff.md",
+      "donorGitblob": "2ece450dda33be64fce6c1356bfd3cf5d1417972:evidence/handoff.md",
+      "git_blob_sha1": "670dca70b918f62d2fec6b92a0f04a37e3dbca22",
+      "SHA256": "cc694acf73649a65ec2c48f672a88723743a029ca70782afb63cfe2fc05c430e",
+      "size": 1279,
+      "role": "recovered safe authored controller blob"
+    }
+  ],
+  "recoveredGitblob_byteidentity": true,
+  "raw_xml_logs_service_payloads_exported": false,
+  "source_changes": false,
+  "original_files_overwritten": false,
+  "actual_targets": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/correction.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/p5-custody-corrected.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/publication-manifest.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/validation.md",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/handoff.md"
+  ]
+}

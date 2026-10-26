@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.f.d141.reg-typescript-fix.v1",
+  "task": "rt-F-D141-REG-typescript-fix-next",
+  "base_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "status": "fixed",
+  "proved_regressions": [
+    "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+    "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation"
+  ],
+  "retained_regression_frame": "stale or mutated generated artifact: conformance/typescript/contract-metadata.ts",
+  "repair": "Normal generation from current contract/openapi/workspace-v1.yaml, contract/manifest.json, and contract/component-manifest.json; only the two permitted checked-in TypeScript conformance outputs were transferred from the private output root.",
+  "changed_paths": [
+    "conformance/typescript/contract-metadata.ts",
+    "conformance/typescript/generated.ts"
+  ],
+  "output_hashes": {
+    "conformance/typescript/contract-metadata.ts": "954f20745963fe246d27aa6eca810d26541ec77e326b2d44b110468e1f2bc1ce",
+    "conformance/typescript/generated.ts": "285dbb51ea89c7b1a6cac6d68e9a4566231ec1b8ceaf9c6c551c4ba3d6ea16f8"
+  },
+  "generated_manifest_sha256": "c7199949394b2594567c484f7500dc53e6e1b0b79eacb3a1240c50660dbb53d6",
+  "contract_schema_inputs_all_unchanged": true,
+  "canonical15_inputs_all_unchanged": true,
+  "outside_allowed_paths_unchanged": true,
+  "contract_unchanged": true,
+  "tests_assertions_inputs_fixtures_unchanged": true,
+  "production_generator_used": true,
+  "python_p5_applicability": "The source applicability is documented only; no new-head Python P5 proof is claimed."
+}

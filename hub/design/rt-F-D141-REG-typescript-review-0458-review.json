@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.f.d141.typescript-independent-review.v1",
+  "verdict": "PASS",
+  "read_only_source_review": true,
+  "commit": "4a66dee1ab34f260ea64bd58aa30cf7ac66c3ae3",
+  "tree": "caed21305ca483591ed60d5d2bebd8b30b525d5b",
+  "parent_base": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "parent_base_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "changed_paths": [
+    "conformance/typescript/contract-metadata.ts",
+    "conformance/typescript/generated.ts"
+  ],
+  "findings": [],
+  "reg_scope": {
+    "prior_evidence": "rt-F-D141-REG-join-P5-review-0445-reg.json",
+    "proved_cases": 2,
+    "canonical15_preserved": true,
+    "new_head_proof_claim": false
+  },
+  "generator": {
+    "normal_generation_byte_equivalence": true,
+    "checked_in_generated_sha256": {
+      "conformance/typescript/generated.ts": "285dbb51ea89c7b1a6cac6d68e9a4566231ec1b8ceaf9c6c551c4ba3d6ea16f8",
+      "conformance/typescript/contract-metadata.ts": "954f20745963fe246d27aa6eca810d26541ec77e326b2d44b110468e1f2bc1ce"
+    },
+    "normal_output_manifest_sha256": "c7199949394b2594567c484f7500dc53e6e1b0b79eacb3a1240c50660dbb53d6",
+    "contract_sha256": "302523509996d42fb1d978912f4e6ea022d8ba596896c6cc307161d2cdc5c075",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "tests": {
+    "targeted_generator": "2 passed",
+    "generator_check": "pass",
+    "node_check_generator": "pass",
+    "typescript_check": "pass"
+  },
+  "source_edits": false,
+  "test_edits": false,
+  "worktree_clean_after_review": true
+}

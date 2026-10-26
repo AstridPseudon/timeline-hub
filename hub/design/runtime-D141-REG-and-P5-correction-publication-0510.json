@@ -1,0 +1,164 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-fix-next/evidence/fix.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-fix-next-fix.json",
+    "sha256": "8533ca756811b23b3c53339cce7b00e3c168ff2072356644bbf025c35fc7a238",
+    "size": 1640
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-fix-next/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-fix-next-source-manifest.json",
+    "sha256": "8867f69f207199b204c0b8c597026da6952483b07a98306e922feabb947b6718",
+    "size": 23030
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-fix-next/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-fix-next-validation.md",
+    "sha256": "a16c715d952c320c2281148815401f46b923f8dc03fb7a56c7e7ba4486ad986a",
+    "size": 2412
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-fix-next/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-fix-next-handoff.md",
+    "sha256": "74af4ad87f0daa0d3e3a139b16eb3d35a2cb65adf59eb6db4378239bc5fb261d",
+    "size": 871
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-review-0458-review.json",
+    "sha256": "d946179555e4a6cfd9e76d7379e51ea9a45962c6b9553e0bcd61c755b02c9fc2",
+    "size": 1558
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-review-0458-findings.md",
+    "sha256": "ed713cc71d94cbeb2080424e79a1dc267176f5f70e34cf877e5d1e6dfe001e28",
+    "size": 586
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-review-0458-source-manifest.json",
+    "sha256": "03821f9031e83f2ea086c194cf67eec2e1d9c1d43586fc5f760fce5c905a777b",
+    "size": 2051
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-review-0458-validation.md",
+    "sha256": "a52f715f5a6f94d3873d8811e8bfa34a7741de706136c390448964b7a8fb1864",
+    "size": 2722
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-typescript-review-0458/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-typescript-review-0458-handoff.md",
+    "sha256": "9e9e414a1f3a02e48b401459b8f0c53a38d50fb54fe8ad2183347addbe0430d7",
+    "size": 1117
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-fix-next/evidence/fix.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-fix-next-fix.json",
+    "sha256": "f64300eaa26056a71c1b9d8152995871d6911b9ab078f1aae524e881e9605d71",
+    "size": 4375
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-fix-next/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-fix-next-source-manifest.json",
+    "sha256": "d90a3f28f21d6477e4f6b59d298b0f8b59e4dba83f5e9674c62209f1a70e8313",
+    "size": 2678
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-fix-next/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-fix-next-validation.md",
+    "sha256": "752a813998890c26b95e7a192fb8929cc4e2bc43ed2c0868cfacd93a879fbf49",
+    "size": 4466
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-fix-next/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-fix-next-handoff.md",
+    "sha256": "d66dfa3b966e1678ef539cefd19f24ea9f59a9defd47eb96d81e37c0d45a40c4",
+    "size": 1400
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-review-0458-review.json",
+    "sha256": "3ea8ee267f2a5d5862995e549ae8cb1c18d4893b6f9f54ffbaae3ac2def9db1a",
+    "size": 3730
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-review-0458-findings.md",
+    "sha256": "19c20e168aaa091171905c370875d7140a2ab8e2e75e43a1be2b4b3961498c7a",
+    "size": 2114
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-review-0458-source-manifest.json",
+    "sha256": "ba77e669110c22b8e2066d9cde65c04daf64578c1463f062ac714c9646ac36af",
+    "size": 1734
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-review-0458-validation.md",
+    "sha256": "2761119d98e91a2495919f2b0c3e841f2f1401cefbc918fdc254e0a6d5382842",
+    "size": 3814
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-review-0458/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-review-0458-handoff.md",
+    "sha256": "6fe644ab340a56a15e67b028cd96a40e900697ae7202e0c051747b74cf179ae7",
+    "size": 1149
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-identity-correction-0505/evidence/correction.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-identity-correction-0505-correction.json",
+    "sha256": "c4795a64c46bfa88c8ff1f83c5895fca4ba967358989f6dd15e5990419bcad03",
+    "size": 6485
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-identity-correction-0505/evidence/identity.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-identity-correction-0505-identity.json",
+    "sha256": "5df9bc30e34c3d975107270e31f34afd3e369d17fe5a790ffcfcfa5a1dcf247c",
+    "size": 2572
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-identity-correction-0505/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-identity-correction-0505-validation.md",
+    "sha256": "7edeac55fb40e034ec70580c27debe38a7a1281c0194d69bf08e01bf7ab514fe",
+    "size": 2576
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-upgrade-identity-correction-0505/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-upgrade-identity-correction-0505-handoff.md",
+    "sha256": "28431ab67999460ae3847db909dbeb26b3a2343f99ed88ffccf494d7cae3e908",
+    "size": 1066
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/correction.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-custody-metadata-correction-0500-correction.json",
+    "sha256": "dd7351d6ef57709d006f9ec78b1a1cc86c997dc097bb463b1e3fcb1360d2aebf",
+    "size": 18004
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/p5-custody-corrected.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-custody-metadata-correction-0500-p5-custody-corrected.json",
+    "sha256": "ee13778f68e1582c97296be0f5e7363143c120b512d7d686ee9bce0c43cd19eb",
+    "size": 13054
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/publication-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-custody-metadata-correction-0500-publication-manifest.json",
+    "sha256": "32e47a9dc07b27d301c71d8aa20e147b8a37aa368d6c5da560646906bd74be20",
+    "size": 5252
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-custody-metadata-correction-0500-validation.md",
+    "sha256": "8dd6b92048e3eaa602543f5f71d5ace02edd18437c28735dd8c2b1df5ae1d9d2",
+    "size": 4676
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-custody-metadata-correction-0500/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P5-D141-custody-metadata-correction-0500-handoff.md",
+    "sha256": "1d946efa8ac3c9d194b7cc1e47dc2f75803f749687d4f913fc5c1a6b5803b0da",
+    "size": 2459
+  }
+]

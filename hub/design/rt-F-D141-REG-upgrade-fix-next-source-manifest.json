@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.f.d141.reg-upgrade-source-manifest.v1",
+  "base": {
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "runtime_source": "/home/user/work/wt/rt-F-D141-REG-upgrade-fix-next"
+  },
+  "files": {
+    "runtime_protocol/upgrade.py": {
+      "before_sha256": "c3f44783b1145877ceec913a4bddeb925e711275296550570fa58a1bc8648cdb",
+      "after_sha256": "c8787dc29b3fa0097ee7aaa9daa704c1626523498cd2c4574f10e14d7e840d50",
+      "changed": true
+    },
+    "tests/test_runtime_upgrade.py": {
+      "before_sha256": "7d1857338a95da5c57f54aa23980c3b8db11a0591a5c7d452f591acac82214a9",
+      "after_sha256": "7d1857338a95da5c57f54aa23980c3b8db11a0591a5c7d452f591acac82214a9",
+      "changed": false,
+      "assertion_predicate_source_unchanged": true,
+      "upgrade_test_function_hashes": {
+        "test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested": "7e00838c83702837fb17fd8493346675a83870c5b63bfb4790173eb718ef771c",
+        "test_upgrade_refuses_unknown_shape_without_touching_source": "cf768ce971c6a2d7ae7531dd08b768fed8ae8db04ad53c75e834f2c7b2fac364",
+        "test_upgrade_repairs_missing_historical_object_indexes": "e1ac795ff1f6c1a7f7b151d5234c802a8e508ccd4feefa3b4b565cd6e82a9b80",
+        "test_upgrade_is_not_repeatable_and_refuses_live_owner": "9ab455f0b1407c69d7d66f49823d8cf399638c45e94626b0c914f69170400526",
+        "test_upgrade_archives_wal_before_activation": "9f43400dab53dcd9cf574a5078d02b0116abcbd097ec14d2c883b2c6fa890d32",
+        "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback": "58a3ade63a9f094b928371d8ac8378d796853c991bc4b12593fe5b20e46757a0",
+        "test_upgrade_and_compaction_flush_owned_files_through_writable_handles": "b8f854ef273dc3026d49026940c8ae19db9532584a5d491a2f3f358e1934a797",
+        "test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars": "a423c756c74c07f19e7f0e1fc016f5cf3e6baf9c685a0a5e99283c75f60b3ed6"
+      }
+    }
+  },
+  "static_scope_check": {
+    "changed_paths": ["runtime_protocol/upgrade.py"],
+    "validated_assignments": {
+      "inspector.db_path": "root / 'realm.sqlite3'",
+      "inspector._mutex": "threading.RLock()"
+    },
+    "result": "PASS"
+  },
+  "references": {
+    "independent_reg_join": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/reg.json",
+    "contract": "contract/commit-v2.md",
+    "p5_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-route-prep-0010/evidence/source-manifest.json"
+  }
+}
