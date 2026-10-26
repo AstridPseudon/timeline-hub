@@ -1,0 +1,35 @@
+{
+  "schema": "timeline.agent.d141l.freeze2-proof-review-source-manifest.v1",
+  "status": "FAIL_SOURCE_CONTROLS",
+  "reviewer": "agt-F-D141l-proof-review-0508",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-source-0500/evidence",
+  "integrated": {
+    "agent": {"path": "/home/user/work/agent", "sha": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "pristine": {
+    "authoritative_sha": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "runtime_sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "task_text_sha_claimed_by_prompt": "64197afa297f86f1e738238d5e80aff6d33e303e",
+    "history_check": "The genuine source-worker manager brief records 303a; 303a exists and 303e is absent. The source packet's task_text_typo claim is unsupported by that brief."
+  },
+  "app": {
+    "status": "MISSING_GENUINE_QUALIFIED_FREEZE2_RECEIPT",
+    "source_packet_value": "APP_FREEZE2_SHA_RECEIPT_REQUIRED",
+    "source_packet_tree": "APP_FREEZE2_TREE_RECEIPT_REQUIRED",
+    "source_packet_path": "/home/user/work/wt/app-pin-freeze2-qualified-required"
+  },
+  "runtime": {"pristine_sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "pristine_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"},
+  "checks": {
+    "cut_roots": 22,
+    "pristine_roots": 17,
+    "cut_flags": "-n3 -o addopts= -p no:cacheprovider --timeout=45",
+    "pristine_flags": "-n3 -o addopts= -p no:cacheprovider --timeout=45",
+    "positive_stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "poison_difference": "agent_sha only",
+    "d89d_floor_bytes": 4714564096
+  },
+  "finding_ids": ["F-001", "F-002", "F-003", "F-004", "F-005", "F-006", "F-007", "F-008", "F-009"]
+}

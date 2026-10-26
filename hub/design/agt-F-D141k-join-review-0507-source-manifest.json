@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.f.d141k.independent-review.source-manifest.v1",
+  "scope": "Read-only documentary inputs and derived review evidence; raw payloads remain private KEEP.",
+  "entries": [
+    {"role":"plan","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md","bytes":14837,"sha256":"bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"},
+    {"role":"board_header","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md","bytes":219862,"sha256":"5d94321c9126195539d52569212b28046f59ec912d716a49945c9005e0faca81"},
+    {"role":"freeze2","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141l-upstream-freeze-2.md","bytes":3605,"sha256":"115d1c668628759b34e6cad87b18e2f8033369653c7bda6c999dc0032def9d02"},
+    {"role":"inbox_current","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md","bytes":2091005,"sha256":"3ced508a1bd28630fc5e9de523238df4a2cf20bc936fe0ce947c5a2a22a27193"},
+    {"role":"join","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-perid-join-0455/evidence/join.json","bytes":14348708,"sha256":"d27d188459793a80ec31c81f8be029dc1ac6bb514beda36f6c0c480c51a38f30"},
+    {"role":"join_counts","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-perid-join-0455/evidence/counts.json","bytes":2716,"sha256":"3c6b2b32466542ab8ad6cf57e0d3dec5c7cc3ca7add63c0a6749d485486249f0"},
+    {"role":"join_env","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-perid-join-0455/evidence/env-sensitive.json","bytes":20010,"sha256":"e489f8eaff0c7c08da6fe7034a1d8b1651f5d8424a1ea176b2206f738e17251d"},
+    {"role":"join_manifest","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-perid-join-0455/evidence/source-manifest.json","bytes":12492,"sha256":"565b0ebd53cd2ac79d4f9cc3caf7b64fba007768076beda5938916f8f6e4c85b"},
+    {"role":"actual_xml","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml","bytes":15207987,"sha256":"7adf18d3a9cd20c2198d4cd4ccd7e0be59497e6111a73284c4977fe31b92b25d"},
+    {"role":"actual_source_before","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-before.txt","bytes":490,"sha256":"2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2"},
+    {"role":"actual_source_after","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-after.txt","bytes":490,"sha256":"2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2"},
+    {"role":"actual_argv","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/callerargv.txt","bytes":2119,"sha256":"9966fba8d7db039c4f58f92fccd4cff210e921f3b87848ae2fec483a246eb2ea"},
+    {"role":"controller_result","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/result.json","bytes":6448,"sha256":"1e826c9438e38a82ee82f5f67e5c7f998b5c7c664b398aa9ffcc541168087fee"},
+    {"role":"controller_source_manifest","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/source-manifest.json","bytes":133052,"sha256":"7c0b6c3fdf1384d7f5e71b04a587c61fc4898c3f4d48ae1d1b5f3d26cf6094b2"},
+    {"role":"controller_receiving","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/receiving.json","bytes":3985,"sha256":"2deadbda848c23aa069822b61e2a0d105c3b3b69401d02cbdfb4f9e8dcda0f1e"},
+    {"role":"pristine_per_id","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-per-id.json","bytes":15645481,"sha256":"7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5"},
+    {"role":"pristine_preflight","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141-pristine-prep-2350-preflight-inventory.json","bytes":3996,"sha256":"8393206ccdd829ef9396c99fec6c893175fbba704bdc9be44d676cd937bf097f"},
+    {"role":"refused_24049_summary","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/summary","bytes":573,"sha256":"ad9dc64fafd1745beb836fb84c25ee69d4f9bb22c492b0945ea3da69fb725289"},
+    {"role":"refused_24049_log","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/log.txt","bytes":74,"sha256":"f7e5887a53ce26ea36acf9abf32d2c99c73d2dc641114648db9b813645ba29f8"},
+    {"role":"review_trace","path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-join-review-0507/evidence/disk-trace.txt","bytes":579,"sha256":"635cfc4a27ae52d1bc796771e75f855a95978dc455e314499ecd90bdd7694300"}
+  ],
+  "mutable_input_note": {
+    "role": "inbox_current",
+    "join_dispatch_bytes": 2087990,
+    "join_dispatch_sha256": "cf16627f29e9f56b904fb54a33adb2a8a77541946848b5b5d7d82f7dc06f5842",
+    "review_read_bytes": 2091005,
+    "review_read_sha256": "3ced508a1bd28630fc5e9de523238df4a2cf20bc936fe0ce947c5a2a22a27193",
+    "interpretation": "INBOX changed after join source-manifest publication; dispatch-time snapshot is not reconstructible from the mutable path. This is disclosed and does not alter the reproduced join."
+  }
+}

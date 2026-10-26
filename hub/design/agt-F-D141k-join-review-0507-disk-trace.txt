@@ -1,0 +1,7 @@
+trace_start_utc=2026-10-26T05:05:17.130129+00:00 stop_bytes=4000000000 vm_limit_kb=4194304 pid=3
+sample=0 utc=2026-10-26T05:05:17.130288+00:00 free_bytes=4662636544 below_stop=False
+sample=1 utc=2026-10-26T05:05:18.130557+00:00 free_bytes=4662636544 below_stop=False
+sample=2 utc=2026-10-26T05:05:19.130918+00:00 free_bytes=4662636544 below_stop=False
+sample=3 utc=2026-10-26T05:05:20.131142+00:00 free_bytes=4662636544 below_stop=False
+sample=4 utc=2026-10-26T05:05:21.131397+00:00 free_bytes=4662452224 below_stop=False
+trace_end_utc=2026-10-26T05:05:22.131627+00:00 samples=5
