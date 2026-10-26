@@ -1,0 +1,102 @@
+{
+  "schema": "D141l-source-manifest-v1",
+  "decision": "NOT_QUALIFIED_DEFAULT_HEAVY_FLOOR",
+  "source_manifest_at": null,
+  "source_manifest_at_note": "This evidence file does not assert a new external event time.",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "worktree": "/home/user/work/wt/app-F-D141l-unit-measurement-0523",
+    "status": "clean"
+  },
+  "current_shipping_pair": {
+    "app": {
+      "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "tree": "dd989783046aeff652486a1ba39db42aea86e201"
+    },
+    "pristine_app": {
+      "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+      "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36"
+    },
+    "behavior_credit": "none from the historical full receipts"
+  },
+  "installed_route": {
+    "test_run": {
+      "path": "/home/user/timeline-hub/hub/kit/bin/test-run",
+      "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+      "receipt_path_rule": "tests/<actual-job-id>/recorded-measured-floor.json",
+      "heavy_suite_rule": "suite names beginning with full are heavy",
+      "validator_call": "python3 -I <kit>/d141-validate-receipt.py <receipt> <manager-root> <actual-job-id> <repo> <suite> <worktree> <HEAD> <TREE> <BASE_CMD>",
+      "admission_probe": "df -B1 --output=avail /home/user"
+    },
+    "validator": {
+      "path": "/home/user/timeline-hub/hub/kit/bin/d141-validate-receipt.py",
+      "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+      "supported_schemas": [
+        "timeline.d89d.measured-floor.v1",
+        "timeline.d141.measured-floor.v1"
+      ],
+      "ordinary_d89d_requirements": "Exact receipt keys, actual source HEAD/TREE/command binding, exactly start and stop witnesses, manager-owned relative paths, and each witness file exactly two UTF-8 lines: Avail and a strict decimal integer.",
+      "d141_extension": "Adds the fixed five-second retained trace binding and recorded-decision authorization; this task does not use or attach it."
+    }
+  },
+  "retained_inputs": [
+    {
+      "path": "design/app-D141-full-controller-admission-0043.json",
+      "sha256": "79149911f6b4c21fa7a48b64032f6b4c27188d06491273a323c0ba688dbaa5ae",
+      "note": "Controller admission at 2026-10-26T00:42:39.754967Z, 5433016320 bytes, no body; excluded from X."
+    },
+    {
+      "path": "design/app-D141l-unit-measurement-admission-0530.json",
+      "sha256": "adc3337f3964bc990fa22cbf0ac5122cfc9e323dc1b35204de1fc643662e25d1",
+      "note": "Source-only current admission at 2026-10-26T05:28:09.988639Z, 4600090624 bytes; meets 4600000000 source-only floor and is excluded from X."
+    },
+    {
+      "path": "workers/app-F-D141-full-pristine-controller-0043/evidence/normal-result.json",
+      "sha256": "56cb08b8f4386fc971f6beec820e9773e7e777a1aff14016c0dce62fc6c595a0"
+    },
+    {
+      "path": "workers/app-F-D141-full-pristine-controller-0043/evidence/pristine-result.json",
+      "sha256": "1f220d2bf7c052b5a12aeb069325467dc7ace45a9903ba6f8deb80e5d4266655"
+    },
+    {
+      "path": "workers/app-F-D141-full-pristine-controller-0043/evidence/receipt.json",
+      "sha256": "bb8fba6c46f23ce3cea078a24aea7a701ffd32d4e0a631d9cd9f6287b4657b62"
+    },
+    {
+      "path": "managers/app/rounds/20261026T0035Z.log",
+      "sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+      "note": "Closed actual manager tool-result stream; candidate rows are full df -B1 table output."
+    },
+    {
+      "path": "managers/app/rounds/20261026T0110Z.log",
+      "sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2",
+      "note": "Closed actual manager tool-result stream; candidate rows are full df -B1 table output."
+    }
+  ],
+  "run_records": {
+    "normal": {
+      "id": "app-full-1026004326-12174",
+      "request_sha256": "bc94b743446ddcd7c6993c250adb968b0eb2366fa1abde3665d88d5ebab84c42",
+      "snap_sha256": "b6a6d758652411b1efd1bd00e1f5aa1e214900308fec5346cfa302be17a225a7",
+      "status_sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "summary_sha256": "1e46e5871efed11d611cee5da547f4611e3c5f36018e2f62b40a24e95f66ec1e",
+      "exit_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "runner_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pristine": {
+      "id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "request_sha256": "e927455374a659647bbc7cba222088640a6c8d2b6d044948a2e507874bb36036",
+      "snap_sha256": "a0571d732f06fa0859e4358c77046925859d10ddcb6461998992528c46e5270d",
+      "status_sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "summary_sha256": "b022e07e50170bcf4be675a2c4c07b770cdb1fb603f646b66d5b87f5b304b118",
+      "exit_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "runner_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "omitted_derivatives": [
+    "retained-start.df",
+    "retained-stop.df"
+  ],
+  "omission_reason": "Neither retained manager stream contains exact original two-line Avail witness bytes, so no df derivative is fabricated or rewritten."
+}

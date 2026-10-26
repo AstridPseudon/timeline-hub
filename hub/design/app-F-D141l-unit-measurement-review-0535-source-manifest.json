@@ -1,0 +1,83 @@
+{
+  "schema": "D141l-independent-source-manifest-v1",
+  "reviewed_at": "2026-10-26T05:37:37Z",
+  "decision": "FAIL_AUTHOR_RESULT_SOURCE_BOUND_WRONG_SERVICE_RECEIPT_UNAVAILABLE",
+  "base": {
+    "repo": "composition",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "worktree": "/home/user/work/wt/app-F-D141l-unit-measurement-review-0535",
+    "status": "clean",
+    "diff_check": "PASS"
+  },
+  "reviewed_author_evidence": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-unit-measurement-0523/evidence",
+    "files": [
+      {"name": "measurement.json", "sha256": "724deae9e799fcda61d07d1526c41558350061fb9ce8cc9f4f7725a6f364d06f"},
+      {"name": "witnesses.json", "sha256": "b56f7be812159313eded07920b2545e0d2f48bcd5439064f92e0813e1e13e013"},
+      {"name": "source-manifest.json", "sha256": "5d34c94b5f03fcff4a618a2dd85336a3b88662bebb46275a5e08fad0b69981f3"},
+      {"name": "validation.md", "sha256": "86f8dd74b6f8a3aae93a2ce7b753900debb2997d9815ac057b4e45de69dad422"},
+      {"name": "handoff.md", "sha256": "433b1015cf9175968e770ed5dbd61a8616b1f13b368bab2e6645b27b812d0443"}
+    ]
+  },
+  "named_sources": [
+    {"path": "design/app-D141-full-controller-admission-0043.json", "sha256": "79149911f6b4c21fa7a48b64032f6b4c27188d06491273a323c0ba688dbaa5ae", "bytes": 298},
+    {"path": "workers/app-F-D141-full-pristine-controller-0043/evidence/normal-result.json", "sha256": "56cb08b8f4386fc971f6beec820e9773e7e777a1aff14016c0dce62fc6c595a0", "bytes": 9114},
+    {"path": "workers/app-F-D141-full-pristine-controller-0043/evidence/pristine-result.json", "sha256": "1f220d2bf7c052b5a12aeb069325467dc7ace45a9903ba6f8deb80e5d4266655", "bytes": 7669},
+    {"path": "workers/app-F-D141-full-pristine-controller-0043/evidence/receipt.json", "sha256": "bb8fba6c46f23ce3cea078a24aea7a701ffd32d4e0a631d9cd9f6287b4657b62", "bytes": 2008},
+    {"path": "managers/app/rounds/20261026T0035Z.log", "sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "bytes": 1294265},
+    {"path": "managers/app/rounds/20261026T0110Z.log", "sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "bytes": 1592459},
+    {"path": "design/app-D141l-unit-measurement-admission-0530.json", "sha256": "adc3337f3964bc990fa22cbf0ac5122cfc9e323dc1b35204de1fc643662e25d1", "bytes": 229}
+  ],
+  "run_records": {
+    "normal": {
+      "id": "app-full-1026004326-12174",
+      "request_sha256": "bc94b743446ddcd7c6993c250adb968b0eb2366fa1abde3665d88d5ebab84c42",
+      "snap_sha256": "b6a6d758652411b1efd1bd00e1f5aa1e214900308fec5346cfa302be17a225a7",
+      "status_sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "summary_sha256": "1e46e5871efed11d611cee5da547f4611e3c5f36018e2f62b40a24e95f66ec1e",
+      "exit_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "runner_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pristine": {
+      "id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "request_sha256": "e927455374a659647bbc7cba222088640a6c8d2b6d044948a2e507874bb36036",
+      "snap_sha256": "a0571d732f06fa0859e4358c77046925859d10ddcb6461998992528c46e5270d",
+      "status_sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "summary_sha256": "b022e07e50170bcf4be675a2c4c07b770cdb1fb603f646b66d5b87f5b304b118",
+      "exit_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "runner_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "installed_route": {
+    "test_run": {"path": "/home/user/timeline-hub/hub/kit/bin/test-run", "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300"},
+    "validator": {"path": "/home/user/timeline-hub/hub/kit/bin/d141-validate-receipt.py", "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6"},
+    "schemas": ["timeline.d89d.measured-floor.v1", "timeline.d141.measured-floor.v1"],
+    "witness_rule": "two manager-owned files, exact UTF-8 bytes Avail\\n<strict decimal integer>\\n, roles start and stop",
+    "receipt_rule": "test-run invokes validator with actual receipt, manager root, actual job ID, repo, suite, worktree, HEAD, TREE, and BASE_CMD"
+  },
+  "qualification": {
+    "controller_admission_bytes": 5433016320,
+    "controller_admission_at": "2026-10-26T00:42:39.754967+00:00",
+    "normal_minimum_bytes": 4839120896,
+    "normal_minimum_at": "2026-10-26T00:48:37Z",
+    "normal_minimum_offset": 1157219,
+    "normal_x_bytes": 593895424,
+    "pristine_timestamped_minimum_bytes": 4938567680,
+    "pristine_timestamped_minimum_at": "2026-10-26T01:15:43Z",
+    "pristine_timestamped_minimum_offset": 1276493,
+    "global_x_bytes": 593895424,
+    "corrected_floor_bytes": 4793895424,
+    "source_floor_bytes": 4600000000,
+    "stop_bytes": 4000000000,
+    "continuous_peak": false,
+    "unobserved_gaps": true,
+    "source_qualified_under_main": true,
+    "executable_receipt_qualified": false
+  },
+  "omitted_derivatives": [
+    "retained-start.df",
+    "retained-stop.df"
+  ],
+  "omission_reason": "No retained original two-line Avail witness exists; creating one from a table row would be a new derivative and is not presently accepted."
+}

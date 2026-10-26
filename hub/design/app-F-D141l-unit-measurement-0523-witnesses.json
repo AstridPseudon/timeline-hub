@@ -1,0 +1,163 @@
+{
+  "schema": "D141l-finite-read-only-witnesses-v1",
+  "authenticated_witness_count": 0,
+  "qualified_witness_pair": false,
+  "selection_rule": "Retain the largest justified same-kind drop; do not use admission-only values or manager prose as body evidence.",
+  "runs": [
+    {
+      "run_id": "app-full-1026004326-12174",
+      "source_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "source_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "source_kind": "App full suite on cut App source",
+      "request_at": "2026-10-26T00:43:26Z",
+      "vitest_start_at": "2026-10-26T00:43:38Z",
+      "vitest_duration_seconds": 954.93,
+      "service_duration_seconds": 961,
+      "terminal_record_at": "2026-10-26T00:59:35.600673Z",
+      "terminal_status": "fail",
+      "terminal_exit": 1,
+      "same_kind_reason": "The retained run is the genuine App full suite using the unchanged command npm test -- --maxWorkers=3; it is one of the two named full bodies.",
+      "observed_samples": [
+        {
+          "available_bytes": 5055897600,
+          "source_file": "managers/app/rounds/20261026T0035Z.log",
+          "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+          "byte_offset": 1133414,
+          "tool_output_origin": "date -u; tail/status/log/evidence/stat; df -B1 /home/user/work",
+          "observed_at": "2026-10-26T00:44:22Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 5041659904,
+          "source_file": "managers/app/rounds/20261026T0035Z.log",
+          "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+          "byte_offset": 1148914,
+          "tool_output_origin": "date -u; status/tails/worker/stat; df -B1 /home/user/work",
+          "observed_at": "2026-10-26T00:46:29Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 4839120896,
+          "source_file": "managers/app/rounds/20261026T0035Z.log",
+          "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+          "byte_offset": 1157219,
+          "tool_output_origin": "date -u; status/tails/worker/stat; df -B1 /home/user/work",
+          "observed_at": "2026-10-26T00:48:37Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Lowest retained in-body row for this run; exact table row, not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 4986675200,
+          "source_file": "managers/app/rounds/20261026T0035Z.log",
+          "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+          "byte_offset": 1169927,
+          "tool_output_origin": "date -u; df -B1 /home/user/work; status/tails/worker/tails",
+          "observed_at": "2026-10-26T00:49:12Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 5379416064,
+          "source_file": "managers/app/rounds/20261026T0035Z.log",
+          "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+          "byte_offset": 1239740,
+          "tool_output_origin": "post-summary df -B1 /home/user/work table row",
+          "observed_at": null,
+          "timestamp_note": "The retained stream has no adjacent date -u for this output; it is after the Vitest terminal summary and is excluded from body measurement.",
+          "body_phase": false,
+          "authenticated_avail_witness": false,
+          "reason": "Post-body observation; cannot represent historical body consumption."
+        }
+      ],
+      "body_gap_disclosure": "The body begins at the retained Vitest Start at 00:43:38, 44 seconds before the first timestamped sample. The minimum at 00:48:37 is followed by later samples and then terminal completion at 00:59:35.600673Z; all unobserved intervals remain unbounded."
+    },
+    {
+      "run_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "source_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "source_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "source_kind": "App full suite on frozen pristine receiver source",
+      "request_at": "2026-10-26T01:00:29Z",
+      "vitest_start_at": "2026-10-26T01:00:47Z",
+      "vitest_duration_seconds": 929.32,
+      "service_duration_seconds": 935,
+      "terminal_record_at": "2026-10-26T01:16:18.218198Z",
+      "terminal_status": "fail",
+      "terminal_exit": 1,
+      "same_kind_reason": "The retained run is the genuine App full suite using the unchanged command npm test -- --maxWorkers=3; it is the named pristine comparator full body. Its retained source record binds the exact frozen 7ca/tree974de target, with the synthetic snapshot-head caveat disclosed in the retained result.",
+      "observed_samples": [
+        {
+          "available_bytes": 4951003136,
+          "source_file": "managers/app/rounds/20261026T0110Z.log",
+          "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2",
+          "byte_offset": 256541,
+          "tool_output_origin": "round-start df -B1 /home/user/work table row",
+          "observed_at": null,
+          "timestamp_note": "No date -u is retained adjacent to this command; it is an in-body candidate by chronology but has no exact event timestamp.",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes and timestamp is not recoverable."
+        },
+        {
+          "available_bytes": 4949999616,
+          "source_file": "managers/app/rounds/20261026T0110Z.log",
+          "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2",
+          "byte_offset": 707034,
+          "tool_output_origin": "df -B1 /home/user/work; date -u",
+          "observed_at": "2026-10-26T01:11:22Z",
+          "timestamp_note": "The date follows df in the same closed tool result; it brackets the df event but does not provide a finer timestamp.",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 4943699968,
+          "source_file": "managers/app/rounds/20261026T0110Z.log",
+          "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2",
+          "byte_offset": 1202321,
+          "tool_output_origin": "date -u; df -B1 /home/user/work; status/tail",
+          "observed_at": "2026-10-26T01:14:01Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Exact table row retained in a closed manager tool stream; not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 4938567680,
+          "source_file": "managers/app/rounds/20261026T0110Z.log",
+          "byte_offset": 1276493,
+          "tool_output_origin": "date -u; status/tail; df -B1 /home/user/work",
+          "observed_at": "2026-10-26T01:15:43Z",
+          "body_phase": true,
+          "authenticated_avail_witness": false,
+          "reason": "Lowest retained in-body row for this run; exact table row, not the validator's two-line Avail bytes."
+        },
+        {
+          "available_bytes": 5190557696,
+          "source_file": "managers/app/rounds/20261026T0110Z.log",
+          "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2",
+          "byte_offset": 1278389,
+          "tool_output_origin": "post-terminal date/status/tail; df -B1 /home/user/work",
+          "observed_at": "2026-10-26T01:17:00Z",
+          "body_phase": false,
+          "authenticated_avail_witness": false,
+          "reason": "Post-body observation; cannot represent historical body consumption."
+        }
+      ],
+      "body_gap_disclosure": "The body begins at the retained Vitest Start at 01:00:47. The first timestamped in-body sample is 10m35s later; the lowest sample is at 01:15:43 and the retained terminal record is 01:16:18.218198Z. The timestamp-less earlier candidate and all intervals remain unbounded."
+    }
+  ],
+  "excluded_admission": {
+    "available_bytes": 5433016320,
+    "at": "2026-10-26T00:42:39.754967+00:00",
+    "source_file": "design/app-D141-full-controller-admission-0043.json",
+    "source_sha256": "79149911f6b4c21fa7a48b64032f6b4c27188d06491273a323c0ba688dbaa5ae",
+    "body_present": false,
+    "used_for_x": false,
+    "reason": "Controller-dispatch admission only; it predates both body starts and is not body consumption."
+  }
+}

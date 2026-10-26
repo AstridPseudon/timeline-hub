@@ -1,0 +1,14 @@
+{
+  "base": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "allowed_paths": ["runtime.lock.json", "public/install-manifest.json"],
+  "working_tree_changed_paths": ["runtime.lock.json", "public/install-manifest.json"],
+  "outside_allowlist_blob_mismatches": [],
+  "untracked_files": [],
+  "runtime_mapped_file_mismatches": [],
+  "agent_vendor_reverification": {
+    "pinned_source_files": 160,
+    "public_imports": 11,
+    "result": "pass"
+  },
+  "result": "all payload/schema/client/canonical mapped bytes conserved"
+}

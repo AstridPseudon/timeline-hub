@@ -1,0 +1,23 @@
+{
+  "task": "U4p D141s post-REG Runtime receiving",
+  "base_app_commit": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+  "agent_head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+  "agent_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+  "tools": {
+    "node": "v20.19.4",
+    "sync": "node scripts/sync-runtime-client.mjs /home/user/work/wt/rt-pin-95d98f03",
+    "lock_check": "node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/wt/rt-pin-95d98f03",
+    "manifest": "node scripts/installer/update-manifest.mjs --runtime-checkout /home/user/work/wt/rt-pin-95d98f03 --agent-checkout /home/user/work/wt/agt-pin-8585ed9c --plan, --write, --plan"
+  },
+  "result": {
+    "changed_paths": ["runtime.lock.json", "public/install-manifest.json"],
+    "runtime_lock_source_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "install_manifest_runtime_sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "install_manifest_agent_sha_unchanged": true,
+    "install_manifest_schema_digest_unchanged": true,
+    "normal_tool_adoption": true,
+    "manifest_plan_idempotent": true
+  }
+}

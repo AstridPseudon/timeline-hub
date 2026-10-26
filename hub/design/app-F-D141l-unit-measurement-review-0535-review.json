@@ -1,0 +1,108 @@
+{
+  "schema": "D141l-independent-unit-witness-review-v1",
+  "reviewed_at": "2026-10-26T05:37:37Z",
+  "verdict": "FAIL",
+  "reviewed_worker": "app-F-D141l-unit-measurement-0523",
+  "scope": "Read-only review against PLAN §3 U3/A2-A4/F, C0 §§1-5,7, and MAIN05:20 D141l unit-floor decision.",
+  "base": {
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "documentary_host_byte_exact": true
+  },
+  "finding_count": 1,
+  "findings": [
+    {
+      "id": "D141L-F1",
+      "severity": "blocking",
+      "title": "Author incorrectly excludes the retained controller admission from source qualification",
+      "author_claim": "X=null and the selected floor is the 5,200,000,000-byte fallback because the 5,433,016,320-byte admission predates the body.",
+      "corrected_fact": "MAIN05:20 explicitly permits the retained controller admission plus an in-run observation as a bracket. For the normal full body, 5,433,016,320 - 4,839,120,896 = 593,895,424; MAX(4,600,000,000, 4,000,000,000 + 593,895,424 + 200,000,000) = 4,793,895,424 bytes.",
+      "qualification": "SOURCE_QUALIFIED_UNDER_MAIN",
+      "service_format": "NOT_EXECUTABLE_WITH_RETAINED_ORIGINALS",
+      "impact": "The author result NOT_QUALIFIED/default-heavy-floor is wrong as a source qualification. The executable receipt route remains unavailable independently because no retained original witness has the validator's exact two-line Avail format."
+    }
+  ],
+  "admission": {
+    "path": "design/app-D141-full-controller-admission-0043.json",
+    "sha256": "79149911f6b4c21fa7a48b64032f6b4c27188d06491273a323c0ba688dbaa5ae",
+    "available_bytes": 5433016320,
+    "recorded_at": "2026-10-26T00:42:39.754967+00:00",
+    "authority": "managers/app/INBOX.md MAIN GO D141c 00:42Z",
+    "body_present": false,
+    "main_interpretation": "Allowed bracket start for the retained normal full run; pre-body timing is not an automatic exclusion under MAIN05:20."
+  },
+  "runs": {
+    "normal": {
+      "run_id": "app-full-1026004326-12174",
+      "source_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "source_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "request_at": "2026-10-26T00:43:26Z",
+      "body_start_at": "2026-10-26T00:43:38Z",
+      "terminal_record_at": "2026-10-26T00:59:35.600673Z",
+      "status": "fail",
+      "exit": 1,
+      "command": "npm test -- --maxWorkers=3",
+      "observed_rows": [
+        {"available_bytes": 5055897600, "source_file": "managers/app/rounds/20261026T0035Z.log", "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "byte_offset": 1133414, "observed_at": "2026-10-26T00:44:22Z", "body_phase": true},
+        {"available_bytes": 5041659904, "source_file": "managers/app/rounds/20261026T0035Z.log", "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "byte_offset": 1148914, "observed_at": "2026-10-26T00:46:29Z", "body_phase": true},
+        {"available_bytes": 4839120896, "source_file": "managers/app/rounds/20261026T0035Z.log", "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "byte_offset": 1157219, "observed_at": "2026-10-26T00:48:37Z", "body_phase": true, "minimum": true},
+        {"available_bytes": 4986675200, "source_file": "managers/app/rounds/20261026T0035Z.log", "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "byte_offset": 1169927, "observed_at": "2026-10-26T00:49:12Z", "body_phase": true},
+        {"available_bytes": 5379416064, "source_file": "managers/app/rounds/20261026T0035Z.log", "source_sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d", "byte_offset": 1239740, "observed_at": null, "body_phase": false, "post_body": true}
+      ],
+      "arithmetic": {
+        "main_allowed_start_minus_observed_minimum": 593895424,
+        "ordinary_in_body_max_bracket": 216776704,
+        "corrected_floor": 4793895424,
+        "stop": 4000000000,
+        "source_floor": 4600000000,
+        "continuous_peak_claim": false
+      },
+      "gaps": "44 seconds from body start to first timestamped sample, and the intervals after the minimum through terminal completion are unobserved."
+    },
+    "pristine": {
+      "run_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "source_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "source_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "request_at": "2026-10-26T01:00:29Z",
+      "body_start_at": "2026-10-26T01:00:47Z",
+      "terminal_record_at": "2026-10-26T01:16:18.218198Z",
+      "status": "fail",
+      "exit": 1,
+      "command": "npm test -- --maxWorkers=3",
+      "snapshot_caveat": "Retained result records synthetic snapshot HEAD 4bb696aceae83a3843df47ff1ff99c9717a3e0aa with required 7ca61bb as parent and exact required tree; this caveat is disclosed and does not enlarge X.",
+      "observed_rows": [
+        {"available_bytes": 4951003136, "source_file": "managers/app/rounds/20261026T0110Z.log", "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "byte_offset": 256541, "observed_at": null, "body_phase": true, "timestamp_unrecoverable": true},
+        {"available_bytes": 4949999616, "source_file": "managers/app/rounds/20261026T0110Z.log", "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "byte_offset": 707034, "observed_at": "2026-10-26T01:11:22Z", "body_phase": true},
+        {"available_bytes": 4943699968, "source_file": "managers/app/rounds/20261026T0110Z.log", "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "byte_offset": 1202321, "observed_at": "2026-10-26T01:14:01Z", "body_phase": true},
+        {"available_bytes": 4938567680, "source_file": "managers/app/rounds/20261026T0110Z.log", "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "byte_offset": 1276493, "observed_at": "2026-10-26T01:15:43Z", "body_phase": true, "minimum": true},
+        {"available_bytes": 5190557696, "source_file": "managers/app/rounds/20261026T0110Z.log", "source_sha256": "3c26072682086b2018fa4fc9d42a8d376b0a3bb4f8dee8261c249e8ea82daae2", "byte_offset": 1278389, "observed_at": "2026-10-26T01:17:00Z", "body_phase": false, "post_body": true}
+      ],
+      "arithmetic": {
+        "timestamped_in_body_bracket": 11431936,
+        "untimestamped_earlier_row_to_minimum": 12435456,
+        "dispatch_minus_timestamped_minimum_if_applied": 494448640,
+        "contributes_to_global_max": false,
+        "continuous_peak_claim": false
+      },
+      "gaps": "First timestamped sample is 10m35s after body start; the timestamp-less earlier row and all other intervals are not used to enlarge the qualified bound."
+    }
+  },
+  "service_format": {
+    "test_run_path": "/home/user/timeline-hub/hub/kit/bin/test-run",
+    "test_run_sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+    "validator_path": "/home/user/timeline-hub/hub/kit/bin/d141-validate-receipt.py",
+    "validator_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+    "supported_schemas": ["timeline.d89d.measured-floor.v1", "timeline.d141.measured-floor.v1"],
+    "required_witness_format": "Exactly two manager-owned UTF-8 lines: Avail\\n<strict decimal integer>\\n, with start and stop roles.",
+    "retained_original_supported_witness": false,
+    "conversion": "Would create a new derivative two-line witness from a multi-line df -B1 table and is not presently accepted as historical source custody.",
+    "source_qualification_independent_of_receipt": true,
+    "receipt_attached_or_executed": false
+  },
+  "scope_preservation": {
+    "product_or_test_mutation": false,
+    "writer_kit_body_receipt_attachment": false,
+    "c0_request_reply_shape_changed": false,
+    "d130_d141_stop_changed": false
+  }
+}

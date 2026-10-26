@@ -1,0 +1,55 @@
+{
+  "schema": "D141l-finite-read-only-v1",
+  "status": "NOT_QUALIFIED",
+  "qualified": false,
+  "base": {
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "documentary_host_byte_exact": true
+  },
+  "current_shipping_unit": {
+    "app_head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "app_tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "pristine_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "pristine_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36"
+  },
+  "source_only_admission": {
+    "available_bytes": 4600090624,
+    "floor_bytes": 4600000000,
+    "stop_bytes": 4000000000,
+    "body_present": false,
+    "at": "2026-10-26T05:28:09.988639+00:00",
+    "record": "design/app-D141l-unit-measurement-admission-0530.json",
+    "meets_source_only_floor": true,
+    "headroom_above_source_only_floor_bytes": 90624
+  },
+  "same_kind_disk_drop": {
+    "x_bytes": null,
+    "bound_status": "UNAVAILABLE_NO_AUTHENTICATED_AVAIL_WITNESSES",
+    "observed_bracket_max_bytes": 216776704,
+    "observed_bracket_max": {
+      "run_id": "app-full-1026004326-12174",
+      "from_available_bytes": 5055897600,
+      "to_available_bytes": 4839120896,
+      "delta_bytes": 216776704,
+      "from_at": "2026-10-26T00:44:22Z",
+      "to_at": "2026-10-26T00:48:37Z",
+      "body_interval": "2026-10-26T00:43:38Z through the retained terminal record at 2026-10-26T00:59:35.600673Z",
+      "why_not_bound": "The retained source is a manager-stream df -B1 table, not an exact two-line Avail witness accepted by the installed validator; the interval before the first sample and after the minimum is unobserved."
+    },
+    "continuous_bound": false,
+    "disclosure": "The maximum observed bracket is reported but is not promoted to X. The source-only 5433016320-byte admission is also excluded from X because it predates the body and is explicitly not body consumption."
+  },
+  "requested_formula": {
+    "x": "MAX(justified same-kind per-body start-minus-minimum or genuine bracket drop)",
+    "floor": "MAX(4600000000, 4000000000 + X + 200000000)",
+    "fallback_when_x_is_null": 5200000000
+  },
+  "resulting_floor_bytes": 5200000000,
+  "stop_bytes": 4000000000,
+  "heavy_body": {
+    "actual_body_run": false,
+    "service_request": false,
+    "reason": "Documentary-only task; no new df sample, test body, service request, receipt attachment, or kit edit."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-26T05:42:14.280019+00:00",
+  "files": [
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-adoption.json",
+      "sha256": "0e72db854ef4562c065a38836a8971188c681a8e6a1d8600c23af2243fa6bee8"
+    },
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-source-manifest.json",
+      "sha256": "659d6bf0781b199b04637ab2a3a633d60c459a1896594c75f4180ccf718b7862"
+    },
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-outside-conservation.json",
+      "sha256": "a9426618a9458ba9f59b7fc526f3d6e678f4056145516baa2898a366c9821415"
+    },
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-validation.md",
+      "sha256": "b9cefcec0a66ef9866e1106cbbb6c50ba1ece628ebf6ed73ef908e79305bcaa3"
+    },
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-findings.json",
+      "sha256": "5d739925d01fef2e672941e195bfa9ca8c302acc3395ca8502fe8f35f266bcb0"
+    },
+    {
+      "path": "design/app-U4p-D141s-Runtime-postREG-adopt-0535-handoff.md",
+      "sha256": "d586583d2cd8dab43aa124b842bc3c0c3a7826e9f888a6f95fcc302f6efc4cf4"
+    },
+    {
+      "path": "design/app-F-D141l-unit-measurement-review-0535-review.json",
+      "sha256": "d403253cb4f3358e8f1405b443da35476d46f9f3500f6f0c8d6fd070a1eaa375"
+    },
+    {
+      "path": "design/app-F-D141l-unit-measurement-review-0535-findings.md",
+      "sha256": "55689aa59ee9aa52074063e10e93c6b350b3ef0de79ee042782508e1a437c13a"
+    },
+    {
+      "path": "design/app-F-D141l-unit-measurement-review-0535-source-manifest.json",
+      "sha256": "d0541152f0d120e6236ba9f6c896e5271a6f8b17e1674113ec0e7b5c20aca009"
+    },
+    {
+      "path": "design/app-F-D141l-unit-measurement-review-0535-validation.md",
+      "sha256": "98811381f04a3e0a598dc5dce9fe81bf0868561f610bf7ee7352126a2afeee56"
+    },
+    {
+      "path": "design/app-F-D141l-unit-measurement-review-0535-handoff.md",
+      "sha256": "fc7433e9820e265ff71abf21e26b8561438ddd2f5a0d33596cf33a47f53ec7cf"
+    }
+  ]
+}
