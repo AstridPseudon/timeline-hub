@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-26T06:47:38.061439+00:00",
+  "worker": "app-F-D141l-current-receipt-return-0643",
+  "reason": "Author wrote relative evidence in documentary Composition worktree despite assigned absolute paths; harness committed and auto-recycled. Exact committed blobs recovered, originals not rewritten. No Git mutation or new author.",
+  "source_commit": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d",
+  "files": [
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/correction.json",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/correction.json",
+      "sha256": "05a47fb6dcb153dd0e2e6fd07bb79d20a8aedc364bd9668fa0c013374a630bdc",
+      "bytes": 4358
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/current-result-corrected.json",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/current-result-corrected.json",
+      "sha256": "c02fab3adc9e6c864532688ab81d2047dbbd3c7ec41c2f15b44dc248eba409c5",
+      "bytes": 6882
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/node-results-corrected.json",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/node-results-corrected.json",
+      "sha256": "4ddd4f6fcfd3c0feb241cea845caa95feb5defd52b70fe82cddeb0176605ca90",
+      "bytes": 3758
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/trace-measurement-corrected.json",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/trace-measurement-corrected.json",
+      "sha256": "ac2486be7fee5b1900417556a73dd9781bd1de7d4cb2607a5b5f82efbd07b5d6",
+      "bytes": 2789
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/id-map-corrected.json",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/id-map-corrected.json",
+      "sha256": "63dc981d545022234a9449eb903331b8dc82987b4ff0f2216557058089e453a0",
+      "bytes": 19911
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/validation.md",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/validation.md",
+      "sha256": "0a16d6137d4ea9405217f1a684b294d64f6a9a63aa4298b0d5483dbc729bb4e5",
+      "bytes": 5097
+    },
+    {
+      "git_source": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d:evidence/handoff.md",
+      "assigned_destination": "workers/app-F-D141l-current-receipt-return-0643/evidence/handoff.md",
+      "sha256": "212ec370c09be9fd71df9366659b4b5cfaaef200bef111cd4d09448e97612a00",
+      "bytes": 2317
+    }
+  ]
+}
