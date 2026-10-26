@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "command": "df -B1 --output=avail /home/user",
+  "interval_seconds": 5,
+  "threshold_bytes": 4000000000,
+  "session_id": 71702,
+  "actual_pid": "not observable: PTY shell printed blank PID and process namespace exposed no monitor PID",
+  "started": "2026-10-26T09:09:56Z",
+  "last_sample": {"utc": "2026-10-26T09:11:37Z", "available_bytes": 4704071680},
+  "minimum_observed_available_bytes": 4698963968,
+  "stop": {"method": "SIGINT", "utc": "2026-10-26T09:11:37Z", "session_call_exit_code": 1},
+  "wait": "not observable: post-stop wait poll returned Unknown process id 71702",
+  "reap": "not independently observable; no process remained to query",
+  "persistence_gap": "live samples were visible in the retained exec session and copied into disk-trace.txt; no external continuous logger was used",
+  "stop_condition_triggered": false
+}

@@ -1,0 +1,25 @@
+# Required monitor: df -B1 --output=avail /home/user; threshold 4000000000 bytes
+# Session 71702; actual worker PID was not exposed by the PTY wrapper (shell PID print was blank).
+# Samples are retained from the live session output; no continuous-peak claim is made.
+2026-10-26T09:09:56Z available_bytes=4713877504
+2026-10-26T09:10:01Z available_bytes=4713971712
+2026-10-26T09:10:06Z available_bytes=4713967616
+2026-10-26T09:10:11Z available_bytes=4713680896
+2026-10-26T09:10:16Z available_bytes=4698963968
+2026-10-26T09:10:21Z available_bytes=4713414656
+2026-10-26T09:10:26Z available_bytes=4712271872
+2026-10-26T09:10:31Z available_bytes=4712210432
+2026-10-26T09:10:36Z available_bytes=4705521664
+2026-10-26T09:10:41Z available_bytes=4705366016
+2026-10-26T09:10:46Z available_bytes=4705415168
+2026-10-26T09:10:51Z available_bytes=4705357824
+2026-10-26T09:10:56Z available_bytes=4705329152
+2026-10-26T09:11:02Z available_bytes=4705304576
+2026-10-26T09:11:07Z available_bytes=4705263616
+2026-10-26T09:11:12Z available_bytes=4704145408
+2026-10-26T09:11:17Z available_bytes=4704120832
+2026-10-26T09:11:22Z available_bytes=4704096256
+2026-10-26T09:11:27Z available_bytes=4704071680
+2026-10-26T09:11:32Z available_bytes=4704165888
+2026-10-26T09:11:37Z available_bytes=4704071680
+# All observed values exceeded 4000000000; monitor stopped by SIGINT after final sample.

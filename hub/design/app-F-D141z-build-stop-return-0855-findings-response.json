@@ -1,0 +1,28 @@
+{
+  "format": "timeline-d141z-findings-response-v1",
+  "result": "PASS_WITH_F1_RECEIVING_GAP",
+  "F1": {
+    "status": "finite_missing_input",
+    "response": "Preserved original paths, hashes, and guards. Runtime-owned core runner, inventory, and original production D68 wrapper remain unavailable; no fabricated replacement or dynamic hash was added."
+  },
+  "F2": {
+    "status": "corrected",
+    "response": "Parsed the seven-field sampler binding, bound parent and trace identity with O_NOFOLLOW, read monitoring samples from the retained descriptor, and used d141-append-final.py with the exact binding and validator --fd."
+  },
+  "F3": {
+    "status": "corrected",
+    "response": "Removed private flock and local dispatch admission. install-map records normal dispatcher test-run as one-heavy owner and the external 4860000000-byte dispatch floor."
+  },
+  "F4": {
+    "status": "corrected",
+    "response": "check.sh invokes candidate.main through the supplied D68 wrapper over four harmless Git fixtures and a stub builder; source and gate guards remain active."
+  },
+  "F5": {
+    "status": "corrected",
+    "response": "Acceptance covers early leader exit with a live descendant, TERM-ignoring descendant KILL/reap, low disk before/during/after, sampler invalid/stale/missing, timeout, SIGTERM/SIGINT, cancellation, and donor five-second periodic sampling."
+  },
+  "F6": {
+    "status": "corrected",
+    "response": "Deleted only the two tracked CPython bytecode files; final py_compile used private /tmp/w-7b1c3307a2/pyc-final output."
+  }
+}

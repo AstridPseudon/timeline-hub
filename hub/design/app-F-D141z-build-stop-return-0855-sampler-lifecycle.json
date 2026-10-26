@@ -1,0 +1,19 @@
+{
+  "format": "timeline-d141z-return-sampler-lifecycle-v1",
+  "required_start": "first terminal tool",
+  "initial_attempt": {
+    "trace": "/tmp/w-7b1c3307a2/d141z-monitor/disk-trace.tsv",
+    "started_after_initial_plan_read": true,
+    "continuous_periodic_rows_observed": true,
+    "terminal_close": "PTY interrupt ended the shell without a final-row message; process was confirmed absent; no PASS claimed"
+  },
+  "clean_terminal_attempt": {
+    "trace": "/tmp/w-7b1c3307a2/d141z-terminal/disk-trace.tsv",
+    "sample_interval_seconds": 5,
+    "first_periodic_final": true,
+    "term_sent": true,
+    "wait_exit": 0,
+    "reap": "confirmed"
+  },
+  "honesty": "The mandated first-tool continuity was missed and is disclosed; the clean bounded attempt was not substituted for that historical claim."
+}

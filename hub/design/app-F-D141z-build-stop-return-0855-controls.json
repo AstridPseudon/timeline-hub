@@ -1,0 +1,28 @@
+{
+  "format": "timeline-d141z-return-controls-v1",
+  "command": "bash ops-d141z-build-stop/check.sh",
+  "exit_code": 0,
+  "result": "PASS",
+  "cases": [
+    "actual main -> D68 wrapper -> harmless stub builder",
+    "normal dispatcher-owned caller",
+    "early leader exit with live descendant",
+    "TERM-ignoring descendant KILL and reap",
+    "low disk before/during/after",
+    "invalid, stale, frozen, and missing sampler",
+    "timeout",
+    "SIGTERM and SIGINT",
+    "mounted cancel_path caller",
+    "donor five-second periodic sampler",
+    "immutable trace binding and append-final --fd",
+    "KEEP and source/hash/symlink guards"
+  ],
+  "prohibited_actions": {
+    "real_delivery_build": false,
+    "dry_run_or_rehearsal": false,
+    "zip": false,
+    "canonical_install": false,
+    "service_or_queue_write": false,
+    "full_suite_or_test_run": false
+  }
+}

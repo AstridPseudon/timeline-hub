@@ -1,0 +1,9 @@
+# Clean terminal sampler trace (explicit TERM, wait, reap)
+# command: bounded 4GB virtual-memory shell, donor d141-disk-trace.py, 12s, TERM, wait
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T09:12:09.212Z	256354719001003	4704120832	d141z-terminal	2	first
+2026-10-26T09:12:14.211Z	256359718299822	4704133120	d141z-terminal	2	periodic
+2026-10-26T09:12:19.213Z	256364720217869	4704133120	d141z-terminal	2	periodic
+2026-10-26T09:12:21.220Z	256366726949878	4704133120	d141z-terminal	2	final
+# sampler-exit:0; explicit wait/reap PASS
+

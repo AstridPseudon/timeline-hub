@@ -1,0 +1,62 @@
+{
+  "utc": "2026-10-26T09:13:43.907919+00:00",
+  "verdict": "PASS protected documentary source review",
+  "safe_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-report.md",
+      "sha256": "8c551f6335f24f1807feee68f3b727e7b771e9858a14116e09f2ad54f126e19a",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-review.json",
+      "sha256": "78436d3d3f2b46af1b9635d58a1c64daa9e48b981d49c117cb0a9599d6adaba9",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-findings.md",
+      "sha256": "6a7444ea8640375cb0a43d83f3b0b06523de3f94b10771763feec179fdd3c97c",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-source-manifest.json",
+      "sha256": "2ae85075af44ee80e6e9a02a3e3e412e004a7deafbb12d0e698258b0e39bd33d",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-controls.json",
+      "sha256": "bb070e9b28d97b2e2dfd19fafd3ce43ade3df27a6471a3b6ff1517eea29ff990",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-validation.md",
+      "sha256": "65095b43546b465646d610e913dc021176c219eb75a571af310a76f7a8e9c74e",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-handoff.md",
+      "sha256": "96221301185c319f7a0d882417d87d143f0ebe868c4168db95c183036dfbf5f0",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-disk-trace.txt",
+      "sha256": "90a387a16472405a0cf2768fa89f14d23b4c562f39f6bfa391821e2d8afeb3bd",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-review-0909/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-review-0909-sampler-lifecycle.json",
+      "sha256": "7ec2dc381af2398498f9b0e2f26404667df9e31fb9346cd348c728aeea01889d",
+      "mode": "0o644"
+    }
+  ],
+  "canonical_install": false,
+  "actual_build": false
+}

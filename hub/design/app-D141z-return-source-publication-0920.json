@@ -1,0 +1,64 @@
+{
+  "utc": "2026-10-26T09:17:03.161979+00:00",
+  "source_commit": "8e42d6f663d506be02f5f63b9e56596884648b50",
+  "tree": "cfaf00a50be253d8a99f2a77bde7b0bcd5df837c",
+  "files": [
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/sampler-lifecycle.json",
+      "published": "design/app-F-D141z-build-stop-return-0855-sampler-lifecycle.json",
+      "sha256": "76409af52cf470567d30b914897721d237f689954d45ce60c906e73e01ed8efd",
+      "bytes": 803
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/controls.json",
+      "published": "design/app-F-D141z-build-stop-return-0855-controls.json",
+      "sha256": "58ba14e34662b03614b6f358048295e93183eff7ef7fcdb1a4760f2a1d5e039b",
+      "bytes": 870
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/source-manifest.json",
+      "published": "design/app-F-D141z-build-stop-return-0855-source-manifest.json",
+      "sha256": "89a757743b2bf4becbab9a3458365ea5ff8e79ea2c7a5f232e03b43ed251664b",
+      "bytes": 828
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/disk-trace.txt",
+      "published": "design/app-F-D141z-build-stop-return-0855-disk-trace.txt",
+      "sha256": "6bef91b1f932a38c76c9a6f45fc8d012a6c54664db0c4e029c06cf5ed92f054d",
+      "bytes": 559
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/validation.md",
+      "published": "design/app-F-D141z-build-stop-return-0855-validation.md",
+      "sha256": "c0fa5155ad33d10705dcf294fd477e60bad342e7e365b70056baa97d1decb1b0",
+      "bytes": 597
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/handoff.md",
+      "published": "design/app-F-D141z-build-stop-return-0855-handoff.md",
+      "sha256": "e1b88a884a988eb234f1d87ea3595fda7c642cc36ffa09f0fd41013f8b01ca72",
+      "bytes": 760
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/findings-response.json",
+      "published": "design/app-F-D141z-build-stop-return-0855-findings-response.json",
+      "sha256": "1a4d747af8e5ff23dfaced4eb04130d8f6b80fdd82cc1277d0e712a66196231a",
+      "bytes": 1554
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/evidence/install-map.json",
+      "published": "design/app-F-D141z-build-stop-return-0855-install-map.json",
+      "sha256": "305d1e7bab5e9c8e332f87116baa9b1f0b7e191597cda5b215e29e4b4f34fa79",
+      "bytes": 758
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-return-0855/report.md",
+      "published": "design/app-F-D141z-build-stop-return-0855-report.md",
+      "sha256": "8f3edc04798f3bb5024b944514afeb59f1518654ed0e1334cc8757426bcdaedb",
+      "bytes": 1140
+    }
+  ],
+  "source_only": true,
+  "canonical_install": false,
+  "author_trace_continuous": false
+}

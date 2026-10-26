@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "task": "app-F-D141-final-unit-notes-review-0909",
+  "verdict": "PASS",
+  "scope": "one independent protected documentary review; source-only",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "source_transfer": {
+    "owner": "Runtime",
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-publication-0849.json",
+    "readme_bytes": 35560,
+    "readme_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+    "gate_bytes": 25966,
+    "gate_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+    "delivery_build_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  },
+  "candidate_checks": {
+    "readme_suffix_only": true,
+    "gate_suffix_only": true,
+    "paragraph_once_per_document": true,
+    "balanced_fences": true,
+    "complete_failure_ids": 32,
+    "id_join_exact_match": true,
+    "classification": "OWN/N/A",
+    "obsolete_own_unknown_final_classification": false,
+    "current_source": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "current_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "catchup_applicability_source": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "catchup_retargeted": false,
+    "c0_wire_change": false
+  },
+  "render_checks": {
+    "caller": "delivery-build.render_readme",
+    "function_only": true,
+    "controlled_inputs": ["agent", "runtime", "app", "composition"],
+    "placeholders_resolved": true,
+    "disclosure_occurrences": 2,
+    "id_table_occurrences": 1,
+    "fallback_placeholder_behavior": true,
+    "rendered_sha256": "05f5f4f45ba18b669c012c37ad31cc1ef23f03955f7552660a8844bbe777c2ab",
+    "fallback_sha256": "a4e27446014279be77cd54b6db7abc7b290608417f8cce52110b5f7bfff51681"
+  },
+  "underlying_status": {
+    "current_full": "FAIL: 19745 passed, 32 failed, separate collection error; Node NOTRUN",
+    "current_node": "FAIL: 296 passed, 2 failed, 26 actual skipped; ssh-keygen ENOENT NONREG for exact same-kind pair",
+    "pristine_full": "FAIL: 17866 passed, 18 failed; Node NOTRUN",
+    "pristine_node": "FAIL: 289 passed, 2 failed, 26 actual skipped",
+    "catchup": "255 targeted tests and both TypeScript checks passed; exactly 3 inherited lint findings; no lint PASS"
+  },
+  "claims_not_made": ["installation", "global REG0", "gate PASS", "ZIP", "product PASS", "popup-not-reproduced", "continuous disk coverage"]
+}

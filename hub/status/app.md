@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T09:10:39Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
-# app board, 2026-10-26T09:10:34.714050+00:00
+<!-- app | 2026-10-26T09:16:31Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 3m -->
+# app board, 2026-10-26T09:13:43.907919+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -20,7 +20,8 @@
 | D141 Agent hosted return | Retain stopped late duplicate WIP | HARD Sol | Earlier Agent08:53:57 actual start | gated:earlier-owner | app-F-D141l-Agent-binding-sol-0905 | Supported stop complete; running marker absent. Agent local Sol next owns source. No review, adoption, service or body. | WIP retained |
 | D141 Agent native path | Deliver complete second failure facts | Luna | Review0820 FAIL | merged | app-F-D141l-Agent-native-path-0828 | Five native findings returned. Direct test-run races daemon; cut FAIL skips pristine. Scope and trace limits explicit. | Evidence only |
 | D141 hosted whole path | Deliver Agent controller ordering facts | Luna | Runtime0752 transfer | merged | app-F-D141l-runtime-wholepath-0752 | Source investigation returned all six findings; local registry and late trace limits explicit. Agent0735 retains repair. | Evidence only |
-| D141 final unit notes | Review private final App unit disclosure | Luna protected review | Author0849 terminal | review | app-F-D141-final-unit-notes-review-0909 | Exact two preimages plus bounded suffixes;32 IDs bundled. Render function only authorPASS; independent review owed. No install. | Evidence only |
+| D141 final unit notes | Deliver protected private App disclosure | Luna and protected Luna | Independent0909 documentary PASS | merged | Author0849; independent0909 | Exact full preimages conserved;32 OWN or absent IDs bundled. Render function only PASS. Actual tests FAIL and scopes retained. | Private candidates |
+| D141 final note install | Install reviewed App unit disclosure | Runtime existing notes installer | Protected0909 PASS and Main source floor | blocked:runtime | Peer0914; existing0625 and0820 route | Two exact private candidates qualified. Main actual preimage CAS and568 outside conservation owed; no App canonical write. | Pending install |
 | D141 notes | Retain reviewed installed notes | Runtime Luna and Luna | 0203;0243 and Runtime reviews | merged | 0215;0225;0254;0258 | Exact upstream mock and placement lines installed;568 outside files and gap paragraphs exact; render PASS. | Evidence only |
 | U4p postREG | Adopt actual Runtime95d producer | Luna | Qualified Runtime0515 handoff | merged | Author0535; independent0540 PASS | HOME4de54 tree equals reviewedfdea. Only Runtime source lock and installer SHA changed;6 tests/all14mappings/verifier PASS. | 4de54db14bdc |
 | D141 final binding | Retain historical postREG builder packet | Luna | Normal U4p reviewed merge | merged | Source0545; publication0556 | Six originals and all8 pairs retained; registration false. Paired kit dropped; no registration or format conversion. | Source4de54 |
@@ -82,11 +83,11 @@ Blockers: Agent — Earlier local Sol next08:53:57 owns native controller repair
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Prepared app-P-D141w-final-journeys-controller ONLY when actual post-prep available>5200000000. All4 checkouts and recipes qualify. App finite REG JOIN closed0736; final pins wait Agent and all-lane REG closure. Journeys bind actual82e9 after normal admission; no second heavy body or paired exception. Final pin pass D141v waits all-lane REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol remains undispatched until independently proved new REG.
-live 2 / cap 3; ready-undispatched 0. D141z return0855 active; Runtime notes protected review0909 queued. Earlier Agent Sol0853 owns repair; late App0905 stopped, WIP kept. Journeys need post-prep5.2GB; no heavy body.
+live 1 / cap 3; ready-undispatched 0. D141z return0855 active; final notes protected0909 PASS delivered for Main canonical CAS. Earlier Agent Sol0853 owns repair; late App0905 stopped. Journeys need post-prep5.2GB; no heavy body.
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through 2859676 bytes; board rewritten 2026-10-26T08:44:14.098289+00:00.
+INBOX consumed through 2863755 bytes; board rewritten 2026-10-26T08:44:14.098289+00:00.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.
 
@@ -120,3 +121,6 @@ Precedence correction 2026-10-26T09:08:12.722699+00:00: New Agent08:54board/08:5
 
 
 H6 2026-10-26T09:10:34.714050+00:00: New Agent0844 home-custody peer authenticates45privateoriginals onAgent only, already reflected in stoppedApphost and existingnativefindings. Notes0849 terminal0;8SAFE sourceoriginals published0909, one protectedLuna review0909 queued at4715036672bytes, exact source conservation/32IDs/renderfunction only. No canonicalinstall. Actual4.715GB retains journeyfloorwait; no readyundispatched body or source, MainF1sourceinputs and finalAgentproofs still separateowners.
+
+
+H6 2026-10-26T09:13:43.907919+00:00: CrossingAgent0848offer is supersededbyearlierlocal0853actualowner, stopApp0905alreadyconfirmed, no duplicate. Runtime0859notesexclusiveacceptance alreadyfulfilled byauthor0849; protected0909nowPASS, all9SAFE published0914 withactualfailedtestscope andmonitorlimits. New canonicalinstallrowblockedRuntime normalfloor/actualCAS, no missingAppinputoradditionalreviewwait. D141zreturn0855boundedscriptclaimsPASS, actualterminalsource/reviewstillowed; no build or sourceadoption.

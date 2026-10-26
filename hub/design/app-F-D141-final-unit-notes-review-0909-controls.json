@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "scope": "documentary review only",
+  "production_caller": "delivery-build.render_readme",
+  "function_only": true,
+  "candidate_documents": {
+    "README.template.md": {"source_bytes": 35560, "candidate_bytes": 38282, "candidate_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02"},
+    "gate-results.md": {"source_bytes": 25966, "candidate_bytes": 35582, "candidate_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"}
+  },
+  "checks": {
+    "source_preimages_conserved": true,
+    "suffix_only": true,
+    "paragraph_once_each": true,
+    "balanced_fences": true,
+    "all_32_ids_bundled_once": true,
+    "classification": "OWN/N/A",
+    "rendered_placeholders_absent": true,
+    "rendered_disclosure_occurrences": 2,
+    "rendered_id_table_occurrences": 1,
+    "fallback_placeholder_behavior": true,
+    "controlled_repo_inputs": ["agent", "runtime", "app", "composition"],
+    "rendered_sha256": "05f5f4f45ba18b669c012c37ad31cc1ef23f03955f7552660a8844bbe777c2ab",
+    "fallback_sha256": "a4e27446014279be77cd54b6db7abc7b290608417f8cce52110b5f7bfff51681"
+  },
+  "no_install": true,
+  "no_delivery_build_invocation": true,
+  "no_build_or_zip": true,
+  "no_product_tests": true,
+  "no_canonical_cas": true
+}

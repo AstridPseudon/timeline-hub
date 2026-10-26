@@ -1,0 +1,23 @@
+{
+  "format": "timeline-d141z-return-install-map-v1",
+  "source": "ops-d141z-build-stop",
+  "canonical_install": false,
+  "service_or_queue_write": false,
+  "real_delivery_build_invoked": false,
+  "admission_owner": "normal dispatcher test-run",
+  "one_heavy": true,
+  "external_dispatch_floor_bytes": 4860000000,
+  "private_heavy_lock": false,
+  "second_dispatch_gate": false,
+  "F1_receiving_inputs": {
+    "run-final-services.py": "absent; Runtime owner",
+    "core-inventory.json": "absent; Runtime owner",
+    "delivery_gate_build.py": "absent at original production path; SAFE0812 donor is read-only acceptance input"
+  },
+  "donors_read_only": [
+    "d141-disk-trace.py",
+    "d141-append-final.py",
+    "d141-validate-trace.py",
+    "test-run"
+  ]
+}
