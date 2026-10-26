@@ -18,7 +18,7 @@ const test = base.extend({
     const downloads = process.env.PLAYWRIGHT_DOWNLOADS_PATH;
     if (downloads) mkdirSync(downloads, { recursive: true, mode: 0o700 });
     const context = await chromium.launchPersistentContext(userDataDir, {
-      channel: 'chrome', args: harness.chromiumArgs,
+      channel: 'chrome', args: harness.chromiumArgs, permissions: ['local-network-access'], acceptDownloads: true,
       ...(downloads ? { downloadsPath: downloads } : {}),
     });
     const page = context.pages()[0] ?? await context.newPage();
