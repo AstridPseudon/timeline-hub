@@ -1,0 +1,7 @@
+{"at":"2026-10-26T14:41:45Z","by":"main lead (read-back, no git write needed)",
+ "clones":{
+  "agent":{"path":"/home/user/work/agent","branch":"tl/integration","head":"ec0a9f5baef2c31bc5179087b83f044524575182","clean":true,"upstream_origin_main":"64197afa297f"},
+  "app":{"path":"/home/user/work/app","branch":"tl/integration","head":"abac6c809da25f4c6cc7cce61a7d5ea2ac067067","tree":"e2632a4fbe63cadbd03b03edc5d34196a37304fd","clean":true,"zip_base_owner_D141jj":"fc24f84994dc","upstream_origin_main_now":"00a014e2a393 (NOT the ZIP base)"},
+  "runtime":{"path":"/home/user/work/runtime","branch":"tl/integration","head":"95d98f038320","clean":true,"upstream_origin_main":"fa9cd5464a8b"},
+  "composition":{"path":"/home/user/work/composition","branch":"tl/integration","head":"635f4de06fda","clean":true,"upstream_origin_main":"67b8aa3d0d68"}},
+ "note":"Main's App clone was already at abac6c80 when read back (advanced by the normal sync). origin/main was re-fetched with an explicit refspec for all four repos."}
