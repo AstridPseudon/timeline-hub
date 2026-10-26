@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T17:25:21Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 5m -->
-# runtime board, 2026-10-26T17:20:27.447560+00:00
+<!-- main | 2026-10-26T17:30:43Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 3m -->
+# runtime board, 2026-10-26T17:27:41.906297+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -96,7 +96,7 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: Protected review of complete launcher successor, then scoped activation and readback; actual build remains gated by those results.
-live 2 / cap 6; ready-undispatched 0. One complete launcher author and one finite read-only whole-path investigator queued; no heavy body.
+live 1 / cap 6; ready-undispatched 0. Sole protected launcher review active; exact scoped installation waits actual PASS.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
@@ -138,7 +138,9 @@ Current pass 2026-10-26T17:12:02.856514+00:00: Actual installer terminal exit0. 
 
 Current pass 2026-10-26T17:16:38.771003+00:00: Actual independent installation review terminal exit0 and bounded PASS. Source11, actual tuple hashes and exact predecessor plus three rows independently conserved; four protected Runtime rows and outside bytes exact. Structured evidence bundle absent; actual safe report and raw log control, monitor PTY/wait limits retained. Sole rt-F-final-build-next queued immediately at5150625792 under Main GO, --net --heavy, unchanged4.86GB/wholegroup4GB route. No cleanup or second checker. INBOX 1936116 HEADER 256846 consumed.
 
-| F-final launcher | Correct actual registered import path | Luna | Actual10589 startup failure | doing | rt-F-final-launcher-fix-1719 | Private row successor and scoped CAS only. SAME production python-c launch from Runtime cwd, guarded startup and tiny fullpath controls required. | No canonical write |
-| F-final launcher path | Investigate complete pre-builder path | Luna read only | Actual10589 vs protected source fixture | doing | rt-F-final-launcher-wholepath-1719 | Finite all-findings source map, comparing registered exec and qualified harness. No builder, clone, install or new body. | Evidence only |
+| F-final launcher | Review corrected normal command and scoped CAS | Luna and protected Luna | Author1719 terminal PASS | review | rt-F-final-launcher-review-next | [Author](../../design/runtime-F-final-launcher-author-publication-1728.json). SAME a850c28b actualcommand and privateCAS controls; no canonical install. | Private row successor |
+| F-final launcher path | Retain complete pre-builder audit | Luna read only | Independent1719 terminal | merged | rt-F-final-launcher-wholepath-1719 | [Finite map](../../design/runtime-F-final-launcher-wholepath-publication-1725.json). Import-path and inprocess-vs-row mismatch; no additional argv/sourceguard issue. | Evidence only |
 
 Current pass 2026-10-26T17:20:27.447560+00:00: Actual normal10589 service FAIL exit1 in0s, ModuleNotFoundError delivery_lifecycle under hashchecked python-c exec; builder NOTRUN, no staging or ZIP. Worker report exit0 separately. Published originals1719. Two Luna source workers queued immediately at5147631616: complete minimal production-launch row/CAS author plus independent finite wholepath reader. Protected successor review then scoped install/readback before another build; no source tuple, canonical source11, live registry or notes change by manager; no cleanup. Main16:18 floors retained.
+
+Current pass 2026-10-26T17:27:41.906297+00:00: Completed finite launcher wholepath audit published1725. Author1719 terminal0/PASS same actualcommand/privateCAS script a850c28b; protectedreview-next queued immediately at5136560128. No canonical row/source/tuple/notes edit or builder. Live1, no heavy. bin/workers rt-F-final read; no ready peer row or newdecision. Main floortrip no-cleanup remains.

@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-26T17:27:10.606658+00:00",
+  "scope": "Author terminal exit0 and source controls PASS; no canonical activation/build. Worker sampler-lifecycle describes tiny stub, not whole author monitor.",
+  "same_check_sha256": "a850c28bb5872e9f8adad7ebb35730f5369078630e2cacf4094e5198c0338413",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/result.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-result.json",
+      "sha256": "8ed26b83f43390beacdb2b3d1d3be87a95420cd3ddcacc57f41074e68319e249",
+      "bytes": 520
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-findings.md",
+      "sha256": "679b41327e1dbd066b06c1737fe5f9900dba5f39b48dfada6f9ae73f7d24503b",
+      "bytes": 1715
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-source-manifest.json",
+      "sha256": "1f47111051f7a6a9659e71c38f5c9d4fc8ce6eb8896f49270891b57d4c40eb81",
+      "bytes": 2448
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-validation.md",
+      "sha256": "b96e6ea65008d797ce29b63c634f0b1a147b162a0eb09ee3df76ff5d97c4c2e2",
+      "bytes": 926
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-handoff.md",
+      "sha256": "93957474da72961d97d78b52cef28c2f6c629d8282eefe73e7a1cb369fe6a794",
+      "bytes": 705
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-disk-trace.txt",
+      "sha256": "e1fad253505fff75a0fb8eaf95ea2fb3ebd8848f44dc86c4fb85b02b5dbcbc0c",
+      "bytes": 286
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-sampler-lifecycle.json",
+      "sha256": "061a965583f5a9c5b04e512ab498280ca1cd3e16b33274de781bad3929f76e5a",
+      "bytes": 1009
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-fix-1719/evidence/check-launcher.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-fix-1719-check-launcher.py",
+      "sha256": "a850c28bb5872e9f8adad7ebb35730f5369078630e2cacf4094e5198c0338413",
+      "bytes": 9327
+    }
+  ]
+}

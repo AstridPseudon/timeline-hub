@@ -1,0 +1,12 @@
+{
+  "builder_invoked": false,
+  "candidate_sha256": "c9fd51d178d736c2073d7936f031e3b38a813149f42aa3d85edfb4974d82565c",
+  "gate_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "import_fix": "row exec inserts hashchecked script parent before exec",
+  "lifecycle_controls_repeated": false,
+  "pythonpath_unset": true,
+  "real_staging": false,
+  "registered_row": "delivery-v2-final",
+  "status": "PASS",
+  "tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561"
+}
