@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.agent.d141l.command-review.v2",
+  "verdict": "PASS_COMMAND",
+  "qualification": "source_and_controls_only",
+  "pair_status": "BLOCKED_EXISTING_CONTROLLER_BINDING_MISSING",
+  "pair_executable_qualified": false,
+  "real_pair_started": false,
+  "behavioral_reg0_gate_ship": "not_claimed",
+  "scope": "Independent one-pass review of Sol0638 executable full-pair repair against PLAN section 3 F/U2 and design/commit-v2.md; no product tests, collection, body, service submission, row installation, or product import.",
+  "author_check": {
+    "command": "/home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/check-source.py check",
+    "exit": 0,
+    "stdout": "control_status=PASS pair_status=BLOCKED_EXISTING_CONTROLLER_BINDING_MISSING admission_cases=10 lifecycle_cases=36",
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/control-logs/check-1792998822405145402.json",
+    "log_sha256": "23daf2d2db5d924a2e09e5a4cd4ac96b15ffa94a7418a49cde7f2475d8a942af"
+  },
+  "current_tuple": {
+    "agent": {"path": "/home/user/work/agent", "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "app": {"path": "/home/user/work/app", "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "pristine_tuple": {
+    "agent": {"path": "/home/user/work/wt/agt-pin-64197afa", "sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e", "clean": true},
+    "runtime": {"path": "/home/user/work/wt/rt-pin-fa9cd546", "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "clean": true}
+  },
+  "finding_disposition": {
+    "F-D141L-001": "closed: current clean Agent/Runtime/App/Composition tuple and genuine 0622/0545 owner receipts are hash-bound; the historic App receipt Agent field remains historical data only",
+    "F-D141L-002": "closed: all 17 pristine selectors exist in source; tests/v10/test_timelines_create.py is used, and five absent own-ID roots are source-backed N/A",
+    "F-D141L-003": "reclassified finite controller blocker: the source fail-closes the old 0309/0249 route and refuses to treat its terminal 24049 record as current admission; it does not self-authorize a current pair",
+    "F-D141L-004": "closed: positive.manifest and source-manifest.json are distinct files and separately hashed/custodied",
+    "F-D141L-005": "closed at control level: actual unchanged launcher gives positive exit 17/call 1 and agent-SHA-only poison exit 1/call 0 on the current tuple",
+    "F-D141L-006": "closed: checker executes syntax, source/path, argv, launcher, adversarial admission, lifecycle, XML, custody, mutation, and disk controls",
+    "F-D141L-007": "closed at source/control level: raw/JUnit/KEEP/source custody, final sealing, status ordering, body/monitor/evidence propagation, and owned-group cleanup are exercised by 36 lifecycle cases"
+  },
+  "author_inputs_preserved": ["26496", "27388", "10086", "historical F009 trace gap", "old19479 HELD UNSTARTED"],
+  "no_product_changes": true
+}

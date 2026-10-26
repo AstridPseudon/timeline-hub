@@ -1,0 +1,44 @@
+{
+  "kind": "manager_byte_exact_SAFE_publication",
+  "utc": "2026-10-26T07:17:40.362702+00:00",
+  "worker": "agt-F-D141l-sol-review-0707",
+  "terminal_exit": "0",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-review.json",
+      "sha256": "7cfee3797e014171321f942c7e7c3f7a5c993fc828231387c6b115e55c6f80cf",
+      "bytes": 3701
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-findings.md",
+      "sha256": "22b98f10e86e41aecaaefe7fc3eab58993155fe0998f15ac8c6a257272cd3288",
+      "bytes": 5060
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-source-manifest.json",
+      "sha256": "62268b2529d602472eff3ee3c4c4ce10122fb8f8a266b96bd43cb0abe4887b14",
+      "bytes": 3822
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-validation.md",
+      "sha256": "e865cf597186e239aee7e371eda0772c4835101c31a7f39e67a1a07ab1acbea9",
+      "bytes": 3567
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-handoff.md",
+      "sha256": "597ab6fa12c785655b6aa23924095fc46e3219b2d6e31506ac8d03d6460121e4",
+      "bytes": 1181
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-sol-review-0707/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-sol-review-0707-disk-trace.txt",
+      "sha256": "43bbbdee87d2f90a6d7e00e92495c705dd4ac2d1023b3aa199d7f497be35b0c2",
+      "bytes": 2039
+    }
+  ]
+}

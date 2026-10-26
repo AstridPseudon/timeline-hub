@@ -1,0 +1,35 @@
+# disk trace started 20261026T070735Z
+2026-10-26T07:07:35Z
+/dev/vda         264212084 36204208   4420344      90% /tmp
+/dev/vda         264212084 36204208   4420344      90% /home/user/work
+2026-10-26T07:07:36Z
+/dev/vda         264212084 36204208   4420344      90% /tmp
+/dev/vda         264212084 36204208   4420344      90% /home/user/work
+2026-10-26T07:07:37Z
+/dev/vda         264212084 36204240   4420312      90% /tmp
+/dev/vda         264212084 36204240   4420312      90% /home/user/work
+2026-10-26T07:07:38Z
+/dev/vda         264212084 36204240   4420312      90% /tmp
+/dev/vda         264212084 36204240   4420312      90% /home/user/work
+2026-10-26T07:07:39Z
+/dev/vda         264212084 36204244   4420308      90% /tmp
+/dev/vda         264212084 36204244   4420308      90% /home/user/work
+BEFORE_WORK_OK
+# persistent review monitor started
+2026-10-26T07:14:27Z available_bytes=4513046528 stop_bytes=4000000000
+2026-10-26T07:14:32Z available_bytes=4513046528 stop_bytes=4000000000
+2026-10-26T07:14:37Z available_bytes=4513296384 stop_bytes=4000000000
+2026-10-26T07:14:42Z available_bytes=4513062912 stop_bytes=4000000000
+2026-10-26T07:14:47Z available_bytes=4513017856 stop_bytes=4000000000
+2026-10-26T07:14:52Z available_bytes=4512952320 stop_bytes=4000000000
+2026-10-26T07:14:57Z available_bytes=4512919552 stop_bytes=4000000000
+2026-10-26T07:15:02Z available_bytes=4512882688 stop_bytes=4000000000
+2026-10-26T07:15:07Z available_bytes=4512858112 stop_bytes=4000000000
+2026-10-26T07:15:12Z available_bytes=4512661504 stop_bytes=4000000000
+2026-10-26T07:15:17Z available_bytes=4512645120 stop_bytes=4000000000
+2026-10-26T07:15:22Z available_bytes=4512645120 stop_bytes=4000000000
+2026-10-26T07:15:27Z available_bytes=4512641024 stop_bytes=4000000000
+2026-10-26T07:15:32Z available_bytes=4512641024 stop_bytes=4000000000
+2026-10-26T07:15:37Z available_bytes=4512641024 stop_bytes=4000000000
+2026-10-26T07:15:42Z available_bytes=4512354304 stop_bytes=4000000000
+2026-10-26T07:15:47Z available_bytes=4512305152 stop_bytes=4000000000

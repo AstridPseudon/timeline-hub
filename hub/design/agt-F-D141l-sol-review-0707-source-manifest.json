@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.agent.d141l.sol0638.review-source-manifest.v1",
+  "review": "agt-F-D141l-sol-review-0707",
+  "verdict": "PASS_COMMAND",
+  "pair_status": "BLOCKED_EXISTING_CONTROLLER_BINDING_MISSING",
+  "current": {
+    "agent": {"path": "/home/user/work/agent", "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "app": {"path": "/home/user/work/app", "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "pristine": {
+    "agent": {"path": "/home/user/work/wt/agt-pin-64197afa", "sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e", "clean": true},
+    "runtime": {"path": "/home/user/work/wt/rt-pin-fa9cd546", "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "clean": true}
+  },
+  "owner_receipts": {
+    "agent-U4a-D141-postREG-home-0622.json": "aa6f52232f7f6e7c5baaf5c35606cdc8ed13867b13f0acc09cf8d6493b67e768",
+    "app-D141s-postREG-source-home-0545.json": "da9319ce349ff86004afe6989f9eff17eaee946a1981462d449f05a5fac08efc"
+  },
+  "selectors": {
+    "cut_count": 22,
+    "pristine_count": 17,
+    "cut_v10": "tests/v10/test_timelines_create.py",
+    "pristine_v10": "tests/v10/test_timelines_create.py",
+    "pristine_absent_own_id_roots": [
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_local_schema.py",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/test_installer_bootstrap_schema.py"
+    ],
+    "settings": ["-n3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"]
+  },
+  "runtime_environment": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version": "Python 3.13.16",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "runtime_lock_sha256": "cc1661b12d9d0a4600c79adab4e2d962db455b5819dee78a0353787d8d4f2b82"
+  },
+  "reviewed_artifacts": {
+    "command-cut.sh": "ed21d1b4b389fe6b698e79098b274bdab832524a3a05c1cdea17c789890fad79",
+    "command-pristine.sh": "cb5da12fd40cca77effd53252080e0e7d1e46b97f384716bbaa374ebe9e6fcfd",
+    "check-source.py": "39b16a3e324e61c8baed8b13a2e04a7642062fe77063e590582f11f0f24b26fc",
+    "tiny-controls.sh": "771ded1f3dab45f8a240d144df97be9e71261dd68338ffe93f0916de1ccb51a9",
+    "positive-stub.sh": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "positive.manifest": "bab9b4c24715b85e3f7e2a2ff064be430cbfe0943762996bb20518c9349de9f1",
+    "poison.manifest": "bcb23dd7bfe663e2a7ced1548b69c329a610164d09cb0517b671253e60bf2355",
+    "rows.txt": "52c3b74478c0b434ecafcd32d61ee5c6dbd41a57b4275e27d898f66d781a5675",
+    "admission-derivation.json": "a02a6472a7fe87e2ce22da356e6fcf63e52cfa5f0b8ba32b24fb91662332b9e8"
+  },
+  "production_rows_verified": {
+    "agent-core-full": "old 0309 measurement command + 0249 receipt/brief; terminal 24049 refusal",
+    "d141b-pristine-comparator-2358": "old 0030-era plain pristine command; not Sol0638"
+  },
+  "retained_originals": ["26496", "27388", "10086", "0508 FAIL9", "0626 FAIL7", "0309", "0318", "0710897c", "0030"],
+  "historical_trace_gap_preserved": true
+}
