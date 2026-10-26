@@ -1,0 +1,67 @@
+{
+  "actual_terminals": {
+    "cut": {
+      "exit": 1,
+      "service_id": "agent-agent-core-full-1026100428-24814",
+      "status": "fail",
+      "xml_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5"
+    },
+    "pristine": {
+      "exit": 1,
+      "service_id": "agent-agent-core-full-1026103030-25513",
+      "status": "fail",
+      "xml_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+    }
+  },
+  "checks": {
+    "concrete_status_reconciliation": true,
+    "d134_label_reconciliation": true,
+    "exact_membership": true,
+    "farm_rule": true,
+    "historical_root_label_reconciliation": true,
+    "nested_suite_count_reconciliation": true,
+    "per_id_classification_reconciliation": true,
+    "product_changes": false,
+    "rerun_or_repair": false,
+    "retained_manifest_hashes": true,
+    "safe_failure_status_reconciliation": true,
+    "source_presence_git_readback": true,
+    "xml_hashes": true,
+    "xml_parse": true
+  },
+  "limitations": [
+    "Both native terminals returned fail/exit 1; this is not a full-suite pass or ship claim.",
+    "Source custody qualification remains separate.",
+    "No Farm child is required because the current exact candidate set is empty.",
+    "The controller wrapper sampler was disclosed unreadable; native traces remain authoritative.",
+    "Historical root/D134 material was used only for labels and structure, never current outcomes."
+  ],
+  "no_actions": [
+    "No install, CAS/request, test-run, wait-test, provider, collection, rerun, source repair, Farm, product test, or repository merge was performed by this reviewer."
+  ],
+  "results": {
+    "aggregate_null_id_records": {
+      "cut": 173,
+      "pristine": 173
+    },
+    "classification_counts": {
+      "CUT_PASS_NOT_REG": 8991,
+      "FAILS_BOTH": 19,
+      "N_A": 373,
+      "PRISTINE_ONLY": 64,
+      "UNKNOWN": 5
+    },
+    "concrete_ids": 9452,
+    "cut_concrete_ids": 9388,
+    "cut_only": 6370,
+    "matched": 3018,
+    "n_a_source_absent_ids": 373,
+    "pristine_concrete_ids": 3082,
+    "pristine_only": 64,
+    "reg_candidates": 0,
+    "unknown_present_source_ids": 5
+  },
+  "schema": "timeline.f.d141l.fullpair.independent-review.v1",
+  "scope": "One independent protected review of the actual D141l full-pair terminals and retained XML; evidence-only, no product qualification.",
+  "verdict": "PASS_EVIDENCE"
+}

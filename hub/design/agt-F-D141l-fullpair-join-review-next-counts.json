@@ -1,0 +1,108 @@
+{
+  "aggregate_null_id_records_total": 346,
+  "classification_counts_concrete": {
+    "CUT_PASS_NOT_REG": 8991,
+    "FAILS_BOTH": 19,
+    "N_A": 373,
+    "PRISTINE_ONLY": 64,
+    "UNKNOWN": 5
+  },
+  "classification_counts_cut_nonpass": {
+    "FAILS_BOTH": 19,
+    "N_A": 373,
+    "UNKNOWN": 5
+  },
+  "cut": {
+    "aggregate_null_id_records": 173,
+    "concrete_elements": 9388,
+    "concrete_status_counts": {
+      "ERROR": 196,
+      "FAIL": 201,
+      "PASS": 8991
+    },
+    "suite_attributes": {
+      "errors": "196",
+      "failures": "201",
+      "hostname": "vm",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "9561",
+      "time": "1525.081",
+      "timestamp": "2026-10-26T10:04:44.155178+00:00"
+    }
+  },
+  "d134_cluster_counts_on_cut_nonpass": {
+    "UNMAPPED": 80,
+    "clip_mirror_fixture_guard": 3,
+    "detached_fixture_preflight": 4,
+    "fixture_call_missing_required_args": 2,
+    "fixture_missing_client": 1,
+    "legacy_archive_shape_expectation": 1,
+    "managed_edge_fixture": 102,
+    "projection_fixture_missing_item": 9,
+    "retired_save_route_expectation": 1,
+    "stale_source_pin_or_hash_expectation": 11,
+    "unresolved_causal_boundary": 181,
+    "v2_status_label_expectation": 2
+  },
+  "farm": {
+    "current_reg_candidates": 0,
+    "env_sensitive_reg_candidates": 0,
+    "farm_child_needed": false,
+    "reason": "No current fail-cut/pass-pristine concrete IDs."
+  },
+  "historical_root_cluster_counts_on_fails_both": {
+    "root-002": 2,
+    "root-040": 2,
+    "root-043": 15
+  },
+  "membership": {
+    "cut_concrete_unique_ids": 9388,
+    "cut_only_concrete_ids": 6370,
+    "duplicate_cut_ids": 0,
+    "duplicate_pristine_ids": 0,
+    "matched_concrete_ids": 3018,
+    "no_double_counting": true,
+    "pristine_concrete_unique_ids": 3082,
+    "pristine_only_concrete_ids": 64
+  },
+  "pristine": {
+    "aggregate_null_id_records": 173,
+    "concrete_elements": 3082,
+    "concrete_status_counts": {
+      "ERROR": 15,
+      "FAIL": 20,
+      "PASS": 3047
+    },
+    "suite_attributes": {
+      "errors": "15",
+      "failures": "20",
+      "hostname": "vm",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "3255",
+      "time": "391.013",
+      "timestamp": "2026-10-26T10:30:44.759587+00:00"
+    }
+  },
+  "schema": "timeline.f.d141l.fullpair.counts.v2",
+  "source_authority": {
+    "cut_service_id": "agent-agent-core-full-1026100428-24814",
+    "cut_xml_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+    "pristine_service_id": "agent-agent-core-full-1026103030-25513",
+    "pristine_xml_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+  },
+  "source_file_accounting": {
+    "cut_source_files": 440,
+    "cut_source_files_not_in_pristine": 300,
+    "pristine_source_files": 177
+  },
+  "status_pairs_matched": {
+    "ERROR/ERROR": 1,
+    "ERROR/FAIL": 1,
+    "FAIL/FAIL": 17,
+    "PASS/ERROR": 14,
+    "PASS/FAIL": 2,
+    "PASS/PASS": 2983
+  }
+}

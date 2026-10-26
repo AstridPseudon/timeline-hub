@@ -1,0 +1,100 @@
+{
+  "current_tuple": {
+    "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935"
+  },
+  "custody_boundary": "Source custody review is separate; this packet records hashes and does not override it.",
+  "inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/agent-core-full.xml",
+      "sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/agent-core-full.xml",
+      "sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/status.txt",
+      "sha256": "e1dcd49cf61da88dff11116a4cc88a0e28d0a8ee80f48ab8fa91c569b11f5cbf"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/status.txt",
+      "sha256": "e1dcd49cf61da88dff11116a4cc88a0e28d0a8ee80f48ab8fa91c569b11f5cbf"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/service.txt",
+      "sha256": "d60a442232f165c1d9da5462740c880d89d586afd0e96fee709888030096a04b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/service.txt",
+      "sha256": "5bd3d87cc8d0e6533e3c41e60257918b3a2a3e66e7bb46453801f3022083757f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/callerargv.txt",
+      "sha256": "fec84106a7078912fa55ae1d4feeb21edfdc956bc5b6393609ebc3813d16a32e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/callerargv.txt",
+      "sha256": "57936eb4b9c829323c551c4d758e0d5c9b664e49780adece2a12ad12b06b1610"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/runner-exit.txt",
+      "sha256": "c0460109605964c5a387d40eead9558e87e22beb72e045f1c0a0c733f5f8285f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/runner-exit.txt",
+      "sha256": "c0460109605964c5a387d40eead9558e87e22beb72e045f1c0a0c733f5f8285f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/monitor-exit.txt",
+      "sha256": "1236156448fc903e08f7760186c1ca6400cc2be0501f720c6c35b0e321f1eca4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/monitor-exit.txt",
+      "sha256": "1236156448fc903e08f7760186c1ca6400cc2be0501f720c6c35b0e321f1eca4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/source-before.txt",
+      "sha256": "e3907e5dcb9c3237e4bc70fac6cf566d885ea973f11a94023f2552fde84827ed"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/source-after.txt",
+      "sha256": "e3907e5dcb9c3237e4bc70fac6cf566d885ea973f11a94023f2552fde84827ed"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/source-before.txt",
+      "sha256": "64a92a796b3f94e141a9d2c731cdc59d0de4124d6a7cdf9c7415c182bebf8827"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/source-after.txt",
+      "sha256": "64a92a796b3f94e141a9d2c731cdc59d0de4124d6a7cdf9c7415c182bebf8827"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/disk-trace.txt",
+      "sha256": "1cbb4b6eb40edba202b01d7fcf01d671910211e11e250f498458e78bd989f862"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/disk-trace.txt",
+      "sha256": "07e6824507a08cef7d39758923af6210e8275c884176667e711fc2a785ada52c"
+    },
+    {
+      "path": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/result.json",
+      "sha256": "bcee9154bafb307ae8f9db51b92b72b9a8ce7cdf77efabdc36ddf34e4177f3c2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-own344-partition-2003-per-id.tsv",
+      "sha256": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141k-perid-join-0455-join.json",
+      "sha256": "d27d188459793a80ec31c81f8be029dc1ac6bb514beda36f6c0c480c51a38f30"
+    }
+  ],
+  "pristine_tuple": {
+    "agent": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+  },
+  "schema": "timeline.f.d141l.fullpair.source-manifest.v2"
+}

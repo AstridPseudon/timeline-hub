@@ -1,0 +1,71 @@
+{
+  "utc": "2026-10-26T10:52:11.017031+00:00",
+  "kind": "manager byte-exact SAFE independent summaries and count reconciliation; full current source identity acceptance incomplete",
+  "scope": "PASS_EVIDENCE for current exact-ID mechanical comparison only;5UNKNOWN/64pristine-only unresolved; no REG0 or finalpin admission",
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/review.json",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-review.json",
+      "sha256": "d2d41186236ca9584e48e3b1f68054111902ab274935ab8dcfbfd586974cab6a",
+      "bytes": 2393,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/findings.md",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-findings.md",
+      "sha256": "ed35e9bed98d81bed49b1145c3cff992599a22de794cec4e42a5278e1e75ed9f",
+      "bytes": 1154,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/source-map.json",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-source-map.json",
+      "sha256": "a8025667773b54a3ddb233da8a5f1f2d37f9f7bfa2710d3715313c591b081ae1",
+      "bytes": 201729,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-source-manifest.json",
+      "sha256": "551958405841187f8fbad898453775c374b6bd1b8ac8a2e3c926ed907999f664",
+      "bytes": 6514,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-validation.md",
+      "sha256": "5e988c021ad7d917698d7909bcfbf1d7a094d04dbab7c857a2b07617c13ff843",
+      "bytes": 1046,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-handoff.md",
+      "sha256": "ddfa956ab54c72550677a5d40e7fdd30ec65cbd21ac0514716da5702770ed676",
+      "bytes": 578,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/disk-trace.txt",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-disk-trace.txt",
+      "sha256": "b5a77bfb1363f30b5eb0542f0dde73d3e1163f781b04c590a136b9922e2bcc59",
+      "bytes": 767,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-join-review-next/evidence/counts.json",
+      "published": "design/agt-F-D141l-fullpair-join-review-next-counts.json",
+      "sha256": "603ce19d1f1bbafea2af2417cdb9be54fdd7273ac25c45c1c11fcb2ecc2150b4",
+      "bytes": 2970,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}

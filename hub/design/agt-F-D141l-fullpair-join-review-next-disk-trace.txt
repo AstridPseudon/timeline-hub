@@ -1,0 +1,13 @@
+2026-10-26T10:44:41Z available_bytes=7507161088
+2026-10-26T10:44:42Z available_bytes=7507156992
+2026-10-26T10:44:43Z available_bytes=7507156992
+2026-10-26T10:44:44Z available_bytes=7507156992
+2026-10-26T10:44:45Z available_bytes=7507156992
+2026-10-26T10:44:46Z sustained_seconds=5 threshold=4000000000 result=PASS
+validated_native_cut_min_available_bytes=6542942208
+validated_native_pristine_min_available_bytes=7407423488
+validated_controller_dispatch_free_bytes=6479253504
+continuous_stop_bytes=4000000000
+validated_native_cut_trace_sha256=1cbb4b6eb40edba202b01d7fcf01d671910211e11e250f498458e78bd989f862
+validated_native_pristine_trace_sha256=07e6824507a08cef7d39758923af6210e8275c884176667e711fc2a785ada52c
+wrapper_sampler=UNREADABLE; native traces authoritative
