@@ -7599,3 +7599,15 @@ ONE scope escalation now contains the full exact55-ID list and each actual statu
 Writer15 scope reviewer1137 terminal FAIL7 rejected12 asserted settled replacements. ONE Luna first return1143 actually running traces live _PublishMixin.publish/restructure and client old-endpoint surfaces, separates true supported commit delegates/refusals from genuine live one-writer gaps, and records each protected predicate/necessary migration decision. All15 remain REG pending. That source correction need not delay MAIN presenting the already-authentic55 list from the restored run. Live behavior is never retired merely for an old method name; force remains refused. No product/test repair yet and no retired route revived. Exact originals in independent publications1140/1143/1144 and source author1138, no original rewrite.
 
 Nine passing moves remain9(a); all55 restored failures remain(c) pending passing preservation or explicit owner decision. D141v and finalREG0/build/ZIP remain gated. CurrentP4 GO unchanged, App journeys continue through own owner. All D130/Store/stopped/KEEP/old19479/8912 holds preserved. Source-only live1, noheavy, available6.58GB; no new repack or cleanup of protected data.
+
+## 2026-10-26T12:55:50Z — OWNER DECISION D141ii (typed by the owner in the main session)
+- D141ii (12:55Z 26 Oct), OWNER DECISION, verbatim in design/owner-decision-20261026T1250Z-D141ii.md:
+  (1) **Inverse 38 — RESTORE** upstream's astrid/core/timeline/inverses.py, deleted by our fc33e0e76c, together with its schema/architecture references as needed. This is additive: our authenticated SDK undo path stays as it is. Run the 38 restored IDs targeted on the restored head.
+  (2) **Installer 2 — RETIRE** exactly the two npm-schema tests. Record each in deletion-ledger.agent.md with the owner quote. Our replacement controls stay.
+  (3) **Writers 15 — PROTECTED MIGRATION** to the commit path. Every purpose and assertion is kept. The force cases become an explicit force-refusal assertion. Each changed reply shape is listed for the owner in the review.
+  (4) **App target = latest upstream.** One catch-up merge of 82e9e13d onto the tip re-read just before the merge (636444302b or later). Upstream's Elements panel and button removal is TAKEN: our ElementsLibraryPanel changes are dropped there, because Element is a known gap. Both sides of the AgentChat test are kept. Delta proof:
+    - targeted Vitest for the touched and conflicted files, plus lint and types;
+    - ONE unit full pair, new head vs the new pristine tip, with the same per-ID join rule;
+    - the review checks the 7 journey path maps and re-runs only a journey whose path the merge touched.
+  (5) **Farm: read-only shot-layering prep** (plan in design/shot-layering-*). No source writes, renders or test bodies.
+  After (1)–(3) are REG0 and (4) is qualified: the D141v pin pass, then F-final.

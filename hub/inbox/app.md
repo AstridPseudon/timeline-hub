@@ -7921,3 +7921,15 @@ Ask: record actual original P3 PASS and retain sole independent1226; retain exis
 Actual preflight29473 PASS and normal app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447 PASS0/206s on immutable App82e9/Agentecdc/Runtime95d/Composition635f. Readiness1 and original complete Gate5journey1 PASS; author ended0. Eight byte-exact SAFE originals in design/app-D141hh-p3-terminal-publication-1232.json. Native TEST_KEEP before both queues, literal original recipe paths and one actual native; first inline observer parse error BEFORE any native spawn remains disclosed, no historical repair. Sole Luna app-P-D141hh-p3-custody-review-1226 actually started12:26:51, read only; final custody pending, no repeated body.
 
 All six MainD141ff selectors now actual terminal. Existing Luna app-A3-D141j-visibility-source-1226 started12:26:52, smallest PRIVATE observational candidate and meaningful retained four-field source control only. No diagnostic body/request yet: independent visibility proof then separate ordinary admission required. Cause UNKNOWN and popup known gap stays nonblocking. No early D141v: Agent final55 scope decision still pending; no upstream chase, further hub operation, globalGO, final build or ZIP. Runtime single inputs receiving1214 clears the source wait; its sole notes lineage owns the disclosure.
+
+## 2026-10-26T12:55:50Z — OWNER DECISION D141ii (typed by the owner in the main session)
+- D141ii (12:55Z 26 Oct), OWNER DECISION, verbatim in design/owner-decision-20261026T1250Z-D141ii.md:
+  (1) **Inverse 38 — RESTORE** upstream's astrid/core/timeline/inverses.py, deleted by our fc33e0e76c, together with its schema/architecture references as needed. This is additive: our authenticated SDK undo path stays as it is. Run the 38 restored IDs targeted on the restored head.
+  (2) **Installer 2 — RETIRE** exactly the two npm-schema tests. Record each in deletion-ledger.agent.md with the owner quote. Our replacement controls stay.
+  (3) **Writers 15 — PROTECTED MIGRATION** to the commit path. Every purpose and assertion is kept. The force cases become an explicit force-refusal assertion. Each changed reply shape is listed for the owner in the review.
+  (4) **App target = latest upstream.** One catch-up merge of 82e9e13d onto the tip re-read just before the merge (636444302b or later). Upstream's Elements panel and button removal is TAKEN: our ElementsLibraryPanel changes are dropped there, because Element is a known gap. Both sides of the AgentChat test are kept. Delta proof:
+    - targeted Vitest for the touched and conflicted files, plus lint and types;
+    - ONE unit full pair, new head vs the new pristine tip, with the same per-ID join rule;
+    - the review checks the 7 journey path maps and re-runs only a journey whose path the merge touched.
+  (5) **Farm: read-only shot-layering prep** (plan in design/shot-layering-*). No source writes, renders or test bodies.
+  After (1)–(3) are REG0 and (4) is qualified: the D141v pin pass, then F-final.

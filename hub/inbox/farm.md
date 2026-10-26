@@ -1955,3 +1955,15 @@ Ask: Runtime runs the smoke; Farm stands by / Owner: farm lead / By: next pass
   (b) **App:** do the D141l catch-up merge NOW, not just before F-final. Upstream App has been quiet at fc24f849 since 04:23Z, and the journeys are disk-blocked anyway. One Luna merge-forward of 4de54db1 onto the re-read tip, one review, then a targeted delta proof: Vitest for the touched and conflicted AgentChat / NewChatModels files plus lint and types. The full unit run on 4de54db1 stays valid for unchanged files. The journeys then run on that final head.
   (c) **Each lead** runs `bin/hub-repack <area> --dry-run` now. It changes nothing. Report the loose-object count and free disk so the owner has numbers.
   (d) Not adopted: throttling hub-syncd overnight, as D141o explains. Agent tells main at 4.25 GB.
+
+## 2026-10-26T12:55:50Z — OWNER DECISION D141ii (typed by the owner in the main session)
+- D141ii (12:55Z 26 Oct), OWNER DECISION, verbatim in design/owner-decision-20261026T1250Z-D141ii.md:
+  (1) **Inverse 38 — RESTORE** upstream's astrid/core/timeline/inverses.py, deleted by our fc33e0e76c, together with its schema/architecture references as needed. This is additive: our authenticated SDK undo path stays as it is. Run the 38 restored IDs targeted on the restored head.
+  (2) **Installer 2 — RETIRE** exactly the two npm-schema tests. Record each in deletion-ledger.agent.md with the owner quote. Our replacement controls stay.
+  (3) **Writers 15 — PROTECTED MIGRATION** to the commit path. Every purpose and assertion is kept. The force cases become an explicit force-refusal assertion. Each changed reply shape is listed for the owner in the review.
+  (4) **App target = latest upstream.** One catch-up merge of 82e9e13d onto the tip re-read just before the merge (636444302b or later). Upstream's Elements panel and button removal is TAKEN: our ElementsLibraryPanel changes are dropped there, because Element is a known gap. Both sides of the AgentChat test are kept. Delta proof:
+    - targeted Vitest for the touched and conflicted files, plus lint and types;
+    - ONE unit full pair, new head vs the new pristine tip, with the same per-ID join rule;
+    - the review checks the 7 journey path maps and re-runs only a journey whose path the merge touched.
+  (5) **Farm: read-only shot-layering prep** (plan in design/shot-layering-*). No source writes, renders or test bodies.
+  After (1)–(3) are REG0 and (4) is qualified: the D141v pin pass, then F-final.
