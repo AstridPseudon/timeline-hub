@@ -605,11 +605,12 @@ class Backend:
             if cause:
                 raise VerificationError(
                     f"Astrid Runtime did not start: {cause} (details: {self.service.log})",
-                    safe_message=f"Astrid Runtime did not start; inspect {self.service.log}",
+                    safe_message=f"Astrid Runtime didn't start. Its log says why: {self.service.log}",
                 )
             raise VerificationError(
                 f"Astrid's browser door did not become ready: {error}",
-                safe_message=f"Astrid's browser door did not become ready; inspect {self.service.log}",
+                safe_message=(f"Astrid didn't become reachable from the browser in time. "
+                              f"Its log may say why: {self.service.log}"),
             )
 
         ready_file = data / "runtime" / "generic-host.ready.json"
@@ -624,10 +625,11 @@ class Backend:
             reason = pack_host.get("reason") if pack_host else None
             last_exit = pack_host.get("last_exit") if pack_host else None
             label = (
-                "A declared Astrid service crashed during startup"
-                if crashed else "Astrid pack-host service hung during startup"
+                "An Astrid service stopped while starting"
+                if crashed else "Astrid's task host didn't finish starting in time"
             )
-            detail = (f"{label}: state={service_state}, reason={reason or 'none'}, "
+            detail = (f"{label}; see the log for the cause. "
+                      f"state={service_state}, reason={reason or 'none'}, "
                       f"last_exit={last_exit!r}; log={service_log}")
             if failed is not None:
                 detail += (f"; failed_service={failed.get('name')}, failed_state={failed.get('state')}, "

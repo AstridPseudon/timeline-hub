@@ -247,7 +247,7 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
     monkeypatch.setattr("astrid.installer.backend.time.sleep", lambda _: None)
 
     if raises:
-        with pytest.raises(VerificationError, match="declared Astrid service crashed during startup"):
+        with pytest.raises(VerificationError, match="An Astrid service stopped while starting"):
             backend.verify(version, data, "realm", timeout=0.01)
     else:
         backend.verify(version, data, "realm", timeout=0.01)

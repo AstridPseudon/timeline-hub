@@ -1654,7 +1654,7 @@ def ensure_pack_host(
             code = str(diagnostic.get("code") or "host_registration_failed")[:128]
             request_id = str(diagnostic.get("request_id") or "")[:128]
             cause = _host_failure_cause(log_path)
-            message = cause or "generic Astrid pack host registration failed; inspect host log"
+            message = cause or f"The task host couldn't register with Astrid Runtime; see {log_path}"
             suffix = f" [request_id={request_id}]" if request_id else ""
             raise PackHostBootstrapError(
                 message + suffix,

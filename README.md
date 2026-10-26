@@ -40,7 +40,8 @@ Tools and knowledge for agents and humans to make art with open models.
 run the installer for your operating system, then open
 [astrid.haus](https://astrid.haus).
 
-**Windows: beta.**
+**Windows support is in beta.** It has had less testing than macOS and Linux;
+if something goes wrong, see [Get help](docs/setup/troubleshooting.md).
 
 **Want step-by-step instructions?** [Set up Astrid →](docs/getting-started.md)
 
