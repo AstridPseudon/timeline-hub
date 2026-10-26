@@ -30,6 +30,7 @@ import json
 from contextlib import contextmanager
 from typing import Any, Mapping
 
+from . import platform
 from .errors import ConflictError
 from .platform import _retry_windows_sharing_violation
 
@@ -1150,6 +1151,7 @@ def atomic_json_write(path: str | Path, encoded: bytes, *, identity: Mapping[str
         temp_name = f".{name}.{os.getpid()}-{time.time_ns()}.tmp"
         fd = os.open(temp_name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600, dir_fd=base_fd)
         try:
+            platform.owner_only(fd)
             view = memoryview(bytes(encoded))
             while view:
                 written = os.write(fd, view)
