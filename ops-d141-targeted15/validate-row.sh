@@ -2,17 +2,47 @@
 set -u
 
 root=$(cd "$(dirname "$0")" && pwd)
-row=$(sed -n 's/^runtime full-d141-targeted15 //p' "$root/row.txt")
+row=$(sed -n 's/^runtime full-d141-pristine-targeted15 //p' "$root/row.txt")
 test -n "$row"
-test "$(grep -c '^runtime full-d141-targeted15 ' "$root/row.txt")" -eq 1
-test "$(grep -c '^runtime full-d141-pristine ' "$root/row.txt")" -eq 0
+test "$(grep -c '^runtime full-d141-pristine-targeted15 ' "$root/row.txt")" -eq 1
+test "$(grep -c '^runtime full-d141-targeted15 ' "$root/row.txt")" -eq 0
 test "$(grep -F -c -- '--junitxml="$D66_OUTPUT_DIR/runtime-targeted15.xml"' "$root/row.txt")" -eq 1
 test "$(grep -F -c -- 'runtime-full.xml' "$root/row.txt")" -eq 0
 
 repo=/home/user/work/wt/rt-pin-fa9cd546
+worker_meta=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-pin-fa9cd546/meta
+registry=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+request=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/request
+status=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/status
+grep -Fxq 'repo=runtime' "$worker_meta"
+grep -Fxq 'worktree=/home/user/work/wt/rt-pin-fa9cd546' "$worker_meta"
+grep -Fxq 'target=rt-pin-fa9cd546' "$request"
+grep -Fxq 'repo=runtime' "$request"
+grep -Fxq 'suite=full-d141-pristine' "$request"
+grep -Fxq 'queued' "$status"
+test "$(grep -c '^runtime full-d141-pristine ' "$registry")" -eq 1
+test "$(grep -c '^runtime full-d141-pristine-targeted15 ' "$registry")" -eq 0
 run_root=$(mktemp -d "${TMPDIR:-/tmp}/d141-targeted15-controls.XXXXXX")
 stub=$root/stub-python
 stubbed=${row//\/home\/user\/work\/venv-runtime\/bin\/python/$stub}
+
+candidate_registry=$run_root/suites.conf
+python - "$registry" "$candidate_registry" "$root/row.txt" <<'PY'
+from pathlib import Path
+import sys
+
+source, destination, candidate = map(Path, sys.argv[1:])
+original = source.read_bytes()
+added = candidate.read_bytes()
+assert original.endswith(b"\n")
+assert added.endswith(b"\n")
+assert original.count(b"runtime full-d141-pristine ") == 1
+assert b"runtime full-d141-pristine-targeted15 " not in original
+destination.write_bytes(original + added)
+PY
+test "$(grep -c '^runtime full-d141-pristine ' "$candidate_registry")" -eq 1
+test "$(grep -c '^runtime full-d141-pristine-targeted15 ' "$candidate_registry")" -eq 1
+test "$(grep -c '^runtime full-d141-pristine-targeted15 ' "$registry")" -eq 0
 
 out=$run_root/positive
 test ! -e "$out"
