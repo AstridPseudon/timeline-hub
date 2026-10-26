@@ -1,0 +1,187 @@
+{
+  "schema": "timeline.f.d141c.perid.independent-review.v1",
+  "result": "PASS_EVIDENCE",
+  "scope": "Read-only review of the completed D141c per-ID packet, its seven published originals, retained JUnit XML, and retained custody artifacts.",
+  "authority": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "agent_inbox_rule": "MAIN 00:52:33: only pristine bad nodes that also fail in the Farm cut core need matching-environment pristine reruns; do not rerun by Agent.",
+    "frozen_agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "review_worktree_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "product_source_untouched": true
+  },
+  "packet": {
+    "request_id": "agent-d141b-pristine-comparator-2358-1026003644-27388",
+    "published_originals": {
+      "bad-nodes": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/bad-nodes.json",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-bad-nodes.json",
+        "bytes": 12298,
+        "sha256": "0914f2f0e43e705b20211833d5cf7e2e7a222cfa3f3db847312922b9a9d254e5",
+        "byte_equal": true
+      },
+      "counts": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/counts.json",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-counts.json",
+        "bytes": 978,
+        "sha256": "6ab5a708dca78ae45cba41362d81f65bc9b703b53be0fe9d7d86334455a63644",
+        "byte_equal": true
+      },
+      "env-rerun": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/env-rerun.json",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-env-rerun.json",
+        "bytes": 8442,
+        "sha256": "62d4b969e0690f673df529e73c9facbc9ebc272821d05fee34515714ba2c79b4",
+        "byte_equal": true
+      },
+      "handoff": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/handoff.md",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-handoff.md",
+        "bytes": 1338,
+        "sha256": "7b60520933cd7d77f3eb71fd73058246ec703178be4e727dc15e8baf94628e0c",
+        "byte_equal": true
+      },
+      "per-id": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/per-id.json",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-per-id.json",
+        "bytes": 15645481,
+        "sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5",
+        "byte_equal": true
+      },
+      "source-manifest": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/source-manifest.json",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-source-manifest.json",
+        "bytes": 8203,
+        "sha256": "799b2a62017e88d5ef26e03086d4a3c15b20fbf37131b0602ad061375323ae00",
+        "byte_equal": true
+      },
+      "validation": {
+        "worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141c-pristine-perid-0045/evidence/validation.md",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-validation.md",
+        "bytes": 2496,
+        "sha256": "14fd2782049aa5d84ef6009fabbf4b7387d235c5482aa933e57f264c7aca387d",
+        "byte_equal": true
+      }
+    },
+    "retained_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/pristine-comparator.xml",
+      "bytes": 4690547,
+      "sha256": "ceeb66095a1e00929da0007639dd3d7c8267126b4541c0da2c86011dab63009a"
+    }
+  },
+  "accounting": {
+    "inventory_records": 3255,
+    "xml_testcase_nodes": 3082,
+    "unnamed_aggregate_subtest_pass": 173,
+    "equation": "3255 = 3082 + 173",
+    "xml_statuses": {
+      "PASS": 3077,
+      "FAIL": 4,
+      "ERROR": 1,
+      "SKIP": 0
+    },
+    "aggregate_statuses": {
+      "PASS": 173
+    },
+    "total_statuses": {
+      "PASS": 3250,
+      "FAIL": 4,
+      "ERROR": 1,
+      "SKIP": 0
+    },
+    "equations": [
+      "3250 = 3077 + 173",
+      "5 non-pass = 4 FAIL + 1 ERROR"
+    ],
+    "concrete_ids_unique": true,
+    "concrete_id_count": 3082,
+    "aggregate_ids_absent_and_explicit": true
+  },
+  "xml_correspondence": {
+    "concrete_membership_exact": true,
+    "field_by_field_outcome_match": true,
+    "fields_checked": [
+      "node_id",
+      "classname",
+      "name",
+      "time",
+      "original_testcase_attributes",
+      "status",
+      "xml_testcase_sha256"
+    ],
+    "xml_testcase_hash_method": "sha256(ET.tostring(testcase, encoding='utf-8'))",
+    "serialized_node_hash_matches": 3082,
+    "serialized_node_hash_mismatches": 0,
+    "bad_node_ids_all_present": true,
+    "bad_node_statuses_preserved_after_sanitization": true
+  },
+  "bad_nodes": [
+    {
+      "id": "tests/sdk/test_generation_publication_adapter.py::test_compose_is_deterministic_and_uses_real_capability_outputs",
+      "status": "FAIL",
+      "safe_error_class": "timeout",
+      "environment_classification": "UNKNOWN",
+      "first_frame": "astrid/sdk/generation_publication.py:280 (_capability_digest)",
+      "rerun_candidate": false
+    },
+    {
+      "id": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+      "status": "ERROR",
+      "safe_error_class": "remotion_site_registry_absent",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "first_frame": "pytest setup precondition (no setup frame retained)",
+      "rerun_candidate": true
+    },
+    {
+      "id": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "status": "FAIL",
+      "safe_error_class": "runtime_publication_import_missing",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "first_frame": "astrid/packs/rendering/actions/render/run.py:9",
+      "rerun_candidate": true
+    },
+    {
+      "id": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "status": "FAIL",
+      "safe_error_class": "remotion_generated_registry_absent",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "first_frame": "tests/packs/rendering/test_render_export_task_adapter.py:271",
+      "rerun_candidate": true
+    },
+    {
+      "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+      "status": "FAIL",
+      "safe_error_class": "runtime_publication_import_missing",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "first_frame": "astrid/packs/rendering/actions/assemble_timeline/run.py:29",
+      "rerun_candidate": true
+    }
+  ],
+  "honest_field_boundary": {
+    "xml_native": ["classname", "name", "time", "failure/error/skipped child result type", "observed status"],
+    "packet_derived_or_custody_only": ["node_id mapping", "safe_error_class", "environment_classification", "first_frame annotations", "classification", "reg_status", "ship_credit", "aggregate ordinal"],
+    "statement": "The published table is a full 3255-record inventory, not a full 3255-unique-ID table. The 173 aggregate PASS records explicitly retain null identity; no selectors were invented. Derived fields are not attributed to XML and were checked not to change the observed XML result."
+  },
+  "current_ruling_application": {
+    "env_rerun_packet_is": "conditional candidate input, not an unconditional four-job gate",
+    "matching_farmcutcore_intersection_required": true,
+    "agent_rerun_or_new_body_performed": false,
+    "timeout_unknown_reclassified": false,
+    "reg_or_nonreg_verdict": "not issued"
+  },
+  "custody": {
+    "source_clean_witnesses": 4,
+    "source_clean_witnesses_all_before_after_clean": true,
+    "actual_pristine_source_is_distinct_from_frozen_cut": true,
+    "interpreter": "/usr/bin/python3.13 (requested /home/user/work/venv-agent/bin/python; Python 3.13.16)",
+    "body_started": 1,
+    "body_exit": 1,
+    "monitor_exit": 0,
+    "service_exit": 1,
+    "minimum_observed_disk_bytes": 5277556736,
+    "stop_floor_bytes": 4000000000,
+    "disk_qualified": true,
+    "central_service_log_empty_by_wrapper_design": true,
+    "authored_raw_stdout_retained_and_hashed": true
+  },
+  "raw_payload_published": false
+}
