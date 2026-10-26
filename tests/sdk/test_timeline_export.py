@@ -150,9 +150,11 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
         saved_internal = service.get_project_timeline_revision(project_id, "main", "internal-1")
         bundle = open_authoring_bundle(saved_parent, shot_revisions=[saved_shot], internal_timeline_revisions=[saved_internal])
         class Transport:
-            def list_project_objects(self, _project, *, cursor=None, limit=50):
-                result = service.list_project_objects(_project, cursor=cursor, limit=limit)
-                return result["items"], result["next_cursor"]
+            def __init__(self):
+                self.location_reads = []
+            def get_project_object_location(self, _project, object_id):
+                self.location_reads.append((_project, object_id))
+                return service.object_location(_project, object_id)
             def list_timelines(self, _project, *, cursor=None, limit=50):
                 return [{"timeline_id": "main", "name": "Fixture"}], None
             def list_documents(self, _project, *, cursor=None, limit=50, kind=None):
@@ -161,9 +163,10 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
 
         opened_calls = []
 
+        transport = Transport()
         client = SimpleNamespace(
             projects=SimpleNamespace(show=lambda _project: SimpleNamespace(ok=True, data={"project_id": project_id})),
-            _remote=SimpleNamespace(_transport=Transport()),
+            _remote=SimpleNamespace(_transport=transport),
             timelines=SimpleNamespace(open_bundle=lambda project, ref: (
                 opened_calls.append((project, ref)) or SimpleNamespace(ok=True, data={
                     "bundle": bundle, "project_id": project_id, "timeline_id": "main",
@@ -184,6 +187,10 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
         assert exported_binding["binding_id"] == binding_pin["binding_id"]
         assert exported_binding["media_id"] == binding_pin["media_id"]
         assert exported_binding["text"] == binding_text
+        assert set(transport.location_reads) == {
+            (project_id, row["media_id"]) for row in published_manifest["media"]
+        }
+        assert all("local_path" not in json.dumps(value) for value in (plan, plan["manifest"]))
         assert opened_calls == [(project_id, "main")]
     finally:
         service.close()

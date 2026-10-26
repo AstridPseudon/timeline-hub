@@ -312,23 +312,26 @@ def export_plan(client: Any, project: str | None, timeline: str) -> dict[str, An
     for media_id in sorted(_text_binding_media(bundle) - known_media):
         media_rows.append({"media_id": media_id})
     media: list[dict[str, Any]] = []
-    object_rows = paged_rows(_transport(client).list_project_objects, export_project_id, limit=100)
-    if object_rows is None:
-        raise ValueError("Runtime could not list project media metadata")
-    object_index = {
-        str(row.get("digest") or row.get("object_id") or "").removeprefix("sha256:"): row
-        for row in object_rows if isinstance(row, Mapping)
-    }
+    transport = _transport(client)
     for row in media_rows:
         digest = str(row.get("media_id") or row.get("content_digest") or "").removeprefix("sha256:")
         if not _HEX.fullmatch(digest):
             raise ValueError(f"compiler returned invalid media identity {digest!r}")
-        metadata = object_index.get(digest, {})
+        object_id = "sha256:" + digest
+        try:
+            metadata_result = transport.get_project_object_location(export_project_id, object_id)
+            metadata = _data(metadata_result, f"metadata for {object_id}")
+        except Exception as exc:
+            raise ValueError(f"Runtime could not resolve project media metadata for {object_id}: {exc}") from exc
+        returned_id = str(metadata.get("object_id") or "").removeprefix("sha256:")
+        returned_digest = str(metadata.get("digest") or "").removeprefix("sha256:")
+        if metadata.get("verified") is not True or returned_id != digest or returned_digest != digest:
+            raise ValueError(f"Runtime returned unverified or mismatched metadata for {object_id}")
         size = metadata.get("size")
         if not isinstance(size, int) or isinstance(size, bool) or size < 0:
-            raise ValueError(f"Runtime did not return valid object metadata for media sha256:{digest}")
+            raise ValueError(f"Runtime did not return valid object metadata for media {object_id}")
         media_type = metadata.get("media_type") or metadata.get("mime_type") or "application/octet-stream"
-        original_name = str(metadata.get("original_name") or metadata.get("filename") or metadata.get("name") or digest)
+        original_name = str(metadata.get("filename") or metadata.get("original_name") or metadata.get("name") or digest)
         original_name = original_name.replace("\\", "/").rsplit("/", 1)[-1] or digest
         media.append({"sha256": digest, "size": size, "media_type": str(media_type), "original_name": str(original_name)})
 
