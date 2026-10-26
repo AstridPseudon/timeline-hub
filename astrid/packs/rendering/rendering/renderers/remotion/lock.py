@@ -8,6 +8,8 @@ acquiring it again.
 from __future__ import annotations
 
 import os
+import re
+import secrets
 import time
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -20,7 +22,9 @@ from runtime_protocol import platform
 from astrid.core.foundation.paths import REPO_ROOT
 
 REMOTION_LOCK_PATH = REPO_ROOT / "remotion" / ".astrid-registry.lock"
-REMOTION_LOCK_OWNER_ENV = "ASTRID_REMOTION_LOCK_OWNER"
+REMOTION_LOCK_TOKEN_ENV = "ASTRID_REMOTION_LOCK_TOKEN"
+REMOTION_LOCK_PATH_ENV = "ASTRID_REMOTION_LOCK_PATH"
+REMOTION_LOCK_RECEIPT_PREFIX = "ASTRID_REMOTION_LOCK_RECEIPT:"
 
 _LOCAL_LOCK_PATH: ContextVar[str | None] = ContextVar(
     "remotion_render_lock_path",
@@ -68,13 +72,11 @@ def _resolved_lock_path() -> Path:
 
 
 def _inherited_lock_path() -> str | None:
-    """Return the inherited lock path only for a direct child of its owner."""
+    """Return the canonical inherited lock path for a child with its launch token."""
 
-    raw_owner = os.environ.get(REMOTION_LOCK_OWNER_ENV)
-    if not raw_owner:
-        return None
-    parent_pid, separator, raw_path = raw_owner.partition(":")
-    if not separator or not parent_pid.isdigit() or int(parent_pid) != os.getppid():
+    token = os.environ.get(REMOTION_LOCK_TOKEN_ENV, "")
+    raw_path = os.environ.get(REMOTION_LOCK_PATH_ENV)
+    if not re.fullmatch(r"[0-9a-f]{64}", token) or not raw_path:
         return None
     inherited_path = str(Path(raw_path).resolve(strict=False))
     if inherited_path != str(_resolved_lock_path()):
@@ -89,12 +91,15 @@ def remotion_render_lock_held() -> bool:
 
 
 def remotion_render_lock_child_env() -> dict[str, str]:
-    """Return the marker that lets one direct child use the held writer path."""
+    """Return a fresh launch token and path for one child of the held lock."""
 
     lock_path = _LOCAL_LOCK_PATH.get() or _inherited_lock_path()
     if lock_path is None:
         raise RuntimeError("cannot delegate Remotion writer work without owning the lock")
-    return {REMOTION_LOCK_OWNER_ENV: f"{os.getpid()}:{lock_path}"}
+    return {
+        REMOTION_LOCK_TOKEN_ENV: secrets.token_hex(32),
+        REMOTION_LOCK_PATH_ENV: lock_path,
+    }
 
 
 @contextmanager
@@ -118,8 +123,10 @@ def remotion_render_lock() -> Iterator[None]:
 
 
 __all__ = [
-    "REMOTION_LOCK_OWNER_ENV",
+    "REMOTION_LOCK_PATH_ENV",
     "REMOTION_LOCK_PATH",
+    "REMOTION_LOCK_RECEIPT_PREFIX",
+    "REMOTION_LOCK_TOKEN_ENV",
     "remotion_render_lock",
     "remotion_render_lock_child_env",
     "remotion_render_lock_held",

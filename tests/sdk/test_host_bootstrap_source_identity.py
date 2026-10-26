@@ -60,6 +60,18 @@ def _materialize_source_closure(source: Path) -> None:
     )
 
 
+def test_windows_parked_preparation_refuses_before_projection_or_socket_allocation(monkeypatch):
+    projected = []
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda reference: projected.append(reference))
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "win32")
+    monkeypatch.setattr(host_bootstrap.socket, "socketpair", lambda: pytest.fail("socket allocated"))
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="unavailable on Windows"):
+        preparer.prepare(object())
+
+    assert projected == []
+
+
 @pytest.mark.parametrize("outcome,alive", [("LIVE", True), ("ZOMBIE", False), ("ABSENT", False)])
 def test_host_pid_alive_uses_native_darwin_state_without_subprocess(monkeypatch, outcome, alive):
     from astrid.core.execution import custody_broker
@@ -501,7 +513,8 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="actual installed"):
         host_bootstrap._installed_execution_origins(tmp_path, "/selected/python")
-    assert seen[0][0][:3] == ["/selected/python", "-I", "-c"]
+    assert seen[0][0][:4] == ["/selected/python", "-X", "utf8", "-I"]
+    assert seen[0][0][4] == "-c"
     assert "PYTHONPATH" not in seen[0][1]["env"]
     assert seen[0][1]["cwd"] != str(tmp_path)
 
@@ -517,13 +530,13 @@ def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpret
     def isolate(monkeypatch, fake_popen):
         def guarded(argv, **kwargs):
             launches.append(argv)
-            assert argv[1:3] == ["-I", "-m"]
+            assert argv[1:5] == ["-X", "utf8", "-I", "-m"]
             assert "PYTHONPATH" not in kwargs["env"]
             assert kwargs["cwd"] != str(tmp_path / "source")
             return fake_popen(argv, **kwargs)
         return original(monkeypatch, guarded)
     monkeypatch.setitem(globals(), "_mock_host_launch", isolate)
-    test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path)
+    test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path, windows_acl=None)
     assert len(launches) == 3
 
 
@@ -802,7 +815,7 @@ def test_darwin_framework_variant_requires_verified_executable_and_exact_private
     monkeypatch.setattr(host_bootstrap, "subprocess", SimpleNamespace(**{**vars(subprocess), "run": selected_probe}))
     assert host_bootstrap._parked_host_identity_matches(f.state) is True
     assert probes[0][0] == str(f.executable)
-    assert probes[0][1:3] == ["-I", "-S"]
+    assert probes[0][1:5] == ["-X", "utf8", "-I", "-S"]
     f.argv[f.argv.index("--max-concurrency") + 1] = "3"
     with pytest.raises(host_bootstrap.PackHostBootstrapError):
         host_bootstrap._parked_host_identity_matches(f.state)
