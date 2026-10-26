@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.ops.d141h.runtime-cas-source.v1",
+  "status": "PASS_SOURCE_REVIEWED",
+  "source_ref": "tl/rt-OPS-D141-cancel-finalize-sol-0410",
+  "source_commit": "56f2d56e7d241d303be85df62166570d51602101",
+  "source_tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+  "parent_commit": "f0ef96c415ff299b1456ed71b695000afd2165b9",
+  "parent_tree": "2e12d3f102ee067b24068aa169d840d38ed77fa7",
+  "author_handoff": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-finalize-sol-0410/evidence/handoff.md",
+  "author_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-finalize-sol-0410/evidence/source-manifest.json",
+  "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-final-verify-0418/evidence/review.json",
+  "independent_handoff": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-final-verify-0418/evidence/handoff.md",
+  "independent_verdict": "PASS",
+  "five_files": [
+    {"path": "bin/d141-append-final.py", "sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398", "mode": "0755", "type": "regular"},
+    {"path": "bin/d141-disk-trace.py", "sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222", "mode": "0755", "type": "regular"},
+    {"path": "bin/d141-validate-receipt.py", "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6", "mode": "0755", "type": "regular"},
+    {"path": "bin/d141-validate-trace.py", "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5", "mode": "0755", "type": "regular"},
+    {"path": "bin/test-run", "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300", "mode": "0755", "type": "regular", "preimage_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe"}
+  ],
+  "manifest_source": "/tmp/d141h-cas-0422/candidate.tYrUQu/privateops-d141-measured-floor/install-manifest.json",
+  "reviewed_installer_blob": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00:ops-child-custody/install-prep/install_atomic.py",
+  "reviewed_installer_blob_sha256": "81eb0818809cccf52c95fb4a536f2c86f29ad47e8395a8d5a725b8c3fb560ef9",
+  "source_worktree_clean": true,
+  "app_admission": "REFUSED_PENDING_SEPARATE_PAIREDKIT"
+}

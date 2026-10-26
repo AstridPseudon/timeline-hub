@@ -1,0 +1,35 @@
+#!/bin/bash
+# hub-repack AREA [--dry-run] — guarded, LOSSLESS compaction of this machine's hub repo loose objects (D141o, 26 Oct).
+# OWNER-GATED: a real run removes loose object copies after they are packed and verified (git prune-packed), which falls
+# under the owner's deletion rule. Run it for real ONLY with the owner's own approval typed in this machine's session.
+# --dry-run changes nothing. Guards: holds the hub-sync lock throughout; refuses while any tests/<run>/status is "running";
+# packs at most BATCH loose objects per step and only while free disk >= MIN_FREE (the pack is written before any loose
+# copy goes, so disk grows first); after each pack, checks the pack and that every object of the batch is in it, then
+# prune-packed (removes only loose objects that a pack now holds). Records each run in design/deletion-ledger.AREA.md.
+set -u
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; R=${HUB_REPACK_REPO:-/home/user/timeline-hub}   # override only for the self-test
+AREA=${1:-}; DRY=0; [ "${2:-}" = --dry-run ] && DRY=1
+case "$AREA" in runtime|app|agent|farm) ;; *) echo "usage: hub-repack runtime|app|agent|farm [--dry-run]. Nothing done." >&2; exit 2;; esac
+MIN_FREE=${HUB_REPACK_MIN_FREE:-4300000000}; BATCH=${HUB_REPACK_BATCH:-3000}
+avail() { df -B1 --output=avail /home/user | tail -1 | tr -d ' '; }
+cd $R || exit 2
+exec 8>$ORCH/.hub-sync.lock; flock -w 600 8 || { echo "hub-repack: hub-sync lock busy; nothing done" >&2; exit 3; }
+for s in $ORCH/tests/*/status; do [ "$(cat $s 2>/dev/null)" = running ] && { echo "hub-repack: test run $(basename $(dirname $s)) is running; nothing done" >&2; exit 4; }; done
+before=$(avail); loose0=$(find .git/objects/?? -type f 2>/dev/null | wc -l)
+echo "hub-repack $AREA: free $before B, loose objects $loose0"; git count-objects -vH
+[ $DRY = 1 ] && { echo "dry run: would pack in batches of $BATCH while free >= $MIN_FREE B. Nothing done."; exit 0; }
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT; b=0
+while :; do
+  [ $(avail) -ge $MIN_FREE ] || { echo "stop: free $(avail) B below $MIN_FREE B"; break; }
+  find .git/objects/?? -type f 2>/dev/null | head -$BATCH | sed -E 's#.*/objects/(..)/(.*)#\1\2#' | sort > $tmp/batch
+  [ -s $tmp/batch ] || { echo "no loose objects left"; break; }
+  p=$(git pack-objects -q .git/objects/pack/pack < $tmp/batch) || { echo "hub-repack: pack-objects failed; loose copies untouched" >&2; exit 5; }
+  git verify-pack .git/objects/pack/pack-$p.idx > /dev/null || { echo "hub-repack: verify-pack failed for pack-$p; loose copies untouched" >&2; exit 6; }
+  git show-index < .git/objects/pack/pack-$p.idx | awk '{print $2}' | sort > $tmp/packed
+  [ -z "$(comm -23 $tmp/batch $tmp/packed)" ] || { echo "hub-repack: pack-$p lacks objects of its batch; loose copies untouched" >&2; exit 7; }
+  git prune-packed; b=$((b+1))
+done
+after=$(avail); loose1=$(find .git/objects/?? -type f 2>/dev/null | wc -l)
+printf '\n### %s — hub-repack (D141o, owner-approved in the %s session)\n\nLossless: %s batches; loose objects %s -> %s (packed and verified before removal by git prune-packed); free %s -> %s B. Repo %s.\n' \
+  "$(date -u +%FT%H:%MZ)" "$AREA" "$b" "$loose0" "$loose1" "$before" "$after" "$R" >> $ORCH/design/deletion-ledger.$AREA.md
+echo "done: $b batches; loose $loose0 -> $loose1; free $before -> $after B"

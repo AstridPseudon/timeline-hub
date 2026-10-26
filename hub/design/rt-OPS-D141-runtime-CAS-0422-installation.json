@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.ops.d141h.runtime-cas-install.v1",
+  "result": "PASS_INSTALL",
+  "source_commit": "56f2d56e7d241d303be85df62166570d51602101",
+  "source_tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+  "destination_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch",
+  "preconditions": {
+    "live_test_run_preimage_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "live_test_run_mode": "0755",
+    "live_test_run_type": "regular_nofollow_single_link",
+    "helpers_absent_including_dangling_symlinks": true,
+    "receiving_bin_physical_owned": true,
+    "receiving_backups_physical_owned": true,
+    "no_live_test_body_or_dispatcher": true
+  },
+  "operations": [
+    "own lock mkdir O_EXCL-style boundary at bin/.d141h-runtime-cas.install.lock, mode 0700",
+    "four helpers copied first through reviewed install_atomic.py copy_reserved using O_EXCL|O_NOFOLLOW, descriptor fsync, regular/single-link/owner/mode/hash readback",
+    "test-run predecessor copied to a fresh backup reservation using the same no-clobber route",
+    "backup promoted with mv --no-clobber; existing backups preserved",
+    "test-run candidate copied last to a staged replacement with descriptor fsync and exact hash/mode readback",
+    "rename_if_same checked target device/inode and regular ownership, then performed descriptor-bound atomic rename and directory fsync",
+    "post-commit target, helper, backup, protected-helper and staging readbacks passed; lock removed normally"
+  ],
+  "installed_files": [
+    {"path": "bin/d141-append-final.py", "sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398", "mode": "0755", "links": 1, "inode": 1632731},
+    {"path": "bin/d141-disk-trace.py", "sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222", "mode": "0755", "links": 1, "inode": 1632737},
+    {"path": "bin/d141-validate-receipt.py", "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6", "mode": "0755", "links": 1, "inode": 1632755},
+    {"path": "bin/d141-validate-trace.py", "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5", "mode": "0755", "links": 1, "inode": 1632773},
+    {"path": "bin/test-run", "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300", "mode": "0755", "links": 1, "inode": 1632774}
+  ],
+  "backup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/test-run.20261026T043253Z.bak",
+    "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "mode": "0755",
+    "type": "regular_single_link",
+    "no_clobber": true
+  },
+  "lock_after_install": "absent",
+  "replacement_after_install": "absent",
+  "protected_helpers_unchanged": {
+    "bin/bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "bin/verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "service_activation": false,
+  "receipt_attachment": false,
+  "hub_publish": false,
+  "product_head_change": false
+}
