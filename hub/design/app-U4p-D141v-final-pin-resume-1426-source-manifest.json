@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.app.u4p.d141v.source-manifest.v1",
+  "app_base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-ec0a9f5b",
+    "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "clean": true
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "clean": true
+  },
+  "vendor": {
+    "provenance_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "provenance_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "payload_entries": 160,
+    "app_payload_entries": 160,
+    "payload_names_exact": true,
+    "payload_bytes_exact_to_app_base": true,
+    "private_refresh_payloads_exact_to_app_base": true,
+    "public_imports_verified": 11,
+    "pinned_source_files_verified": 65
+  },
+  "runtime_lock": {
+    "source_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "entries": 14,
+    "bytes_sha256": "847c58d658e90e319f0c65ff9a780b8937fe96b1aa02732c22c00064741d3d51"
+  },
+  "metadata_hashes": {
+    "manifest_sha256": "76980e42bf0e89b090a16caf7b1808eae842f48246f538e2689998c614a9b483",
+    "provenance_sha256": "546e746dad5bb8c74aeb3e139cf477ef26e422dc6021e0a406e8ab67f0e90134"
+  }
+}

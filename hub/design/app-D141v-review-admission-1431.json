@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-26T14:30:08.247469+00:00",
+  "worker": "app-U4p-D141v-final-pin-review-next",
+  "free_before_dispatch": 4631158784,
+  "floor": 4600000000,
+  "continuous_stop": 4000000000,
+  "base": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+  "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+  "author_terminal": true,
+  "no_heavy": true
+}

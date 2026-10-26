@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.app.u4p.d141v.adoption.v1",
+  "result": "PASS",
+  "base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "producers": {
+    "agent": {
+      "checkout": "/home/user/work/wt/agt-pin-ec0a9f5b",
+      "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "clean": true,
+      "expected_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "expected_tree": "83b84c79941917fde535ee3ddba5533a776cace3"
+    },
+    "runtime": {
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true,
+      "expected_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "expected_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "tools": {
+    "node": "v20.19.4",
+    "private_refresh_result": "PASS: 160 payload files; all names and bytes exact to App baseline",
+    "normal_refresh_result": "PASS: 160 files; provenance updated",
+    "runtime_sync_result": "PASS: runtime.lock source_commit already exact; no consumer byte delta",
+    "vendor_lock_result": "PASS",
+    "manifest_result": "PASS; plan, write, repeat plan idempotent"
+  },
+  "final_metadata": {
+    "manifest_agent_sha": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "manifest_runtime_sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "manifest_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provenance_agent_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "provenance_agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "runtime_lock_source_commit": "95d98f038320d5d46bd679ac000ab3e15825c935"
+  },
+  "changed_paths": [
+    "public/install-manifest.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "status": [
+    "M public/install-manifest.json",
+    " M vendor/astrid-browser/provenance.json"
+  ],
+  "payload_files": 160
+}

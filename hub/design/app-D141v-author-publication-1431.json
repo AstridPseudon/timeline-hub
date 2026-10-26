@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-26T14:30:08.246582+00:00",
+  "worker": "app-U4p-D141v-final-pin-resume-1426",
+  "commit": "beee9d3110fbb4fae73eb2998e1dac5e12f0d1dc",
+  "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/adoption.json",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-adoption.json",
+      "sha256": "26c1dc72389ffef4752b9aa19f9387f9970c2f0cb521c01b2634f12278e9fbae",
+      "bytes": 2068,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/source-manifest.json",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-source-manifest.json",
+      "sha256": "f414eb3319e3df72781c710b77717d7903c7fee0593c5d7d916d14c3fbdcfaed",
+      "bytes": 1435,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/outside-conservation.json",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-outside-conservation.json",
+      "sha256": "27f5bceed6714e80534f264c7c05816924ab04a07b9fed90698519bdec5701dd",
+      "bytes": 892,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/validation.md",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-validation.md",
+      "sha256": "63f7f56fb7ad11b43b81e69023b623f25f7b66ec1603882f80fcd37d3cafd068",
+      "bytes": 2048,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/findings.json",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-findings.json",
+      "sha256": "41b8b58d6b6fe659af5b869b6382cd5730f5803a347c34dc1e15a98597ef1a49",
+      "bytes": 272,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/handoff.md",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-handoff.md",
+      "sha256": "983b21a6a3503ab4e50067a5eee795f44fc1334103b36f69a3561d7c0262f066",
+      "bytes": 846,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/disk-trace.txt",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-disk-trace.txt",
+      "sha256": "18fbcfa16242a43e6ec7b45090cab74a86aa7be7a86bf7267223976465d9c7a2",
+      "bytes": 350,
+      "mode": 420
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141v-final-pin-resume-1426/evidence/sampler-lifecycle.json",
+      "path": "design/app-U4p-D141v-final-pin-resume-1426-sampler-lifecycle.json",
+      "sha256": "3f1bf438f6d80f6c61c2cb0f5488fad46f853c870ae803c506b10833b8b69331",
+      "bytes": 1426,
+      "mode": 420
+    }
+  ],
+  "qualification": "author claims only; one independent review required",
+  "monitor_limit": "Only first five one-second samples and bounded tool samplers, not continuous whole-worker coverage. Original claim retained."
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "timeline.app.u4p.d141v.sampler-lifecycle.v1",
+  "stop_bytes": 4000000000,
+  "first_tool_trace": {
+    "started_as_first_tool": true,
+    "duration_samples": 5,
+    "samples": [
+      {
+        "utc": "2026-10-26T14:26:06Z",
+        "available_bytes": 4467126272,
+        "stop_bytes": 4000000000
+      },
+      {
+        "utc": "2026-10-26T14:26:07Z",
+        "available_bytes": 4467122176,
+        "stop_bytes": 4000000000
+      },
+      {
+        "utc": "2026-10-26T14:26:08Z",
+        "available_bytes": 4467122176,
+        "stop_bytes": 4000000000
+      },
+      {
+        "utc": "2026-10-26T14:26:09Z",
+        "available_bytes": 4467122176,
+        "stop_bytes": 4000000000
+      },
+      {
+        "utc": "2026-10-26T14:26:10Z",
+        "available_bytes": 4467122176,
+        "stop_bytes": 4000000000
+      }
+    ],
+    "min_available_bytes": 4467122176,
+    "result": "PASS"
+  },
+  "private_refresh_sampler": {
+    "started": true,
+    "stopped": true,
+    "waited": true,
+    "reaped": true,
+    "samples": [
+      4466315264,
+      4466315264
+    ],
+    "min_available_bytes": 4466315264,
+    "result": "PASS"
+  },
+  "adoption_sampler": {
+    "started": true,
+    "stopped": true,
+    "waited": true,
+    "reaped": true,
+    "samples": [
+      4453040128,
+      4453036032,
+      4453036032
+    ],
+    "min_available_bytes": 4453036032,
+    "result": "PASS"
+  },
+  "continuous_stop_respected": true
+}
