@@ -22,6 +22,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())) / "X5-windows-journey"
 HEALTH_URL = "http://127.0.0.1:17340/api/runtime/v1/health"
+TASK_OUTPUT_TAIL_BYTES = 65536
 
 
 def save(name, value):
@@ -206,7 +207,7 @@ def task():
             "processes-after-task-follow.json"))
         if process_rows is not None:
             best_effort("task-sfx-output-evidence.json", lambda: capture_sfx_output(task_id, process_rows))
-        best_effort("task-logs-before-cancel", capture_task_logs)
+        best_effort("task-logs-before-cancel", lambda: capture_task_logs(task_id, process_rows))
         try:
             cli("astrid", ["tasks", "events", task_id, "--project", project, "--json"],
                 "task-events-before-cancel.json", timeout=30)
@@ -265,38 +266,10 @@ def best_effort(label, action):
         return None
 
 
-def capture_task_logs():
-    logs = data_root() / "logs"
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
-    copied = []
-    paths = [logs / "service-pack-host.log", logs / "service-worker.log", *logs.glob("worker*.log")]
-    for path in paths[:21]:
-        if not path.is_file():
-            continue
-        try:
-            evidence_name = f"task-timeout-{path.name}"
-            with path.open("rb") as source, (EVIDENCE / evidence_name).open("wb") as target:
-                source.seek(max(0, path.stat().st_size - 262144))
-                target.write(source.read(262144))
-            copied.append({"source": path.name, "evidence": evidence_name})
-        except OSError:
-            continue
-    save("task-logs-before-cancel.json", {
-        "logs": copied,
-        "missing": [name for name in ("service-pack-host.log", "service-worker.log")
-                    if name not in {entry["source"] for entry in copied}],
-        "task_child_output": {
-            "available": False,
-            "reason": "The task child stdout/stderr are held in pipes and consumed after exit; "
-                      "there is no on-disk per-task worker log to collect while it is running.",
-        },
-    })
-
-
-def capture_sfx_output(task_id, process_rows):
-    """Record only the known journey SFX attempt's small metadata files."""
+def task_attempt_root(task_id, process_rows):
+    if process_rows is None:
+        return None
     expected_prefix = ntpath.normcase(f"astrid-attempt-{task_id}-")
-    output_root = None
     for process in process_rows:
         command = process.get("command") or ""
         if "astrid.packs.chiptune.actions.sfx.run" not in command:
@@ -307,8 +280,70 @@ def capture_sfx_output(task_id, process_rows):
         candidate = match.group(1) or match.group(2)
         normalized = ntpath.normcase(candidate.replace("/", "\\"))
         if expected_prefix in normalized and normalized.endswith("\\outputs"):
-            output_root = Path(candidate)
-            break
+            return Path(candidate).parent
+    return None
+
+
+def _copy_tail(source, evidence_name, limit, *, details=False):
+    if source.is_symlink() or not source.is_file():
+        return None
+    try:
+        with source.open("rb") as stream:
+            size = os.fstat(stream.fileno()).st_size
+            stream.seek(max(0, size - limit))
+            content = stream.read(limit)
+    except OSError:
+        return None
+    (EVIDENCE / evidence_name).write_bytes(content)
+    row = {"source": source.name, "evidence": evidence_name}
+    if details:
+        row.update(bytes=len(content), truncated=size > limit)
+    return row
+
+
+def capture_task_logs(task_id=None, process_rows=None):
+    logs = data_root() / "logs"
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    copied = []
+    paths = [logs / "service-pack-host.log", logs / "service-worker.log", *logs.glob("worker*.log")]
+    for path in paths[:21]:
+        if not path.is_file():
+            continue
+        row = _copy_tail(path, f"task-timeout-{path.name}", 262144)
+        if row is not None:
+            copied.append(row)
+    attempt = task_attempt_root(task_id, process_rows) if task_id else None
+    child_logs = []
+    missing_child_logs = []
+    for name in ("task-stdout-tail.log", "task-stderr-tail.log"):
+        row = None
+        if attempt is not None:
+            row = _copy_tail(
+                attempt / name, f"task-timeout-{name}", TASK_OUTPUT_TAIL_BYTES, details=True,
+            )
+        if row is None:
+            missing_child_logs.append(name)
+        else:
+            child_logs.append(row)
+    save("task-logs-before-cancel.json", {
+        "logs": copied,
+        "missing": [name for name in ("service-pack-host.log", "service-worker.log")
+                    if name not in {entry["source"] for entry in copied}],
+        "task_child_output": {
+            "available": bool(child_logs),
+            "streams": child_logs,
+            "missing": missing_child_logs,
+            "reason": None if not missing_child_logs else (
+                "No readable per-attempt task stream tail was available before cancellation."
+            ),
+        },
+    })
+
+
+def capture_sfx_output(task_id, process_rows):
+    """Record only the known journey SFX attempt's small metadata files."""
+    attempt = task_attempt_root(task_id, process_rows)
+    output_root = attempt / "outputs" if attempt is not None else None
 
     evidence = {"found": output_root is not None, "files": {}}
     if output_root is not None:

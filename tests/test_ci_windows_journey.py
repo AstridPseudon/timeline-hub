@@ -135,6 +135,15 @@ def test_failed_follow_cancels_and_settles_before_returning_failure(tmp_path, mo
 
 def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monkeypatch):
     monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "service-pack-host.log").write_text("host at timeout\n", encoding="utf-8")
+    attempt = tmp_path / "astrid-attempt-task-1-token"
+    attempt.mkdir()
+    stdout = "x" * (journey.TASK_OUTPUT_TAIL_BYTES + 19)
+    (attempt / "task-stdout-tail.log").write_text(stdout, encoding="utf-8")
+    (attempt / "task-stderr-tail.log").write_text("worker stderr at timeout\n", encoding="utf-8")
     calls = []
     state = "running"
 
@@ -150,6 +159,21 @@ def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monke
         if argv[:2] == ["tasks", "show"]:
             return json.dumps({"ok": True, "data": {"state": state}})
         if argv[:2] == ["tasks", "cancel"]:
+            assert (tmp_path / "task-timeout-task-stdout-tail.log").read_text(encoding="utf-8") == (
+                stdout[-journey.TASK_OUTPUT_TAIL_BYTES:]
+            )
+            assert (tmp_path / "task-timeout-task-stderr-tail.log").read_text(
+                encoding="utf-8",
+            ) == "worker stderr at timeout\n"
+            evidence = json.loads((tmp_path / "task-logs-before-cancel.json").read_text(encoding="utf-8"))
+            assert evidence["task_child_output"]["available"] is True
+            assert evidence["task_child_output"]["missing"] == []
+            assert evidence["task_child_output"]["streams"] == [
+                {"source": "task-stdout-tail.log", "evidence": "task-timeout-task-stdout-tail.log",
+                 "bytes": journey.TASK_OUTPUT_TAIL_BYTES, "truncated": True},
+                {"source": "task-stderr-tail.log", "evidence": "task-timeout-task-stderr-tail.log",
+                 "bytes": len("worker stderr at timeout\n"), "truncated": False},
+            ]
             state = "cancelled"
             return json.dumps({"ok": True})
         if argv[:2] == ["tasks", "events"]:
@@ -157,12 +181,17 @@ def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monke
         raise AssertionError(argv)
 
     monkeypatch.setattr(journey, "cli", cli)
-    monkeypatch.setattr(journey, "snapshot", lambda name: (_ for _ in ()).throw(RuntimeError("snapshot failed")))
+    command = (f"python -m astrid.packs.chiptune.actions.sfx.run --out "
+               f"{attempt / 'outputs'}")
+    monkeypatch.setattr(journey, "snapshot", lambda name: [process(
+        22, 21, "10:02", command=command,
+    )])
+    monkeypatch.setattr(journey, "capture_sfx_output", lambda task_id, rows: None)
     with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
         journey.task()
 
     assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
-    assert (tmp_path / "processes-after-task-follow-error.json").is_file()
+    assert (tmp_path / "task-timeout-service-pack-host.log").read_text(encoding="utf-8") == "host at timeout\n"
 
 
 def test_sfx_output_capture_restricts_path_to_the_journey_attempt(tmp_path, monkeypatch):
@@ -189,8 +218,14 @@ def test_collect_preserves_timeout_logs_separately_from_final_logs(tmp_path, mon
     (tmp_path / "logs").mkdir()
     (tmp_path / "logs" / "service-pack-host.log").write_text("host at timeout\n", encoding="utf-8")
     (tmp_path / "logs" / "service-worker.log").write_text("worker at timeout\n", encoding="utf-8")
+    attempt = tmp_path / "astrid-attempt-task-1-token"
+    attempt.mkdir()
+    (attempt / "task-stdout-tail.log").write_text("child at timeout\n", encoding="utf-8")
+    (attempt / "task-stderr-tail.log").write_text("child error at timeout\n", encoding="utf-8")
+    command = (f"python -m astrid.packs.chiptune.actions.sfx.run --out "
+               f"{attempt / 'outputs'}")
 
-    journey.capture_task_logs()
+    journey.capture_task_logs("task-1", [process(22, 21, "10:02", command=command)])
     (tmp_path / "logs" / "service-pack-host.log").write_text("host after shutdown\n", encoding="utf-8")
     (tmp_path / "logs" / "service-worker.log").write_text("worker after shutdown\n", encoding="utf-8")
     monkeypatch.setattr(journey, "health", lambda: None)
@@ -200,12 +235,30 @@ def test_collect_preserves_timeout_logs_separately_from_final_logs(tmp_path, mon
     evidence = tmp_path / "evidence"
     assert (evidence / "task-timeout-service-pack-host.log").read_text() == "host at timeout\n"
     assert (evidence / "task-timeout-service-worker.log").read_text() == "worker at timeout\n"
+    assert (evidence / "task-timeout-task-stdout-tail.log").read_text() == "child at timeout\n"
+    assert (evidence / "task-timeout-task-stderr-tail.log").read_text() == "child error at timeout\n"
     assert (evidence / "service-pack-host.log").read_text() == "host after shutdown\n"
     manifest = json.loads((evidence / "task-logs-before-cancel.json").read_text())
     assert manifest["logs"] == [
         {"source": "service-pack-host.log", "evidence": "task-timeout-service-pack-host.log"},
         {"source": "service-worker.log", "evidence": "task-timeout-service-worker.log"},
     ]
+
+
+def test_timeout_manifest_marks_missing_task_streams(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path / "evidence")
+    monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
+    (tmp_path / "logs").mkdir()
+
+    journey.capture_task_logs("task-1", [])
+
+    manifest = json.loads((tmp_path / "evidence" / "task-logs-before-cancel.json").read_text())
+    assert manifest["task_child_output"] == {
+        "available": False,
+        "streams": [],
+        "missing": ["task-stdout-tail.log", "task-stderr-tail.log"],
+        "reason": "No readable per-attempt task stream tail was available before cancellation.",
+    }
 
 
 def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
