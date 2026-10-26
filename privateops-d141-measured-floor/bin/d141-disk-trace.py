@@ -27,6 +27,7 @@ def available_bytes(probe: str) -> int:
         check=True,
         capture_output=True,
         text=True,
+        timeout=2,
     )
     rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if len(rows) != 2 or rows[0] != "Avail" or not rows[1].isdigit():
@@ -122,13 +123,11 @@ def main(argv: list[str]) -> int:
             if stopping:
                 return 0
             next_sample += INTERVAL_SECONDS
-            delay = max(0.0, next_sample - time.monotonic())
-            try:
-                time.sleep(delay)
-            except InterruptedError:
-                # The signal handler records the terminal request; loop once
-                # so the required final sample is durable before exit.
-                stopping = True
+            while not stopping:
+                delay = next_sample - time.monotonic()
+                if delay <= 0:
+                    break
+                time.sleep(min(delay, 0.1))
     finally:
         if trace_descriptor >= 0:
             os.close(trace_descriptor)

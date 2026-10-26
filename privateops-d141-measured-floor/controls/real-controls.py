@@ -439,8 +439,8 @@ def main() -> int:
     if "trace PASS" not in (root / "tests/body-failure/trace-validation").read_text():
         raise AssertionError("failing body lost trace custody")
 
-    # Cancellation is delivered to the real setsid process group; the shell
-    # trap must stop and reap the sampler with a final sample.
+    # An early runner-group signal may arrive as soon as the trace is visible,
+    # before the readiness handshake. It must still finalize and reap.
     receipt(root, "body-cancel", "composition", "full-cancel-control", worktree, command=CANCEL_COMMAND)
     request(root, "body-cancel", "composition", "full-cancel-control")
     case("body-cancel-start", run_candidate(script, root, "body-cancel", env), 0)
@@ -481,6 +481,56 @@ def main() -> int:
     if Path(f"/proc/{trace_pid}").exists():
         raise AssertionError("cancelled installed runner did not reap its sampler")
     outcomes["cases"].append({"name": "body-cancel-self-finalized-reaped", "result": "pass"})
+
+    # The mounted caller marks CANCELLED, excludes the runner, and signals its
+    # session children (ps -g), including timeout's separate process group.
+    job = "body-stop-test"
+    receipt(root, job, "composition", "full-cancel-control", worktree, command=CANCEL_COMMAND)
+    request(root, job, "composition", "full-cancel-control")
+    case("body-stop-test-start", run_candidate(script, root, job, env), 0)
+    directory = root / "tests" / job
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if (directory / "log.txt").exists() and (directory / "disk-trace.tsv").exists():
+            break
+        time.sleep(0.02)
+    else:
+        raise AssertionError("stop-test body never entered the running command")
+    sampler = int((directory / "trace.pid").read_text())
+    caller = root / "stop-test-caller"
+    caller.write_text((LIVE_ROOT / "bin/stop-test").read_text().replace(f"O={LIVE_ROOT}", f"O={root}"))
+    stopped = subprocess.run(["bash", str(caller), job, "isolated cancellation control"], env=env, text=True, capture_output=True, timeout=15, check=False)
+    case("mounted-stop-test-caller", stopped, 0)
+    if wait_terminal(root, job) != "cancelled" or (directory / "exit").read_text().strip() != "130":
+        raise AssertionError("stop-test did not preserve cancelled/130")
+    if "trace PASS" not in (directory / "trace-validation").read_text() or Path(f"/proc/{sampler}").exists():
+        raise AssertionError("stop-test did not finalize and reap its sampler")
+    outcomes["cases"].append({"name": "mounted-stop-test-finalized-reaped", "result": "pass"})
+
+    # A stopped sampler cannot obey TERM. Reaping must escalate within the
+    # existing control deadline and refuse a successful body as exit 125.
+    job = "body-stopped-sampler"
+    receipt(root, job, "composition", "full-trace-control", worktree)
+    request(root, job, "composition", "full-trace-control")
+    case("body-stopped-sampler-start", run_candidate(script, root, job, env), 0)
+    directory = root / "tests" / job
+    trace = directory / "disk-trace.tsv"
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        if trace.exists() and "\tfirst\n" in trace.read_text():
+            break
+        time.sleep(0.02)
+    else:
+        raise AssertionError("stopped sampler never recorded its first sample")
+    sampler = int((directory / "trace.pid").read_text())
+    os.kill(sampler, signal.SIGSTOP)
+    if wait_terminal(root, job) != "fail" or (directory / "exit").read_text().strip() != "125":
+        raise AssertionError("unresponsive sampler did not fail closed within the deadline")
+    if not (directory / "trace-error").exists() or Path(f"/proc/{sampler}").exists():
+        raise AssertionError("unresponsive sampler was not refused and reaped")
+    if "integer expression expected" in (directory / "runner.log").read_text():
+        raise AssertionError("sampler failure used an unset caller exit status")
+    outcomes["cases"].append({"name": "stopped-sampler-bounded-reaped", "result": "pass"})
 
     # Trace custody attacks are exercised against the real received runner.
     for name, replacement in [
