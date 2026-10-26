@@ -1,0 +1,48 @@
+{
+  "task": "rt-F-D141l-command-wholepath-0640",
+  "verdict": "FAIL7_CONFIRMED_SOURCE_ONLY",
+  "admission": {
+    "available_bytes": 4608532480,
+    "utc": "2026-10-26T06:50:42.455577+00:00",
+    "kind": "ordinary source admission; not body or acceptance admission"
+  },
+  "current_tuple": {
+    "agent": {"path": "/home/user/work/agent", "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "app": {"path": "/home/user/work/app", "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "pristine": {
+    "agent": {"path": "/home/user/peteromallet/astrid-agent", "sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"},
+    "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"},
+    "root_check": {"claimed": "tests/v10/timelines_create.py", "result": "missing", "actual": "tests/v10/test_timelines_create.py", "result_actual": "exists"}
+  },
+  "published_hashes": {
+    "command_cut": "b3693e96c02cfbe89e094c2013370fcf4feb2e8f386a98860ecec4c2a30d11d2",
+    "command_pristine": "17800a0228c98c1859c55ea5f5b0ef08fe8824295c3dc40a9fcbef079259b2f9",
+    "checker_actual": "c5af3e45c06a8ab9c068f628178224442ef19277d7094bae2dfebd7c3988c128",
+    "checker_claimed_by_review0626": "c5afc8a5b06a8ab9c068f628178224442ef19277d7094bae2dfebd7c3988c128",
+    "d73_launcher_current": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+  },
+  "findings": [
+    {"id": "F-D141L-001", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-command-cut.sh:97-112", "agt-F-D141l-proof-return-0515-command-pristine.sh:90-105", "agt-F-D141l-proof-return-0515-source-manifest.json:5-8"], "defect": "stale integrated tuple"},
+    {"id": "F-D141L-002", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-command-pristine.sh:255-273", "agt-F-D141l-proof-return-0515-check-source.py:94-95", "git show 64197afa:tests/v10/{timelines_create.py,test_timelines_create.py}"], "defect": "claimed pristine root missing; checker counts tokens"},
+    {"id": "F-D141L-003", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-command-cut.sh:152-193", "agt-F-D141l-proof-return-0515-command-pristine.sh:134-165"], "defect": "inline caller JSON is not producer-authenticated admission"},
+    {"id": "F-D141L-004", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-command-pristine.sh:135-154"], "defect": "same source-manifest passed as command manifest and source manifest"},
+    {"id": "F-D141L-005", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-controls.json:38-46", "agt-F-D141l-proof-return-0515-check-source.py:49-68", "/home/user/work/agent/tools/p4-d73-pinned-launch.sh:41-73"], "defect": "positive/poison launcher controls not run for current tuple"},
+    {"id": "F-D141L-006", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-check-source.py:39-95"], "defect": "checker cannot execute or adversarially validate claimed controls"},
+    {"id": "F-D141L-007", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-command-cut.sh:210-224,242-286", "agt-F-D141l-proof-return-0515-command-pristine.sh:180-194,211-252"], "defect": "hashes stripped, existence-only custody, status before final checks"},
+    {"id": "F-D141L-008", "severity": "blocking", "sources": ["agt-F-D141l-command-review-0626-source-manifest.json:5-9", "published checker hash above"], "defect": "review publication hash mismatch for checker"},
+    {"id": "F-D141L-009", "severity": "blocking", "sources": ["/tmp/.../orch/bin/request-test:8-15", "/tmp/.../orch/bin/test-run:11-19", "agt-F-D141b-sol-command-review-0030 service-row.txt:4,13", "agt-F-D141l-proof-return-0515-rows.txt:1-20"], "defect": "no registered agent-core-full named row reaches the production route"},
+    {"id": "F-D141L-010", "severity": "blocking", "sources": ["agt-F-D141l-proof-return-0515-check-source.py:49-68"], "defect": "published checker dependencies positive-stub and positive/poison manifests are absent"}
+  ],
+  "production_dataflow": {
+    "request_test": "validates suite registration, writes tests/<id>/request and queues pending/test-<id>",
+    "test_run": "sources request, resolves command from suites.conf, snapshots tree, validates measured-floor receipt, starts child and records status/exit/log",
+    "named_row": "not present for agent-core-full; 0030 row is explicitly candidate-only",
+    "cut_launcher": "0515 direct setsid -> p4-d73-pinned-launch.sh -> preflight -> pytest child; not invoked by request-test/test-run",
+    "pristine_child": "0515 direct setsid -> pytest child; no D73",
+    "receipt_consumer": "0515 inline admitted_dispatch consumes caller JSON; does not consume a central producer receipt",
+    "lifecycle": "0515 writes status before late custody; existing test-run and 0030 have separate child/monitor finalization seams"
+  }
+}

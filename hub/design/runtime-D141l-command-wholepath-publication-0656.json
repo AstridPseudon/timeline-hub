@@ -1,0 +1,47 @@
+{
+  "utc": "2026-10-26T06:56:41Z",
+  "worker": "rt-F-D141l-command-wholepath-0640",
+  "worker_exit": 0,
+  "scope": "Independent read-only whole-path source investigation; no source qualification or body admission",
+  "verdict": "FAIL7_CONFIRMED_SOURCE_ONLY",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141l-command-wholepath-0640/evidence/findings.md",
+      "published": "design/rt-F-D141l-command-wholepath-0640-findings.md",
+      "bytes": 9147,
+      "sha256": "75d94ac4ee2819fbe0abeb31a348665eae1ac4d60ee081ae74d617e0884b3a35"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141l-command-wholepath-0640/evidence/source-map.json",
+      "published": "design/rt-F-D141l-command-wholepath-0640-source-map.json",
+      "bytes": 5408,
+      "sha256": "b2c2db030e86a48f9955bebf40ccc3d7f57f9b9003218d6f9e91a9a30b8f2c61"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141l-command-wholepath-0640/evidence/validation.md",
+      "published": "design/rt-F-D141l-command-wholepath-0640-validation.md",
+      "bytes": 2687,
+      "sha256": "5f0ab86743ddcff5d7b2b116d148d5b7989ac5aba45917a8c16d9f4d10491360"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141l-command-wholepath-0640/evidence/handoff.md",
+      "published": "design/rt-F-D141l-command-wholepath-0640-handoff.md",
+      "bytes": 1327,
+      "sha256": "7c78239134348866f36a39b64f7202dcae0b5c94be18c89546a79200797658a7"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141l-command-wholepath-0640/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141l-command-wholepath-0640-disk-trace.txt",
+      "bytes": 2711,
+      "sha256": "5dd07b3955db85e28d48e4a65e9f4d7242299581bff013690466956719b07696"
+    }
+  ],
+  "trace": {
+    "samples": 36,
+    "minimum_available_bytes": 4602667008,
+    "first": "2026-10-26T06:51:07+00:00 available_bytes=4607373312 stop_bytes=4000000000",
+    "terminal": "2026-10-26T06:54:10+00:00 terminal=1 available_bytes=4602667008 stop_bytes=4000000000"
+  },
+  "repair_owner": "agt-F-D141l-command-sol-0638",
+  "final_review_owner": "Agent lane"
+}
