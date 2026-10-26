@@ -1,0 +1,6 @@
+2026-10-26T13:15:14Z available_bytes=5540102144
+2026-10-26T13:15:19Z available_bytes=5540093952
+sampler_pid=5
+sampler_exit=0
+sampler_waited=true
+sampler_reaped=true

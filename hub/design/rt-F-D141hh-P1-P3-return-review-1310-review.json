@@ -1,0 +1,208 @@
+{
+  "candidate_hashes": {
+    "candidate-README.template.md": {
+      "base_bytes": 43978,
+      "base_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md",
+      "base_sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "candidate_bytes": 47478,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-README.template.md",
+      "candidate_sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "exact_prefix": true,
+      "suffix_bytes": 3500,
+      "suffix_occurrences": 1
+    },
+    "candidate-gate-results.md": {
+      "base_bytes": 39916,
+      "base_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md",
+      "base_sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "candidate_bytes": 43666,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-gate-results.md",
+      "candidate_sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "exact_prefix": true,
+      "suffix_bytes": 3750,
+      "suffix_occurrences": 1
+    }
+  },
+  "checks": {
+    "independent_hash_conservation_audit": {
+      "ids": "1..32",
+      "originals": 32,
+      "publication_packets": 4,
+      "result": "PASS",
+      "unique_originals": 32
+    },
+    "protected_checker_no_write": {
+      "command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/check_notes.py",
+      "exit_code": 0
+    },
+    "source_manifest_json_tool": {
+      "command": "python3 -m json.tool /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/source-manifest.json",
+      "exit_code": 0
+    }
+  },
+  "claims": {
+    "author_native_reviewer_distinctions_preserved": true,
+    "no_agent55_reg0_upstream_final_pin_build_zip_claim": true,
+    "no_outside_row_conservation_claim": true,
+    "no_selector_or_cumulative_verdict_retarget": true,
+    "observer_sampler_limitations_preserved": true,
+    "p1": {
+      "cases": 2,
+      "custody": "PASS_CUSTODY_TEST_PASS",
+      "errors": 0,
+      "failures": 0,
+      "native_invocations": 1,
+      "normal": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161",
+      "normal_duration_seconds": 200,
+      "preflight": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121",
+      "readiness": 1,
+      "same_id_wait_invocations": 1,
+      "skips": 0,
+      "test_keep_before_queue": true
+    },
+    "p3": {
+      "custody": "PASS_CUSTODY_TEST_PASS",
+      "errors": 0,
+      "failures": 0,
+      "gate5_tests": 1,
+      "native_invocations": 1,
+      "normal": "app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447",
+      "normal_duration_seconds": 206,
+      "preflight": "app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473",
+      "readiness": 1,
+      "skips": 0,
+      "test_keep_before_queue": true
+    },
+    "renderer": {
+      "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "controlled_inputs": [
+        "agent",
+        "runtime",
+        "app",
+        "composition"
+      ],
+      "fallback_checked": true,
+      "function": "render_readme",
+      "function_only": true
+    },
+    "shared_tuple": {
+      "agent": [
+        "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      ],
+      "app": [
+        "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      ],
+      "composition": [
+        "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      ],
+      "runtime": [
+        "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      ]
+    }
+  },
+  "conservation": {
+    "accepted_prefixes_byte_exact": true,
+    "all32_originals_resolved_and_hashed": true,
+    "bounded_suffix_once_per_document": true,
+    "complete_32_id_table": true,
+    "outside_row_conservation_claim": false,
+    "prior_failure_ids": "32 IDs 1..32 preserved unchanged",
+    "prior_gaps_ledgers_witnesses_monitor_limits_conserved": true
+  },
+  "d141ii": {
+    "app": "latest-upstream catch-up, then new-head qualification",
+    "historical_pending_scope": "Main12:30",
+    "installer2": "exact retirement of the two npm-schema tests",
+    "inverse38": "additive upstream-module restore",
+    "outstanding": [
+      "actual repairs",
+      "REG0",
+      "App new-head qualification",
+      "final D141v pin pass",
+      "build"
+    ],
+    "writers15": "protected migration to the commit path with force refused"
+  },
+  "disposition": "PASS_PROTECTED_DOCUMENTARY_RETURN",
+  "findings": [],
+  "limitations": [
+    "Author initial sampler launch failed before its evidence directory existed; the retained 38-sample foreground sampler is genuine, exited 130, was waited/reaped, and does not backfill first-tool coverage.",
+    "Reviewer first-tool sampler coverage is absent because inspection preceded the retained two-sample trace; no whole-worker monitoring claim is made.",
+    "P1/P3 and custody facts are retained original publications; no product or body re-review was performed."
+  ],
+  "prior_finding": {
+    "basis": "Both new candidate suffixes and handoff scope the Main12:30 pending wording historically and record current D141ii; the readonly checker enforces this correction.",
+    "id": "F-001",
+    "status": "CLOSED"
+  },
+  "sampler": {
+    "author_trace": {
+      "exit_code": 130,
+      "first_sample_at": "2026-10-26T13:08:49Z",
+      "first_tool_gap": {
+        "reason": "The initial sampler launch could not create disk-trace.txt because the evidence directory did not yet exist; the later retained sampler is not backfilled as first-tool coverage.",
+        "status": "FAIL"
+      },
+      "interval_seconds": 5,
+      "last_sample_at": "2026-10-26T13:11:55Z",
+      "minimum_available_bytes": 5544296448,
+      "reaped": true,
+      "sample_count": 38,
+      "sampler_pid": 2,
+      "schema": "d141hh-p1-p3-worker-sampler-v2",
+      "stop_free_bytes": 4000000000,
+      "stop_reached": false,
+      "tmpdir_metadata": "regular file pointer; no mkdir performed",
+      "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/disk-trace.txt",
+      "waited": true,
+      "worker_first_tool_trace": false
+    },
+    "review_trace": {
+      "author_source_trace": {
+        "exit_code": 130,
+        "first_tool_gap": {
+          "reason": "The initial sampler launch could not create disk-trace.txt because the evidence directory did not yet exist; the later retained sampler is not backfilled as first-tool coverage.",
+          "status": "FAIL"
+        },
+        "minimum_available_bytes": 5544296448,
+        "reaped": true,
+        "sample_count": 38,
+        "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/disk-trace.txt",
+        "waited": true
+      },
+      "exit_code": 0,
+      "first_sample_at": "2026-10-26T13:15:14Z",
+      "first_tool_gap": {
+        "reason": "The reviewer first tool was documentary inspection before starting this retained sampler; the current two-sample trace is bounded and is not backfilled as first-tool coverage.",
+        "status": "FAIL"
+      },
+      "interval_seconds": 5,
+      "last_sample_at": "2026-10-26T13:15:19Z",
+      "minimum_available_bytes": 5540093952,
+      "reaped": true,
+      "sample_count": 2,
+      "sampler_pid": 5,
+      "schema": "d141hh-protected-review-sampler-v1",
+      "stop_free_bytes": 4000000000,
+      "stop_reached": false,
+      "tmpdir_metadata": "regular file pointer; no mkdir performed",
+      "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-review-1310/evidence/disk-trace.txt",
+      "waited": true,
+      "worker_first_tool_trace": false
+    }
+  },
+  "schema": "d141hh-protected-return-review-v1",
+  "scope": "Independent one-pass review of the private D141hh P1/P3 documentary successors; no source or canonical edit, product test, service submission, body repeat, build, pin, REG0, or ZIP claim.",
+  "source_bindings": {
+    "all_actual_sizes_and_sha256_match": true,
+    "originals": 32,
+    "publication_packets": 4,
+    "unique_originals": 32
+  },
+  "task": "rt-F-D141hh-P1-P3-return-review-1310",
+  "verdict": "PASS"
+}

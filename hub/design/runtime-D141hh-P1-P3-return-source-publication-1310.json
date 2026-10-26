@@ -1,0 +1,72 @@
+{
+  "utc": "2026-10-26T13:13:24.418022+00:00",
+  "status": "AUTHOR_RETURN_TERMINAL_UNREVIEWED",
+  "worker": "rt-F-D141hh-P1-P3-return-1307",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/P1-P3-note.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-P1-P3-note.md",
+      "bytes": 473,
+      "sha256": "db6be60c62aacc0e978c53e7671544dbf15277378b37745db2a3cbb4137b3ab7"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-candidate-README.template.md",
+      "bytes": 47478,
+      "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-candidate-gate-results.md",
+      "bytes": 43666,
+      "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/check_notes.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-check_notes.py",
+      "bytes": 12288,
+      "sha256": "3b93e0532428009e1c29bc7f360c613507baf8ed18b45ba40314bee448ed2f6c"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-disk-trace.txt",
+      "bytes": 1895,
+      "sha256": "24494fe4e01f2e97fba31f16871e8bbe12693ac7496d71f3870ad8e2f72feadf"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-handoff.md",
+      "bytes": 572,
+      "sha256": "82f0e255b1b173f64aff7ea840fffcdaa5e8caf06456d30dce4dddc5048a519a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-sampler-lifecycle.json",
+      "bytes": 868,
+      "sha256": "9ea7f432c0d8c77821771560853d0ca43f5ad7d22cfb12e9218bcd3ac04c75d8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-source-manifest.json",
+      "bytes": 39347,
+      "sha256": "42758970f892634304611981435f21d5d2197857fbd53c9b20697730618df4a1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-validation.md",
+      "bytes": 1110,
+      "sha256": "e3c6792b5ba096b7908fbbbc74d48ac601d6d7b69d259068b77193797a7242fb"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-report.md",
+      "bytes": 1044,
+      "sha256": "0ba015f75ab79158b853c6111c795fd87fb3125b2517d241c51d24e688b7f67d"
+    }
+  ],
+  "limits": [
+    "Original1252 FAIL retained.",
+    "Initial sampler launch failed before evidence directory existed; later38samples are real, exit130 waited/reaped, not history repair.",
+    "No canonical install or original App proof retarget."
+  ]
+}
