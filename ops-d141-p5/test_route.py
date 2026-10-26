@@ -20,6 +20,7 @@ AGENT_RECEIPT = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
     "scratchpad/orch/queue/done/checkout-agent-" + AGENT_COMMIT
 )
+HISTORICAL_SNAPSHOT_KEY = "e9ea77a72a3e0027cdaa35281893fddf"
 
 
 def _qualified_config(tmp_path: Path) -> dict[str, object]:
@@ -48,6 +49,29 @@ def _copy_output(base: Path, destination: Path) -> Path:
     argv[-1] = f"--junitxml={destination}/d66/d141-p5-cut.xml"
     argv_path.write_text(json.dumps(argv))
     return destination
+
+
+def _normal_output(base: Path, destination: Path, *, skipped: bool = False) -> Path:
+    output = _copy_output(base, destination)
+    snap = output / "snap"
+    snap.write_text(snap.read_text() + f"key={HISTORICAL_SNAPSHOT_KEY}\n")
+    root = ET.Element(
+        "testsuite",
+        {
+            "name": "pytest",
+            "tests": str(len(receive.EXPECTED_CASES)),
+            "failures": "0",
+            "errors": "0",
+            "skipped": "1" if skipped else "0",
+        },
+    )
+    for index, case_id in enumerate(sorted(receive.EXPECTED_CASES)):
+        classname, name = case_id.split("::", 1)
+        case = ET.SubElement(root, "testcase", {"classname": classname, "name": name})
+        if skipped and index == 0:
+            ET.SubElement(case, "skipped")
+    (output / "d66/d141-p5-cut.xml").write_text(ET.tostring(root, encoding="unicode"))
+    return output
 
 
 def _receiver_cli(output: Path, receipt: Path, *options: str) -> subprocess.CompletedProcess:
@@ -314,6 +338,42 @@ def test_normal_receiver_cli_refuses_harmless_membership_and_pending_config(tmp_
     assert completed.returncode != 0
     assert "pending tuple" in completed.stderr
     assert _inventory(tmp_path) == before
+
+
+def test_normal_receiver_cli_requires_real_snapshot_key_and_all_cases_run(tmp_path: Path) -> None:
+    base = tmp_path / "control"
+    assert route.run_control(base, config=_qualified_config(tmp_path)) == 0
+    valid = _normal_output(base, tmp_path / "valid")
+    receipt = tmp_path / "valid-receipt.json"
+    completed = _receiver_cli(valid, receipt)
+    assert completed.returncode == 0, completed.stderr
+    data = json.loads(receipt.read_text())
+    assert data["provenance"]["snapshot_key"] == HISTORICAL_SNAPSHOT_KEY
+    assert len(data["testcases"]) == len(receive.EXPECTED_CASES)
+    assert {case["outcome"] for case in data["testcases"]} == {"passed"}
+
+    attacks = {
+        "skipped": _normal_output(base, tmp_path / "skipped", skipped=True),
+        "missing-key": _normal_output(base, tmp_path / "missing-key"),
+        "malformed-key": _normal_output(base, tmp_path / "malformed-key"),
+    }
+    attacks["missing-key"].joinpath("snap").write_text(
+        "tree=ac5b862744bece65b2e30565db1777bacd60da28\nworktree=/home/user/work/runtime\n"
+    )
+    attacks["malformed-key"].joinpath("snap").write_text(
+        "tree=ac5b862744bece65b2e30565db1777bacd60da28\nkey=E9EA77A72A3E0027CDAA35281893FDD\nworktree=/home/user/work/runtime\n"
+    )
+    for name, output in attacks.items():
+        attacked_receipt = tmp_path / f"{name}-receipt.json"
+        before = _inventory(tmp_path)
+        completed = _receiver_cli(output, attacked_receipt)
+        assert completed.returncode != 0
+        if name == "skipped":
+            assert "all 38 testcases" in completed.stderr
+        else:
+            assert "normal service snapshot has no valid key" in completed.stderr
+        assert not attacked_receipt.exists()
+        assert _inventory(tmp_path) == before
 
 
 def test_receiver_rejects_malformed_artifact_and_duplicate_receipt(tmp_path: Path) -> None:

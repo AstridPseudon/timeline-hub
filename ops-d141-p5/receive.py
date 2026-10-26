@@ -17,6 +17,7 @@ import route
 
 
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
+HEX32 = re.compile(r"^[0-9a-f]{32}$")
 HEX64 = re.compile(r"^(?:sha256:)?[0-9a-f]{64}$")
 REQUIRED_SERVICE = ("exit", "log.txt", "request", "snap", "summary")
 REQUIRED_D66 = (
@@ -302,6 +303,12 @@ def receive(output: Path, receipt: Path, *, config: dict[str, Any] | None = None
     expected_cases = {"test_control::test_D141_P5_CONTROL_ONCE"} if control else EXPECTED_CASES
     if {case["id"] for case in cases} != expected_cases:
         raise ValueError("JUnit testcase membership is not the exact P5 selection" if not control else "JUnit is not the harmless control")
+    if not control and not HEX32.fullmatch(snap.get("key", "")):
+        raise ValueError("normal service snapshot has no valid key")
+    if not control and any(case["outcome"] != "passed" for case in cases):
+        raise ValueError("normal P5 receipt requires all 38 testcases to pass without skips")
+    if not control:
+        provenance["snapshot_key"] = snap["key"]
     _validate_keep(d66 / "KEEP")
     _validate_disk(d66 / "disk-start")
     _validate_disk(d66 / "disk-stop")
