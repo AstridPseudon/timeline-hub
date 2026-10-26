@@ -900,6 +900,57 @@ def test_list_documents_generated_client_kind_filter_is_encoded() -> None:
         return 200, {}, b'{"items": [], "next_cursor": null}'
     assert WorkspaceClient("http://runtime", transport=transport).list_documents("p /", cursor="next/page", limit=5, kind="astrid.note /?") == ([], None)
 
+
+def test_stream_project_object_upload_sets_length_digest_and_does_not_buffer_or_close(monkeypatch) -> None:
+    import astrid_runtime_client.generated as generated
+
+    raw = b"prepared timeline bytes"
+    digest = hashlib.sha256(raw).hexdigest()
+
+    class ReadProbe(io.BytesIO):
+        max_read = 0
+
+        def read(self, size=-1):
+            self.max_read = max(self.max_read, size)
+            return super().read(size)
+
+    stream = ReadProbe(raw)
+    seen = {}
+
+    class Response:
+        status = 201
+        headers = {}
+
+        def __enter__(self): return self
+        def __exit__(self, *_args): return None
+        def read(self): return b'{"data":{"object_id":"sha256:' + digest.encode() + b'"},"receipt":{}}'
+
+    def open_request(request, *, timeout):
+        seen["request"] = request
+        seen["timeout"] = timeout
+        chunks = []
+        while True:
+            chunk = request.data.read(7)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        seen["uploaded"] = b"".join(chunks)
+        return Response()
+
+    monkeypatch.setattr(generated, "_urlopen_loopback", open_request)
+    result = WorkspaceClient("http://runtime").ingest_project_object_stream(
+        "p", stream, size=len(raw), media_type="application/json", idempotency_key="stream-import",
+        filename="prepared.json", expected_digest=digest,
+    )
+    request = seen["request"]
+    assert request.data is stream
+    assert request.get_header("Content-length") == str(len(raw))
+    assert request.get_header("X-expected-digest") == digest
+    assert request.get_header("X-original-name") == "prepared.json"
+    assert seen["uploaded"] == raw and stream.max_read == 7
+    assert not stream.closed
+    assert result["object_id"] == "sha256:" + digest
+
 def test_generated_recoverable_snapshot_client_and_server_route_shape() -> None:
     from types import SimpleNamespace
     from runtime_protocol.server import RuntimeHandler

@@ -1940,9 +1940,10 @@ class TimelineCommitStore:
                     reject("text_binding_owner_changed", "text binding owner differs from the accepted shot")
                 self._project_text_binding(project_id, shot_id, kind, slot, write["before"], write["after"], publication_id)
 
-    def _project_text_binding(self, project_id, shot_id, kind, slot, before, after, publication_id):
+    def _project_text_binding(self, project_id, shot_id, kind, slot, before, after, publication_id,
+                              *, allow_import_text_plain=False):
         from .service import RuntimeService
-        from .timeline_commit_port import verify_retained_text_object, verify_text_object
+        from .timeline_commit_port import _verify_text_object, verify_retained_text_object, verify_text_object
         from .cas import ContentAddressedStore
 
         owner = self.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (shot_id,)).fetchone()
@@ -1978,6 +1979,8 @@ class TimelineCommitStore:
             cas = ContentAddressedStore(self.store.cas_root)
             if selection["media_type"] == "text/plain" and row is not None:
                 verify_retained_text_object(self.conn, cas, row, selection)
+            elif selection["media_type"] == "text/plain" and allow_import_text_plain:
+                _verify_text_object(self.conn, cas, project_id, selection, "text/plain")
             else:
                 verify_text_object(self.conn, cas, project_id, selection)
         object_digest = value["media_id"][7:]
@@ -2168,9 +2171,15 @@ class TimelineCommitStore:
             self._install_entries(project_id, timeline_id, plan)
             return plan["entries"][0]["receipt"]["event_ids"][0]
 
-    def bootstrap(self, project_id, timeline_id, *, authorize):
-        from .cas import ContentAddressedStore
-        from .timeline_commit_baseline import bootstrap_install_plan, default_bootstrap_document
+    def bootstrap(self, project_id, timeline_id, *, authorize, document=None, source=None,
+                  idempotency_key=None, request_hash=None):
+        """Install one initial publication, optionally from a validated import closure.
+
+        Timeline creation and import share the same transaction, publication
+        event, receipt, head and history path. An imported closure is therefore
+        the first editable revision, with no intermediate empty timeline.
+        """
+        from .timeline_commit_baseline import default_bootstrap_document
 
         # May compose with main's atomic create transaction. This is the sole
         # exception to accept's outer-transaction requirement.
@@ -2183,7 +2192,18 @@ class TimelineCommitStore:
                 if current["publication_id"]:
                     return self.head(project_id, timeline_id)
                 reject("history_unavailable", diagnostic_reason="store_bootstrap_unpublished_head")
-            document = default_bootstrap_document(project_id, timeline_id, "bootstrap-" + new_id())
+            if source is not None and (
+                not isinstance(source, dict)
+                or set(source) - {"via", "detail"}
+                or source.get("via") not in {"cli", "python", "app", "script", "sheet"}
+                or ("detail" in source and not isinstance(source["detail"], str))
+            ):
+                raise ValidationError("source must be a supported timeline provenance object")
+            imported = document is not None
+            if document is None:
+                document = default_bootstrap_document(project_id, timeline_id, "bootstrap-" + new_id())
+            elif (document.get("project_id"), document.get("timeline_id")) != (project_id, timeline_id):
+                reject("invalid_closure", "import closure scope does not match the new timeline", status=422)
             self._validate_closure(document)
             self._persist_closure(document)
             parent, timestamp = document["parent_revision"], now()
@@ -2191,18 +2211,64 @@ class TimelineCommitStore:
             self.conn.execute("INSERT INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, ?, ?) "
                               "ON CONFLICT(timeline_id) DO UPDATE SET revision_id=excluded.revision_id, updated_at=excluded.updated_at",
                               (timeline_id, project_id, parent["revision_id"], timestamp))
-            event = self.store._append_timeline_event(timeline_id, "parent.composition.published",
-                {"project_id": project_id, "timeline_id": timeline_id, "old_head": None, "new_head": parent["revision_id"],
-                 "content_digest": parent["content_digest"], "dependency_manifest": manifest})
+            event_payload = {"project_id": project_id, "timeline_id": timeline_id,
+                             "old_head": None, "new_head": parent["revision_id"],
+                             "content_digest": parent["content_digest"], "dependency_manifest": manifest}
+            if source is not None:
+                event_payload["source"] = source
+            event = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
             result = {"project_id": project_id, "timeline_id": timeline_id, "revision_id": parent["revision_id"],
                       "parent_revision_id": parent["revision_id"], "content_digest": parent["content_digest"], "payload": parent["payload"],
                       "old_head": None, "new_head": parent["revision_id"], "dependency_manifest": manifest,
-                      "content_digests": {"parent": parent["content_digest"]}, "event_id": event, "created_at": timestamp}
+                      "content_digests": {"parent": parent["content_digest"],
+                          **{item["revision_id"]: item["content_digest"] for item in document["shot_revisions"] + document["internal_timeline_revisions"]},
+                          **{item["media_id"]: item["content_digest"] for item in manifest["media"]}},
+                      "event_id": event, "created_at": timestamp}
+            if imported and source is not None:
+                result["source"] = source
             event_seq = self.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
-            self.store._record_command_receipt("parent_composition.publish", timeline_id, "bootstrap:" + timeline_id,
-                digest({"project_id": project_id, "timeline_id": timeline_id, "bootstrap": True})[7:], result,
+            publication_key = idempotency_key or ("bootstrap:" + timeline_id)
+            publication_hash = request_hash or digest({"project_id": project_id, "timeline_id": timeline_id, "bootstrap": True})[7:]
+            publication_id = self.store._record_command_receipt("parent_composition.publish", timeline_id,
+                publication_key, publication_hash, result,
                 project_id=project_id, event_ids=[event], primary_stream_id=timeline_id, resulting_stream_seq=event_seq, created_at=timestamp)
-            plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
-                                          read_object=ContentAddressedStore(self.store.cas_root).read)
+            if imported:
+                for shot in document["shot_revisions"]:
+                    for descriptor in shot["payload"].get("text_bindings", []):
+                        from .service import RuntimeService
+                        expected_binding_id = RuntimeService._text_binding_id(
+                            project_id, shot["shot_id"], descriptor.get("kind"), descriptor.get("slot")
+                        )
+                        if (descriptor.get("binding_id") != expected_binding_id
+                                or descriptor.get("project_id", project_id) != project_id
+                                or descriptor.get("shot_id", shot["shot_id"]) != shot["shot_id"]
+                                or descriptor.get("event_stream_id", expected_binding_id + ":shot.text_binding")
+                                != expected_binding_id + ":shot.text_binding"):
+                            reject("invalid_closure", "import text binding identity does not match its shot", status=422)
+                        self._project_text_binding(
+                            project_id, shot["shot_id"], descriptor["kind"], descriptor.get("slot"),
+                            {"state": "absent"}, {"state": "present", "value": descriptor}, publication_id,
+                            allow_import_text_plain=True,
+                        )
+                entry = {
+                    "publication_id": publication_id,
+                    "revision_id": parent["revision_id"],
+                    "previous": None,
+                    "intent": "bootstrap",
+                    "receipt": {"project_seq": [
+                        self.conn.execute("SELECT first_project_seq FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()[0],
+                        self.conn.execute("SELECT last_project_seq FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()[0],
+                    ]},
+                    "provider_version": None,
+                    "compiler_version": None,
+                    "publisher": None,
+                    **({"source": source, "label": "Imported timeline"} if source is not None else {"label": "Imported timeline"}),
+                }
+                plan = {"head": {"revision_id": parent["revision_id"], "publication_id": publication_id}, "entries": [entry]}
+            else:
+                from .cas import ContentAddressedStore
+                from .timeline_commit_baseline import bootstrap_install_plan
+                plan = bootstrap_install_plan(self.conn, project_id, timeline_id,
+                                              read_object=ContentAddressedStore(self.store.cas_root).read)
             self._install_entries(project_id, timeline_id, plan)
             return detached(plan["head"])
