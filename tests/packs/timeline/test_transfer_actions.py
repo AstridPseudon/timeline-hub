@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from astrid.packs.timeline.actions._common import decode_manifest
+from astrid.packs.timeline.actions._common import open_worker_runtime_client
 from astrid.packs.timeline.actions.export_plan.run import _summary
 from astrid.packs.timeline.actions.prepare_import.run import build_prepare_import_artifacts
 
@@ -82,6 +83,43 @@ def test_export_summary_is_small_and_uses_plan_metadata():
     assert summary == {
         "name": "Saved edit", "media_count": 2, "media_bytes": 20, "transcript_count": 2,
     }
+
+
+def test_action_client_requires_the_explicit_host_runtime_context(monkeypatch):
+    from astrid.sdk import autobootstrap
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    monkeypatch.delenv("ASTRID_RUNTIME_ENDPOINT", raising=False)
+    monkeypatch.delenv("ASTRID_RUNTIME_CREDENTIAL", raising=False)
+    calls = []
+    monkeypatch.setattr(autobootstrap, "ensure_runtime", lambda **_kwargs: calls.append("launcher"))
+    with pytest.raises(WorkspaceClientError, match="runtime endpoint"):
+        open_worker_runtime_client()
+    assert calls == []
+
+
+def test_action_client_uses_the_host_worker_connection_for_runtime_reads(monkeypatch):
+    import astrid.sdk.workspace_client as workspace_client
+
+    monkeypatch.setenv("ASTRID_RUNTIME_ENDPOINT", "http://127.0.0.1:17341")
+    monkeypatch.setenv("ASTRID_RUNTIME_CREDENTIAL", "host-issued-worker-token")
+    calls = []
+
+    class FakeWorkspaceClient:
+        def __init__(self, endpoint, token):
+            self.endpoint, self.token = endpoint, token
+
+        def list_projects(self, *, cursor=None, limit=50):
+            calls.append(("list_projects", cursor, limit))
+            return {"items": [{"project_id": "target-project"}], "next_cursor": None}
+
+    monkeypatch.setattr(workspace_client, "WorkspaceClient", FakeWorkspaceClient)
+    client = open_worker_runtime_client()
+    result = client.projects.list()
+    assert result.ok and result.data["items"] == [{"project_id": "target-project"}]
+    assert client._transport.endpoint == "http://127.0.0.1:17341"
+    assert client._transport.token == "host-issued-worker-token"
+    assert calls == [("list_projects", None, 50)]
 
 
 @pytest.mark.integration

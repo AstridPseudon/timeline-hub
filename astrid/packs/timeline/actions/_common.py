@@ -70,3 +70,18 @@ def write_receipt(root: Path, *, kind: str, inputs: Mapping[str, Any], outputs: 
 
 def run_cli(capability_id: str, runner, argv: list[str] | None = None) -> int:
     return run_pack_main(capability_id, runner, argv=argv)
+
+
+def open_worker_runtime_client():
+    """Compose the read-only product facade over the host-issued worker connection.
+
+    GenericPackHost authenticates the worker and injects its explicit Runtime
+    endpoint and worker credential into command children. Do not invoke
+    the neutral launcher here: it selects an owner workspace, which is a
+    different authority from the Runtime task this action is serving.
+    """
+    from astrid.sdk.remote import RemoteAstridClient
+    from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
+
+    endpoint, token = resolve_runtime_connection()
+    return RemoteAstridClient(WorkspaceClient(endpoint, token))

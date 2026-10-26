@@ -9,7 +9,13 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from astrid.packs.timeline.actions._common import output_root, run_cli, write_artifact, write_receipt
+from astrid.packs.timeline.actions._common import (
+    open_worker_runtime_client,
+    output_root,
+    run_cli,
+    write_artifact,
+    write_receipt,
+)
 from astrid.sdk.timeline_transfer import export_plan
 
 
@@ -47,10 +53,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.add_argument("--timeline", required=True)
         parser.add_argument("--out", required=True)
         args = parser.parse_args(argv)
-        from astrid.sdk import AstridClient
-
-        with AstridClient.open_from_launcher(start_pack_host=False) as client:
-            build_export_plan_artifacts(client, args.project, args.timeline, args.out)
+        client = open_worker_runtime_client()
+        build_export_plan_artifacts(client, args.project, args.timeline, args.out)
         return 0
 
     return run_cli("timeline.export_plan", _run, argv)
