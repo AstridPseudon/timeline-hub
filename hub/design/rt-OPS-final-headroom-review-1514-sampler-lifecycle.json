@@ -1,0 +1,21 @@
+{
+  "format": "timeline-ops-headroom-review-v1",
+  "review": "rt-OPS-final-headroom-review-1514",
+  "read_only_reuse": true,
+  "new_sampler_started": false,
+  "historical_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-review-next/evidence/sampler-lifecycle.json",
+  "historical_observations": 29,
+  "historical_interval_seconds": 5,
+  "historical_min_available_bytes": 4916834304,
+  "historical_admission_floor_bytes": 4960000000,
+  "historical_positive_staging": "NOT_RUN_ADMISSION",
+  "historical_same33": "NOT_RUN_ADMISSION",
+  "review_point": {
+    "observed_at_utc": "2026-10-26T15:15:50Z",
+    "command": "df -B1 --output=avail /home/user /tmp",
+    "available_bytes_home_user": 4893786112,
+    "available_bytes_tmp": 4893786112,
+    "continuous_coverage": false
+  },
+  "scope": "Historical sampler metadata is accepted only at historical scope; it is not credited as this worker's continuous coverage or current 4GB stop."
+}

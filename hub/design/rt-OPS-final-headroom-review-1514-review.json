@@ -1,0 +1,112 @@
+{
+  "review": "rt-OPS-final-headroom-review-1514",
+  "census": "rt-OPS-final-headroom-census-1506",
+  "verdict": "NONE",
+  "scope": "Bounded records and targeted finite metadata only; not globally exhaustive.",
+  "observed_at_utc": "2026-10-26T15:15:50Z",
+  "composition_context": {
+    "revision": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "headroom": {
+    "required_pre_stage_bytes": 4960000000,
+    "census_observed_at_utc": "2026-10-26T15:11:11Z",
+    "census_available_bytes": 4899520512,
+    "census_gap_bytes": 60479488,
+    "review_point_available_bytes": 4893786112,
+    "review_point_gap_bytes": 66213888,
+    "measurement_type": "metadata_only"
+  },
+  "finite_candidates": [
+    {
+      "path": "workers/rt-F-D141jj-base-resume-next",
+      "bytes": 347684864,
+      "keep_marker": true,
+      "reference": "Current F-final source-positive review fixture and final tuple/manager records",
+      "decision": "protected"
+    },
+    {
+      "path": "workers/rt-F-D141yb-rehearsal-0741",
+      "bytes": 364339200,
+      "keep_marker": true,
+      "reference": "Current F-final rehearsal evidence and retained failed-rehearsal record",
+      "decision": "protected"
+    },
+    {
+      "path": "workers/rt-P2-parent-single-0107",
+      "bytes": 289853440,
+      "keep_marker": false,
+      "reference": "Current proof fixture referenced by suites/manager records",
+      "decision": "protected"
+    },
+    {
+      "path": "workers/rt-P2-native-reply-resume-0217",
+      "bytes": 282918912,
+      "keep_marker": false,
+      "reference": "Current proof fixture referenced by suites/manager records",
+      "decision": "protected"
+    },
+    {
+      "path": "archive-v1-20261022",
+      "bytes": 2097152,
+      "decision": "not_actionable"
+    },
+    {
+      "path": "tests/cache",
+      "bytes": 6881280,
+      "decision": "not_actionable"
+    },
+    {
+      "path": "/home/user/work/wt/.test-agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220",
+      "bytes": 15032320,
+      "decision": "not_actionable_unowned"
+    },
+    {
+      "path": "/home/user/work/wt/nesttest",
+      "bytes": 8192,
+      "decision": "not_actionable_unowned"
+    }
+  ],
+  "dirty_runtime": {
+    "count": 5,
+    "source": "Owning Runtime manager's recorded bin/recycle guard refusals at 2026-10-26T14:42Z",
+    "status": "DIRTY, refused",
+    "names": [
+      "rt-m3-legacy-capture-replay-proof",
+      "rt-m3-capture-candidate-actual-pair",
+      "rt-m2-parent-media-door-proof",
+      "rt-m2-public018-generation-gate-preflight-1134",
+      "rt-m2-rt03-peer-agreed-raw-capture-impl"
+    ],
+    "review_did_not_run_git_status": true,
+    "review_did_not_inspect_contents": true
+  },
+  "owner_decision": {
+    "existing_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-repack runtime",
+    "owner_gated": true,
+    "executed": false,
+    "approved_by_review_author": false,
+    "repeat_ask": false
+  },
+  "sampler": {
+    "new_sampler_started": false,
+    "read_only_reuse": true,
+    "historical_only": true,
+    "continuous_coverage_credit": false,
+    "current_4gb_stop_credit": false
+  },
+  "actions": {
+    "cleanup": false,
+    "recycle": false,
+    "sweep": false,
+    "compact": false,
+    "repack": false,
+    "delete": false,
+    "source_change": false,
+    "product_change": false
+  },
+  "tests": {
+    "needed": false,
+    "run": []
+  }
+}

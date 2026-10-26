@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-26T15:19:14.694400+00:00",
+  "status": "PASS_BOUNDED_REVIEW_NONE",
+  "scope": "Independent review confirms no ordinary eligible recovery among inspected records; not exhaustive",
+  "worker": "rt-OPS-final-headroom-review-1514",
+  "terminal_exit": "0",
+  "new_sampler_started": false,
+  "monitor_limit": "Historical sampler reuse provides no reviewer continuous coverage or current stop proof",
+  "current_point_free_bytes": 4892741632,
+  "required_pre_stage_bytes": 4960000000,
+  "gap_bytes": 67258368,
+  "source_positive_controls": "HOLD unchanged; not executed",
+  "decision": "Existing Main 1450 request remains pending; no repeat approval inferred",
+  "outputs": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/disk-trace.txt",
+      "published": "design/rt-OPS-final-headroom-review-1514-disk-trace.txt",
+      "bytes": 622,
+      "sha256": "109bee8aedb4039bc3296e57a6ec6fc3d1d99ccd120d6e12242ef0213436087e"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/findings.md",
+      "published": "design/rt-OPS-final-headroom-review-1514-findings.md",
+      "bytes": 2507,
+      "sha256": "01ce780fe7a9b6c1507fcf4125d588476aaa65274cfe96729e96c0b783eb10b0"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/handoff.md",
+      "published": "design/rt-OPS-final-headroom-review-1514-handoff.md",
+      "bytes": 1401,
+      "sha256": "fa176aae1f2bdb5f995b0c7f16620d7656061c6557af4f00131f79484db37bd0"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/report.md",
+      "published": "design/rt-OPS-final-headroom-review-1514-report.md",
+      "bytes": 2856,
+      "sha256": "66a9e6babc55925928f54c35b6bbdb5599f2e851e41d0b3efec315cc2f80df49"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/review.json",
+      "published": "design/rt-OPS-final-headroom-review-1514-review.json",
+      "bytes": 3477,
+      "sha256": "449f980c39dd80638f0c7363137983e7784c5f47d171b6e33bc7799c7b8d53fe"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/sampler-lifecycle.json",
+      "published": "design/rt-OPS-final-headroom-review-1514-sampler-lifecycle.json",
+      "bytes": 1007,
+      "sha256": "493e911873a8676ee160e1c072136a0ecbf53689fbe7baa5697e28b63b2c66cb"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/source-manifest.json",
+      "published": "design/rt-OPS-final-headroom-review-1514-source-manifest.json",
+      "bytes": 4345,
+      "sha256": "780fb6319bb0298bae77f593b8b4a3196b3d5cafcb038acee2c31693c542fe51"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-review-1514/evidence/validation.md",
+      "published": "design/rt-OPS-final-headroom-review-1514-validation.md",
+      "bytes": 2059,
+      "sha256": "4d8c623f82e2393ccbaad6417175d6d66550d7413fd269ff69ffe8ba9244c878"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Metadata-only disk trace — rt-OPS-final-headroom-review-1514
+
+This review did not start a sampler. The following are point-in-time `df` observations only.
+
+## Review point
+
+```text
+2026-10-26T15:15:50Z
+command: df -B1 --output=avail /home/user /tmp
+/home/user 4893786112
+/tmp       4893786112
+```
+
+The census's prior bounded measurement remains separately recorded at `2026-10-26T15:11:11Z`:
+
+```text
+/home/user 4899520512
+/tmp       4899520512
+```
+
+The historical five-second source-review trace was read, not rerun. Its minimum was `4916834304` bytes over 29 observations; it is not this worker's continuous trace.
+

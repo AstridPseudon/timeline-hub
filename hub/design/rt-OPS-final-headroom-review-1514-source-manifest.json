@@ -1,0 +1,85 @@
+{
+  "review": "rt-OPS-final-headroom-review-1514",
+  "census": "rt-OPS-final-headroom-census-1506",
+  "observed_at_utc": "2026-10-26T15:15:50Z",
+  "method": "bounded read-only metadata, control-record, command-guard, hash, and JSON review",
+  "composition_context": {
+    "revision": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "sources": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "use": "settled plan; F support scope",
+      "sha256": "not recorded; read-only source"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-census-1506/evidence/candidates.json",
+      "use": "bounded candidate facts",
+      "sha256": "4791e53d33a709032b0af235d962b103332a80d17593d7c4eb1e0ddcd1317895"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-census-1506/evidence/source-manifest.json",
+      "use": "census source scope and exclusions",
+      "sha256": "55706585363cc3178091e6545fed80deda881d964892f26ece27f8aad2280210"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-final-headroom-census-1506/report.md",
+      "use": "separate census harness report",
+      "sha256": "517d9b0897af5e3e8928f29318a3920150d1ace5922ec8a79d420937bbdaca2c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-review-next/evidence/sampler-lifecycle.json",
+      "use": "historical sampler lifecycle only",
+      "sha256": "8255256fa7528cb5e65c7e3379f70a2f864abb6177621dad5c973feee6726123"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1442Z.log",
+      "use": "owning manager recycle guard refusals",
+      "sha256": "744e0ac94c2444769986fdb2da4e0c2ace7ab6144f7c170f6d3500504208c0c7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/runtime-20261026T1450Z-final-source-headroom-decision.md",
+      "use": "sole existing Main owner decision",
+      "sha256": "ff7c57354c8f2737b503044778473f4eb2d8deaad86d317c4ba693cdf08bf2fb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+      "use": "Runtime board and protected proof/KEEP boundaries",
+      "sha256": "f12e2c2b079d2dd4f1822ef924e89df160e59fda744bcdad04ce7200f83bcdf6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md",
+      "use": "current Runtime control context and final tuple",
+      "sha256": "682909fc61f443741a343c1761b1b22d2449fae370610138d663aeb418a5afe8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+      "use": "current board header and tuple",
+      "sha256": "2239fbc488088a8ed098fdeaad69cb30f604476b04c0a4ec45b2715a1327726b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-repack",
+      "use": "existing owner-gated lossless route",
+      "sha256": "2dff4685ea7656309ba4fce3303b93e4a969c9d9a8c3739b37599ed28f0e02f1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/recycle",
+      "use": "supported guarded refusal path",
+      "sha256": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch",
+      "use": "supported guarded compaction eligibility",
+      "sha256": "897c81bde0f1a7409efae90cbee2a6372e20ff3a630dda4b75a094e91516e2c2"
+    }
+  ],
+  "excluded_or_not_run": [
+    "new sampler",
+    "new broad census",
+    "dirty Runtime tree inspection",
+    "sandbox host audit",
+    "cleanup/recycle/sweep/compact/repack/deletion",
+    "product/source/test/build/service/Git mutations"
+  ]
+}
