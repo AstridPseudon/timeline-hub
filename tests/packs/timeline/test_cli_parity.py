@@ -95,6 +95,40 @@ def test_commit_migration_preserves_message_contract(capsys) -> None:
     ]).message == "tighten c3"
 
 
+def test_place_element_cli_exposes_occurrence_target_and_forwards_arguments(capsys) -> None:
+    class Timelines:
+        def __init__(self):
+            self.calls = []
+
+        def place_element(self, project, ref, **kwargs):
+            self.calls.append((project, ref, kwargs))
+            return DomainResult.success({'target': kwargs['target']})
+
+    timelines = Timelines()
+    client = _Client()
+    client.timelines = timelines
+    parser = timeline_cli.build_parser(client)
+    help_text = parser._subparsers._group_actions[0].choices['place-element'].format_help()
+    assert '--target' in help_text
+    assert 'occurrence:<occurrence-' in help_text and 'id>/clip:<clip-id>' in help_text
+    parsed = parser.parse_args([
+        'place-element', 'film', '--project', 'p', '--realm', 'realm',
+        '--target', 'occurrence:shot-1/clip:discord', '--pack', 'project_pack',
+        '--element', 'smooth-zoom', '--revision', 'sha256:' + 'a' * 64,
+        '--expected-head', 'head-1', '--idempotency-key', 'place-key',
+    ])
+    assert parsed.handler(parsed) == 0
+    assert timelines.calls == [(
+        'p', 'film', {
+            'realm': 'realm', 'target': 'occurrence:shot-1/clip:discord',
+            'element': {'packId': 'project_pack', 'id': 'smooth-zoom',
+                        'kind': 'effect', 'revision': 'sha256:' + 'a' * 64},
+            'expected_head': 'head-1', 'idempotency_key': 'place-key',
+        },
+    )]
+    assert capsys.readouterr().out
+
+
 class _CreateTimelines:
     def __init__(self):
         self.calls = []
