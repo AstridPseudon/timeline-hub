@@ -81,7 +81,8 @@ jobs:
   unit-shard:
     name: unit shard ${{ matrix.group }} / 8 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    # Shard 7 has a ~35-minute tail after ~15 minutes of tests; 60 minutes cancels healthy runs.
+    timeout-minutes: 120
     env:
       # The test run's skip registry (tests/lanes.py) reads this: a lane this job provides fails, not skips, when its dependency is missing.
       ASTRID_CI_JOB: unit-shard-${{ matrix.os }}
