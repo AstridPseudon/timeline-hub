@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c operational source return",
+  "verdict": "PASS_OPERATIONAL_SOURCE",
+  "findings": [
+    {
+      "id": "P4-D141c-F001",
+      "status": "fixed",
+      "kind": "same_file_manifest_evidence_alias",
+      "prior_observation": "The 1347 normal service failed before pytest because launcher cp saw manifest and destination as the same file.",
+      "correction": "Immutable final manifest is under inputs/ and launcher evidence is a separate body-evidence directory.",
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-path-identity-persist.txt"
+    },
+    {
+      "id": "P4-D141c-F002",
+      "status": "fixed",
+      "kind": "missing_interpreter_module_argv",
+      "correction": "Candidate row preserves run -- -m pytest and later -m integration, followed by the unchanged q/addopts/cacheprovider/timeout/JUnit and three original selectors.",
+      "evidence": "evidence/candidate-row.txt"
+    },
+    {
+      "id": "P4-D141c-F003",
+      "status": "preserved",
+      "kind": "prior_actual_service_failure",
+      "correction": "No metadata rewrite or receipt retargeting; actual 1347 exit, raw log, zero selectors, no JUnit, and no body remain retained.",
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/service.json"
+    },
+    {
+      "id": "P4-D141c-F004",
+      "status": "not_done_by_this_worker",
+      "kind": "CAS_install_and_original_body",
+      "correction": "No suite CAS installation and no original P4 body submission were performed; independent review must precede the existing controller's single real-body continuation.",
+      "evidence": "evidence/validation.md"
+    }
+  ],
+  "controls": {
+    "positive": "run mode, genuine manifest, preflight 0, body exit 17, counter 1",
+    "poison": "agent_sha-only poison, nonzero before body, counter 0",
+    "production_launcher_unchanged": true,
+    "test_body_untouched": true
+  }
+}

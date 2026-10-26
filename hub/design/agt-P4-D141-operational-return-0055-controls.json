@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "PASS_OPERATIONAL_SOURCE",
+  "launcher": {
+    "path": "/home/user/work/wt/agt-pin-28e56cac/tools/p4-d73-pinned-launch.sh",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "mode": "run",
+    "preflight_exit": 0
+  },
+  "paths": {
+    "immutable_input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-original-final.manifest",
+    "body_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence",
+    "materialized_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-positive-persist.manifest",
+    "realpaths_distinct": true,
+    "samefile_false": true,
+    "symlink_false": true,
+    "hardlink_false": true,
+    "input_sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+    "materialized_sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f"
+  },
+  "positive": {
+    "request_id": "p4-d141c-positive-persist",
+    "argv": ["-c", "import os; os.execv(\"/bin/sh\", [\"sh\", \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-control-stub-2234.sh\"])", "(launcher mode: run)"],
+    "body_exit": 17,
+    "counter_lines": 1,
+    "stub": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-control-stub-2234.sh",
+    "receipts": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-positive-persist.*"
+  },
+  "poison": {
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-poison.manifest",
+    "only_changed_field": "agent_sha",
+    "exit_code": 1,
+    "counter_lines": 0,
+    "observed": "D73 launcher: agent SHA mismatch"
+  },
+  "source_and_disk": {
+    "before": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/sources.before.txt",
+    "after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/sources.final.txt",
+    "available_bytes_after": 5047336960,
+    "stop_bytes": 4000000000
+  },
+  "control_boundary": "No pytest, imports, collection, provider, socket, or test body was run by these controls."
+}
