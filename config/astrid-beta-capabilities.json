@@ -860,9 +860,9 @@
    "id": "rendering.timeline_export_plan",
    "disposition": "required",
    "evidence_reason": "Timeline transfer N2/N4 acceptance covered by the generic host.",
-   "adapter_family": "render",
+   "adapter_family": "cpu",
    "resource_keys": [
-    "render"
+    "cpu"
    ],
    "required_env": [],
    "required_binaries": [],
@@ -872,9 +872,9 @@
    "id": "rendering.timeline_prepare_import",
    "disposition": "required",
    "evidence_reason": "Timeline transfer N2/N4 acceptance covered by the generic host.",
-   "adapter_family": "render",
+   "adapter_family": "cpu",
    "resource_keys": [
-    "render"
+    "cpu"
    ],
    "required_env": [],
    "required_binaries": [],
