@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T11:32:15Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
-# app board, 2026-10-26T11:31:30.524725+00:00
+<!-- app | 2026-10-26T11:37:42Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 2m -->
+# app board, 2026-10-26T11:35:01.699036+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -45,9 +45,9 @@
 | D141 P2 ADD | Retain qualified popup known gap | Luna and independent Luna | D141ff and independent1121 PASS | merged | Popup next; custody1121 | 27026 FAIL1/207s; custody PASS. Native44/min5.472GB. Cause UNKNOWN; four fields absent. Nonblocking gap per Main. | App82e9 |
 | D141ff notes | Prepare factual popup gap paragraph | Runtime existing notes route | Main D141ff and actual evidence | blocked:runtime | Existing final notes lineage | Peer1123 supplies27026 tuple;1368 original and cancelled13234/20413 stay distinct. No cause claim or new author now. | Evidence only |
 | D141j diagnostic | Prepare one nonblocking diagnostic | Luna existing popup lineage | Six selectors and four field visibility proof | gated:six-selectors | Not dispatched | Main D141ff authorizes one body only after six and source visibility receipt. No instrumentation or body now. | App82e9 |
-| D141 parent | Reprove original parent move | Luna and independent Luna | Native terminal16601 | review | Author1121; custody1130 | Preflight25487 PASS; normal16601 PASS0/237s, readiness and gesture. Private path relocation under review. | App82e9 |
-| D141 single | Reprove original single transition | Luna | Parent terminal | doing | app-P-D141cc-single-controller-next | Admitted at5644668928 bytes after four clean pins and no running local request. No actual ID yet. | App82e9 |
-| D141 bulk | Reprove original bulk transition | Luna | Sole heavy slot after single | gated:oneheavy | app-P-D141cc-bulk-controller-next | Exact Sol1047 recipe3 and source final PASS43; no admission yet. | App82e9 |
+| D141 parent | Retain native pass and custody failure | Luna and independent Luna | Independent1130 FAIL | gated:custody | Author1121; custody1130 | Body16601 PASS0/237s. First sampler command failed; later72sample trace is genuine. No first-tool coverage, no rerun or GO. | App82e9 |
+| D141 single | Retain no-body source guard refusal | Luna and independent Luna | Native invocation terminal | review | Single next; review next | Wrong manually typed Agent SHA refused before request/row/artifact. NOTRUN_CUSTODY; no ID or body. No retry. | App82e9 |
+| D141 bulk | Reprove original bulk transition | Luna | Single terminal without request | doing | app-P-D141cc-bulk-controller-next | Admitted1135 at5638373376 bytes. Programmatic exact recipe3 loading; no manual hash/env copy. Actual ID pending. | App82e9 |
 | D141 asset | Reprove original registerAsset | Luna | Sole heavy slot after bulk | gated:oneheavy | app-P-D141cc-asset-controller-next | Exact Sol1047 recipe4 and source final PASS43; no admission yet. | App82e9 |
 | D141 P3 | Reprove original Gate5 journey | Luna and service | Serial heavy slot after P1 | gated:oneheavy | app-P-D141cc-p3-controller-next | Source final review PASS43. Complete Gate5 tail exact; prepared separate controller, not admitted yet. | App82e9 |
 | D141s kit | Retain dropped paired kit and final packet | Runtime Luna | Main D141s-c 06:18 | gated:dropped | Source0529 PASS74; final literals0601 | Packet0545 schema3 needs new format step. No new round, install, registration or paired admission. | Private WIP retained |
@@ -87,11 +87,15 @@ Runtime final stop source receiving1030 PASS and notes installed48013/506e indep
 
 Maintenance1125: eligible clean ended nonKEEP worktree census0. Guarded sweep3/compact1 terminal0, removed0/packed0/gzipped0/tests0; known Brokenpipe helper diagnostics retained. No pre-run marker hash inventory captured this pass, no equality claim. [Receipt](../../design/app-D141ff-maintenance-result-1125.json). Prior superseded5344/867/28e/6a/d822/8585 releases retain individual lead host CLEAR/repeatedguards/bin-recycle receipts; rawKEEP and Gitobjects kept. DirtyU3/lockedU3c/no-metadata bundles/hardlinked cache/refused orphan graph held. Lead10:16 owner-approved one hub repack complete, no manager hub operation or further repack. Current free at board write 5641523200 bytes;4GB stop holds.
 
-Blockers: App heavy slot — Single controller admitted1130 owns sole heavy; parent independent custody1130 in parallel. Bulk, asset, P1 and P3 staged separately behind it.
+Blockers: App heavy slot — Bulk controller admitted1135 owns sole heavy; single custody1135 read only. Asset, P1 and P3 separately staged. Parent nativePASS/custodyFAIL retained, no retry.
 Blockers: Agent — Writer15 restoration and inverse/schema preservation dispositions precede definitive REG0 and final pin pass. No new App pin/source author.
 Blockers: Runtime notes — Existing final-notes route owns D141ff popup paragraph from peer1123; no new App prose author under Main instruction.
 Blockers: Safety — D130 absolute hold; no SWAP retry, transfer, alternate qualification or rollback. Dirty, unowned, sealed, refused and hardlinked targets retained.
-Next ready: Single actual terminal, then bulk, registerAsset, P1 and P3 each separately admitted; parent custody1130 terminal. One diagnostic only after six and visibility proof. Final pins after Agent REG0.
-live 2 queued / cap 6; ready-undispatched 0. Single is sole heavy controller and parent review is read only. Other selectors gated on that slot; no plain fallback.
+Next ready: Bulk actual terminal, then registerAsset, P1 and P3 each separately admitted. Single finite custody1135 terminal. One diagnostic only after six dispositions and visibility proof. Final pins after Agent REG0.
+live 2 queued / cap 6; ready-undispatched 0. Bulk is sole heavy; single custody1135 read only. Asset/P1/P3 heavy gated; no plain fallback.
 
 Later: D141ff nonblocking diagnostic and known-gap notes use existing routes. Gate3/D133B/D23/D14/D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. Other held IDs8912/19479 unchanged; obsolete18617 supported cancellation verified and originals/rawKEEP retained. Early hosting offers not used, no duplicate writer/reviewer. Final unit-own failures remain visible; no global platform GO/build/ZIP claim. INBOX consumed through2915549bytes; delayed self1101 P4 peer is already fulfilled.
+
+Current finite failures 2026-10-26T11:33:53.439009+00:00: peer1134 reports parentnativePASS/firsttoolFAIL_CUSTODY and singlewrongAgentSHApre-requestNOTRUN. No oldproofrewritten orretry. Exact recipe loading in futurebriefs is programmatic, no manualenv/hashcopy; unchanged builder/authority retained. Original errors visible.
+
+Pass 2026-10-26T11:35:01.699036+00:00: [parent independent FAIL](../../design/app-D141cc-parent-custody-publication-1135.json) retains native16601PASS and firstsamplercommandfailure; no retry/GO. [Single terminal](../../design/app-D141cc-single-terminal-publication-1135.json) retains wrongmanuallytypedAgentSHA and integrationcheckoutpath substitution; nativeguard refused beforeanyrequest/row/artifact. Single independent1135 queued, finite no-body custody/cause only. Bulk admitted at5638373376 after actualsingleterminal/noactualrunninglocalrequest/fourcleanpins; [admission](../../design/app-D141cc-bulk-controller-admission-1135.json). Brief enforces exact JSONenvironment/argv/cwd loading, no manualpin retyping; no new mechanism or sourcechange. Each failure remains its actualselector scope. Mainfinitepeer1134 reports all, no safetydenial or rerun.

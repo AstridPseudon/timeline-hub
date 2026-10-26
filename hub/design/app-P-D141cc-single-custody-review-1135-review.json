@@ -1,0 +1,122 @@
+{
+  "schema": "d141cc-single-custody-review-v1",
+  "verdict": "FAIL_CUSTODY",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "original",
+  "suite": "full-d141-p2-transition-none-single-82e9e13d-submit",
+  "source_base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "execution": {
+    "native_submit_invocation_count": 1,
+    "native_submit_exit_code": 1,
+    "native_submit_started": true,
+    "native_submit_retried": false,
+    "second_submit": false,
+    "request_id": null,
+    "actual_service_created": false,
+    "request_row_created": false,
+    "normal_artifact_created": false,
+    "body_started": false,
+    "body_verdict": "UNVERIFIED",
+    "test_status": "NOTRUN"
+  },
+  "native_error": {
+    "class": "D66_SOURCE_SELECTION_MISMATCH",
+    "ordinary_guard_refusal": true,
+    "safety_denial": false,
+    "stderr": "D66 source selection: D66 agent source does not match its submit-time pin: selected ecdc242ed9b673f641759ecf029f95e89c2a6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735, pinned ecdc242ed9b673f641759ecf029f95e89a2c6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+  },
+  "custody_findings": [
+    {
+      "id": "CUSTODY-1",
+      "severity": "FAIL",
+      "finding": "The controller receipt records integration checkout paths where the accepted recipe requires exact detached checkout paths.",
+      "deltas": {
+        "D66_APP_CHECKOUT": {
+          "actual": "/home/user/work/app",
+          "accepted": "/home/user/work/wt/app-pin-82e9e13d"
+        },
+        "D66_AGENT_CHECKOUT": {
+          "actual": "/home/user/work/agent",
+          "accepted": "/home/user/work/wt/agt-pin-ecdc242e"
+        },
+        "D66_RUNTIME_CHECKOUT": {
+          "actual": "/home/user/work/runtime",
+          "accepted": "/home/user/work/wt/rt-pin-95d98f03"
+        },
+        "D66_COMPOSITION_CHECKOUT": {
+          "actual": "/home/user/work/composition",
+          "accepted": "/home/user/work/wt/vw-pin-635f4de0"
+        }
+      },
+      "basis": "controller-receipt.json invocation_env versus dispatch-recipes.json dispatches[2]"
+    },
+    {
+      "id": "CUSTODY-2",
+      "severity": "FAIL",
+      "finding": "The single native invocation used a manually typed agent SHA with one wrong character.",
+      "actual": "ecdc242ed9b673f641759ecf029f95e89c2a6f92",
+      "accepted": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "first_difference_zero_based": 33,
+      "basis": "native stderr, controller-receipt.json, source-manifest.json"
+    },
+    {
+      "id": "CUSTODY-3",
+      "severity": "WARN",
+      "finding": "The first corrected wrapper stopped before native execution because its guard addressed evidence/evidence/candidate/controller.py; this is a guard failure, not a second native invocation or a test result.",
+      "exit_code": 2,
+      "basis": "actual worker log"
+    },
+    {
+      "id": "CUSTODY-4",
+      "severity": "WARN",
+      "finding": "The worker's final validation command raised KeyError on native_invocation_count in controller-receipt.json, then DONE was still created; the earlier JSON validation does not cure this final-command failure.",
+      "exception": "KeyError: 'native_invocation_count'",
+      "basis": "actual worker log"
+    },
+    {
+      "id": "CUSTODY-5",
+      "severity": "WARN",
+      "finding": "First-tool direct-trace coverage is not met. The retained sampler did write 15 samples and was stopped, waited, and reaped, but it followed an initial output-only sampler session.",
+      "first_tool_direct_trace": false,
+      "retained_sampler_stop_wait_reap": true,
+      "basis": "trace-measurement.json and sampler-lifecycle.json"
+    }
+  ],
+  "namespace_observation": {
+    "exact_suite_registry_match": false,
+    "exact_request_directory_match": false,
+    "assigned_submit_plan_exists": false,
+    "assigned_lock_exists": false,
+    "assigned_output_contains_artifact": false,
+    "actual_registry_row_present": false,
+    "basis": "read-only namespace inspection and controller-receipt.json"
+  },
+  "source_observation": {
+    "current_four_source_pins_exact": true,
+    "current_four_source_trees_exact": true,
+    "detached_pin_worktrees_clean": true,
+    "builder_sha_and_blob_exact": true,
+    "product_source_changed": false,
+    "product_registry_inference": "none",
+    "source_guard_is_product_pass": false,
+    "journey_go_valid": false
+  },
+  "prohibited_actions_not_observed": [
+    "second native --submit",
+    "direct request-test",
+    "wait-test",
+    "stop-test",
+    "alternate selector",
+    "service body",
+    "product test suite"
+  ],
+  "raw_hashes": {
+    "worker_log": "5f8bbd85eeb581c1887266c80151a9e20329c36a803c3303fd83c9af408a1acd",
+    "worker_meta": "1f9e40e67e457dd7d69a6d8b86861d6fe576c2274b9eea0ef4e0db9b569c0686",
+    "worker_ended": "631fd289b533bab4fd35ab4992adc1bca310c124ba180a22afaec3461f8c8491",
+    "native_stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native_stderr": "5e50ac195b246be3a5847ffa62662f61eee74714fa0844ef67a8e6666fe0c951",
+    "accepted_dispatch_recipe": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d"
+  },
+  "decision": "Do not retry or repair this selector in place. Treat it as custody failure with execution NOTRUN; no product PASS, product FAIL, or journey GO is emitted."
+}

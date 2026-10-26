@@ -1,0 +1,23 @@
+{
+  "schema": "d141cc-single-controller-results-v1",
+  "selector": "p2-transition-none-single",
+  "suite": "full-d141-p2-transition-none-single-82e9e13d-submit",
+  "outcome": "NOTRUN_CUSTODY",
+  "body_verdict": "UNVERIFIED",
+  "request": null,
+  "terminal_service_result": null,
+  "error": "D66 source selection: D66 agent source does not match its submit-time pin: selected ecdc242ed9b673f641759ecf029f95e89a2c6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735, pinned ecdc242ed9b673f641759ecf029f95e89c2a6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+  "evidence": {
+    "native_stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/native-submit.stdout.log",
+    "native_stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/native-submit.stderr.log",
+    "assigned_output_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/output",
+    "assigned_artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/submit-plan.json"
+  },
+  "prohibited_actions_not_taken": [
+    "second --submit",
+    "direct request-test",
+    "wait-test",
+    "stop-test",
+    "alternate selector"
+  ]
+}

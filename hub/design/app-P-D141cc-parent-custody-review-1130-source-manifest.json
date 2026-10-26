@@ -1,0 +1,39 @@
+{
+  "schema": "d141cc-parent-custody-review-source-manifest-v1",
+  "accepted_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "dispatch_index": 1,
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "selector": "p2-parent-move",
+    "attempt_scope": "original",
+    "command_sha256": {
+      "preflight": "becf69527edc1be7c12b457ba0754ac8d63f942a24d1a1b52708d90490963036",
+      "normal": "c77b6a97e0807d43a2590624e3d47590a5e76d5ed5841f7f214f3aa9176c8f04"
+    },
+    "row_sha256": {
+      "preflight": "5b3f746b01dc3c18a84c21737e82841b108d04d637000adfbc901825f432d83f",
+      "normal": "ff98c12644fed8ba786a453ae49fde0ba7648160e8a2c1bf7ab75fc07d3c898d"
+    }
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "source_tuple": {
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "clean": true},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "clean": true},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "test_sources": {
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "relocation": {
+    "accepted_private_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit",
+    "actual_private_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit",
+    "operational_paths_only": true,
+    "production_builder_argv_source_env_registered_row_predicates_unchanged": true
+  }
+}

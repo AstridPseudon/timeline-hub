@@ -1,0 +1,23 @@
+{
+  "schema": "d141cc-single-controller-progress-v1",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "original",
+  "suite": "full-d141-p2-transition-none-single-82e9e13d-submit",
+  "state": "NOTRUN_CUSTODY",
+  "terminal": true,
+  "actual_request_id": null,
+  "actual_result_dir": null,
+  "first_error": "D66 source selection: D66 agent source does not match its submit-time pin: selected ecdc242ed9b673f641759ecf029f95e89a2c6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735, pinned ecdc242ed9b673f641759ecf029f95e89c2a6f92/d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+  "native_exit_code": 1,
+  "native_invocation_count": 1,
+  "native_invocation_started": true,
+  "native_request_created": false,
+  "native_artifact_persisted": false,
+  "rerun_authorized": false,
+  "completed_at": "2026-10-26T11:32:50.168968+00:00",
+  "notes": [
+    "The sole native --submit invocation failed source selection before request registration.",
+    "No request ID was generated; no wait-test or stop-test was run.",
+    "Do not retry this selector from this controller."
+  ]
+}

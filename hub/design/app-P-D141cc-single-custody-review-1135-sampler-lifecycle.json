@@ -1,0 +1,21 @@
+{
+  "schema": "d141cc-review-sampler-lifecycle-v1",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/disk-trace.txt",
+  "reviewer_trace": {
+    "sample_count": 4,
+    "interval_seconds": 5,
+    "foreground": true,
+    "first_tool_direct_trace": false,
+    "supplemental_only": true,
+    "stop_wait_reap": "not applicable; finite foreground sampler completed"
+  },
+  "controller_trace_claim_review": {
+    "author_trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-controller-next/evidence/disk-trace.txt",
+    "author_sample_count": 15,
+    "author_first_tool_direct_trace": false,
+    "author_retained_session": 44814,
+    "author_poll_intervals_seconds": [5, 5],
+    "author_stop_signal": "SIGINT via write_stdin",
+    "author_stop_wait_reap": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-26T11:35:01.699036+00:00",
+  "worker": "app-P-D141cc-parent-custody-review-1130",
+  "status": "FAIL_CUSTODY_NATIVE_TEST_PASS",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-review.json",
+      "sha256": "68ea90257f65680151defa8712d5c9a99e84557c51c03d2026eb4fdfe3daf92a",
+      "bytes": 1385
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-findings.md",
+      "sha256": "85174450e2817a13c7ef2c2a3250d7904f317b4c0733237dc2050018d7b8f9e2",
+      "bytes": 1586
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-source-manifest.json",
+      "sha256": "431fe970b9c91365f785123efbdc13189f1ef847eee72ae8e56bc150ad652f08",
+      "bytes": 2496
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-validation.md",
+      "sha256": "e77fce840f3ac02bcbcea80f7885d244bebceb316d63001ee7fc3cf7cf2ac321",
+      "bytes": 3381
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-handoff.md",
+      "sha256": "dc94148df98cd703b5b7d55bb45eeb269599d0ca93d49750335d405b0caa447f",
+      "bytes": 909
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-disk-trace.txt",
+      "sha256": "c3eed661e5591993417ad65469ccf19965f1b2e68f008842564f33ef90464694",
+      "bytes": 1005
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-sampler-lifecycle.json",
+      "sha256": "4116fed68c5b883887d90167ebea5244f33afd12f9c5727a087bb47705400828",
+      "bytes": 728
+    }
+  ],
+  "no_retry": true
+}

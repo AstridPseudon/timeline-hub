@@ -1,0 +1,37 @@
+{
+  "schema": "d141cc-parent-custody-review-v1",
+  "verdict": "FAIL_CUSTODY",
+  "selector": "p2-parent-move",
+  "attempt_scope": "original",
+  "finding_ids": ["F-001"],
+  "finding_count": 1,
+  "service_result": {
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+    "normal_status": "pass",
+    "normal_exit": "0",
+    "duration_seconds": 237,
+    "xml_tests": 1,
+    "xml_failures": 0,
+    "xml_skipped": 0,
+    "readiness_status": "pass",
+    "parent_move_status": "pass"
+  },
+  "custody": {
+    "native_submit_session": 59630,
+    "native_submit_exit": 0,
+    "wait_session": 51172,
+    "wait_exit": 0,
+    "native_submit_invocations": 1,
+    "normal_request_recreations": 0,
+    "alternate_selectors_started": [],
+    "preflight_keep_present": true,
+    "normal_keep_present": true,
+    "first_tool_sampler": "FAIL",
+    "first_tool_failure": "mkdir tmpdir exited 1 because tmpdir was a regular file; no trace was written",
+    "later_sampler": "PASS_AS_LATER_TRACE_ONLY",
+    "sampler_reap": "PASS_AS_RECORDED",
+    "retry_authorized": false
+  },
+  "decision": "The service body passed, but the mandated first-tool sampler custody predicate was not met. Later evidence cannot backfill it; finite FAIL_CUSTODY and no rerun."
+}

@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-26T11:38:14.068472+00:00",
+  "verdict": "FAIL_CUSTODY_EXECUTION_NOTRUN",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-report.md",
+      "sha256": "eb4ca5cb1883bfe00a41488d29199f4a51c5d66b6e8c858afc8fcc5b2cc45054",
+      "bytes": 975
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-review.json",
+      "sha256": "f77d75fcbc071033a317024a1238e0212a5b8eed1e52e9fb714d7976fb50ac1f",
+      "bytes": 5282
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-findings.md",
+      "sha256": "d60135f6e944c0ad895fdc41ae9030c0149c7ca94fc9af0bc65aabeb47bbb1d5",
+      "bytes": 2912
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-source-manifest.json",
+      "sha256": "1f03ddd75f5114cc44a8f2280c72d6888b88bcbb14123525f24dff6a6bfcf540",
+      "bytes": 4205
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-validation.md",
+      "sha256": "c5bce1faf2e2128297d835ecee9f3151aa3992a82a4d43c0c72e214dacbd2f65",
+      "bytes": 916
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-handoff.md",
+      "sha256": "0b1b1a9e893e536d5b8836a75b1cb78fd7289f329bb33e8fcfab3676c540d4e3",
+      "bytes": 679
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-disk-trace.txt",
+      "sha256": "b3f137474e4da2f0d56a64c350d26a1919c36d2a7d9c0c8426e5c9fd97ef6efb",
+      "bytes": 612
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-single-custody-review-1135/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-single-custody-review-1135-sampler-lifecycle.json",
+      "sha256": "247dde3fbbfc1e040b6fdd1e294acfa04e741309d098d27871c1c55667b6a481",
+      "bytes": 939
+    }
+  ],
+  "limits": "Original reviewer native_error.stderr reverses selected and pinned labels versus genuine stderr; primary source-manifest actual/expected map and actual raw stderr control. No result change.",
+  "Main_D141gg": "Original failure retained; ONE new explicitly scoped attempt authorized after programmatic exact recipe loading; no old receipt retarget."
+}

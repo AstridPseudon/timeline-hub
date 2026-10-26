@@ -1,0 +1,13 @@
+{
+  "schema": "d141cc-parent-custody-review-sampler-v1",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-custody-review-1130/evidence/disk-trace.txt",
+  "first_tool": true,
+  "foreground": true,
+  "sampling_command": "for i in 1 2 3 4 5; do date -u; df -P /home/user/work/wt/app-P-D141cc-parent-custody-review-1130; sleep 1; done",
+  "natural_completion": true,
+  "duration_seconds": 5,
+  "stop_signal": null,
+  "waited": true,
+  "reaped": true,
+  "note": "The finite foreground command completed and was reaped by the tool call; no detached sampler was used. This review sampler is separate from the admitted worker's F-001 first-tool finding."
+}
