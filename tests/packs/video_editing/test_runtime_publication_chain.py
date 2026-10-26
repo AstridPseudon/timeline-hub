@@ -1097,6 +1097,45 @@ def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts
     assert not any("publish_timeline_render" in repr(call) for call in runtime.calls)
 
 
+def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
+    """The registered authoring host hook has one Runtime publication route."""
+    proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
+    proposal_path.parent.mkdir(parents=True)
+    proposal_path.write_text(json.dumps({
+        "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
+        "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
+    }))
+
+    class Runtime:
+        def __init__(self): self.calls = []
+        def publish_timeline_render(self, *args, **kwargs):
+            self.calls.append((args, kwargs))
+            return {"timeline_version": 2, "render_task_id": "render-1"}
+
+    runtime = Runtime()
+    host = GenericPackHost.__new__(GenericPackHost)
+    host.client = runtime
+    host.capabilities = {}
+    result = host._publish_assembled_timeline(
+        task_data={"id": "author-1", "spec": {"family": "stitch_finalization", "runtime_dependencies": {
+            "publication": {"timeline_id": "main", "expected_version": 1, "render": {
+                "capability_id": "rendering.render", "capability_digest": _digest("rendering.render"),
+                "spec": {"inputs": {"selector": "rendering.ffmpeg"}},
+            }},
+        }}},
+        attempt_id="attempt-1", fence=1, lease_token="lease-1",
+        outputs=[{"path": str(proposal_path), "artifact_type": "timeline/authoring-proposal"}],
+        attempt_root=proposal_path.parents[1],
+    )
+    assert result["render_task_id"] == "render-1"
+    assert len(runtime.calls) == 1
+    args, kwargs = runtime.calls[0]
+    assert args[:2] == ("attempt-1", "lease-1")
+    assert kwargs["timeline_id"] == "main"
+    assert kwargs["expected_version"] == 1
+    assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
+
+
 # D66 restore of upstream-924 selector 6635, migrated to the requester-owned
 # v2 commit route after the generic-host publication hook was retired.
 def test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
