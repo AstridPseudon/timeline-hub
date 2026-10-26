@@ -49,3 +49,7 @@ Owner, typed in this session: "I approve removing exactly the worktrees agt-pin-
 - Action: `git worktree remove` with no --force, for exactly those 3. rc=0 each.
 - Commits 28e56cacb42d, 4c4ee35d5687 and 8b6ed2116fd1 remain in the object store, so each pin can be re-created with `git worktree add`.
 - Free disk: 4,861,800,448 -> 5,240,180,736 B.
+
+### 2026-10-26T18:37Z — hub-repack (D141o, owner-approved in the runtime session)
+
+Lossless: 2 batches; loose objects 5036 -> 0 (packed and verified before removal by git prune-packed); free 5053304832 -> 5255770112 B. Repo /home/user/timeline-hub.

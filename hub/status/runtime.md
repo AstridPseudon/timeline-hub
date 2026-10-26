@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T18:31:48Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-26T18:31:19.024637+00:00
+<!-- main | 2026-10-26T18:37:39Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-26T18:36:13.913131+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -96,7 +96,7 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: None under the Main safety hold. One independent read-only artifact review waits for an actual named ZIP and recorded Main release.
-live 0 / cap 0; ready-undispatched 0. Available disk is below4GB; Main safety denial retained. No Runtime dispatch, cleanup or alternate route.
+live 0 / cap 0; ready-undispatched 0. Latest pass measured 5.05 GB free; no recorded Main release. Safety hold retained; no Runtime dispatch, cleanup or alternate route.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Main and owner — Main18:10 build stopped below4GB; no ZIP. Cleanup denied by classifier [Irreversible Local Destruction]. Main requested owner disposition. [Safety hold](../../escalations/runtime-20261026T181250Z-Main-build-safety-hold.md). No retry or alternate route.
@@ -184,3 +184,6 @@ Current pass 2026-10-26T18:26:51.362647+00:00: PLAN and MANAGER-COMMON read firs
 
 
 Current pass 2026-10-26T18:31:19.024637+00:00: PLAN and MANAGER-COMMON read first; INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 Runtime HOLD remain controlling. Complete bin/workers rt- exit0, 2716 rows, zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked and unchanged; no released Runtime dependency or named ZIP. No dispatch, cleanup, repack, retry, alternate route or artifact review. Historical census metadata warnings retained without repair. Free 3933118464 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T183119Z-pass.json).
+
+
+Current pass 2026-10-26T18:36:13.913131+00:00: Read PLAN and MANAGER-COMMON first. INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 Runtime HOLD remain controlling. Complete bin/workers rt- exit0,2716 rows, zero Runtime running markers. All33 original hashes and sizes exact; App, Agent and Farm owner boards checked and unchanged. No released Runtime dependency or named ZIP. Historical census metadata warnings retained without repair. Free 5051731968 bytes does not release the safety hold. No dispatch, cleanup, repack, retry, alternate route or artifact review. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T183613Z-pass.json).
