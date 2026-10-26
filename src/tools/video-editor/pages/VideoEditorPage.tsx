@@ -38,7 +38,7 @@ import {
 import { useOptionalAgentChatRegistry } from "@/shared/contexts/AgentChatContext.tsx";
 import { useOptionalGlobalHeaderSlot } from "@/shared/contexts/ToolPageHeaderContext.tsx";
 import { toast } from "@/shared/components/ui/toast.tsx";
-import { useTimelineChromeContext } from "@/tools/video-editor/hooks/timelineStore.ts";
+import { useTimelineChromeContextSafe } from "@/tools/video-editor/hooks/timelineStore.ts";
 import { exportTimelineArchive, importTimelineArchive } from "@/tools/video-editor/lib/timeline-transfer.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import { VideoEditorProvider } from "@/tools/video-editor/contexts/VideoEditorProvider.tsx";
@@ -104,8 +104,8 @@ export const LAST_OPENED_PROJECT_STORAGE_KEY =
 export const VIDEO_EDITOR_SWIPE_LOCK_CLASS = "video-editor-swipe-lock";
 
 function TimelineTransferSaveBridge({ target }: { target: MutableRefObject<(() => Promise<unknown>) | null> }) {
-  const chrome = useTimelineChromeContext();
-  target.current = chrome.flushPendingSave;
+  const chrome = useTimelineChromeContextSafe();
+  target.current = chrome?.flushPendingSave ?? null;
   return null;
 }
 
