@@ -7,6 +7,8 @@ export const EDITOR_TOUR_ANCHORS = Object.freeze({
   chatComposer: 'chat-composer',
   chatSend: 'chat-send',
   chatTranscript: 'chat-transcript',
+  /** The act's reply and its actions, in the tour's own chat. */
+  chatReply: 'chat-reply',
   timeline: 'timeline',
   preview: 'preview',
 } as const);

@@ -195,13 +195,13 @@ describe('RuntimeConnectionPanel', () => {
     expect(connect).toHaveBeenCalledOnce();
   });
 
-  it('connect pending: stays centred on a phone, while the other cards rest along the bottom', () => {
+  it('keeps every card in the middle of a phone\'s screen, none along the bottom', () => {
     panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
-    const layer = screen.getByTestId('runtime-not-connected');
-    expect(layer.querySelector('.max-sm\\:items-end')).toBeNull();
+    expect(screen.getByTestId('runtime-not-connected').querySelector('.max-sm\\:items-end')).toBeNull();
     cleanup();
     panel(connectionFor({ status: 'needs_permission' }));
-    expect(screen.getByTestId('runtime-not-connected').querySelector('.max-sm\\:items-end')).not.toBeNull();
+    expect(screen.getByTestId('runtime-not-connected').querySelector('.items-center.justify-center')).not.toBeNull();
+    expect(screen.getByTestId('runtime-not-connected').querySelector('.max-sm\\:items-end')).toBeNull();
   });
 
   it('connect pending: tells the person to choose Allow, says where, and draws the install dialog\'s arrow outside the card, aimed top left', () => {

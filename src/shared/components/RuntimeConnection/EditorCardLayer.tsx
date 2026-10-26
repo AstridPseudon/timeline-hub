@@ -14,19 +14,16 @@ export function EditorBackdrop({ leaving = false }: { readonly leaving?: boolean
 export interface EditorCardLayerProps extends HTMLAttributes<HTMLElement> {
   readonly leaving?: boolean;
   readonly cardKey?: string;
-  /** `center` keeps the card in the middle of a phone's screen too (the default rests it along the bottom). */
-  readonly placement?: 'center';
   readonly children: ReactNode;
 }
 
 /** A full-screen layer that presents an onboarding card over the editor shell. */
-export function EditorCardLayer({ leaving = false, cardKey, placement, children, className, ...props }: EditorCardLayerProps) {
+export function EditorCardLayer({ leaving = false, cardKey, children, className, ...props }: EditorCardLayerProps) {
   // Over the app's own panes (the chat pane sits at z 100016) while the app mounts beneath it.
   return <section {...props} className={cn('fixed inset-0 z-[100100] overflow-y-auto text-foreground', leaving && 'pointer-events-none', className)}>
     <EditorBackdrop leaving={leaving} />
-    {/* A phone's card rests along the bottom, under the thumb, as the tour's cards do. The permission prompt card is the
-        exception: it stays centred, because it points the person at the browser's prompt at the top of the window. */}
-    <div className={cn('relative flex min-h-full items-center justify-center p-4 max-sm:p-3 max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]', placement !== 'center' && 'max-sm:items-end')}>
+    {/* In the middle of the screen on a phone too, as the tour's cards are; the bottom inset clears a home indicator. */}
+    <div className="relative flex min-h-full items-center justify-center p-4 max-sm:p-3 max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div key={cardKey} className={cn('w-full max-w-[576px] transition-[opacity,transform] duration-300 ease-out animate-in fade-in-0 motion-reduce:transition-none motion-reduce:animate-none', leaving && '-translate-y-1 opacity-0')}>
         {children}
       </div>

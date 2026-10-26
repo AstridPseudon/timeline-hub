@@ -405,9 +405,12 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
     marginBottom: safeAreaCalc.marginBottom(0.5),
   } : dynamicStyle;
 
-  // The Tasks/chat tab rests as a slim grip in the gutter beside the pane so it
-  // covers none of the page; hover or keyboard focus expands it to the full tab.
-  const restsAsGrip = isTasksPane && !isMobile && !(isOpen && !isLocked);
+  // The Tasks/chat and gallery tabs rest as slim grips in the gutter beside the pane so they
+  // cover none of the page; hover or keyboard focus expands them to the full tab.
+  const restsAsGrip = !isMobile && (
+    (isTasksPane && !(isOpen && !isLocked))
+    || (side === 'bottom' && !isVisible)
+  );
   const gripResting = restsAsGrip && !hovered && !focused;
 
   const content = (
@@ -427,7 +430,8 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
         'opacity-100 touch-none',
         // Taller touch target for mobile side panes with single button
         isMobileSidePane && 'min-h-[72px] justify-center',
-        gripResting && 'h-12 w-[10px] justify-center overflow-hidden !p-0 [&>button]:opacity-0 [&>div]:opacity-0',
+        gripResting && 'justify-center overflow-hidden !p-0 [&>button]:opacity-0 [&>div]:opacity-0',
+        gripResting && (isBottom ? 'h-[10px] w-12' : 'h-12 w-[10px]'),
       )}
       onMouseEnter={() => {
         if (restsAsGrip) setHovered(true);
@@ -444,7 +448,12 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
       {gripResting && (
         <span
           aria-hidden
-          className="pointer-events-none absolute inset-y-3 left-1/2 w-[2px] -translate-x-1/2 rounded-full bg-muted-foreground/60"
+          className={cn(
+            'pointer-events-none absolute rounded-full bg-muted-foreground/60',
+            isBottom
+              ? 'inset-x-3 top-1/2 h-[2px] -translate-y-1/2'
+              : 'inset-y-3 left-1/2 w-[2px] -translate-x-1/2',
+          )}
         />
       )}
       {buttons.map(renderButton)}

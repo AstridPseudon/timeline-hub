@@ -1,11 +1,14 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 
-/** The right action pane's presentation, independent of task discovery and chat sessions. */
+/**
+ * The right action pane's presentation, independent of task discovery and chat sessions. Opaque: on a touch screen it
+ * covers the editor, which must not show through it.
+ */
 export const TasksPaneSurface = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   function TasksPaneSurface({ className, children, ...props }, ref) {
     return <div {...props} ref={ref} data-tasks-pane="true" data-pane-side="right" data-scroll-lock-scrollable="true"
-      className={cn('h-full w-full bg-sidebar/95 border-l border-sidebar-border text-sidebar-foreground shadow-xl flex flex-col pointer-events-auto', className)}>
+      className={cn('h-full w-full bg-sidebar border-l border-sidebar-border text-sidebar-foreground shadow-xl flex flex-col pointer-events-auto', className)}>
       {children}
     </div>;
   },

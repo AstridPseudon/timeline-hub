@@ -173,6 +173,7 @@ describe('isReservedKeybinding', () => {
     expect(isReservedKeybinding('escape')).toBe(true);
     expect(isReservedKeybinding('alt+w')).toBe(true);
     expect(isReservedKeybinding('ctrl+shift+p')).toBe(true);
+    expect(isReservedKeybinding('f')).toBe(true);
   });
 
   it('handles ctrlOrCmd canonicalization for reserved check', () => {

@@ -164,7 +164,7 @@ function Dock() {
 /** The chat pane, locked open on desktop as `TasksPane` opens it on a first visit. */
 function ChatPane() {
   return (
-    <aside className="fixed inset-y-0 right-0 hidden w-[300px] flex-col border-l border-sidebar-border bg-sidebar/95 text-sidebar-foreground shadow-xl md:flex">
+    <aside className="fixed inset-y-0 right-0 hidden w-[300px] flex-col border-l border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xl md:flex">
       <section className="mx-2 my-1 rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50">
         <div className="flex h-[38px] items-center justify-between gap-2 px-2.5">
           <span className="flex items-center gap-2">

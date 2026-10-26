@@ -55,9 +55,21 @@ describe('placeCard', () => {
     });
   });
 
-  it('docks a phone card along the bottom when nothing is spotlighted', () => {
+  it('centres a phone card when nothing is spotlighted, never along the bottom', () => {
     const phone = { width: 375, height: 667 };
-    expect(placeCard([], { width: 351, height: 240 }, phone, { edge: 12, dock: 'bottom' })).toEqual({ left: 12, top: 415 });
+    expect(placeCard([], { width: 351, height: 240 }, phone, { edge: 12, gap: 8 })).toEqual({ left: 12, top: 213.5 });
+  });
+
+  it('puts a phone card right under the spotlit preview, the gap apart', () => {
+    const phone = { width: 393, height: 659 };
+    const preview: SpotlightRect = { x: 7, y: 148, width: 379, height: 218 };
+    expect(placeCard([preview], { width: 369, height: 257 }, phone, { edge: 12, gap: 8 })).toEqual({ left: 12, top: 374 });
+  });
+
+  it('puts a phone card right above the spotlit composer', () => {
+    const phone = { width: 393, height: 659 };
+    const composer: SpotlightRect = { x: 7, y: 521, width: 380, height: 132 };
+    expect(placeCard([composer], { width: 369, height: 202 }, phone, { edge: 12, gap: 8 })).toEqual({ left: 12, top: 311 });
   });
 
   it('when no side of the whole area fits, takes the spot that covers the least of the targets', () => {

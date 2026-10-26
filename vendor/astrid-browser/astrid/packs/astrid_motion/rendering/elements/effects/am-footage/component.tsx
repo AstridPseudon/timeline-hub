@@ -111,7 +111,7 @@ const coverRect = (
   const h = src.h * s;
   const x = clamp(width / 2 - focus.x * w, width - w, 0);
   const y = clamp(height / 2 - focus.y * h, height - h, 0);
-  return {x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h)};
+  return {x, y, w, h};
 };
 
 const isVideo = (type: unknown, url: string): boolean =>

@@ -20,6 +20,8 @@ export interface EditorTourState {
   status: EditorTourStatus;
   act: EditorTourAct;
   beat: EditorTourBeat;
+  /** The beat the card and spotlight show: it trails `beat` while the new beat's targets settle. */
+  shownBeat: EditorTourBeat;
   /** The composer's Send was pressed for the current act. */
   sent: boolean;
   /** Reset on every beat change; each part sets its own flag once it has finished presenting the beat. */
@@ -41,6 +43,7 @@ const editorTourStore = createStore<EditorTourState>(() => ({
   status: 'idle',
   act: 1,
   beat: 'compose',
+  shownBeat: 'compose',
   sent: false,
   ready: NOT_READY,
   reducedMotion: false,
@@ -67,6 +70,7 @@ export function startEditorTour(): void {
     status: 'running',
     act: 1,
     beat: 'welcome',
+    shownBeat: 'welcome',
     sent: false,
     ready: NOT_READY,
     reducedMotion: prefersReducedMotion(),
@@ -78,6 +82,11 @@ export function startEditorTour(): void {
 /** Runner only. `instant` is true only for a move back; any forward move clears it. */
 export function setEditorTourBeat(act: EditorTourAct, beat: EditorTourBeat, instant = false): void {
   editorTourStore.setState({ act, beat, sent: false, ready: NOT_READY, instant });
+}
+
+/** Runner only: the card and spotlight now show this beat. */
+export function showEditorTourBeat(shownBeat: EditorTourBeat): void {
+  editorTourStore.setState((state) => (state.shownBeat === shownBeat ? state : { shownBeat }));
 }
 
 /** Runner only. */

@@ -9,6 +9,7 @@ import { evaluatePredicate } from '@/tools/video-editor/runtime/commandPredicate
 import type { KeybindingEntry } from '@/tools/video-editor/runtime/commandRegistry.ts';
 import type { PredicateContext } from '@/tools/video-editor/runtime/commandPredicates.ts';
 import type { AstridExtension } from '@astrid/editor-sdk';
+import { PREVIEW_FULLSCREEN_ATTRIBUTE } from '@/tools/video-editor/components/PreviewPanel/usePreviewFullscreen.ts';
 
 // ---------------------------------------------------------------------------
 // KeyboardEvent → normalized keybinding notation
@@ -165,6 +166,8 @@ interface UseKeyboardShortcutsOptions {
   redo: () => void;
   selectAllClips: () => void;
   togglePlayPause: () => void;
+  /** F: the preview fills the screen, or comes back. */
+  toggleFullscreen: () => void;
   seekRelative: (deltaSeconds: number) => void;
   toggleMute: () => void;
   splitSelectedClip: () => void;
@@ -199,6 +202,7 @@ export function useKeyboardShortcuts({
   redo,
   selectAllClips,
   togglePlayPause,
+  toggleFullscreen,
   seekRelative,
   toggleMute,
   splitSelectedClip,
@@ -227,7 +231,8 @@ export function useKeyboardShortcuts({
 
       // A full-screen panel is modal: no editor shortcut acts while it is open, and its Esc
       // (the frame listens after this hook) must not also clear the timeline selection.
-      if (document.querySelector('[data-panel-fullscreen-frame]')) return;
+      // The fullscreen preview is the same: it has a video player's keys of its own.
+      if (document.querySelector(`[data-panel-fullscreen-frame], [${PREVIEW_FULLSCREEN_ATTRIBUTE}]`)) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
@@ -302,6 +307,12 @@ export function useKeyboardShortcuts({
         return;
       }
 
+      if (key === 'f' && isPlainKey && !event.shiftKey) {
+        event.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+
       if (key === 's' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         splitSelectedClip();
@@ -368,6 +379,7 @@ export function useKeyboardShortcuts({
     selectedClipIds,
     splitSelectedClip,
     runtime?.shellRootRef,
+    toggleFullscreen,
     toggleMute,
     togglePlayPause,
     undo,

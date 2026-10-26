@@ -6,6 +6,16 @@ describe('editorTourTargets', () => {
     expect(editorTourTargets(2, 'land')).toEqual(['[data-editor-tour-track="tour-stills"]', '[data-editor-tour="preview"]']);
     expect(editorTourTargets(1, 'compose')).toEqual(['[data-editor-tour="chat-composer"]']);
   });
+
+  it('lights the whole transcript on respond, and on a phone the reply and its actions alone', () => {
+    expect(editorTourTargets(1, 'respond')).toEqual(['[data-editor-tour="chat-transcript"]']);
+    expect(editorTourTargets(1, 'respond', 'tablet')).toEqual(['[data-editor-tour="chat-transcript"]']);
+    expect(editorTourTargets(1, 'respond', 'phone')).toEqual(['[data-editor-tour="chat-reply"]']);
+  });
+
+  it('lights nothing on the welcome, finale and feedback cards, which sit in the middle', () => {
+    for (const beat of ['welcome', 'finale', 'feedback'] as const) expect(editorTourTargets(3, beat, 'phone')).toEqual([]);
+  });
 });
 
 describe('phoneSpotlight', () => {
