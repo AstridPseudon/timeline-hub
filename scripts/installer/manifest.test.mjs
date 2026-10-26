@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { test } from 'node:test';
@@ -30,4 +31,13 @@ test('both bootstraps agree with the manifest uv and Python pins', async () => {
   assert.equal(posix.match(/^PYTHON_VERSION=(\S+)$/m)?.[1], manifest.tools.python.version);
   assert.equal(powershell.match(/\$UvVersion = '([^']+)'/)?.[1], manifest.tools.uv.version);
   assert.equal(powershell.match(/\$PythonVersion = '([^']+)'/)?.[1], manifest.tools.python.version);
+});
+
+test('manifest pins its agent Runtime and schema digest', () => {
+  const result = spawnSync(process.execPath, [path.join(repo, 'scripts/installer/pin.mjs'), '--check'], {
+    cwd: repo,
+    encoding: 'utf8',
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });

@@ -20,6 +20,8 @@ Windows (beta), in PowerShell:
 irm https://astrid.haus/install.ps1 | iex
 ```
 
+Pin `public/install-manifest.json` with `node scripts/installer/pin.mjs <agent-sha>`; CI checks the agent Runtime and schema digest.
+
 Install Git and Node.js **20.19 or newer in the Node 20 release line**, then run these commands in Terminal or PowerShell:
 
 ```sh
