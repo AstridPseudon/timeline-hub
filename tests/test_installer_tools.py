@@ -23,6 +23,28 @@ def manifest():
     return value
 
 
+def test_download_sends_astrid_user_agent(tmp_path, monkeypatch):
+    import io
+
+    requests = []
+
+    class Response(io.BytesIO):
+        pass
+
+    def urlopen(request, *, timeout):
+        requests.append((request, timeout))
+        return Response(b"archive bytes")
+
+    monkeypatch.setattr(tools.urllib.request, "urlopen", urlopen)
+    target = tmp_path / "archive.zip"
+
+    tools.download("https://example.invalid/archive.zip", target)
+
+    assert requests[0][0].get_header("User-agent") == f"astrid-installer/{tools.ASTRID_VERSION}"
+    assert requests[0][1] == 120
+    assert target.read_bytes() == b"archive bytes"
+
+
 def media_binary(directory, name):
     directory.mkdir(parents=True, exist_ok=True)
     executable = directory / (name + EXE_SUFFIX)

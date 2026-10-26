@@ -16,6 +16,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 from ..core.generation.vibecomfy_dependency import VIBECOMFY_FORK_URL
+from ..version import ASTRID_VERSION
 
 ENCODERS = {"libx264", "libx265", "libvpx-vp9", "libaom-av1", "libopus"}
 FILTERS = {"ebur128", "silencedetect", "astats", "signalstats", "blackdetect",
@@ -101,7 +102,8 @@ def asset_downloads(asset: dict) -> list[tuple[str, str | None]]:
 def download(url: str, target: Path, *, sha256: str | None = None) -> None:
     if not url.startswith("https://"):
         raise ValueError("Installer downloads require HTTPS.")
-    with urllib.request.urlopen(url, timeout=120) as response, target.open("wb") as output:
+    request = urllib.request.Request(url, headers={"User-Agent": f"astrid-installer/{ASTRID_VERSION}"})
+    with urllib.request.urlopen(request, timeout=120) as response, target.open("wb") as output:
         shutil.copyfileobj(response, output)
     if sha256 and hashlib.sha256(target.read_bytes()).hexdigest() != sha256:
         raise ValueError(f"Download checksum mismatch: {url}")

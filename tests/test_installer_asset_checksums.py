@@ -40,7 +40,8 @@ def test_two_archives_use_distinct_digests_and_extract_both(tmp_path, monkeypatc
     value, archives = asset()
     requested = []
 
-    def response(url, timeout):
+    def response(request, timeout):
+        url = request.full_url
         requested.append(url)
         return io.BytesIO(archives[value["urls"].index(url)])
 
@@ -118,7 +119,8 @@ def test_installed_tools_forward_the_matching_digest_for_every_archive(tmp_path,
     media["urls"] = media["urls"][:2]
     downloads = []
 
-    def response(url, timeout):
+    def response(request, timeout):
+        url = request.full_url
         downloads.append(url)
         return io.BytesIO(payloads[url])
 
