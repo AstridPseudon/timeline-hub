@@ -363,29 +363,85 @@ def _preflight_cli_case(client, project: str, directory: Path, label: str,
         raise RuntimeError(f"{label} preflight did not refuse with {expected_text!r}: {rendered}")
 
 
+def _acceptance_digest(value: object) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return "sha256:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _acceptance_authoring_closure(project_id: str, picture_id: str, audio_id: str):
+    """Build the small valid authoring closure used by the transcript case."""
+    internal_payload = {
+        "tracks": [{"id": "picture", "kind": "visual"}, {"id": "voice", "kind": "audio"}],
+        "clips": [
+            {"id": "picture-1", "track": "picture", "clipType": "media", "asset": "picture",
+             "at": 0, "hold": 1, "rect": {"x": 0.1, "y": 0.2, "width": 0.3, "height": 0.4}},
+            {"id": "voice-1", "track": "voice", "clipType": "media", "asset": "voice",
+             "at": 0, "hold": 1},
+        ],
+        "effects": [{"type": "opacity", "value": 0.75}],
+        "audio": [{"track_id": "voice", "gain": 0.8}],
+        "layout": {"width": 1920, "height": 1080},
+        "registry": {"assets": {
+            "picture": {"media_id": picture_id, "type": "image"},
+            "voice": {"media_id": audio_id, "type": "audio"},
+        }},
+        "assets": [],
+    }
+    shot_payload = {
+        "name": "Opening",
+        "metadata": {},
+        "items": [
+            {"item_id": "item-1", "media_id": picture_id, "source_frame": None,
+             "metadata": {"role": "primary_visual", "source_item_id": "item-1"}},
+            {"item_id": "item-audio", "media_id": audio_id, "source_frame": None,
+             "metadata": {"role": "voiceover"}},
+        ],
+        "pools": [],
+        "selected_variants": {},
+        "provenance": {},
+        "generation_inputs": {},
+        "audio_bindings": [{"track_id": "voice", "object_id": audio_id}],
+        "text_bindings": [{"slot": "voiceover", "text": "hello"}],
+        "internal_timeline_revision_id": "internal-1",
+    }
+    occurrences = []
+    for index, start in ((1, 0), (2, 1000)):
+        occurrences.append({
+            "occurrence_id": f"occ-{index}", "shot_id": "shot-shared", "shot_revision_id": "shot-rev-1",
+            "placement": {"start_ms": start, "track": "picture"},
+            "source_offset": {"start": 0, "end": 1000}, "duration_ms": 1000,
+            "speed": {"numerator": 1, "denominator": 1}, "track": "picture",
+            "transform": {"scale": 1}, "gain": 1, "muted": False,
+        })
+    parent_payload = {
+        "config": {
+            "tracks": [{"id": "picture", "kind": "visual"}],
+            "clips": [{"id": "direct", "track": "picture", "asset": "direct", "at": 3, "hold": 1}],
+        },
+        "registry": {"assets": {"direct": {"media_id": picture_id}}},
+        "clips": [{"id": "direct", "track": "picture", "asset": "direct", "at": 3, "hold": 1}],
+        "occurrences": occurrences,
+    }
+    parent = {
+        "revision_id": "parent-1", "project_id": project_id, "timeline_id": "main",
+        "content_digest": _acceptance_digest(parent_payload), "payload": parent_payload,
+    }
+    shot = {
+        "revision_id": "shot-rev-1", "project_id": project_id, "shot_id": "shot-shared",
+        "internal_timeline_revision_id": "internal-1",
+        "content_digest": _acceptance_digest(shot_payload), "payload": shot_payload,
+    }
+    internal = {
+        "revision_id": "internal-1", "project_id": project_id, "timeline_id": "main",
+        "content_digest": _acceptance_digest(internal_payload), "payload": internal_payload,
+    }
+    return parent, [shot], [internal]
+
+
 def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]:
     """Seed a tiny real Runtime timeline with transcript/music/words and test conflict semantics."""
     from astrid.sdk.remote import RemoteAstridClient
     from astrid.sdk.timeline_export import export_timeline
-
-    # Load the existing fixture helpers by checkout-bound path. The acceptance
-    # command also adds Runtime to sys.path, and both repositories have a
-    # top-level ``tests`` package, so a normal package import can resolve to
-    # Runtime's unrelated tests package (or an ambient installed package).
-    import importlib.util
-    fixture_path = Path(__file__).resolve().parents[2] / "tests" / "timeline" / "test_authoring_bundle.py"
-    fixture_spec = importlib.util.spec_from_file_location("astrid_n4_authoring_bundle_fixture", fixture_path)
-    if fixture_spec is None or fixture_spec.loader is None:
-        raise RuntimeError(f"could not load transcript acceptance fixture helpers from {fixture_path}")
-    fixture_module = importlib.util.module_from_spec(fixture_spec)
-    try:
-        fixture_spec.loader.exec_module(fixture_module)
-        AUDIO, OLD = fixture_module.AUDIO, fixture_module.OLD
-        _closure = fixture_module._closure
-        _digest = fixture_module._digest
-        _replace_values = fixture_module._replace_values
-    except Exception as exc:
-        raise RuntimeError(f"checkout-bound transcript acceptance fixture helpers failed to load: {exc}") from exc
 
     remote: RemoteAstridClient = client._remote
     workspace = remote._transport
@@ -418,17 +474,13 @@ def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]
                                             expected_head=0, idempotency_key="n4-transcript-binding")
     if not timeline or not shot.ok or not binding.ok:
         raise RuntimeError("could not create sandbox transcript fixture shell/shot/binding")
-    parent, shots, internals = _closure(shared=True)
+    parent, shots, internals = _acceptance_authoring_closure(source_id, picture_id, audio_id)
     for occurrence in parent["payload"]["occurrences"]:
         occurrence["source_offset"] = {"start": 0, "end": 0}
     narration = "Narration — café"
     shots[0]["payload"]["text_bindings"] = [{**binding.data, "text": narration}]
     shots[0]["payload"]["items"].append({"item_id": "n4-music-item", "media_id": music_id,
                                           "source_frame": None, "metadata": {"role": "music"}})
-    replacements = {OLD: picture_id, AUDIO: audio_id, "project-1": source_id}
-    parent = _replace_values(parent, replacements)
-    shots = _replace_values(shots, replacements)
-    internals = _replace_values(internals, replacements)
     internal = internals[0]["payload"]
     internal["tracks"].append({"id": "music", "kind": "audio"})
     internal["registry"]["assets"]["music"] = {"media_id": music_id, "type": "audio"}
@@ -448,9 +500,9 @@ def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]
             {"assetId": "voice", "documentId": document.data["document_id"]}
         ]},
     }
-    parent["content_digest"] = _digest(parent["payload"])
-    shots[0]["content_digest"] = _digest(shots[0]["payload"])
-    internals[0]["content_digest"] = _digest(internals[0]["payload"])
+    parent["content_digest"] = _acceptance_digest(parent["payload"])
+    shots[0]["content_digest"] = _acceptance_digest(shots[0]["payload"])
+    internals[0]["content_digest"] = _acceptance_digest(internals[0]["payload"])
     publication = {"project_id": source_id, "timeline_id": "main", "expected_head": None,
                    "parent_revision_id": "n4-transcript-parent", "parent_composition": parent["payload"],
                    "shot_revisions": shots, "internal_timeline_revisions": internals}
