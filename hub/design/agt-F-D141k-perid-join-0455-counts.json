@@ -1,0 +1,93 @@
+{
+  "schema": "timeline.f.d141k.join.counts.v1",
+  "cut": {
+    "xml_sha256": "7adf18d3a9cd20c2198d4cd4ccd7e0be59497e6111a73284c4977fe31b92b25d",
+    "suite_tests_declared": 9561,
+    "suite_failures_declared": 204,
+    "suite_errors_declared": 196,
+    "suite_skipped_declared": 0,
+    "concrete_testcase_elements": 9388,
+    "concrete_status_counts": {
+      "PASS": 8988,
+      "ERROR": 196,
+      "FAIL": 204
+    },
+    "aggregate_pass_members": 173,
+    "raw_summary": {
+      "failed": 204,
+      "passed": 8988,
+      "warnings": 86,
+      "errors": 196,
+      "subtests_passed": 173,
+      "seconds": 1260.1
+    },
+    "derived_total_equation": "9561 = 9388 + 173",
+    "derived_pass_equation": "9161 = 8988 + 173",
+    "duplicate_concrete_ids": 0
+  },
+  "pristine": {
+    "per_id_sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5",
+    "inventory_records": 3255,
+    "concrete_unique_ids": 3082,
+    "aggregate_null_id_records": 173,
+    "status_counts": {
+      "PASS": 3250,
+      "FAIL": 4,
+      "ERROR": 1
+    },
+    "derived_total_equation": "3255 = 3082 + 173",
+    "duplicate_concrete_ids": 0
+  },
+  "membership": {
+    "cut_concrete_unique_ids": 9388,
+    "pristine_concrete_unique_ids": 3082,
+    "matched_concrete_ids": 3018,
+    "cut_only_concrete_ids": 6370,
+    "pristine_only_concrete_ids": 64,
+    "duplicate_cut_ids": 0,
+    "no_double_counting": true,
+    "multiset_check": "PASS"
+  },
+  "join": {
+    "all_record_classifications": {
+      "CUT_PASS_NOT_REG": 8988,
+      "UNKNOWN": 376,
+      "REG_CANDIDATE": 17,
+      "N_A": 3,
+      "FAILS_BOTH": 4,
+      "AGGREGATE_UNNAMED_PASS": 173
+    },
+    "cut_nonpass_classifications": {
+      "UNKNOWN": 376,
+      "REG_CANDIDATE": 17,
+      "N_A": 3,
+      "FAILS_BOTH": 4
+    },
+    "env_sensitive_reg_candidates": 15,
+    "env_sensitive_fails_both": 4
+  },
+  "source_roots": {
+    "requested_roots": 22,
+    "upstream_present_roots": 17,
+    "project_only_roots": 5,
+    "project_only_root_names": [
+      "tests/core/rendering/test_local_schema.py",
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/test_installer_bootstrap_schema.py"
+    ]
+  },
+  "disk": {
+    "trace_sha256": "e4b87f121ec1c17e9c5523ef9a49f3b6c8c82e7315182999e0920d0eca8c2dfd",
+    "trace_lines": 10,
+    "minimum_available_bytes": 4699422720,
+    "stop_bytes": 4000000000,
+    "stop_preserved": true
+  },
+  "qualification": {
+    "derivative_xml_accounting": "PASS",
+    "controller_qualification": "FAIL_CUSTODY_DISCREPANCY retained unchanged",
+    "final_reg_or_ship_claim": "NOT_ISSUED"
+  }
+}

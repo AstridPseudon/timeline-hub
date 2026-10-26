@@ -1,0 +1,331 @@
+{
+  "schema": "timeline.f.d141k.environment-sensitive.v1",
+  "decision": "CONDITIONAL_FARM_REQUIRED",
+  "farm_trigger": "Nonzero environment-sensitive venv-agent-undecidable REG candidates.",
+  "reg_candidates_total": 17,
+  "reg_candidates_flagged_y": 15,
+  "additional_fails_both_flagged_y": 4,
+  "farm_child_needed": true,
+  "farm_scope": "One conditional matched-kind Farm analysis for the 15 REG candidates; four matched pristine environment-bad/current-nonpass rows are supporting follow-up, not unconditional extra bodies.",
+  "groups": [
+    {
+      "current_source_root": "tests/packs/rendering/test_live_scene_composition.py",
+      "historical_root_cluster": "root-040",
+      "count": 1,
+      "reg_candidate_count": 0,
+      "fails_both_count": 1,
+      "ids": [
+        "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay"
+      ]
+    },
+    {
+      "current_source_root": "tests/packs/rendering/test_render_export_task_adapter.py",
+      "historical_root_cluster": "root-002",
+      "count": 1,
+      "reg_candidate_count": 0,
+      "fails_both_count": 1,
+      "ids": [
+        "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation"
+      ]
+    },
+    {
+      "current_source_root": "tests/packs/rendering/test_render_export_task_adapter.py",
+      "historical_root_cluster": "root-040",
+      "count": 1,
+      "reg_candidate_count": 0,
+      "fails_both_count": 1,
+      "ids": [
+        "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable"
+      ]
+    },
+    {
+      "current_source_root": "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "historical_root_cluster": "root-002",
+      "count": 1,
+      "reg_candidate_count": 0,
+      "fails_both_count": 1,
+      "ids": [
+        "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render"
+      ]
+    },
+    {
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "count": 15,
+      "reg_candidate_count": 15,
+      "fails_both_count": 0,
+      "ids": [
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+        "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "node_id": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+      "current_source_root": "tests/packs/rendering/test_live_scene_composition.py",
+      "historical_root_cluster": "root-040",
+      "cut_status": "ERROR",
+      "pristine_status": "ERROR",
+      "classification": "FAILS_BOTH",
+      "env_sensitive_undecidable": "y",
+      "reason": "pristine record explicitly classified ENVIRONMENT_SITE_REGISTRY_ABSENCE with safe_error_class remotion_site_registry_absent; matching-kind follow-up is required",
+      "cut_first_frame": null,
+      "pristine_environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "pristine_safe_error_class": "remotion_site_registry_absent"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "current_source_root": "tests/packs/rendering/test_render_export_task_adapter.py",
+      "historical_root_cluster": "root-002",
+      "cut_status": "FAIL",
+      "pristine_status": "FAIL",
+      "classification": "FAILS_BOTH",
+      "env_sensitive_undecidable": "y",
+      "reason": "pristine record explicitly classified ENVIRONMENT_SITE_REGISTRY_ABSENCE with safe_error_class remotion_generated_registry_absent; matching-kind follow-up is required",
+      "cut_first_frame": "tests/packs/rendering/test_render_export_task_adapter.py:360",
+      "pristine_environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "pristine_safe_error_class": "remotion_generated_registry_absent"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "current_source_root": "tests/packs/rendering/test_render_export_task_adapter.py",
+      "historical_root_cluster": "root-040",
+      "cut_status": "FAIL",
+      "pristine_status": "FAIL",
+      "classification": "FAILS_BOTH",
+      "env_sensitive_undecidable": "y",
+      "reason": "pristine record explicitly classified ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION with safe_error_class runtime_publication_import_missing; matching-kind follow-up is required",
+      "cut_first_frame": "tests/packs/rendering/test_render_export_task_adapter.py:134",
+      "pristine_environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "pristine_safe_error_class": "runtime_publication_import_missing"
+    },
+    {
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+      "current_source_root": "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "historical_root_cluster": "root-002",
+      "cut_status": "ERROR",
+      "pristine_status": "FAIL",
+      "classification": "FAILS_BOTH",
+      "env_sensitive_undecidable": "y",
+      "reason": "pristine record explicitly classified ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION with safe_error_class runtime_publication_import_missing; matching-kind follow-up is required",
+      "cut_first_frame": "tests/packs/video_editing/test_runtime_publication_chain.py:595",
+      "pristine_environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "pristine_safe_error_class": "runtime_publication_import_missing"
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:223",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:363",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    },
+    {
+      "node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "current_source_root": "tests/sdk",
+      "historical_root_cluster": "root-043",
+      "cut_status": "FAIL",
+      "pristine_status": "PASS",
+      "classification": "REG_CANDIDATE",
+      "env_sensitive_undecidable": "y",
+      "reason": "cut failure is in the host-bootstrap/source-identity family and XML result message reports registry_discovery/original_wait_exit_code; venv-agent cannot decide matching host custody",
+      "cut_first_frame": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "pristine_environment_classification": null,
+      "pristine_safe_error_class": null
+    }
+  ],
+  "not_included": {
+    "pristine_timeout_id": "tests/sdk/test_generation_publication_adapter.py::test_compose_is_deterministic_and_uses_real_capability_outputs",
+    "reason": "pristine timeout remains UNKNOWN and current cut status is PASS; no Farm classification inferred"
+  },
+  "no_unconditional_farm_child": false,
+  "no_product_cause_inference": true
+}

@@ -1,0 +1,227 @@
+{
+  "schema": "timeline.f.d141k.join.source-manifest.v1",
+  "scope": "Hashes of genuine custody/source inputs read by stdlib-only join; raw payloads remain private.",
+  "controller": "agt-F-D141i-corrected-controller-0321",
+  "service_id": "agent-agent-core-full-1026032321-26496",
+  "xml_sha256": "7adf18d3a9cd20c2198d4cd4ccd7e0be59497e6111a73284c4977fe31b92b25d",
+  "pristine_per_id_sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5",
+  "entries": [
+    {
+      "role": "task_plan",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "bytes": 14837,
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    },
+    {
+      "role": "task_brief",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/briefs/agt-F-D141k-perid-join-0455.md",
+      "bytes": 8404,
+      "sha256": "5bfc23f30a4ac2b3bbd78eff8773c3387484ab4bf1d226adef9a25e71a8a57c9"
+    },
+    {
+      "role": "agent_inbox",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/INBOX.md",
+      "bytes": 2087990,
+      "sha256": "cf16627f29e9f56b904fb54a33adb2a8a77541946848b5b5d7d82f7dc06f5842"
+    },
+    {
+      "role": "board_header",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+      "bytes": 219862,
+      "sha256": "5d94321c9126195539d52569212b28046f59ec912d716a49945c9005e0faca81"
+    },
+    {
+      "role": "controller_admission",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/admission.json",
+      "bytes": 1250,
+      "sha256": "aa3730e79201372c533aed1748d934242b75d33ddc59413e362a8d95f8728438"
+    },
+    {
+      "role": "controller_receiving",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/receiving.json",
+      "bytes": 3985,
+      "sha256": "2deadbda848c23aa069822b61e2a0d105c3b3b69401d02cbdfb4f9e8dcda0f1e"
+    },
+    {
+      "role": "controller_result",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/result.json",
+      "bytes": 6448,
+      "sha256": "1e826c9438e38a82ee82f5f67e5c7f998b5c7c664b398aa9ffcc541168087fee"
+    },
+    {
+      "role": "controller_service",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/service.json",
+      "bytes": 1720,
+      "sha256": "b53b3e51537f4dad9b342ef0be3c4fca505c7959799a91fb7ed34d064e7aa272"
+    },
+    {
+      "role": "controller_source_manifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/source-manifest.json",
+      "bytes": 133052,
+      "sha256": "7c0b6c3fdf1384d7f5e71b04a587c61fc4898c3f4d48ae1d1b5f3d26cf6094b2"
+    },
+    {
+      "role": "controller_progress",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/progress.md",
+      "bytes": 1697,
+      "sha256": "1bf42f720f0ce57c8ac7311da10e37d2a877ac68bfb681eedd152ddeb231139d"
+    },
+    {
+      "role": "terminal_xml",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+      "bytes": 15207987,
+      "sha256": "7adf18d3a9cd20c2198d4cd4ccd7e0be59497e6111a73284c4977fe31b92b25d"
+    },
+    {
+      "role": "terminal_disk_trace",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/disk-trace.txt",
+      "bytes": 16780,
+      "sha256": "176b1c21a4c412462ba1197be8580ba488c3d574da6f413ab5360abe5177447b"
+    },
+    {
+      "role": "terminal_source_before",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-before.txt",
+      "bytes": 490,
+      "sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2"
+    },
+    {
+      "role": "terminal_source_after",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-after.txt",
+      "bytes": 490,
+      "sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2"
+    },
+    {
+      "role": "terminal_source_after_errors",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-after-errors.txt",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "role": "terminal_callerargv",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/callerargv.txt",
+      "bytes": 2119,
+      "sha256": "9966fba8d7db039c4f58f92fccd4cff210e921f3b87848ae2fec483a246eb2ea"
+    },
+    {
+      "role": "terminal_runner_exit",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/runner-exit.txt",
+      "bytes": 14,
+      "sha256": "c0460109605964c5a387d40eead9558e87e22beb72e045f1c0a0c733f5f8285f"
+    },
+    {
+      "role": "terminal_monitor_exit",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/monitor-exit.txt",
+      "bytes": 15,
+      "sha256": "1236156448fc903e08f7760186c1ca6400cc2be0501f720c6c35b0e321f1eca4"
+    },
+    {
+      "role": "terminal_runmanifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/launcher-evidence/agent-core-full.runmanifest",
+      "bytes": 752,
+      "sha256": "f78d31ad65a0743c17d265f088d4b2ec902a0e2a31acf913edaa9299b5d3151e"
+    },
+    {
+      "role": "terminal_launcher_manifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/launcher-evidence/agent-core-full.manifest",
+      "bytes": 2730,
+      "sha256": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643"
+    },
+    {
+      "role": "terminal_raw_stdout",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/raw-stdout.log",
+      "bytes": 9633090,
+      "sha256": "6929640c9150256cd090e0ae32308f2a1a8b7f2baea4430ab09d6115f867a8e8"
+    },
+    {
+      "role": "terminal_raw_stderr",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/raw-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "role": "service_request",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/request",
+      "bytes": 108,
+      "sha256": "8c287077cff85f837f822299c9d1efb3ebcfa3ab070e4a76262a604c040bf09a"
+    },
+    {
+      "role": "service_status",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/status",
+      "bytes": 5,
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+    },
+    {
+      "role": "service_exit",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/exit",
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "role": "service_summary",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/summary",
+      "bytes": 791,
+      "sha256": "47e6e0deab6e6778faa229e8e260a0362224d9b622b753d3a65dac46341b0c9c"
+    },
+    {
+      "role": "service_log",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/log.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "role": "pristine_per_id",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-per-id.json",
+      "bytes": 15645481,
+      "sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5"
+    },
+    {
+      "role": "pristine_counts",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-counts.json",
+      "bytes": 978,
+      "sha256": "6ab5a708dca78ae45cba41362d81f65bc9b703b53be0fe9d7d86334455a63644"
+    },
+    {
+      "role": "pristine_bad_nodes",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-bad-nodes.json",
+      "bytes": 12298,
+      "sha256": "0914f2f0e43e705b20211833d5cf7e2e7a222cfa3f3db847312922b9a9d254e5"
+    },
+    {
+      "role": "pristine_env_rerun",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-env-rerun.json",
+      "bytes": 8442,
+      "sha256": "62d4b969e0690f673df529e73c9facbc9ebc272821d05fee34515714ba2c79b4"
+    },
+    {
+      "role": "pristine_source_manifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141c-pristine-perid-0045-source-manifest.json",
+      "bytes": 8203,
+      "sha256": "799b2a62017e88d5ef26e03086d4a3c15b20fbf37131b0602ad061375323ae00"
+    },
+    {
+      "role": "historical_template",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141-nonreg-notes-template-0213-per-id-template.json",
+      "bytes": 1093982,
+      "sha256": "d3729a6a2665bfd8d0081bdb2b89004eaec1bb5c6a8de3054711fe7d9f840f10"
+    },
+    {
+      "role": "historical_template_notes",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141-nonreg-notes-template-0213-notes-template.md",
+      "bytes": 211410,
+      "sha256": "e37accbfd13153c8c92dfcb1e5cd11ed6b384325366cde7f1aaed1a0f2fc173d"
+    },
+    {
+      "role": "historical_template_manifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141-nonreg-notes-template-0213-source-manifest.json",
+      "bytes": 5508,
+      "sha256": "32feeb9f5d503f2469d6a8b8aa5143c17c0d0b79178fa83a49463f4fd9839a05"
+    },
+    {
+      "role": "pristine_preflight",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141-pristine-prep-2350-preflight-inventory.json",
+      "bytes": 3996,
+      "sha256": "8393206ccdd829ef9396c99fec6c893175fbba704bdc9be44d676cd937bf097f"
+    }
+  ],
+  "excluded_refused_service": "service 24049 intentionally excluded; REFUSED-PRE-BODY with zero outcomes"
+}
