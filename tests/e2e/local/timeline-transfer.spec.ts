@@ -133,7 +133,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await page.goto(`${appOrigin}/tools/video-editor?${query}`);
   // The connection pill is only mounted for the hosted editor; the local Vite editor reaches the Runtime through its dev proxy,
   // and the timeline picker below (which needs the Runtime's data) is its connected signal. A cold dev server needs time for its first load.
-  if (appMode === 'hosted') await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
+  if (appMode === 'hosted') await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected', { timeout: 120_000 });
   await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible({ timeout: 180_000 });
   const picker = page.getByRole('combobox', { name: 'Select timeline' });
   // The timeline picker's suggestions listbox; page-wide options also match the playback-speed select.
