@@ -1,0 +1,36 @@
+{
+  "schema": "timeline.agent.d141i.command-return.findings-resolution.v1",
+  "review_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-review-0232/evidence/review.json",
+  "verdict": "CORRECTED_RETURN_READY_FOR_INDEPENDENT_FINAL_REVIEW",
+  "resolutions": [
+    {
+      "id": "D141I-COMMAND-001",
+      "status": "RESOLVED_STATIC_AND_CONTROLLED",
+      "evidence": "measurement-command.sh die() uses local exit_code=${2:-78}, numeric validation, and exit \"$exit_code\"; actual authored helper controls returned default 78 and explicit 83"
+    },
+    {
+      "id": "D141I-COMMAND-002",
+      "status": "RESOLVED_STATIC_AND_DRY_CONTROLLED",
+      "evidence": "positive.manifest junit_paths and fresh launcher runmanifest both equal the wrapper's durable JUNIT_XML path; MANIFEST input root and launcher-evidence output root are distinct"
+    },
+    {
+      "id": "D141I-COMMAND-003",
+      "status": "RESOLVED_STATIC_AND_CONTROLLED",
+      "evidence": "after_body captures nonzero record_disk status and exits before PASS classification; authored helper controls returned 97 for read failure and 98 for write failure"
+    },
+    {
+      "id": "D141I-SOURCE-004",
+      "status": "RESOLVED_FRESH_PHYSICAL_READBACK",
+      "evidence": "positive/source manifest profile_lock_sha is derived from and equals the existing protected package-lock.json hash ending ...be18d; all emitted source/hash fields were read back"
+    }
+  ],
+  "preserved": {
+    "source_tuple": true,
+    "normal_manifest_maker": true,
+    "launcher": true,
+    "profile_source_client_schema_pins": true,
+    "selector_and_pytest_settings": true,
+    "admission_stop_and_single_heavy_body": true,
+    "no_body_or_request": true
+  }
+}

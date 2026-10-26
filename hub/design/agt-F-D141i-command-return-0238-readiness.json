@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.d141i.command-return.readiness.v1",
+  "status": "READY_FOR_INDEPENDENT_FINAL_COMMAND_REVIEW",
+  "source_tuple": "PASS exact requested commits/trees/official origins/clean status",
+  "fresh_manifests": "PASS positive and poison generated from actual authenticated physical files",
+  "profile_lock_binding": "PASS f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+  "junit_binding": "PASS manifest path equals production durable XML argv destination",
+  "fresh_positive_control": "PASS preflight=0 stub=17 counter=1",
+  "fresh_poison_control": "PASS exit=1 before stub/counter=0; agent_sha is exactly 40 zeroes",
+  "helper_controls": "PASS die default=78 explicit=83; disk read failure=97/write failure=98",
+  "static_checks": "PASS bash syntax, JSON/hash/22-root/argv/path-join/source readbacks",
+  "body": {
+    "measurement_command_executed": false,
+    "pytest_executed": false,
+    "collection_executed": false,
+    "request_test_submitted": false,
+    "service_row_count": 1,
+    "heavy_body_count": 1
+  },
+  "blocking_input": "independent final command review; then normal controller may decide admission",
+  "not_claimed": ["body result", "queue/admission state", "REG", "behavior", "ship credit"]
+}

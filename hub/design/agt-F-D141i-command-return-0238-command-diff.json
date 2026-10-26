@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.d141i.command-return.command-diff.v1",
+  "reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-dry-preflight-1848-measurement-command.sh",
+  "qualified_wrapper_reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141b-pristine-controller-0035-validation.md",
+  "candidate": "measurement-command.sh",
+  "candidate_sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+  "review_verdict": "RETURNED_COMMAND_CORRECTED",
+  "source_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-review-0232/evidence/review.json",
+  "fixes": [
+    {"id": "D141I-COMMAND-001", "change": "die uses numeric default/explicit exit_code expansion"},
+    {"id": "D141I-COMMAND-002", "change": "manifest JUnit path equals actual durable JUnit argv path; input and launcher-output roots are distinct"},
+    {"id": "D141I-COMMAND-003", "change": "after_body disk failure is captured and exits nonzero before terminal finish"},
+    {"id": "D141I-SOURCE-004", "change": "fresh manifest/source receipts derive the actual protected profile package-lock hash"}
+  ],
+  "preserved": [
+    "same four frozen source tuples and official origins",
+    "normal manifest-maker and pinned launcher",
+    "exact 1848 settings and 22 selector roots",
+    "one heavy body, 4700000000 admission, 4000000000 stop floor",
+    "no body, request, installation, source/pin/launcher/kit/package change"
+  ]
+}
