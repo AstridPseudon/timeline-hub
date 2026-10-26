@@ -239,12 +239,22 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     if (!workerCredentialFile || !existsSync(workerCredentialFile)) throw new Error('N4 sandbox Runtime did not publish its worker credential');
 
     // The product-facing hosted UI obtains export-plan work from the canonical timeline pack host.
+    // Same composition the supervised host bootstrap uses (astrid/sdk/host_bootstrap.py): stamp <support>/astrid-host/boot-manifest.json.
+    const bootManifestPath = path.join(supportRoot, 'astrid-host', 'boot-manifest.json');
+    execFileSync(astridPython, ['-c',
+      'import sys; from astrid.core.gateway.dispatch import compose_profile_handoff; compose_profile_handoff(sys.argv[1], support_root=sys.argv[2])',
+      bootManifestPath, supportRoot], {
+      cwd: astridCheckout,
+      env: { PATH: process.env.PATH, HOME: isolatedHome, TMPDIR: shortTmpRoot, TMP: shortTmpRoot, TEMP: shortTmpRoot,
+        PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: `${astridCheckout}${path.delimiter}${runtimeCheckout}` },
+      stdio: 'inherit',
+    });
     hostChild = spawnGroup(astridPython, ['-m', 'astrid.core.execution.generic_host', 'run',
       '--pack-root', path.join(astridCheckout, 'astrid', 'packs', 'timeline'),
       '--pack-root', path.join(astridCheckout, 'astrid', 'packs', 'rendering'),
       '--runtime-endpoint', endpoint, '--credential-file', workerCredentialFile,
       '--executor-id', 'astrid-pack-host', '--runtime-discovery-file', discoveryFile,
-      '--source-checkout', astridCheckout, '--support-root', supportRoot,
+      '--source-checkout', astridCheckout, '--support-root', supportRoot, '--boot-manifest-path', bootManifestPath,
       '--runtime-instance-id', runtimeInstanceId, '--attempt-root', path.join(outputRoot, 'attempts'),
       '--register', '--poll-seconds', '0.5'], {
       cwd: astridCheckout,
