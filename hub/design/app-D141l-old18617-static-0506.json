@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-26T05:06:37.020566+00:00",
+  "id": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617",
+  "request": "target=app-pin-867cb273\nrepo=app\nsuite=d141-p2-transition-none-single-867cb273-submit-preflight\nfiles=''\nnocache=1\nrequested=2026-10-26T01:50:50Z\n",
+  "request_sha256": "ce84206effa283337f7b67c9e7373b95eabadeb450905fca137057d1a759671f",
+  "status": "queued",
+  "why": "low disk (available=4632084480 bytes; floor=5000000000, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)",
+  "queued_file_exists": true,
+  "kit_sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+  "kit_held_ids": [
+    "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+    "agent-p4-current-becfe-http-3legs-1026012948-19479"
+  ],
+  "requested_queue_change": false,
+  "body_started": false,
+  "source": "Current5344 proof replaces historical867; original request and queue stay unchanged under recorded instruction."
+}
