@@ -1,0 +1,13 @@
+{
+  "kind": "Manager recorded terminal maintenance receipt; no behavior proof",
+  "observed_utc": "2026-10-26T12:33:39.781168+00:00",
+  "compact": {
+    "command": "bin/compact-scratch",
+    "exit": 0,
+    "actual_stdout": "packed 0 scratch dirs; free 6236M -> 6236M\ngzipped 1 old worker logs; free now 6237M\npacked 0 finished test-run dirs; free now 6237M\n"
+  },
+  "sweep_receipt": "design/agent-D141ee-sweep-maintenance-1230.json",
+  "free_bytes": 6538129408,
+  "recycle": "No eligible ended nonKEEP local Agent tree; no request made. Eight nonhome Runtime trees lack local worker metadata; dirtyG2 stays protected.",
+  "limits": "No pre-run complete marker inventory; no marker byte-equality claim. No KEEP override, manager hub mutation, repeat repack or Store operation."
+}
