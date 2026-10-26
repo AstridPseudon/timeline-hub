@@ -245,7 +245,8 @@ def test_verification_rejects_pack_host_without_ready_file_with_service_evidence
     })
     status = {"discovery": {"runtime_instance_id": "instance"}, "support": {"pid_alive": True}}
     health = {"status": "ok", "runtime_instance_id": "instance", "services": [
-        {"name": "pack-host", "state": state, "reason": "worker exited during startup", "last_exit": 7},
+        {"name": "pack-host", "state": state, "reason": "worker exited during startup",
+         "restart_count": 1, "last_exit": 7},
     ]}
     realm = {"realm_id": "realm"}
 

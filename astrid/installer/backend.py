@@ -70,6 +70,23 @@ def _last_service_log(log: Path, *, tail: int = 8192) -> str | None:
         return None
 
 
+def _classify_services(services, ready_file: Path) -> tuple[str, dict | None, dict | None]:
+    """Classify one health snapshot as ready, crashed, or still starting."""
+    if not isinstance(services, list):
+        services = []
+    pack_host = next((service for service in services
+                      if isinstance(service, dict) and service.get("name") == "pack-host"), None)
+    failed = next((service for service in services
+                   if isinstance(service, dict) and service.get("state") == "failed"), None)
+    if failed is not None:
+        return "crashed", pack_host, failed
+    if pack_host and pack_host.get("state") == "running" and ready_file.is_file():
+        return "ready", pack_host, None
+    if pack_host and (pack_host.get("restart_count", 0) > 0 or pack_host.get("last_exit") is not None):
+        return "crashed", pack_host, None
+    return "starting", pack_host, None
+
+
 def _runtime_json(output: str) -> dict:
     """Runtime's one JSON result, after any stderr notes merged into output."""
     start = next((match.start() for match in re.finditer(r"^\{", output, re.MULTILINE)), 0)
@@ -538,7 +555,6 @@ class Backend:
         port = int(version.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)))
         deadline = time.monotonic() + timeout
         error = None
-        pack_host = None
         identity_ok = False
         while time.monotonic() < deadline:
             try:
@@ -547,16 +563,15 @@ class Backend:
                 endpoint = discovery.get("door_endpoint", "")
                 if endpoint != f"http://127.0.0.1:{port}":
                     raise ValueError("Astrid's recorded door is not on the configured loopback port.")
+
                 def get(path):
                     request = urllib.request.Request(endpoint + path, headers={"Origin": "https://astrid.haus"})
                     with opener.open(request, timeout=2) as response:
                         return json.load(response)
+
                 health = get("/api/runtime/v1/health")
                 realm = get("/api/runtime/v1/realm")
                 services = health.get("services", [])
-                if isinstance(services, list):
-                    pack_host = next((service for service in services
-                                      if isinstance(service, dict) and service.get("name") == "pack-host"), None)
                 if (health.get("status") != "ok" or realm.get("realm_id") != realm_id
                         or discovery.get("active_realm") != realm_id
                         or health.get("runtime_instance_id") != discovery.get("runtime_instance_id")
@@ -564,50 +579,60 @@ class Backend:
                         or status.get("support", {}).get("pid_alive") is not True):
                     raise ValueError("The browser door belongs to a different Runtime or workspace.")
                 identity_ok = True
-                if (pack_host is not None and pack_host.get("state") == "running"
-                        and (data / "runtime" / "generic-host.ready.json").is_file()
-                        and not (isinstance(services, list) and any(
-                            isinstance(service, dict) and service.get("state") == "failed"
-                            for service in services
-                        ))):
-                    return
-                error = ValueError("Astrid pack-host service is not ready.")
-                if isinstance(services, list) and any(
-                    isinstance(service, dict) and service.get("state") == "failed"
-                    for service in services
-                ):
-                    break
+                break
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 error = exc
                 time.sleep(0.25)
-        if identity_ok and (pack_host is None or pack_host.get("state") != "running"
-                            or not (data / "runtime" / "generic-host.ready.json").is_file()):
-            service_state = pack_host.get("state", "missing") if isinstance(pack_host, dict) else "missing"
-            reason = pack_host.get("reason") if isinstance(pack_host, dict) else None
-            last_exit = pack_host.get("last_exit") if isinstance(pack_host, dict) else None
-            service_log = platform.log_dir() / "service-pack-host.log"
-            tail = _last_service_log(service_log)
-            detail = (f"Astrid pack-host service did not become ready: state={service_state}, "
-                      f"reason={reason or 'none'}, last_exit={last_exit!r}; log={service_log}")
-            if tail:
-                detail += f"\nLast service log lines:\n{tail}"
-            raise VerificationError(detail)
         if not identity_ok:
             cause = _last_logged_error(self.service.log)
             if cause:
                 raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
             raise VerificationError(f"Astrid's browser door did not become ready: {error}")
-        if isinstance(services, list) and any(
-            isinstance(service, dict) and service.get("state") == "failed"
-            for service in services
-        ):
-            raise VerificationError("A declared Astrid service is failed.")
-        # A Runtime that died at startup records why in its service log; that is
-        # the real cause, not the missing door it leads to.
-        cause = _last_logged_error(self.service.log)
-        if cause:
-            raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
-        raise VerificationError(f"Astrid's browser door did not become ready: {error}")
+
+        ready_file = data / "runtime" / "generic-host.ready.json"
+        state, pack_host, failed = _classify_services(services, ready_file)
+        if state == "ready":
+            return
+
+        def service_failure(*, crashed: bool) -> VerificationError:
+            service_log = platform.log_dir() / "service-pack-host.log"
+            tail = _last_service_log(service_log)
+            service_state = pack_host.get("state", "missing") if pack_host else "missing"
+            reason = pack_host.get("reason") if pack_host else None
+            last_exit = pack_host.get("last_exit") if pack_host else None
+            label = "A declared Astrid service is failed" if crashed else "Astrid pack-host service hung during startup"
+            detail = (f"{label}: state={service_state}, reason={reason or 'none'}, "
+                      f"last_exit={last_exit!r}; log={service_log}")
+            if failed is not None:
+                detail += (f"; failed_service={failed.get('name')}, failed_state={failed.get('state')}, "
+                           f"failed_reason={failed.get('reason') or 'none'}, "
+                           f"failed_last_exit={failed.get('last_exit')!r}")
+            if tail:
+                detail += f"\nLast service log lines:\n{tail}"
+            return VerificationError(detail)
+
+        if state == "crashed":
+            raise service_failure(crashed=True)
+        profile = read_json(version.profile)
+        declaration = read_json(Path(profile["service_declaration"]))
+        pack_host_declaration = next(
+            service for service in declaration.get("services", [])
+            if isinstance(service, dict) and service.get("name") == "pack-host"
+        )
+        ready_deadline = time.monotonic() + pack_host_declaration["ready"]["timeout_seconds"]
+        while state == "starting":
+            if time.monotonic() >= ready_deadline:
+                raise service_failure(crashed=False)
+            try:
+                health = get("/api/runtime/v1/health")
+                services = health.get("services", [])
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+                time.sleep(0.25)
+                continue
+            time.sleep(0.25)
+            state, pack_host, failed = _classify_services(services, ready_file)
+            if state == "crashed":
+                raise service_failure(crashed=True)
 
     def sync_skills(self, version: Version) -> None:
         """Best-effort install of Astrid's skill view into detected harnesses."""
