@@ -8,7 +8,8 @@ import { ASTRID_APP_LOCAL_DEV_COMMAND } from '@/shared/lib/localAstridRuntime.ts
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import { useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { RuntimeAuthenticationError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
-import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+import { describeFailure, healthCheckCommand, RUNTIME_CONNECTION_COPY, runtimeLogDirectory } from '@/shared/components/RuntimeConnection/copy.ts';
+import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection.ts';
 
 export interface RuntimeConnectorRecoveryBannerProps {
   readonly retrying?: boolean;
@@ -43,9 +44,11 @@ export function buildWorkspaceRestartBrief({
   connectionUrl,
   projectId,
   timelineId,
-}: { error: string; connectionUrl?: string | null; projectId?: string | null; timelineId?: string | null }): string {
-  const diagnostic = error.trim() || 'The editor cannot reach its configured Astrid Runtime.';
+}: { error: unknown; connectionUrl?: string | null; projectId?: string | null; timelineId?: string | null }): string {
+  const diagnostic = (typeof error === 'string' ? error.trim() : describeFailure(error).summary)
+    || 'The editor cannot reach its configured Astrid Runtime.';
   const safeUrl = safeConnectionUrl(connectionUrl);
+  const platform = detectPlatform();
   return [
     'Please restore this editor’s existing Astrid Runtime connection.',
     'Keep the current installation, Runtime profile, data root, workspace files, credentials, and agent instructions. Do not reset, reinstall, create a new data root, or switch to the bundled demo bridge.',
@@ -53,6 +56,8 @@ export function buildWorkspaceRestartBrief({
     ...(projectId || timelineId ? [`Preserve the current editor route identity: project ${projectId || '(unknown)'}, timeline ${timelineId || '(unknown)'}.`] : []),
     `Current editor diagnostic: ${diagnostic}`,
     ...(safeUrl ? [`Configured editor origin for the workspace connection: ${safeUrl}`] : []),
+    `Service logs are named service-<name>.log under ${runtimeLogDirectory(platform)}.`,
+    ...(safeUrl ? [`Check Runtime health: \`${healthCheckCommand(safeUrl, undefined, platform)}\`.`] : []),
     'Verify that the same configured Runtime is healthy, editor project and timeline discovery return the same selections, and the existing configured agent responds without changing its instructions. Leave the existing processes available after verification.',
   ].join('\n\n');
 }
@@ -109,8 +114,13 @@ export function RuntimeConnectorRecoveryBanner({
   const [briefCopyFailed, setBriefCopyFailed] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const safeUrl = safeConnectionUrl(connectionUrl);
-  const restartBrief = buildWorkspaceRestartBrief({ error: error.message, connectionUrl: safeUrl, projectId, timelineId });
+  const hosted = runtimeOrigin() !== '';
+  const failure = describeFailure(error);
+  const restartBrief = buildWorkspaceRestartBrief({ error, connectionUrl: safeUrl, projectId, timelineId });
+  const authenticationFailed = error instanceof RuntimeAuthenticationError;
+  const typedFailure = authenticationFailed || error instanceof RuntimeUnavailableError && (error.failureKind === "admission" || error.failureKind === "storage");
   const visibleFailureSummary = failureSummary?.trim()
+    || (!hosted ? failure.summary : null)
     || 'The editor could not complete workspace discovery.';
 
   const copyRestartInstructions = async () => {
@@ -124,10 +134,7 @@ export function RuntimeConnectorRecoveryBanner({
 
   const retryRef = useRef<HTMLButtonElement>(null);
   const recoveryCardShowing = useRecoveryCardShowing();
-  const hosted = runtimeOrigin() !== '';
   if (hosted && recoveryCardShowing) return null;
-  const authenticationFailed = error instanceof RuntimeAuthenticationError;
-  const typedFailure = authenticationFailed || error instanceof RuntimeUnavailableError && (error.failureKind === "admission" || error.failureKind === "storage");
   const titles = RUNTIME_CONNECTION_COPY.connectorFailure;
   const title = authenticationFailed
     ? titles.authentication
@@ -137,7 +144,8 @@ export function RuntimeConnectorRecoveryBanner({
         ? titles.storage
         : titles.unavailable;
   const action = 'recoveryAction' in error && typeof error.recoveryAction === 'string'
-    ? error.recoveryAction : 'Retry the connection to your configured Astrid Runtime.';
+    ? error.recoveryAction
+    : 'Retry the connection to your configured Astrid Runtime.';
   if (hosted) return (
     <RecoveryOverlay onRetry={onRetry} retryRef={retryRef} quietRetry={!authenticationFailed}>
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-6 shadow-lg" role="alert">

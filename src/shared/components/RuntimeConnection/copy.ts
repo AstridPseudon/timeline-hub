@@ -1,6 +1,9 @@
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import { RuntimeAuthenticationError, RuntimeCompatibilityError, RuntimeUnavailableError } from '@/integrations/runtime/client.ts';
+import type { ServiceStatus } from '@/integrations/runtime/generated.ts';
 import { installBrowserName } from '@/pages/Home/installScenario.ts';
 import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection.ts';
+import type { Platform } from '@/shared/hooks/platformInstall/types.ts';
 
 /**
  * Every word the hosted build's connection gate shows. The panel, the restart cards,
@@ -110,6 +113,95 @@ export function localSetupInstructions(): string {
 
 export type CommandMode = 'install' | 'update';
 
+export interface FailureDescription {
+  readonly summary: string | null;
+  readonly lastExit: number | null;
+  readonly logPath: string | null;
+}
+
+export function runtimeLogDirectory(platform: Platform = detectPlatform()): string {
+  switch (platform) {
+    case 'windows': return '%LOCALAPPDATA%\\Astrid Runtime\\logs';
+    case 'mac': return '~/Library/Logs/Astrid Runtime';
+    case 'linux': return '${XDG_STATE_HOME:-~/.local/state}/astrid-runtime/logs';
+    default: return 'Astrid Runtime logs';
+  }
+}
+
+function serviceLogPath(name: string, platform: Platform): string {
+  const safeName = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name) ? name : 'unknown';
+  const separator = platform === 'windows' ? '\\' : '/';
+  return `${runtimeLogDirectory(platform)}${separator}service-${safeName}.log`;
+}
+
+function serviceStatus(value: unknown): value is ServiceStatus {
+  if (!value || typeof value !== 'object') return false;
+  const service = value as Partial<ServiceStatus>;
+  return typeof service.name === 'string'
+    && ['starting', 'running', 'restarting', 'failed'].includes(String(service.state))
+    && (typeof service.last_exit === 'number' || service.last_exit === null);
+}
+
+/** Describes known Runtime failures and service history without exposing arbitrary error text. */
+export function describeFailure(value: unknown, platform: Platform = detectPlatform()): FailureDescription {
+  if (serviceStatus(value)) {
+    const reason = typeof value.reason === 'string' ? value.reason.trim() : '';
+    const lastExit = value.last_exit;
+    const summary = reason
+      ? `${value.state === 'failed' ? 'Reason' : 'Previous reason'}: ${reason}`
+      : value.state === 'failed' ? 'The service is failed.'
+        : lastExit !== null ? 'The service exited previously.' : null;
+    return { summary, lastExit, logPath: serviceLogPath(value.name, platform) };
+  }
+  if (value instanceof RuntimeAuthenticationError) {
+    return { summary: 'The Runtime rejected or revoked its connector credential.', lastExit: null, logPath: null };
+  }
+  if (value instanceof RuntimeUnavailableError) {
+    const summary = value.failureKind === 'storage'
+      ? 'The Runtime reported a storage problem.'
+      : value.failureKind === 'admission'
+        ? 'The Runtime failed its startup or integrity checks.'
+        : value.failureKind === 'transport'
+          ? 'The configured Runtime did not respond.'
+          : 'The Runtime returned an unavailable response.';
+    return { summary, lastExit: null, logPath: null };
+  }
+  if (value instanceof RuntimeCompatibilityError) {
+    return { summary: 'The Runtime does not match the selected workspace or App contract.', lastExit: null, logPath: null };
+  }
+  if (value instanceof Error && value.message.trim()) {
+    return { summary: value.message.trim(), lastExit: null, logPath: null };
+  }
+  return { summary: 'The Runtime connection failed.', lastExit: null, logPath: null };
+}
+
+export function healthCheckCommand(apiBase: string, origin?: string, platform: Platform = detectPlatform()): string {
+  const base = apiBase.replace(/\/+$/, '');
+  const runtimeBase = base.endsWith('/api/runtime') ? base : `${base}/api/runtime`;
+  const url = `${runtimeBase}/v1/health`;
+  if (platform === 'windows') {
+    const headers = origin ? ` -Headers @{ Origin = '${origin.replace(/'/g, "''")}' }` : '';
+    return `Invoke-RestMethod -Uri '${url.replace(/'/g, "''")}'${headers}`;
+  }
+  return `curl -s${origin ? ` -H "Origin: ${origin}"` : ''} ${url}`;
+}
+
+function serviceBrief(services: readonly ServiceStatus[] | undefined, platform: Platform): string {
+  const recorded = services?.map((service) => {
+    const failure = describeFailure(service, platform);
+    const details = [
+      `${service.name}: ${service.state}`,
+      failure.summary,
+      failure.lastExit === null ? null : `Last exit: ${failure.lastExit}`,
+      failure.logPath ? `Log: ${failure.logPath}` : null,
+    ].filter((part): part is string => Boolean(part));
+    return details.join(' · ');
+  }) ?? [];
+  return recorded.length
+    ? `Runtime services from health:\n${recorded.join('\n')}`
+    : `If a service fails, inspect its service-<name>.log under ${runtimeLogDirectory(platform)}.`;
+}
+
 export function installCommand(mode: CommandMode): string {
   const windows = detectPlatform() === 'windows';
   if (mode === 'update') return windows ? ASTRID_COMMANDS.windowsUpdate : ASTRID_COMMANDS.macLinuxUpdate;
@@ -125,8 +217,9 @@ export const UPDATE_ROUTES = {
 } as const;
 
 /** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
-export function agentInstructions(mode: CommandMode, pageOrigin: string, localBuild = false): string {
-  const windows = detectPlatform() === 'windows';
+export function agentInstructions(mode: CommandMode, pageOrigin: string, localBuild = false, services?: readonly ServiceStatus[]): string {
+  const platform = detectPlatform();
+  const windows = platform === 'windows';
   const command = installCommand(mode);
   return [
     `Please ${mode === 'update' ? 'update my existing Astrid installation' : 'set up or restart Astrid on this computer'} so the page at ${pageOrigin} can connect. Do the work yourself and verify the result.`,
@@ -141,6 +234,8 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string, localBu
       ? localBuild ? `${UPDATE_ROUTES.source} Before running the installer, check whether this computer runs Astrid from source checkouts (for example, a running runtime_protocol from a git checkout). If it does, update those checkouts instead of running the installer.` : null
       : null,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
+    serviceBrief(services, platform),
+    `Check Runtime health: \`${healthCheckCommand(`${runtimeOrigin() || pageOrigin}/api/runtime`, undefined, platform)}\`.`,
     `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
     "If the installer couldn't open a browser, open https://astrid.haus/?connect=1.",
     'My astrid.haus tab connects by itself once Astrid answers; if it shows a Connect button, click it.',
@@ -152,10 +247,12 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string, localBu
  * and the one fix there is (update) when the page is astrid.haus.
  */
 export function refusedAgentInstructions(pageOrigin: string, apiBase: string): string {
-  const windows = detectPlatform() === 'windows';
+  const platform = detectPlatform();
+  const windows = platform === 'windows';
   return [
     `Astrid is running on this computer and answering at ${apiBase}, but it refuses requests from the page at ${pageOrigin}, so that page can't connect. Do the work yourself and verify the result.`,
-    `Check it: \`curl -s -H "Origin: ${pageOrigin}" ${apiBase}/v1/health\`. A refusal answers 403 with no Access-Control-Allow-Origin header. Compare with \`curl -s -H "Origin: https://astrid.haus" ${apiBase}/v1/health\`, which should answer with health JSON.`,
+    `Check it: \`${healthCheckCommand(apiBase, pageOrigin, platform)}\`. A refusal answers 403 with no Access-Control-Allow-Origin header. Compare with \`${healthCheckCommand(apiBase, 'https://astrid.haus', platform)}\`, which should answer with health JSON.`,
+    `Service logs are named service-<name>.log under ${runtimeLogDirectory(platform)}.`,
     'Astrid is installed and running: do not reinstall it, and do not reset, delete or replace my workspace, projects, media, credentials or agent instructions.',
     `If the page is https://astrid.haus, this Astrid is probably out of date. Update it with the official installer's update command; read the script before running it. ${windows ? `In PowerShell: ${ASTRID_COMMANDS.windowsUpdate}\nFrom Git Bash or another shell: ${ASTRID_COMMANDS.windowsAgentUpdate}\nUpdate from Windows, not inside WSL.` : `The command: ${ASTRID_COMMANDS.macLinuxUpdate}`} If you run Astrid from source checkouts instead, update those checkouts to their main branches and restart Astrid; don't run the installer over them.`,
     `If the page is not https://astrid.haus, ${pageOrigin} isn't an address this Astrid serves. Tell me to open https://astrid.haus instead; don't change Astrid's allowed origins unless I ask.`,

@@ -29,6 +29,8 @@ export const ASTRID_STATUS_COPY = {
     restarting: 'Restarting…',
     failed: 'Failed',
   },
+  lastExit: (code: number) => `Last exit: ${code}`,
+  serviceLog: (path: string) => `Log: ${path}`,
   serviceName: (name: string) => {
     switch (name) {
       case 'pack-host': return 'Task host';

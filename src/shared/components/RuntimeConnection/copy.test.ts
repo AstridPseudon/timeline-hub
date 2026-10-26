@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { agentInstructions, ASTRID_COMMANDS, installCommand, localSetupInstructions, localSetupSteps, LOCAL_SETUP, refusedAgentInstructions, RUNTIME_CONNECTION_COPY, withOrigin } from './copy.ts';
+import { agentInstructions, ASTRID_COMMANDS, describeFailure, healthCheckCommand, installCommand, localSetupInstructions, localSetupSteps, LOCAL_SETUP, refusedAgentInstructions, RUNTIME_CONNECTION_COPY, withOrigin } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -105,5 +105,33 @@ describe('refused card', () => {
     const text = refusedAgentInstructions('https://astrid.haus', BASE);
     expect(text).toContain(ASTRID_COMMANDS.windowsUpdate);
     expect(text).toContain(ASTRID_COMMANDS.windowsAgentUpdate);
+  });
+});
+
+describe('failure diagnostics', () => {
+  it('uses one service description with the platform log path and historical exit', () => {
+    const service = { name: 'pack-host', state: 'running', reason: 'readiness_timeout', last_exit: 7, restart_count: 2 } as const;
+    expect(describeFailure(service, 'windows')).toEqual({
+      summary: 'Previous reason: readiness_timeout',
+      lastExit: 7,
+      logPath: '%LOCALAPPDATA%\\Astrid Runtime\\logs\\service-pack-host.log',
+    });
+    expect(describeFailure(service, 'mac').logPath).toBe('~/Library/Logs/Astrid Runtime/service-pack-host.log');
+    expect(describeFailure(service, 'linux').logPath).toBe('${XDG_STATE_HOME:-~/.local/state}/astrid-runtime/logs/service-pack-host.log');
+  });
+
+  it('keeps ordinary diagnostics available to local recovery and uses PowerShell on Windows', () => {
+    expect(describeFailure(new Error('Connection refused.')).summary).toBe('Connection refused.');
+    expect(healthCheckCommand('http://127.0.0.1:17340/api/runtime', 'https://astrid.haus', 'windows'))
+      .toBe("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health' -Headers @{ Origin = 'https://astrid.haus' }");
+    expect(healthCheckCommand('http://127.0.0.1:17340', undefined, 'windows'))
+      .toBe("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health'");
+    expect(healthCheckCommand('http://127.0.0.1:17340/api/runtime/', undefined, 'windows'))
+      .toBe("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health'");
+    const brief = agentInstructions('install', 'https://astrid.haus', false, [
+      { name: 'pack-host', state: 'restarting', reason: 'readiness_timeout', last_exit: 7, restart_count: 1 },
+    ]);
+    expect(brief).toContain('pack-host: restarting · Previous reason: readiness_timeout · Last exit: 7');
+    expect(brief).toContain('service-pack-host.log');
   });
 });
