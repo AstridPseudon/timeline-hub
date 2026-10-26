@@ -1,0 +1,63 @@
+{
+  "format": "timeline-d141jj-wholepath-source-map-v2",
+  "verdict": "READ_ONLY_FINITE_NOT_READY",
+  "scope": "Static continuation after the private isolation derivative; no checker, staging, builder, installer, service, or product execution.",
+  "source_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence",
+  "immutable_source_tuple": {
+    "app_head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+    "agent_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "app_recorded_base": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "agent_recorded_base": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "runtime_recorded_base": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "composition_recorded_base": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+  },
+  "trace": [
+    {
+      "phase": "fixture construction",
+      "file_lines": "check_jj.py:120-165, 439-448",
+      "observation": "fixture_repo returns the initial commit as stale_base; the stale control adds a commit and uses stale_base for recorded upstream_base and gated_tip, but the main stale control does not advance refs/heads/origin/main to stale_head."
+    },
+    {
+      "phase": "caller source identity",
+      "file_lines": "run-final-delivery.py:84-117",
+      "observation": "source tuple roots, ownership, cleanliness, HEAD and tl/integration tree are checked before D68 is called."
+    },
+    {
+      "phase": "caller gate identity and binding",
+      "file_lines": "run-final-delivery.py:120-175",
+      "observation": "gate tuple objects and refs are checked, then source and gate roots are compared."
+    },
+    {
+      "phase": "caller to D68",
+      "file_lines": "run-final-delivery.py:204-235, 268-280",
+      "observation": "caller creates a unique receipt/stage child but passes the outer service_tmp to run_delivery; run_delivery owns the retained fixed trace path."
+    },
+    {
+      "phase": "D68 source guard",
+      "file_lines": "delivery_gate_build.py:221-242",
+      "observation": "D68 resolves recorded upstream_base and current origin/main; for non-App repositories it refuses only when they differ."
+    },
+    {
+      "phase": "D68 diagnostic and return",
+      "file_lines": "delivery_gate_build.py:433-464, 467-472",
+      "observation": "CandidateError is recorded as a FAIL receipt and exits nonzero; the caller receives that integer from run_delivery."
+    },
+    {
+      "phase": "caller observation",
+      "file_lines": "run-final-delivery.py:287-306; check_jj.py:112-117, 402-432",
+      "observation": "caller writes a final receipt with status FAIL for a nonzero D68 result and returns the code; invoke discards the integer and only reports Python OSError/ValueError exceptions."
+    }
+  ],
+  "prior_positive_and_same33": {
+    "prior_positive": "Preserved prior actual caller -> delivery lifecycle -> D68 -> bounded stub PASS; its log shows D68 PASS and the positive receipt. It is retained evidence, not rerun.",
+    "same33": "The preserved same33 route also enters candidate.main, run_wrapper, delivery_lifecycle and the real D68 wrapper with a per-case TMPDIR. Its lifecycle/floor/trace cases prove lifecycle safety only; they do not qualify the seven source-guard negatives.",
+    "shared_route": "Both routes use the real caller and D68 path. The earlier collision came from the checker reusing one outer service_tmp; same33 avoids it by giving each case a distinct case directory."
+  },
+  "false_positive_rules": [
+    "A refusal caused by the disk floor, retained trace, malformed sampler, source identity, or caller service-TMP validation is not a semantic PASS for a later D68/source branch.",
+    "The prior stale-nonapp trace collision was lifecycle refusal before D68 source_snapshot and was not a semantic PASS.",
+    "The current stale-nonapp fixture accepts because upstream_base equals origin/main; its PASS receipt is a false-positive control result and is not a semantic PASS."
+  ]
+}

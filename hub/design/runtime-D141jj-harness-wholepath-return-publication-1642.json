@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-26T16:41:57.920808+00:00",
+  "worker": "rt-F-D141jj-harness-wholepath-return-1637",
+  "result": "READ_ONLY_FINITE_NOT_READY",
+  "scope": "Finite fixture and phase map; not source qualification. Separate Sol complete correction is already active.",
+  "monitor_limits": "Initial launch and quoting gaps retained; actual 18 samples min5201264640; PTY SIGINT exit1.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-report.md",
+      "sha256": "afbc11abd928c71975ce286463c339d34365ab495f66ae819744f1e9707edcf1",
+      "bytes": 2733
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-findings.md",
+      "sha256": "15c67fb613003eeb9183d40111a2901c45acae81eca5930a32f8524a814f4627",
+      "bytes": 3779
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-source-map.json",
+      "sha256": "2d222153c52449000e133946a69b6aec08b99cc662833185503a04f7003ea2f3",
+      "bytes": 4126
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/purpose-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-purpose-map.json",
+      "sha256": "51b0f47d54e8dc517a33ef4cf02e47724ae063229fb8de10d62f80bb154cc838",
+      "bytes": 4661
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-source-manifest.json",
+      "sha256": "86ba1b91007d9c8b00869a486007e906836b1169b7cdea4e47dd6709f056175c",
+      "bytes": 2632
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-validation.md",
+      "sha256": "9eb73b09810eddce03b4e88fb291f0c6ee47001920c9e2bb7e2a76d2edbe9dc7",
+      "bytes": 1689
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-handoff.md",
+      "sha256": "7ec5c77ae66cf60782294fa3c648b642a0fbded7ee33ecd68ab469fa1f37ff0b",
+      "bytes": 779
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-disk-trace.txt",
+      "sha256": "6c404ae649963cc55a6fcd569820356482ff424d94167234c1443aac6983a8d3",
+      "bytes": 1035
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-return-1637/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-wholepath-return-1637-sampler-lifecycle.json",
+      "sha256": "77c79c0896c4e2d5106650b56b7bd6b8b26d43552a5f703303aca3ad331e4d0d",
+      "bytes": 1138
+    }
+  ]
+}

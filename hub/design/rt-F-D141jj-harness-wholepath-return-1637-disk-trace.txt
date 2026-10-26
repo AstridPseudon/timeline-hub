@@ -1,0 +1,23 @@
+awk: 1: unexpected character '\'
+2026-10-26T16:38:07Z available_bytes=
+awk: 1: unexpected character '\'
+df: write error: Broken pipe
+2026-10-26T16:38:12Z available_bytes=
+2026-10-26T16:38:17Z available_bytes=5203173376
+2026-10-26T16:38:22Z available_bytes=5203140608
+2026-10-26T16:38:27Z available_bytes=5203120128
+2026-10-26T16:38:32Z available_bytes=5203058688
+2026-10-26T16:38:37Z available_bytes=5203009536
+2026-10-26T16:38:42Z available_bytes=5202604032
+2026-10-26T16:38:47Z available_bytes=5202530304
+2026-10-26T16:38:52Z available_bytes=5202530304
+2026-10-26T16:38:57Z available_bytes=5202464768
+2026-10-26T16:39:02Z available_bytes=5202423808
+2026-10-26T16:39:07Z available_bytes=5202403328
+2026-10-26T16:39:13Z available_bytes=5201539072
+2026-10-26T16:39:18Z available_bytes=5201428480
+2026-10-26T16:39:23Z available_bytes=5201510400
+2026-10-26T16:39:28Z available_bytes=5201510400
+2026-10-26T16:39:33Z available_bytes=5201510400
+2026-10-26T16:39:38Z available_bytes=5201510400
+2026-10-26T16:39:43Z available_bytes=5201264640

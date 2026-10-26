@@ -1,0 +1,35 @@
+{
+  "format": "timeline-d141jj-real5s-sampler-lifecycle-v1",
+  "start_attempts": [
+    {
+      "kind": "detached",
+      "recorded_pid": "5",
+      "result": "did not survive command boundary",
+      "coverage": "gap; no heavy/control execution"
+    },
+    {
+      "kind": "pty_initial",
+      "session_id": "90216",
+      "actual_pid_in_private_namespace": "3",
+      "result": "exited after quoting error; no valid byte samples",
+      "coverage": "gap; no heavy/control execution"
+    },
+    {
+      "kind": "pty_corrected",
+      "session_id": "87868",
+      "actual_pid_in_private_namespace": "3",
+      "result": "SIGINT stop, exit 1",
+      "waited": true,
+      "reaped": true,
+      "whole_group_stop": "SIGINT sent to the live terminal group; no descendant remained to reap"
+    }
+  ],
+  "interval_seconds": 5,
+  "valid_samples": 18,
+  "min_available_bytes": 5201264640,
+  "max_available_bytes": 5203173376,
+  "stop_floor_bytes": 4000000000,
+  "floor_tripped": false,
+  "monitoring_coverage": "corrected sampler covered static checks only; initial gaps and final bookkeeping are outside coverage",
+  "trace": "disk-trace.txt"
+}

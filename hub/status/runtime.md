@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T16:40:51Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 0m -->
+<!-- main | 2026-10-26T16:46:28Z | dispatcher heartbeat 15s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 4m -->
 # runtime board, 2026-10-26T16:40:43.088790+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -96,8 +96,8 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: Independent protected check of actual repaired harness; then existing final installer, installation review, one build and artifact review.
-live 2 / cap 6; ready-undispatched 0. One heavy private checker author and one independent read-only phase investigation above 5.0 GB.
-| F D141jj harness path | Complete phase and refusal investigation | Luna read only | Finite Sol F1 to F6 | doing | rt-F-D141jj-harness-wholepath-return-1637 | Earlier map retained; new return audits all seven branches and actual failure receipt semantics. | Evidence only |
+live 1 / cap 6; ready-undispatched 0. One heavy private checker author; mandatory independent map is terminal. Protected review waits for actual corrected checker.
+| F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
 

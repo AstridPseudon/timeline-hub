@@ -1,0 +1,67 @@
+{
+  "format": "timeline-d141jj-d141jj-purpose-map-v1",
+  "qualification": "NOT_READY",
+  "controls": [
+    {
+      "name": "stale_source_manifest",
+      "purpose": "Reject a candidate manifest whose recorded source hash no longer matches the immutable candidate bytes before caller execution.",
+      "intended_phase": "private manifest validation",
+      "static_result": "purpose-preserving; no production branch claimed",
+      "semantic_pass": false,
+      "minimal_adaptation": "Keep the private poisoned-manifest assertion; report it as manifest validation, not a caller/D68 refusal."
+    },
+    {
+      "name": "source_gate_root_mismatch",
+      "purpose": "Reject a source tuple and frozen gate tuple that name different repository roots.",
+      "intended_phase": "caller require_root_binding after source_identity and gate_identity",
+      "static_result": "reaches the intended caller binding phase when service TMP is valid; prior logged refusal is not evidence for any later D68 branch",
+      "semantic_pass": false,
+      "minimal_adaptation": "Use a fresh valid private service root and assert the binding error/path; retain no-receipt and no-builder assertions."
+    },
+    {
+      "name": "stale_nonapp_upstream",
+      "purpose": "Reject a non-App gate whose recorded upstream_base is stale relative to the fixture's current origin/main.",
+      "intended_phase": "D68 delivery_gate_build.source_snapshot line 240-241",
+      "static_result": "not reached in the original run because the retained trace collided; after isolation the fixture accepts because origin/main remains stale_base, then writes PASS. The control is false-positive, not semantic PASS.",
+      "semantic_pass": false,
+      "minimal_adaptation": "After creating stale_head, advance the fixture refs/heads/origin/main to stale_head while keeping recorded upstream_base=stale_base; then adapt the checker to observe the caller's nonzero return and FAIL diagnostic receipt."
+    },
+    {
+      "name": "wrong_source_owner",
+      "purpose": "Reject a source repository whose owner is not the effective user.",
+      "intended_phase": "caller source_identity.require_directory",
+      "static_result": "intended source-owner phase; no D68 execution should be claimed",
+      "semantic_pass": false,
+      "minimal_adaptation": "Keep the source-owner perturbation isolated to the caller's source-directory check; do not treat the pre-D68 refusal as a D68 semantic result."
+    },
+    {
+      "name": "wrong_source_mode",
+      "purpose": "Reject a source repository writable by group/other before source use.",
+      "intended_phase": "caller source_identity.require_directory",
+      "static_result": "intended source-mode phase; no D68 execution should be claimed",
+      "semantic_pass": false,
+      "minimal_adaptation": "Keep the 0775 source fixture and assert the source-directory mode error; preserve source immutability checks."
+    },
+    {
+      "name": "wrong_stage_owner",
+      "purpose": "Reject the D68 private stage parent when its owner is not the effective user.",
+      "intended_phase": "D68 main stage-parent require_directory(private=True), line 410",
+      "static_result": "false-positive coverage: monkeypatching caller.os.geteuid mutates the shared os module, so caller source_identity fails first; the stage branch is untested",
+      "semantic_pass": false,
+      "minimal_adaptation": "Keep service_tmp valid and perturb only the stage-parent ownership after caller validation, using a private harness seam or stage-parent fixture; do not globally patch os.geteuid before source checks."
+    },
+    {
+      "name": "wrong_stage_mode",
+      "purpose": "Reject the D68 private stage parent unless it is exactly mode 0700.",
+      "intended_phase": "D68 main stage-parent require_directory(private=True), line 410",
+      "static_result": "false-positive coverage: the 0775 directory is supplied as service_tmp and caller.run_wrapper rejects it at line 212 before D68 creates/checks its stage parent",
+      "semantic_pass": false,
+      "minimal_adaptation": "Use a valid 0700 outer service_tmp, then make only the D68 --stage-parent fixture 0775 through a private harness entrypoint; preserve the real caller -> D68 route."
+    }
+  ],
+  "additional_controls": {
+    "wrong_app_base_and_tree": "Caller/D68 tuple validation controls; do not call them source-guard semantic passes.",
+    "dirty_symlink_ref_drift": "Caller source/gate identity controls; phase-specific refusal only.",
+    "lifecycle_floor_trace_controls": "Same33 lifecycle controls; a floor/trace refusal is safety coverage, never evidence that a later source guard fired."
+  }
+}
