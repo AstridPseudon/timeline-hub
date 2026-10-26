@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T07:02:33.063131+00:00",
+  "target": "/home/user/work/wt/app-pin-867cb273",
+  "host": "design/app-pin-host-process-use-0702.md",
+  "repeated_guards": "all PASS",
+  "only_source_KEEP_released": "workers/app-pin-867cb273/KEEP",
+  "raw_unchanged": "all test/controller KEEP retained; Git objects/branches retained",
+  "result": "bin/recycle PASS",
+  "source_absent": true,
+  "after_free": 4694601728
+}

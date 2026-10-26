@@ -1,8 +1,5 @@
-# App lead fresh HOST process-use audit of 4 newly stale pins, 2026-10-25T06:57:20Z
+Ask: host process-use verdict for the superseded source pin app-pin-867cb273 before ordinary guarded recycle / Owner: App lead host audit; App manager repeated guards and recycle / By: 2026-10-26T07:02Z
 
-Read-only scan of host /proc (cmdline, cwd, environ matched only against the wt path, fd symlinks).
-
-- app-pin-0b6cee26 CLEAR
-- app-pin-51239c79 CLEAR
-- agt-pin-8c88ea8f CLEAR
-- rt-pin-1daca2a3 CLEAR
+Verdict CLEAR: /home/user/work/wt/app-pin-867cb273.
+Read-only host /proc scan at 2026-10-26T07:02Z (own ancestors excluded; the target path was read from a file so the scanner's own command line holds no target): cmdline, cwd, environ, fd, map_files and maps. Zero matches.
+No deletion, no git write, no sync by the lead. Manager repeats source/plan/live/lease/clean guards, removes ONLY the named empty source KEEP and runs bin/recycle for this one pin. Request 18617 is cancelled (superseded), 8912/19479, the v1 cache, dirty/refused/orphan/no-metadata trees, the hub and all proof raw KEEP are untouched. Any guard or classifier/permission refusal means STOP and retain.
