@@ -220,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _run_prepare(experiment: Path, runs_dir: Path, out: Path) -> None:
     cmd = [
-        sys.executable, "-m",
+        sys.executable, "-X", "utf8", "-m",
         "astrid.packs.iteration.actions.experiment_prepare.run",
         "--experiment", str(experiment),
         "--runs-dir", str(runs_dir),

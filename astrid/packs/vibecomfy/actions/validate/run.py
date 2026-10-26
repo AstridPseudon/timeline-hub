@@ -340,7 +340,7 @@ def main(argv: list[str] | None = None) -> int:
         ) as (workflow_path, authority):
             if args.command == "run":
                 return subprocess.run(
-                    [sys.executable, "-m", "vibecomfy.cli", "run", str(workflow_path)]
+                    [sys.executable, "-X", "utf8", "-m", "vibecomfy.cli", "run", str(workflow_path)]
                 ).returncode
 
             if args.out is None:

@@ -432,7 +432,7 @@ def _regenerate_element_registries_locked(
         return
 
     generator = REPO_ROOT / "scripts" / "gen_effect_registry.py"
-    cmd = [sys.executable, str(generator)]
+    cmd = [sys.executable, "-X", "utf8", str(generator)]
     env: dict[str, str] = {}
     composition_src = _timeline_composition_src(project_dir)
     if composition_src is not None:

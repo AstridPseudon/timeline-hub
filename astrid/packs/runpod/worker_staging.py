@@ -212,7 +212,7 @@ for distribution,expected in contract.get("package_versions",{}).items():
  except Exception as exc: raise RuntimeError("selected dependency metadata is missing: "+distribution) from exc
  if observed!=expected: raise RuntimeError("selected dependency version drifted: "+distribution)
 if contract.get("pip_check_required"):
- check=subprocess.run([sys.executable,"-m","pip","check"],capture_output=True,text=True,check=False)
+ check=subprocess.run([sys.executable,"-X","utf8","-m","pip","check"],capture_output=True,text=True,check=False)
  if check.returncode!=0: raise RuntimeError("selected interpreter dependency closure failed pip check: "+(check.stdout+check.stderr).strip())
 def tree_digest(root):
  rows=[]
