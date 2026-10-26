@@ -1,0 +1,13 @@
+{
+  "at": "2026-10-26T17:07:11.020197+00:00",
+  "stopped": "rt-F-D141bb-final-install-next",
+  "stop_receipt": "stopped rt-F-D141bb-final-install-next (pids 24738); harness finalization will commit its WIP\n",
+  "live_registry_sha256": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df",
+  "unchanged_preimage": true,
+  "canonical_source_tuple_exists": false,
+  "canonical_gate_tuple_exists": false,
+  "reason": "Proposed tuple-output global relocation disagrees with immutable row paths; stopped before activation",
+  "resume": "rt-F-D141bb-final-install-resume-1706",
+  "ready_action": "Unchanged CLI canonical tuple outputs; no source edits or relocation",
+  "free_bytes": 5161316352
+}

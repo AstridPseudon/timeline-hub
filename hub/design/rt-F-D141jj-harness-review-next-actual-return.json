@@ -1,0 +1,9 @@
+{
+  "returncode": 0,
+  "end": 1793034012.084467,
+  "pid": 5,
+  "pgid": 5,
+  "explicit_wait_reaped": true,
+  "stop": null,
+  "retained_regular_file_bytes": 8997639
+}

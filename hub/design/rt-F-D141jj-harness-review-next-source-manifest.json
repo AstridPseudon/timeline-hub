@@ -1,0 +1,24 @@
+{
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "authorized_tuple": {
+    "app": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+    "agent": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "checker_base": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/check_jj.py",
+    "sha256": "0fae07c6eeafc4c8081b84e65ecd9e2518f54c79d5d8c8132a4396974c8b9595"
+  },
+  "checker_author": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py",
+    "sha256": "7b69bcc20bfa24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52"
+  },
+  "original_manifest_sha256": "7c3fa7c10dd4afb7e01f6af32aaf28ffb94a16c81730095d36bc514683b27852",
+  "candidate_source_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate",
+  "candidate_files": 11,
+  "candidate_hashes_and_modes": "MATCHED_IMMUTABLE_ORIGINAL_MANIFEST",
+  "author_inherited_manifest": "BYTE_EXACT_MATCH",
+  "review_worktree": "CLEAN",
+  "production_worktrees": "CHECKER_REPORTED_UNCHANGED"
+}

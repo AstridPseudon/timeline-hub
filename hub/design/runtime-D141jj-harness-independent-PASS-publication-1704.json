@@ -1,0 +1,96 @@
+{
+  "at": "2026-10-26T17:04:22.526595+00:00",
+  "worker": "rt-F-D141jj-harness-review-next",
+  "result": "INDEPENDENT_QUALIFICATION_PASS_WITH_SCOPE",
+  "scope": "Complete harness and unchanged production guard route controls PASS; no product behavior or physical ownership integration claim. Prior source-static and same33 qualifications retained separately. Main final activation already authorized.",
+  "actual_executed_checker_sha256": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+  "binding_basis": "Raw original request checker digest equals measured current immutable bytes; raw exit0 and explicit wait/reap.",
+  "review_metadata_typo_retained": {
+    "review_json": "7b69bcc20bfa24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+    "source_manifest_json": "7b69bcc20bfa24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+    "correct_value_from_raw_request": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+    "originals_changed": false
+  },
+  "source11": "Exact immutable manifest retained",
+  "monitor_limits": "Original reviewer valid bounded sampler and preserved invalid trace; no whole-worker monitor claim. Heavy checker supervisor stop null, actual wait/reap.",
+  "outputs": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-review.json",
+      "sha256": "29dd8e14cc10db1955d70a718e43ee4057cbd0a1abc2d5df7d3b6b2e215f6a2e",
+      "bytes": 1394
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-findings.md",
+      "sha256": "080edf366cd186759b15d0835ddc5f76774518f3e8c260763812f646b23ebc92",
+      "bytes": 2546
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-handoff.md",
+      "sha256": "7fa1f2ac0a765d1d583b38ce3d1fb16fa8ec2339397c971f0b206123fba0b01d",
+      "bytes": 881
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-source-manifest.json",
+      "sha256": "4ccc2d8f38622814ac5efd21700faf198fe090194f62dcdeb6870fc607757233",
+      "bytes": 1357
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-validation.md",
+      "sha256": "9701faedb054101b979bf023a3c739ae20f386f3f17f16968f3a256c343f2285",
+      "bytes": 1802
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-disk-trace.txt",
+      "sha256": "c4e4093a32b781da96d3a5a101f7bd8d3be9f4f172408faed9e8b4a7a66a4907",
+      "bytes": 1308
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-sampler-lifecycle.json",
+      "sha256": "33bcb724314dd79541f3a4d5c571a0f41a2765c8d7f4362f05af4917665e5255",
+      "bytes": 682
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-review-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-harness-report.md",
+      "sha256": "059caa17ed30dcd1becd695baa8851608cdff30effa50f9f706ef5e812e3cac8",
+      "bytes": 938
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793034003750419415/request.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-actual-request.json",
+      "sha256": "9757736951eb411af4b4fa0fea090375896491304e78eb9cfd25248eb17f501c",
+      "bytes": 395
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793034003750419415/return.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-actual-return.json",
+      "sha256": "bf20b4323806d2c3103e44a32c6ba5bca69c8ce14ecccfa540193d15d6003f33",
+      "bytes": 165
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793034003750419415/stdout.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-actual-stdout.txt",
+      "sha256": "24d11a7b6819592bc049585762f85ea45eee060704aecba8360760bf0b4d2a35",
+      "bytes": 5229
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793034003750419415/stderr.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-actual-stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793034003750419415/pid.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-harness-review-next-actual-pid.json",
+      "sha256": "0165e806f849d2e4b026993ef00c87f32b7c62bf295711c243bc77b1cfc77fa0",
+      "bytes": 39
+    }
+  ]
+}
