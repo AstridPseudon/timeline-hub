@@ -18,7 +18,7 @@
     {
       "source": "bin/d141-disk-trace.py",
       "destination": "bin/d141-disk-trace.py",
-      "sha256": "e6f0747a908a6097cec71c10fb62bfd661ef2b3fa4891fd3b2f23aaa32575179",
+      "sha256": "1fb5ff9a7f4c7fbb416cccd9b552640cb0a041964935b7e8724e34ea5c2bb440",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
@@ -27,7 +27,7 @@
     {
       "source": "bin/d141-validate-receipt.py",
       "destination": "bin/d141-validate-receipt.py",
-      "sha256": "5c0a38755a17c55a30997b501419fe8028b9d076bb65fb87eff10defbb6a5cb3",
+      "sha256": "ff538a0154e8ef70fd138b98f99b5c8c6b5adfda8d54c0379355f76303cf2c21",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
@@ -45,7 +45,7 @@
     {
       "source": "bin/test-run",
       "destination": "bin/test-run",
-      "sha256": "19e19e6d925a03dd0512c29c4638d1b4ff746868b3bf61fd9dfdc93f6226fded",
+      "sha256": "9b43dac3f8e001cc927dca9e91633aea014dc45b2b6ddf42d416f584b8aae00e",
       "mode": "755",
       "precondition": {
         "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",

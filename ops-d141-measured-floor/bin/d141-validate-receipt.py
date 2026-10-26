@@ -176,6 +176,7 @@ def validate_recorded_decision(
     decision = authorization["decision"]
     if decision not in {
         "D141g-next-app-journey",
+        "D141g-paired-control",
         "D141h-runtime-pristine-targeted15",
         "P5-service6934",
     }:
@@ -191,8 +192,14 @@ def validate_recorded_decision(
         record = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_pairs, parse_constant=reject_constant)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f"recorded decision is not strict JSON: {exc}")
-    record = exact_keys(record, {"schema", "decision", "scope", "trace"}, "recorded decision")
-    if record["schema"] != "timeline.d141.recorded-decision.v1" or record["decision"] != decision:
+    expected_record_keys = {"schema", "decision", "scope", "trace"}
+    if isinstance(record, dict) and "pair" in record:
+        expected_record_keys.add("pair")
+    elif decision == "D141g-paired-control":
+        fail("paired control decision requires a paired admission record")
+    record = exact_keys(record, expected_record_keys, "recorded decision")
+    expected_schema = "timeline.d141.paired-recorded-decision.v1" if "pair" in record else "timeline.d141.recorded-decision.v1"
+    if record["schema"] != expected_schema or record["decision"] != decision:
         fail("recorded decision schema or name mismatch")
     record_scope = exact_keys(record["scope"], {"job_id", "repo", "suite", "source"}, "recorded decision scope")
     record_source = exact_keys(record_scope["source"], {"head", "tree", "command_sha256"}, "recorded decision source")
@@ -201,6 +208,87 @@ def validate_recorded_decision(
     if record_source != source:
         fail("recorded decision source mismatch")
     validate_trace_binding(record["trace"], manager_root, job_id, repo, suite, source)
+    if "pair" in record:
+        pair = exact_keys(
+            record["pair"],
+            {
+                "preflight_suite",
+                "body_suite",
+                "preflight_source",
+                "preflight_command_sha256",
+                "body_command_sha256",
+                "preflight_row_sha256",
+                "body_row_sha256",
+                "registered_pair_sha256",
+                "preflight_caller_id",
+                "body_caller_id",
+            },
+            "paired admission",
+        )
+        if pair["body_suite"] != suite or pair["body_caller_id"] != job_id:
+            fail("paired admission body scope mismatch")
+        preflight_suite = text(pair["preflight_suite"], "paired admission preflight_suite")
+        if preflight_suite == suite:
+            fail("paired admission requires distinct preflight and body suites")
+        preflight_source = exact_keys(pair["preflight_source"], {"head", "tree"}, "paired admission source")
+        for key in ("head", "tree"):
+            text(preflight_source[key], f"paired admission source.{key}")
+        for key in (
+            "preflight_command_sha256",
+            "body_command_sha256",
+            "preflight_row_sha256",
+            "body_row_sha256",
+            "registered_pair_sha256",
+        ):
+            if not re.fullmatch(r"[0-9a-f]{64}", text(pair[key], f"paired admission {key}")):
+                fail(f"paired admission {key} is not lowercase hexadecimal")
+        text(pair["preflight_caller_id"], "paired admission preflight_caller_id")
+        if pair["preflight_caller_id"] == pair["body_caller_id"]:
+            fail("paired admission caller IDs must be distinct")
+
+        registry = manager_root / "tests" / "suites.conf"
+        if not registry.is_file() or registry.is_symlink():
+            fail("paired admission registry is unavailable")
+        rows: dict[str, bytes] = {}
+        commands: dict[str, str] = {}
+        for raw_line in registry.read_bytes().splitlines(keepends=True):
+            line = raw_line[:-1] if raw_line.endswith(b"\n") else raw_line
+            fields = line.split(None, 2)
+            if len(fields) == 3 and fields[0].decode("utf-8", "strict") == repo:
+                name = fields[1].decode("utf-8", "strict")
+                if name in {suite, preflight_suite}:
+                    rows[name] = raw_line
+                    commands[name] = fields[2].decode("utf-8", "strict")
+        if set(rows) != {suite, preflight_suite}:
+            fail("paired admission suites are not both registered")
+        if sha256(commands[suite].encode()) != pair["body_command_sha256"]:
+            fail("registered body command differs from admission record")
+        if sha256(commands[preflight_suite].encode()) != pair["preflight_command_sha256"]:
+            fail("registered preflight command differs from admission record")
+        if sha256(rows[suite]) != pair["body_row_sha256"]:
+            fail("registered body row differs from admission record")
+        if sha256(rows[preflight_suite]) != pair["preflight_row_sha256"]:
+            fail("registered preflight row differs from admission record")
+        if sha256(rows[preflight_suite] + rows[suite]) != pair["registered_pair_sha256"]:
+            fail("registered pair bytes differ from admission record")
+        if pair["body_command_sha256"] != source["command_sha256"]:
+            fail("paired body command is not the admitted source command")
+        if decision == "D141g-next-app-journey":
+            if (repo, suite, preflight_suite) != (
+                "app",
+                "d141g-p2-automatic-child-placement-520d7e4f-submit",
+                "d141g-p2-automatic-child-placement-520d7e4f-submit-preflight",
+            ):
+                fail("D141g is not bound to the exact first placement pair")
+            if preflight_source != {
+                "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+                "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+            }:
+                fail("D141g preflight source is not the exact final520d source")
+            if pair["preflight_command_sha256"] != "82f4ad3c8a4bc940c10d52c9b9bf230f49c59c7e8865a3c0144498e412cafe8d":
+                fail("D141g preflight command is not the exact production builder output")
+            if pair["body_command_sha256"] != "600fca0f7852eac45179b2a485b9b160d4d807ebb752456e292636b69a85eaa":
+                fail("D141g body command is not the exact production builder output")
     # App's published 0309 pure production-builder binding; actual row
     # bytes and checkout identity are checked by the caller at admission.
     if decision == "D141g-next-app-journey" and (

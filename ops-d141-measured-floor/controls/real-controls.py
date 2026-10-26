@@ -24,6 +24,7 @@ LIVE_ROOT = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61
 COMMAND = "python3 -c 'import time; time.sleep(6)'"
 FAIL_COMMAND = "python3 -c 'import sys; sys.exit(7)'"
 CANCEL_COMMAND = "python3 -c 'import time; time.sleep(20)'"
+PREFLIGHT_CANCEL_COMMAND = "python3 -c 'import sys; sys.exit(130)'"
 
 
 def digest(raw: bytes) -> str:
@@ -32,6 +33,27 @@ def digest(raw: bytes) -> str:
 
 def write_df(path: Path, value: int | str) -> None:
     path.write_text(f"#!/bin/sh\nprintf '%s\\n' Avail\nprintf '%s\\n' {value}\n", encoding="utf-8")
+    path.chmod(0o755)
+
+
+def write_df_sequence(path: Path, values: list[int]) -> None:
+    values_path = path.with_name(path.name + ".values")
+    state_path = path.with_name(path.name + ".state")
+    values_path.write_text("".join(f"{value}\n" for value in values), encoding="utf-8")
+    state_path.write_text("0\n", encoding="utf-8")
+    path.write_text(
+        "#!/bin/sh\n"
+        f"state={state_path!s}\n"
+        f"values={values_path!s}\n"
+        "n=$(cat \"$state\")\n"
+        "line=$((n + 1))\n"
+        "value=$(sed -n \"${line}p\" \"$values\")\n"
+        "[ -n \"$value\" ] || value=$(tail -n 1 \"$values\")\n"
+        "printf '%s\\n' Avail\n"
+        "printf '%s\\n' \"$value\"\n"
+        "printf '%s\\n' \"$line\" > \"$state\"\n",
+        encoding="utf-8",
+    )
     path.chmod(0o755)
 
 
@@ -65,6 +87,7 @@ def receipt(
     growth: int = 0,
     command: str = COMMAND,
     source: dict[str, str] | None = None,
+    pair: dict[str, object] | None = None,
 ) -> None:
     if source is None:
         head, tree = source_identity(worktree)
@@ -92,6 +115,9 @@ def receipt(
     if decision is not None:
         trace = {"path": f"tests/{job}/disk-trace.tsv", "sampling_seconds": 5, "format": "timeline.disk-trace.v1", "keep": True}
         record = {"schema": "timeline.d141.recorded-decision.v1", "decision": decision, "scope": value["scope"], "trace": trace}
+        if pair is not None:
+            record["schema"] = "timeline.d141.paired-recorded-decision.v1"
+            record["pair"] = pair
         record_path = root / f"tests/{job}/d141-decision.json"
         record_path.write_text(json.dumps(record, separators=(",", ":")) + "\n", encoding="utf-8")
         record_path.chmod(0o600)
@@ -191,12 +217,40 @@ def prepare() -> tuple[Path, Path, Path, dict[str, str]]:
     return root, script, worktree, env
 
 
-def request(root: Path, job: str, repo: str, suite: str, nocache: int = 1) -> None:
+def request(
+    root: Path,
+    job: str,
+    repo: str,
+    suite: str,
+    nocache: int = 1,
+    pair_preflight_suite: str | None = None,
+) -> None:
     directory = root / "tests" / job
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    (directory / "request").write_text(
-        f"repo={repo}\nsuite={suite}\ntarget=body\nfiles=\nnocache={nocache}\n", encoding="utf-8"
-    )
+    request_text = f"repo={repo}\nsuite={suite}\ntarget=body\nfiles=\nnocache={nocache}\n"
+    if pair_preflight_suite is not None:
+        request_text += f"pair=paired-admission-v1\npair_preflight_suite={pair_preflight_suite}\npair_preflight_files=\n"
+    (directory / "request").write_text(request_text, encoding="utf-8")
+
+
+def register_pair(root: Path, repo: str, preflight_suite: str, preflight_command: str, body_suite: str, body_command: str) -> dict[str, str]:
+    registry = root / "tests/suites.conf"
+    preflight_row = f"{repo} {preflight_suite} {preflight_command}\n".encode()
+    body_row = f"{repo} {body_suite} {body_command}\n".encode()
+    existing = registry.read_bytes()
+    if preflight_suite.encode() in existing or body_suite.encode() in existing:
+        raise AssertionError("pair was registered before the controller dispatch")
+    # This is the isolated controller's one atomic registration. The real
+    # D66 submit caller must perform the same pair write, then hand the
+    # resulting registered bytes to test-run; no row is pre-registered here.
+    temporary = registry.with_name("suites.conf.pair-new")
+    temporary.write_bytes(existing + preflight_row + body_row)
+    os.replace(temporary, registry)
+    return {
+        "preflight_row_sha256": digest(preflight_row),
+        "body_row_sha256": digest(body_row),
+        "registered_pair_sha256": digest(preflight_row + body_row),
+    }
 
 
 def wait_terminal(root: Path, job: str) -> str:
@@ -272,6 +326,169 @@ def main() -> int:
         raise AssertionError("normal caller did not reach received trace helpers")
     outcomes["cases"].append({"name": "normal-request-full-id-terminal", "job": job, "status": "pass"})
 
+    # The bounded paired API is exercised through the same normal caller
+    # shape: registration is one atomic pair, admission is one measured-floor
+    # check, and the received runner executes preflight before body under one
+    # trace. The commands are isolated controls; the App builder tuple below
+    # remains a prospective source binding, never a fabricated registration.
+    pair_preflight = "d141g-pair-preflight-control"
+    pair_body = "full-d141g-pair-body-control"
+    pair_hashes = register_pair(root, "app", pair_preflight, COMMAND, pair_body, COMMAND)
+    pair_source = {"head": source_identity(worktree)[0], "tree": source_identity(worktree)[1], "command_sha256": digest(COMMAND.encode())}
+    pair_record = {
+        "preflight_suite": pair_preflight,
+        "body_suite": pair_body,
+        "preflight_source": {"head": pair_source["head"], "tree": pair_source["tree"]},
+        "preflight_command_sha256": digest(COMMAND.encode()),
+        "body_command_sha256": digest(COMMAND.encode()),
+        **pair_hashes,
+        "preflight_caller_id": "pair-control-preflight",
+        "body_caller_id": "pair-control",
+    }
+    receipt(root, "pair-control", "app", pair_body, worktree, "D141g-paired-control", command=COMMAND, source=pair_source, pair=pair_record)
+    request(root, "pair-control", "app", pair_body, pair_preflight_suite=pair_preflight)
+    write_df_sequence(root / "bin/df", [4_600_000_001, 4_600_000_001, 4_500_000_000, 4_500_000_000, 4_500_000_000, 4_500_000_000])
+    case("paired-admission-start", run_candidate(script, root, "pair-control", env), 0)
+    if wait_terminal(root, "pair-control") != "pass":
+        raise AssertionError("paired admission did not pass")
+    pair_log = (root / "tests/pair-control/log.txt").read_text()
+    if "paired preflight passed; body: full-d141g-pair-body-control" not in pair_log:
+        raise AssertionError("paired preflight did not precede the body")
+    if "trace PASS" not in (root / "tests/pair-control/trace-validation").read_text():
+        raise AssertionError("paired admission did not finalize its trace")
+    if len((root / "tests/pair-control/disk-trace.tsv").read_text().splitlines()) < 4:
+        raise AssertionError("paired admission trace lost the interval sample")
+    outcomes["cases"].append({"name": "paired-admission-terminal", "status": "pass", "trace_rows": len((root / "tests/pair-control/disk-trace.tsv").read_text().splitlines()) - 1})
+
+    # A preflight failure is terminal for the whole admission unit; the body
+    # marker must never appear, while the parent still finalizes the trace.
+    fail_preflight = "d141g-pair-fail-preflight"
+    fail_body = "full-d141g-pair-fail-body"
+    fail_hashes = register_pair(root, "app", fail_preflight, FAIL_COMMAND, fail_body, COMMAND)
+    fail_source = {"head": pair_source["head"], "tree": pair_source["tree"], "command_sha256": digest(COMMAND.encode())}
+    fail_pair = {
+        "preflight_suite": fail_preflight,
+        "body_suite": fail_body,
+        "preflight_source": {"head": fail_source["head"], "tree": fail_source["tree"]},
+        "preflight_command_sha256": digest(FAIL_COMMAND.encode()),
+        "body_command_sha256": digest(COMMAND.encode()),
+        **fail_hashes,
+        "preflight_caller_id": "pair-fail-preflight",
+        "body_caller_id": "pair-fail",
+    }
+    receipt(root, "pair-fail", "app", fail_body, worktree, "D141g-paired-control", command=COMMAND, source=fail_source, pair=fail_pair)
+    request(root, "pair-fail", "app", fail_body, pair_preflight_suite=fail_preflight)
+    write_df(root / "bin/df", 4_600_000_001)
+    case("paired-preflight-failure-start", run_candidate(script, root, "pair-fail", env), 0)
+    if wait_terminal(root, "pair-fail") != "fail":
+        raise AssertionError("paired preflight failure did not refuse the body")
+    fail_log = (root / "tests/pair-fail/log.txt").read_text()
+    if "paired preflight refused body" not in fail_log or "paired preflight passed; body" in fail_log:
+        raise AssertionError("paired preflight failure launched the body")
+    if "trace PASS" not in (root / "tests/pair-fail/trace-validation").read_text():
+        raise AssertionError("paired preflight failure lost trace custody")
+    outcomes["cases"].append({"name": "paired-preflight-failure-refuses-body", "status": "pass"})
+
+    # Cancellation during the preflight/body gap cancels the one admission
+    # unit; it never creates a second body admission or loses trace custody.
+    cancel_preflight = "d141g-pair-cancel-preflight"
+    cancel_body = "full-d141g-pair-cancel-body"
+    cancel_hashes = register_pair(root, "app", cancel_preflight, PREFLIGHT_CANCEL_COMMAND, cancel_body, COMMAND)
+    cancel_source = {"head": pair_source["head"], "tree": pair_source["tree"], "command_sha256": digest(COMMAND.encode())}
+    cancel_pair = {
+        "preflight_suite": cancel_preflight,
+        "body_suite": cancel_body,
+        "preflight_source": {"head": cancel_source["head"], "tree": cancel_source["tree"]},
+        "preflight_command_sha256": digest(PREFLIGHT_CANCEL_COMMAND.encode()),
+        "body_command_sha256": digest(COMMAND.encode()),
+        **cancel_hashes,
+        "preflight_caller_id": "pair-cancel-preflight",
+        "body_caller_id": "pair-cancel",
+    }
+    receipt(root, "pair-cancel", "app", cancel_body, worktree, "D141g-paired-control", command=COMMAND, source=cancel_source, pair=cancel_pair)
+    request(root, "pair-cancel", "app", cancel_body, pair_preflight_suite=cancel_preflight)
+    write_df(root / "bin/df", 4_600_000_001)
+    case("paired-cancel-start", run_candidate(script, root, "pair-cancel", env), 0)
+    cancel_running = root / "tests/pair-cancel/running"
+    deadline = time.monotonic() + 10
+    while not cancel_running.exists() and time.monotonic() < deadline:
+        time.sleep(0.05)
+    if not cancel_running.exists():
+        raise AssertionError("paired cancellation unit never started")
+    if wait_terminal(root, "pair-cancel") != "fail":
+        raise AssertionError("paired cancellation did not terminate the unit")
+    cancel_log = (root / "tests/pair-cancel/log.txt").read_text()
+    if "paired preflight passed; body" in cancel_log or "trace PASS" not in (root / "tests/pair-cancel/trace-validation").read_text():
+        raise AssertionError("paired cancellation launched body or lost trace custody")
+    outcomes["cases"].append({"name": "paired-cancel-refuses-body", "status": "pass"})
+
+    # The continuous sampler owns the 4 GB stop for the whole pair. A below-
+    # stop sample during preflight terminates the parent before body launch.
+    stop_preflight = "d141g-pair-stop-preflight"
+    stop_body = "full-d141g-pair-stop-body"
+    stop_hashes = register_pair(root, "app", stop_preflight, COMMAND, stop_body, COMMAND)
+    stop_source = {"head": pair_source["head"], "tree": pair_source["tree"], "command_sha256": digest(COMMAND.encode())}
+    stop_pair = {
+        "preflight_suite": stop_preflight,
+        "body_suite": stop_body,
+        "preflight_source": {"head": stop_source["head"], "tree": stop_source["tree"]},
+        "preflight_command_sha256": digest(COMMAND.encode()),
+        "body_command_sha256": digest(COMMAND.encode()),
+        **stop_hashes,
+        "preflight_caller_id": "pair-stop-preflight",
+        "body_caller_id": "pair-stop",
+    }
+    receipt(root, "pair-stop", "app", stop_body, worktree, "D141g-paired-control", command=COMMAND, source=stop_source, pair=stop_pair)
+    request(root, "pair-stop", "app", stop_body, pair_preflight_suite=stop_preflight)
+    write_df_sequence(root / "bin/df", [4_600_000_001, 4_600_000_001, 4_000_000_000, 4_000_000_000])
+    case("paired-stop-start", run_candidate(script, root, "pair-stop", env), 0)
+    if wait_terminal(root, "pair-stop") not in {"fail", "timeout"}:
+        raise AssertionError("4 GB stop did not terminate the paired unit")
+    stop_log = (root / "tests/pair-stop/log.txt").read_text()
+    if "paired preflight passed; body" in stop_log or "trace PASS" not in (root / "tests/pair-stop/trace-validation").read_text():
+        raise AssertionError("4 GB stop launched body or lost trace custody")
+    outcomes["cases"].append({"name": "paired-4gb-stop-refuses-body", "status": "pass"})
+
+    # Reciprocal heavy occupancy includes a paired unit during its gap.
+    busy_preflight = "d141g-pair-busy-preflight"
+    busy_body = "full-d141g-pair-busy-body"
+    busy_hashes = register_pair(root, "app", busy_preflight, COMMAND, busy_body, COMMAND)
+    busy_source = {"head": pair_source["head"], "tree": pair_source["tree"], "command_sha256": digest(COMMAND.encode())}
+    busy_pair = {
+        "preflight_suite": busy_preflight,
+        "body_suite": busy_body,
+        "preflight_source": {"head": busy_source["head"], "tree": busy_source["tree"]},
+        "preflight_command_sha256": digest(COMMAND.encode()),
+        "body_command_sha256": digest(COMMAND.encode()),
+        **busy_hashes,
+        "preflight_caller_id": "pair-busy-preflight",
+        "body_caller_id": "pair-busy",
+    }
+    receipt(root, "pair-busy", "app", busy_body, worktree, "D141g-paired-control", command=COMMAND, source=busy_source, pair=busy_pair)
+    request(root, "pair-busy", "app", busy_body, pair_preflight_suite=busy_preflight)
+    write_df(root / "bin/df", 4_600_000_001)
+    case("paired-busy-start", run_candidate(script, root, "pair-busy", env), 0)
+    time.sleep(0.3)
+    request(root, "heavy-during-pair", "composition", "full-trace-control")
+    case("heavy-during-pair-refused", run_candidate(script, root, "heavy-during-pair", env), 3)
+    if wait_terminal(root, "pair-busy") != "pass":
+        raise AssertionError("paired busy unit did not terminate")
+    outcomes["cases"].append({"name": "concurrent-heavy-during-pair-refuses", "status": "pass"})
+
+    # A corrupt pair hash is rejected before snapshot or launch artifacts.
+    wrong_pair = "pair-wrong-command"
+    wrong_hashes = register_pair(root, "app", "d141g-pair-wrong-preflight", COMMAND, "full-d141g-pair-wrong-body", COMMAND)
+    wrong_record = dict(pair_record)
+    wrong_record.update({"preflight_suite": "d141g-pair-wrong-preflight", "body_suite": "full-d141g-pair-wrong-body", **wrong_hashes})
+    wrong_record["body_caller_id"] = wrong_pair
+    wrong_record["body_command_sha256"] = "0" * 64
+    receipt(root, wrong_pair, "app", wrong_record["body_suite"], worktree, "D141g-paired-control", command=COMMAND, source=pair_source, pair=wrong_record)
+    request(root, wrong_pair, "app", wrong_record["body_suite"], pair_preflight_suite=wrong_record["preflight_suite"])
+    case("paired-wrong-command", run_candidate(script, root, wrong_pair, env), 3)
+    if (root / "tests" / wrong_pair / "snap").exists() or (root / "tests" / wrong_pair / "running").exists():
+        raise AssertionError("corrupt paired receipt reached launch")
+    outcomes["cases"].append({"name": "paired-corrupt-receipt-refuses", "status": "pass"})
+
     # Consume the published production-builder bytes without launching App or
     # fabricating its unavailable checkout. The actual validator is received
     # through bin publication; these are authority controls, not App proof.
@@ -283,6 +500,10 @@ def main() -> int:
     app_command = (LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-normal-command.txt").read_text()
     if digest(app_command.encode()) != binding["commands"]["normal"]["sha256_utf8_without_newline"]:
         raise AssertionError("published App command changed")
+    app_preflight_command = (LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-preflight-command.txt").read_text()
+    if digest(app_preflight_command.encode()) != binding["commands"]["preflight"]["sha256_utf8_without_newline"]:
+        raise AssertionError("published App preflight command changed")
+    outcomes["cases"].append({"name": "prospective-first-pair-binding", "status": "pass", "registration": False, "body_command_sha256": digest(app_command.encode()), "preflight_command_sha256": digest(app_preflight_command.encode())})
     if " ".join(app_command.split()) != app_command:
         raise AssertionError("App command differs after test-run awk normalization")
     app_source = dict(binding["source_tuple"]["app"], command_sha256=digest(app_command.encode()))

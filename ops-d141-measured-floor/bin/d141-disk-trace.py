@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 INTERVAL_SECONDS = 5.0
+STOP_BYTES = 4_000_000_000
 
 
 def proc_start_ticks(pid: int) -> str:
@@ -74,6 +75,13 @@ def main(argv: list[str]) -> int:
             stream.write(f"{timestamp()}\t{time.monotonic_ns()}\t{value}\t{job_id}\t{body_pid}\t{kind}\n")
             stream.flush()
             os.fsync(stream.fileno())
+            if value <= STOP_BYTES and not stopping:
+                # The sampler is outside the body. Ask the runner to stop its
+                # active command and finalize the whole admission unit after
+                # this below-stop observation is durable.
+                Path(f"{trace_path}.stop").write_text("4gb-stop\n", encoding="utf-8")
+                os.kill(body_pid, signal.SIGUSR1)
+                stopping = True
             first = False
             if stopping:
                 return 0

@@ -15,11 +15,25 @@ if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled 
 [ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
+PAIR=0
+PAIR_PREFLIGHT_BASE_CMD=
+if [ -n "${pair_preflight_suite:-}" ]; then
+  [ "${pair:-}" = paired-admission-v1 ] || bad "paired request has an unsupported pair marker"
+  [ "$pair_preflight_suite" != "$suite" ] || bad "paired request requires distinct preflight and body suites"
+  PAIR_PREFLIGHT_BASE_CMD=$(awk -v r=$repo -v s=$pair_preflight_suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' "$O/tests/suites.conf")
+  [ -n "$PAIR_PREFLIGHT_BASE_CMD" ] || bad "paired preflight suite $pair_preflight_suite not in suites.conf for $repo"
+  [ -z "${pair_preflight_files:-}" ] || bad "paired preflight does not accept file arguments"
+  PAIR=1
+fi
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
 HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
+if [ "$PAIR" = 1 ]; then
+  [ "$HV" = heavy ] || refuse "paired admission body must be a heavy suite"
+  [ -f "$D/recorded-measured-floor.json" ] || refuse "paired admission requires a measured-floor receipt"
+fi
 case "$ID" in
   rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
   agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
@@ -42,7 +56,7 @@ if [ -z "$RUN" ]; then
   EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
   for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
-  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  KEY=$(echo "$repo $TREE $suite $files $CMD $PAIR $pair_preflight_suite $PAIR_PREFLIGHT_BASE_CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
   if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
     cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
     basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
@@ -61,6 +75,29 @@ fi
 # Every heavy body owns a durable trace.  The sampler is the child of this
 # exact body and carries both the queued ID and this body's /proc start tick.
 TRACE_PID=; TRACE_FILE=; TRACE_RC=0; TRACE_FINALIZED=0
+STOP_REQUESTED=0
+request_stop() { STOP_REQUESTED=1; }
+trap request_stop USR1
+run_admission_command() {
+  timeout -k 60 90m nice -n 5 bash -c "$1" &
+  COMMAND_PID=$!
+  while kill -0 "$COMMAND_PID" 2>/dev/null; do
+    if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE.stop" ]; then
+      STOP_REQUESTED=1
+      kill -TERM "$COMMAND_PID" 2>/dev/null || true
+      break
+    fi
+    sleep 0.05
+  done
+  wait "$COMMAND_PID" 2>/dev/null
+  COMMAND_RC=$?
+  if [ "$STOP_REQUESTED" -eq 1 ]; then
+    kill -TERM "$COMMAND_PID" 2>/dev/null || true
+    wait "$COMMAND_PID" 2>/dev/null || true
+    return 130
+  fi
+  return "$COMMAND_RC"
+}
 stop_trace() {
   if [ -n "$TRACE_PID" ]; then
     kill -TERM "$TRACE_PID" 2>/dev/null
@@ -72,7 +109,7 @@ stop_trace() {
   fi
   if [ "$TRACE_RC" -ne 0 ]; then
     echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
-    [ "$rc" -eq 0 ] && rc=125
+    [ "${rc:-0}" -eq 0 ] && rc=125
   fi
   if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/d141-validate-trace.py" "$TRACE_FILE" "$ID" "$$" "$(id -u)" > "$D/trace-validation" 2>&1; then
     TRACE_RC=125
@@ -97,6 +134,12 @@ if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
   echo "$TRACE_PID" > "$D/trace.pid"
   trap finish_trace EXIT
   trap 'exit 130' HUP TERM INT
+  # A fast preflight failure must not race the sampler's first durable row.
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+    [ -s "$TRACE_FILE" ] && break
+    sleep 0.05
+  done
+  [ -s "$TRACE_FILE" ] || { echo "disk trace sampler did not create its header" > "$D/trace-error"; exit 125; }
 fi
 # BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
 if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then
@@ -261,16 +304,49 @@ NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $rep
 if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
-  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
+  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66"
+    if [ "$PAIR" = 1 ]; then
+      echo "paired preflight: $pair_preflight_suite"
+      run_admission_command "$PAIR_PREFLIGHT_BASE_CMD"
+      PREFLIGHT_RC=$?
+      if [ "$PREFLIGHT_RC" -ne 0 ] || [ "$STOP_REQUESTED" -eq 1 ]; then
+        echo "paired preflight refused body (exit=$PREFLIGHT_RC)"
+        exit 130
+      fi
+      echo "paired preflight passed; body: $suite"
+    fi
+    run_admission_command "$CMD"
+    exit $?
+  ) > $D/log.txt 2>&1 < /dev/null &
   SUITE_PID=$!; printf '%s\n' "$SUITE_PID" >&"$BENCH_CONTROL_FD"; exec {BENCH_CONTROL_FD}>&-
   wait "$SUITE_PID"; RC=$?
 else
-( cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+( cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66"
+  if [ "$PAIR" = 1 ]; then
+    echo "paired preflight: $pair_preflight_suite"
+    run_admission_command "$PAIR_PREFLIGHT_BASE_CMD"
+    PREFLIGHT_RC=$?
+    if [ "$PREFLIGHT_RC" -ne 0 ] || [ "$STOP_REQUESTED" -eq 1 ]; then
+      echo "paired preflight refused body (exit=$PREFLIGHT_RC)"
+      exit 130
+    fi
+    echo "paired preflight passed; body: $suite"
+  fi
+  run_admission_command "$CMD"
+  exit $?
+) > $D/log.txt 2>&1 < /dev/null; RC=$?
 fi
 [ -n "$LEASED" ] && exit "$RC"
 fi
 # Finalize before writing the terminal result so a late parent/session signal
 # cannot leave a passing body without its final sample and custody verdict.
+if [ "$HV" = heavy ]; then
+  POST_DF=$(df -B1 --output=avail /home/user 2>/dev/null | awk '$1 ~ /^[0-9]+$/ { if (++n == 1) print $1 }')
+  if [ -n "$POST_DF" ] && [ "$POST_DF" -le 4000000000 ]; then
+    echo "4GB stop reached after admission unit (available=$POST_DF)" >> $D/log.txt
+    [ "$RC" -eq 0 ] && RC=130
+  fi
+fi
 if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
   stop_trace
   [ "$?" -ne 0 ] && [ "$RC" -eq 0 ] && RC=125
