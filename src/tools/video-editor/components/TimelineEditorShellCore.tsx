@@ -27,7 +27,6 @@ import {
   VideoEditorRightPanelDock,
   type VideoEditorRightPanelTab,
 } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
-import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import { TimelineEditor } from '@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx';
 import { CREATE_ANIMATION_PROMPT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx';
 import { TimelineErrorBoundary } from '@/tools/video-editor/components/TimelineEditor/TimelineErrorBoundary.tsx';
@@ -305,19 +304,20 @@ function TimelineEditorShellCoreComponent({
     gridTemplateRows,
   } = useTimelineShellDividerDrag(hasActivityRegion);
   const [condensedRightPanel, setCondensedRightPanel] = useState<VideoEditorRightPanelTab>('video');
-  const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isExtensionManagerOpen, setIsExtensionManagerOpen] = useState(false);
   const openExtensionManager = useCallback(() => setIsExtensionManagerOpen(true), []);
   const agentChatBridge = useOptionalAgentChatBridge();
   const requestComposerPrompt = agentChatBridge?.requestComposerPrompt;
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  // Opens the chat locked, the same as the lock button: a temporary open would leave the lock icon, layout push and
+  // hover-close out of step with the pane.
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const openElementCreationPrompt = useCallback((prompt: string) => {
     runtime.agentChat?.activateTimeline?.();
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
     requestComposerPrompt?.(prompt);
-    setIsTasksPaneOpen(true);
-  }, [requestComposerPrompt, setIsTasksPaneOpen, runtime.agentChat, runtime.agentSelectionOwner]);
+    setIsTasksPaneLocked(true);
+  }, [requestComposerPrompt, setIsTasksPaneLocked, runtime.agentChat, runtime.agentSelectionOwner]);
   const handleActivityDismiss = useCallback((eventId: string) => {
     setActivityEvents((prev) => prev.filter((e) => e.id !== eventId));
   }, []);
@@ -710,7 +710,6 @@ function TimelineEditorShellCoreComponent({
       onDividerLostPointerCapture={onDividerLostPointerCapture}
       isTimelineMaximized={isTimelineMaximized}
       setIsTimelineMaximized={setIsTimelineMaximized}
-      onOpenElements={() => setIsElementsOpen(true)}
     />
   );
 
@@ -1166,13 +1165,6 @@ function TimelineEditorShellCoreComponent({
           <ExtensionManager />
         </DialogContent>
       </Dialog>
-      {isElementsOpen && (
-        <ElementsLibraryPanel
-          open={isElementsOpen}
-          onOpenChange={setIsElementsOpen}
-          onOpenCreationPrompt={() => openElementCreationPrompt("I'd like to create a new Remotion element.")}
-        />
-      )}
 
       {/* Host command palette overlay — only mount when open to avoid
           unnecessary context lookups that break in tests without providers. */}

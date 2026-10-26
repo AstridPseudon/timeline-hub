@@ -1,6 +1,6 @@
 import type { Dispatch, PointerEvent as ReactPointerEvent, ReactNode, SetStateAction } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { GripHorizontal, History, Maximize2, Minimize2, Redo2, Sparkles, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { GripHorizontal, History, Maximize2, Minimize2, Redo2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
@@ -113,7 +113,6 @@ export function TimelineEditorShellToolbar({
   onDividerLostPointerCapture,
   isTimelineMaximized,
   setIsTimelineMaximized,
-  onOpenElements,
   timelineLoaded = true,
 }: {
   touchChrome: boolean;
@@ -133,7 +132,6 @@ export function TimelineEditorShellToolbar({
   onDividerLostPointerCapture: (event: ReactPointerEvent<HTMLElement>) => void;
   isTimelineMaximized: boolean;
   setIsTimelineMaximized: Dispatch<SetStateAction<boolean>>;
-  onOpenElements: () => void;
   /** False until the timeline has arrived: nothing is saved yet, so the save badge holds its place unseen. */
   timelineLoaded?: boolean;
 }) {
@@ -323,17 +321,6 @@ export function TimelineEditorShellToolbar({
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
         {saveBadge}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={toolbarButtonSizeClass}
-          onClick={onOpenElements}
-          title="Elements"
-          aria-label="Elements"
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-        </Button>
         <TimelineUndoRedo buttonClassName={toolbarButtonSizeClass} />
         {historyMenu}
       </div>
