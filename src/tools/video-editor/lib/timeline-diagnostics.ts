@@ -34,7 +34,7 @@ const SAVE_REJECTION_CODES = [
   'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated',
 ] as const;
 export type TimelineSaveRejectionCode = typeof SAVE_REJECTION_CODES[number];
-type SaveRejectionClass = 'TimelineVersionConflictError' | 'Error';
+type SaveRejectionClass = 'TimelineVersionConflictError' | 'TimelineSaveError' | 'Error';
 const saveRejections = new WeakMap<object, { code: TimelineSaveRejectionCode; errorClass: SaveRejectionClass }>();
 
 // Only authentic local throw sites supply these fixed values. Never inspect or
@@ -44,7 +44,7 @@ export function markTimelineSaveRejection<T extends Error>(error: T, code: Timel
   try {
     if (typeof window !== 'undefined'
       && (window as unknown as { __timelineSaveDiagnosticsEnabled?: unknown }).__timelineSaveDiagnosticsEnabled === true
-      && SAVE_REJECTION_CODES.includes(code) && ['TimelineVersionConflictError', 'Error'].includes(errorClass)) {
+      && SAVE_REJECTION_CODES.includes(code) && ['TimelineVersionConflictError', 'TimelineSaveError', 'Error'].includes(errorClass)) {
       saveRejections.set(error, { code, errorClass });
     }
   } catch { /* Diagnostic tagging cannot affect the original throw. */ }

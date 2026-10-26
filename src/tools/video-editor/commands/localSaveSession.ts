@@ -110,7 +110,8 @@ export async function createLocalSaveSession(options: Options) {
     if (failure?.kind !== 'rejected') return false;
     const at = generation;
     // Retain the entire rejected chain in the outbox; only the visible preview rolls back.
-    publish('conflict', failure.error);
+    publish(failure.error && typeof failure.error === 'object' && !Array.isArray(failure.error)
+      && failure.error.kind === 'conflict' ? 'conflict' : 'error', failure.error);
     try {
       const latest = await options.loadLatest();
       checkBasis(latest);

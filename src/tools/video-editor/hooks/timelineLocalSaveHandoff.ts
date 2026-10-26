@@ -4,7 +4,7 @@ import type { LocalSaveSession } from '../commands/localSaveSession.ts';
 import { toOutboxJson, type OutboxJson } from '../commands/commitOutbox.ts';
 import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typed/timelineBundle.ts';
 import { authoringBundleFromDocument, type AuthoringBundle } from '../commands/authoringBundle.ts';
-import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis, type TimelineHeadRevision, type TimelineSaveReceipt } from '../data/DataProvider.ts';
+import { TimelineSaveError, TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis, type TimelineHeadRevision, type TimelineSaveReceipt } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { canonicalizeTimelinePair, projectTimelineTracksForDisplay } from '../lib/timeline-domain.ts';
 import { findEnclosingPinnedGroup } from '../lib/pinned-group-projection.ts';
@@ -12,6 +12,7 @@ import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { markTimelineSaveRejection, type TimelineSaveRejectionCode } from '../lib/timeline-diagnostics.ts';
 import { applyTimelineOperation, type TimelineElementOperation } from '../runtime/element-adapter.ts';
 import type { AstridAgentElementContext } from '../runtime/element-contract.ts';
+import { documentPatchIntent } from '../commands/documentPatchIntent.ts';
 import type { PlacePreparedMediaCommand } from '../commands/media.ts';
 
 export interface TimelineSaveSource {
@@ -61,8 +62,8 @@ export function bindTimelinePersistenceHandoff(
 }
 
 const invalidPersistenceBinding: TimelinePersistenceHandoff = {
-  async capture() { throw new TimelineVersionConflictError('Scoped timeline save binding is unavailable; draft retained'); },
-  async flush() { throw new TimelineVersionConflictError('Scoped timeline save binding is unavailable; draft retained'); },
+  async capture() { throw new TimelineSaveError('Scoped timeline save binding is unavailable; draft retained'); },
+  async flush() { throw new TimelineSaveError('Scoped timeline save binding is unavailable; draft retained'); },
 };
 export function resolveTimelinePersistenceHandoff(
   binding: TimelinePersistenceBinding | undefined, provider: DataProvider, timelineId: string,
@@ -90,8 +91,8 @@ function authoredJson(value: unknown): OutboxJson {
 }
 
 function refuse(message: string, reason?: TimelineSaveRejectionCode): never {
-  const error = new TimelineVersionConflictError(`Local document save retained: ${message}`);
-  throw reason ? markTimelineSaveRejection(error, reason) : error;
+  const error = new TimelineSaveError(`Local document save retained: ${message}`);
+  throw reason ? markTimelineSaveRejection(error, reason, 'TimelineSaveError') : error;
 }
 function checkHead(initial: TimelineCommandBasis, value: TimelineSaveSource,
   reason: TimelineSaveRejectionCode = 'original-head-unavailable') {
@@ -100,7 +101,15 @@ function checkHead(initial: TimelineCommandBasis, value: TimelineSaveSource,
     || value.head?.projectId !== initial.canonicalDocument.project_id
     || value.head.timelineId !== initial.canonicalDocument.timeline_id
     || value.head.headRevisionId !== initial.head.revisionId
-    || value.head.headPublicationId !== initial.head.publicationId) refuse('original verified authoring head is unavailable', reason);
+    || value.head.headPublicationId !== initial.head.publicationId) {
+    if (value.head?.projectId === initial.canonicalDocument.project_id
+      && value.head.timelineId === initial.canonicalDocument.timeline_id
+      && value.head.headRevisionId && value.head.headPublicationId
+      && (value.head.headRevisionId !== initial.head.revisionId || value.head.headPublicationId !== initial.head.publicationId)) {
+      throw markTimelineSaveRejection(new TimelineVersionConflictError('Local document save retained: original verified authoring head is unavailable'), reason);
+    }
+    refuse('original verified authoring head is unavailable', reason);
+  }
 }
 function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) {
   const parent = initial.canonicalDocument.parent_revision.payload;
@@ -174,7 +183,6 @@ export function createTimelineLocalSaveHandoff(options: {
   let sourceChecked = false;
   let targets = historyTargets(options.initial.history, options.initial.head);
   let inversePending = false;
-  let preparedMediaFailure: TimelineVersionConflictError | undefined;
 
   async function appendInverse(kind: 'undo' | 'redo'): Promise<void> {
     if (!remoteHistoryAvailable()) refuse('durable timeline history is not settled');
@@ -198,7 +206,7 @@ export function createTimelineLocalSaveHandoff(options: {
   }
 
   function remoteHistoryAvailable(): boolean {
-    return !inversePending && !preparedMediaFailure && options.session.getState().status === 'saved';
+    return !inversePending && options.session.getState().status === 'saved';
   }
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[], element = false): unknown {
     if (same(previous, next)) return structuredClone(raw);
@@ -259,8 +267,6 @@ export function createTimelineLocalSaveHandoff(options: {
   const handoff: TimelineLocalSaveHandoff = {
     capture(input, gestureBasis) {
       try {
-        // A later generic save must not absorb an unsubmitted media birth.
-        if (preparedMediaFailure) throw preparedMediaFailure;
         const next = structuredClone(input);
         checkHead(initial, source, 'capture-source-head-unavailable');
         checkHead(initial, next, 'capture-input-head-unavailable');
@@ -283,7 +289,19 @@ export function createTimelineLocalSaveHandoff(options: {
         if (gestureBasis?.kind === 'element' && topLevelClips && !source.config.clips.length
           && Array.isArray(parent.clips) && parent.clips.length) refuse('element parent clips are not present in the mounted source');
         payload.config = changes(configBefore, configSource, next.config, ['config'], gestureBasis?.kind === 'element') as Record<string, OutboxJson>;
-        payload.registry = changes(parent.registry, source.registry, next.registry, ['registry']) as Record<string, OutboxJson>;
+        if (gestureBasis?.kind === 'prepared-media') {
+          const asset = gestureBasis.command.payload.asset;
+          if (!object(parent.registry) || (parent.registry.assets !== undefined && !object(parent.registry.assets))
+            || !same(authoredJson(next.registry), authoredJson({ ...source.registry,
+              assets: { ...source.registry.assets, [asset.assetKey]: asset.entry } }))) {
+            refuse('prepared media registry changes exceed the selected asset; draft retained');
+          }
+          // Bootstrap registry is {}, while the editor displays { assets: {} }.
+          payload.registry = { ...parent.registry, assets: { ...(parent.registry.assets ?? {}),
+            [asset.assetKey]: authoredJson(asset.entry) } };
+        } else {
+          payload.registry = changes(parent.registry, source.registry, next.registry, ['registry']) as Record<string, OutboxJson>;
+        }
         if (next.bundle !== undefined && !same(source.bundle, next.bundle)) {
           (payload.config as Record<string, OutboxJson>).bundle = authoredJson(next.bundle);
         }
@@ -295,8 +313,13 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         let reads: OutboxJson[] | undefined;
         if (gestureBasis) {
+          // The drop's transient skeleton can assemble its newly created track
+          // before the media gesture. Bind every other input to the original;
+          // the prepared-media guard below proves the one new track exactly.
+          const gestureConfig = gestureBasis.kind === 'prepared-media'
+            ? { ...gestureBasis.config, tracks: authoringSource.config.tracks } : gestureBasis.config;
           if (!['split', 'trim', 'move', 'transition-clear', 'prepared-media', 'element'].includes(gestureBasis.kind)
-            || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
+            || !same(authoredJson(gestureConfig), authoredJson(authoringSource.config))
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
             refuse('gesture read basis differs from the original local authoring input', 'gesture-basis-mismatch');
           }
@@ -381,9 +404,10 @@ export function createTimelineLocalSaveHandoff(options: {
             read(config, 'theme', ['config']); read(config, 'theme_overrides', ['config']);
           }
         }
-        let commands: [EditCommand] | undefined;
+        let commands: EditCommand[] | undefined;
         let mediaReads: CommitRequest['reads'];
         let mediaSteps: CommitRequest['steps'];
+        let mediaLabel = 'Add media';
         if (gestureBasis?.kind === 'prepared-media') {
           if (gestureBasis.command.type !== 'place-prepared-media') refuse('prepared media command is unavailable');
           const prepared = gestureBasis.command.payload;
@@ -400,9 +424,9 @@ export function createTimelineLocalSaveHandoff(options: {
           if ((prepared.removeClipId !== undefined
             && (duplicateVideo || !prepared.removeClipId.startsWith('uploading-')))
             || (!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipIds?.length
-            || prepared.forceNewTrack || prepared.insertAtTop || prepared.pinnedShotGroupsOverride
+            || prepared.pinnedShotGroupsOverride
             || (!duplicateVideo && prepared.asset.mediaType !== 'image')) {
-            refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
+            refuse('prepared media currently supports an ordinary image add on a visual track. Draft retained; reload the timeline, then choose Add media');
           }
           const config = configBefore as Record<string, OutboxJson>;
           const nextConfig = payload.config as Record<string, OutboxJson>;
@@ -413,24 +437,37 @@ export function createTimelineLocalSaveHandoff(options: {
             refuse('prepared media cannot remove an authored parent clip. Draft retained; reload the timeline, then choose Add media');
           }
           const row = duplicateVideo ? nextClips.find(clip => object(clip) && clip.id === gestureBasis.clipId) : nextClips.at(-1);
+          const tracks = config.tracks;
+          const nextTracks = nextConfig.tracks;
+          const newTrack = object(row) && Array.isArray(tracks) && Array.isArray(nextTracks)
+            && !tracks.some(track => object(track) && track.id === row.track)
+            ? nextTracks.find(track => object(track) && track.id === row.track) : undefined;
+          const visualTrack = object(row) && Array.isArray(nextTracks)
+            && nextTracks.filter(track => object(track) && track.id === row.track);
           if (!object(row) || row.id !== gestureBasis.clipId || row.asset !== prepared.asset.assetKey
             || clips.some(clip => object(clip) && clip.id === row.id)
             || (!duplicateVideo && !same(nextClips.slice(0, -1), clips))
-            || !same({ ...nextConfig, clips }, config)
-            || !Array.isArray(config.tracks) || !config.tracks.some(track => object(track)
-              && track.id === row.track && track.kind === 'visual' && (track.role ?? 'output') === 'output')) {
+            || !Array.isArray(tracks) || !Array.isArray(nextTracks)
+            || (!same(authoredJson(gestureBasis.config.tracks), authoredJson(authoringSource.config.tracks))
+              && (!newTrack || !same(authoredJson(gestureBasis.config.tracks), authoredJson(next.config.tracks))))
+            || !same({ ...nextConfig, clips, tracks }, config)
+            || (newTrack ? duplicateVideo || !same(nextTracks.filter(track => track !== newTrack), tracks)
+              : !same(nextTracks, tracks))
+            || !visualTrack || visualTrack.length !== 1 || !object(visualTrack[0])
+            || visualTrack[0].kind !== 'visual' || (visualTrack[0].role ?? 'output') !== 'output') {
             refuse('prepared media changes more than one ordinary parent clip. Draft retained; reload the timeline, then choose an existing visual track');
           }
           if (Array.isArray(parent.occurrences) && parent.occurrences.some(occurrence => object(occurrence)
             && (occurrence.track === row.track || (object(occurrence.placement) && occurrence.placement.track === row.track)))) {
             refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
           }
-          if (!object(parent.registry) || !object(parent.registry.assets)
-            || !same(payload.registry, { ...parent.registry, assets: { ...parent.registry.assets,
+          if (!object(parent.registry) || (parent.registry.assets !== undefined && !object(parent.registry.assets))
+            || !same(payload.registry, { ...parent.registry, assets: { ...(parent.registry.assets ?? {}),
               [prepared.asset.assetKey]: authoredJson(prepared.asset.entry) } })) {
             refuse('prepared media registry changes exceed the selected asset; draft retained');
           }
           if (duplicateVideo) {
+            mediaLabel = 'Add video after clip';
             const old = prepared.oldMediaSelection;
             const anchorIndex = clips.findIndex(clip => object(clip) && clip.id === prepared.afterClipId);
             const anchor = clips[anchorIndex];
@@ -463,11 +500,35 @@ export function createTimelineLocalSaveHandoff(options: {
               command_ordinals: [0], patch: [], reads: [{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${prepared.afterClipId}`],
                 state: { state: 'present', value: authoredJson(anchor) } }] }];
           } else {
-            commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+            commands = [
+              ...(newTrack ? [{ schema_version: 1, op: 'track.create', version: '1', select: 'parent',
+                args: { row: authoredJson(newTrack) }, intent: {}, created: [`parent/track:${row.track}`] } as EditCommand] : []),
+              { schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
               args: { row: authoredJson(row), media: authoredJson(media) }, intent: {}, created: [
-                ...(Object.prototype.hasOwnProperty.call(parent.registry.assets, row.asset) ? [] : [`parent/asset:${row.asset}`]),
+                ...(Object.prototype.hasOwnProperty.call(parent.registry.assets ?? {}, row.asset) ? [] : [`parent/asset:${row.asset}`]),
                 `parent/clip:${row.id}`,
               ] }];
+          }
+          // track.create appends. Preserve a drop at the top in the same
+          // atomic commit, using the normal document-patch encoder for order.
+          if (newTrack && nextTracks.at(-1) !== newTrack) {
+            const appended = structuredClone(before);
+            const appendedPayload = appended.parent_revision.payload;
+            (appendedPayload.config as Record<string, OutboxJson>).tracks = [...tracks, newTrack];
+            if (Object.prototype.hasOwnProperty.call(parent, 'tracks')) appendedPayload.tracks = [...tracks, newTrack];
+            const reordered = structuredClone(appended);
+            (reordered.parent_revision.payload.config as Record<string, OutboxJson>).tracks = nextTracks;
+            if (Object.prototype.hasOwnProperty.call(parent, 'tracks')) reordered.parent_revision.payload.tracks = nextTracks;
+            const patch = documentPatchIntent({ before: appended, after: reordered, basis: { head: initial.head },
+              roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
+              label: mediaLabel, step: { id: crypto.randomUUID(), label: 'Position new track', intent: 'Keep the dropped track position', tags: [] },
+              reads: [] }) as Record<string, OutboxJson>;
+            commands!.splice(1, 0, { schema_version: 1, op: 'doc.patch', version: '1', select: null,
+              args: { changes: patch.changes }, created: patch.created as string[] });
+            mediaReads = [];
+            mediaSteps = commands!.map((_, index) => index === 1
+              ? { ...patch.step as NonNullable<CommitRequest['steps']>[number], command_ordinals: [index], patch: patch.changes as NonNullable<CommitRequest['steps']>[number]['patch'] }
+              : { id: crypto.randomUUID(), label: mediaLabel, intent: mediaLabel, tags: [], command_ordinals: [index], patch: [] });
           }
         }
         // Verified parent recipes preserve the complete child closure cloned above.
@@ -574,7 +635,7 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
         const pending = commands ? options.session.append({ before: toOutboxJson(before), after: toOutboxJson(after),
-          label: mediaSteps ? 'Add video after clip' : 'Add media', commands,
+          label: mediaLabel, commands,
           ...(mediaReads && mediaSteps ? { reads: mediaReads, steps: mediaSteps,
             rationale: mediaSteps[0].intent, group_id: mediaSteps[0].id } : {}) }) : options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
@@ -599,15 +660,13 @@ export function createTimelineLocalSaveHandoff(options: {
         document = structuredClone(after);
         return pending;
       } catch (error) {
-        const rejection = error instanceof TimelineVersionConflictError ? error
-          : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`);
-        if (gestureBasis?.kind === 'prepared-media') preparedMediaFailure = rejection;
+        const rejection = error instanceof TimelineVersionConflictError || error instanceof TimelineSaveError ? error
+          : new TimelineSaveError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`);
         return Promise.reject(rejection);
       }
     },
     async flush() {
       try {
-        if (preparedMediaFailure) throw preparedMediaFailure;
         const basis = await options.session.flush();
         const adopted = options.adopted(basis);
         const head = adopted.receipt.head;
@@ -627,9 +686,11 @@ export function createTimelineLocalSaveHandoff(options: {
         return adopted.receipt;
       }
       catch (error) {
-        if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
-          refuse(error instanceof Error ? error.message : String(error));
-        }
+        const state = options.session.getState();
+        const message = object(state.error) && typeof state.error.message === 'string' ? state.error.message
+          : error instanceof Error ? error.message : String(error);
+        if (state.status === 'conflict') throw new TimelineVersionConflictError(message);
+        if (['blocked', 'error', 'recovery'].includes(state.status)) refuse(message);
         throw error;
       }
     },

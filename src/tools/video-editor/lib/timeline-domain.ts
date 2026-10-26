@@ -971,7 +971,9 @@ export const migrateToFlatTracks = (
   issues?: TimelineDomainIssue[],
   level: TimelineDomainContractLevel = 'config-only',
 ): TimelineConfig => {
-  if (config.tracks?.length) {
+  // An explicit empty bootstrap is already flat; default tracks would invent
+  // display identities that have no authored parent binding at save time.
+  if (config.tracks?.length || (Array.isArray(config.tracks) && Array.isArray(config.clips) && config.clips.length === 0)) {
     return {
       output: { ...config.output },
       tracks: config.tracks.map((track) => ({ ...track })),

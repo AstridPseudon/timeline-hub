@@ -233,7 +233,8 @@ describe('placementService under Workspace v1', () => {
     runtime.nextFailure = failure;
 
     await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
-      .rejects.toThrow('unacknowledged');
+      .rejects.toThrow(failure === 'transport' ? 'unacknowledged' : failure === 'refused'
+        ? 'Runtime refused this placement' : 'Runtime rejected this placement');
     expect(runtime.requests).toHaveLength(1);
     expect(runtime.publishes).toHaveLength(0);
   });
@@ -252,7 +253,7 @@ describe('placementService under Workspace v1', () => {
     runtime.commitFailure = new ApiError(409, 'conflict', 'original authored guard changed', '', details);
     const request = { projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' };
 
-    await expect(placeGeneration(request)).rejects.toThrow('unacknowledged');
+    await expect(placeGeneration(request)).rejects.toMatchObject({ code: 'timeline_version_conflict' });
     expect(runtime.requests).toHaveLength(1);
     expect(runtime.publishes).toHaveLength(0);
     const scope = { realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE };

@@ -21,7 +21,7 @@ import { applyPreparedMediaCommand } from '../commands/media.ts';
 import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
 import { emitTimelineSaveDiagnostic } from '../lib/timeline-diagnostics.ts';
-import { TimelineVersionConflictError } from '../data/DataProvider.ts';
+import { TimelineSaveError, TimelineVersionConflictError } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
@@ -112,10 +112,29 @@ describe('upstream local document handoff', () => {
       { kind: 'prepared-media', config: env.source.config, registry: env.source.registry, clipId: row.id, command }))
       .rejects.toThrow('ordinary image add');
     await expect(env.handoff.capture({ ...env.source, config: preview.nextData.config, registry: preview.nextData.registry }))
-      .rejects.toThrow('ordinary image add');
+      .rejects.toThrow('original Runtime project media selection');
     expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
     expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
     expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it('allows a valid edit after a refused media gesture has been discarded', async () => {
+    const env = await environment();
+    const prepared = preparedImageCommand();
+    const { mediaSelection: _selection, ...asset } = prepared.payload.asset;
+    const command = { ...prepared, payload: { ...prepared.payload, asset } };
+    const refused = structuredClone(env.source);
+    refused.config.clips.push({ id: 'refused', track: 'V1', at: 0, hold: 2, clipType: 'hold', asset: 'import-image' });
+    refused.registry.assets['import-image'] = command.payload.asset.entry;
+    await expect(env.handoff.capture(refused, { kind: 'prepared-media', config: env.source.config,
+      registry: env.source.registry, clipId: 'refused', command })).rejects.toThrow('Runtime project media selection');
+    // Discard the refused preview and author a fresh ordinary edit from the
+    // unchanged canonical source, using the same mounted handoff.
+    const valid = structuredClone(env.source);
+    valid.config.tracks[0].label = 'After discard';
+    await expect(env.handoff.capture(valid)).resolves.toBeUndefined();
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
     await env.session.dispose();
   });
 
@@ -240,7 +259,7 @@ describe('upstream local document handoff', () => {
       }
       const reject = vi.spyOn(Promise, 'reject');
       const error = await handoff.capture(next, gesture).catch((caught: unknown) => caught);
-      expect(error).toBeInstanceOf(TimelineVersionConflictError);
+      expect(error).toBeInstanceOf(kind === 'head' ? TimelineVersionConflictError : TimelineSaveError);
       expect(error).toHaveProperty('message', `Local document save retained: ${message}`);
       // This is the exact error passed to the existing Promise.reject boundary.
       expect(reject.mock.calls.some(([original]) => original === error)).toBe(true);
@@ -249,7 +268,7 @@ describe('upstream local document handoff', () => {
       const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
       emitTimelineSaveDiagnostic('capture-rejected', () => ({ error }));
       if (enabled) expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({
-        errorCode: code, errorClass: kind === 'nonfinite' ? 'UNKNOWN' : 'TimelineVersionConflictError' });
+        errorCode: code, errorClass: kind === 'nonfinite' ? 'UNKNOWN' : kind === 'head' ? 'TimelineVersionConflictError' : 'TimelineSaveError' });
       else expect(dispatch).not.toHaveBeenCalled();
       expect(Object.getOwnPropertyDescriptors(error)).toEqual(descriptors);
       dispatch.mockRestore();
@@ -323,7 +342,7 @@ describe('upstream local document handoff', () => {
         if (changed === 'opaque') Object.assign(next.config.clips[0], { opaque: { keep: false } });
         if (changed === 'child') { basis.clipId = 'child-title'; basis.clipIds = ['child-title']; }
         if (changed === 'stale') basis.config.clips[0].at = 12;
-        await expect(env.handoff.capture(next, basis)).rejects.toBeInstanceOf(TimelineVersionConflictError);
+        await expect(env.handoff.capture(next, basis)).rejects.toBeInstanceOf(TimelineSaveError);
         expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
         expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
         expect(env.send).not.toHaveBeenCalled();
@@ -634,7 +653,7 @@ describe('upstream local document handoff', () => {
     expect(candidate).not.toHaveProperty('parent_revision.payload.config.output');
     next.bundle.itemsBySchemaRef.changed = [];
     expect(env.session.getDocument()).toEqual(candidate);
-    await expect(env.handoff.flush()).rejects.toThrow('draft retained');
+    await expect(env.handoff.flush()).rejects.toThrow('generated v2 doc.patch contract');
     expect(env.receipt).not.toHaveBeenCalled();
     expect(env.send).not.toHaveBeenCalled();
     await env.session.dispose();
@@ -928,4 +947,54 @@ it.each(['valid', 'missing owner', 'wrong owner', 'stale selection', 'child sele
   await recovered.dispose();
   form.unmount(); hook.unmount(); propertyOwner.context = null;
   await env.session.dispose();
+});
+
+describe('prepared image media on a newly created track', () => {
+  it.each([['at the bottom', false], ['at the top', true]])('captures one atomic intent for an image drop %s', async (_label, insertAtTop) => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(false, false, ['authored'], undefined, undefined, false, false, false, true);
+    const current = await buildTimelineData(env.source.config, env.source.registry);
+    const command = preparedImageCommand();
+    command.payload.forceNewTrack = true;
+    command.payload.insertAtTop = insertAtTop;
+    const preview = applyPreparedMediaCommand(current, command)!;
+    const row = preview.nextData.config.clips.find(clip => clip.id === preview.commandResult.detail?.clipId)!;
+    await env.handoff.capture({ ...env.source, config: preview.nextData.config, registry: preview.nextData.registry },
+      { kind: 'prepared-media', config: env.source.config, registry: env.source.registry, clipId: row.id, command });
+
+    const [stored] = await env.outboxes.list(env.scope);
+    expect(stored.intents).toHaveLength(1);
+    expect(stored.intents[0].payload.commands).toEqual(expect.arrayContaining([
+      expect.objectContaining({ op: 'track.create', args: { row: expect.objectContaining({ id: row.track, kind: 'visual' }) } }),
+      expect.objectContaining({ op: 'clip.add-media', args: { row: expect.objectContaining({ id: row.id, track: row.track, asset: 'import-image' }),
+        media: command.payload.asset.mediaSelection } }),
+    ]));
+    const after = stored.intents[0].payload.after as typeof env.initial.canonicalDocument;
+    const tracks = (after.parent_revision.payload.config as Record<string, Array<{ id: string }>>).tracks;
+    expect(tracks.map(track => track.id)).toEqual(insertAtTop ? [row.track, ...env.source.config.tracks.map(track => track.id)]
+      : [...env.source.config.tracks.map(track => track.id), row.track]);
+    expect((after.parent_revision.payload.config as Record<string, Array<Record<string, unknown>>>).clips)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: row.id, track: row.track, asset: 'import-image' })]));
+    if (insertAtTop) expect(stored.intents[0].payload.commands.map(command => command.op)).toEqual(['track.create', 'doc.patch', 'clip.add-media']);
+    await env.session.dispose();
+  });
+
+  it('refuses a prepared-media gesture basis with an unrelated original track edit', async () => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(false, false, ['authored'], undefined, undefined, false, false, false, true);
+    const current = await buildTimelineData(env.source.config, env.source.registry);
+    const command = preparedImageCommand();
+    command.payload.forceNewTrack = true;
+    const preview = applyPreparedMediaCommand(current, command)!;
+    const row = preview.nextData.config.clips.find(clip => clip.id === preview.commandResult.detail?.clipId)!;
+    const changedTracks = structuredClone(env.source.config.tracks);
+    changedTracks[0] = { ...changedTracks[0], label: 'Unrelated edit' };
+    await expect(env.handoff.capture({ ...env.source, config: preview.nextData.config, registry: preview.nextData.registry },
+      { kind: 'prepared-media', config: { ...env.source.config, tracks: changedTracks }, registry: env.source.registry,
+        clipId: row.id, command })).rejects.toBeInstanceOf(TimelineSaveError);
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(0);
+    expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
 });

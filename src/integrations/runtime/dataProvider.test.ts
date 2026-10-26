@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient, RuntimeAuthenticationError, RUNTIME_CLIENT_SCOPES } from './client.ts';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
-import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
+import { TimelineSaveError, TimelineSchemaIncompatibleError, TimelineVersionConflictError, isOwnUnacknowledgedSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 import { createTimelineReader } from '@/tools/video-editor/lib/timeline-reader.ts';
 import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
@@ -793,10 +793,13 @@ describe('RuntimeDataProvider', () => {
     const fixture = runtimeFixture();
     const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: publicTimelineTransport(fixture) });
     const base = await provider.loadTimeline(TIMELINE_ID);
-    await expect(provider.saveTimeline(TIMELINE_ID, base.config, base.configVersion)).rejects.toMatchObject({ code: 'timeline_version_conflict' });
+    await expect(provider.saveTimeline(TIMELINE_ID, base.config, base.configVersion)).rejects.toBeInstanceOf(TimelineSaveError);
     for (const head of [{ ...base.head!, projectId: 'another' }, { ...base.head!, timelineId: 'another' }]) {
-      await expect(provider.saveTimelineAtHead(TIMELINE_ID, base.config, head)).rejects.toMatchObject({ code: 'timeline_version_conflict' });
+      await expect(provider.saveTimelineAtHead(TIMELINE_ID, base.config, head)).rejects.toBeInstanceOf(TimelineSaveError);
     }
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, base.config, undefined as never)).rejects.toBeInstanceOf(TimelineSaveError);
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, base.config,
+      { ...base.head!, headRevisionId: '' })).rejects.toBeInstanceOf(TimelineSaveError);
     expect(fixture.requests.filter((r) => r.method === 'POST' && r.path.endsWith('/composition-revisions'))).toHaveLength(0);
   });
 

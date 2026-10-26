@@ -22,7 +22,7 @@ import { buildTimelineData, buildTimelineDataWithResolver, configToRows, type Ti
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
-import { TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
+import { TimelineSaveError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
 import { loadTimelineDraft, saveTimelineDraft } from '../data/timelineDraftIndexedDb';
 import type { AssetRegistry } from '../types/index.ts';
 import type { VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext';
@@ -1482,7 +1482,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         if (outcome === 'conflict' || outcome === 'invalid') {
           expect(stored.intents).toHaveLength(1);
           expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(config.output.file);
-          expect(harness.hook.result.current.localSaveState?.status).toBe('conflict');
+          expect(harness.hook.result.current.localSaveState?.status).toBe(outcome === 'conflict' ? 'conflict' : 'error');
         } else if (restart) {
           const exact = structuredClone(send.mock.calls[0]);
           const pending = structuredClone(stored.pending?.request);
@@ -2065,7 +2065,7 @@ describe('useTimelineSave mounted save diagnostics', () => {
         await expect(captured).rejects.toThrow('Local edits preceded the original verified read');
         expect(send).not.toHaveBeenCalled();
         expect(records.find((record) => record.phase === 'capture-rejected')).toMatchObject({
-          errorCode: 'owner-original-read-invalidated', errorClass: 'TimelineVersionConflictError', errorStage: 'capture' });
+          errorCode: 'owner-original-read-invalidated', errorClass: 'TimelineSaveError', errorStage: 'capture' });
         expect(harness.hook.result.current.originalLocalSaveBasis?.status).toBe('unavailable');
       } else {
         await act(async () => { await captured; });
@@ -2149,13 +2149,13 @@ describe('useTimelineSave mounted save diagnostics', () => {
             return true;
           });
           const error = await save.capture(next, gesture).catch((caught: unknown) => caught);
-          expect(error).toBeInstanceOf(TimelineVersionConflictError);
+          expect(error).toBeInstanceOf(kind === 'head' ? TimelineVersionConflictError : TimelineSaveError);
           expect(mark.mock.calls.some(([original]) => original === error)).toBe(true);
           const code = kind === 'head' ? 'capture-input-head-unavailable' : kind === 'gesture' ? 'gesture-basis-mismatch' : 'capture-owner-unavailable';
           if (enabled) {
             const events = dispatch.mock.calls.map(([event]) => (event as CustomEvent).detail);
             expect(events.find((event) => event.phase === 'capture-rejected')).toMatchObject({
-              errorCode: code, errorClass: 'TimelineVersionConflictError', errorStage: 'capture' });
+              errorCode: code, errorClass: kind === 'head' ? 'TimelineVersionConflictError' : 'TimelineSaveError', errorStage: 'capture' });
           } else expect(dispatch).not.toHaveBeenCalled();
           dispatch.mockRestore();
           mark.mockRestore();
@@ -2211,6 +2211,7 @@ it.each(['valid', 'wrong source', 'stale head'] as const)('forwards parameter ge
       })]);
     } else {
       await vi.waitFor(() => expect(harness.toast.error).toHaveBeenCalledWith('Element parameter owner changed; draft retained'));
+      expect(harness.toast.error).toHaveBeenCalledTimes(1);
       expect(saved).not.toHaveBeenCalled();
     }
     expect(harness.saveTimeline).not.toHaveBeenCalled();

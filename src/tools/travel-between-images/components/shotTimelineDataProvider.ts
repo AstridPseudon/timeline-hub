@@ -2,7 +2,7 @@ import {
   projectedClipCounterparts,
   verifiedRetainedRawClipIds,
 } from '@/tools/video-editor/lib/serialize.ts';
-import { TimelineVersionConflictError, type DataProvider, type TimelineAcceptedIdentity, type TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
+import { TimelineSaveError, TimelineVersionConflictError, type DataProvider, type TimelineAcceptedIdentity, type TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
 import type {
   LoadedTimeline,
 } from '@/tools/video-editor/data/DataProvider.ts';
@@ -1016,9 +1016,11 @@ export function createShotTimelineDataProvider(
   const flushLocalSaves = async (session: LocalSaveSession) => {
     try { return await session.flush(); }
     catch (error) {
-      if (session.getState().status === 'conflict') {
-        throw new TimelineVersionConflictError(error instanceof Error ? error.message : String(error));
-      }
+      const state = session.getState();
+      const detail = object(state.error)?.message;
+      const message = typeof detail === 'string' ? detail : error instanceof Error ? error.message : String(error);
+      if (state.status === 'conflict') throw new TimelineVersionConflictError(message);
+      if (['blocked', 'error', 'recovery'].includes(state.status)) throw new TimelineSaveError(message);
       throw error;
     }
   };
@@ -1028,11 +1030,20 @@ export function createShotTimelineDataProvider(
         timelineDataProvider!.loadTimelineCommandBasis!(composition.parentDocumentId),
         timelineDataProvider!.getRecoverableIdentity!(),
       ]);
-      if (!initial.head.publicationId || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
-        || initial.head.revisionId !== composition.headRevisionId
+      if (!initial.head.revisionId || !initial.head.publicationId
         || initial.canonicalDocument.project_id !== composition.projectId
         || initial.canonicalDocument.timeline_id !== composition.parentDocumentId) {
-        throw new TimelineVersionConflictError('Popup A2 save needs the original verified parent, shot and internal closure with revision and publication pins; draft retained');
+        throw new TimelineSaveError('Popup A2 save needs the original verified parent, shot and internal closure with revision and publication pins; draft retained');
+      }
+      const revisionMismatch = typeof initial.head.revisionId === 'string' && initial.head.revisionId.length > 0
+        && typeof composition.headRevisionId === 'string' && composition.headRevisionId.length > 0
+        && initial.head.revisionId !== composition.headRevisionId;
+      const canonicalRevisionMismatch = typeof initial.canonicalDocument.parent_revision.revision_id === 'string'
+        && initial.canonicalDocument.parent_revision.revision_id.length > 0
+        && typeof initial.head.revisionId === 'string' && initial.head.revisionId.length > 0
+        && initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId;
+      if (revisionMismatch || canonicalRevisionMismatch) {
+        throw new TimelineVersionConflictError('Popup A2 original parent revision changed before save; draft retained');
       }
       localSaveHead = initial.head;
       return createLocalSaveSession({
@@ -1058,8 +1069,13 @@ export function createShotTimelineDataProvider(
     const sourceHead = localSaveHead;
     return localSaveSessionPromise!.then(() => {
       const verified = sourceHead ?? localSaveHead;
-      if (!verified || verified.revisionId !== sourceComposition.headRevisionId) {
-        throw new TimelineVersionConflictError('Popup original source head is unavailable; draft retained');
+      if (verified && typeof verified.revisionId === 'string' && verified.revisionId.length > 0
+        && typeof sourceComposition.headRevisionId === 'string' && sourceComposition.headRevisionId.length > 0
+        && verified.revisionId !== sourceComposition.headRevisionId) {
+        throw new TimelineVersionConflictError('Popup original source revision changed; draft retained');
+      }
+      if (!verified || !verified.revisionId || !verified.publicationId || !sourceComposition.headRevisionId) {
+        throw new TimelineSaveError('Popup original source head is unavailable; draft retained');
       }
       return { projectId: sourceComposition.projectId, timelineId: sourceComposition.parentDocumentId,
         headRevisionId: verified.revisionId, headPublicationId: verified.publicationId };
@@ -1078,11 +1094,23 @@ export function createShotTimelineDataProvider(
         if (!shotCompositionAdapter) throw new Error('Popup A2 save requires the validated canonical composition adapter');
         const session = await localSaveSessionPromise!;
         assertEditorHeadIsCurrent();
-        if (canonicalBase.headRevisionId !== rawComposition.headRevisionId
-          || !head || head.projectId !== rawComposition.projectId
+        if (!head || head.projectId !== rawComposition.projectId
           || head.timelineId !== rawComposition.parentDocumentId
-          || head.headRevisionId !== rawComposition.headRevisionId
-          || head.headPublicationId !== localSaveHead?.publicationId) {
+          || !head.headRevisionId || !head.headPublicationId
+          || !rawComposition.headRevisionId || !localSaveHead?.publicationId) {
+          throw new TimelineSaveError('Popup canonical source pins are unavailable; draft retained');
+        }
+        if (typeof canonicalBase.headRevisionId === 'string' && canonicalBase.headRevisionId.length > 0
+          && typeof rawComposition.headRevisionId === 'string' && rawComposition.headRevisionId.length > 0
+          && canonicalBase.headRevisionId !== rawComposition.headRevisionId) {
+          throw new TimelineVersionConflictError('Popup canonical head changed during capture; draft retained');
+        }
+        if (head?.headRevisionId && rawComposition.headRevisionId
+          && head.headRevisionId !== rawComposition.headRevisionId) {
+          throw new TimelineVersionConflictError('Popup canonical head changed during capture; draft retained');
+        }
+        if (head?.headPublicationId && localSaveHead?.publicationId
+          && head.headPublicationId !== localSaveHead.publicationId) {
           throw new TimelineVersionConflictError('Popup canonical head changed during capture; draft retained');
         }
         const draftRegistry = nextRegistry ?? registry;

@@ -15,7 +15,7 @@
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import type { CanonicalDocument, EditCommand } from '@/integrations/runtime/timeline-commit-types';
-import type { TimelineCommandBasis, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
+import { TimelineSaveError, type TimelineCommandBasis, type TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
 import { createCommitOutbox, toOutboxJson, type OutboxScope } from '@/tools/video-editor/commands/commitOutbox';
 import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession';
 import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle';
@@ -98,7 +98,7 @@ function sourceFromBasis(basis: TimelineCommandBasis): TimelineSaveSource {
   const parent = basis.canonicalDocument.parent_revision.payload as Record<string, unknown>;
   if (!parent.config || typeof parent.config !== 'object' || Array.isArray(parent.config)
     || !parent.registry || typeof parent.registry !== 'object' || Array.isArray(parent.registry)) {
-    throw new TimelineVersionConflictError(
+    throw new TimelineSaveError(
       `Runtime timeline ${basis.canonicalDocument.timeline_id} has no authored parent config/registry`,
     );
   }
@@ -118,18 +118,37 @@ function sourceFromBasis(basis: TimelineCommandBasis): TimelineSaveSource {
 }
 
 function refusePlacement(message: string): never {
-  throw new TimelineVersionConflictError(`Local document save retained: ${message}`);
+  throw new TimelineSaveError(`Local document save retained: ${message}`);
 }
 
 function checkPlacementHead(initial: TimelineCommandBasis, source: TimelineSaveSource): void {
+  const canonicalRevision = initial.canonicalDocument.parent_revision.revision_id;
+  const sourceHead = source.head;
   if (!initial.head.revisionId || !initial.head.publicationId
-    || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
-    || source.head?.projectId !== initial.canonicalDocument.project_id
-    || source.head.timelineId !== initial.canonicalDocument.timeline_id
-    || source.head.headRevisionId !== initial.head.revisionId
-    || source.head.headPublicationId !== initial.head.publicationId) {
+    || !canonicalRevision
+    || sourceHead?.projectId !== initial.canonicalDocument.project_id
+    || sourceHead.timelineId !== initial.canonicalDocument.timeline_id
+    || !sourceHead.headRevisionId || !sourceHead.headPublicationId) {
     refusePlacement('original verified authoring head is unavailable');
   }
+  if (initial.head.revisionId && canonicalRevision && canonicalRevision !== initial.head.revisionId) {
+    throw new TimelineVersionConflictError('Local document save retained: verified parent revision changed');
+  }
+  if (sourceHead?.projectId === initial.canonicalDocument.project_id
+    && sourceHead.timelineId === initial.canonicalDocument.timeline_id
+    && sourceHead.headRevisionId && initial.head.revisionId
+    && sourceHead.headRevisionId !== initial.head.revisionId) {
+    throw new TimelineVersionConflictError('Local document save retained: source revision changed');
+  }
+  if (sourceHead?.projectId === initial.canonicalDocument.project_id
+    && sourceHead.timelineId === initial.canonicalDocument.timeline_id
+    && sourceHead.headRevisionId === initial.head.revisionId
+    && sourceHead.headPublicationId && initial.head.publicationId
+    && sourceHead.headPublicationId !== initial.head.publicationId) {
+    throw new TimelineVersionConflictError('Local document save retained: source publication changed');
+  }
+  if (sourceHead.headRevisionId !== initial.head.revisionId
+    || sourceHead.headPublicationId !== initial.head.publicationId) refusePlacement('original verified authoring head is unavailable');
 }
 
 /**
@@ -196,12 +215,23 @@ function createPlacementLocalSaveHandoff(options: {
         document = structuredClone(authoredAfter);
         return pending;
       } catch (error) {
-        return Promise.reject(error instanceof TimelineVersionConflictError ? error
-          : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
+        return Promise.reject(error instanceof TimelineSaveError || error instanceof TimelineVersionConflictError ? error
+          : new TimelineSaveError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
       }
     },
     async flush() {
-      const basis = await options.session.flush();
+      let basis: TimelineCommandBasis;
+      try {
+        basis = await options.session.flush();
+      } catch (error) {
+        const state = options.session.getState();
+        const detail = state.error && typeof state.error === 'object' && !Array.isArray(state.error)
+          && typeof state.error.message === 'string' ? state.error.message : undefined;
+        const message = detail ?? (error instanceof Error ? error.message : String(error));
+        if (state.status === 'conflict') throw new TimelineVersionConflictError(message);
+        if (state.status === 'error') throw new TimelineSaveError(message);
+        throw error;
+      }
       const adopted = options.adopted(basis);
       const head = adopted.receipt.head;
       if (head.projectId !== initial.canonicalDocument.project_id
@@ -302,7 +332,7 @@ function createDocumentStore(
         }
       } else if (owners.length > 1) {
         await session.dispose();
-        throw new TimelineVersionConflictError('Multiple placement save owners require explicit recovery');
+        throw new TimelineSaveError('Multiple placement save owners require explicit recovery');
       }
       const handoff = createPlacementLocalSaveHandoff({
         initial: saveBasis,
@@ -350,7 +380,7 @@ export async function prepareTimelineDocumentMutation(target: ActiveTimelineTarg
     expectedVersion: timeline.configVersion,
     headRevisionId: timeline.head?.headRevisionId,
     mutate(mutate) {
-      if (consumed) return Promise.reject(new TimelineVersionConflictError('Timeline mutation was already consumed'));
+      if (consumed) return Promise.reject(new TimelineSaveError('Timeline mutation was already consumed'));
       consumed = true;
       return mutateTimelineDocumentFromStore(selected, mutate, store);
     },
@@ -443,29 +473,29 @@ export interface OccurrenceForkRequest extends ActiveTimelineTarget {
 
 export function buildOccurrenceForkCommand(document: CanonicalDocument, request: OccurrenceForkRequest): EditCommand {
   if (!/^occurrence:(?!.*::)[^/]+$/.test(request.ownerRef)) {
-    throw new TimelineVersionConflictError('Occurrence fork requires one explicit canonical occurrence owner');
+    throw new TimelineSaveError('Occurrence fork requires one explicit canonical occurrence owner');
   }
   if (!/^(?!.*::)[^/]+$/.test(request.shotId)) {
-    throw new TimelineVersionConflictError('Occurrence fork requires one reserved shot identity');
+    throw new TimelineSaveError('Occurrence fork requires one reserved shot identity');
   }
   const occurrenceId = request.ownerRef.slice('occurrence:'.length);
   const payload = document.parent_revision.payload as Record<string, unknown>;
   const occurrences = payload.occurrences;
   if (!Array.isArray(occurrences)) {
-    throw new TimelineVersionConflictError('Occurrence fork has no canonical occurrence closure');
+    throw new TimelineSaveError('Occurrence fork has no canonical occurrence closure');
   }
   const owners = occurrences.filter((row) => row && typeof row === 'object'
     && !Array.isArray(row) && (row as Record<string, unknown>).occurrence_id === occurrenceId);
   if (owners.length !== 1) {
-    throw new TimelineVersionConflictError('Occurrence fork requires one uniquely bound canonical occurrence');
+    throw new TimelineSaveError('Occurrence fork requires one uniquely bound canonical occurrence');
   }
   const sourceShotId = (owners[0] as Record<string, unknown>).shot_id;
   if (typeof sourceShotId !== 'string' || sourceShotId === request.shotId) {
-    throw new TimelineVersionConflictError('Occurrence fork requires a fresh shot identity distinct from its source');
+    throw new TimelineSaveError('Occurrence fork requires a fresh shot identity distinct from its source');
   }
   const shotRevisions = document.shot_revisions.filter((shot) => shot.shot_id === request.shotId);
   if (shotRevisions.length !== 0) {
-    throw new TimelineVersionConflictError('Occurrence fork destination shot identity is already occupied');
+    throw new TimelineSaveError('Occurrence fork destination shot identity is already occupied');
   }
   return {
     schema_version: 1,
@@ -516,7 +546,7 @@ export async function placeGeneration(request: PlaceGenerationRequest): Promise<
 
   const target = await resolveLegacyPlacementTarget(request.projectSlug);
   if (request.timelineRef !== undefined && request.timelineRef !== target.timelineRef) {
-    throw new TimelineVersionConflictError('Placement target differs from the selected editor timeline');
+    throw new TimelineSaveError('Placement target differs from the selected editor timeline');
   }
   if (request.ownerRef !== undefined) {
     await forkOccurrence({ ...target, ownerRef: request.ownerRef, shotId: request.shotId });

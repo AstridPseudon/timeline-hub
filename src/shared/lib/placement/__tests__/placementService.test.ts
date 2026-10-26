@@ -311,7 +311,7 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       configVersion: 1,
       ownerRef: 'occurrence:shot-child',
       shotId: 'shot-fork',
-    })).toThrow('uniquely bound canonical occurrence');
+    })).toThrow(expect.objectContaining({ code: 'timeline_save_refused', message: expect.stringContaining('uniquely bound canonical occurrence') }));
   });
 
   it('refuses an ambiguous canonical occurrence owner', () => {
@@ -326,7 +326,7 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       configVersion: 1,
       ownerRef: 'occurrence:occurrence-1',
       shotId: 'shot-fork',
-    })).toThrow('uniquely bound canonical occurrence');
+    })).toThrow(expect.objectContaining({ code: 'timeline_save_refused', message: expect.stringContaining('uniquely bound canonical occurrence') }));
   });
 
   it('uses the explicit occurrence owner in the production placement caller', async () => {
@@ -376,7 +376,7 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     await expect(placeGeneration({
       projectSlug: PROJECT, shotId: 'reserved-shot', generationId: firstSeededGenerationId(router),
       ownerRef: 'occurrence:occurrence-1', timelineRef: 'foreign-timeline',
-    })).rejects.toThrow('differs from the selected editor timeline');
+    })).rejects.toMatchObject({ code: 'timeline_save_refused', message: expect.stringContaining('differs from the selected editor timeline') });
     expect(runtime.commits).toHaveLength(0);
   });
 

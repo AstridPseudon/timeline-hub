@@ -27,6 +27,22 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      runtime_ref:
+        description: Runtime branch, tag, or SHA for the dependency checkout
+        required: false
+        default: main
+        type: string
+      agent_ref:
+        description: Astrid Agent branch, tag, or SHA for the three-products checkout
+        required: false
+        default: main
+        type: string
+      test_grep:
+        description: Optional Playwright grep for a focused three-products run
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: direct-journey-${{ github.ref }}
@@ -34,17 +50,19 @@ concurrency:
 
 jobs:
   direct-journey:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.test_grep }}
     runs-on: ubuntu-latest
     steps:
       # The harness finds the Runtime at ../astrid-runtime (ASTRID_RUNTIME_CHECKOUT overrides),
-      # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in astrid-app, Runtime beside it.
+      # so both repos are checked out as siblings under $GITHUB_WORKSPACE/..: App in astrid-app, Runtime beside it. Manual runs can
+      # choose `runtime_ref`; scheduled and pull-request runs continue to use `main`.
       - uses: actions/checkout@v4
         with:
           path: astrid-app
       - uses: actions/checkout@v4
         with:
           repository: banodoco/astrid-runtime
-          ref: main
+          ref: ${{ github.event.inputs.runtime_ref || 'main' }}
           path: astrid-runtime
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
 
@@ -138,22 +156,28 @@ jobs:
       cancel-in-progress: true
     steps:
       # The harness finds Astrid at ../astrid-agent (ASTRID_CHECKOUT overrides) and the Runtime at ../astrid-runtime,
-      # so all three checkouts are siblings under $GITHUB_WORKSPACE.
+      # so all three checkouts are siblings under $GITHUB_WORKSPACE. Manual runs can select both dependency refs and a test grep.
       - uses: actions/checkout@v4
         with:
           path: astrid-app
       - uses: actions/checkout@v4
         with:
           repository: banodoco/astrid-runtime
-          ref: main
+          ref: ${{ github.event.inputs.runtime_ref || 'main' }}
           path: astrid-runtime
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
       - uses: actions/checkout@v4
         with:
           repository: banodoco/astrid-agent
-          ref: main
+          ref: ${{ github.event.inputs.agent_ref || 'main' }}
           path: astrid-agent
           token: ${{ secrets.ASTRID_READ_TOKEN || github.token }}
+
+      - name: Record checked out dependency revisions
+        id: dependency-heads
+        run: |
+          echo "agent=$(git -C astrid-agent rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "runtime=$(git -C astrid-runtime rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
@@ -193,14 +217,23 @@ jobs:
       - name: Run the three-product journey
         working-directory: astrid-app
         env:
+          ASTRID_APP_DIRECT_DOOR_PORT: "17341"
           ASTRID_CHECKOUT: ${{ github.workspace }}/astrid-agent
           ASTRID_REQUIRE_LANES: direct-journey
           ASTRID_PYTHON: ${{ github.workspace }}/astrid-agent/.venv/bin/python
+          TIMELINE_BUNDLE_AGENT_HEAD: ${{ steps.dependency-heads.outputs.agent }}
+          TIMELINE_BUNDLE_RUNTIME_HEAD: ${{ steps.dependency-heads.outputs.runtime }}
+          TEST_GREP: ${{ github.event.inputs.test_grep }}
           # Written by the JSON reporter itself (the globalSetup prints to stdout, so a shell redirect would corrupt the file).
           PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/three-products.json
           PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/three-products-results
           NODE_OPTIONS: --max-old-space-size=4096
-        run: npm run test:e2e:three-products -- --reporter=json,list,./config/testing/playwrightSkipGuard.ts
+        run: |
+          if [[ -n "$TEST_GREP" ]]; then
+            npm run test:e2e:three-products -- --grep "$TEST_GREP" --reporter=json,list,./config/testing/playwrightSkipGuard.ts
+          else
+            npm run test:e2e:three-products -- --reporter=json,list,./config/testing/playwrightSkipGuard.ts
+          fi
 
       # Pass rule (R-9, same as the direct journey): no quarantined cases exist for this spec, so every case must pass. Durations are
       # written to three-products-summary.json and recorded, never judged (R-10).

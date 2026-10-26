@@ -23,6 +23,7 @@ import {
 } from './client.ts';
 import {
   TimelineNotFoundError,
+  TimelineSaveError,
   TimelineSchemaIncompatibleError,
   TimelineVersionConflictError,
   OwnUnacknowledgedSaveError,
@@ -1066,7 +1067,7 @@ export class RuntimeDataProvider implements DataProvider {
     _registry?: AssetRegistry,
     _bundle?: TimelineBundleEnvelope | null,
   ): Promise<number> {
-    throw new TimelineVersionConflictError('Workspace Runtime requires the original scoped timeline head; numeric versions cannot authorize a save.', expectedVersion);
+    throw new TimelineSaveError('Workspace Runtime requires the original scoped timeline head; numeric versions cannot authorize a save.');
   }
 
   private timelineHead(timelineId: string, headRevisionId: string | null, headPublicationId: string | null = null): TimelineHeadRevision {
@@ -1082,7 +1083,7 @@ export class RuntimeDataProvider implements DataProvider {
   ): Promise<TimelineSaveReceipt> {
     if (expectedHead?.projectId !== this.projectId || expectedHead.timelineId !== timelineId
       || !(expectedHead.headRevisionId === null || (typeof expectedHead.headRevisionId === 'string' && expectedHead.headRevisionId.length > 0))) {
-      throw new TimelineVersionConflictError('Workspace Runtime save has missing or untrusted timeline head provenance.');
+      throw new TimelineSaveError('Workspace Runtime save has missing or untrusted timeline head provenance.');
     }
     const base = { ...expectedHead };
     return this.withTimelineOperation(timelineId, () =>
@@ -1483,7 +1484,8 @@ export class RuntimeDataProvider implements DataProvider {
         mismatch = `Workspace Runtime timeline head moved while pairing inspected revision ${inspectedRevisionId ?? 'null'} with public revision ${publicRevisionId ?? 'null'}`;
         this.invalidatePolledHead(this.projectId, timelineId);
       }
-      if (mismatch || !inspection) throw new TimelineVersionConflictError(mismatch ?? 'Workspace Runtime timeline head pair is unavailable');
+      if (mismatch) throw new TimelineVersionConflictError(mismatch);
+      if (!inspection) throw new TimelineSaveError('Workspace Runtime timeline head pair is unavailable');
       this.rememberFreshHead(this.projectId, timelineId, inspection);
       const previous = this.canonicalTimelineState.get(timelineId);
       const sameVerifiedPublication = previous?.headPublicationId === null
@@ -1564,7 +1566,7 @@ export class RuntimeDataProvider implements DataProvider {
 
   private toProviderError(error: unknown, timelineId: string, expectedVersion?: number): Error {
     let providerError: Error;
-    if (error instanceof TimelineSchemaIncompatibleError || error instanceof TimelineVersionConflictError) {
+    if (error instanceof TimelineSaveError || error instanceof TimelineSchemaIncompatibleError || error instanceof TimelineVersionConflictError) {
       providerError = error;
     } else if (isRuntimeUnavailableFailure(error)) {
       providerError = error instanceof RuntimeUnavailableError

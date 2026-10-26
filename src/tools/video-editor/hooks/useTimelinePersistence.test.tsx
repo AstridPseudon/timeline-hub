@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
+vi.mock('@/shared/components/ui/runtime/sonner.tsx', () => ({ toast: { error: vi.fn() } }));
 import { act, fireEvent, render, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,7 +34,7 @@ import { getConfigSignature, getStableConfigSignature } from '../lib/config-util
 import { buildDataFromCurrentRegistry } from '../lib/timeline-save-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
 import type { AssetResolver } from '../data/AssetResolver';
-import { OwnUnacknowledgedSaveError, TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
+import { OwnUnacknowledgedSaveError, TimelineSaveError, TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
 import { StaleWriteError } from '../data/shotComposition';
 import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
@@ -426,7 +428,8 @@ describe('useTimelinePersistence — interaction gating', () => {
       clips: original.config.clips.map((clip) => ({ ...clip, hold: 2 })) }, original);
     harness.scheduleSave(edited);
     await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('child ownership/fork mapping'); });
-    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.result.current.isConflictExhausted).toBe(false);
+    expect(harness.result.current.saveStatus).toBe('error');
     expect(harness.dataRef.current?.config).toEqual(edited.config);
     expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(edited.config);
     expect(local.getDocument()).toEqual(document);
@@ -462,7 +465,7 @@ describe('useTimelinePersistence — interaction gating', () => {
     harness.scheduleSave(added);
     harness.editSeqRef.current++;
     harness.scheduleSave(trimmed);
-    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('draft retained'); });
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('generated v2 doc.patch contract'); });
     const [stored] = await outboxes.list(scope);
     expect(stored.intents).toHaveLength(2);
     expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
@@ -473,7 +476,8 @@ describe('useTimelinePersistence — interaction gating', () => {
       basis: { after: stored.intents[0].id }, changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:new-right', 'hold'], before: { state: 'present', value: 2 }, value: 1 }],
     } });
     expect(local.getState().status).toBe('blocked');
-    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.result.current.isConflictExhausted).toBe(false);
+    expect(harness.result.current.saveStatus).toBe('error');
     expect(harness.dataRef.current?.config).toEqual(trimmed.config);
     expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(trimmed.config);
     expect(send).not.toHaveBeenCalled();
@@ -512,6 +516,37 @@ describe('useTimelinePersistence — interaction gating', () => {
     expect(draft?.baseHeadRevisionId).toBe('revision-1');
     expect(harness.result.current.isConflictExhausted).toBe(true);
     expect(harness.commitData).not.toHaveBeenCalled();
+  });
+
+  it('keeps a local handoff refusal terminal without presenting it as a timeline conflict', async () => {
+    const original = makeTimelineData('handoff-refusal');
+    vi.mocked(toast.error).mockClear();
+    const refusal = new TimelineSaveError('The local save owner is unavailable; draft retained.');
+    const capture = vi.fn(async () => { throw refusal; });
+    const handoff = {
+      capture,
+      flush: vi.fn(),
+      remoteHistoryAvailable: () => false,
+      canUndo: () => false,
+      canRedo: () => false,
+      undo: vi.fn(),
+      redo: vi.fn(),
+    } satisfies TimelineLocalSaveHandoff;
+    const harness = setup({ initialData: original, localDocumentSave: handoff });
+    const edited = buildDataFromCurrentRegistry({ ...original.config,
+      clips: original.config.clips.map((clip) => ({ ...clip, hold: 2 })) }, original);
+
+    harness.scheduleSave(edited);
+    await act(async () => {
+      await expect(harness.result.current.flushPendingSave()).rejects.toBe(refusal);
+    });
+
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(toast.error).toHaveBeenCalledExactlyOnceWith(refusal.message);
+    expect(harness.result.current.saveStatus).toBe('error');
+    expect(harness.result.current.isConflictExhausted).toBe(false);
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    harness.unmount();
   });
 
   it('publishes source-only edits and explicit source clearing without a server reload', async () => {

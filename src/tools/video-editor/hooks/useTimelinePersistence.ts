@@ -1,3 +1,4 @@
+import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useContext, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import {
   isOwnUnacknowledgedSaveError,
   isTimelineSchemaIncompatibleError,
   isTimelineVersionConflictError,
+  TimelineSaveError,
   TimelineVersionConflictError,
   type DataProvider,
   type TimelineHeadRevision,
@@ -812,11 +814,10 @@ export function useTimelinePersistence({
         if (isTimelineDiagnosticsEnabled()) {
           console.log('[TimelineSave] timeline not found, cannot save');
         }
-        handleConflictExhausted({
-          expectedVersion: configVersionRef.current,
-          retries: 0,
-          reason: 'missing_local_data',
-        });
+        cancelErrorRetryTimer();
+        disarmWatchdog();
+        setSaveStatus('error');
+        toast.error(persistenceError instanceof Error ? persistenceError.message : String(persistenceError));
         rejectFlushWaiters(persistenceError, attempt, true);
         return;
       }
@@ -830,6 +831,18 @@ export function useTimelinePersistence({
         setSaveStatus('error');
         stalledAttemptRef.current = attempt;
         rejectFlushWaiters(persistenceError);
+        return;
+      }
+
+      if (persistenceError instanceof TimelineSaveError) {
+        // A local owner or authoring guard refused this save. Keep the recovery
+        // draft and expose the refusal as a terminal save error; no remote head
+        // divergence has been established, so the conflict flow is misleading.
+        cancelErrorRetryTimer();
+        disarmWatchdog();
+        setSaveStatus('error');
+        toast.error(persistenceError.message);
+        rejectFlushWaiters(persistenceError, attempt, true);
         return;
       }
 

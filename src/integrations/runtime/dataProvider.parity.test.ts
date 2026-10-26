@@ -607,7 +607,9 @@ describe('identity validation', () => {
     };
     const provider = providerFor(fixture, transport);
 
-    await expect(provider.loadTimeline(TIMELINE_ID)).rejects.toThrow('head moved while pairing');
+    await expect(provider.loadTimeline(TIMELINE_ID)).rejects.toMatchObject({
+      code: 'timeline_version_conflict', message: expect.stringContaining('head moved while pairing'),
+    });
     expect(fixture.requests.some((request) => request.method === 'GET'
       && request.path.includes('/composition-revisions/'))).toBe(false);
   });

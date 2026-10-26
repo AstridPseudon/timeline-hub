@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 afterEach(async () => { for (const cleanup of cleanups.reverse()) await cleanup(); cleanups.length = 0; vi.unstubAllGlobals(); });
 
-async function environment(child: boolean, delayed = false) {
+async function environment(child: boolean, delayed = false, empty = false) {
   const parentConfig = createDefaultTimelineConfig();
   parentConfig.tracks = [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }];
   parentConfig.clips = [
@@ -48,19 +48,29 @@ async function environment(child: boolean, delayed = false) {
   document.parent_revision.payload = { config: { ...parentConfig, registry }, clips: parentConfig.clips, registry,
     occurrences: [{ occurrence_id: 'occ-0', shot_id: 'shot-1', shot_revision_id: 'shot-r1',
       placement: { start_ms: 0 }, duration_ms: 12000, source_offset: 0, speed: 1, track: 'S1' }] };
-  document.internal_timeline_revisions[0].payload = {
+  if (empty) {
+    parentConfig.tracks = [];
+    parentConfig.clips = [];
+    document.parent_revision.payload = { config: { clips: [], tracks: [] }, registry: {}, clips: [], occurrences: [] };
+    document.shot_revisions = [];
+    document.internal_timeline_revisions = [];
+    document.dependency_manifest = { shots: [], internal_timelines: [], media: [], documents: [] };
+  }
+  if (!empty) document.internal_timeline_revisions[0].payload = {
     tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
     clips: [{ id: 'plate', track: 'plate', at: 0, hold: 12, clipType: 'media', asset: 'existing-image' },
       { id: 'child-title', track: 'V2', at: 3, hold: 3, clipType: 'media', asset: 'existing-image' },
       { id: 'child-reference', track: 'V2', at: 6, hold: 3, clipType: 'media', asset: 'existing-image' }],
     output: parentConfig.output, registry,
   };
+  if (!empty) {
   document.shot_revisions[0].payload = { ...document.shot_revisions[0].payload, timing: { duration_ms: 12000 } };
   document.internal_timeline_revisions[0].content_digest = fixtureDigest(document.internal_timeline_revisions[0].payload);
   document.shot_revisions[0].content_digest = fixtureDigest(document.shot_revisions[0].payload);
-  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
   document.dependency_manifest.internal_timelines[0].content_digest = document.internal_timeline_revisions[0].content_digest;
   document.dependency_manifest.shots[0].content_digest = document.shot_revisions[0].content_digest;
+  }
+  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
   const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
   const composition = adapter.prepare(runtimeGraphToContractFromCanonicalDocument(document.project_id, document.timeline_id, document, 'p0'));
   const occurrence = composition.occurrences[0];
@@ -97,7 +107,7 @@ async function environment(child: boolean, delayed = false) {
     handoff = resolveTimelinePersistenceHandoff(popup.bindLocalDocumentSave('mounted-shot'), popup, 'mounted-shot')!;
     mountedProvider = popup;
   } else {
-    data = await buildTimelineData({ ...parentConfig, registry }, registry, undefined, 1, undefined, head);
+    data = await buildTimelineData(empty ? { ...parentConfig, tracks: [], clips: [] } : { ...parentConfig, registry }, empty ? { assets: {} } : registry, undefined, 1, undefined, head);
     const session = await createLocalSaveSession({ scope, initial, document: toOutboxJson(document), outboxes, send,
       loadLatest: async () => initial, prepareDisplay: async () => { throw new Error('No ACK fixture'); }, changed: () => {} });
     cleanups.push(() => session.dispose());
@@ -260,4 +270,25 @@ it('chains another mounted file drop behind the first local semantic command', a
   expect(record.intents[1].payload).toMatchObject({ commands: [{ op: 'clip.add-media', args: { media } }] });
   expect(JSON.stringify(record.intents)).not.toContain('uploading-');
   expect(env.send).not.toHaveBeenCalled();
+});
+
+// Unlike the seeded parent/shot fixtures above, a new Runtime timeline has no
+// authored tracks, clips, output defaults or assets collection.
+it('commits the track and image from a real file drop onto a bootstrap empty head', async () => {
+  const env = await environment(false, false, true);
+  expect(env.document.parent_revision.payload).toEqual({ config: { clips: [], tracks: [] }, registry: {}, clips: [], occurrences: [] });
+  await act(async () => { await env.mounted.result.current.onTimelineDrop(fileDropEvent()); });
+  await Promise.all(env.captures);
+  expect(env.prepareMediaImport).toHaveBeenCalledOnce();
+  expect(env.failures).toEqual([]);
+  const [record] = await env.outboxes.list(env.scope);
+  expect(record.intents).toHaveLength(1);
+  env.send.mockRejectedValue(new ApiError(422, 'invalid', 'Fixture refusal', { status: 'invalid', code: 'fixture_invalid' }));
+  await expect(env.handoff.flush()).rejects.toThrow();
+  expect(env.send).toHaveBeenCalledOnce();
+  const [request] = env.send.mock.calls[0];
+  expect(request).toMatchObject({ source: { via: 'app' }, commands: [
+    { op: 'track.create', args: { row: { id: 'V1', kind: 'visual' } } },
+    { op: 'clip.add-media', args: { row: { track: 'V1', asset: media.asset }, media } },
+  ], steps: [{ command_ordinals: [0, 1] }] });
 });

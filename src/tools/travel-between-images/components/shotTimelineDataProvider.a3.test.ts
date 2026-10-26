@@ -12,6 +12,7 @@ import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '@
 import type { CanonicalDocument, CommitRequest, MediaSelection, MediaSelectionQuery } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createCommitOutbox, type OutboxRecord } from '@/tools/video-editor/commands/commitOutbox.ts';
 import { createShotTimelineDataProvider } from './shotTimelineDataProvider.ts';
+import { TimelineSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 
 function canonicalDocument(): CanonicalDocument {
   const occurrence = fixture.occurrences.find((value) => value.occurrence_id === 'occ-3')!;
@@ -180,9 +181,11 @@ describe('shot popup A3 save ingress', () => {
       if (kind === 'revision') head.headRevisionId = 'another-revision';
       if (kind === 'publication') head.headPublicationId = 'another-publication';
       try {
+        const expectedCode = kind === 'revision' || kind === 'publication'
+          ? 'timeline_version_conflict' : 'timeline_save_refused';
         await expect(provider.localDocumentSave!.capture({ config: h.add(),
           registry: await provider.loadAssetRegistry(), head: kind === 'missing' ? undefined : head }))
-          .rejects.toThrow('Popup canonical head changed during capture');
+          .rejects.toMatchObject({ code: expectedCode, message: expect.stringContaining('Popup canonical') });
         expect((await h.records()).flatMap(record => record.intents)).toEqual([]);
         expect(h.send).not.toHaveBeenCalled();
         expect(h.oldPublish).not.toHaveBeenCalled();
@@ -216,7 +219,7 @@ describe('shot popup A3 save ingress', () => {
     const provider = h.mount();
     try {
       await expect(provider.localDocumentSave!.capture({ config: h.add(), registry: await provider.loadAssetRegistry() }))
-        .rejects.toThrow('needs the original verified parent, shot and internal closure with revision and publication pins');
+        .rejects.toBeInstanceOf(TimelineSaveError);
       expect(h.send).not.toHaveBeenCalled();
       expect(await h.records()).toEqual([]);
     } finally { await provider.dispose().catch(() => {}); }
@@ -746,7 +749,9 @@ describe('shot popup A3 save ingress', () => {
       : { code: 'invalid_media', path: ['clips', 'id:popup-added-a3'], hint: 'Choose verified media' };
     h.send.mockRejectedValueOnce(new ApiError(code === 'conflict' ? 409 : 422, code, code, '', details));
     const first = h.mount();
-    await expect(first.saveTimeline('popup-timeline', h.add(), 1)).rejects.toThrow('unacknowledged');
+    await expect(first.saveTimeline('popup-timeline', h.add(), 1)).rejects.toMatchObject({
+      code: code === 'conflict' ? 'timeline_version_conflict' : 'timeline_save_refused', message: `${code}: ${code}`,
+    });
     expect((await first.loadTimeline('popup-timeline')).config.clips).toHaveLength(h.config.clips.length);
     expect(h.load).toHaveBeenCalledTimes(2);
     const [stored] = await h.records();
@@ -754,7 +759,9 @@ describe('shot popup A3 save ingress', () => {
     expect(stored.intents).toHaveLength(1);
     await first.dispose();
     const second = h.mount();
-    await expect(second.recoverLocalSaves(stored.ownerId)).rejects.toThrow('unacknowledged');
+    await expect(second.recoverLocalSaves(stored.ownerId)).rejects.toMatchObject({
+      code: code === 'conflict' ? 'timeline_version_conflict' : 'timeline_save_refused', message: `${code}: ${code}`,
+    });
     expect(h.send).toHaveBeenCalledTimes(1);
     expect((await h.records())[0].pending!.request).toEqual(stored.pending!.request);
     expect(h.published).not.toHaveBeenCalled();

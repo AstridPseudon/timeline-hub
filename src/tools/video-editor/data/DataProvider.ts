@@ -8,6 +8,17 @@ import type { ProjectObjectStorage } from '@/sdk/video/assets/projectObjects.ts'
 
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
 
+/** A terminal local save refusal that did not establish a concurrent write. */
+export class TimelineSaveError extends Error {
+  readonly code = 'timeline_save_refused' as const;
+
+  constructor(message = 'Timeline save was refused') {
+    super(message);
+    this.name = 'TimelineSaveError';
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export {
   TimelineVersionConflictError,
   isTimelineVersionConflictError,

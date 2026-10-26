@@ -1345,6 +1345,20 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
     return this.threeProductsSeed;
   }
 
+  /** Create a second, untouched Runtime timeline in the throwaway project for an empty-bootstrap browser journey. */
+  async createEmptyTimeline(name = 'Empty drop'): Promise<{ timelineId: string; headRevisionId: string; publicationId: string }> {
+    const timelineId = randomUUID();
+    const created = await this.runtimeJson('POST', `/v1/projects/${this.seed.projectId}/timelines`, { timeline_id: timelineId, name });
+    if (created.status !== 201) throw new Error(`create empty timeline: ${created.status} ${JSON.stringify(created.body)}`);
+    const timeline = await this.runtimeJson('GET', `/v1/projects/${this.seed.projectId}/timelines/${timelineId}`);
+    if (timeline.status !== 200) throw new Error(`read empty timeline head: ${timeline.status} ${JSON.stringify(timeline.body)}`);
+    const { head_revision_id: headRevisionId, head_publication_id: publicationId } = timeline.body;
+    if (typeof headRevisionId !== 'string' || !headRevisionId || typeof publicationId !== 'string' || !publicationId) {
+      throw new Error(`new empty timeline has no Runtime head pair: ${JSON.stringify(timeline.body)}`);
+    }
+    return { timelineId, headRevisionId, publicationId };
+  }
+
   /**
    * The render journey's timeline, a second timeline in the seeded project made on first use (after the cases that open the
    * seeded timeline, so none of them sees another timeline). The editor opens it from the "Select timeline" combobox.

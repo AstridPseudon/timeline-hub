@@ -3451,3 +3451,83 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   journey.facts = { ...journey.facts, ...result };
   await sniff.expectClean(page);
 });
+
+test('empty bootstrap: dropping an image records one App-source commit and a canonical clip', async ({ page, harness }) => {
+  const empty = await harness.createEmptyTimeline();
+  const base = timelineBase(harness, { timelineId: empty.timelineId });
+  const initial = await harness.runtimeJson<HistoryPage>('GET', `${base}/commits?limit=50`);
+  expect(initial.status, JSON.stringify(initial.body)).toBe(200);
+  expect(initial.body.items).toHaveLength(1);
+  expect(initial.body.items[0].intent).toBe('bootstrap');
+  const initialRevision = await harness.runtimeJson<any>('GET', `${base}/composition-revisions/${empty.headRevisionId}`);
+  expect(initialRevision.status, JSON.stringify(initialRevision.body)).toBe(200);
+  const initialPayload = initialRevision.body.payload;
+  const initialClips = initialPayload.clips ?? initialPayload.config?.clips;
+  const initialTracks = initialPayload.tracks ?? initialPayload.config?.tracks;
+  expect(Array.isArray(initialClips), 'empty bootstrap exposes canonical clips').toBe(true);
+  expect(Array.isArray(initialTracks), 'empty bootstrap exposes canonical tracks').toBe(true);
+  expect(initialClips).toEqual([]);
+  expect(initialTracks).toEqual([]);
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const timelinePicker = page.getByRole('combobox', { name: 'Select timeline' });
+  await timelinePicker.click();
+  await page.getByRole('option', { name: /Empty drop/ }).click();
+  await expect(timelinePicker).toContainText('Empty drop');
+  await expect(page.getByRole('textbox', { name: 'Track name' })).toHaveCount(0);
+  await expect(page.locator('.timeline-wrapper')).toBeVisible();
+
+  const file = {
+    name: 'drop-on-empty.png',
+    type: 'image/png',
+    bytesBase64: 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR4nGP4EKDxnxLMMGrAqAGjBgwXAwCCv2cf+oH0twAAAABJRU5ErkJggg==',
+  };
+  const wrapper = page.locator('.timeline-wrapper').first();
+  const box = await wrapper.boundingBox();
+  if (!box || box.width < 20 || box.height < 20) throw new Error('Cannot measure empty timeline drop target');
+  await page.evaluate(({ name, type, bytesBase64, x, y }) => {
+    const target = document.querySelector<HTMLElement>('.timeline-wrapper');
+    if (!target) throw new Error('Mounted timeline wrapper is missing');
+    const bytes = Uint8Array.from(atob(bytesBase64), (character) => character.charCodeAt(0));
+    const transfer = new DataTransfer();
+    transfer.items.add(new File([bytes], name, { type }));
+    for (const eventType of ['dragover', 'drop'] as const) {
+      target.dispatchEvent(new DragEvent(eventType, { bubbles: true, cancelable: true, clientX: x, clientY: y, dataTransfer: transfer }));
+    }
+  }, { ...file, x: box.x + Math.min(80, box.width / 3), y: box.y + box.height / 2 });
+
+  let after!: HistoryPage;
+  await expect.poll(async () => {
+    const response = await harness.runtimeJson<HistoryPage>('GET', `${base}/commits?limit=50`);
+    if (response.status !== 200) return false;
+    after = response.body;
+    const added = after.items.filter((entry) => !initial.body.items.some((old) => old.publication_id === entry.publication_id));
+    return added.filter((entry) => entry.source?.via === 'app').length;
+  }, { timeout: CEILING.timeout }).toBe(1);
+
+  const added = after.items.filter((entry) => !initial.body.items.some((old) => old.publication_id === entry.publication_id));
+  expect(added).toHaveLength(1);
+  expect(added[0].source?.via).toBe('app');
+
+  const canonicalReply = await harness.runtimeJson<any>('GET', `${base}/composition-revisions/${after.head.revision_id}`);
+  expect(canonicalReply.status, JSON.stringify(canonicalReply.body)).toBe(200);
+  const payload = canonicalReply.body.payload;
+  const clips = payload.clips ?? payload.config?.clips;
+  const tracks = payload.tracks ?? payload.config?.tracks;
+  expect(clips).toHaveLength(1);
+  const clip = clips[0] as Record<string, any>;
+  expect(clip).toMatchObject({ clipType: 'hold', hold: 5 });
+  expect(typeof clip.asset).toBe('string');
+  expect(typeof clip.track).toBe('string');
+  expect(tracks).toEqual([expect.objectContaining({ id: clip.track, kind: 'visual' })]);
+
+  const assets = payload.registry?.assets ?? payload.config?.registry?.assets;
+  const asset = assets?.[clip.asset];
+  expect(asset).toMatchObject({ type: 'image/png' });
+  expect(typeof asset.media_id).toBe('string');
+  const object = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(asset.media_id)}`);
+  expect(object.status).toBe(200);
+  expect(Array.from(new Uint8Array(await object.arrayBuffer()).slice(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+});

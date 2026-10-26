@@ -22,7 +22,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import { usePollSync, type UsePollSyncQueries } from '@/tools/video-editor/hooks/usePollSync.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { isDataProviderPersistenceEnabled, TimelineVersionConflictError, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import { isDataProviderPersistenceEnabled, TimelineSaveError, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -60,7 +60,7 @@ export function bindElementParameterOwner(routes: ElementTimelineRoutes, context
 /** Keep parameter gestures on the scoped element route, before generic serialization. */
 export async function saveElementParameterEdit(current: TimelineData, mutation: TimelineEditMutation,
   basis: TimelineGestureReadBasis, routes: ElementTimelineRoutes, timelineId: string, adapter: AstridElementOperationAdapter) {
-  if (basis.kind !== 'element') throw new TimelineVersionConflictError('Element parameter basis is unavailable; draft retained');
+  if (basis.kind !== 'element') throw new TimelineSaveError('Element parameter basis is unavailable; draft retained');
   const op = basis.operation;
   if (!op || op.name !== 'timeline.update_element' || !op.params || op.element || op.duration !== undefined
     || op.clip_id !== basis.clipId || op.timeline !== timelineId || op.expected_version !== current.configVersion
@@ -70,14 +70,14 @@ export async function saveElementParameterEdit(current: TimelineData, mutation: 
     || canonicalJsonStringify(mutation.resolvedConfig) !== canonicalJsonStringify({ ...current.resolvedConfig,
       clips: current.resolvedConfig.clips.map(clip => clip.id === op.clip_id
         ? { ...clip, params: { ...clip.params, ...op.params } } : clip) })) {
-    throw new TimelineVersionConflictError('Element parameter source changed; draft retained');
+    throw new TimelineSaveError('Element parameter source changed; draft retained');
   }
   const original = await routes.get(timelineId);
   if (canonicalJsonStringify(original.config) !== canonicalJsonStringify(basis.config)
     || canonicalJsonStringify(original.registry) !== canonicalJsonStringify(basis.registry)
     || canonicalJsonStringify(original.head ?? null) !== canonicalJsonStringify(current.head)
     || original.config_version !== current.configVersion) {
-    throw new TimelineVersionConflictError('Element parameter owner changed; draft retained');
+    throw new TimelineSaveError('Element parameter owner changed; draft retained');
   }
   return adapter.execute(op);
 }
@@ -143,9 +143,9 @@ export function useTimelineSave(
       try {
         const original = structuredClone(source);
         const originalReads = gestureBasis ? structuredClone(gestureBasis) : undefined;
-        if (localOwner.closed || !localOwner.ready) throw markTimelineSaveRejection(new TimelineVersionConflictError('Original local save session is unavailable; draft retained'), 'capture-owner-unavailable');
+        if (localOwner.closed || !localOwner.ready) throw markTimelineSaveRejection(new TimelineSaveError('Original local save session is unavailable; draft retained'), 'capture-owner-unavailable', 'TimelineSaveError');
         const handoff = await localOwner.ready;
-        if (localOwner.closed) throw markTimelineSaveRejection(new TimelineVersionConflictError('Local save session was replaced; draft retained'), 'capture-owner-replaced');
+        if (localOwner.closed) throw markTimelineSaveRejection(new TimelineSaveError('Local save session was replaced; draft retained'), 'capture-owner-replaced', 'TimelineSaveError');
         await handoff.capture(original, originalReads);
         emitTimelineSaveDiagnostic('capture-resolved', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
           source: original, gesture: originalReads,
@@ -158,9 +158,9 @@ export function useTimelineSave(
       }
     },
     async flush() {
-      if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      if (localOwner.closed || !localOwner.ready) throw new TimelineSaveError('Original local save session is unavailable; draft retained');
       const handoff = await localOwner.ready;
-      if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
+      if (localOwner.closed) throw new TimelineSaveError('Local save session was replaced; draft retained');
       return handoff.flush();
     },
     remoteHistoryAvailable: () => localOwner.handoff?.remoteHistoryAvailable() ?? false,
@@ -168,13 +168,13 @@ export function useTimelineSave(
     canRedo: () => localOwner.handoff?.canRedo() ?? false,
     undo: async () => {
       const handoff = await localOwner.ready;
-      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      if (localOwner.closed || !handoff) throw new TimelineSaveError('Original local save session is unavailable; draft retained');
       try { await handoff.undo(); }
       finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
     },
     redo: async () => {
       const handoff = await localOwner.ready;
-      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      if (localOwner.closed || !handoff) throw new TimelineSaveError('Original local save session is unavailable; draft retained');
       try { await handoff.redo(); }
       finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
     },
@@ -307,7 +307,7 @@ export function useTimelineSave(
       localOwner.ready = (async () => {
         const verified = await originalRead;
         if (cancelled || !isCurrent() || localEditSeqRef.current !== editSeq) {
-          throw markTimelineSaveRejection(new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained'), 'owner-original-read-invalidated');
+          throw markTimelineSaveRejection(new TimelineSaveError('Local edits preceded the original verified read; draft retained'), 'owner-original-read-invalidated', 'TimelineSaveError');
         }
         const identity = await provider.getRecoverableIdentity!();
         emitTimelineSaveDiagnostic('identity-read', () => ({ owner: localOwner, timelineId,
@@ -364,7 +364,7 @@ export function useTimelineSave(
           emitTimelineSaveDiagnostic('session-recovered', () => ({ owner: localOwner, timelineId,
             current: isCurrent(), generation, sessionPresent: true }));
         }
-        else if (owners.length) throw markTimelineSaveRejection(new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained'), 'owner-recovery-ambiguous');
+        else if (owners.length) throw markTimelineSaveRejection(new TimelineSaveError('Multiple local save owners require recovery; drafts retained'), 'owner-recovery-ambiguous', 'TimelineSaveError');
         let initial = verified.initial;
         if (owners.length && session.getState().status === 'saved') {
           initial = await session.flush();
@@ -743,7 +743,7 @@ export function useTimelineSave(
   const elementTimelineRoutes = useMemo<ElementTimelineRoutes>(() => {
     const currentDocument = (): ElementTimelineDocument => {
       const current = elementDataRef.current;
-      if (!current) throw new TimelineVersionConflictError('Timeline is not loaded');
+      if (!current) throw new TimelineSaveError('Timeline is not loaded');
       return structuredClone({ config: current.config, registry: current.registry,
         config_version: configVersionRef.current, head: current.head,
         ...(current.sourceItemsBySchemaRef === undefined ? {} : { bundle: { schema_version: 1,
@@ -753,7 +753,7 @@ export function useTimelineSave(
     return {
       getGeneration: () => canonicalJsonStringify(currentDocument()),
       async get(id) {
-        if (id !== timelineId) throw new TimelineVersionConflictError('Element timeline scope changed');
+        if (id !== timelineId) throw new TimelineSaveError('Element timeline scope changed');
         return currentDocument();
       },
       async save(id, input) {
@@ -766,16 +766,16 @@ export function useTimelineSave(
             || canonicalJsonStringify(currentDocument()) !== canonicalJsonStringify(original)
             || input.expectedVersion !== original.config_version
             || canonicalJsonStringify(input.expectedHead ?? null) !== canonicalJsonStringify(original.head ?? null)) {
-            throw new TimelineVersionConflictError('Element original local document changed; draft retained');
+            throw new TimelineSaveError('Element original local document changed; draft retained');
           }
         };
         checkCurrent();
-        if (!input.operation || !input.context) throw new TimelineVersionConflictError('Element causal input is unavailable');
+        if (!input.operation || !input.context) throw new TimelineSaveError('Element causal input is unavailable');
         const config = input.config as TimelineConfig;
         const registry = input.registry as AssetRegistry;
         if (localDocumentSave) {
           const handoff = await localOwner.ready;
-          if (!handoff || localOwner.closed) throw new TimelineVersionConflictError('Element local save owner was replaced');
+          if (!handoff || localOwner.closed) throw new TimelineSaveError('Element local save owner was replaced');
           const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
             input.bundle?.itemsBySchemaRef, input.expectedHead, input.bundle?.transcriptReferences);
           checkCurrent();
