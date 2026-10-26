@@ -1,0 +1,364 @@
+{
+  "case_count": 49,
+  "command": "TMPDIR=/tmp/w-f47dcb2045 PYTHONDONTWRITEBYTECODE=1 python3 -I privateops-d141-measured-floor/controls/real-controls.py",
+  "exit_code": 0,
+  "final_source_diff_sha256": "87e2952b0e3c7b8b984ca99c24fa7e41a3cc3d25500408e8dd901c9a063865ac",
+  "limits": [
+    "isolated real received-bin execution only",
+    "no full suite or product tests/import/collection",
+    "no live dispatcher/request/queue/service/body",
+    "no installation/CAS/hub/registry/Store change",
+    "no gate or production P5/target15 qualification"
+  ],
+  "prior_44_preserved": true,
+  "result": "PASS",
+  "run": {
+    "app_scope": "DEFERRED: D141g is refused explicitly while the paired App kit is pending; no App row or body",
+    "cases": [
+      {
+        "name": "d141h-targeted15-admission",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test d141h-targeted15 (full-d141-pristine-targeted15 on body, tree f72ad4702d)"
+      },
+      {
+        "name": "d141h-targeted15-terminal",
+        "status": "pass",
+        "trace_rows": 4
+      },
+      {
+        "name": "runtime-d141-p5-cut-1026013331-6934-admission",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test runtime-d141-p5-cut-1026013331-6934 (d141-p5-cut on body, tree f72ad4702d)"
+      },
+      {
+        "name": "runtime-d141-p5-cut-1026013331-6934-terminal",
+        "status": "pass",
+        "trace_rows": 4
+      },
+      {
+        "name": "normal-request-full-id-admission",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test body-full-d141-pristine-targeted15-1026042040-22138 (full-d141-pristine-targeted15 on body, tree f72ad4702d)"
+      },
+      {
+        "job": "body-full-d141-pristine-targeted15-1026042040-22138",
+        "name": "normal-request-full-id-terminal",
+        "status": "pass"
+      },
+      {
+        "name": "app-paired-kit-pending-validator",
+        "returncode": 1,
+        "stderr": "receipt rejected: D141g App admission refused: paired kit pending",
+        "stdout": ""
+      },
+      {
+        "name": "app-paired-kit-pending-admission",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "D141g App admission refused: paired kit pending"
+      },
+      {
+        "name": "floor-at",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test floor-at (full-d141-pristine-targeted15 on body, tree f72ad4702d)"
+      },
+      {
+        "name": "floor-below",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "low disk (available=4599999999 bytes; floor=4600000000, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)"
+      },
+      {
+        "name": "floor-above",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test floor-above (full-d141-pristine-targeted15 on body, tree f72ad4702d)"
+      },
+      {
+        "name": "default-light-at",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test default-light-at (targeted-control on body, tree f72ad4702d)"
+      },
+      {
+        "name": "default-core-at",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test default-core-at (agent-core-full on body, tree f72ad4702d)"
+      },
+      {
+        "name": "default-heavy-at",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "low disk (available=5200000000 bytes; floor=5200000000, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)"
+      },
+      {
+        "name": "global-stop",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "low disk (available=4500000000 bytes; no new runs below or at 4500000000 bytes)"
+      },
+      {
+        "name": "busy-one-start",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test busy-one (full-d141-pristine-targeted15 on body, tree f72ad4702d)"
+      },
+      {
+        "name": "busy-two-refused",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "a full suite is already running"
+      },
+      {
+        "name": "body-failure-start",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test body-failure (full-failure-control on body, tree f72ad4702d)"
+      },
+      {
+        "name": "body-cancel-start",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test body-cancel (full-cancel-control on body, tree f72ad4702d)"
+      },
+      {
+        "name": "body-cancel-self-finalized-reaped",
+        "result": "pass"
+      },
+      {
+        "name": "body-stop-test-start",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test body-stop-test (full-cancel-control on body, tree f72ad4702d)"
+      },
+      {
+        "name": "mounted-stop-test-caller",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "cancelled test body-stop-test (runner 896 finishes cleanup; status will read cancelled)"
+      },
+      {
+        "name": "mounted-stop-test-finalized-reaped",
+        "result": "pass"
+      },
+      {
+        "name": "body-stopped-sampler-start",
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "started test body-stopped-sampler (full-trace-control on body, tree f72ad4702d)"
+      },
+      {
+        "name": "stopped-sampler-bounded-reaped",
+        "result": "pass"
+      },
+      {
+        "name": "symlink-before-final",
+        "result": "pass"
+      },
+      {
+        "name": "fifo-before-final",
+        "result": "pass"
+      },
+      {
+        "name": "regular-before-final",
+        "result": "pass"
+      },
+      {
+        "name": "parent-substitution-before-final",
+        "result": "pass"
+      },
+      {
+        "name": "symlink-before-validation",
+        "result": "pass"
+      },
+      {
+        "name": "fifo-before-validation",
+        "result": "pass"
+      },
+      {
+        "name": "regular-before-validation",
+        "result": "pass"
+      },
+      {
+        "name": "wrong-job",
+        "returncode": 3,
+        "stderr": "receipt rejected: receipt job/repo/suite scope mismatch",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "symlink-witness",
+        "returncode": 3,
+        "stderr": "receipt rejected: path contains symlink: /tmp/w-f47dcb2045/d141-controls-_d4g2272/tests/symlink-witness/link.witness",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "witness-mismatch",
+        "returncode": 3,
+        "stderr": "receipt rejected: witness hash mismatch: /tmp/w-f47dcb2045/d141-controls-_d4g2272/tests/witness-mismatch/stop.witness",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "duplicate-key",
+        "returncode": 3,
+        "stderr": "receipt rejected: duplicate JSON key: schema",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "boolean-growth",
+        "returncode": 3,
+        "stderr": "receipt rejected: measurement.growth_bytes must be an integer",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "float-floor",
+        "returncode": 3,
+        "stderr": "receipt rejected: measurement.floor_bytes must be an integer",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "wrong-arithmetic",
+        "returncode": 3,
+        "stderr": "receipt rejected: receipt floor arithmetic mismatch",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "wrong-head",
+        "returncode": 3,
+        "stderr": "receipt rejected: receipt source revision/tree mismatch",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "wrong-tree",
+        "returncode": 3,
+        "stderr": "receipt rejected: receipt source revision/tree mismatch",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "wrong-command",
+        "returncode": 3,
+        "stderr": "receipt rejected: receipt suite command mismatch",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "wrong-trace-interval",
+        "returncode": 3,
+        "stderr": "receipt rejected: trace sampling interval is not five seconds",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "malformed-disk",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "disk availability invalid; refusing admission"
+      },
+      {
+        "name": "held-rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "held old pristine full job remains queued and unstarted"
+      },
+      {
+        "name": "held-agent-p4-current-becfe-http-3legs-1026012948-19479",
+        "returncode": 3,
+        "stderr": "",
+        "stdout": "cancelled P4 job cannot be activated"
+      },
+      {
+        "name": "p5-invalid-6934",
+        "returncode": 3,
+        "stderr": "receipt rejected: P5 decision is not bound to the exact service 6934 request",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "p5-invalid-runtime-d141-p5-cut-1026013331-6934-suffix",
+        "returncode": 3,
+        "stderr": "receipt rejected: P5 decision is not bound to the exact service 6934 request",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      },
+      {
+        "name": "p5-invalid-runtime-d141-p5-cut-1026013331-9999",
+        "returncode": 3,
+        "stderr": "receipt rejected: P5 decision is not bound to the exact service 6934 request",
+        "stdout": "invalid measured-floor receipt; refusing admission"
+      }
+    ],
+    "installed_layout": [
+      {
+        "destination": "bin/d141-append-final.py",
+        "installed_published_received_sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398",
+        "source": "bin/d141-append-final.py",
+        "source_sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398"
+      },
+      {
+        "destination": "bin/d141-disk-trace.py",
+        "installed_published_received_sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222",
+        "source": "bin/d141-disk-trace.py",
+        "source_sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222"
+      },
+      {
+        "destination": "bin/d141-validate-receipt.py",
+        "installed_published_received_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+        "source": "bin/d141-validate-receipt.py",
+        "source_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6"
+      },
+      {
+        "destination": "bin/d141-validate-trace.py",
+        "installed_published_received_sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5",
+        "source": "bin/d141-validate-trace.py",
+        "source_sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"
+      },
+      {
+        "destination": "bin/test-run",
+        "installed_published_received_sha256": "74cd74a84c52fced2884093c4d9ef47a2490bd120466ab8cbbf7713f127bd27c",
+        "source": "bin/test-run",
+        "source_sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300"
+      }
+    ],
+    "root": "/tmp/w-f47dcb2045/d141-controls-_d4g2272"
+  },
+  "run_history": [
+    {
+      "artifact": "/tmp/w-f47dcb2045/controls-run.json",
+      "cases": 47,
+      "exit_code": 0,
+      "variant": "initial fix; then changed signal wait implementation and added stopped-sampler control"
+    },
+    {
+      "artifact": "/tmp/w-f47dcb2045/controls-final.json",
+      "cases": 49,
+      "exit_code": 0,
+      "variant": "found existing unset rc diagnostic in stopped-sampler runner.log; removed redundant mutation and added assertion"
+    },
+    {
+      "artifact": "/tmp/w-f47dcb2045/controls-verified.json",
+      "cases": 49,
+      "exit_code": 0,
+      "variant": "FINAL exact source; no subsequent source change"
+    }
+  ],
+  "schema": "timeline.ops.d141h.cancellation-controls.v1",
+  "seven_custody_attacks": {
+    "fifo-before-final": "PASS",
+    "fifo-before-validation": "PASS",
+    "parent-substitution-before-final": "PASS",
+    "regular-before-final": "PASS",
+    "regular-before-validation": "PASS",
+    "symlink-before-final": "PASS",
+    "symlink-before-validation": "PASS"
+  },
+  "startup_regression": {
+    "command": "TMPDIR=/tmp/w-f47dcb2045 python3 -I /tmp/w-f47dcb2045/startup-regression.py",
+    "elapsed_after_signal_seconds": 0.19604112900560722,
+    "exit_code": 0,
+    "result": "PASS",
+    "root": "/tmp/w-f47dcb2045/d141-controls-4uncuc8e",
+    "sampler_reaped": true,
+    "trace": "timestamp_utc\tmonotonic_ns\tavailable_bytes\tjob_id\tbody_pid\tkind\n2026-10-26T04:22:53.490Z\t219467050945340\t4600000001\tstartup-cancel-regression\t74\tfirst\n2026-10-26T04:22:53.626Z\t219467186596566\t4600000001\tstartup-cancel-regression\t74\tfinal\n",
+    "validation": "trace PASS: 2 actual samples\n"
+  }
+}

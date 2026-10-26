@@ -1,0 +1,48 @@
+{
+  "candidate_base_commit": "f0ef96c415ff299b1456ed71b695000afd2165b9",
+  "candidate_branch": "tl/rt-OPS-D141-cancel-finalize-sol-0410",
+  "diff_sha256": "87e2952b0e3c7b8b984ca99c24fa7e41a3cc3d25500408e8dd901c9a063865ac",
+  "files": [
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/bin/d141-append-final.py",
+      "sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398"
+    },
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/bin/d141-disk-trace.py",
+      "sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222"
+    },
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/bin/d141-validate-receipt.py",
+      "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6"
+    },
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/bin/d141-validate-trace.py",
+      "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"
+    },
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/bin/test-run",
+      "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300"
+    },
+    {
+      "mode": "755",
+      "path": "privateops-d141-measured-floor/controls/real-controls.py",
+      "sha256": "d0d0b9012c3e98ff8b25280f0fb77c1958d388e93dc0a6137361a3aba7b6c3ea"
+    },
+    {
+      "mode": "644",
+      "path": "privateops-d141-measured-floor/install-manifest.json",
+      "sha256": "88558998061a39a799ab98e9ff7de55b3ea842020605ce4f6dfe6535a6ff83c3"
+    }
+  ],
+  "live_preimage_and_absent_helpers": "verified read-only; required 0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe, regular 0755; four helpers absent including dangling symlinks",
+  "paired_join_0408": "NOT_EDITED",
+  "parent_ops_d141_measured_floor": "UNCHANGED",
+  "recorded_at_utc": "2026-10-26T04:23:59.765328+00:00",
+  "schema": "timeline.ops.d141h.cancellation-source.v1",
+  "status": "SOURCE_ONLY_NOT_INSTALLED"
+}

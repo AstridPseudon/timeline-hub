@@ -1,0 +1,42 @@
+{
+  "consumed": [
+    "0340 report and SEC-001",
+    "0349 implementation, manifest, reported 44 controls",
+    "0402 complete failure/evidence and raw first-only trace",
+    "0410 independent readonly wholepath report/findings (finite startup and caller-contract findings)"
+  ],
+  "findings": [
+    {
+      "id": "D141H-SEC-001",
+      "resolution": "All seven original descriptor/path custody attacks reached after cancellation and passed. No symlink/regular redirected bytes; FIFO refusal remained bounded. Existing inode/device/parent/owner/0600/single-link/nonblock/nofollow and same-descriptor validation checks preserved.",
+      "result": "PASS"
+    },
+    {
+      "id": "D141H-VERIFY-001",
+      "resolution": "Original 0402 cancellation assertion retained; final complete common author/reviewer harness passed 49 checks, including all 44 prior checks.",
+      "result": "PASS"
+    },
+    {
+      "id": "D141H-CANCEL-001",
+      "resolution": "Install EXIT and deferred signal traps before sampler launch. Capture child PID and immutable readiness under cancellation, preserve partial interrupted reads under the original 10-second deadline, close both coprocess descriptors, then honor pending cancellation. Narrow final-source startup regression finalized/reaped immediately after trace visibility.",
+      "result": "PASS"
+    },
+    {
+      "id": "D141H-CANCEL-002",
+      "resolution": "Read actual mounted stop-test: writes CANCELLED, ps -g selects session children, excludes runner, TERM then five-second KILL check. Original direct runner-group signal remains tested; added isolated execution of exact mounted caller with only ORCH root substitution, proving cancelled/130 plus trace PASS and sampler reap. No fixture authority invented.",
+      "result": "PASS"
+    },
+    {
+      "id": "D141H-CANCEL-REAP-001",
+      "resolution": "Bound sampler reap to 80 x 0.1-second probes before KILL/wait; df subprocess timeouts 2 seconds and same-descriptor validator timeout 5 seconds. Sampler stop flag polled at most every 0.1 seconds while samples retain their 5-second schedule. SIGSTOP control proves bounded reap and fail/125; no unsafe trace fallback.",
+      "result": "PASS"
+    },
+    {
+      "id": "D141H-CANCEL-EXIT-001",
+      "resolution": "Forced sampler failure exposed existing redundant rc mutation with unset lowercase variable in normal completion. Removed it: both existing callers already promote successful body/exit status to 125 on trace failure. New assertion rejects the diagnostic; final frozen-sampler runner.log is clean.",
+      "result": "PASS"
+    }
+  ],
+  "result": "PASS for bounded isolated controls; no gate claim",
+  "schema": "timeline.ops.d141h.cancellation-findings.v1"
+}

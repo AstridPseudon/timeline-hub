@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T04:28:31Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 3m -->
-# runtime board, 2026-10-26T04:25:03Z
+<!-- main | 2026-10-26T04:33:13Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-26T04:30:53Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -15,7 +15,7 @@
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | gated:D141-kit | Controls0247; independent0250 PASS | Row source15 selectors and CAS PASS. Independent actual valid and poison controls PASS; old8912 intact. Ready after separate kit held-ID clearance. No body. | fa9 / 8b6 |
 | D89d measured admission | Qualify exact App paired admission | Luna | Main D141g-a recorded | blocked:runtime | Scope0400 PASS61; resume0418 queued | Synthetic authority removed; shared trace donor0402 failed cancellation. Join WIP retained until qualified Sol0410 donor; new App binding still owed. | Private0400 |
-| D141h Runtime split | Unblock Runtime separately from App pair | Luna | Runtime0309 bounded PASS and d63 | doing | Sol0410 PASS49; reviewer0418 queued | Sol0410 terminal56f2d56 PASS49; direct and mounted stop cancel plus frozen sampler pass. Finite independent0418 queued. No CAS. | f0ef96c4 |
+| D141h Runtime split | Install independently qualified Runtime kit | Sol and Luna | Independent0418 PASS49 before04:30 | merging | Sol0410; review0418; CAS0422 active | [Acceptance](../../design/rt-OPS-D141-cancel-final-verify-0418-review.json). All49 controls and custody PASS. CAS five files authorized; no live install yet. | 56f2d56e |
 | D141g App binding | Retain historical first placement caller | App Luna | Author0309 terminal | merged | app-P-D141g-first-suite-binding-0309 | Exact520d target suite source and builder command hashes published. Prospective only; actual D66 registered bytes must match before either part. | App520d |
 | D141g paired preflight | Apply recorded one unit admission | Luna | D141g-a and D141l binding | doing | SEC002 return0400 | Preflight and body one admission at4.6. No second floor gate; trace stop and heavy protection cover whole pair. Exact builder bytes before either part. | App520d |
 | D141l App new binding | Receive freeze2 first placement caller | App Luna | Actual App merge and builder output | blocked:app | App0350 and existing binding lineage | Historical520d packet consumed; newhead/tree/commands/row hashes required after actual source. No oldhead body or guessed refreshed receipt. | Pending |
@@ -44,10 +44,10 @@
 | OPS headroom | Preserve guarded cleanup holds | Manager route | Main0123 and0130 decisions | gated:safety | Prior maintenance complete | Sweep removed0; compact packed0 dirs and gzipped5 logs. Sealed fixtures, dirty trees, KEEP data and three old venvs retained. | No product change |
 
 Blockers: Runtime service — MainD141h replaces full comparator with exact15 targeted nodes;8912 stays unstarted. New targeted and sameP56934 need reviewed trace kit and recorded4.6GB receipts.
-Blockers: P5 — Sole service6934 queued. MainD141h authorizes4.6GB plus trace; Runtime0402 cancellation FAIL; Sol0410 and independent path0410 now own correction; pairedApp0331 separate. No live admission change or service reissue.
+Blockers: P5 — Sole service6934 queued. MainD141h authorizes4.6GB plus trace; Final source56f2 and independent0418 PASS49; CAS0422 now owns install; pairedApp0331 separate. No live admission change or service reissue.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
 Next ready: independent cancellation0418 and paired resume0418, then CAS on PASS before04:30; D141m smoke dropped after Main04:03; App0400 source complete; resume0408 WIP only after qualified new trace donor and actual App binding. Historical App binding wait cleared; freeze2 binding waits qualified Agent and App source. Farm cheap schema verification now; original input hunt parked under D141k until actual Agent join requires it. Keep8912/P419479 unstarted; sameP56934 waits kit.
-live 2 / cap 3; ready-undispatched 0. Reviewer0418 and paired resume0418 queued immediately on immutable Sol56f2d56 and stopped WIP1726af76. No heavy body; no CAS yet.
+live 2 / cap 3; ready-undispatched 0. Independent0418 terminalPASS before04:30; CAS0422 active immediately. Paired resume0418 active on retainedWIP. No heavy body or gate GO.
 D141o: Hub objects wait for owner morning decision. No hub repo, repack or manual disk mutation.
 D141l/m: App merges freeze2 now; Agent after current core and join. Runtime and Composition unchanged. Both kit reviews timebox04:30Z; a later FAIL goes to Main, no next loop. App520d source evidence historical; paired source cannot release a new head without its authentic builder binding.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted freeze2 post-fix heads.
@@ -59,3 +59,5 @@ D141p/q: Agent freeze2 Sol source join now precedes per ID join under recorded o
 Disk current pass: 4692791296 bytes; fresh Runtime census finds only three prior dirty ended trees, no clean nonKEEP recycle candidate. Guarded sweep3 removed0; compact packed0scratch/0test dirs and gzipped2logs; no protected evidence or hub repo touched.
 
 Path0410 evidence: [Finite startup and caller findings](../../workers/rt-OPS-D141-cancel-wholepath-0410/evidence/findings.md). Direct whole-group cancellation FAIL; actual production stop-test UNKNOWN. No new scope decision inferred; existing author may fix robust finalization within its brief.
+
+04:30 kit checkpoint: Runtime review PASS, CAS active. App pair resume still active; no paired final verdict or authentic freeze2 builder binding. No new author loop after a later FAIL; report it to Main. Reviewer0418 relative evidence recovered byte-exact from committed Git blobs to stable absolute evidence and flat design, originals retained.

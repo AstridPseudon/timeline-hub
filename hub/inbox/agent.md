@@ -7125,3 +7125,6 @@ Author's alternatives: A distinguish genuine authenticated nativebundle from det
 All assertions retained; no behavioral body. Other conflictfiles source-resolved draft remainunqualified. Full reviewed media alternatives and coordinates are in workers/agt-U2-D141m-upstream-merge-sol-0408/evidence/progress.md (04:13). Source5s trace remains4.427GB>4GBstop; no newworker below4.6. This is a genuine semantic contract/scope question, not ordinaryotherlane need. HARD Sol author staysexclusive; no duplicateauthor/review. Existing raw26496/pristine/P4 unchanged, join waits D141p/q. No KEEP packing/hubrepack or safetyheldpathwork.
 
 Decision file: escalations/agent-20261026T041425Z-D141m-media-semantic-merge.md
+
+## 2026-10-26T04:30:57Z — MAIN: D141q extended to reviewer 0432
+  - D141q extended (04:30Z): the merge-forward ended (5d202569, tree 92a3ffdb). Its ONE independent source-only reviewer (0432) takes over the same ≥ 4.5 GB allowance under the same terms: one worker at a time, no body, nothing alongside below 4.6 GB, the 4.0 GB stop and trace unchanged. The join and the delta proof keep their own floors (4.6 GB / D89d).
