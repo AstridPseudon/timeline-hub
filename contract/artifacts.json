@@ -5,6 +5,7 @@
     "conformance/fixtures/event.json": "sha256:29c739974e7bad256804feaceccd44e5a4633d144c1a6229cfe853737bca8ead",
     "conformance/fixtures/handshake.json": "sha256:259f06fa225aec0cb0e0cfc593fa89db4578fc26db9664e2b7632ce2f4fec234",
     "conformance/fixtures/managed-object.json": "sha256:db5646c5c47415bbb6fe7c84751bf1b7b56cae6074df0bd28040990db9f5f031",
+    "conformance/fixtures/occurrence-media-projection.json": "sha256:34622b5f99032aad2cd21bbf9a2914538a3d4fc7abdf1ddd80d56d2d90ec3c75",
     "conformance/fixtures/preferences-user-mutation.json": "sha256:5b176a96f941ddb8ae737493d2b51547568710f6e54aaa164bd7fa640410eabe",
     "conformance/fixtures/preferences-user.json": "sha256:1220094f6d80ce36fd8e0ed891b0c5418647b43ace19e74d127f3af5043125fa",
     "conformance/fixtures/project.json": "sha256:b526be614ff35276608630c602213078edc8a291eb5241dd14b82bcffad71e29",
@@ -82,5 +83,5 @@
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+  "version": "sha256:f748f105fd4c61026bed9a3bb9742d696fbb971ff8451ee93147383de14877bb"
 }
