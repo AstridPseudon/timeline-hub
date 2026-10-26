@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T02:48:03Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 0m -->
-# runtime board, 2026-10-26T02:47:32Z
+<!-- main | 2026-10-26T02:52:55Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 2m -->
+# runtime board, 2026-10-26T02:50:22Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -13,7 +13,7 @@
 | D141 Runtime full route | Retain qualified full and pristine routes | Sol and independent Luna | Review0028 and own0052 controls | merged | Review0028; output0052 | Normal route installed; source and symlink guards retained. Actual cut18778 complete; same-route pristine8912 queued. | Source 0404f9819 |
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
-| D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | doing | Split controls0247; review0241 FAIL | Row source15 selectors and CAS PASS. Private validator must fail closed;0247 owns it. Separate full held-ID kit guard finding belongs0235 review. No body. | fa9 / 8b6 |
+| D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | review | Controls0247; independent0250 | Row source15 selectors and CAS PASS. Failclosed TMPDIR stub and command poisons now PASS;0250 checks actual controls. Kit held-ID finding remains. No body. | fa9 / 8b6 |
 | D89d measured admission | Add receipt admission and continuous trace | Luna | Main0213 D141g and D141h | doing | WIP0215; resume0220 | Samebranch source resumed with5second heavytrace and scoped4.6GB receipts. Defaults and4GBstop unchanged; no live kit install yet. | WIPa3f26619 |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
@@ -39,8 +39,8 @@ Blockers: Farm — Census0140 NOT_READY with22 non-pass checks. Corrected produc
 Blockers: Runtime service — MainD141h replaces full comparator with exact15 targeted nodes;8912 stays unstarted. New targeted and sameP56934 need reviewed trace kit and recorded4.6GB receipts.
 Blockers: P5 — Sole service6934 remains queued. MainD141h authorizes4.6GB plus trace via new receipt kit; source0220 active, no live admission change yet.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
-Next ready: Review kit0220 on completion; receive targeted15 controls0247 and Farm artifact0229. Keep8912/P419479 unstarted; sameP56934 waits kit.
-live 3 / cap 3; ready-undispatched 0. Kit0220, targeted15 controls0247 and Farm artifact return0245 active or queued; no heavy body. Independent0225 A/B PASS published; App note wait cleared by peer0229.
+Next ready: Review kit0220 on completion; receive targeted15 controls review0250 and Farm artifact0229. Keep8912/P419479 unstarted; sameP56934 waits kit.
+live 3 / cap 3; ready-undispatched 0. Kit0220, targeted15 controls review0250 and Farm artifact return0245 active or queued; no heavy body. Independent0225 A/B PASS published; App note wait cleared by peer0229.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
 D141i: Agent owns like for like cut core in venv-agent; Farm custody child is definitive only for environment sensitive candidates. Runtime artifact0229 owns existing producer0201 continuation.
 INBOX consumed through 1765006 bytes. Peer boards read Farm01:55 App02:04 Agent current published board; blocked source waits rechecked. Main0106 sync clears installer ref wait. Managers write boards briefs peers only.
