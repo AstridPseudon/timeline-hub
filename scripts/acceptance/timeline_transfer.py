@@ -368,10 +368,24 @@ def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]
     from astrid.sdk.remote import RemoteAstridClient
     from astrid.sdk.timeline_export import export_timeline
 
+    # Load the existing fixture helpers by checkout-bound path. The acceptance
+    # command also adds Runtime to sys.path, and both repositories have a
+    # top-level ``tests`` package, so a normal package import can resolve to
+    # Runtime's unrelated tests package (or an ambient installed package).
+    import importlib.util
+    fixture_path = Path(__file__).resolve().parents[2] / "tests" / "timeline" / "test_authoring_bundle.py"
+    fixture_spec = importlib.util.spec_from_file_location("astrid_n4_authoring_bundle_fixture", fixture_path)
+    if fixture_spec is None or fixture_spec.loader is None:
+        raise RuntimeError(f"could not load transcript acceptance fixture helpers from {fixture_path}")
+    fixture_module = importlib.util.module_from_spec(fixture_spec)
     try:
-        from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _digest, _replace_values
+        fixture_spec.loader.exec_module(fixture_module)
+        AUDIO, OLD = fixture_module.AUDIO, fixture_module.OLD
+        _closure = fixture_module._closure
+        _digest = fixture_module._digest
+        _replace_values = fixture_module._replace_values
     except Exception as exc:
-        raise RuntimeError(f"real transcript acceptance fixture helpers are unavailable: {exc}") from exc
+        raise RuntimeError(f"checkout-bound transcript acceptance fixture helpers failed to load: {exc}") from exc
 
     remote: RemoteAstridClient = client._remote
     workspace = remote._transport
@@ -397,9 +411,9 @@ def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]
     picture_id, audio_id, music_id = (picture.data["object_id"], audio.data["object_id"], music.data["object_id"])
     timeline = workspace.create_timeline(source_id, "main", name="N4 transcript fixture",
                                          idempotency_key="n4-transcript-timeline")
-    shot = remote.shots.create(project=source_id, shot={"shot_id": "n4-shot-shared", "name": "Opening"},
+    shot = remote.shots.create(project=source_id, shot={"shot_id": "shot-shared", "name": "Opening"},
                                idempotency_key="n4-transcript-shot")
-    binding = remote.shots.set_text_binding(project=source_id, shot_id="n4-shot-shared",
+    binding = remote.shots.set_text_binding(project=source_id, shot_id="shot-shared",
                                             kind="voiceover_script", text="Narration — café",
                                             expected_head=0, idempotency_key="n4-transcript-binding")
     if not timeline or not shot.ok or not binding.ok:
@@ -486,10 +500,115 @@ def _sandbox_transcript_conflict(client, result_root: Path) -> dict[str, object]
     if (not isinstance(rows, list) or not any(isinstance(row, dict) and row.get("document_id") == transcript_id for row in rows)
             or not after.ok or after.data.get("content") != changed):
         raise RuntimeError(f"conflict receipt omitted or overwrote existing transcript: {conflict}")
+
+    # Exercise the warning through the real archive importer using this tiny
+    # Runtime-authored archive. Keep the timeline and manifest inventories in
+    # sync so the importer's stale/hidden-element guard remains enabled.
+    from zipfile import ZIP_STORED, ZipFile
+    from astrid.core.element.catalog import list_element_descriptors
+
+    shipped_effect = next((row for row in list_element_descriptors()
+                           if row.get("kind") == "effect" and row.get("packId")), None)
+    if shipped_effect is None:
+        raise RuntimeError("no shipped effect pack is available for the unknown-effect acceptance case")
+    unknown_id = "acceptance-unknown-effect"
+    unknown_pack = str(shipped_effect["packId"])
+    unknown_archive = result_root / "unknown-unpinned-effect-fixture.astrid"
+    with ZipFile(archive, "r") as source_zip:
+        members = {name: source_zip.read(name) for name in source_zip.namelist()}
+    unknown_bundle = json.loads(members["timeline.json"].decode("utf-8"))
+    unknown_manifest = json.loads(members["manifest.json"].decode("utf-8"))
+    changed_clips = 0
+
+    def mark_unknown_clip(value: object) -> None:
+        nonlocal changed_clips
+        if isinstance(value, dict):
+            # Exported authoring bundles retain both base_* snapshots and
+            # current content. Change one current shot timeline so the case
+            # tests what import actually copies, not its historical base.
+            internal = value.get("internal_timeline")
+            clips = internal.get("clips") if isinstance(internal, dict) else None
+            if isinstance(clips, list):
+                for clip in clips:
+                    if (isinstance(clip, dict) and isinstance(clip.get("clipType"), str)
+                            and clip.get("clipType") == "media"):
+                        clip["clipType"] = unknown_id
+                        changed_clips += 1
+                        return
+            for child in value.values():
+                if changed_clips == 0:
+                    mark_unknown_clip(child)
+        elif isinstance(value, list):
+            for child in value:
+                if changed_clips == 0:
+                    mark_unknown_clip(child)
+
+    mark_unknown_clip(unknown_bundle)
+    if changed_clips != 1:
+        raise RuntimeError(f"could not select exactly one real fixture clip for the unknown effect: {changed_clips}")
+    unknown_manifest["elements"] = list(unknown_manifest.get("elements", [])) + [{
+        "packId": unknown_pack, "kind": "effect", "id": unknown_id, "revision": "", "pinned": False,
+    }]
+    members["timeline.json"] = json.dumps(unknown_bundle, ensure_ascii=False,
+                                          separators=(",", ":")).encode("utf-8")
+    members["manifest.json"] = json.dumps(unknown_manifest, ensure_ascii=False,
+                                           separators=(",", ":")).encode("utf-8")
+    with ZipFile(unknown_archive, "w", compression=ZIP_STORED) as target_zip:
+        for name, content in members.items():
+            target_zip.writestr(name, content)
+
+    unknown_target = remote.projects.create(slug="n4-unknown-effect-target",
+                                           name="N4 unknown effect target",
+                                           idempotency_key="n4-unknown-effect-target")
+    if not unknown_target.ok or not isinstance(unknown_target.data, dict):
+        raise RuntimeError("could not create isolated target project for the unknown effect case")
+    unknown_project = str(unknown_target.data.get("project_id") or unknown_target.data.get("id") or "")
+    if not unknown_project:
+        raise RuntimeError("Runtime did not return unknown-effect target project id")
+    unknown_code, unknown_env, unknown_text = _invoke_cli(
+        client, ["import", "--project", unknown_project, str(unknown_archive), "--json"])
+    if unknown_code != 0:
+        raise RuntimeError(f"unknown unpinned effect CLI import failed: {unknown_text}")
+    unknown_receipt = _data(unknown_env, "unknown unpinned effect import")
+    warnings = unknown_receipt.get("missing_effects")
+    if not isinstance(warnings, list) or not any(
+            isinstance(row, dict) and row.get("id") == unknown_id and row.get("packId") == unknown_pack
+            for row in warnings):
+        raise RuntimeError(f"unknown effect warning was not named in the CLI receipt: {unknown_receipt}")
+    unknown_timeline_id = str(unknown_receipt.get("timeline_id") or "")
+    loaded_unknown = remote.timelines.open_bundle(unknown_project, unknown_timeline_id)
+    if (not unknown_timeline_id or not loaded_unknown.ok or not isinstance(loaded_unknown.data, dict)
+            or not isinstance(loaded_unknown.data.get("bundle"), dict)):
+        raise RuntimeError("could not reload imported timeline for the unknown-effect persistence check")
+    # Count only the saved current authoring timelines. The loaded bundle also
+    # exposes base_internal_timeline snapshots (and shared shot authority can
+    # appear through multiple placements), so a recursive walk counts the
+    # historical copy as if it were a second saved clip.
+    saved_shots = loaded_unknown.data["bundle"].get("shots")
+    if not isinstance(saved_shots, dict):
+        raise RuntimeError("imported unknown effect bundle has no current authoring shots")
+    retained_identities: set[tuple[str, str]] = set()
+    for shot_key, shot_value in saved_shots.items():
+        if not isinstance(shot_value, dict):
+            continue
+        shot_id = str(shot_value.get("shot_id") or shot_key)
+        internal = shot_value.get("internal_timeline")
+        clips = internal.get("clips") if isinstance(internal, dict) else None
+        if not isinstance(clips, list):
+            continue
+        for clip in clips:
+            if isinstance(clip, dict) and clip.get("id") == "picture-1" and clip.get("clipType") == unknown_id:
+                retained_identities.add((shot_id, str(clip.get("id"))))
+    retained = len(retained_identities)
+    if retained != 1:
+        raise RuntimeError(f"imported unknown effect clip was not persisted exactly once in current authoring timelines: {retained}")
     return {"status": "passed", "timeline_id": timeline_id, "transcript_document_id": transcript_id,
             "transcript_read": True, "transcript_preserved_after_conflict": True,
             "text_binding_read": True, "music_preserved": True, "word_timings_preserved": True,
-            "conflict_receipt": conflict}
+            "conflict_receipt": conflict,
+            "unknown_unpinned_effect": {"timeline_id": unknown_timeline_id, "clip_type": unknown_id,
+                                        "pack_id": unknown_pack, "retained_clips": retained,
+                                        "receipt_missing_effects": warnings}}
 
 
 def _chapter_rows(bundle: dict[str, object]) -> list[dict[str, object]]:
