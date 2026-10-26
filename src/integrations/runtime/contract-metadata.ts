@@ -10,6 +10,8 @@ export const RUNTIME_PROTOCOL = PROTOCOL;
 export const RUNTIME_SCHEMA_DIGEST = SCHEMA_DIGEST;
 export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = [
   RUNTIME_SCHEMA_DIGEST,
+  // Runtime e6e5273d predates unresolved-effect warning support and remains compatible.
+  'sha256:9081570c9d68212906426cfb0290c319849ea3dacaea1a0375d9e7e96d8c5ae9',
   // Runtime fa9cd546 is still pinned by the installer and predates this generated client refresh.
   'sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47',
   // Before app-state: the Runtime without /v1/app-state stays compatible (the editor tour falls back to its local flag).
