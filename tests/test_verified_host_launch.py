@@ -468,7 +468,7 @@ def test_trusted_local_explicit_constructor_keeps_default_closed_and_record_priv
     f.record['source_components'][0]['sha256'] = '0' * 64
     proof = f.verifier.verify(**f.args)
     argv, data = f.verifier.claim(proof, **f.args, binding_fd=9)
-    assert argv[1:3] == ['-I', '-S']
+    assert argv[1:5] == ['-X', 'utf8', '-I', '-S']
     assert json.loads(data)['mode'] == gate.TRUSTED_LOCAL_MODE
     with pytest.raises(gate.HostLaunchError): gate.HostLaunchVerifier().verify(**f.args)
     with pytest.raises(TypeError): pickle.dumps(proof)

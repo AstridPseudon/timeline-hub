@@ -617,7 +617,7 @@ def test_workspace_inspection_forwards_selected_admission_budget_without_changin
     monkeypatch.setattr("astrid_runtime.runtime_boundary.subprocess.run", fake_run)
     assert LocalRuntimeBoundary().inspect(realm_root=root) == report
     assert observed["argv"] == [
-        __import__("sys").executable, "-m", "runtime_protocol", "doctor",
+        __import__("sys").executable, "-X", "utf8", "-m", "runtime_protocol", "doctor",
         "--root", str(root), "--json", "--admission-timeout", expected,
     ]
     assert list(root.iterdir()) == []
