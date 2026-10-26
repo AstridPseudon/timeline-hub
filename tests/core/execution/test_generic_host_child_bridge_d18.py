@@ -2047,6 +2047,19 @@ def test_d18_invalid_network_context_cannot_start_action(world, monkeypatch, for
     _context_receipt("startup-" + form.removeprefix("-") + "-" + corruption, {"error": str(error.value), "action_started": marker.exists(), "broker_events": [context.broker.evidence() for context in captured]})
 
 
+def test_network_startup_preserves_utf8_pair_before_isolation_flags(tmp_path):
+    from astrid.core.execution.generic_host import _network_startup_argv
+
+    wrapped = _network_startup_argv(
+        [sys.executable, "-X", "utf8", "-B", "-m",
+         "astrid.core.execution.generic_host_worker", "request.json"],
+        tmp_path, {}, broker_required=False,
+    )
+    assert wrapped[:7] == [sys.executable, "-X", "utf8", "-B", "-I", "-S", "-c"]
+    assert json.loads(wrapped[8])["module"] == "astrid.core.execution.generic_host_worker"
+    assert wrapped[9] == "request.json"
+
+
 @pytest.mark.parametrize("form", ["python", "-c"])
 @pytest.mark.parametrize("corruption", ["missing_policy", "malformed_policy", "nonmapping_policy", "missing_evidence", "missing_proxy", "missing_hook", "changed_hook", "shadow_hook", "import_failure", "install_failure", "noninstalling_hook", "broker_reject", "broker_disconnect", "broker_timeout", "broker_malformed_reply", "broker_connect_failure"])
 def test_d18_network_startup_faults_are_fatal_before_pack_import(world, monkeypatch, form, corruption):

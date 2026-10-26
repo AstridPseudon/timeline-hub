@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -158,6 +159,22 @@ def test_host_bootstrap_binds_manifest_in_argv_and_reuses_exact_binding(
     assert captured[0][captured[0].index("--boot-manifest-hash") + 1] == first["host_boot_manifest_hash"]
     assert first["host_boot_manifest_path"] == str(manifest)
     assert first["host_boot_manifest_hash"]
+    assert captured[0][1:3] == ["-X", "utf8"]
+    if launch_mode == "plain":
+        # Run the configured host interpreter with the exact startup prefix
+        # observed at its real host launch boundary, replacing only the module.
+        command = captured[0]
+        module_index = command.index("-m")
+        host_probe = subprocess.run(
+            [*command[:module_index], "-c", "import sys; print(sys.flags.utf8_mode)"],
+            env={**os.environ, "PYTHONUTF8": "0"}, check=True, capture_output=True, text=True,
+        )
+        control = subprocess.run(
+            [command[0], "-c", "import sys; print(sys.flags.utf8_mode)"],
+            env={**os.environ, "PYTHONUTF8": "0"}, check=True, capture_output=True, text=True,
+        )
+        assert host_probe.stdout.strip() == "1"
+        assert control.stdout.strip() == "0"
 
     second = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert second == first
@@ -183,6 +200,7 @@ def test_parked_host_preserves_projected_environment(tmp_path, monkeypatch):
     launch = SimpleNamespace(deployment_digest='deployment', env=lambda: {'HOME': str(tmp_path)},
                              argv=(sys.executable, '-m', 'astrid.core.execution.generic_host'), cwd=source)
     def host_created(argv, **kwargs):
+        assert argv[:3] == [sys.executable, "-X", "utf8"]
         assert kwargs['env']['__CF_USER_TEXT_ENCODING'] == '1:0'
         assert 'ASTRID_TASK_RUN_ID' not in kwargs['env']
         return SimpleNamespace(pid=4244)

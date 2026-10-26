@@ -290,7 +290,7 @@ def _run_python_orchestrator_subprocess(
     )
     try:
         completed = subprocess.run(
-            [sys.executable, "-m", "astrid.core.execution.python_runtime_worker", str(request_path)],
+            [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.python_runtime_worker", str(request_path)],
             cwd=str(root),
             env=env,
             capture_output=True,

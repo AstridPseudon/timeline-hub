@@ -156,7 +156,7 @@ def _probe_schema(schema_root: Path) -> str | None:
     """Import the installed schema in isolation and check its module origin."""
     try:
         probe, _receipt = _owned_probe(
-            [sys.executable, "-I", "-c", _SCHEMA_PROBE, str(schema_root),
+            [sys.executable, "-X", "utf8", "-I", "-c", _SCHEMA_PROBE, str(schema_root),
              str(REPO_ROOT / "astrid/core/timeline/schema/timeline-config.schema.json")],
             cwd=schema_root.parent, env=_probe_environment(), timeout=_NODE_PROBE_TIMEOUT_SECONDS,
         )
