@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-26T13:42:56.153967+00:00",
+  "kind": "manager byte publication of EXISTING final1051 original per-ID table and checker origins",
+  "files": [
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/per-id.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-per-id.json",
+      "sha256": "9e8b3dbee35702944c2f4486a52dbdfc54797cde14058df6e3fa67a4b8df45c6",
+      "bytes": 24356803
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/join.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-join.json",
+      "sha256": "aa8a647de3392d3ffbe0281db30b93d101a8ce118cac5c25901a5591fc0e2e21",
+      "bytes": 13232
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/counts.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-counts.json",
+      "sha256": "456d792436acb0a711bd52d438de0359ada9afa83575a97b5c53c8b7b95524a5",
+      "bytes": 3560
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-source-manifest.json",
+      "sha256": "db348e979fd9d94300ed03d52787d755812bcce6ffdd3a114ba91be67d933680",
+      "bytes": 6751
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/source-identity-map.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-source-identity-map.json",
+      "sha256": "475869ec6e97a883ceee9ffce8717423bdbd816932bee27240b5c0b04b760cca",
+      "bytes": 30476
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/env-sensitive.json",
+      "published": "design/agt-F-D141l-fullpair-source-accounting-return-1051-env-sensitive.json",
+      "sha256": "d2361d5139bcc784bd71c73060e70f294a7976695458c902368d04214feb7b32",
+      "bytes": 1720
+    }
+  ],
+  "qualification": "Independent1104 controlling; actualecdc95d versus64197fa9 only. Original9798 records=9452 concrete union+346 null aggregates,397 cutbad378N_A+19FAILS_BOTH.64pristineonly remains subject D141ii, no REG0 from historicaltable.",
+  "safety": "IDs/statuses/source first frames/exception classes and supplied static source references; no raw tracebacks/messages or private XML/log copied. Long IDs are authored synthetic malformed-JSON padding parameter identities, not user data.",
+  "original_early_join": "Early sourceworker evidence was already normally packed before this pass; archive retained and nowKEEP for open Runtime ask. Final1051 per-id original remains uncompressed under existingKEEP. No archive unpack/removal or rewrite."
+}

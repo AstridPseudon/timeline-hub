@@ -1,0 +1,40 @@
+{
+  "current_reg_candidates": [],
+  "decision": "NO_CURRENT_REG_CANDIDATES",
+  "fails_both_environment_limited": [
+    {
+      "cut_source_limit": "provisioned_render_registry_or_dependency_missing",
+      "cut_status": "ERROR",
+      "historical_root_cluster": "root-040",
+      "node_id": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+      "pristine_source_limit": "provisioned_render_registry_or_dependency_missing",
+      "pristine_status": "ERROR"
+    },
+    {
+      "cut_source_limit": "provisioned_render_registry_or_dependency_missing",
+      "cut_status": "FAIL",
+      "historical_root_cluster": "root-002",
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "pristine_source_limit": "provisioned_render_registry_or_dependency_missing",
+      "pristine_status": "FAIL"
+    },
+    {
+      "cut_source_limit": "D13_environment_inputs_missing",
+      "cut_status": "ERROR",
+      "historical_root_cluster": "root-002",
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+      "pristine_source_limit": "runtime_publication_import_missing",
+      "pristine_status": "FAIL"
+    }
+  ],
+  "farm_child_needed": false,
+  "farm_scope": null,
+  "schema": "timeline.f.d141l.fullpair.environment-sensitive.v2",
+  "source_accounting": {
+    "current_reg_candidates": 0,
+    "env_sensitive_undecidable_supported_only_for": "existing source/cause-limited FAILS_BOTH rows",
+    "fails_both": 19,
+    "five_source_backed_na_not_reg": 5,
+    "pristine_only_not_reg": 64
+  }
+}
