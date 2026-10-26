@@ -5,12 +5,14 @@ import copy
 
 import pytest
 
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from tests.editing_conformance.test_pristine_initialize import (
     GOLDEN,
     batch,
     empty_document,
 )
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.native_initialize import capture_initialize
 from tests.sdk import test_timeline_commit_provider as provider
 
 runtime_abi = provider.runtime_abi
@@ -68,3 +70,25 @@ def test_cas_retry_cannot_initialize_over_edit_then_undo_equal_bytes():
     assert error.value.failure['details']['reason'] == 'not_pristine'
     assert realm.documents[realm.head['revision_id']] == empty_document()
     assert len(realm.accepted) == 2
+
+
+def test_provider_rejects_initialization_after_authored_head_with_bootstrap_tracks():
+    document = empty_document()
+    tracks = [{'id': 'runtime-track', 'kind': 'visual'}]
+    payload = document['parent_revision']['payload']
+    payload['config']['tracks'] = tracks
+    document['parent_revision']['content_digest'] = _digest(payload)
+    bundle = bundle_from_document(document)
+    initialize = capture_initialize(
+        bundle, name='Main', slug='main', output=GOLDEN['app_parent']['config']['output'],
+    )
+    realm = provider.DetachedRealm(document)
+    authored = capture_track_create(bundle, 'parent', {'id': 'later', 'kind': 'visual'})
+    realm.call([authored])
+    before = copy.deepcopy(realm.head)
+
+    with pytest.raises(provider.CommitRejected) as error:
+        realm.call([initialize])
+
+    assert error.value.failure['details']['reason'] == 'not_pristine'
+    assert realm.head == before

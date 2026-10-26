@@ -7,8 +7,18 @@ from ._command_state import ABSENT, CommandError, equal
 def initialize(ctx, command):
     bundle = ctx.state.bundle
     parent = ctx.read('parent')
+    config = parent.get('config') if isinstance(parent, dict) else None
+    pristine_parent = (
+        isinstance(config, dict)
+        and isinstance(config.get('tracks'), list)
+        and equal(parent, {
+            'config': {'clips': [], 'tracks': config['tracks']},
+            'registry': {},
+            'clips': [],
+        })
+    )
     if (ctx.record['ordinal'] != 0
-            or not equal(parent, {'config': {'clips': [], 'tracks': []}, 'registry': {}, 'clips': []})
+            or not pristine_parent
             or bundle['placements'] or bundle['shots']):
         raise CommandError('initialization requires the pristine empty timeline', kind='not_pristine')
     for path in (['config', 'output'], ['name'], ['slug'], ['registry', 'assets']):
@@ -23,10 +33,10 @@ def initialize(ctx, command):
 
 
 def capture_initialize(bundle, *, name, slug, output):
-    """Capture raw defaults; publication-history authority stays in the provider.
+    """Capture timeline metadata on Runtime's canonical bootstrap tracks.
 
-    Append full V1 then A1 track.create captures over each preceding local result.
-    Persist the resulting batch and its original base pair before sending it.
+    Publication-history authority stays in the provider; persist the captured
+    command and its original base pair before sending it.
     """
     from .commands import execute
 

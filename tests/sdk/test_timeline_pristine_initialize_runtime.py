@@ -12,11 +12,16 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.mark.parametrize('explicit_metadata', [False, True])
-def test_initialize_batch_authenticates_sequential_command_inputs(tmp_path, explicit_metadata):
+def test_initialize_batch_authenticates_sequential_command_inputs(tmp_path, monkeypatch, explicit_metadata):
     use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
     from runtime_protocol.timeline_commit_port import route_path
+    from runtime_protocol.timeline_commit_baseline import empty_bootstrap_document
+
+    # The recorded App batch supplies its own tracks and targets the legacy
+    # trackless bootstrap. Keep exercising that existing publication format.
+    monkeypatch.setattr("runtime_protocol.timeline_commit_baseline.default_bootstrap_document", empty_bootstrap_document, raising=False)
 
     from astrid.sdk.timeline.commit import create_runtime_commit_service
 
@@ -78,6 +83,10 @@ def test_pristine_init_crash_resume_reload_undo_retry_and_redo(tmp_path, monkeyp
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
     from runtime_protocol.timeline_commit_port import route_path
+    from runtime_protocol.timeline_commit_baseline import empty_bootstrap_document
+
+    # This persisted golden intent predates Runtime-owned starter tracks.
+    monkeypatch.setattr("runtime_protocol.timeline_commit_baseline.default_bootstrap_document", empty_bootstrap_document, raising=False)
 
     from astrid.sdk.timeline import commands, commit
     from astrid.sdk.timeline.outbox import Outbox
@@ -202,6 +211,9 @@ def test_remote_create_empty_uses_live_commit_bootstrap_and_exact_replay(
         "resolution": "640x360", "fps": 24, "file": "output.mp4",
         "background": None, "background_scale": None,
     }
+    # Explicit empty tracks remain a caller choice, even when Runtime now
+    # supplies canonical tracks in the bootstrap head.
+    assert document["parent_revision"]["payload"]["config"]["tracks"] == []
     opened = client.timelines.open_bundle(project, "film")
     assert opened.ok, opened.as_dict()
     assert opened.data["bundle"]["parent"]["config"]["meta"] == config["meta"]

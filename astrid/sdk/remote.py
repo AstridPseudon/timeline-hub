@@ -530,7 +530,7 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         try:
             from .timeline._common import TimelineEditError
             from .timeline.commands import execute
-            from .timeline.emitter import emit_document_commands
+            from .timeline._command_state import equal, present
             from .timeline.native_initialize import capture_initialize
             from .timeline.sync import CommitConflict, TimelineSession
 
@@ -566,7 +566,14 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 before, name=canonical_name, slug=slug, output=default_output,
             )]
             initialized = execute(before, commands).bundle
-            authored_config = copy.deepcopy(dict(config)) if config is not None else {"tracks": []}
+            authored_config = copy.deepcopy(dict(config)) if config is not None else {}
+            # Runtime owns the canonical bootstrap tracks. Preserve them when
+            # the caller has no track preference; an explicit tracks array,
+            # including [], remains authoritative.
+            bootstrap_config = initialized["parent"].get("config")
+            if "tracks" not in authored_config and isinstance(bootstrap_config, Mapping):
+                if "tracks" in bootstrap_config:
+                    authored_config["tracks"] = copy.deepcopy(bootstrap_config["tracks"])
             canvas = authored_config.get("theme_overrides")
             for field in ("visual", "canvas"):
                 canvas = canvas.get(field) if isinstance(canvas, Mapping) else None
@@ -578,9 +585,18 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 }
             authored_config.setdefault("output", default_output)
             authored_config.setdefault("clips", [])
-            after = copy.deepcopy(initialized)
-            after["parent"]["config"] = authored_config
-            commands.extend(emit_document_commands(initialized, after))
+            # Creation already guards the entire pristine timeline atomically.
+            # Install its initial config as one observed value, including any
+            # explicit track choice, rather than emitting member removals.
+            initial_config = initialized["parent"]["config"]
+            if not equal(initial_config, authored_config):
+                commands.append({
+                    "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                    "args": {"changes": [{
+                        "op": "set", "ref": "parent", "path": ["config"],
+                        "before": present(copy.deepcopy(initial_config)), "value": authored_config,
+                    }]},
+                })
             label = "Create empty timeline"
             timeline_scope_read = [{"kind": "scope", "ref": "timeline", "path": []}]
             steps = [{

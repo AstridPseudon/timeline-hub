@@ -114,6 +114,10 @@ def _create(argv, capsys):
 def test_create_slug_names_the_new_timeline(capsys) -> None:
     rc, calls, _ = _create(["create", "--project", "p", "--slug", "intro"], capsys)
     assert rc == 0 and calls[0]["timeline_id"] == "intro" and calls[0]["project"] == "p"
+    assert "tracks" not in calls[0]["config"]
+    assert calls[0]["config"]["theme_overrides"]["visual"]["canvas"] == {
+        "width": 1920, "height": 1080, "fps": 30,
+    }
 
 
 def test_create_slug_matching_the_positional_id_is_fine_a_different_one_is_refused(capsys) -> None:
