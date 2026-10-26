@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-26T11:16:07.946737+00:00",
+  "worker_KEEP_added_by_manager_now": true,
+  "raw_KEEP_added_at_prior_manager_observation": "11:13:31, not backdated",
+  "worker_initial_sampler": "foreground df5s outputs to existing retained tool session/log; evidence/disk-trace.txt not yet materialized",
+  "worker_own_evidence_tests_markers": "These do not protect ORCH/tests; manager protected actual raw dirs at11:13:31",
+  "observations": [
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight-1026111237-26455",
+      "status": "pass",
+      "real_rawKEEP": true,
+      "native_trace": true
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026",
+      "status": "running",
+      "real_rawKEEP": true,
+      "native_trace": true
+    }
+  ],
+  "available": 5535674368,
+  "no_historical_coverage_or_timely_KEEP_claim": true
+}
