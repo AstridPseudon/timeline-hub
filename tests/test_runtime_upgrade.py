@@ -22,11 +22,17 @@ from runtime_protocol.upgrade import (
     repair_generic_media_types,
     upgrade_realm,
 )
+from tests.schema_fixtures import walk_back_to_v30
+
+
+def _walk_back_to_v30(connection):
+    walk_back_to_v30(connection)
+    connection.commit()
 
 
 def _walk_back_to_v27(connection):
-    # A fresh realm is the current schema; v31 -> v30 drops user_app_state, v30 -> v29 drops timelines.name
-    # (the only v30 change), and v28 -> v27 restores inline specs and drops task_specs.
+    # Remove current commit storage, app state, then the display name and deduplicated specs.
+    _walk_back_to_v30(connection)
     connection.execute("PRAGMA foreign_keys=OFF")
     connection.execute("DROP TABLE user_app_state")
     connection.execute("ALTER TABLE timelines DROP COLUMN name")
@@ -297,6 +303,7 @@ def _canonical_fixture(root, version):
             _walk_back_to_v27(connection)  # also drops user_app_state and timelines.name
         else:
             if version < 31:
+                _walk_back_to_v30(connection)
                 connection.execute("DROP TABLE user_app_state")
             if version < 30:
                 connection.execute("ALTER TABLE timelines DROP COLUMN name")
@@ -329,7 +336,7 @@ def _canonical_fixture(root, version):
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 7), (25, 6), (26, 5), (29, 2), (30, 1)])
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 8), (25, 7), (26, 6), (29, 3), (30, 2)])
 def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)

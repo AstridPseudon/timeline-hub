@@ -11,12 +11,26 @@ import hashlib
 import json
 import math
 from collections import ChainMap, defaultdict
+from itertools import pairwise
 
 from .errors import ConflictError, NotFoundError, ValidationError
+from .seam_intent import (
+    boundary_intent_owners,
+    intent_context,
+    opaque_activation_cues,
+    pause_covers,
+    relevant_intent_owners,
+)
+from .seam_intent import cue_identity as portable_cue_identity
 from .util import canonical_json
-from .visual_boundary import VERSION, DISCLOSURE_VERSION, boundary_report, finite, js_round, transition_frames
-from .seam_intent import (boundary_intent_owners, intent_context, cue_identity as portable_cue_identity,
-                          pause_covers, relevant_intent_owners, opaque_activation_cues)
+from .visual_boundary import (
+    DISCLOSURE_VERSION,
+    VERSION,
+    boundary_report,
+    finite,
+    js_round,
+    transition_frames,
+)
 
 MAX_METADATA_CLIPS = 20_000
 AUXILIARY = frozenset({"end-spanning-layer", "effect-layer", "frame-overlay", "text"})
@@ -106,9 +120,15 @@ def clip_seconds(clip, fallback=0, *, speed=None):
 
 
 def parent_clips(parent):
-    clips, configured = parent.get("clips", []), parent.get("config", {}).get("clips", [])
+    config = parent.get("config", {})
+    clips, configured = parent.get("clips", []), config.get("clips", []) if isinstance(config, dict) else None
     if not isinstance(clips, list) or not isinstance(configured, list):
         raise ValidationError("canonical parent clips must be lists")
+    return agreed_clips(clips, configured)
+
+
+def agreed_clips(clips, configured):
+    """Return the canonical clip list; the two authorities must agree when both are present."""
     if clips and configured and clips != configured:
         raise ConflictError("canonical parent clips and config.clips disagree", details={"reason": "canonical_payload_mismatch"})
     return clips or configured
@@ -147,6 +167,19 @@ def load_closure(conn, project_id, timeline_id, parent_row):
     return parent, shots, internal
 
 
+def _fps(value):
+    """Read raw authored FPS locally without changing the stored payload."""
+    if isinstance(value, (dict, list)):
+        from .timeline_inspection import _fraction
+
+        try:
+            result = float(_fraction(value, "fps", nonnegative=False))
+        except (OverflowError, ValidationError):
+            return None
+        return result if math.isfinite(result) else None
+    return finite(value, None)
+
+
 def _strip_derived(value):
     if isinstance(value, dict):
         # Most authored clips have no app/report/intent. Keep their immutable
@@ -162,7 +195,7 @@ def _strip_derived(value):
 def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False):
     """Authored geometry plus effective spans. No mutable heads or clipping loss."""
     config = parent.get("config", {})
-    fps = finite((config.get("output") or {}).get("fps", config.get("fps", 30)), None)
+    fps = _fps((config.get("output") or {}).get("fps", config.get("fps", 30)))
     if fps is None or fps <= 0:
         raise ValidationError("visual timing fps must be finite and positive")
     policy = (config.get("app") or {}).get("visualSeamContract") or {}
@@ -185,7 +218,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
     next_start = {}
     for group in occurrence_groups.values():
         ordered = sorted(group, key=lambda o: seconds(o, "at", finite(o.get("placement", {}).get("start_ms"), 0) / 1000))
-        for a, b in zip(ordered, ordered[1:]):
+        for a, b in pairwise(ordered):
             next_start[a["occurrence_id"]] = seconds(b, "at", finite(b.get("placement", {}).get("start_ms"), 0) / 1000)
 
     def add(raw, registry, path, *, offset=0, bound=None, inherited_speed=1, inherited_track=None, source_offset=0, inherited_gain=1, muted=False, render=True, track_definitions=None):
@@ -340,7 +373,6 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
                     render_config.setdefault("tracks", []).append(copy.deepcopy(t))
                     known_tracks.add(t.get("id"))
         for c in clips:
-            track = c.get("track", o["track"])
             add(c, child_registry, path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
                 inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)),
                 track_definitions=child_tracks)

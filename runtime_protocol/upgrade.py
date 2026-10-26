@@ -20,6 +20,7 @@ import shutil
 import sqlite3
 import stat
 import tempfile
+import threading
 import time
 import uuid
 from contextlib import contextmanager
@@ -55,6 +56,8 @@ NEW_TABLES = frozenset({
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
     "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
     "composition_revision_dependencies",
+    "timeline_commit_history", "timeline_document_input_contents",
+    "timeline_document_input_bindings", "timeline_document_input_links",
 })
 REVISION_TABLES = frozenset({
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
@@ -71,7 +74,8 @@ USER_PREFERENCES_TARGET_SCHEMA_VERSION = 27
 SPEC_DEDUP_TARGET_SCHEMA_VERSION = 28
 SPEC_REFERENCE_TARGET_SCHEMA_VERSION = 29
 TIMELINE_NAME_TARGET_SCHEMA_VERSION = 30
-USER_APP_STATE_TARGET_SCHEMA_VERSION = 31
+APP_STATE_TARGET_SCHEMA_VERSION = 31
+TIMELINE_COMMIT_TARGET_SCHEMA_VERSION = 32
 HISTORICAL_OUTPUT_MIGRATION_CONFIRMATION = "MIGRATE MANAGED OUTPUTS"
 GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION = "REPAIR GENERIC MEDIA TYPES"
 _VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".webm", ".mkv"})
@@ -338,14 +342,23 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         SPEC_DEDUP_TARGET_SCHEMA_VERSION,
         SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
         TIMELINE_NAME_TARGET_SCHEMA_VERSION,
-        USER_APP_STATE_TARGET_SCHEMA_VERSION,
+        APP_STATE_TARGET_SCHEMA_VERSION,
+        TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
     }:
         raise ValidationError(f"canonical schema version {version} is not supported")
     tables = set(REQUIRED_SCHEMA_TABLES)
     columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
-    if version < USER_APP_STATE_TARGET_SCHEMA_VERSION:
+    if version < APP_STATE_TARGET_SCHEMA_VERSION:
         tables.remove("user_app_state")
         columns.pop("user_app_state")
+    if version < TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
+        tables.remove("timeline_commit_history")
+        columns.pop("timeline_commit_history")
+        for name in ("timeline_document_input_contents", "timeline_document_input_bindings", "timeline_document_input_links"):
+            tables.remove(name)
+            columns.pop(name)
+        columns["parent_composition_heads"].remove("publication_id")
+        columns["parent_composition_revisions"].remove("commit_manifest_json")
     if version < TIMELINE_NAME_TARGET_SCHEMA_VERSION:
         columns["timelines"].remove("name")
     if version < SPEC_DEDUP_TARGET_SCHEMA_VERSION:
@@ -388,13 +401,23 @@ def _canonical_schema_identity(
     format_id, version = str(rows[0][1]), int(rows[0][2])
     if format_id != CANONICAL_FORMAT_ID:
         raise ValidationError(f"unsupported canonical format {format_id!r}")
-    if version > USER_APP_STATE_TARGET_SCHEMA_VERSION:
+    if version > TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
         raise ValidationError(
-            f"canonical schema v{version} is newer than supported v{USER_APP_STATE_TARGET_SCHEMA_VERSION}"
+            f"canonical schema v{version} is newer than supported v{TIMELINE_COMMIT_TARGET_SCHEMA_VERSION}"
         )
     if version < CANONICAL_PREVIOUS_SCHEMA_VERSION:
         raise ValidationError(f"canonical schema v{version} is not a supported migration source")
     expected_tables, expected_columns = _canonical_shape_for(version)
+    # v31 was used by the timeline integration before upstream reserved that
+    # number for app-state. Accept that historical commit-table shape solely
+    # so it can be advanced to v32 without losing its recorded history.
+    if version == APP_STATE_TARGET_SCHEMA_VERSION and "timeline_commit_history" in tables:
+        expected_tables = set(REQUIRED_SCHEMA_TABLES)
+        expected_columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+        # Preserve the pre-U1 timeline-v31 layout separately from upstream's
+        # app-state-v31 layout. It has commit history but no app-state table.
+        expected_tables.remove("user_app_state")
+        expected_columns.pop("user_app_state")
     unknown = tables - expected_tables
     missing = expected_tables - tables
     if unknown or missing:
@@ -794,8 +817,38 @@ def _apply_v30_to_v31(connection: sqlite3.Connection) -> dict[str, object]:
         )
         """
     )
-    connection.execute("UPDATE runtime_schema SET version=31 WHERE id=1")
-    return {"source_schema_version": 30, "target_schema_version": 31, "added_tables": ["user_app_state"]}
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (APP_STATE_TARGET_SCHEMA_VERSION,))
+    return {"source_schema_version": 30, "target_schema_version": APP_STATE_TARGET_SCHEMA_VERSION, "added_tables": ["user_app_state"]}
+
+
+def _apply_v31_to_v32(connection: sqlite3.Connection) -> dict[str, object]:
+    from .canonical_schema import TIMELINE_COMMIT_SCHEMA_SQL
+    from .timeline_commit_inputs import DOCUMENT_INPUT_SCHEMA_SQL
+
+    existing_tables = _tables(connection)
+    if "user_app_state" not in existing_tables:
+        connection.execute(
+            """
+            CREATE TABLE user_app_state (
+                actor_id TEXT NOT NULL, key TEXT NOT NULL,
+                content_json TEXT NOT NULL CHECK (json_valid(content_json)),
+                version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+                created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                PRIMARY KEY (actor_id, key)
+            )
+            """
+        )
+    if "timeline_commit_history" not in existing_tables:
+        connection.execute("ALTER TABLE parent_composition_heads ADD COLUMN publication_id TEXT REFERENCES timeline_commit_history(publication_id)")
+        connection.execute("ALTER TABLE parent_composition_revisions ADD COLUMN commit_manifest_json TEXT CHECK (commit_manifest_json IS NULL OR json_valid(commit_manifest_json))")
+        connection.execute(TIMELINE_COMMIT_SCHEMA_SQL)
+        for statement in DOCUMENT_INPUT_SCHEMA_SQL.split(";"):
+            if statement.strip():
+                connection.execute(statement)
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,))
+    return {"source_schema_version": APP_STATE_TARGET_SCHEMA_VERSION,
+            "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
+            "baseline_required": "timeline_commit_history" not in existing_tables}
 
 
 def migrate_canonical_v24_to_v25(
@@ -924,9 +977,9 @@ def migrate_canonical_to_current(
     confirmation: str | None = None,
     expected_realm_id: str | None = None,
 ) -> dict:
-    """Atomically run every supported canonical step through pinned v31.
+    """Atomically run every supported canonical step through pinned v32.
 
-    Current v31 is a read-only idempotent result.  Unknown, alternate, and
+    Current v32 is a read-only idempotent result.  Unknown, alternate, and
     newer layouts are rejected by the read-only preflight before an owner-lock
     marker, SQLite sidecar, journal, process signal, or schema mutation occurs.
     """
@@ -939,12 +992,12 @@ def migrate_canonical_to_current(
     if confirmation != expected_confirmation:
         raise ValidationError(f"migration requires confirmation exactly '{expected_confirmation}'")
     source_version = int(identity["version"])
-    if source_version == USER_APP_STATE_TARGET_SCHEMA_VERSION:
+    if source_version == TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
         return {
             "ok": True,
             "realm_id": realm_id,
             "source_schema_version": source_version,
-            "target_schema_version": USER_APP_STATE_TARGET_SCHEMA_VERSION,
+            "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
             "steps": [],
             "changed": False,
         }
@@ -983,9 +1036,12 @@ def migrate_canonical_to_current(
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v30_to_v31(connection))
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if current["version"] == APP_STATE_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v31_to_v32(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(final["version"]) != USER_APP_STATE_TARGET_SCHEMA_VERSION:
-                raise ValidationError("canonical migration did not produce the pinned v31 layout")
+            if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
+                raise ValidationError("canonical migration did not produce the pinned v32 layout")
             if _quick_check(connection, float(timeout_seconds)) != "ok":
                 raise ValidationError("migrated database failed SQLite integrity check")
             foreign_keys = _foreign_key_errors(connection, float(timeout_seconds))
@@ -996,7 +1052,7 @@ def migrate_canonical_to_current(
                 "ok": True,
                 "realm_id": realm_id,
                 "source_schema_version": source_version,
-                "target_schema_version": USER_APP_STATE_TARGET_SCHEMA_VERSION,
+                "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
                 "steps": steps,
                 "changed": True,
                 "vacuum": _reclaim_after_migration(connection),
@@ -1021,14 +1077,14 @@ def _source_shape(connection: sqlite3.Connection) -> tuple[set[str], dict[str, l
         if unknown:
             raise ValidationError("upgrade refuses unknown source tables: " + ", ".join(sorted(unknown)))
         excluded = {"runtime_schema", *REVISION_TABLES}
-        columns: dict[str, list[str]] = {}
+        current_columns: dict[str, list[str]] = {}
         for table in sorted(REQUIRED_SCHEMA_TABLES - excluded):
             actual = _table_columns(connection, table)
             expected = list(REQUIRED_SCHEMA_COLUMNS[table])
             if set(actual) != set(expected) or len(actual) != len(expected):
                 raise ValidationError(f"upgrade source shape differs for table {table}")
-            columns[table] = actual
-        return tables, columns, str(schema[1])
+            current_columns[table] = actual
+        return tables, current_columns, str(schema[1])
     if "schema_migrations" not in tables:
         raise ValidationError("upgrade requires a legacy schema_migrations table")
     version = connection.execute("SELECT COALESCE(MAX(version), 0) FROM schema_migrations").fetchone()[0]
@@ -1181,9 +1237,10 @@ def _validate_candidate(target: sqlite3.Connection, root: Path, timeout: float) 
         raise ValidationError("staged database failed foreign-key validation")
     inspector = object.__new__(RealmStore)
     inspector.root = root
+    inspector.db_path = root / "realm.sqlite3"
     inspector.cas_root = root / "cas" / "sha256"
     inspector.conn = target
-    inspector._mutex = None
+    inspector._mutex = threading.RLock()
     report = inspector._integrity_report(deadline=time.monotonic() + timeout)
     if not report.get("ok"):
         raise ValidationError("staged database failed canonical validation", details=report)

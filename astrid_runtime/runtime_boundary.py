@@ -255,7 +255,13 @@ class LocalRuntimeBoundary:
                         f"{candidate}"
                     )
                 python = str(candidate)
-            argv = [python, "-X", "utf8", "-m", "runtime_protocol", "start"]
+            authoring_profile = {"astrid": "astrid"}.get(source.profile)
+            if authoring_profile is None:
+                raise BootstrapError(
+                    "Source profile has no supported Runtime authoring profile: "
+                    f"{source.profile!r}"
+                )
+            argv = [python, "-X", "utf8", "-m", "runtime_protocol", "start", "--authoring-profile", authoring_profile]
         replacements = {
             "{realm_id}": realm_id,
             "{realm_root}": str(realm_root),

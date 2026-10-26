@@ -26,6 +26,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 
 from . import cancellation
 
@@ -565,12 +566,22 @@ def process_identity(pid: int, *, timeout: float = 1.0):
             return identity
         finally:
             kernel.CloseHandle(handle)
+    # Match the boot-bound Linux birth marker used by parked host activation.
+    # A missing boot source is observation failure, never proof of PID absence.
+    try:
+        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        if str(uuid.UUID(boot_id)) != boot_id:
+            raise ValueError("noncanonical boot ID")
+    except ValueError as exc:
+        raise OSError("process boot identity observation was malformed") from exc
     root = Path("/proc") / str(pid)
     try:
         raw = (root / "stat").read_text()
         fields = raw.rsplit(")", 1)[1].split()
+        if not fields[19].isascii() or not fields[19].isdigit():
+            raise ValueError("invalid process start tick")
         value = {"pid": pid, "uid": root.stat().st_uid, "parent_pid": int(fields[1]),
-                 "birth_id": f"proc-start-ticks:{fields[19]}", "process_group": int(fields[2]), "session_id": int(fields[3])}
+                 "birth_id": f"{boot_id}:{fields[19]}", "process_group": int(fields[2]), "session_id": int(fields[3])}
         second = (root / "stat").read_text().rsplit(")", 1)[1].split()
         if fields[19] != second[19]:
             raise OSError("process identity changed during observation")
@@ -1070,7 +1081,11 @@ def pidfd_open(pid: int, flags: int = 0) -> int:
         raise NotImplementedError("identity-safe process signaling requires Linux pidfd support")
     opener = getattr(os, "pidfd_open", None)
     if opener is not None:
-        return opener(pid, flags)
+        try:
+            return opener(pid, flags)
+        except TypeError:
+            # Keep compatibility with narrow test doubles and older wrappers.
+            return opener(pid)
     return _linux_pidfd_syscall("pidfd_open", pid, flags)
 
 

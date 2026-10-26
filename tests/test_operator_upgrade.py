@@ -14,6 +14,7 @@ from astrid_runtime.paths import RuntimePaths
 from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
 from runtime_protocol.upgrade import inspect_canonical_schema
+from tests.schema_fixtures import walk_back_to_v30
 
 
 class _Boundary:
@@ -55,16 +56,17 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
     paths.ensure_support_dirs()
     realm_root = paths.realms_dir / "realm-1"
     RealmStore.initialize(realm_root, realm_id="realm-1").close()
-    if version < 30:
-        # A fresh realm is the current schema; v30 -> v29 drops timelines.name (the only v30 change).
+    if version < 31:
+        # Upstream app-state v31 adds this table; v30 and earlier must omit it.
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
-            connection.execute("ALTER TABLE timelines DROP COLUMN name")
             connection.execute("DROP TABLE user_app_state")
     if version < 28:
         # v28 -> v27 restores inline specs and drops task_specs.
         connection = sqlite3.connect(realm_root / "realm.sqlite3")
         try:
             connection.execute("PRAGMA foreign_keys=OFF")
+            walk_back_to_v30(connection)
+            connection.execute("ALTER TABLE timelines DROP COLUMN name")
             connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
             for table in ("runs", "tasks"):
                 connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
@@ -74,6 +76,12 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
             connection.commit()
         finally:
             connection.close()
+    elif version < 31:
+        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
+            walk_back_to_v30(connection)
+            if version < 30:
+                connection.execute("ALTER TABLE timelines DROP COLUMN name")
+            connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (version,))
     if version < 27:
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
             connection.execute("DROP TABLE user_preferences")

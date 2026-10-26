@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import base64
 import hashlib
 import json
+import base64
 import os
 import subprocess
 import sys
@@ -15,8 +15,10 @@ from runtime_protocol import platform
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore, IDEMPOTENCY_RESULT_MARKER, IdempotencyWindowExpired, command_result
 from runtime_protocol.snapshot_refs import restore_spec_snapshots
+from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 from runtime_protocol.upgrade import migrate_canonical_to_current, compact_idempotency_ledger
 from runtime_protocol.util import canonical_json, now
+from tests.schema_fixtures import walk_back_to_v30
 
 
 def _digest(value):
@@ -65,30 +67,47 @@ print(json.dumps(values))
 @pytest.mark.integration
 def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source(tmp_path, astrid_importable):
     # This crosses task admission, CAS custody, task readback, and Astrid's
-    # actual host materializer. The child receives bytes read from the real
-    # Runtime service, so admission, custody, and hydration stay real.
+    # actual host materializer. A fake Runtime *transport* delegates to the
+    # real service, so neither the admission nor the hydration layer is mocked.
+    from test_timeline_commit_acceptance import validate_prepared
+    from test_timeline_native_inspection import _publish
+    from runtime_protocol.timeline_commit_store import TimelineCommitStore
+
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     try:
         project = service.create_project({"slug": "snapshots", "name": "Snapshots"}, idempotency_key="project")
         project_id = project["id"]
+        provider = load_timeline_commit_provider("astrid")
+        service.register_timeline_commit_provider(provider)
         service.create_timeline(project_id, "main", idempotency_key="timeline")
+        TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
+            project_id, "main", authorize=lambda: None)
         service.register_capability({"capability_id": "rendering.timeline_visualize", "definition_digest": _digest("visualize")})
         service.register_executor({"executor_id": "worker", "capabilities": ["rendering.timeline_visualize"]})
-        parent = {"config": {"clips": []}, "registry": {"assets": {}}, "clips": [], "occurrences": []}
-        with service.store._transaction():
-            service.store.conn.execute(
-                "INSERT INTO parent_composition_revisions(id,project_id,timeline_id,payload_json,content_digest,created_at) "
-                "VALUES (?,?,?,?,?,?)",
-                ("revision-1", project_id, "main", canonical_json(parent), _digest(parent), now()),
-            )
-        snapshot = {"config": {"clips": [{"id": "old", "at": 0, "hold": 1}]}, "registry": {"assets": {}}}
+        fixture = json.loads((Path(__file__).with_name("fixtures") / "capture_authority.json")
+                             .read_text().replace("PROJECT_ID", project_id))
+        media = service.ingest(project_id, fixture["media_bytes"].encode(), media_type="video/mp4",
+                               idempotency_key="media")["data"]["object_id"]
+        publication = fixture["publication"]
+        assert publication["shot_revisions"][0]["payload"]["items"][0]["media_id"] == media
+        asset = publication["internal_timeline_revisions"][0]["payload"]["registry"]["assets"]["picture"]
+        asset["content_sha256"] = media.removeprefix("sha256:")
+        _publish(service, project_id, publication, idempotency_key="saved-revision")
+        document = service._timeline_commits()[0].revision_closure(project_id, "main", "parent-1")
+        projection = provider.project_capture(document)
+        snapshot = {"config": projection["config"], "registry": projection["registry"],
+                    "metadata": {"capture_authority": {
+                        "project_id": project_id, "timeline_id": "main",
+                        "parent_revision_id": "parent-1", "parent_content_digest": document["parent_revision"]["content_digest"],
+                        "expansion": projection["expansion"],
+                    }}}
         context = {"mode": "composed_capture", "project_id": project_id, "timeline_id": "main",
-                   "revision_id": "revision-1", "capture_snapshot": snapshot}
+                   "revision_id": "parent-1", "capture_snapshot": snapshot}
         task = service.create_task({
             "project": project_id, "capability_id": "rendering.timeline_visualize",
-            "capability_digest": _digest("visualize"), "input_object_ids": [],
+            "capability_digest": _digest("visualize"), "input_object_ids": [media],
             "idempotency_key": "capture", "spec": {
                 "inputs": {"filmstrip_authority": canonical_json(context)},
                 "authority_context": context,
@@ -99,8 +118,8 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         assert "capture_snapshot" not in inner["authority_context"]
         assert "capture_snapshot" not in json.loads(inner["inputs"]["filmstrip_authority"])
         ref = inner["authority_context"]["capture_snapshot_ref"]
-        assert ref["revision_id"] == "revision-1"
-        assert ref["revision_digest"] == _digest(parent)
+        assert ref["revision_id"] == "parent-1"
+        assert ref["revision_digest"] == document["parent_revision"]["content_digest"]
         assert ref["digest"] in spec["input_object_ids"]
 
         attempt = tmp_path / "attempt"
@@ -109,8 +128,14 @@ def test_visualize_task_hydrates_exact_saved_revision_and_refuses_missing_source
         assert json.loads((attempt / "inputs" / "timeline.json").read_text()) == snapshot["config"]
         assert json.loads(values["filmstrip_authority"])["capture_snapshot"] == snapshot
 
-        with service.store._transaction():
-            service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='revision-1'")
+        # Simulate lost retained storage despite its accepted-history foreign keys.
+        with service.store._mutex:
+            service.store.conn.execute("PRAGMA foreign_keys=OFF")
+            try:
+                with service.store._transaction():
+                    service.store.conn.execute("DELETE FROM parent_composition_revisions WHERE id='parent-1'")
+            finally:
+                service.store.conn.execute("PRAGMA foreign_keys=ON")
         with pytest.raises(NotFoundError, match="parent revision is missing"):
             service.claim_next({"executor_id": "worker", "capability_ids": ["rendering.timeline_visualize"],
                                 "runtime_epoch": service.health()["runtime_epoch"]})
@@ -166,7 +191,7 @@ def test_render_hydration_reads_named_revision_after_head_moves(tmp_path, astrid
         service.close()
 
 
-def test_working_copy_uses_cas_and_requires_its_saved_base_at_claim(tmp_path):
+def test_working_copy_without_candidate_is_admitted_uncertified_and_requires_its_saved_base(tmp_path):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -210,7 +235,10 @@ def test_working_copy_uses_cas_and_requires_its_saved_base_at_claim(tmp_path):
         with pytest.raises(NotFoundError, match="base parent revision"):
             service.claim_next(claim)
         insert_base()
-        assert service.claim_next(claim)["task_id"] == task["id"]
+        claimed = service.claim_next(claim)
+        assert claimed["task_id"] == task["id"]
+        view = claimed["spec"]["spec"]["authority_context"]["capture_snapshot_ref"]
+        assert view == {"digest": ref["digest"], "project_id": project_id, "timeline_id": "main", "source_kind": "cas"}
     finally:
         service.close()
 
@@ -257,6 +285,7 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
             service.store.conn.execute("DELETE FROM task_specs WHERE digest!=?", (legacy_digest,))
             service.store.conn.execute("DELETE FROM project_objects WHERE digest=?", (ref["digest"].removeprefix("sha256:"),))
             service.store.conn.execute("DELETE FROM objects WHERE digest=?", (ref["digest"].removeprefix("sha256:"),))
+            walk_back_to_v30(service.store.conn)
             service.store.conn.execute("ALTER TABLE timelines DROP COLUMN name")
             service.store.conn.execute("DROP TABLE user_app_state")
             service.store.conn.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
@@ -266,8 +295,10 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
         service.close()
 
     migrated = migrate_canonical_to_current(root, confirmation=f"MIGRATE CANONICAL {realm_id}")
-    assert migrated["steps"][-1]["target_schema_version"] == 31
-    assert migrated["steps"][-3]["referenced_pairs"] == 1
+    assert migrated["steps"][-1]["target_schema_version"] == 32
+    assert migrated["steps"][-2]["target_schema_version"] == 31
+    spec_reference_step = next(step for step in migrated["steps"] if step["target_schema_version"] == 29)
+    assert spec_reference_step["referenced_pairs"] == 1
     reopened = RuntimeService(root)
     try:
         task = reopened.task(admitted["task"]["id"])["task"]
@@ -318,33 +349,54 @@ def test_expired_parent_publish_body_keeps_bounded_receipt_facts(tmp_path):
         reopened.close()
 
 
-def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
+def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path, astrid_importable):
     from datetime import datetime, timedelta, timezone
+    import importlib
+    from runtime_protocol.timeline_commit_baseline import verify_baseline
+    from runtime_protocol.timeline_commit_port import route_path
+
+    open_authoring_bundle = getattr(
+        importlib.import_module("astrid.core.timeline.authoring_bundle"), "open_authoring_bundle",
+    )
+    capture_track_create = getattr(
+        importlib.import_module("astrid.sdk.timeline.capture"), "capture_track_create",
+    )
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     try:
-        project = service.create_project({"slug": "publication", "name": "Publication"}, idempotency_key="project")
-        project_id = project["id"]
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        project_id = service.create_project(
+            {"slug": "publication", "name": "Publication"}, idempotency_key="project",
+        )["id"]
         service.create_timeline(project_id, "main", idempotency_key="timeline")
-        publication = {
-            "project_id": project_id, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "parent-1",
-            "parent_composition": {"config": {"clips": [], "tracks": []},
-                                   "registry": {"assets": {}}, "clips": [], "occurrences": []},
-            "shot_revisions": [], "internal_timeline_revisions": [],
-            "dependency_manifest": {"shots": [], "internal_timelines": [], "media": []},
+        bootstrap = service.list_timeline_commits(project_id, "main", authorize=lambda: None)["items"][0]
+        bootstrap_receipt = bootstrap["receipt"]
+        bootstrap_revision = bootstrap["revision_id"]
+
+        parent = service.get_project_parent_composition_revision(project_id, "main", bootstrap_revision)
+        bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
+        command = capture_track_create(
+            bundle, "parent", {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]},
+        )
+        head = service.get_project_timeline(project_id, "main")
+        request = {
+            "api_version": 1, "project_id": project_id, "timeline_id": "main",
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"], "commands": [command],
         }
-        original = service.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
         with service.store._transaction():
             service.store.conn.execute(
                 "UPDATE command_idempotency SET created_at=? WHERE command_kind='parent_composition.publish'",
                 ((datetime.now(timezone.utc) - timedelta(days=2)).isoformat(timespec="milliseconds"),),
             )
             service.store.conn.execute(
-                "UPDATE parent_composition_revisions SET created_at=? WHERE id='parent-1'",
-                ((datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="milliseconds"),),
+                "UPDATE parent_composition_revisions SET created_at=? WHERE id=?",
+                (
+                (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="milliseconds"),
+                bootstrap_revision,
+                ),
             )
         assert service.store.integrity_report()["ok"] is True
         realm_id = service.realm["id"]
@@ -354,10 +406,65 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
     reopened = RuntimeService(root)
     try:
         assert reopened.store.integrity_report()["ok"] is True
-        replay = reopened.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
+        connection = reopened.store.conn
+        assert connection is not None
+        facts = verify_baseline(connection, project_id, "main", read_object=reopened.cas.read)
+        assert facts is not None
+        assert facts["head"] == {
+            "revision_id": bootstrap_revision,
+            "publication_id": bootstrap_receipt["receipt_id"],
+        }
+        compacted_row = connection.execute(
+            "SELECT result_json FROM command_idempotency WHERE txn_id=?", (bootstrap_receipt["receipt_id"],),
+        ).fetchone()
+        assert compacted_row is not None
+        compacted_result = json.loads(compacted_row[0])
+        assert compacted_result["parent_revision_id"] == bootstrap_revision
+        assert compacted_result["event_id"] == bootstrap_receipt["result"]["event_id"]
+        assert IDEMPOTENCY_RESULT_MARKER in compacted_result
+    finally:
+        reopened.close()
+
+    reopened = RuntimeService(root)
+    try:
+        reopened.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        original = reopened.commit_timeline(
+            project_id, "main", request, idempotency_key="current-commit",
+            publisher="editor", invocation_path=route_path(project_id, "main"),
+            authorize=lambda: None,
+        )
+        assert original["data"]["status"] == "accepted"
+        assert original["receipt"]["result"] == original["data"]
+        connection = reopened.store.conn
+        assert connection is not None
+        event = connection.execute(
+            "SELECT * FROM timeline_events WHERE id=?", (original["receipt"]["event_ids"][0],),
+        ).fetchone()
+        assert event is not None and event["kind"] == "timeline.commit.accepted"
+        assert reopened.store.integrity_report()["ok"] is True
+    finally:
+        reopened.close()
+
+    reopened = RuntimeService(root)
+    try:
+        reopened.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        connection = reopened.store.conn
+        assert connection is not None
+        before = tuple(connection.iterdump())
+        replay = reopened.commit_timeline(
+            project_id, "main", request, idempotency_key="current-commit",
+            publisher="editor", invocation_path=route_path(project_id, "main"),
+            authorize=lambda: None,
+        )
         assert replay["data"] == original["data"]
         assert replay["receipt"]["result"] == original["receipt"]["result"]
-        assert reopened.committed_receipt("parent_composition.publish", "main", "publish", project_id=project_id)["result"] == original["data"]
+        committed = reopened.committed_receipt(
+            "timeline.commit", canonical_json([project_id, "main"]), "current-commit", project_id=project_id,
+        )
+        assert committed is not None
+        assert committed["result"] == original["data"]
+        assert replay == original
+        assert tuple(connection.iterdump()) == before
     finally:
         reopened.close()
 
