@@ -63,6 +63,7 @@ import re
 import shlex
 import sys
 import uuid
+import zipfile
 from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
@@ -73,6 +74,7 @@ from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_res
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
 from astrid.core.timeline.clip_names import clip_media_name
+from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
     _changed_cuts_line,
     _clips_changed,
@@ -192,6 +194,57 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
         idempotency_key=parsed.idempotency_key,
     )
     return print_result(result, as_json=parsed.json)
+
+
+# What a transfer can raise: its own ValueError/OSError, a damaged archive, and a
+# Runtime refusal (conflict, validation, not found) carried by WorkspaceClientError.
+_TRANSFER_ERRORS = (ValueError, OSError, zipfile.BadZipFile, zipfile.LargeZipFile, WorkspaceClientError)
+
+
+def _transfer_error_code(exc: Exception) -> str:
+    return exc.code if isinstance(exc, WorkspaceClientError) else "validation_error"
+
+
+def _cmd_export(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import export_timeline
+
+    try:
+        receipt = export_timeline(parsed.client, parsed.project, parsed.ref, parsed.out)
+        return print_result(DomainResult.success(receipt), as_json=parsed.json)
+    except _TRANSFER_ERRORS as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            _transfer_error_code(exc), str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
+        )), as_json=parsed.json)
+
+
+def _configure_export(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Saved timeline UUID, ULID, or slug.")
+    subparser.add_argument("--out", required=True, type=Path, help="Destination .astrid archive.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_export)
+
+
+def _cmd_import(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import import_timeline
+
+    try:
+        receipt = import_timeline(parsed.client, parsed.file, parsed.project, name=parsed.name)
+        return print_result(DomainResult.success(receipt), as_json=parsed.json)
+    except _TRANSFER_ERRORS as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            _transfer_error_code(exc), str(exc), {"file": str(parsed.file), "project": parsed.project}
+        )), as_json=parsed.json)
+
+
+def _configure_import(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("file", type=Path, help=".astrid timeline archive to import.")
+    subparser.add_argument("--name", help="Display name for the imported timeline.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_import)
 
 
 def _cmd_list(parsed: argparse.Namespace) -> int:
@@ -3310,7 +3363,6 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     """Apply the operations in order: timeline-level ops first, then the selected clip (move, length, set, look, swap)."""
     from astrid.sdk.timeline_editing import TimelineEditError
 
-    line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
     line_only_args = bool(
         parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
         or parsed.line_text or parsed.takes or parsed.script_gaps
@@ -3844,6 +3896,8 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("import", help="Import a validated .astrid timeline archive into a project.", configure=_configure_import),
+    CommandSpec("export", help="Export the saved head and its media into a .astrid archive.", configure=_configure_export),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
