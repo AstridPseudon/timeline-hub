@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T15:32:54Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 4m -->
-# runtime board, 2026-10-26T15:28:35.660315+00:00
+<!-- main | 2026-10-26T15:38:35Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 5m -->
+# runtime board, 2026-10-26T15:33:43.221858+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -93,7 +93,7 @@
 
 | OPS final headroom | Retain independently bounded recovery census | Luna read only | Independent1514 terminal | merged | Census1506; review1514 | [No eligible inspected recovery](../../design/runtime-final-headroom-independent-publication-1522.json). Historical sampler reuse only; no cleanup permission. | No source change |
 
-Blockers: Main decision — existing4960MB pre-stage guard is short70600704 bytes at4889399296. Guarded cleanup exhausted; [finite headroom request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
+Blockers: Main decision — positive source controls need 4960000000 bytes; free 4887240704, short 72759296. [Existing request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
 Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
 live 0 / cap 3; ready-undispatched 0. Census review complete; unchanged positive source controls held by genuine4960MB guard.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives held. Raw KEEP, refused smoke and8912/19479 unchanged. No repeat hub operation.
@@ -115,4 +115,4 @@ Current pass 2026-10-26T15:19:14.694400+00:00: PLAN and common read first; INBOX
 
 Pre-stage complete: same-source positive review, final installer, independent installation review, sole build and sole artifact-review briefs exist. No dependent worker is started while the positive source gate is held. Maintenance produced no headroom.
 
-Pass 2026-10-26T15:28:35.660315+00:00: INBOX1931716 and header253013 unchanged. Both bounded headroom workers terminal0; independent publication1522, original peer1450 and escalation1450 personally byte-equal in normal hub. Three currently materialized ended nonKEEP Runtime trees again DIRTY-refused by guarded recycle; no force or release. Sweep3/compact terminal0 removed0/packed0/gzipped0. Positive source guard remains unmet by 70600704 bytes. Main permission decision pending; no ready-undispatched row, active worker, canonical activation or ZIP. All final briefs are pre-staged, including independent installation review.
+Current pass 2026-10-26T15:33:43.221858+00:00: PLAN/common, new INBOX and HEADER read. INBOX1931716 and HEADER253013 unchanged. App15:13 and Agent15:08 published boards read; final metadata and all cross-lane needs remain clear. All four final clones personally read back clean at recorded heads/trees. Five ended nonKEEP Runtime worktrees DIRTY-refused by supported recycle; no force. Sweep3 and compact terminal0 removed0/packed0/gzipped0; sweep broken-pipe diagnostics preserved. Free4887240704; unchanged positive source guard short72759296. Existing Main1450 decision pending. No new worker, source change, canonical activation, ZIP or repeat hub operation. [Pass receipt](rounds/20261026T1530Z-pass.json). All five final briefs pre-staged; continuing watch interval.
