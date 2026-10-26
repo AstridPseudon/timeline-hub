@@ -1,0 +1,41 @@
+{
+  "review": "rt-U1-D141-final-review-2350",
+  "verdict": "PASS",
+  "head": "24107e83b096264e59f64ed5bd65e00650567f22",
+  "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "parents": [
+    "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+  ],
+  "frozen_upstream": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+  "base": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+  "merge_base": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+  "incoming_paths": 6,
+  "final_changed_paths": 6,
+  "source_review": "PASS",
+  "predicate_review": "PASS",
+  "contract_review": "PASS",
+  "protected_union": "PASS",
+  "functional_evidence": {
+    "kind": "author_receipt_independently_hash_verified",
+    "tests": 119,
+    "passed": 119,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 21.171,
+    "receipt_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-U1-D141-final-join-2345/evidence/targeted.xml",
+    "receipt_sha256": "c059937a1d50375b5e8cf39c4ce0ab636dd9e7b8696b2c9e11b7d082001a1653",
+    "rerun_by_this_worker": false
+  },
+  "static_evidence": {
+    "author_in_memory_compile": "PASS",
+    "author_ruff": "93 inherited diagnostics; no new diagnostics claimed",
+    "author_pyright": "432 baseline -> 428 final; 0 new diagnostics",
+    "diff_check": "PASS",
+    "conflict_markers": 0,
+    "added_skip_or_xfail_markers": 0
+  },
+  "disk_witness": "df -BG reported 5G rounded free space; precise byte start unavailable, so no >=5GB witness is claimed",
+  "full_suite": "NOT RUN per D141 brief"
+}

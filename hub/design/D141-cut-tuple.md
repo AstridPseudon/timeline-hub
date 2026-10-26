@@ -9,4 +9,4 @@ Each lane: ONE final merge-forward of integration to its tip above, through the 
 ## Integration heads after the final merge-forward
 - agent: (pending)
 - app: (pending)
-- runtime: (pending)
+- runtime: 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d (frozen; upstream fa9cd5464a8b; independent rt-U1-D141-final-review-2350 PASS; author119 PASS)

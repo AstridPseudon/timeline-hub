@@ -1,0 +1,37 @@
+{
+  "review": "rt-U1-D141-final-review-2350",
+  "result": "PASS",
+  "protected_15_byte_exact": [
+    "packages/python/astrid_runtime_client/__init__.py",
+    "packages/python/astrid_runtime_client/contract_metadata.py",
+    "packages/python/astrid_runtime_client/generated.py",
+    "packages/python/astrid_runtime_client/timeline_commit_types.py",
+    "packages/python/pyproject.toml",
+    "packages/typescript/package-lock.json",
+    "packages/typescript/package.json",
+    "packages/typescript/src/contract-metadata.ts",
+    "packages/typescript/src/generated.ts",
+    "packages/typescript/src/index.ts",
+    "packages/typescript/src/operation-handle.ts",
+    "packages/typescript/src/timeline-commit-types.ts",
+    "packages/typescript/tsconfig.json",
+    "generators/release.json",
+    "runtime_protocol/contract_metadata.py"
+  ],
+  "live_predicates": {
+    "schema_v32": "runtime_protocol/store.py:45 retains SCHEMA_VERSION = 32",
+    "runtime_authority": "runtime_protocol/timeline_commit_store.py, runtime_protocol/timeline_commit_inputs.py, and canonical_document paths unchanged from base",
+    "provider": "runtime_protocol/timeline_commit_provider.py retains PROVIDER_FACTORY, interface/version/digest validation, and provider loading",
+    "c0": "contract/commit-v2.md and contract/schemas/timeline-commit.json unchanged; request, response, error, and preview fields remain present",
+    "r5": "runtime_protocol/server.py and runtime_protocol/service.py retain direct-writer retirement and commitTimeline routing",
+    "diagnostics": "timeline_commit_store.py retains safe_diagnostic, current/conflicts, invalid code/path/hint/suggested_command, and redaction boundaries",
+    "storage": "production admission and claim paths both call storage_preflight; storage.py owns the one-GiB reserve parser"
+  },
+  "test_union": {
+    "tests/test_canonical_render_admission.py": {"base": 21, "final": 21, "removed": [], "added": []},
+    "tests/test_direct_render_admission.py": {"base": 11, "final": 11, "removed": [], "added": []},
+    "tests/test_runtime_control2.py": {"base": 15, "final": 15, "removed": [], "added": []},
+    "tests/test_task_storage_estimate.py": {"base": 6, "final": 8, "removed": [], "added": ["test_expected_film_size_and_default_reserve_control_admission", "test_disk_reserve_configuration_is_validated"]}
+  },
+  "marker_delta": {"conflict_markers": 0, "new_skip_markers": 0, "new_xfail_markers": 0}
+}

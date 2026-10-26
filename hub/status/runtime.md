@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T23:51:27Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 1m -->
-# runtime board, 2026-10-25T23:50:00Z
+<!-- main | 2026-10-25T23:56:11Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
+# runtime board, 2026-10-25T23:57:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -520,7 +520,7 @@
 
 | D139a-kit-install | Install reviewed complete child kit | Luna / independent Luna | Actual Farm receiving | merged | Installer2309; independent2314 PASS | All three exact0755; backups and installed controls independently PASS. Normal hubkit bytes match; actual Farm receipt pending. | Independent2314 PASS_INSTALLED | fd83 /60d223 /8215 installed |
 
-| D140-Farm-recipe | Bind complete merged-tuple Farm core | Sol / Luna | Exact receipt authenticity repair | doing | Sol2338; whole path Luna2338 | Final2332 FAIL: forged receipt accepted. Six findings close; exact producer closure repair and independent whole path active. | Independent2332 FAIL | d772 held |
+| D140-Farm-recipe | Bind complete merged-tuple Farm core | Sol / Luna | Exact receipt authenticity repair | review | Sol2338; security2353 | Exact producer receipt closure added;69 privatePASS. Independentsecurity2353 active; actualcut binding and Farm census pending. | Wholepath2338 sourceFAIL retained | 0634ea013 candidate |
 
 | D138-CLI22-receiving | Receive reviewed current CLI recipe | Agent Luna / Runtime later | Actual D140 full-core coverage | gated:D140-core | Agent2251/final2259 PASS | Private f987 eleven source controls PASS. Prefer exact full-core per-ID outcomes; no duplicate22 body or premature row installation. | Independent2259 PASS_SOURCE | f987135c6 private |
 
@@ -528,10 +528,13 @@
 
 | F-final-D136c-inventory | Wire all released final tests | Luna / independent Luna | Existing runner includes all101 | doing | Sol2349; independent2345 FAIL | Runner101 stub passes; actual caller pins stale and traversal accepted. Second Luna attempt failed; bounded whole-route Sol repair active. | Independent2345 FAIL | Private artifact only |
 
-| U1-D141-final | Join frozen Runtime upstream tip | Luna | D141 approved | review | Author2345; independent2350 | Clean join;119PASS. Six paths and15client bytes preserved. Rounded disk witness disclosed; no full-suite credit. | Independent2350 active | Frozen upstreamfa9cd |
-| F-D141-Runtime-full | Compare cut Runtime full and pristine | Luna / service | Final U1 merge and freeze | gated:D141-join | Existing full route; controller next | Full and matching pristine comparator owed. Fix REG only; unchanged own nonREG failures stay visible. | Unchanged runs need receipts | Cut pending |
+| U1-D141-final | Join frozen Runtime upstream tip | Luna | D141 approved | merged | Author2345; review2350 PASS | Actual6a011 tree equals reviewed24107. Targeted119PASS; exact frozenfa9 ancestry. Rounded disk witness disclosed; full/pristine still owed. | Independent2350 PASS | 6a011d58e6 frozen |
+| F-D141-Runtime-full | Compare cut Runtime full and pristine | Luna / service | Final Agent cut receipt and reviewed route | doing | rt-F-D141-runtime-full-prep-2356 | Full and matching pristine comparator owed. Fix REG only; unchanged own nonREG failures stay visible. | Unchanged runs need receipts | Cut pending |
 
-Runtime producer: Normal0ca306dfd3cf4e21976271cc4b2e779b10e025b0 tree37cf exactly reviewed D136c; integrated4PASS1.42s on Agent4c. Priorf103 Actual9082 targeted1571 PASS70.60s, independent2219 PASS; Agent4c source scope only, no full/core/gate credit. Future Agent home41ad and App569 provenance receipts consumed; Main local Agent547e is stale and excluded.
+| F-D141-notes | Document morning cut and known gaps | Luna | One independent notes review | doing | rt-F-D141-notes-author-2357 | Private successors only; SWAP/Element/D77 known gaps and actual own-failure list pending cut comparison. | Review after author | No live install |
+| OPS-D141-three-pins | Restore full suite admission | Manager guarded route | Host CLEAR and fresh guards | merged | bin/recycle a4e016 fe3309 2eca | Three clean superseded pins removed; all active routes and leases clear. Branches/evidence/raw KEEP retained; free5.43GB. | Host2351 CLEAR | No source change |
+
+Runtime producer: D141 frozen6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d, upstreamfa9. Actualtree equals reviewed24107;119 targetedPASS independent2350. Prior0ca diagnostic4PASS retained. Full/pristine/cutgates unrun; no REG0 claim.
 Core venue: D140 Farm. Agent remains source/author lane; old child3e163 retained. No new Agent child/core. Farm complete prerequisite --check-only before ONE merged child, in-child imports, D134 dry controls and exact22-root core.
 Core: D134 measurement8926 PASS190 FAIL180 ERROR173 subtests. XML/full disk witness absent. Own344 split132 setup,0 proved product,212 unknown. Ship-grade core NEVER started; old child built but schema preflight failed.
 Gates: D141 MORNING CUT supersedes prior ship bar. P1/P3/P4/P5 and P2 six rerun at cut; SWAP/Element documented known gaps. ZERO REG versus pristine cut tips is the only fixing gate. Own nonREG failures stay unchanged, visible and listed. No cut ZIP yet.
@@ -549,7 +552,7 @@ Delivery: All D139 joins landed; final D59 cut gets second fresh upstream merge.
 Staging: Main2303 DEFERRED until post ZIP; source held and uninstalled, no more rounds or cleanup. Resolved escalation2250 consumed.
 Store retirement: Main D140 DEFERRED; independent2304 PASS_ASSESSMENT confirms F1-F3 UNAPPLIED/F4-F5 fixed. Child3e163 retained; source uninstalled, no further author or cleanup. Resolved escalation2304 consumed.
 Disk: Fresh5048528896 bytes. Sweep3 removed0; compact packed0 worker dirs and compressed12 logs; test packing still running. Three remaining old V1 trees are dirty/unreferenced, total19MB, retained; no unsafe recycle attempted. Prior five clean pins released with guarded audits; all branches/evidence/registeredpins/testKEEP preserved. Source cap6 above5GB, cap3 above4.6GB; stop4GB.
-live 3 / cap 3 at 4.97 GB; ready-undispatched 0. Sol receipt2338, U1 review2350, Sol runner2349. Hard reasons in both Sol meta files. No heavy body. Full/pristine await freeze and5.2GB admission; host relief peer2350.
+live 4 / cap 6 at5.42GB; ready-undispatched0. Receipt review2353, finalrunner Sol2349, full/pristine prep2356, notes2357. Runtime frozen; actualAgent/App cutheads pending. No heavybody. Both Solhard reasons recorded.
 Safety: All prior refusals held. Manager writes board/briefs/peers and exact handbacks only; Codex workers own product/tests/generated/pins and kit replacement. No direct Git mutation or credential access.
-INBOX consumed through1694569 bytes. D140 Agent1848 control source supplied; old manifests historical only, new Farm tuple receipts required. D100a immediate independent assessment2320 dispatched; stop if B022 intersects. CLI22 private f987 source received as gated D140-core row; no duplicate body. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
+INBOX consumed through1699553 bytes. D140 Agent1848 control source supplied; old manifests historical only, new Farm tuple receipts required. D100a immediate independent assessment2320 dispatched; stop if B022 intersects. CLI22 private f987 source received as gated D140-core row; no duplicate body. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
 Model rule: Luna high180. Sol2338 and2349 each follow second Luna source failure, explicit HARD brief plus quoted hard= metadata. Staging/Store/D141 stopped investigations have no new rounds.

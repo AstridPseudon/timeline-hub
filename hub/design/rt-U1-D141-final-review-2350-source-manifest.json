@@ -1,0 +1,26 @@
+{
+  "head": "24107e83b096264e59f64ed5bd65e00650567f22",
+  "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+  "parents": ["0ca306dfd3cf4e21976271cc4b2e779b10e025b0", "fa9cd5464a8b37b02f971de375e56be846cd69e2"],
+  "merge_base": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+  "exact_incoming_paths": [
+    "runtime_protocol/storage.py",
+    "runtime_protocol/store.py",
+    "tests/test_canonical_render_admission.py",
+    "tests/test_direct_render_admission.py",
+    "tests/test_runtime_control2.py",
+    "tests/test_task_storage_estimate.py"
+  ],
+  "current_files": {
+    "runtime_protocol/storage.py": {"bytes": 523, "sha256": "5f51a2b39630a2bbd9bd76650bc657f314252f01ef75be8688366da4077f849c", "git_blob": "6c5e41982339a0da2b12111974ef0ac89ea1d23f"},
+    "runtime_protocol/store.py": {"bytes": 420274, "sha256": "5f1581df18af5e8cd8283fdf466d9ec24a33597d1a2d4329a446b889023c9912", "git_blob": "8d949acf687f0726fe0b4bb08df49ea548bd95b4"},
+    "tests/test_canonical_render_admission.py": {"bytes": 37905, "sha256": "ff5ba55ae272ea664fa7e49418e8fd4d544a3f6d2573f15cd551f2b4d419c597", "git_blob": "8a782d0a769024516241f32d767280103f2bbd27"},
+    "tests/test_direct_render_admission.py": {"bytes": 26352, "sha256": "51e72aa7b3c0a9633bff850a33b0abecb821ddd9afff845e776f78d339d7e5fe", "git_blob": "05fad9e315c6306033d56fca261b1aea6c2563f1"},
+    "tests/test_runtime_control2.py": {"bytes": 23949, "sha256": "5f7316c0cee614c3d714b47aedd881759d11696a9d33fdaa3eb704135e9ce25a", "git_blob": "c55edd25ef6ffabce3f60aae31481d09a92592f6"},
+    "tests/test_task_storage_estimate.py": {"bytes": 10873, "sha256": "eafaa85c694bc218b371f15927ad84bf5ca68bd1df9eab161d46d21f5f80acab", "git_blob": "f256971b22ffa3cfe10b905e709b7f7400362735"}
+  },
+  "author_tested_tree": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0 plus the six-path D141 patch; all current file SHA-256 values match the author receipt at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-U1-D141-final-join-2345/evidence/source-manifest.json",
+  "targeted_receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-U1-D141-final-join-2345/evidence/targeted.xml", "sha256": "c059937a1d50375b5e8cf39c4ce0ab636dd9e7b8696b2c9e11b7d082001a1653"},
+  "protected_15_byte_exact": true,
+  "protected_15_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-U1-D141-final-review-2350/evidence/predicate-map.json"
+}

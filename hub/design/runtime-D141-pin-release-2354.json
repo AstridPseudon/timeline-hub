@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-25T23:53:20.440600+00:00",
+  "targets": [
+    "agt-pin-a4e016b6",
+    "app-pin-fe3309db",
+    "agt-pin-2eca9a1d"
+  ],
+  "host_audit": "escalations/runtime-full-headroom-2350.resolved.md",
+  "fresh_checks": "clean, no active queue, running worker, test route, lease or suite/env registration references",
+  "keep_release": "D74a and D141 recorded supersession",
+  "retained": "branches, Git objects, evidence and raw test KEEP"
+}
