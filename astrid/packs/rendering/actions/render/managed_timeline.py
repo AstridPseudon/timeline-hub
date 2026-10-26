@@ -294,14 +294,18 @@ def _validate_render_element_clip_types(
     """
 
     from astrid.core.element import catalog as element_catalog
+    from astrid.core.rendering.project_elements import selections
 
     effect_ids = set(element_catalog.list_effect_ids())
+
     aliases = {"text"} if "text-card" in effect_ids else set()
     for effect_id in effect_ids:
         metadata = element_catalog.read_effect_meta(effect_id)
         raw_aliases = metadata.get("clipTypeAliases")
         if isinstance(raw_aliases, list):
             aliases.update(alias for alias in raw_aliases if isinstance(alias, str) and alias)
+    effect_ids.update(row["reference"]["id"] for row in selections(config)
+                      if row["reference"]["kind"] == "effect")
     builtins = {"media", "video", "image", "audio", "effect-layer"}
     known = builtins | effect_ids | aliases
     for index, clip in enumerate(config.get("clips", [])):
@@ -386,6 +390,9 @@ def _validate_pinned_element_references(
     """Check revision-pinned editor refs against Astrid's registry."""
 
     from astrid.core.element import catalog as element_catalog
+    from astrid.core.rendering.project_elements import selection_key, selections
+
+    selected = {selection_key(row["reference"]): row["descriptor"] for row in selections(config)}
 
     descriptors = {
         (str(descriptor.get("kind")), str(descriptor.get("id"))): descriptor
@@ -426,6 +433,8 @@ def _validate_pinned_element_references(
                 recovery="Publish the element before exporting the timeline.",
                 validator="pinned_element_reference",
             )
+        if "packId" in ref and selection_key(ref) in selected:
+            continue
         descriptor = (
             owned_descriptors.get((ref_kind, ref_id, ref_pack))
             if "packId" in ref else descriptors.get((ref_kind, ref_id))
@@ -1138,6 +1147,9 @@ def resolve_managed_render_snapshot(
     raw_registry = stored_registry
     config, stored_registry = _render_compatible_projection(config, stored_registry)
     config = _normalize_pinned_element_references(config)
+    from astrid.core.rendering.project_elements import resolve_project_elements
+
+    config = resolve_project_elements(config, project=project_id, client=client)
     registry = _runtime_snapshot_registry(
         stored_registry,
         project_ref=project_ref,
