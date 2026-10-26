@@ -1,0 +1,39 @@
+{
+  "time": "2026-10-26T13:59:54.922824+00:00",
+  "kind": "manager byte publication of terminal worker SAFE summaries",
+  "worker": "agt-U2-D141ii-integrated-kept53-next",
+  "result": "53 PASS; independent result review active, no REG0 qualification yet",
+  "files": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/proof.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-next-proof.json",
+      "size": 3272,
+      "sha256": "bd92f42e6d155b1261257fb2906e351854e98fd92969b5bde60cb459d8b33d49"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/per-id.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-next-per-id.json",
+      "size": 95998,
+      "sha256": "d4eee4053dffefae4726fcc421587b49f4efbd98fa03d3fe498e8b219f9ff52a"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-next-source-manifest.json",
+      "size": 28667,
+      "sha256": "7c24df3b7f9ac24dfb0c43c34c209985c22c6ebd376b89a5b3b39fef0552f8a8"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-next-validation.md",
+      "size": 2855,
+      "sha256": "28c0f7e8e60b30015dd626639789325df1259708cc50de9c57aff2738b6da699"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-next-handoff.md",
+      "size": 1194,
+      "sha256": "b5bebe7c0cf4b5072c2aa9f27f6cb951eb2cc25f720216f1d912c7e8bdbe871f"
+    }
+  ],
+  "raw": "XML, stdout, stderr and disk trace retained KEEP locally, not transferred"
+}

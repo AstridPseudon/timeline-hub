@@ -1,0 +1,59 @@
+{
+  "counts": {
+    "actual_current_testcases": 53,
+    "actual_current_unique_selectors": 53,
+    "all_original_records": 64,
+    "current_errors": 0,
+    "current_failures": 0,
+    "current_passed": 53,
+    "current_skips": 0,
+    "owner_approved_retirements": 2,
+    "protected_writer_migration_purposes": 15,
+    "qualified_moves_prior_receipt": 9,
+    "retained_current_purposes": 53,
+    "retained_upstream_inverse_purposes": 38
+  },
+  "disk_trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/disk-trace.jsonl",
+  "finite_findings": [
+    "F7 protected writer review environment finding retained: default mypy failed identically on baseline/candidate; no lint-green claim made."
+  ],
+  "force_companion_included": [
+    "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force"
+  ],
+  "historical_preservation": {
+    "all397bad_outcomes_preserved": true,
+    "fullpair_ids": [
+      "24814",
+      "25513"
+    ],
+    "retargeted": false,
+    "source_tuple": {
+      "candidate": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "pristine": "64197afa297f86f1e738238d5e80aff6d33e303a"
+    }
+  },
+  "non_claims": [
+    "No full/core/browser/render/live-journey suite.",
+    "No final build/ZIP or final gate verdict.",
+    "No whole-history backfill or broad lint claim.",
+    "Nine prior qualified moves and historical pair outcomes were not re-executed or retargeted."
+  ],
+  "per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/per-id.json",
+  "reg0_recommendation": true,
+  "reply_shapes": [
+    "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+    "bounded human summary plus C0 JSON envelope/receipt identity",
+    "partial-publication error retaining receipt/idempotency details without retry",
+    "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+    "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+    "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+  ],
+  "retirement_bindings_verified": true,
+  "schema": "timeline.d141ii.integrated-kept53.proof.v1",
+  "scope": "53 retained original purposes: 38 unchanged inverse selectors + 15 protected migrated writer selectors; two installer originals excluded only by owner approval; nine earlier qualified moves retained by prior receipts",
+  "source_bindings_verified": true,
+  "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/source-manifest.json",
+  "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml",
+  "test_run_note": "Initial exploratory invocation omitted ASTRID_RUNTIME_CHECKOUT and produced 48 passed, 4 failed, 1 error; it was not the acceptance invocation. Corrected prescribed environment run is the retained targeted.xml and passed 53/53.",
+  "verdict": "PASS"
+}

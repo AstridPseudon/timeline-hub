@@ -1,0 +1,608 @@
+{
+  "agent_binding": {
+    "integration_worktree": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "diff_check_exit": 0,
+      "origin_fetch": "https://github.com/peteromallet/astrid-agent",
+      "origin_push": "https://github.com/peteromallet/astrid-agent",
+      "path": "/home/user/work/agent",
+      "status_porcelain": "",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3"
+    },
+    "proof_worktree": {
+      "branch": "tl/agt-U2-D141ii-integrated-kept53-next",
+      "clean": true,
+      "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "diff_check_exit": 0,
+      "origin_fetch": "https://github.com/peteromallet/astrid-agent",
+      "origin_push": "https://github.com/peteromallet/astrid-agent",
+      "path": "/home/user/work/wt/agt-U2-D141ii-integrated-kept53-next",
+      "status_porcelain": "",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3"
+    },
+    "required_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "required_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "source_branch": "tl/integration"
+  },
+  "captured_at_utc": "2026-10-26T13:57:57.981713+00:00",
+  "disk_trace": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/disk-trace.jsonl",
+    "sha256": {
+      "bytes": 10968,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/disk-trace.jsonl",
+      "sha256": "e52e75a4197e8887a9231572f63753e3b27d5ba8cd17131e1520d4bdeaf5b1df"
+    },
+    "summary": {
+      "below_stop_bytes": false,
+      "first_timestamp_utc": "2026-10-26T13:53:48.074Z",
+      "interval_seconds_target": 5,
+      "last_timestamp_utc": "2026-10-26T13:58:08.801Z",
+      "maximum_available_bytes": 5958782976,
+      "minimum_available_bytes": 5956202496,
+      "samples": 53,
+      "stop_bytes": 4000000000
+    }
+  },
+  "frozen_r4_refs": [
+    {
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "name": "agent_r4_candidate",
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+    },
+    {
+      "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+      "name": "runtime_r4_candidate",
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+      "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+    },
+    {
+      "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+      "name": "app_r4_candidate",
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+      "repo": "/home/user/banodoco/reigh-app",
+      "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+    },
+    {
+      "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+      "name": "composition_r4_candidate",
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+      "repo": "/home/user/peteromallet/timeline-composition",
+      "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+    }
+  ],
+  "historical_accounting_inputs": {
+    "definitive_historical_table": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-definitive-historical-pair-table-publication-1344.json",
+    "fullpair_counts": {
+      "aggregate_null_id_records_total": 346,
+      "classification_counts_concrete": {
+        "CUT_PASS_NOT_REG": 8991,
+        "FAILS_BOTH": 19,
+        "N_A": 378,
+        "PRISTINE_ONLY": 64,
+        "UNKNOWN": 0
+      },
+      "classification_counts_cut_nonpass": {
+        "FAILS_BOTH": 19,
+        "N_A": 378,
+        "UNKNOWN": 0
+      },
+      "cut": {
+        "aggregate_null_id_records": 173,
+        "concrete_elements": 9388,
+        "concrete_status_counts": {
+          "ERROR": 196,
+          "FAIL": 201,
+          "PASS": 8991
+        },
+        "suite_attributes": {
+          "errors": "196",
+          "failures": "201",
+          "hostname": "vm",
+          "name": "pytest",
+          "skipped": "0",
+          "tests": "9561",
+          "time": "1525.081",
+          "timestamp": "2026-10-26T10:04:44.155178+00:00"
+        }
+      },
+      "d134_cluster_counts_on_cut_nonpass": {
+        "UNMAPPED": 80,
+        "clip_mirror_fixture_guard": 3,
+        "detached_fixture_preflight": 4,
+        "fixture_call_missing_required_args": 2,
+        "fixture_missing_client": 1,
+        "legacy_archive_shape_expectation": 1,
+        "managed_edge_fixture": 102,
+        "projection_fixture_missing_item": 9,
+        "retired_save_route_expectation": 1,
+        "stale_source_pin_or_hash_expectation": 11,
+        "unresolved_causal_boundary": 181,
+        "v2_status_label_expectation": 2
+      },
+      "farm": {
+        "current_reg_candidates": 0,
+        "env_sensitive_reg_candidates": 0,
+        "farm_child_needed": false,
+        "reason": "No current fail-cut/pass-pristine concrete IDs."
+      },
+      "historical_root_cluster_counts_on_fails_both": {
+        "root-002": 2,
+        "root-040": 2,
+        "root-043": 15
+      },
+      "membership": {
+        "cut_concrete_unique_ids": 9388,
+        "cut_only_concrete_ids": 6370,
+        "duplicate_cut_ids": 0,
+        "duplicate_pristine_ids": 0,
+        "matched_concrete_ids": 3018,
+        "no_double_counting": true,
+        "pristine_concrete_unique_ids": 3082,
+        "pristine_only_concrete_ids": 64
+      },
+      "nested_count_equations": {
+        "cut": {
+          "aggregate_null_identity": 173,
+          "concrete": 9388,
+          "declared": 9561
+        },
+        "pristine": {
+          "aggregate_null_identity": 173,
+          "concrete": 3082,
+          "declared": 3255
+        }
+      },
+      "pristine": {
+        "aggregate_null_id_records": 173,
+        "concrete_elements": 3082,
+        "concrete_status_counts": {
+          "ERROR": 15,
+          "FAIL": 20,
+          "PASS": 3047
+        },
+        "suite_attributes": {
+          "errors": "15",
+          "failures": "20",
+          "hostname": "vm",
+          "name": "pytest",
+          "skipped": "0",
+          "tests": "3255",
+          "time": "391.013",
+          "timestamp": "2026-10-26T10:30:44.759587+00:00"
+        }
+      },
+      "schema": "timeline.f.d141l.fullpair.counts.v2",
+      "source_accounting": {
+        "cut_bad_outcomes": 397,
+        "equations": [
+          "9561 = 9388 + 173",
+          "3255 = 3082 + 173",
+          "397 = 201 + 196"
+        ],
+        "five_failures_still_accounted": 5,
+        "five_source_backed_na": 5,
+        "five_unknown_before": 5,
+        "pristine_only_behavior_unresolved": 64,
+        "pristine_only_mapped": 64
+      },
+      "source_authority": {
+        "cut_service_id": "agent-agent-core-full-1026100428-24814",
+        "cut_xml_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+        "pristine_service_id": "agent-agent-core-full-1026103030-25513",
+        "pristine_xml_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+      },
+      "source_file_accounting": {
+        "cut_source_files": 440,
+        "cut_source_files_not_in_pristine": 300,
+        "pristine_source_files": 177
+      },
+      "status_pairs_matched": {
+        "ERROR/ERROR": 1,
+        "ERROR/FAIL": 1,
+        "FAIL/FAIL": 17,
+        "PASS/ERROR": 14,
+        "PASS/FAIL": 2,
+        "PASS/PASS": 2983
+      }
+    },
+    "fullpair_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-per-id.json",
+    "independent_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141l-source-accounting-independent-publication-1104.json",
+    "nine_move_publications": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+    ],
+    "no_historical_receipt_retargeting": true,
+    "original_receipts_preserved": [
+      {
+        "preservation": "UNCHANGED_HISTORICAL_INPUT_NOT_RETARGETED",
+        "receipt_hash": {
+          "bytes": 108,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agent-agent-core-full-1026100428-24814",
+          "sha256": "240265d736e0e7765542a22dd63dbd2eb5427ecdf97798af34df8bb413679564"
+        },
+        "receipt_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agent-agent-core-full-1026100428-24814",
+        "service_id": "agent-agent-core-full-1026100428-24814",
+        "source_ref": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "source_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      {
+        "preservation": "UNCHANGED_HISTORICAL_INPUT_NOT_RETARGETED",
+        "receipt_hash": {
+          "bytes": 108,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agent-agent-core-full-1026103030-25513",
+          "sha256": "aa97d596c60e16a70e7c74156e4201d7f45a4eb9499e587023008e1a80248a32"
+        },
+        "receipt_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/test-agent-agent-core-full-1026103030-25513",
+        "service_id": "agent-agent-core-full-1026103030-25513",
+        "source_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_tree": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+      }
+    ]
+  },
+  "input_hashes": [
+    {
+      "bytes": 80928,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+      "sha256": "3d125d7c02169644bdc8340f93047974808c7ce798d1b0152c974cc7d287a121"
+    },
+    {
+      "bytes": 1858,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/disposition.json",
+      "sha256": "30476dc4863b568ddce79157edd00eb88811924b28beb0c75ae1a57791f09a7e"
+    },
+    {
+      "bytes": 7918,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/validation.md",
+      "sha256": "45183d52a269d4db441eaee711f0a4b881763e48c701910cc8985fa58da01779"
+    },
+    {
+      "bytes": 3148,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/per-id.json",
+      "sha256": "8bbf13b42359d133da9f2e04164e6c9f3ab23524c05173bbfb432c3dbbacc53d"
+    },
+    {
+      "bytes": 2210,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/retirement-ledger-entries.md",
+      "sha256": "5bb9882552fb384a3b1ae67387b5b3c21a9e761725a44f4e01f8a93c861c4b5d"
+    },
+    {
+      "bytes": 777,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/targeted.xml",
+      "sha256": "c9509aa82a4d2dfa3540380e665212882a67733e1338202037b696b5680acdbe"
+    },
+    {
+      "bytes": 3242,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/validation.md",
+      "sha256": "429aca3b2773a02db143915a4ced32895ad4001a2442ec1a0747aeffee9b87b8"
+    },
+    {
+      "bytes": 7681,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/final-selectors.json",
+      "sha256": "0ed23f5c9b9cb2aee276312d8f144524654b4550bcf48a6df09d3ad9f7efe295"
+    },
+    {
+      "bytes": 8547,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+      "sha256": "ae3aed23704bb1352fe7a77b370eea1ff3c1e0b78f1eb4430518b39f2073b54a"
+    },
+    {
+      "bytes": 1517,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/disposition.json",
+      "sha256": "a62a980f1ffbac899313bad33d95d5fa562b6b16dea20273cdfdb6113f464f2c"
+    },
+    {
+      "bytes": 2478,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+      "sha256": "b3eed8591ddb611c18abad079e77beb5e0c42cfd6004014d405e4ff2552af0cb"
+    },
+    {
+      "bytes": 3267,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/validation.md",
+      "sha256": "0d8eaa85ce03171e907d30849ab2a5c7628b1ed013a0c9d9a5cfd61a4e9748f9"
+    },
+    {
+      "bytes": 1349,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-owner-relay-1257.md",
+      "sha256": "fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22"
+    },
+    {
+      "bytes": 1048,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+      "sha256": "2f844fc0fdd8286d1743bfed0a114f0ebe255411f735ec602b39da7d6a9b442a"
+    },
+    {
+      "bytes": 2254,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json",
+      "sha256": "f9d15f89dfcb57eee9aa21d403a8c9b69d8ad517baa7adb1835cc89acff15f4b"
+    },
+    {
+      "bytes": 4340,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json",
+      "sha256": "7d79272e4607cff876bc1ce949b78093ce14d15ec288894f8dd8a76c6a89d3dd"
+    },
+    {
+      "bytes": 13340,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-preserve-writers18-review-next-map.json",
+      "sha256": "fe01a0d44d938aa51d7d0106421f4dce951119e7edd130d57b69e05a50db11ad"
+    },
+    {
+      "bytes": 28599,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+      "sha256": "bbceef229cb9b8214111833014f46ce1111b46aba3ac619f8031ee47c770faab"
+    },
+    {
+      "bytes": 3015,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141l-source-accounting-independent-publication-1104.json",
+      "sha256": "55bb2b688485f9188f478776bd9246ee1826d5fc169ff5550cad3b4478c39383"
+    },
+    {
+      "bytes": 2829,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-definitive-historical-pair-table-publication-1344.json",
+      "sha256": "7a9e654715cadf4cef72ce97563a960e0c40b46c53d3d4838a7062082f0a8276"
+    },
+    {
+      "bytes": 1684,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141l-fullpair-terminal-publication-1041.json",
+      "sha256": "a54e79088299afcafab7bef23f7d899eb4c0f33f2208a214cb1170ecd03ec64b"
+    },
+    {
+      "bytes": 3560,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-counts.json",
+      "sha256": "456d792436acb0a711bd52d438de0359ada9afa83575a97b5c53c8b7b95524a5"
+    },
+    {
+      "bytes": 13232,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-join.json",
+      "sha256": "aa8a647de3392d3ffbe0281db30b93d101a8ce118cac5c25901a5591fc0e2e21"
+    },
+    {
+      "bytes": 1035,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-review.json",
+      "sha256": "e2666b87eeaa83311b73275c1bc9fda45cae7fba7e4067836ebd0d4f6cb69ca8"
+    },
+    {
+      "bytes": 6751,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-source-manifest.json",
+      "sha256": "db348e979fd9d94300ed03d52787d755812bcce6ffdd3a114ba91be67d933680"
+    },
+    {
+      "bytes": 30476,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-fullpair-source-accounting-return-1051-source-identity-map.json",
+      "sha256": "475869ec6e97a883ceee9ffce8717423bdbd816932bee27240b5c0b04b760cca"
+    }
+  ],
+  "missing_input_paths": [],
+  "post_snapshot": {
+    "captured_at": "2026-10-26T13:57:57.349184+00:00",
+    "frozen_refs": [
+      {
+        "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+        "name": "agent_r4_candidate",
+        "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "repo": "/home/user/peteromallet/astrid-agent",
+        "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+      },
+      {
+        "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+        "name": "runtime_r4_candidate",
+        "ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+        "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+        "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+      },
+      {
+        "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+        "name": "app_r4_candidate",
+        "ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+        "repo": "/home/user/banodoco/reigh-app",
+        "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+      },
+      {
+        "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+        "name": "composition_r4_candidate",
+        "ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+        "repo": "/home/user/peteromallet/timeline-composition",
+        "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+      }
+    ],
+    "input_hashes": [
+      {
+        "bytes": 80928,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "sha256": "3d125d7c02169644bdc8340f93047974808c7ce798d1b0152c974cc7d287a121"
+      },
+      {
+        "bytes": 1858,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/disposition.json",
+        "sha256": "30476dc4863b568ddce79157edd00eb88811924b28beb0c75ae1a57791f09a7e"
+      },
+      {
+        "bytes": 7918,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/validation.md",
+        "sha256": "45183d52a269d4db441eaee711f0a4b881763e48c701910cc8985fa58da01779"
+      },
+      {
+        "bytes": 3148,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/per-id.json",
+        "sha256": "8bbf13b42359d133da9f2e04164e6c9f3ab23524c05173bbfb432c3dbbacc53d"
+      },
+      {
+        "bytes": 2210,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/retirement-ledger-entries.md",
+        "sha256": "5bb9882552fb384a3b1ae67387b5b3c21a9e761725a44f4e01f8a93c861c4b5d"
+      },
+      {
+        "bytes": 7681,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/final-selectors.json",
+        "sha256": "0ed23f5c9b9cb2aee276312d8f144524654b4550bcf48a6df09d3ad9f7efe295"
+      },
+      {
+        "bytes": 8547,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "sha256": "ae3aed23704bb1352fe7a77b370eea1ff3c1e0b78f1eb4430518b39f2073b54a"
+      },
+      {
+        "bytes": 2478,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "sha256": "b3eed8591ddb611c18abad079e77beb5e0c42cfd6004014d405e4ff2552af0cb"
+      },
+      {
+        "bytes": 3015,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141l-source-accounting-independent-publication-1104.json",
+        "sha256": "55bb2b688485f9188f478776bd9246ee1826d5fc169ff5550cad3b4478c39383"
+      },
+      {
+        "bytes": 2254,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json",
+        "sha256": "f9d15f89dfcb57eee9aa21d403a8c9b69d8ad517baa7adb1835cc89acff15f4b"
+      },
+      {
+        "bytes": 4340,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json",
+        "sha256": "7d79272e4607cff876bc1ce949b78093ce14d15ec288894f8dd8a76c6a89d3dd"
+      },
+      {
+        "bytes": 1349,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-owner-relay-1257.md",
+        "sha256": "fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22"
+      },
+      {
+        "bytes": 1048,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+        "sha256": "2f844fc0fdd8286d1743bfed0a114f0ebe255411f735ec602b39da7d6a9b442a"
+      }
+    ],
+    "missing_inputs": [],
+    "phase": "after",
+    "repos": [
+      {
+        "branch": "tl/agt-U2-D141ii-integrated-kept53-next",
+        "clean": true,
+        "commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+        "diff_check_exit": 0,
+        "origin_fetch": "https://github.com/peteromallet/astrid-agent",
+        "origin_push": "https://github.com/peteromallet/astrid-agent",
+        "path": "/home/user/work/wt/agt-U2-D141ii-integrated-kept53-next",
+        "status_porcelain": "",
+        "tree": "83b84c79941917fde535ee3ddba5533a776cace3"
+      },
+      {
+        "branch": "tl/integration",
+        "clean": true,
+        "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "diff_check_exit": 0,
+        "origin_fetch": "https://github.com/banodoco/banodoco-workspace-runtime",
+        "origin_push": "https://github.com/banodoco/banodoco-workspace-runtime",
+        "path": "/home/user/work/runtime",
+        "status_porcelain": "",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      }
+    ],
+    "schema": "timeline.d141ii.source-snapshot.v1"
+  },
+  "pre_snapshot": "/tmp/w-dcd64c608e/d141ii-pre.json",
+  "pre_snapshot_note": "The pre-run scratch snapshot recorded the brief shorthand filename agent-D141l-fullpair-source-accounting-publication-1058.json as absent; the actual existing publication agent-D141l-source-accounting-publication-1058.json was bound and hashed in input_hashes. No source was fabricated.",
+  "protected_review_bindings": {
+    "installer2_owner_approval": {
+      "date": "2026-10-26",
+      "exact_retirement_count": 2,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+      "quote": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+      "sha256": "2f844fc0fdd8286d1743bfed0a114f0ebe255411f735ec602b39da7d6a9b442a"
+    },
+    "inverse38_approved_cases": {
+      "all_prior_results_passed": true,
+      "count": 38,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+      "sha256": "3d125d7c02169644bdc8340f93047974808c7ce798d1b0152c974cc7d287a121"
+    },
+    "writer_review": {
+      "environment_finding": "FAIL_ENVIRONMENT_MYPY",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+      "reviewed_commit": "66720e11e8daa26a4e192a83d592cbe5caafc109",
+      "reviewed_tree": "a302a0bca0cc941dafd0122bdbdc38430ad7c33d",
+      "sha256": "b3eed8591ddb611c18abad079e77beb5e0c42cfd6004014d405e4ff2552af0cb",
+      "verdict": "PASS"
+    }
+  },
+  "runtime_binding": {
+    "checkout_env": "/home/user/work/runtime",
+    "required_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "required_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "worktree": {
+      "branch": "tl/integration",
+      "clean": true,
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "diff_check_exit": 0,
+      "origin_fetch": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "origin_push": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "path": "/home/user/work/runtime",
+      "status_porcelain": "",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "schema": "timeline.d141ii.integrated-kept53.source-manifest.v1",
+  "scope_controls": {
+    "force_or_authenticated_undo_change": false,
+    "full_or_live_suite": false,
+    "git_internal_write": false,
+    "hub_operation": false,
+    "package_install": false,
+    "product_and_tests_read_only": true,
+    "source_repair": false
+  },
+  "targeted_run": {
+    "args": [
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-n",
+      "3",
+      "--timeout=45",
+      "--junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml",
+      "--basetemp=/tmp/w-dcd64c608e/d141ii/basetemp-correct",
+      "-o",
+      "cache_dir=/tmp/w-dcd64c608e/d141ii/cache-correct"
+    ],
+    "command_executable": "/home/user/work/venv-agent/bin/python",
+    "env": {
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/runtime",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next:/home/user/work/runtime"
+    },
+    "junit_attributes": {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "vm",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "53",
+      "time": "9.403",
+      "timestamp": "2026-10-26T13:55:31.475192+00:00"
+    },
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml",
+    "junit_sha256": {
+      "bytes": 8548,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml",
+      "sha256": "dbd2a15bc22db9fea1bab70ae2ef87e84a6dec042718177001e93dc9d9de2e74"
+    },
+    "selector_conservation": {
+      "missing_xml_cases": [],
+      "selector_count": 53,
+      "selectors_all_present_in_xml": true,
+      "unique_selector_count": 53,
+      "xml_testcase_count": 53,
+      "xml_unique_count": 53
+    },
+    "selector_count": 53,
+    "selector_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/final-selectors.json",
+    "unique_selector_count": 53
+  },
+  "verdict_scope": "independent read-only same-kind targeted proof and accounting only; no build/ZIP/final gate verdict"
+}

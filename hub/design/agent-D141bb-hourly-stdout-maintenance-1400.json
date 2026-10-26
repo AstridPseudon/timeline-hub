@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-26T14:00:32.017579+00:00",
+  "free_before": 5824458752,
+  "free_after": 5825097728,
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1238Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1238Z.log.xz",
+      "decoded_sha256": "ae6bce1c089cc56d2ed38ab98faee721ecc2e46018b15264c965e870f02ba4a5",
+      "original_bytes": 806311,
+      "compressed_bytes": 166624,
+      "mode": "0o644"
+    }
+  ],
+  "skipped": [],
+  "saved_bytes": 639687,
+  "scope": "D141bb hourly guarded lossless closed manager stdout only; single-link, exit older15min, no KEEP, no live FD, no active board/suite/env/lease reference; raw workers/tests and active manager log untouched"
+}
