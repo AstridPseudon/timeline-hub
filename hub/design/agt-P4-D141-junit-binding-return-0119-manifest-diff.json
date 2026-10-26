@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c normal manifest/runmanifest/argv/JUnit custody correction",
+  "old_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-original-final.manifest",
+    "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f"
+  },
+  "new_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/inputs/p4-d141c-junit-bound.manifest",
+    "sha256": "95f5ce93705a50cff41559d5a23cd1c43fd9d3611f269bb3acb197ed942a4ab3"
+  },
+  "changed_fields": [
+    {
+      "field": "junit_paths",
+      "before": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml",
+      "after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c.xml",
+      "reason": "Bind the normal manifest to the separately durable JUnit destination used by the corrected actual argv."
+    }
+  ],
+  "unchanged_fields": [
+    "format", "batch_id", "scope", "scope_label", "selector_manifest", "timeout_seconds",
+    "profile_mode", "P4_LIVE_PROFILE_DIR_MUST_BE_UNSET", "agent_sha", "agent_tree", "agent_parents",
+    "agent_path", "runtime_sha", "runtime_tree", "runtime_parents", "runtime_path", "app_sha",
+    "app_tree", "app_parents", "app_path", "composition_sha", "composition_tree", "composition_parents",
+    "composition_path", "python", "node", "profile", "schema", "node_version", "profile_lock_sha",
+    "profile_archive_sha", "profile_registry_sha", "composition_version", "client_version", "schema_digest",
+    "runtime_lock_files", "original_p4_test_hash", "service_versions"
+  ],
+  "scope_justification": "The only manifest field change is the required operational JUnit path. All frozen pins, origins, source guards, environment/profile values, selector manifest, timeout, and version fields remain byte-identical. The old receipt is preserved and is not relabeled."
+}

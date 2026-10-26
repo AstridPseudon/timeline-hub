@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c independent read-only whole-path assessment",
+  "base": "tl/agt-P4-D141-body-continuation-0105",
+  "verdict": "ACTUAL_BODY_PASS_CUSTODY_FAIL",
+  "actual_body": {
+    "service_id": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+    "request_id": "p4-d141c-normal",
+    "central_request_sha256": "20d18d526ebe3bc848eb82659025636c41bf810b48dc5de2d4c590b9baf58b97",
+    "summary_sha256": "9376311d8eb310841c1c11ea68c5db328a8460029cc53b54a12a2bd244ac9aa1",
+    "status": "pass",
+    "exit_code": 0,
+    "preflight_exit": 0,
+    "body_exit": 0,
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+    "junit_sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+    "counts": {"tests": 3, "passed": 3, "failures": 0, "errors": 0, "skipped": 0},
+    "junit_time_seconds": 23.668
+  },
+  "findings": [
+    {
+      "id": "P4-D141c-W001",
+      "status": "open",
+      "severity": "custody",
+      "title": "Manifest and runmanifest JUnit identity is stale",
+      "fact": "The immutable input manifest and its byte-identical materialization contain junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml; the runmanifest repeats it. That path is absent. The actual shell command writes --junitxml to the 0055/body-evidence path, which exists with the recorded SHA-256.",
+      "scope": "receipt discoverability and custody only",
+      "effect": "A consumer following the manifest field cannot locate the actual XML. The central request, actual command, runmanifest, body log, exit files, and actual XML still bind the genuine 3/3 result.",
+      "evidence": {
+        "input_manifest": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-original-final.manifest", "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f"},
+        "materialized_manifest": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.manifest", "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f"},
+        "runmanifest": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.runmanifest", "sha256": "86595e66a6739d9d6c9cdaa5fe583c4b7eff50a5f2ba5aec4e620df91104dc71"},
+        "actual_command": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.command", "sha256": "ad2168fde0f0c928a975e2f2898a824031ce434ec1ecd47db97f16932f32f352"},
+        "missing_manifest_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml",
+        "actual_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml"
+      }
+    },
+    {
+      "id": "P4-D141c-W002",
+      "status": "open",
+      "severity": "evidence_lifetime",
+      "title": "Final packet depends on prior-worker and private raw-artifact lifetime",
+      "fact": "The manifest selector_manifest still points into 0047, while the 0055 packet has an identical selector copy (SHA-256 59a41669300bdd97fbe7925a36958534abb7a5d7e793dd4ee26fb8c197668ac4). The actual XML, body log, command, runmanifest, central summary, snapshot, ext, and exits remain in private 0055/central-service paths; the result-review source manifest explicitly says raw originals were retained private and not copied into the review.",
+      "effect": "Current hashes and files are sufficient for this assessment, but the final App receiver has no receiver-owned artifact bundle or explicit retention/expiry fact. Recycling 0047 or 0055 would leave the manifest's historical references or the actual XML undiscoverable even though summary hashes remain.",
+      "missing_fact": "Whether the orchestrator/App proof receiver guarantees retention of the exact 0055 and central-service paths, or has made a durable receiver-owned copy, is not recorded.",
+      "evidence": {
+        "selector_old_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.selectors.tsv",
+        "selector_copy": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-final.selectors.tsv",
+        "actual_service_summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/summary",
+        "actual_raw_private": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence"
+      }
+    },
+    {
+      "id": "P4-D141c-W003",
+      "status": "bounded_missing_fact",
+      "severity": "provenance",
+      "title": "Body-process import origins are not directly receipted",
+      "fact": "The strict launcher preflight checks the pinned Agent/Runtime paths, lock files, schema, profile, composition archive, registry hash, versions, and imports; the actual preflight exit is 0. The actual command then runs with the same pinned PYTHONPATH/environment. Source receipts, central snap, and all four clean checkouts agree on Agent tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a and the frozen tuple.",
+      "effect": "No source-origin mismatch was found. However, the body log is only pytest output and the runmanifest records versions/hashes, not the body process's resolved module __file__ origins. The source binding is therefore established by launcher guards plus exact source comparisons, not by direct body import telemetry.",
+      "not_a_product_defect": true,
+      "evidence": {
+        "launcher_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+        "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+        "sources_before_sha256": "531ef02ca2c8bc498aff33e1e6b8c583840b207706092db78f99b81e9a318366",
+        "sources_after_sha256": "91b19855c11ec69f9aeefa61147f851ad94e2b545e20a5db250f45f6b8543f74",
+        "sources_final_sha256": "0660f1e7a79d6e274f75796aa4e647a2165cb21d429ea7dcf9862a28f98ece84",
+        "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "app_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+        "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      }
+    },
+    {
+      "id": "P4-D141c-W004",
+      "status": "open",
+      "severity": "receiver_binding",
+      "title": "App receiver has no receiver-owned final P4 custody receipt",
+      "fact": "The App D141 source-binding publication is explicitly source-only/no body, and the 0119 peer handoff says App owns the cumulative P4 verdict while holding it after the custody FAIL. It carries the actual service/JUnit facts in prose, but does not contain a machine-readable receiver-owned binding for the corrected JUnit path and retention state.",
+      "effect": "The App can distinguish actual 3/3 PASS from cumulative qualification hold only by consuming the cross-worker handoff and private paths; it cannot resolve a canonical receiver-owned JUnit artifact from the current source-binding publication alone.",
+      "evidence": {
+        "app_source_binding": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-final-journey-binding-publication-0052.json",
+        "app_source_binding_sha256": "6c3178b412dfccb33ae0f596b1a9d60744979cda23a2576f732e08519a74e053",
+        "custody_handoff": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-agent-lead-app-runtime-20261026T0119Z-D141c-P4-custody-FAIL-junit-binding.md",
+        "custody_handoff_sha256": "1c2c93a58ba40d21538daff01a5d0bef02a3f9e4ec34ccb0e123472110e04e72"
+      }
+    }
+  ],
+  "not_findings": [
+    "No source-version mismatch: the central Agent snapshot tree, pinned launcher checkout, source before/after/final receipts, and four clean checkouts agree.",
+    "No artifact reuse of the historical 1347 failure as a PASS: 1347 remains exit 1 with zero selectors and no JUnit; 10086 is distinct and authentic.",
+    "No reuse of D97 as D141 body evidence: D97 is comparison context only; no D97 body was rerun.",
+    "No product, launcher, guard, schema, test, registry, C0 contract, or environment defect inferred."
+  ]
+}
