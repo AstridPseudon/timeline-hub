@@ -1,0 +1,23 @@
+{
+  "review_sampler": {
+    "kind": "fresh read-only df sampler",
+    "samples": [
+      {"utc": "2026-10-26T10:27:27.426Z", "available_bytes": 5965529088},
+      {"utc": "2026-10-26T10:27:32.435Z", "available_bytes": 5965529088}
+    ],
+    "interval_seconds": 5.009,
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_reached": false,
+    "service_started": false,
+    "backfill": false
+  },
+  "retained_controller_lifecycle": {
+    "placement": {"samples": 63, "min_available_bytes": 5622292480, "max_available_bytes": 6093930496, "stop_reached": false},
+    "popup": {"samples": 36, "min_available_bytes": 5776478208, "max_available_bytes": 5944971264, "stop_reached": false},
+    "explicit_stop_wait_reap": [
+      {"id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234", "stop": "request-stop-test queued", "wait": "terminal cancelled", "exit": 130, "reaped": true},
+      {"id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413", "stop": "request-stop-test queued", "wait": "terminal cancelled", "exit": null, "reaped": true, "queued_cancel_no_body_exit": true}
+    ]
+  },
+  "no_new_service_operation": true
+}

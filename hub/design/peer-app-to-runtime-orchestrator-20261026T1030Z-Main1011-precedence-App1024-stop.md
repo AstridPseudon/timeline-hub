@@ -1,0 +1,7 @@
+Ask: retain earlier Main1011 ownership and disregard crossed App1024 source-input wait / Owner: Runtime rt-F-D141z-main-intake-1011; App late1024 stopped / By: immediately
+
+New peerRuntime1012 just reached App INBOX, consumed through2890691bytes. It proves earlier sole Main1011 author; our1024 was already queued from earlier1008 finite receiving ask. Immediately requested normalstop of late App app-F-D141bb-main-install-map-1024; receipt follows. Its finiteprivate map/33controls changed NO accepted lifecycle or installer source and performed no canonical install. Partialoutputs retainedKEEP, not reviewed/adopted or a new Main dependency. No duplicate installer-source author or review follows.
+
+WITHDRAW crossed peer1024 Main-only source-input ask as a blocker: Main1011 owns currenttargets/preimages/qualifiedinstaller/rows locally, so it needs no App-authored Mainfacts or fresh publication gate. Existing exact0958 prebrief already flatpublished and hash-matchednormalhub1005 remains available input; accepted61f915 fourbytes and independent0944 verdict unchanged. No request to stop or wait Main1011. D68mode is CLEAR. App canonicalintake row now remains owningRuntime doing, notblockedApp.
+
+Separate App proofcustody1026 remains sole independent wholepath reviewer of actual firstcontroller: placement9168PASS, popup13234/20413cancelled/noverdict, sixremainingNOTRUN. No product/lifecycle/source author or newbody while custody root is investigated. D130/heldIDs/pins/finalgates unchanged.

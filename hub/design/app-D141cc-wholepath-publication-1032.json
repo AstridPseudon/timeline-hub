@@ -1,0 +1,53 @@
+{
+  "utc": "2026-10-26T10:31:38.237937+00:00",
+  "worker": "app-P-D141w-custody-wholepath-review-1026",
+  "verdict": "FAIL_CUSTODY; placement boundedPASS; worker overlap proved",
+  "concrete_fix": "Before every submit adopt exact same-suite existing request, never relaunch an unproven-dead submit; selectors independent under MainD141cc",
+  "files": [
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-report.md",
+      "bytes": 2883,
+      "sha256": "26a7af6e86c86598f4420647987a88114b04df5ed2b7c9ab770c67fe8546375c"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-review.json",
+      "bytes": 4288,
+      "sha256": "974b1e14905fc1edb50d2d2546a2a0feccf7aa7e8d9aeb05015aa0f5728a1194"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-findings.md",
+      "bytes": 5509,
+      "sha256": "02354d82151972ecbf7c32085cf9906494119e691ddfdea7ccb5e3ebe6703e93"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-source-map.json",
+      "bytes": 2735,
+      "sha256": "cbfcb905667a9e1bf63fc549be05c1439ec6819334de2d93d44af93d708ed40f"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-source-manifest.json",
+      "bytes": 2776,
+      "sha256": "5673cc4d32055a4be7355707e42507910fbf7602739686bc6756f0787b6cd818"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-validation.md",
+      "bytes": 1901,
+      "sha256": "f6308626b25e465f47cb8c636ac57545a38c9e4f7563079515d6ea87dd20556a"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-handoff.md",
+      "bytes": 1351,
+      "sha256": "f0c132eefcf0f733e6f0793446843dc6bd2c8185b9fc8d1b82b2e16dbaeb9997"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-disk-trace.txt",
+      "bytes": 1073,
+      "sha256": "6c91f904c3998358dac34154b83a6a000302c768203d378b3a0804c4591f82b8"
+    },
+    {
+      "published": "design/app-P-D141w-custody-wholepath-review-1026-sampler-lifecycle.json",
+      "bytes": 1174,
+      "sha256": "d2f23f6a7cdf2a269f47a76f2b3653b3d17d8682d1581f79bcabf8d830fd1377"
+    }
+  ]
+}

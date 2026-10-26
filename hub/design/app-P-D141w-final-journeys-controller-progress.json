@@ -1,0 +1,16 @@
+{
+  "task": "app-P-D141w-final-journeys-controller",
+  "finished_utc": "2026-10-26T10:22:30Z",
+  "status": "HALTED_FINITE_CUSTODY_GAP",
+  "selectors": [
+    {"selector":"p2-automatic-child-placement","status":"PASS","actual_id":"app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168","preflight_id":"app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-preflight-1026101609-6758","terminal":"pass"},
+    {"selector":"p2-popup-add","status":"FAIL","actual_ids":["app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234","app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"],"terminal":"cancelled","reason":"submit artifact custody gap exposed two normal request IDs; both stopped and waited; no body credit"},
+    {"selector":"p2-parent-move","status":"NOTRUN"},
+    {"selector":"p2-transition-none-single","status":"NOTRUN"},
+    {"selector":"p2-transition-none-bulk","status":"NOTRUN"},
+    {"selector":"p2-register-asset","status":"NOTRUN"},
+    {"selector":"p1","status":"NOTRUN"},
+    {"selector":"p3","status":"NOTRUN"}
+  ],
+  "halt_reason": "Shared reviewed submit-owner custody boundary failed on popup-add resume; remaining selectors were not dispatched."
+}

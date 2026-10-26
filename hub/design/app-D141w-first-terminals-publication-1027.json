@@ -1,0 +1,49 @@
+{
+  "utc": "2026-10-26T10:26:54.509751+00:00",
+  "worker": "app-P-D141w-final-journeys-controller",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/controller-receipt.json",
+      "published": "design/app-P-D141w-final-journeys-controller-controller-receipt.json",
+      "bytes": 1178,
+      "sha256": "cbfa2078a0fc0b080fc08db14035d0005fa02be8c467544d02a2e6927ffb1da3"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/results.json",
+      "published": "design/app-P-D141w-final-journeys-controller-results.json",
+      "bytes": 1711,
+      "sha256": "5d003a129d1ca1613ec6bddb41821be4b88ce446d3aa6fb3bf5b0084c3034f7a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/source-manifest.json",
+      "published": "design/app-P-D141w-final-journeys-controller-source-manifest.json",
+      "bytes": 1023,
+      "sha256": "93644214732f40f2d4d414208a95c2e5e0ac34bbeb69776abc9b1d2955c0679a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/trace-measurement.json",
+      "published": "design/app-P-D141w-final-journeys-controller-trace-measurement.json",
+      "bytes": 605,
+      "sha256": "27dc8f09f4e16812431aa7c488fdceed862bbba9d14876d246bd88f411b7e4ab"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/progress.json",
+      "published": "design/app-P-D141w-final-journeys-controller-progress.json",
+      "bytes": 1258,
+      "sha256": "b6417ba64bd3eed080d18a14935a3f87101d3d0097d01c93d775a9ebe2281ea7"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/validation.md",
+      "published": "design/app-P-D141w-final-journeys-controller-validation.md",
+      "bytes": 2073,
+      "sha256": "f915a0e20585210d017756d39bfa4366e02d0d11c1527014b85892579d3ee4e0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/handoff.md",
+      "published": "design/app-P-D141w-final-journeys-controller-handoff.md",
+      "bytes": 789,
+      "sha256": "f85f2093401cba424cf78dedef595612a4db0f24e7d45925299f226b1dc18ab8"
+    }
+  ],
+  "scope": "Actual placementPASS; popupoperationalcustodyFAIL twoCANCELLED normalIDs; sixremainingNOTRUN. Independent1026 pending, no globalGO."
+}

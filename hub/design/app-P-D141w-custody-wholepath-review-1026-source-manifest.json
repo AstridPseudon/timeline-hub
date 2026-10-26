@@ -1,0 +1,18 @@
+{
+  "task": "app-P-D141w-custody-wholepath-review-1026",
+  "inputs": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/controller-receipt.json", "sha256": "cbfa2078a0fc0b080fc08db14035d0005fa02be8c467544d02a2e6927ffb1da3"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/progress.json", "sha256": "b6417ba64bd3eed080d18a14935a3f87101d3d0097d01c93d775a9ebe2281ea7"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/results.json", "sha256": "5d003a129d1ca1613ec6bddb41821be4b88ce446d3aa6fb3bf5b0084c3034f7a"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/source-manifest.json", "sha256": "93644214732f40f2d4d414208a95c2e5e0ac34bbeb69776abc9b1d2955c0679a"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/trace-measurement.json", "sha256": "27dc8f09f4e16812431aa7c488fdceed862bbba9d14876d246bd88f411b7e4ab"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/validation.md", "sha256": "f915a0e20585210d017756d39bfa4366e02d0d11c1527014b85892579d3ee4e0"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/evidence/handoff.md", "sha256": "f85f2093401cba424cf78dedef595612a4db0f24e7d45925299f226b1dc18ab8"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/report.md", "sha256": "2263d5a885de50325908cc930404a3ba7bcf13fdd9b7a380fb932e3f340211c7"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-journeys-controller/BLOCKED", "sha256": "843633f28470e5f947b3341a2aa700f59c882ccb161c50e7ebe4340a4a44e2ca"}
+  ],
+  "source_tuple": {"app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935", "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"},
+  "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+  "raw_payload_published": false,
+  "changes": {"source": false, "product": false, "tests": false, "registry": false, "pins": false, "git_metadata": false}
+}

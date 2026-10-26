@@ -1,0 +1,59 @@
+{
+  "task": "app-P-D141w-custody-wholepath-review-1026",
+  "verdict": "FAIL_CUSTODY",
+  "verdict_scope": "terminal read-only review; no body or rerun",
+  "admission": {
+    "utc": "2026-10-26T10:26:04.961923+00:00",
+    "available_bytes": 5967790080,
+    "source_only": true,
+    "no_body": true
+  },
+  "tuple": {
+    "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914
+  },
+  "selectors": [
+    {"selector": "p2-automatic-child-placement", "status": "PASS", "preflight_id": "app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-preflight-1026101609-6758", "normal_id": "app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168", "exit": 0, "duration_seconds": 259},
+    {"selector": "p2-popup-add", "status": "FAIL_CUSTODY", "preflight_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437", "normal_ids": ["app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234", "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"], "terminal_statuses": ["cancelled", "cancelled"], "body_verdict": "UNKNOWN"},
+    {"selector": "p2-parent-move", "status": "NOTRUN"},
+    {"selector": "p2-transition-none-single", "status": "NOTRUN"},
+    {"selector": "p2-transition-none-bulk", "status": "NOTRUN"},
+    {"selector": "p2-register-asset", "status": "NOTRUN"},
+    {"selector": "p1", "status": "NOTRUN"},
+    {"selector": "p3", "status": "NOTRUN"}
+  ],
+  "whole_path": {
+    "initial_invocation": {"controller_log_lines": "2460-2521", "argv": "scripts/testing/d66-plain-stack.mjs p2-popup-add --submit", "artifact_before_normal": "preflight=...2125-437, normal=null"},
+    "resume_invocation": {"controller_log_lines": "2579-2641", "argv": "scripts/testing/d66-plain-stack.mjs p2-popup-add --submit", "same_artifact": true},
+    "source_calls": {"initial": "d66-plain-stack.mjs:691-699", "prior_artifact": "d66-plain-stack.mjs:643-660", "lock": "d66-plain-stack.mjs:704-710", "calls_per_invocation": 1},
+    "first_divergence": "The worker launched the resume before proving the initial submit process was dead; trace 10:21:49.224 still had only the preflight ID, resume began at 10:21:49.227, then 13234 appeared at 10:21:54.262 and 20413 at 10:21:59.291.",
+    "native_source_reissued": false,
+    "worker_reran_submit": true,
+    "independent_caller": false,
+    "interpretation": "Two worker-launched builder invocations each made the builder's single normal request. The second service request was not a process resume of the first request."
+  },
+  "lifecycle": {
+    "13234": {"pre_stop": "running", "stop": "request-stop-test queued", "wait": "terminal cancelled", "exit": 130, "body_started": true, "body_verdict": "UNKNOWN"},
+    "20413": {"pre_stop": "queued", "stop": "request-stop-test queued", "wait": "terminal cancelled", "exit": null, "body_started": false, "body_verdict": "UNKNOWN", "why": "identical run ...13234 in flight"}
+  },
+  "trace": {
+    "placement_samples": 63,
+    "placement_min_available_bytes": 5622292480,
+    "popup_samples": 36,
+    "popup_min_available_bytes": 5776478208,
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_reached": false,
+    "fresh_review_df_samples": [{"utc": "2026-10-26T10:27:27.426Z", "available_bytes": 5965529088}, {"utc": "2026-10-26T10:27:32.435Z", "available_bytes": 5965529088}],
+    "backfill": false
+  },
+  "next_step": "Use the original remaining-selector packet at p2-parent-move with one submit owner; preserve both popup cancellations and stop on any missing normal artifact ID.",
+  "raw_payload_published": false
+}

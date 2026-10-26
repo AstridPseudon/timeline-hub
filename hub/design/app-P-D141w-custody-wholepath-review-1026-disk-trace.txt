@@ -1,0 +1,12 @@
+D141w retained service trace review
+
+Placement: 63 controller samples; minimum available 5622292480; maximum 6093930496; standing stop 4000000000 not reached.
+Popup ADD: 36 controller samples; minimum available 5776478208; maximum 5944971264; standing stop 4000000000 not reached.
+
+The popup trace includes the custody transition: preflight ID ...2125-437, preflight-resume, then normal IDs ...2149-13234 and ...2155-20413. Repeated timestamps at 10:21:54.262 and 10:21:59.291 are retained sampler observations from overlapping worker controllers, not backfilled samples.
+
+Lifecycle:
+- ...2149-13234: request file at 10:21:49Z, snap key d35753753ddb14fa9392fd0efa97de50, status running before stop, request-stop-test queued, wait terminal cancelled, exit 130.
+- ...2155-20413: request file at 10:21:55Z, same snap key, status queued, why identical run ...2149-13234 in flight, request-stop-test queued, wait terminal cancelled, no body exit/summary.
+
+No request reached the 4-GB standing stop. The cancellations were custody-failure disposition, not disk-stop disposition.

@@ -1,0 +1,10 @@
+{
+  "sampling": "controller df -B1 every 5 seconds while submit/wait wrappers were alive",
+  "standing_stop_bytes": 4000000000,
+  "strict_admission_floor_bytes": 5200000000,
+  "selectors": {
+    "p2-automatic-child-placement": {"samples":63,"min_available_bytes":5622292480,"max_available_bytes":6093930496,"standing_stop_reached":false},
+    "p2-popup-add": {"samples":36,"min_available_bytes":5776478208,"max_available_bytes":5944971264,"standing_stop_reached":false}
+  },
+  "actual_service_trace": "Each normal request also retained its service disk-trace.tsv; no request reached the standing stop."
+}

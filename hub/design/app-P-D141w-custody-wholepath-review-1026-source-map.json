@@ -1,0 +1,28 @@
+{
+  "source_tuple": {
+    "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "builder": {"path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f"},
+  "source_call_map": [
+    {"source_lines": "643-660", "meaning": "existing submit artifact with preflight/no normal waits preflight then requests one normal ID and persists it"},
+    {"source_lines": "691-699", "meaning": "new submit persists preflight, waits, requests one normal ID and persists it"},
+    {"source_lines": "704-710", "meaning": "submit lock/file-lock wrapper"}
+  ],
+  "worker_call_map": [
+    {"log_lines": "2460-2521", "meaning": "initial p2-popup-add submit invocation"},
+    {"log_lines": "2579-2641", "meaning": "worker-launched resumed p2-popup-add submit invocation"},
+    {"log_lines": "2667-2687", "meaning": "custody anomaly recognized and both existing IDs audited"},
+    {"log_lines": "2774-2814", "meaning": "existing request-stop-test then wait-test for both IDs"}
+  ],
+  "service_artifacts": {
+    "registry": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "submit_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output",
+    "placement_result": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168",
+    "popup_first_result": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234",
+    "popup_second_result": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"
+  },
+  "source_identity": "exact-clean retained tuple; no source or product change by this review"
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "tuple": {
+    "app": {"commit":"82e9e13ddf1d7ec6c736521b2eb091dca9877598","tree":"6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"commit":"ecdc242ed9b673f641759ecf029f95e89a2c6f92","tree":"d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"commit":"95d98f038320d5d46bd679ac000ab3e15825c935","tree":"78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "results": [
+    {"selector":"p2-automatic-child-placement","status":"PASS","preflight":"app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-preflight-1026101609-6758","normal":"app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168","service_status":"pass","body":"one readiness test and one placement test passed"},
+    {"selector":"p2-popup-add","status":"FAIL","preflight":"app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437","normal_ids":["app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234","app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"],"service_statuses":["cancelled","cancelled"],"body":"not credited; finite custody gap"},
+    {"selector":"p2-parent-move","status":"NOTRUN"},
+    {"selector":"p2-transition-none-single","status":"NOTRUN"},
+    {"selector":"p2-transition-none-bulk","status":"NOTRUN"},
+    {"selector":"p2-register-asset","status":"NOTRUN"},
+    {"selector":"p1","status":"NOTRUN"},
+    {"selector":"p3","status":"NOTRUN"}
+  ],
+  "popup_note": "D141j PASS wording is not applicable: popup body did not produce an actual PASS."
+}
