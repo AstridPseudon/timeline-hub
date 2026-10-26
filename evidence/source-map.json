@@ -1,0 +1,63 @@
+{
+  "status": "READONLY_FINITE_CONTINUATION",
+  "actual_registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "mode": "0600",
+    "owner_uid": 0,
+    "owner_gid": 0,
+    "regular_non_symlink": true,
+    "selected_rows": {
+      "core-v2-final-integration": "3846de6ed008eb00df1920a67e0e591233ebb5be80229fddc06bb10333071437",
+      "delivery-v2-final": "95714eb061e7a1c7093be48046ea01e8d0eb4af47c35d76d3e36656a2994d050",
+      "delivery-v2-dryrun": "edf64ce81841ee1a804a08a5c5ca654041fa4622e9896df7545ca30a4e1a2bde"
+    }
+  },
+  "immutable_source11": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate",
+    "manifest": "source-manifest.json",
+    "rows_sha256": "251dc22826a7b42314c77b51e49b5e7cc3f44a9a17246eb3c92e40c370ecad81",
+    "runner_sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+    "lifecycle_sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+    "wrapper_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  },
+  "row_comparison": {
+    "actual_0495919_registry": {
+      "core-v2-final-integration": {"row_sha256": "3846de6ed008eb00df1920a67e0e591233ebb5be80229fddc06bb10333071437", "parent_import_setup": false, "root": "rt-F-D141jj-base-fix-next/evidence/candidate"},
+      "delivery-v2-final": {"row_sha256": "95714eb061e7a1c7093be48046ea01e8d0eb4af47c35d76d3e36656a2994d050", "parent_import_setup": false, "root": "rt-F-D141jj-base-fix-next/evidence/candidate"},
+      "delivery-v2-dryrun": {"row_sha256": "edf64ce81841ee1a804a08a5c5ca654041fa4622e9896df7545ca30a4e1a2bde", "parent_import_setup": false, "root": "rt-F-D141jj-base-fix-next/evidence/candidate", "required_args": "concrete and present"}
+    },
+    "successor_1719": {
+      "parent_import_setup": {"core": false, "delivery-v2-final": true, "delivery-v2-dryrun": true},
+      "root": "rt-F-final-launcher-fix-1719/evidence/candidate",
+      "delivery-v2-dryrun": {"wrapper": "delivery-v2-receipt.json", "missing": ["--wrapper-sha", "--builder", "--builder-sha", "--receipt"]}
+    },
+    "successor_D141jj_source11": {
+      "core-v2-final-integration": {"row_sha256": "bbc13243b2d51a22082885e5178598dacc404cc9031dd5aaf22a4fe065d803fd", "parent_import_setup": false, "tuple_markers": 1},
+      "delivery-v2-final": {"row_sha256": "32744c88f753315149b762d9c75926540da0f2a23ff9ffa26ec6ecdd462c2d1f", "parent_import_setup": false, "tuple_markers": 2},
+      "delivery-v2-dryrun": {"row_sha256": "a6a4469b6fab2b55e6f2051a3fcd1e89b030de38aad21b8a178b3ebede8599ec", "parent_import_setup": false, "tuple_markers": 2, "required_args": "concrete and present"}
+    }
+  },
+  "tuple_materialization": {
+    "final-source-tuple.json": {"sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561", "mode": "0644", "regular_non_symlink": true, "exists": true},
+    "final-gate-tuple.json": {"sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8", "mode": "0644", "regular_non_symlink": true, "exists": true}
+  },
+  "source_roots": {
+    "agent": {"root": "/home/user/work/agent", "head": "ec0a9f5baef2c31bc5179087b83f044524575182", "tree": "83b84c79941917fde535ee3ddba5533a776cace3", "mode": "0755", "clean": true},
+    "runtime": {"root": "/home/user/work/runtime", "head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "mode": "0755", "clean": true},
+    "app": {"root": "/home/user/work/app", "head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067", "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd", "mode": "0755", "clean": true},
+    "composition": {"root": "/home/user/work/composition", "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "mode": "0755", "clean": true}
+  },
+  "installer": {
+    "path": "candidate/install-final-services.py",
+    "sha256": "41d963bb400f115a872a7f433f58e1291849dc5cd6c575eb5fe1a61eb4ed3959",
+    "declared_registry_sha256": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df",
+    "actual_registry_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "no_install_actual_registry": "FAIL predecessor registry hash mismatch",
+    "install_tuple_guard": "refuses when FINAL_TUPLE or GATE_TUPLE exists",
+    "private_cas_rebind": true
+  },
+  "findings": ["F1_missing_production_sibling_import_setup", "F2_prior_dryrun_missing_args", "F3_stale_full_registry_preimage", "F4_existing_tuple_files_block_exact_cli"],
+  "limits": ["no source repair", "no canonical write", "no builder", "no dry-run", "no clone", "no service", "no collection", "no 33-repeat", "no readiness claim"]
+}

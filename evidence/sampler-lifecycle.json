@@ -1,0 +1,14 @@
+{
+  "kind": "real_available_bytes_control",
+  "path": "evidence/disk-trace.txt",
+  "samples": 2,
+  "interval_seconds": 5,
+  "stop_line_bytes": 4294967296,
+  "pid": 3,
+  "exit_code": 0,
+  "wait_status": 0,
+  "waited_and_reaped": true,
+  "service_lifecycle": "NOT_RUN_BY_THIS_READONLY_CONTINUATION",
+  "builder": "NOT_RUN",
+  "registry": "UNCHANGED"
+}

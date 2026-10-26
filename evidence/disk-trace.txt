@@ -1,0 +1,4 @@
+sampler_pid=3
+2026-10-26T17:33:38Z available_bytes=5128794112
+2026-10-26T17:33:43Z available_bytes=5128794112
+sampler_pid=3 exit=0 waited_and_reaped=true
