@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T03:07:01Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 2m -->
-# runtime board, 2026-10-26T03:04:30Z
+<!-- main | 2026-10-26T03:11:43Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 2m -->
+# runtime board, 2026-10-26T03:09:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -14,7 +14,7 @@
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | gated:D141-kit | Controls0247; independent0250 PASS | Row source15 selectors and CAS PASS. Independent actual valid and poison controls PASS; old8912 intact. Ready after separate kit held-ID clearance. No body. | fa9 / 8b6 |
-| D89d measured admission | Correct full job identity binding | Luna | Independent0235 FAIL | doing | First return0305; same159acdc | Actual full held IDs admitted and full P5 refused. All findings returned; wholepath0235 complete. No kit install or admission release. | Private159acdc |
+| D89d measured admission | Review corrected full job identity binding | Luna | Source0305 complete | review | Author0305; independent0309 | Author real full ID controls PASS on88bb53/tree1dfcf. Final review includes App real suite applicability. No kit install or admission release. | Private88bb53 |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Recorded4.6GB plus trace kit | doing | Controller0129; service6934 | Exact reviewed row installed; sole runtime-d141-p5-cut-1026013331-6934 queued. Whole run KEEP; no actual body or GO yet. | Frozen cut |
@@ -38,11 +38,11 @@
 
 Blockers: Farm — Census0140 NOT_READY with22 non-pass checks. Corrected producer map independently0225 PASS; Farm owns full40 composition receipt correction. Artifact publication0229 active; no Farm child or core body.
 Blockers: Runtime service — MainD141h replaces full comparator with exact15 targeted nodes;8912 stays unstarted. New targeted and sameP56934 need reviewed trace kit and recorded4.6GB receipts.
-Blockers: P5 — Sole service6934 remains queued. MainD141h authorizes4.6GB plus trace via new receipt kit; source0220 active, no live admission change yet.
+Blockers: P5 — Sole service6934 queued. MainD141h authorizes4.6GB plus trace; candidate88bb53 final review0309 active, no live admission change yet. App first real suite binding requested.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
-Next ready: First return0305 then independent final review and CAS install. Farm transport0300 then independent security review. Keep8912/P419479 unstarted; sameP56934 waits kit.
-live 2 / cap 3; ready-undispatched 0. Kit return0305 and Farm transport Sol0300 active or queued; no heavy body. Placement receipt0258 PASS published to App and main.
+Next ready: Final review0309 then qualified CAS install; receive actual App first journey binding. Farm transport0300 then independent security review. Keep8912/P419479 unstarted; sameP56934 waits kit.
+live 2 / cap 3; ready-undispatched 0. Kit final review0309 and Farm transport Sol0300 active or queued; no heavy body. Placement receipt0258 PASS published to App and main.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
 D141i: Agent owns like for like cut core in venv-agent; Farm custody child is definitive only for environment sensitive candidates. Runtime artifact0229 owns existing producer0201 continuation.
 INBOX consumed through 1765571 bytes. Peer boards read Farm02:36 App02:55 Agent02:54; source waits rechecked. App P4 GO and final520d source recorded; notes wait cleared. Main0106 sync clears installer ref wait. Managers write boards briefs peers only.
-Disk: fresh4787712000 bytes. No eligible clean ended non-KEEP Runtime worktree found this pass. Sweep3 removed0; compact packed0 dirs and gzipped6 logs. No eligible clean ended Runtime worktree found; three old v1 trees retain prior DIRTY holds. Safety-held venvs fixtures and runtimes/agent-remotion untouched.
+Disk: fresh4787712000 bytes. No eligible clean ended non-KEEP Runtime worktree found this pass. Sweep3 removed0; compact packed0 dirs and gzipped1 old log this pass. No eligible clean ended Runtime worktree found; three old v1 trees retain prior DIRTY holds. Safety-held venvs fixtures and runtimes/agent-remotion untouched.
