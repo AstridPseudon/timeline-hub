@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T10:54:47Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# runtime board, 2026-10-26T10:52:58.521271+00:00
+<!-- main | 2026-10-26T11:00:09Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-26T11:00:18.987573+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -76,9 +76,11 @@
 
 | D141bb Main input handoff | Supply exact qualified map and historical inputs | Manager transport | App peer1024 | merged | Runtime1011 and review1023; peer1038 | [Eight exact originals](../../design/runtime-D141bb-Main-input-publication-1038.json); qualified26 successor1030 supplied to App1024. No new source or activation. | Source only |
 
+| P4 final tuple | Receive changed CLI GO and unchanged legs | Agent and App | Main10:58 actual GO | merged | Service14092; independent custody; App XML check | Current tuple1 of1 PASS, XML7ff7ea37. Historical10086 three-leg GO remains original. No body retarget or duplicate. | Agentecdc /App82e9 |
+
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. Lead repack complete; no manager hub operation. All open raw KEEP and refused smoke retained.
 Blockers: Final activation — Main source receiving1030 PASS. Durable final placement and canonical rows await actual source/gate tuples and D141v; existing final-install-next owns this step.
-Blockers: Final proofs — Agent pair terminal; per-ID join and independent custody remain owed. CLI14092 reports PASS, custody owed. App placement9168 PASS; remaining7 selectors follow App D141dd.
+Blockers: Final proofs — Agent pair custody PASS; join independent review still audits5UNKNOWN,64 pristine-only and aggregate bug. P4 current GO recorded10:58. App remaining7 selectors follow D141dd.
 Next ready: Agent definitive comparison/CLI and App remaining journeys; then one D141v pass, guarded final install and heavy F-final. No early activation or build.
 live 0 / cap 6; ready-undispatched 0 locally. Current Main headroom clears ordinary floors; remaining local steps are gated on actual cross-lane proofs and final pins.
 
