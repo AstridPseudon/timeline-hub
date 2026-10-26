@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "registration": false,
+  "execution": "none",
+  "target": "app-pin-520d7e4f",
+  "repo": "app",
+  "selector": "p2-automatic-child-placement",
+  "suites": {
+    "normal": "d141g-p2-automatic-child-placement-520d7e4f-submit",
+    "preflight": "d141g-p2-automatic-child-placement-520d7e4f-submit-preflight"
+  },
+  "source_tuple": {
+    "app": {
+      "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+      "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65"
+    },
+    "agent": {
+      "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+    },
+    "runtime": {
+      "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-520d7e4f",
+    "agent": "/home/user/work/wt/agt-pin-28e56cac",
+    "runtime": "/home/user/work/wt/rt-pin-6a011d58",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "builder_source": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "repo": "app",
+    "git_head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "git_tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "exports_used": [
+      "serviceRecipe"
+    ],
+    "diagnostic_helper": null,
+    "execution_mode": "pure-builder-only"
+  },
+  "full_spec": {
+    "value": {
+      "target": "app-pin-520d7e4f",
+      "repo": "app",
+      "selector": "p2-automatic-child-placement",
+      "normal_suite": "d141g-p2-automatic-child-placement-520d7e4f-submit",
+      "preflight_suite": "d141g-p2-automatic-child-placement-520d7e4f-submit-preflight",
+      "pins": {
+        "app": {
+          "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+          "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65"
+        },
+        "agent": {
+          "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+          "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+        },
+        "runtime": {
+          "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+          "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+        },
+        "composition": {
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-520d7e4f",
+        "agent": "/home/user/work/wt/agt-pin-28e56cac",
+        "runtime": "/home/user/work/wt/rt-pin-6a011d58",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      }
+    },
+    "canonical_utf8": "{\"target\":\"app-pin-520d7e4f\",\"repo\":\"app\",\"selector\":\"p2-automatic-child-placement\",\"normal_suite\":\"d141g-p2-automatic-child-placement-520d7e4f-submit\",\"preflight_suite\":\"d141g-p2-automatic-child-placement-520d7e4f-submit-preflight\",\"pins\":{\"app\":{\"head\":\"520d7e4fc12a03392afaed3f486aba34a2b5c319\",\"tree\":\"70ad390c56b0e45d9279b4179598b6cdbad9ed65\"},\"agent\":{\"head\":\"28e56cacb42d3da85b02e5b3543895b44f3d0f70\",\"tree\":\"2ebe2ddf5a61f013953ab1e21d51ebaab746e58a\"},\"runtime\":{\"head\":\"6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d\",\"tree\":\"ac5b862744bece65b2e30565db1777bacd60da28\"},\"composition\":{\"head\":\"635f4de06fda22a85fc2e4cfc764d0153a4c9f40\",\"tree\":\"5ab5191a296980a0a6bcd1178ab6902d6478a148\"}},\"checkouts\":{\"app\":\"/home/user/work/wt/app-pin-520d7e4f\",\"agent\":\"/home/user/work/wt/agt-pin-28e56cac\",\"runtime\":\"/home/user/work/wt/rt-pin-6a011d58\",\"composition\":\"/home/user/work/wt/vw-pin-635f4de0\"}}",
+    "sha256": "e6c1c4b7ed33ac98998621638d2327c5ad9237526cf8726626bfe8b248766fea"
+  },
+  "commands": {
+    "normal": {
+      "sha256_utf8_without_newline": "600fca0fa7852eac45179b2a485b9b160d4d807ebb752456e292636b69a85eaa",
+      "bytes_without_newline": 966,
+      "command_file": "normal-command.txt"
+    },
+    "preflight": {
+      "sha256_utf8_without_newline": "82f4ad3c8a4bc940c10d52c9b9bf230f49c59c7e8865a3c0144498e412cafe8d",
+      "bytes_without_newline": 978,
+      "command_file": "preflight-command.txt"
+    }
+  },
+  "rows": {
+    "normal": {
+      "row": "app d141g-p2-automatic-child-placement-520d7e4f-submit D66_APP_SHA='520d7e4fc12a03392afaed3f486aba34a2b5c319' D66_APP_TREE='70ad390c56b0e45d9279b4179598b6cdbad9ed65' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-520d7e4f' D66_AGENT_SHA='28e56cacb42d3da85b02e5b3543895b44f3d0f70' D66_AGENT_TREE='2ebe2ddf5a61f013953ab1e21d51ebaab746e58a' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-28e56cac' D66_RUNTIME_SHA='6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d' D66_RUNTIME_TREE='ac5b862744bece65b2e30565db1777bacd60da28' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-6a011d58' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-automatic-child-placement'",
+      "sha256_utf8_with_one_terminal_lf": "b358157b034cc90d7d1285ae990761066135cb649137cb6900cd276361dc7c9c",
+      "bytes_with_one_terminal_lf": 1022,
+      "newline_convention": "exact row UTF-8 bytes followed by exactly one LF (0x0a); no CRLF"
+    },
+    "preflight": {
+      "row": "app d141g-p2-automatic-child-placement-520d7e4f-submit-preflight D66_APP_SHA='520d7e4fc12a03392afaed3f486aba34a2b5c319' D66_APP_TREE='70ad390c56b0e45d9279b4179598b6cdbad9ed65' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-520d7e4f' D66_AGENT_SHA='28e56cacb42d3da85b02e5b3543895b44f3d0f70' D66_AGENT_TREE='2ebe2ddf5a61f013953ab1e21d51ebaab746e58a' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-28e56cac' D66_RUNTIME_SHA='6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d' D66_RUNTIME_TREE='ac5b862744bece65b2e30565db1777bacd60da28' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-6a011d58' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-automatic-child-placement' --preflight",
+      "sha256_utf8_with_one_terminal_lf": "fda2c699ebe0b685a3aea061e239474865ba9a37d3b6962c3e03a1e197c05562",
+      "bytes_with_one_terminal_lf": 1044,
+      "newline_convention": "exact row UTF-8 bytes followed by exactly one LF (0x0a); no CRLF"
+    }
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_sha256": "5ce57b6ee789de40c6d25874a29af37c4fff3d477b913219617eff8b1d01f072",
+    "preimage_bytes": 733149,
+    "prospective_rows_absent": [
+      {
+        "name": "d141g-p2-automatic-child-placement-520d7e4f-submit-preflight",
+        "present": false
+      },
+      {
+        "name": "d141g-p2-automatic-child-placement-520d7e4f-submit",
+        "present": false
+      }
+    ],
+    "prior_authentic_rows": [
+      {
+        "name": "d141-p2-automatic-child-placement-867cb273-submit-preflight",
+        "expected_sha256": "deab97ea638c2abebb0186940ba253b41afa9c09162ba035b8ac09a9697fa4e9",
+        "actual_sha256": "deab97ea638c2abebb0186940ba253b41afa9c09162ba035b8ac09a9697fa4e9",
+        "exact_match": true,
+        "differences": null
+      },
+      {
+        "name": "d141-p2-automatic-child-placement-867cb273-submit",
+        "expected_sha256": "e0accb3c136012a46c25d628c25e7ac859b537bc1d3699c8cd386d09b14d3b85",
+        "actual_sha256": "e0accb3c136012a46c25d628c25e7ac859b537bc1d3699c8cd386d09b14d3b85",
+        "exact_match": true,
+        "differences": null
+      }
+    ]
+  },
+  "protected_source_spec": {
+    "path": "/home/user/timeline-hub/hub/design/app-D141d-expectation-source-home-0251.json",
+    "sha256": "166d11920fe0257d4aa468959c1a0babe97ed71cb7b9e601efddd9693072583e",
+    "bytes": 2008,
+    "value": {
+      "at": "2026-10-26T02:51:11.757982+00:00",
+      "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+      "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+      "candidate": "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58",
+      "candidate_tree_equal": true,
+      "parent_integration": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+      "parents": [
+        "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+        "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58"
+      ],
+      "clean": true,
+      "changed_paths_from_prior_head": [
+        "tests/e2e/local/three-products.p2-elements-assets.spec.ts"
+      ],
+      "independent_protected_review": "app-P2-D141-expectation-final-review-0243",
+      "source_checks": "Author and independent app/node tsc, scoped eslint and diff PASS; all shared helpers and other gestures exact; two binding objects/22 paths deep equal, no fallback",
+      "body_proof": "NOTRUN on this head; six P2 plus P1/P3 reproof owed; no repeated full",
+      "p4_path": "Only App e2e test changed from independently path-qualified5fe; P4 actual Agent/Runtime body does not execute this file. Original XML custody still pending, no P4 GO credited.",
+      "ledger": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.app.md",
+        "worker_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-local-return-0235/evidence/ledger-line.md",
+        "exact_worker_line": "| D141d | App P2 automatic child placement | P2 placement expectation updated to the D124 materialization contract. | tests/e2e/local/three-products.p2-elements-assets.spec.ts |",
+        "already_installed": false,
+        "before_sha256": "9cb110bbc989ded380d8054103770bb194f7b07862e2896ad8093ba4cfe8bd78",
+        "after_sha256": "3239581ce5367c76e95f8536e9c320b4daa60212750877d6ce20f3f4c08949c6"
+      },
+      "zip_note_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-expectation-local-return-0235-zip-note.md"
+    }
+  }
+}

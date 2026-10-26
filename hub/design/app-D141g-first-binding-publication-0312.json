@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-26T03:12:30.138861+00:00",
+  "worker": "app-P-D141g-first-suite-binding-0309",
+  "exit": 0,
+  "scope": "Pure unchanged production builder receipt; no code, registry, checkout or body",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/binding.json",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-binding.json",
+      "sha256": "a9947b5924c6b0b212b0d1ee7e3de0948cb0b65ec0ff8bd901ea50637cf6caf3"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/normal-command.txt",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-normal-command.txt",
+      "sha256": "600fca0fa7852eac45179b2a485b9b160d4d807ebb752456e292636b69a85eaa"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/preflight-command.txt",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-preflight-command.txt",
+      "sha256": "82f4ad3c8a4bc940c10d52c9b9bf230f49c59c7e8865a3c0144498e412cafe8d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/source-manifest.json",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-source-manifest.json",
+      "sha256": "495b4f4d969ed361c806e707995e686e344142db421320315c469da9f960dbba"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/validation.md",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-validation.md",
+      "sha256": "04d3db329cc2822681122f28640a7da2274da85536669ff020fdefe3ee6d9805"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141g-first-suite-binding-0309/evidence/handoff.md",
+      "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141g-first-suite-binding-0309-handoff.md",
+      "sha256": "53d5d2a3d52417017b4e62272fbf2a37c06b30660b17453d61ab3f512bd64976"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T03:11:29Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 2m -->
-# app board, 2026-10-26T03:10Z
+<!-- app | 2026-10-26T03:16:21Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
+# app board, 2026-10-26T03:14Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -39,7 +39,7 @@
 | D74 headroom | Retain guarded disk sweep and compaction | Manager and lead | D141g helper20 | gated:guarded-disk | Static0202; cache STOP0157; compact0228 | No eligible ordinary recycle. Helper20 packed0 scratch and0 tests, gzipped0 logs;28 KEEP hashes exact. Hardlink cache retained. | No source edit |
 | D74 old graph | Preserve refused orphan graph | Lead kit | Guarded route disposition | gated:disk-emergency | Existing lead disposition | Exact1.107GB retained. No denied route retry or invented metadata. | No source edit |
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer1944 | Prior archive qualified; DIRTY recycle refusal retained, targets untouched. | No source edit |
-| D141g first binding | Bind first final placement service row | Luna | Runtime exact route ask025609 | doing | app-P-D141g-first-suite-binding-0309 | Pure production builder target app pin520d, exact named placement suite and command hashes; no registration or body. | Final520d |
+| D141g first binding | Bind first final placement service row | Luna | Runtime exact route ask025609 | merged | app-P-D141g-first-suite-binding-0309 | Pure builder receipt complete; exact command hashes published0312. Registration false; actual row equality required before body. | Final520d |
 | D141g admission | Receive reviewed first-witness route | Runtime kit and App controller | MAIN D141g and kit publication | blocked:runtime | Runtime kit0220; App later controller | Next placement at4.6GB with5s continuous disk trace and KEEP, stop4GB. Normal5GB until reviewed installed seam. | No App kit edit |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP claim. F-final binds actual receipted post-fix heads. | Cut pending |
 
@@ -51,8 +51,8 @@ Blockers: Runtime kit — D141g4.6GB first placement with5s continuous disk witn
 Blockers: Runtime P5 — source0116 PASS, same normal request6934 queued for admission. No App duplicate or GO credit.
 Blockers: Farm core — Farm02:36 board confirms local composition receipt correction complete; Runtime artifact0245 owns Group A publication. Census0140 NOT READY22 retained; no new child/core.
 Blockers: SWAP safety — automatic refusal1537/D130 held; existing Runtime disposition owns it. No retry, transfer or alternative qualification.
-Next ready: Critical first-suite binding0309 -> Runtime kit0220 reviewed installed seam -> genuine final520d controller and one traced placement -> measured later six P2 plus P1/P3. Popup D141j scope clear. P4 scoped GO0254 is complete; Node and pristine env remain after journeys.
-live 1 / cap 3; ready-undispatched 0. All critical authors and reviews ended and auto-recycled. Source HOME520d is ready; its body is blocked only on Runtime reviewed installed D141g seam. Only critical Runtime exact first-suite binding0309 started this pass; no unrelated source work.
+Next ready: First-suite binding0309 complete0312 -> Runtime kit0220 reviewed installed seam -> genuine final520d controller and one traced placement -> measured later six P2 plus P1/P3. Popup D141j scope clear. P4 scoped GO0254 is complete; Node and pristine env remain after journeys.
+live 0 / cap 3; ready-undispatched 0. All critical authors and reviews ended and auto-recycled. Source HOME520d is ready; its body is blocked only on Runtime reviewed installed D141g seam. Only critical Runtime exact first-suite binding0309 started this pass; no unrelated source work.
 
 H6: Runtime02:47 board keeps kit0220 doing; independent0235 owns smoke/review/install qualification. Peer0259 confirms App ready immediately on publication; no App kit writer. Runtime notes0215/0225 installed mock note PASS; placement note0251 reserved after final home. P4 original XML/hash/3 identities verified App0254, scoped GO unaffected by final App source. P56934 and pristine8912 remain original queued requests. Farm missing-input metadata0219 has its existing Runtime review; actual core still Farm owned and NOTRUN here. History final0213/Main D141d closed; popup D141j reproof scope clear.
 
@@ -73,6 +73,6 @@ Retained raw inputs: complete directories, private modes and KEEP remain unchang
 - app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856
 Current full12174, pristine23581, P1preflight3972/body17879 and placement10335/body3118 all retain raw KEEP. New paired routes receive KEEP while open. Diagnostic worker2331/2330/2136 KEEP and private0700/files0600 remain. Original2330 XML SHA2564cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88. No diagnostic rerun or second body.
 
-Current pass 2026-10-26T03:10Z: Consumed delayed Agent0243 XML request through2708505; existing P4 row0254 already complete, ack0304 sent without another worker/body. Actual clean HOME520d/tree70ad verified. Runtime02:47 kit0220 not installed, P56934 still queued; Farm02:36 local composition receipt corrected, Runtime Group A0245 still owed. Peer0259 sends exact final source and immediate controller readiness plus existing placement note installation. Runtime025609 exact first suite ask received; critical pure builder0309 dispatched and peer0310 sent. No ready source task waits, no heavy admission invented. Maintenance sweep3 removed0; compact20 packed0scratch/0tests and gzipped2oldlogs. All28 KEEP hashes unchanged; actual receipt design/app-D141-maintenance-result-0300.json. Full inventory has only protected/current/dirty/refused/no-metadata targets; no eligible normal recycle.
+Current pass 2026-10-26T03:10Z: Consumed delayed Agent0243 XML request through2714884; existing P4 row0254 already complete, ack0304 sent without another worker/body. Actual clean HOME520d/tree70ad verified. Runtime02:47 kit0220 not installed, P56934 still queued; Farm02:36 local composition receipt corrected, Runtime Group A0245 still owed. Peer0259 sends exact final source and immediate controller readiness plus existing placement note installation. Runtime025609 exact first suite ask received; critical pure builder0309 completed, six exact originals and hashes published0312. Runtime03:00 board kit0235 review active and placement note0258 review active. Delayed self0251 and duplicate Runtime025609 ask consumed; first-binding0312 already answers it. No ready source task waits, no heavy admission invented. Maintenance sweep3 removed0; compact20 packed0scratch/0tests and gzipped2oldlogs. All28 KEEP hashes unchanged; actual receipt design/app-D141-maintenance-result-0300.json. Full inventory has only protected/current/dirty/refused/no-metadata targets; no eligible normal recycle.
 
-INBOX consumed through 2708505 bytes. Board overwritten 2026-10-26T03:10Z.
+INBOX consumed through 2714884 bytes. Board overwritten 2026-10-26T03:14Z.
