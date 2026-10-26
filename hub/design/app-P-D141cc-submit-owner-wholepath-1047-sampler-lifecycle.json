@@ -1,0 +1,21 @@
+{
+  "schema": "timeline.d141cc.wholepath.sampler.v1",
+  "worker": "app-P-D141cc-submit-owner-wholepath-1047",
+  "sampler": {
+    "started_utc": "2026-10-26T10:45:04Z",
+    "ended_utc": "2026-10-26T10:45:09Z",
+    "pid": 4,
+    "samples": 5,
+    "interval_seconds": 1,
+    "wait_rc": 0,
+    "reaped": true,
+    "available_bytes": [5951184896, 5951184896, 5951184896, 5951148032, 5951148032],
+    "minimum_available_bytes": 5951148032,
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_reached": false,
+    "service_started": false,
+    "backfill": false
+  },
+  "worker_record": {"keep_marker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-wholepath-1047/KEEP", "created_before_private_evidence": true},
+  "retained_originals": {"placement_min_available_bytes": 5622292480, "popup_min_available_bytes": 5776478208, "standing_stop_reached": false, "source": "independent1026 retained sampler-lifecycle.json"}
+}

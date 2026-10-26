@@ -1,0 +1,127 @@
+{
+  "at": "2026-10-26T10:48:48.725424+00:00",
+  "status": "PASS_TRANSPORT",
+  "scope": "original custody FAIL retained; current content/earlier aggregate bounded PASS only",
+  "files": [
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-installation.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-next-report.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-review.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-findings.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-sampler-lifecycle.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-report.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-correction.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-comparison.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-sampler-lifecycle.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-report.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-review.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-findings.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-sampler-lifecycle.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141-notes-custody-review-1022-report.md",
+      "PASS": true
+    }
+  ]
+}

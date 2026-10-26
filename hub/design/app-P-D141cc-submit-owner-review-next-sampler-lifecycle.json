@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.d141cc.submit-owner-independent-review-sampler.v1",
+  "observation_scope": "present_review_only",
+  "sampler_pid": 4,
+  "started_at_utc": "2026-10-26T10:41:03.542Z",
+  "stopped_at_utc": "2026-10-26T10:41:13.566Z",
+  "interval_seconds": 5.010,
+  "stop_bytes": 4000000000,
+  "samples": [
+    {"utc": "2026-10-26T10:41:03.546Z", "available_bytes": 5956517888},
+    {"utc": "2026-10-26T10:41:08.556Z", "available_bytes": 5955985408}
+  ],
+  "standing_stop_reached": false,
+  "stop": {"signal": "TERM", "kill_return": 0},
+  "wait_return": 0,
+  "reaped": true,
+  "service_started": false,
+  "backfill": false
+}

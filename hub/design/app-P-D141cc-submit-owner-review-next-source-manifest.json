@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.d141cc.submit-owner-independent-review-manifest.v1",
+  "admitted_candidate": {
+    "controller_sha256": "98104bdfe1eb02dd8b5938f4a7953cc1233f63f58c492a2a089242998ae480a7",
+    "check_sha256": "36df5df5cc83c0574a29c0215926748a2897a2f17e37115212baa879912be435",
+    "cases_sha256": "4ded5e672e0497eb85b50bcf7962158f6f5aca11e08e62f5a5ce305428565795"
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f"
+  },
+  "immutable_reference": {
+    "source_publication_sha256": "26d3c99d399d3a2cf27cc75b71f74f366b00336a93d2b6ba7842df2b522b0a63",
+    "prior_source_map_sha256": "cbfcb905667a9e1bf63fc549be05c1439ec6819334de2d93d44af93d708ed40f",
+    "original_binding_sha256": "812b737aa235e26ab25fd8a342223c8d6f43d35394d4cdcbcc63545645469255"
+  },
+  "claims": {
+    "source_only": true,
+    "product_change": false,
+    "live_admission": false,
+    "future_request_ids": false,
+    "whole_author_trace": false
+  }
+}

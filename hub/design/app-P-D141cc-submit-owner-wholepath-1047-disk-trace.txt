@@ -1,0 +1,19 @@
+D141cc independent whole-path worker read-only disk trace
+UTC: 2026-10-26T10:45:04Z through 2026-10-26T10:45:09Z
+Sampler: foreground background-child PID 4; explicit wait returned 0; no service operation, fixture, or test started.
+Standing stop: 4000000000 bytes available.
+
+2026-10-26T10:45:04Z
+/dev/vda 264212084 34812848 5811704 86% /tmp
+2026-10-26T10:45:05Z
+/dev/vda 264212084 34812848 5811704 86% /tmp
+2026-10-26T10:45:06Z
+/dev/vda 264212084 34812848 5811704 86% /tmp
+2026-10-26T10:45:07Z
+/dev/vda 264212084 34812884 5811668 86% /tmp
+2026-10-26T10:45:08Z
+/dev/vda 264212084 34812884 5811668 86% /tmp
+
+Final human-readable check: /dev/vda 252G total, 34G used, 5.6G available, 86%.
+Minimum observed available: 5811668 KiB (5951148032 bytes), above the 4 GB stop.
+This is present-time worker evidence only; it does not backfill placement/popup service traces or qualify a body.

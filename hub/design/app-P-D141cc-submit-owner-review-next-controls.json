@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.d141cc.submit-owner-review-controls.v1",
+  "same_author_check": {
+    "command": "bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-return-1032/evidence/candidate/check.sh",
+    "exit": 0,
+    "result": "PASS",
+    "coverage": "12 private scenarios, AST/private-cache compile, bash -n, Ruff F, candidate conservation"
+  },
+  "independent_controls": [
+    {"name": "unchanged builder import and recipe comparison", "result": "FAIL_POPUP_RETRY", "service_started": false},
+    {"name": "original overlap shape", "result": "PASS_MODEL_ONLY"},
+    {"name": "normal-created-before-artifact-durable", "result": "PASS_MODEL_ONLY"},
+    {"name": "queued/running/completed/cancelled adoption", "result": "PASS_MODEL_ONLY"},
+    {"name": "cancelled old attempt excluded", "result": "PASS_MODEL_ONLY"},
+    {"name": "interleaving after preflight before normal", "result": "FAIL_TWO_NORMAL_CALLS"},
+    {"name": "same source with mismatched command/row", "result": "FAIL_NOT_CLOSED"},
+    {"name": "exact disk stop ID", "result": "PASS_MODEL_ONLY"}
+  ],
+  "not_run": [
+    "actual --submit",
+    "request-test/wait-test/stop-test",
+    "registry or queue mutation",
+    "body/browser/localhost/full suite/delivery build",
+    "product tests/types/lint"
+  ]
+}

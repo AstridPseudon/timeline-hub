@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.d141cc.wholepath.source-manifest.v1",
+  "worker": "app-P-D141cc-submit-owner-wholepath-1047",
+  "source_only": true,
+  "product_change": false,
+  "service_operation": false,
+  "source_tuple": {"app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935", "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"},
+  "inputs": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md", "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"},
+    {"path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf", "sha256": "bc33e4e8a8b1619d4aefaf64a06e0c67ab6ed8bc2f26469418d5e35f6cb35f90"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/review.json", "sha256": "5e943666f984fae887b5ac3959aaec7a7fdbfb3989790434228b10c37e49f165"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/findings.md", "sha256": "216d9b118584647a79e90bb7f3fd49b632fd42d5818036c0ae01e25e9b44ca09"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/source-map.json", "sha256": "08e4c734fac02e67ada0b02278425289d7a27c88917ceaefee24477c4a00f6d9"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/controls.json", "sha256": "aac29d1fb2b72e243a3902e728f9b046923891b6643445b2129dd1af704516d2"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-report.md", "sha256": "26a7af6e86c86598f4420647987a88114b04df5ed2b7c9ab770c67fe8546375c"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-findings.md", "sha256": "02354d82151972ecbf7c32085cf9906494119e691ddfdea7ccb5e3ebe6703e93"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-source-map.json", "sha256": "cbfcb905667a9e1bf63fc549be05c1439ec6819334de2d93d44af93d708ed40f"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-source-manifest.json", "sha256": "5673cc4d32055a4be7355707e42507910fbf7602739686bc6756f0787b6cd818"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-validation.md", "sha256": "f6308626b25e465f47cb8c636ac57545a38c9e4f7563079515d6ea87dd20556a"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-handoff.md", "sha256": "f0c132eefcf0f733e6f0793446843dc6bd2c8185b9fc8d1b82b2e16dbaeb9997"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-custody-wholepath-review-1026-sampler-lifecycle.json", "sha256": "d2f23f6a7cdf2a269f47a76f2b3653b3d17d8682d1581f79bcabf8d830fd1377"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-return-1032-adoption.json", "sha256": "132bb43d6c431d1ae94ad56114badda05a55ac9f5c61e0ed8f97388014429d54"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-return-1032-findings.json", "sha256": "59d5e3ce1461d1e66da7c04933913557bd0b489d2b47b455096c9b5cf3e55661"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168/summary", "sha256": "46168a7ed9cb0d60c09cdaa1add00b4f230c848d4316822c7dba76971025e27e"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234/summary", "sha256": "3766ee441e255b49fba1c9a5f4318998b960fb0d6db87e4caf3a0b5169fdb2c4"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413/why", "sha256": "6780e1c571928542614c1ec02f2768279e17645892551348a5affdb14061037a"}
+  ],
+  "candidate_controls": {"controller_sha256": "98104bdfe1eb02dd8b5938f4a7953cc1233f63f58c492a2a089242998ae480a7", "check_sha256": "36df5df5cc83c0574a29c0215926748a2897a2f17e37115212baa879912be435", "cases_sha256": "4ded5e672e0497eb85b50cbf7962158f6f5aca11e08e62f5a5ce305428565795", "same_author_check": "PASS; 12 private MODEL controls", "native_route": "not qualified"},
+  "changes": {"source": false, "product": false, "tests": false, "generated": false, "pins": false, "registry": false, "queue": false, "git_metadata": false}
+}

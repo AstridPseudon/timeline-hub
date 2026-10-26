@@ -1,0 +1,66 @@
+{
+  "time": "2026-10-26T10:44:11.816336+00:00",
+  "status": "FAIL source only; no body",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-report.md",
+      "bytes": 465,
+      "sha256": "ca29cd14598f7d1eab40088d1d6bc5aa5190e07118f77c3772fe5a631735b9b4"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-review.json",
+      "bytes": 3406,
+      "sha256": "5e943666f984fae887b5ac3959aaec7a7fdbfb3989790434228b10c37e49f165"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-findings.md",
+      "bytes": 1869,
+      "sha256": "216d9b118584647a79e90bb7f3fd49b632fd42d5818036c0ae01e25e9b44ca09"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-source-map.json",
+      "bytes": 2080,
+      "sha256": "08e4c734fac02e67ada0b02278425289d7a27c88917ceaefee24477c4a00f6d9"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-source-manifest.json",
+      "bytes": 1106,
+      "sha256": "daaa3b71d19177f562f2bc4aeb830c0c66cba45692c4159b30ff9d91c7cefdcb"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-controls.json",
+      "bytes": 1343,
+      "sha256": "aac29d1fb2b72e243a3902e728f9b046923891b6643445b2129dd1af704516d2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-validation.md",
+      "bytes": 1792,
+      "sha256": "f59be960a4fd393d976af64976037a2019e63d50db65ff2d7d81bf4c8a96e5a5"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-handoff.md",
+      "bytes": 802,
+      "sha256": "318b761c333158fd301a93c69c79c0385aca7f6f46da6feeb5f2f454d46f9416"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-disk-trace.txt",
+      "bytes": 577,
+      "sha256": "765a89ab556065a04abc2920266bc32d5b8af55c0c9eb1f3c55d8a53b6fc628f"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-review-next-sampler-lifecycle.json",
+      "bytes": 628,
+      "sha256": "3554c90bb56f639db4c42f0afb452adfce5260e7b385b334875b087e7ba8a9fd"
+    }
+  ]
+}

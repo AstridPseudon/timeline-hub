@@ -1,0 +1,15 @@
+# D141cc independent reviewer present-time disk sampler
+
+scope=read-only present-time evidence; service_started=false; backfill=false
+standing_stop_bytes=4000000000
+sampler_pid=4
+2026-10-26T10:41:03.546Z available_bytes=5956517888
+2026-10-26T10:41:08.556Z available_bytes=5955985408
+minimum_available_bytes=5955985408
+sample_interval_seconds=5.010
+standing_stop_reached=false
+stop_signal=TERM kill_rc=0
+wait_rc=0 reaped=true
+
+This trace is only the reviewer's present-time safety observation. It does not
+substitute for or backfill the retained placement/popup service traces.

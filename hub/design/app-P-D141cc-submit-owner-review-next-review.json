@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.d141cc.submit-owner-independent-review.v1",
+  "review": "app-P-D141cc-submit-owner-review-next",
+  "task": "D141cc",
+  "status": "FAIL",
+  "decision": "return_for_correction",
+  "scope": "one independent source-only all-findings review",
+  "candidate": {
+    "controller_sha256": "98104bdfe1eb02dd8b5938f4a7953cc1233f63f58c492a2a089242998ae480a7",
+    "check_sha256": "36df5df5cc83c0574a29c0215926748a2897a2f17e37115212baa879912be435",
+    "cases_sha256": "4ded5e672e0497eb85b50bcf7962158f6f5aca11e08e62f5a5ce305428565795",
+    "source_only": true,
+    "product_change": false
+  },
+  "findings": [
+    {
+      "id": "D141cc-R1",
+      "severity": "blocking",
+      "status": "open",
+      "title": "Popup retry is not bound to the unchanged production builder",
+      "evidence": "The candidate changes popup-retry-1 command_bytes to synthetic production-command:p2-popup-add and row_bytes to synthetic production-row text. The unchanged serviceRecipe produces command SHA 27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501 and retry registry-row SHA c89f8ac7430f4e5342fbffb23cd5ce4aa54f2151e38b3e46af7035aea13fc6c3; the candidate records 809c1a5ed1be729808d335c8c18dbfdee3ccd73d9454e4739b91e256572def37 and 17e8a4acc32f21825eb0642d7e7a832889ec10b9591c0a05795e2dfa8cf6a018. The six original rows match the pure builder, but the authorized retry does not.",
+      "source": "candidate/controller.py:100-139; candidate/check.sh:33-62; /home/user/work/app/scripts/testing/d66-plain-stack.mjs:375-395,685"
+    },
+    {
+      "id": "D141cc-R2",
+      "severity": "blocking",
+      "status": "open",
+      "title": "Preflight-to-normal interleaving can create a second normal request",
+      "evidence": "An adversarial FakeService that creates another normal request immediately after create_preflight causes recover_or_adopt to call create_normal again; the observed result was normal_calls=2. The controller does not re-inspect same-target/suite candidates or acquire the unchanged builder's artifact lock between preflight persistence and normal creation.",
+      "source": "candidate/controller.py:268-297; /home/user/work/app/scripts/testing/d66-plain-stack.mjs:704-710"
+    },
+    {
+      "id": "D141cc-R3",
+      "severity": "blocking",
+      "status": "open",
+      "title": "Mismatched command/row candidates are not fail-closed",
+      "evidence": "A same-target/suite normal request with the same source digest but wrong command_bytes is excluded by exact_candidates, not rejected by _inspect. recover_or_adopt then created a new normal request; observed normal_calls=1. The required source/argv/rowtuple mismatch guard is therefore absent. command_digest and row_digest are also not checked against the bytes used for adoption.",
+      "source": "candidate/controller.py:220-227,247-266"
+    }
+  ],
+  "qualification": {
+    "private_controls": "PARTIAL_PASS",
+    "actual_builder_binding": "FAIL_FOR_POPUP_RETRY",
+    "actual_service_or_body": "UNVERIFIED_BY_SCOPE",
+    "live_admission": "UNVERIFIED"
+  },
+  "retained_limits": [
+    "Placement 9168 remains the only bounded PASS.",
+    "Old popup receipts 13234 and 20413 remain terminal cancelled with UNKNOWN body verdict.",
+    "No actual request, body, wait, stop, registry, queue, browser, or product test was run.",
+    "The two early own-source samples do not support a whole-author trace claim."
+  ]
+}
