@@ -1,0 +1,115 @@
+{
+  "utc": "2026-10-26T08:20:22.629428+00:00",
+  "worker": "app-F-D141l-Agent-binding-review-0820",
+  "available_bytes": 4938182656,
+  "floor": 4600000000,
+  "live_before": [],
+  "source_only": true,
+  "files": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/controller-continuation.sh",
+      "sha256": "780f2ce672ec8a002be784a0e44fd4ec82601b8342de9d8bad9d4b5f98f5e994",
+      "bytes": 9647,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/binding-source.py",
+      "sha256": "703b0fa3c36b4b9e47c456bd75a30fbcc65e8a81f78a82416732f6143d0f5044",
+      "bytes": 9531,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/check-source.py",
+      "sha256": "6e5c4f7702b1001f04ff7751e49c75b5b3e4b7d36e9e413322a1d5f2d3c02e7d",
+      "bytes": 31868,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/command-cut.sh",
+      "sha256": "72fa453e1cc01279e8c19c8fc691e6a4994a7d09f9c2c3f860b80ded05cd4022",
+      "bytes": 10532,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/command-pristine.sh",
+      "sha256": "cc700b6b82d8eefaf58fc25b78f21897f4d67372abbe8d4cb343ff807dec60da",
+      "bytes": 10312,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/source-manifest.json",
+      "sha256": "66a0e55769d64e0b5464a2cda5f203ba61320eeb37cd0e7e6e8a23cb91dad543",
+      "bytes": 19103,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/rows.txt",
+      "sha256": "4b32dc58b0ad6a728aba7c187dec2c0f4fc36404277bcdcaa3d48c2a0aacee57",
+      "bytes": 148,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/readiness.json",
+      "sha256": "01e5c59fc04daf60631679318daa26687e8b7a8668b35d09c8c6a30c6b2e5fa4",
+      "bytes": 615,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/controller-plan.md",
+      "sha256": "0a2f1b241e1efe38081c05c0ec1f1223efc8bee988e8dead888f8d1dcf481643",
+      "bytes": 1092,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/validation.md",
+      "sha256": "49d8680d8c8308c1cef39906bb89d6348cae137f449c0642c7d7975c93a189fd",
+      "bytes": 2793,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/handoff.md",
+      "sha256": "5c8e4e4abca219d54f88234f9de52b8c57318055fd3c3cbf797dbe89f157c2ec",
+      "bytes": 2304,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/disk-trace.txt",
+      "sha256": "0aafa313473ea9ac946c1d36fe1287ac0537d787a352db5ff57dd908e7dbed7f",
+      "bytes": 300,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/tiny-controls.sh",
+      "sha256": "393a5bbefc1b0c7f57906e02dcfbf111843e8ff3bda5fd8ece74a3cfeb9a5b66",
+      "bytes": 1300,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/positive-stub.sh",
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+      "bytes": 67,
+      "mode": "0o700"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/positive.manifest",
+      "sha256": "d6a8865cc908b518ed0ffce7defe44f91846a983c8cd3befebbeb5477380f3e7",
+      "bytes": 2660,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/poison.manifest",
+      "sha256": "ba0bd7d07dc1dcfdd9da8a6fcf2cdce2341925f3ae99021f3fdfb8abb8413596",
+      "bytes": 2660,
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/admission-derivation.json",
+      "sha256": "39410ae8083b1900cebf74a802882a1fe7f6b762939e7ec7b29fb3cef525c8b4",
+      "bytes": 882,
+      "mode": "0o644"
+    }
+  ],
+  "source_brief_sha": "e637a6800968e93941a6c89ba61fdea6d9e2e523e5046dd910e2f4e6189cb242",
+  "brief_output_root_only_changed": true,
+  "no_hub_writes": true
+}
