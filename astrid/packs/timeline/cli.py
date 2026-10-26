@@ -63,6 +63,7 @@ import re
 import shlex
 import sys
 import uuid
+import zipfile
 from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
@@ -73,6 +74,7 @@ from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_res
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
 from astrid.core.timeline.clip_names import clip_media_name
+from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
     _changed_cuts_line,
     _clips_changed,
@@ -194,6 +196,15 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
     return print_result(result, as_json=parsed.json)
 
 
+# What a transfer can raise: its own ValueError/OSError, a damaged archive, and a
+# Runtime refusal (conflict, validation, not found) carried by WorkspaceClientError.
+_TRANSFER_ERRORS = (ValueError, OSError, zipfile.BadZipFile, zipfile.LargeZipFile, WorkspaceClientError)
+
+
+def _transfer_error_code(exc: Exception) -> str:
+    return exc.code if isinstance(exc, WorkspaceClientError) else "validation_error"
+
+
 def _cmd_export(parsed: argparse.Namespace) -> int:
     from astrid.sdk.contracts import DomainResult, ErrorObject
     from astrid.sdk.timeline_transfer import export_timeline
@@ -201,9 +212,9 @@ def _cmd_export(parsed: argparse.Namespace) -> int:
     try:
         receipt = export_timeline(parsed.client, parsed.project, parsed.ref, parsed.out)
         return print_result(DomainResult.success(receipt), as_json=parsed.json)
-    except (ValueError, OSError) as exc:
+    except _TRANSFER_ERRORS as exc:
         return print_result(DomainResult.failure(ErrorObject(
-            "validation_error", str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
+            _transfer_error_code(exc), str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
         )), as_json=parsed.json)
 
 
@@ -222,9 +233,9 @@ def _cmd_import(parsed: argparse.Namespace) -> int:
     try:
         receipt = import_timeline(parsed.client, parsed.file, parsed.project, name=parsed.name)
         return print_result(DomainResult.success(receipt), as_json=parsed.json)
-    except (ValueError, OSError) as exc:
+    except _TRANSFER_ERRORS as exc:
         return print_result(DomainResult.failure(ErrorObject(
-            "validation_error", str(exc), {"file": str(parsed.file), "project": parsed.project}
+            _transfer_error_code(exc), str(exc), {"file": str(parsed.file), "project": parsed.project}
         )), as_json=parsed.json)
 
 
