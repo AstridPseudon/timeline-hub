@@ -205,6 +205,7 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
 
     from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
     from astrid.sdk import AstridClient, observe_task_invocation
+    from astrid.sdk.pagination import paged_rows
 
     pack_root = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "timeline"
     daemon = real_runtime()
@@ -214,7 +215,7 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
         executor_id="astrid-pack-host",
         attempt_base=tmp_path / "attempts",
     )
-    host.discover()
+    records = {record.id: record for record in host.discover()}
     host.preflight("timeline.export_plan")
     host.preflight("timeline.prepare_import")
     host.register(deliberate=True)
@@ -230,6 +231,12 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
         protocol_version="workspace.v1",
     ) as client:
         try:
+            registered_rows = paged_rows(client._remote._transport.list_capabilities, limit=50)
+            assert registered_rows is not None
+            registered_capabilities = {
+                row["capability_id"]: row for row in registered_rows
+            }
+
             created = client.projects.create(
                 slug="timeline-action-test", name="Timeline Action Test", idempotency_key="timeline-action-project",
             )
@@ -291,23 +298,47 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             task_outputs = []
 
             def invoke(capability: str, inputs: dict):
-                pending = client.invoke_result(
-                    capability, kind="action", project=project, inputs=inputs, wait=False,
+                record = records[capability]
+                registered = registered_capabilities[capability]
+                spec = {
+                    "capability_id": capability,
+                    "kind": "action",
+                    "inputs": inputs,
+                    "outputs": {},
+                    "extra_pack_roots": [],
+                }
+                input_manifest = []
+                if "payload" in inputs:
+                    input_manifest.append(inputs["payload"])
+                    spec["input_digests"] = [{"name": "payload", "digest": inputs["payload"]}]
+                pending = client.tasks.create(
+                    project_id=project,
+                    capability=capability,
+                    capability_digest=registered["definition_digest"],
+                    spec=spec,
+                    input_manifest=input_manifest,
+                    storage_estimate={
+                        "scratch_bytes": registered["estimated_scratch_bytes"],
+                        "output_bytes": registered["estimated_output_bytes"],
+                    },
+                    idempotency_key=f"timeline-action-{len(task_outputs)}",
                 ).raise_for_error()
-                assert pending.kernel_task_id and pending.run_id
+                task_id = pending.data["task_id"]
+                task = client.tasks.show(task_id).raise_for_error().data
+                run_id = task["run_id"]
                 assert len(host.run(once=True)) == 1
                 observed = observe_task_invocation(
                     client,
-                    capability_id=pending.capability_id,
-                    capability_type=pending.capability_type,
-                    native_kind=pending.native_kind,
-                    task_id=pending.kernel_task_id,
-                    run_id=pending.run_id,
+                    capability_id=capability,
+                    capability_type="executor",
+                    native_kind=record.definition.kind,
+                    task_id=task_id,
+                    run_id=run_id,
                     read_managed_outputs=True,
                 ).raise_for_error()
                 task_outputs.append({
-                    "task_id": pending.kernel_task_id,
-                    "run_id": pending.run_id,
+                    "task_id": task_id,
+                    "run_id": run_id,
                     "outputs": observed.outputs["managed_outputs"],
                 })
                 return observed

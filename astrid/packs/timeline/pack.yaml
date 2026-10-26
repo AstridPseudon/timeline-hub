@@ -80,6 +80,8 @@ actions:
       runtime_file: actions/export_plan/run.py
       runtime_module: astrid.packs.timeline.actions.export_plan.run
       output_result_manifest: true
+      estimated_scratch_bytes: 67108864
+      estimated_output_bytes: 67108864
   prepare_import:
     name: Prepare Timeline Import
     version: "1.0.0"
@@ -166,6 +168,8 @@ actions:
       runtime_file: actions/prepare_import/run.py
       runtime_module: astrid.packs.timeline.actions.prepare_import.run
       output_result_manifest: true
+      estimated_scratch_bytes: 67108864
+      estimated_output_bytes: 67108864
 resources:
   - kind: documentation
     path: docs/SKILL.md
