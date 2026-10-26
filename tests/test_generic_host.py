@@ -1095,6 +1095,147 @@ def test_discovery_digest_and_truthful_preflight(tmp_path):
     host.register(deliberate=True)
 
 
+@pytest.mark.parametrize(("bad_metadata", "bad_matrix"), [
+    ({"adapter_family": "unregistered-family"}, {}),
+    ({"adapter_family": "cpu", "requires_remotion": "sometimes"}, {}),
+    ({"adapter_family": "cpu"}, {"resource_keys": "provider"}),
+])
+def test_bad_adapter_is_registered_unavailable_without_changing_admission_digests(tmp_path, bad_metadata, bad_matrix):
+    bad_root = tmp_path / "bad"
+    _write_manifest(bad_root, capability_id="test.bad")
+    bad_manifest = json.loads((bad_root / "executor.yaml").read_text(encoding="utf-8"))
+    bad_manifest["metadata"].update(bad_metadata)
+    (bad_root / "executor.yaml").write_text(json.dumps(bad_manifest), encoding="utf-8")
+    good_root = tmp_path / "good"
+    _write_manifest(good_root, capability_id="test.good")
+    matrix_rows = []
+    for capability_id in ("test.bad", "test.good"):
+        row = {
+            "id": capability_id,
+            "disposition": "optional",
+            "evidence_reason": "fixture capability row",
+            "adapter_family": bad_metadata.get("adapter_family", "cpu") if capability_id == "test.bad" else "cpu",
+            "resource_keys": ["cpu"],
+            "required_binaries": [],
+            "required_packages": [],
+        }
+        if capability_id == "test.bad":
+            row.update(bad_matrix)
+        matrix_rows.append(row)
+    matrix_path = tmp_path / "matrix.json"
+    expected_matrix = {row["id"]: dict(row) for row in matrix_rows}
+    matrix_path.write_text(json.dumps({"schema_version": 1, "capabilities": matrix_rows}), encoding="utf-8")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], capability_matrix=matrix_path, client=runtime)
+
+    before = {record.id: (record.capability_digest, record.source_digest) for record in host.discover()}
+    source_epoch_before = host.source_epoch
+    result = host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.bad"]["status"] == "unavailable"
+    assert rows["test.bad"]["required_resource_keys"] == []
+    assert rows["test.bad"]["unavailable_reason"].startswith("adapter:reason=")
+    assert rows["test.good"]["status"] == "ready"
+    manifests = {item["id"]: item for item in result["capabilities"]}
+    assert manifests["test.bad"]["adapter_family"] is None
+    assert manifests["test.bad"]["adapter_error"]
+    assert (manifests["test.bad"]["capability_digest"], manifests["test.bad"]["source_digest"]) == before["test.bad"]
+    assert host.capabilities["test.bad"].matrix == expected_matrix["test.bad"]
+    assert host.matrix == expected_matrix
+    assert host.source_epoch == source_epoch_before
+    with pytest.raises(HostError, match="unavailable: adapter:reason="):
+        host.admit("executor", "test.bad")
+
+    local_result = GenericPackHost(pack_roots=[tmp_path], capability_matrix=matrix_path).register()
+    local_bad = next(item for item in local_result["capabilities"] if item["id"] == "test.bad")
+    assert local_bad["adapter_family"] is None and local_bad["adapter_error"]
+
+
+def test_replaced_capability_record_reparses_current_adapter_matrix(tmp_path):
+    _write_manifest(tmp_path / "good", capability_id="test.replace")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    original = host.discover()[0]
+
+    invalid = dataclasses.replace(original, matrix={"adapter_family": "invalid-family"})
+    host.capabilities[original.id] = invalid
+    host.register()
+    assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
+    assert host.capabilities[original.id].resource_keys == ()
+
+    host.capabilities[original.id] = dataclasses.replace(invalid, matrix={})
+    host.register(deliberate=True)
+    assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "ready"
+    assert host.admit("executor", original.id)[0]["id"] == original.id
+
+
+def test_malformed_network_policy_is_a_capability_scoped_registration_and_admission_error(tmp_path):
+    bad_root = tmp_path / "network_bad"
+    _write_manifest(bad_root, capability_id="test.network_bad")
+    bad_manifest = json.loads((bad_root / "executor.yaml").read_text(encoding="utf-8"))
+    bad_manifest["isolation"] = {"mode": "subprocess", "network": True}
+    bad_manifest["metadata"].update({"adapter_family": "provider", "network_policy": ["not", "an object"]})
+    (bad_root / "executor.yaml").write_text(json.dumps(bad_manifest), encoding="utf-8")
+    good_root = tmp_path / "network_good"
+    _write_manifest(good_root, capability_id="test.network_good")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+
+    host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.network_bad"]["status"] == "unavailable"
+    assert "network:reason=network_policy" in rows["test.network_bad"]["unavailable_reason"]
+    assert rows["test.network_good"]["status"] == "ready"
+    with pytest.raises(HostError, match="unavailable: network:reason=network_policy"):
+        host.admit("executor", "test.network_bad")
+
+
+def test_remotion_status_exception_only_unreadies_remotion_capability(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+
+    render_root = tmp_path / "render"
+    _write_manifest(render_root, capability_id="test.render")
+    definition = json.loads((render_root / "executor.yaml").read_text(encoding="utf-8"))
+    definition["metadata"].update({"adapter_family": "render", "requires_remotion": True})
+    (render_root / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+    cpu_root = tmp_path / "cpu"
+    _write_manifest(cpu_root, capability_id="test.cpu")
+
+    def broken_status(*, require_explicit_project=False):
+        raise RuntimeError("opaque project detail")
+
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", broken_status)
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+
+    host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.render"]["status"] == "unavailable"
+    assert "Remotion validation failed: opaque project detail" in rows["test.render"]["unavailable_reason"]
+    assert rows["test.cpu"]["status"] == "ready"
+    assert host.capabilities["test.cpu"].ready
+
+
+def test_shared_host_integrity_error_from_remotion_stays_fatal(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+
+    render_root = tmp_path / "render"
+    _write_manifest(render_root, capability_id="test.render")
+    definition = json.loads((render_root / "executor.yaml").read_text(encoding="utf-8"))
+    definition["metadata"].update({"adapter_family": "render", "requires_remotion": True})
+    (render_root / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+
+    def broken_status(*, require_explicit_project=False):
+        raise HostError("host identity integrity failed")
+
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", broken_status)
+    with pytest.raises(HostError, match="host identity integrity failed"):
+        GenericPackHost(pack_roots=[tmp_path], client=FakeRuntime()).register()
+
+
 def test_claim_only_admits_capabilities_that_are_currently_ready(tmp_path, monkeypatch):
     """The host candidate set must equal its current readiness predicate."""
     monkeypatch.delenv("ASTRID_PROVIDER_KEY", raising=False)
