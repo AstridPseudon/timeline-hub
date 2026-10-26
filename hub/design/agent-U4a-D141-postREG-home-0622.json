@@ -1,0 +1,25 @@
+{
+  "schema": "agent.manager.normal-home-receipt.v1",
+  "time": "2026-10-26T06:22:27.375779+00:00",
+  "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+  "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+  "parents": [
+    "432f9dcbc66fb80b539d9ef709a63ef8065dbc92",
+    "00ec0f2f841401b69dad26fb1b23d31cce11efab"
+  ],
+  "clean": true,
+  "source_branch": "tl/rt-U4a-D141-host-receiving-review-0549",
+  "source_commit": "00ec0f2f841401b69dad26fb1b23d31cce11efab",
+  "source_tree": "5d334b48e68d583a633e5bb658238be0d96b08c4",
+  "review": "rt-U4a-D141-host-receiving-review-0549 PASS24",
+  "queue_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-rt-U4a-D141-host-receiving-review-0549",
+  "queue_sha256": "99ccb6379bb126329631cf6282bacddc61956bf2af3e9e2f9dedcad1f378f977",
+  "previous_home": "432f9dcbc66fb80b539d9ef709a63ef8065dbc92",
+  "delta_paths": [
+    "runtime.lock.json"
+  ],
+  "source_commit_only": true,
+  "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "runtime_lock_sha256": "cc1661b12d9d0a4600c79adab4e2d962db455b5819dee78a0353787d8d4f2b82",
+  "proof_scope": "Normal receiving source readback only; no full pair, REG0 or P4 claim"
+}
