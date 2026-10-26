@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "task": "D141l",
+  "status": "FAIL",
+  "scope": "standalone current Node receipt and evidence",
+  "original_author_derivative": {
+    "path": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/node-results.json",
+    "sha256": "cbfd24d9c3cd2bc9a21246ee49b723d40f9ea448059e1ad0c021101075801fb5"
+  },
+  "independent_review_derivative": {
+    "path": "workers/app-F-D141l-current-result-review-0635/evidence/review.json",
+    "sha256": "17ef856517b03468309838d0dd4420c951df26095375ecfa65f68731badce4e4"
+  },
+  "current": {
+    "result_id": "app-full-d141-node-phase-1026063009-19156",
+    "suite": "full-d141-node-phase",
+    "status": "fail",
+    "exit": 1,
+    "service_duration_seconds": 83,
+    "node_duration_ms": 79907.300109,
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "source": {
+      "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"
+    },
+    "counts": {
+      "tests": 324,
+      "suites": 33,
+      "passed": 296,
+      "failed": 2,
+      "cancelled": 0,
+      "actual_skipped_tests": 26,
+      "todo": 0,
+      "declared_skip_entries": 27,
+      "declared_skip_entries_are_distinct_from_actual_skipped_tests": true
+    },
+    "raw": {
+      "request": {"path": "tests/app-full-d141-node-phase-1026063009-19156/request", "sha256": "a4b7491f3e153a8541c877d8f6954a4211f793e3efc6b7a5cdd9f84b59133877"},
+      "snap": {"path": "tests/app-full-d141-node-phase-1026063009-19156/snap", "sha256": "8a3aa9c0e7eb14c080bae37ba2d8000919cb15ae5b826cb26980402235e031b2"},
+      "summary": {"path": "tests/app-full-d141-node-phase-1026063009-19156/summary", "sha256": "cb2f6cbae49d74547da72370f9bea03128cb0cac7faff0c5d20edc92c2f251b1"},
+      "log": {"path": "tests/app-full-d141-node-phase-1026063009-19156/log.txt", "sha256": "ad43b74b1536b557a4b943fb8a8e3183707c86ff521fbb44ba589970dd8ffa4e"},
+      "trace": {"path": "tests/app-full-d141-node-phase-1026063009-19156/disk-trace.tsv", "sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b", "samples": 19},
+      "receipt": {"path": "tests/app-full-d141-node-phase-1026063009-19156/recorded-measured-floor.json", "sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8"},
+      "xml": "not emitted by this registered Node route",
+      "keep": true
+    },
+    "failures": [
+      {
+        "file": "scripts/quality/capture-extension-external-evidence.test.mjs",
+        "title": "computes and verifies an Ed25519 public-key fingerprint without reading a private key",
+        "callsite": "line 133",
+        "error": "spawnSync ssh-keygen ENOENT",
+        "source_status": "present in frozen d822 with identical blob; static environment hint only",
+        "comparison_status": "pending genuine same-kind pristine result; no REG/nonREG claim"
+      },
+      {
+        "file": "scripts/quality/check-extension-ship-evidence.test.mjs",
+        "title": "suite-level uncaught setup failure after external-evidence failure",
+        "callsite": "line 70",
+        "error": "spawnSync ssh-keygen ENOENT",
+        "source_status": "present in frozen d822 with identical blob; static environment hint only",
+        "causal_relation": "independent second suite-level uncaught setup failure; not causally the first test failure",
+        "comparison_status": "pending genuine same-kind pristine result; no REG/nonREG claim"
+      }
+    ]
+  },
+  "pristine": {
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "status": "NOTRUN",
+    "reason": "exact pristine full and same-kind standalone Node admission/result are absent"
+  }
+}
