@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
+import { Blocks, Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
@@ -25,6 +25,8 @@ export interface NewChatMenuHandle {
 /** What the + button starts: the open chat's agent, model and thinking level. */
 export interface NewChatLike { agent: LocalAgentId; model?: string; modelName?: string | null; thoughtLevel?: string }
 
+export type NewChatSetupTarget = LocalAgentId | 'other';
+
 interface NewChatMenuProps {
   /** The open chat, which + repeats unless a choice was made in the menu; without one, + starts the default agent with its default model. */
   current?: NewChatLike | null;
@@ -42,8 +44,8 @@ interface NewChatMenuProps {
   newChatDisabled?: boolean;
   /** Start a chat: no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
-  /** Opens setup for an agent that is not ready. */
-  onSetupAgent?: (agent: LocalAgentId) => void;
+  /** Opens setup for an agent that is not ready, or the Another agent instructions. */
+  onSetupAgent?: (agent: NewChatSetupTarget) => void;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
@@ -51,8 +53,8 @@ interface NewChatMenuProps {
 }
 
 /**
- * The chat header's new-chat split button, like a split Merge button: + starts a chat, and ▾ opens a chooser for what + starts
- * (an agent, → drills into that agent's models and thinking levels). The chooser never starts a chat itself.
+ * The chat header's new-chat split button, like a split Merge button: + starts a chat, and ▾ chooses its agent/model or opens setup.
+ * Choosing a row never starts a chat; → drills into that agent's models and thinking levels.
  */
 export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(function NewChatMenu({
   current = null, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null,
@@ -261,11 +263,28 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
                   <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <CommandLine line={astridSignInLine} /></p>
                 )} />
             ) : (
-              <CommandGroup heading="Use for new chats" className={PICKER_GROUP}>
-                {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
-                {agentsError && !updateNeeded && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>}
-                {agentRows}
-              </CommandGroup>
+              <>
+                <CommandGroup heading="Use for new chats" className={PICKER_GROUP}>
+                  {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
+                  {agentsError && !updateNeeded && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>}
+                  {agentRows}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup className={PICKER_GROUP}>
+                  <CommandItem value="setup:other" disabled={newChatDisabled}
+                    className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]"
+                    onSelect={() => { changeOpen(false); onSetupAgent?.('other'); }}>
+                    <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 opacity-0" aria-hidden="true" />
+                    <Blocks className="mt-[3px] h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="flex items-baseline gap-2">
+                        <span>Another agent</span>
+                        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">Gemini CLI, OpenCode…</span>
+                      </span>
+                    </span>
+                  </CommandItem>
+                </CommandGroup>
+              </>
             )}
           </CommandList>
           <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground/80">

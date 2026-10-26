@@ -205,6 +205,28 @@ describe('NewChatMenu agent rows', () => {
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Not installed');
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Install with hermes install.');
   });
+
+  it('offers Another agent after the choices and opens it with keyboard navigation', async () => {
+    const user = userEvent.setup();
+    const onSetupAgent = vi.fn();
+    const onOpenChange = vi.fn();
+    openMenu({ onSetupAgent, onOpenChange });
+    const other = screen.getByRole('option', { name: /Another agent/ });
+    expect(other).toHaveTextContent('Gemini CLI, OpenCode…');
+    expect(other.querySelector('svg.lucide-check')).toHaveClass('opacity-0');
+
+    const command = screen.getByRole('dialog', { name: 'New chat' }).querySelector('[cmdk-root]') as HTMLElement;
+    command.focus();
+    for (let index = 0; index <= ready.length && other.getAttribute('aria-selected') !== 'true'; index++) {
+      await user.keyboard('{ArrowDown}');
+    }
+    expect(other).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{Enter}');
+
+    expect(onSetupAgent).toHaveBeenCalledExactlyOnceWith('other');
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    expect(screen.queryByRole('dialog', { name: 'New chat' })).toBeNull();
+  });
 });
 
 describe('NewChatMenu choice', () => {
