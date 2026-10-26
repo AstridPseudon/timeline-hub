@@ -1,0 +1,40 @@
+{
+  "schema": "D141f-finite-read-only-v1",
+  "status": "NOT_QUALIFIED",
+  "qualified": false,
+  "source_only_admission": {
+    "available_bytes": 4771422208,
+    "body_present": false,
+    "timestamp": null,
+    "timestamp_note": "The supplied admission record has no timestamp field; no timestamp was invented."
+  },
+  "same_kind_disk_drop": {
+    "x_bytes": null,
+    "bound_status": "UNAVAILABLE_NO_AUTHENTICATED_PAIRED_SAMPLES",
+    "selector": "MAX across all authenticated witnesses",
+    "bracket_bound": false,
+    "continuous_bound": false,
+    "disclosure": "No before/after available_bytes pair or continuous trace is retained for any of the three exact normal journey runs. The run suffixes and terminal records are not substituted for disk samples."
+  },
+  "requested_formula": {
+    "x": "MAX(observed same-kind cut-tuple disk drops)",
+    "floor": "MAX(4600000000, 4000000000 + X + 200000000)",
+    "fallback_when_x_unbounded": 5000000000
+  },
+  "resulting_floor_bytes": 5000000000,
+  "stop_bytes": 4000000000,
+  "heavy_body": {
+    "actual_body_run": false,
+    "queued_request_id": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617",
+    "queued_status": "queued",
+    "queued_request_excluded_from_consumption": true,
+    "reason": "The queued single preflight has no body execution or receipt and its queue-time disk observations cannot bound body consumption."
+  },
+  "kit_context": {
+    "observed_light_floor_bytes": 5000000000,
+    "observed_default_heavy_floor_bytes": 5200000000,
+    "d141f_receipt_interface_present": false,
+    "source_only_controller_admission_bytes": 5433016320,
+    "source_only_controller_admission_is_body_witness": false
+  }
+}

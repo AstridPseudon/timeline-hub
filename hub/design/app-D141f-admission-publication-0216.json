@@ -1,0 +1,27 @@
+{
+  "worker": "app-P-D141f-measured-journey-admission-0209",
+  "verdict": "NOT_QUALIFIED author only; independent check dispatched next",
+  "fallback_floor": 5000000000,
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141f-measured-journey-admission-0209-measurement.json",
+      "sha256": "af6afbc24f9fc8bf23030bae92ac74cd3a1de97dc7ff6c6bba290529f841b838"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141f-measured-journey-admission-0209-witnesses.json",
+      "sha256": "b03ebe474139d8a77837e224497d6d5145e0c5df3101f1e5f22b3cfc61c07347"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141f-measured-journey-admission-0209-source-manifest.json",
+      "sha256": "d5a08cdb462d46bd7de954676f2b36bfabff46a99117592befe1f22a37d3c90e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141f-measured-journey-admission-0209-validation.md",
+      "sha256": "51e0971b3dccf97ea0398f933c1309c56912285576859386a91e89065c4dd29e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141f-measured-journey-admission-0209-handoff.md",
+      "sha256": "88b07e8563359756193790e2fea2653b4e484b94bb429402dd96e4cdc3783e46"
+    }
+  ]
+}

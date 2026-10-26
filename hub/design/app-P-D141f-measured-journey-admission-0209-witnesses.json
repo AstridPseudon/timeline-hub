@@ -1,0 +1,69 @@
+{
+  "schema": "D141f-finite-read-only-witnesses-v1",
+  "authenticated_witness_count": 0,
+  "witnesses": [
+    {
+      "run_id": "app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879",
+      "requested_at": "2026-10-26T01:28:01Z",
+      "body_started_at": "2026-10-26T01:28:19.226Z",
+      "body_finished_at": "2026-10-26T01:31:14.450Z",
+      "scope": "P1 chain normal journey",
+      "selector": "p1",
+      "terminal_status": "pass",
+      "same_kind_cut_tuple": true,
+      "available_bytes_samples": [],
+      "boundable": false,
+      "unboundable_reason": "The retained run manifest, summary, controller record, and custody record contain no authenticated paired available_bytes samples or continuous trace.",
+      "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879",
+      "manifest_sha256": "c5269108da4f33986c29e4a2100a37907ea2926d05b13f5acd074ec9eea2e3d5",
+      "request_sha256": "47722ad41e4fd33028a6cc6b25461078b2cf7501fe3d34e216e029b9c6fb7bd9",
+      "summary_sha256": "e84a912d2a7ee96341a1a38f34f3c360ac0497d12f341d06e5b495713e715b2e",
+      "custody_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-cut-journeys-resume-0127/evidence/journeys.json"
+    },
+    {
+      "run_id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+      "requested_at": "2026-10-26T01:32:36Z",
+      "body_started_at": "2026-10-26T01:32:52.713Z",
+      "body_finished_at": "2026-10-26T01:36:25.019Z",
+      "scope": "P2 automatic child placement normal journey",
+      "selector": "automatic-child-placement",
+      "terminal_status": "fail",
+      "same_kind_cut_tuple": true,
+      "available_bytes_samples": [],
+      "boundable": false,
+      "unboundable_reason": "The retained run manifest, summary, controller record, and custody record contain no authenticated paired available_bytes samples or continuous trace.",
+      "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+      "manifest_sha256": "76b88bd3f1e2e6723f5252fc36edb935ef55142698f49a1f10d62c0e6065b722",
+      "request_sha256": "8d573c71c205c1ce6e9d2450a597180d3d155abb0724586d28d1a684362ed54a",
+      "summary_sha256": "eacf5c79830f622395c79d7446a575391afa7eea3726594d440125f8ee8f030c",
+      "custody_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-cut-journeys-resume-0127/evidence/journeys.json"
+    },
+    {
+      "run_id": "app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698",
+      "requested_at": "2026-10-26T01:46:21Z",
+      "body_started_at": "2026-10-26T01:46:31.897Z",
+      "body_finished_at": "2026-10-26T01:50:13.671Z",
+      "scope": "P2 parent move normal journey",
+      "selector": "parent-move",
+      "terminal_status": "pass",
+      "same_kind_cut_tuple": true,
+      "available_bytes_samples": [],
+      "boundable": false,
+      "unboundable_reason": "The retained run manifest, summary, controller record, and custody record contain no authenticated paired available_bytes samples or continuous trace.",
+      "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698",
+      "manifest_sha256": "fc22cf255e8da7648322789f304df65781ea10ee10b1f0f1299e65470e6c6a06",
+      "request_sha256": "8cb4147c455d67cea67cc065fab7430e83d44a241b6557c65d48da74e598c8fc",
+      "summary_sha256": "c507b8d66c7fa009871a0fd5a34cb59d9e3f59165b56fd5c3f28e23e01f78337",
+      "custody_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-cut-journeys-resume-0127/evidence/journeys.json"
+    }
+  ],
+  "excluded_observations": [
+    {
+      "request_id": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617",
+      "status": "queued",
+      "reason": "Queue-time samples are not body consumption and there is no body receipt.",
+      "request_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617/request",
+      "status_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617/status"
+    }
+  ]
+}
