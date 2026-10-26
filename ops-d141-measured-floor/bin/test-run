@@ -74,7 +74,7 @@ if [ -z "$RUN" ]; then
 fi
 # Every heavy body owns a durable trace.  The sampler is the child of this
 # exact body and carries both the queued ID and this body's /proc start tick.
-TRACE_PID=; TRACE_FILE=; TRACE_RC=0; TRACE_FINALIZED=0
+TRACE_PID=; TRACE_FILE=; TRACE_BINDING=; TRACE_READY_OK=0; TRACE_RC=0; TRACE_FINALIZED=0
 STOP_REQUESTED=0
 request_stop() { STOP_REQUESTED=1; }
 trap request_stop USR1
@@ -99,20 +99,19 @@ run_admission_command() {
   return "$COMMAND_RC"
 }
 stop_trace() {
+  SAMPLER_RC=0
   if [ -n "$TRACE_PID" ]; then
     kill -TERM "$TRACE_PID" 2>/dev/null
-    wait "$TRACE_PID" 2>/dev/null; TRACE_RC=$?
+    wait "$TRACE_PID" 2>/dev/null; SAMPLER_RC=$?
     TRACE_PID=
   fi
-  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/d141-append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user"; then
+  TRACE_RC=$SAMPLER_RC
+  if [ "$TRACE_READY_OK" -eq 1 ] && ! python3 -I "$SELF_DIR/d141-append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$TRACE_BINDING" > "$D/trace-validation" 2>&1; then
     TRACE_RC=125
   fi
   if [ "$TRACE_RC" -ne 0 ]; then
     echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
     [ "${rc:-0}" -eq 0 ] && rc=125
-  fi
-  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/d141-validate-trace.py" "$TRACE_FILE" "$ID" "$$" "$(id -u)" > "$D/trace-validation" 2>&1; then
-    TRACE_RC=125
   fi
   TRACE_FINALIZED=1
   return "$TRACE_RC"
@@ -129,17 +128,17 @@ finish_trace() {
 if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
   TRACE_FILE=$D/disk-trace.tsv
   BODY_START_TICKS=$(awk '{print $22}' "/proc/$$/stat") || exit 125
-  setsid python3 -I "$SELF_DIR/d141-disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" > "$D/trace-runner.log" 2>&1 &
-  TRACE_PID=$!
+  coproc TRACE_SAMPLER { exec setsid python3 -I "$SELF_DIR/d141-disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" 2> "$D/trace-runner.log"; }
+  TRACE_PID=$TRACE_SAMPLER_PID
   echo "$TRACE_PID" > "$D/trace.pid"
   trap finish_trace EXIT
   trap 'exit 130' HUP TERM INT
-  # A fast preflight failure must not race the sampler's first durable row.
-  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    [ -s "$TRACE_FILE" ] && break
-    sleep 0.05
-  done
-  [ -s "$TRACE_FILE" ] || { echo "disk trace sampler did not create its header" > "$D/trace-error"; exit 125; }
+  if ! IFS= read -r -t 10 TRACE_READY <&"${TRACE_SAMPLER[0]}"; then
+    echo "disk trace sampler did not publish its immutable identity" > "$D/trace-error"
+    exit 125
+  fi
+  TRACE_BINDING=$TRACE_READY
+  TRACE_READY_OK=1
 fi
 # BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
 if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then

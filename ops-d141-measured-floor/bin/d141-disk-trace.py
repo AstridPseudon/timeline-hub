@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import os
 import signal
+import stat
 import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 
 INTERVAL_SECONDS = 5.0
@@ -37,6 +39,41 @@ def timestamp() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+def parent_binding(path: Path, owner_uid: int) -> tuple[int, str]:
+    """Open every physical parent without following links and bind its identity."""
+    if not path.is_absolute() or path.name != "disk-trace.tsv":
+        raise RuntimeError("trace path is not the fixed absolute file")
+    if any(component in {".", ".."} for component in path.parts[1:]):
+        raise RuntimeError("trace path contains traversal components")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path.anchor, flags)
+    records: list[str] = []
+    try:
+        for component in path.parts[1:-1]:
+            child = os.open(component, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+            item = os.fstat(descriptor)
+            mode = stat.S_IMODE(item.st_mode)
+            if not stat.S_ISDIR(item.st_mode) or item.st_uid not in {0, owner_uid}:
+                raise RuntimeError("trace parent is not an owned directory")
+            if mode & (stat.S_IWGRP | stat.S_IWOTH) and not (item.st_uid == 0 and mode & stat.S_ISVTX):
+                raise RuntimeError("trace parent is writable by an untrusted class")
+            records.append(f"{component}:{item.st_dev}:{item.st_ino}:{item.st_uid}:{mode:o}")
+        return descriptor, sha256("|".join(records).encode()).hexdigest()
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def write_all(descriptor: int, raw: bytes) -> None:
+    while raw:
+        written = os.write(descriptor, raw)
+        if written <= 0:
+            raise OSError("trace write made no progress")
+        raw = raw[written:]
+
+
 def main(argv: list[str]) -> int:
     if len(argv) != 5:
         print("usage: disk-trace.py TRACE JOB_ID BODY_PID PROBE PARENT_START_TICKS", file=sys.stderr)
@@ -54,13 +91,21 @@ def main(argv: list[str]) -> int:
 
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
-    trace_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    if trace_path.is_symlink():
-        raise RuntimeError("trace path is symlinked")
-    with trace_path.open("x", encoding="utf-8") as stream:
-        stream.write("timestamp_utc\tmonotonic_ns\tavailable_bytes\tjob_id\tbody_pid\tkind\n")
-        stream.flush()
-        os.fsync(stream.fileno())
+    owner_uid = os.getuid()
+    parent_descriptor, parent_hash = parent_binding(trace_path, owner_uid)
+    trace_descriptor = -1
+    try:
+        create_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+        trace_descriptor = os.open(trace_path.name, create_flags, 0o600, dir_fd=parent_descriptor)
+        item = os.fstat(trace_descriptor)
+        if not stat.S_ISREG(item.st_mode) or item.st_uid != owner_uid or stat.S_IMODE(item.st_mode) != 0o600 or item.st_nlink != 1:
+            raise RuntimeError("sampler trace is not a single-link owned regular file")
+        write_all(trace_descriptor, b"timestamp_utc\tmonotonic_ns\tavailable_bytes\tjob_id\tbody_pid\tkind\n")
+        os.fsync(trace_descriptor)
+        print(
+            f"ready\t{item.st_dev}\t{item.st_ino}\t{item.st_uid}\t{stat.S_IMODE(item.st_mode):o}\t{item.st_nlink}\t{parent_hash}",
+            flush=True,
+        )
         next_sample = time.monotonic()
         first = True
         while True:
@@ -72,14 +117,23 @@ def main(argv: list[str]) -> int:
                 stopping = True
             kind = "first" if first else ("final" if stopping else "periodic")
             value = available_bytes(probe)
-            stream.write(f"{timestamp()}\t{time.monotonic_ns()}\t{value}\t{job_id}\t{body_pid}\t{kind}\n")
-            stream.flush()
-            os.fsync(stream.fileno())
+            write_all(trace_descriptor, f"{timestamp()}\t{time.monotonic_ns()}\t{value}\t{job_id}\t{body_pid}\t{kind}\n".encode())
+            os.fsync(trace_descriptor)
             if value <= STOP_BYTES and not stopping:
-                # The sampler is outside the body. Ask the runner to stop its
-                # active command and finalize the whole admission unit after
-                # this below-stop observation is durable.
-                Path(f"{trace_path}.stop").write_text("4gb-stop\n", encoding="utf-8")
+                # Keep the paired admission's measured stop semantics: the
+                # durable below-stop observation asks the body to stop.
+                stop_path = trace_path.with_name(trace_path.name + ".stop")
+                stop_descriptor = os.open(
+                    stop_path.name,
+                    os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0),
+                    0o600,
+                    dir_fd=parent_descriptor,
+                )
+                try:
+                    write_all(stop_descriptor, b"4gb-stop\n")
+                    os.fsync(stop_descriptor)
+                finally:
+                    os.close(stop_descriptor)
                 os.kill(body_pid, signal.SIGUSR1)
                 stopping = True
             first = False
@@ -93,6 +147,10 @@ def main(argv: list[str]) -> int:
                 # The signal handler records the terminal request; loop once
                 # so the required final sample is durable before exit.
                 stopping = True
+    finally:
+        if trace_descriptor >= 0:
+            os.close(trace_descriptor)
+        os.close(parent_descriptor)
 
 
 if __name__ == "__main__":
