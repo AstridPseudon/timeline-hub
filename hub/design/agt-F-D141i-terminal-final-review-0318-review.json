@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.agent.d141i.terminal-final-review.v1",
+  "status": "PASS_COMMAND",
+  "finding_count": 0,
+  "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence",
+  "prior_finding": {
+    "id": "D141I-FINAL-001",
+    "prior_status": "FAIL_COMMAND",
+    "resolution": "after_body_available is captured and compared inclusively against CONTINUOUS_STOP_BYTES=4000000000"
+  },
+  "checks": {
+    "bash_syntax": "PASS",
+    "terminal_controls": {
+      "above_4000000001": 0,
+      "equal_4000000000": 0,
+      "below_3999999999": 78,
+      "unreadable": 97,
+      "unwritable": 98,
+      "monitor_failure": 124,
+      "body_failure": 17
+    },
+    "admission_controls": {
+      "genuine_original_0249": 0,
+      "malformed": 78,
+      "missing": 78
+    },
+    "dry_serialization": {
+      "positive": "preflight 0 / stub 17 / one call",
+      "poison": "exit 1 / zero calls / no materialization",
+      "positive_serialized_materialized_equal": true,
+      "junit_binding_equal": true
+    },
+    "static_bindings": "PASS",
+    "source_hash_tree_origin_custody": "PASS",
+    "operational_python": "PASS: ruff and mypy on four packet drivers"
+  },
+  "limits": [
+    "No pytest, collection, measurement body, service request, registration, queue action, or installation",
+    "No product/source/test/generated/schema/pin/profile/launcher/guard change",
+    "No core test outcome, REG/nonREG classification, or ship credit inferred",
+    "Original 0249 admission remains the only 4700000000 witness; own preparation uses the 4000000000 continuous stop",
+    "Actual 24049 remains terminal refusal exit 78 with body zero"
+  ]
+}
