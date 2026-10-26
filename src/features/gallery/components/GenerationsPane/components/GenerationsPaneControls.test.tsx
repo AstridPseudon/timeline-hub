@@ -1,51 +1,13 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GenerationsPaneControls } from './GenerationsPaneControls';
 import { SHOT_FILTER } from '@/shared/constants/filterConstants';
 
-vi.mock('@/shared/components/selectors/ShotFilter', () => ({
-  ShotFilter: ({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) => (
-    <button type="button" data-testid="shot-filter" onClick={() => onOpenChange?.(true)}>
-      shot-filter
-    </button>
-  ),
-}));
-
-vi.mock('@/shared/components/selectors/MediaTypeFilter', () => ({
-  MediaTypeFilter: ({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) => (
-    <button type="button" data-testid="media-type-filter" onClick={() => onOpenChange?.(true)}>
-      media-type-filter
-    </button>
-  ),
-}));
-
-vi.mock('@/shared/components/ui/checkbox', () => ({
-  Checkbox: ({
-    id,
-    checked,
-    onCheckedChange,
-  }: {
-    id?: string;
-    checked?: boolean;
-    onCheckedChange?: (value: boolean) => void;
-  }) => (
-    <input
-      id={id}
-      type="checkbox"
-      checked={checked}
-      onChange={(e) => onCheckedChange?.(e.target.checked)}
-    />
-  ),
-}));
-
-vi.mock('@/shared/components/ui/select', () => ({
-  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
-  SelectValue: () => <span>value</span>,
-  SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  SelectItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+const SHOTS = [
+  { id: 'shot-1', name: 'Opening' },
+  { id: 'shot-2', name: 'Finale' },
+] as React.ComponentProps<typeof GenerationsPaneControls>['filters']['shots'];
 
 describe('GenerationsPaneControls', () => {
   function buildProps(overrides: Partial<React.ComponentProps<typeof GenerationsPaneControls>> = {}) {
@@ -77,7 +39,7 @@ describe('GenerationsPaneControls', () => {
       },
       pagination: {
         totalCount: 3,
-        perPage: 10,
+        perPage: 18,
         page: 1,
         onPageChange: vi.fn(),
       },
@@ -88,21 +50,84 @@ describe('GenerationsPaneControls', () => {
     } as React.ComponentProps<typeof GenerationsPaneControls>;
   }
 
-  it('renders count fallback when pagination is not needed', () => {
+  it('offers All, Images, Videos and Audio with All selected by default', () => {
     render(<GenerationsPaneControls {...buildProps()} />);
-    expect(screen.getByText('3 items')).toBeInTheDocument();
+    const group = screen.getByRole('radiogroup', { name: 'Media type' });
+    const radios = within(group).getAllByRole('radio');
+    expect(radios.map((r) => r.textContent)).toEqual(['All', 'Images', 'Videos', 'Audio']);
+    expect(within(group).getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('selects audio in the existing media type buttons and highlights only audio', () => {
+  it('passes video through the media type handler', () => {
     const props = buildProps();
-    props.filters.mediaTypeFilter = 'audio';
     render(<GenerationsPaneControls {...props} />);
-    const audioButton = screen.getByRole('button', { name: 'Audio' });
-    expect(audioButton).toHaveClass('bg-zinc-600');
-    expect(screen.getByRole('button', { name: 'Images' })).not.toHaveClass('bg-zinc-600');
-    expect(screen.getByRole('button', { name: 'Videos' })).not.toHaveClass('bg-zinc-600');
-    fireEvent.click(audioButton);
-    expect(props.filters.onMediaTypeFilterChange).toHaveBeenCalledWith('audio');
+    const group = screen.getByRole('radiogroup', { name: 'Media type' });
+    fireEvent.click(within(group).getByRole('radio', { name: 'Videos' }));
+    expect(props.filters.onMediaTypeFilterChange).toHaveBeenCalledWith('video');
+  });
+
+  it('hides the scope menu when there are no shots and no current shot', () => {
+    render(<GenerationsPaneControls {...buildProps()} />);
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByText('All shots')).not.toBeInTheDocument();
+  });
+
+  it('shows the scope menu with labels, not raw values', () => {
+    render(
+      <GenerationsPaneControls
+        {...buildProps({
+          filters: { ...buildProps().filters, shots: SHOTS, selectedShotFilter: SHOT_FILTER.NO_SHOT },
+        })}
+      />,
+    );
+    expect(screen.getByText('Not in a shot')).toBeInTheDocument();
+    expect(screen.queryByText('no-shot')).not.toBeInTheDocument();
+  });
+
+  it('shows the page range for page 2 of 19 at 18 per page', () => {
+    render(
+      <GenerationsPaneControls
+        {...buildProps({
+          pagination: { totalCount: 19, perPage: 18, page: 2, onPageChange: vi.fn() },
+        })}
+      />,
+    );
+    expect(screen.getByText('19–19 of 19')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeEnabled();
+  });
+
+  it('opens the page menu and jumps to the chosen page', () => {
+    const onPageChange = vi.fn();
+    render(
+      <GenerationsPaneControls
+        {...buildProps({
+          pagination: { totalCount: 19, perPage: 18, page: 2, onPageChange },
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /19–19 of 19/ }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Page 1' }));
+    expect(onPageChange).toHaveBeenCalledWith(1);
+  });
+
+  it('shows a plain item count on a single page', () => {
+    render(
+      <GenerationsPaneControls
+        {...buildProps({ pagination: { totalCount: 19, perPage: 25, page: 1, onPageChange: vi.fn() } })}
+      />,
+    );
+    expect(screen.getByText('19 items')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+  });
+
+  it('reports the star as pressed when starred only is on', () => {
+    render(
+      <GenerationsPaneControls
+        {...buildProps({ filters: { ...buildProps().filters, starredOnly: true } })}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Starred only' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('toggles search and starred filters via callbacks', () => {
@@ -111,58 +136,15 @@ describe('GenerationsPaneControls', () => {
     render(
       <GenerationsPaneControls
         {...buildProps({
-          filters: {
-            ...buildProps().filters,
-            onSearchOpenChange,
-            onStarredOnlyChange,
-            starredOnly: false,
-          },
+          filters: { ...buildProps().filters, onSearchOpenChange, onStarredOnlyChange },
         })}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Search prompts' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Show only starred items' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Starred only' }));
 
     expect(onSearchOpenChange).toHaveBeenCalledWith(true);
     expect(onStarredOnlyChange).toHaveBeenCalledWith(true);
-  });
-
-  it('switches to all shots when current-shot filter is active', () => {
-    const onSelectedShotFilterChange = vi.fn();
-    render(
-      <GenerationsPaneControls
-        {...buildProps({
-          filters: {
-            ...buildProps().filters,
-            currentShotId: 'shot-1',
-            selectedShotFilter: 'shot-1',
-            onSelectedShotFilterChange,
-          },
-        })}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /All/i }));
-    expect(onSelectedShotFilterChange).toHaveBeenCalledWith(SHOT_FILTER.ALL);
-  });
-
-  it('propagates exclude-positioned checkbox changes', () => {
-    const onExcludePositionedChange = vi.fn();
-    render(
-      <GenerationsPaneControls
-        {...buildProps({
-          filters: {
-            ...buildProps().filters,
-            onExcludePositionedChange,
-            excludePositioned: false,
-            isSpecialFilterSelected: false,
-          },
-        })}
-      />,
-    );
-
-    fireEvent.click(screen.getByLabelText('Exclude items with a position'));
-    expect(onExcludePositionedChange).toHaveBeenCalledWith(true);
   });
 });
