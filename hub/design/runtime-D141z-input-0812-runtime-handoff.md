@@ -1,0 +1,15 @@
+# OPS D141h cancellation handoff
+
+Bounded isolated controls PASS. Candidate: branch `tl/rt-OPS-D141-cancel-finalize-sol-0410`, base `f0ef96c415ff299b1456ed71b695000afd2165b9`, exact production bytes in source-manifest.json and the five-file install manifest (SHA-256 `88558998061a39a799ab98e9ff7de55b3ea842020605ce4f6dfe6535a6ff83c3`). The harness supplies the final commit; this worker made no Git writes. No source changes followed the final 49-check run.
+
+Root cause: admission/trace visibility preceded installed cancellation traps and readiness binding. An early signal could kill the runner or exit through a finalizer with TRACE_READY_OK=0. Preserve immutable descriptor custody and defer cancellation until its child PID/binding can be retained, then finalize and reap. Sampler polling keeps the original 5-second observation schedule; processing/reap bounds fail closed. Both the original early runner-group signal and the actual mounted stop-test session-child contract now have passing isolated controls. The latter preserves terminal cancelled/130. An unresponsive sampler is killed/reaped and records fail/125.
+
+All six findings in findings-map.json are PASS for the tested isolated scope. All 44 original controls and seven custody attacks remain present. The parent `ops-d141-measured-floor` and separate paired join 0408 were not edited. This private Runtime trace source is the donor for the later authorized App integration; no paired implementation was duplicated.
+
+Preserved: default/measured floors, source/head/tree/command/snapshot/cache binding, leases and one-heavy admission, 4 GB stop rule, 5-second kept trace cadence and trace exit behavior. App admission remains paired-kit-pending refusal. Exact held IDs ending 8912 and P4 19479 remain refused. P5 authorization remains the exact SAME `runtime-d141-p5-cut-1026013331-6934`; normal generated Runtime targeted15 full-ID dispatcher route remains unchanged. These are fixture controls, not live P5/target15 gate evidence.
+
+Manifest remains exactly five direct bin files; all 0755. test-run requires regular nofollow live preimage `0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe`; all four helper preconditions require absence including dangling symlinks. Those live states were verified read-only. No helper/control sibling dependency was added to production.
+
+C0 v2 unchanged and un-requalified: project/timeline/base pair; commands, label, steps and each step patch, declared reads, fields/atomic merge, idempotency, dry run/source; accepted/merged canonical receipt records, bindings, effects, dependencies, history and guarded whole/per-step undo; conflict reason/head; invalid code/path/hint/suggested command; existing preview behavior. No API or scope expansion.
+
+Recommended next step: Main consumes this exact candidate and all findings for the settled independent review/CAS decision, and the App worker consumes only this immutable corrected donor when authorized. No live installation, service request, receipt attachment, or gate claim is authorized by this return. Nothing remains blocked in this bounded task.

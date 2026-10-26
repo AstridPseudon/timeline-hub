@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T08:09:56Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 4m -->
-# runtime board, 2026-10-26T08:05:53Z
+<!-- main | 2026-10-26T08:15:19Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-26T08:12:42.774679+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -60,17 +60,19 @@
 | F-final App lint disclosure | Include inherited lint and Node limits | Luna reserved | Main notes item07:32; final result packet | gated:D141-results | Existing final notes owner | Later final notes:3 inherited exhaustive-deps findings, no lint PASS;2 inherited ssh-keygen ENOENT Node failures. Exact same-source receipts required. | App82e9 lineage |
 | D141y-b rehearsal | Retain interrupted current tuple rehearsal | Luna | Main07:39 source admission | review | rt-F-D141yb-rehearsal-0741 | Disk 3.93 GB; controller stopped at 07:43:59. Only partial Agent and Runtime checks; command exit and child reaping unknown. Raw KEEP. | App82e9 / Agentecdc / Runtime95d |
 
-| D141y-b custody | Independently review interrupted actual run | Luna reserved | Normal App source slot or Main 4.5 GB | gated:D89-source | App host0756 requested; Main dispatches none | Safe partial originals published at 07:56. Host review must disclose missing original exit and reaping, plus physical raw limits. No replay. | No source change |
+| D141y-b custody | Review interrupted actual run | Luna reserved | Ordinary App slot | blocked:app | App host0756 requested | Main D141z audit: no survivors. Original exit and reaping unknown; no replay. SAFE originals0756 retained. | No source change |
 | D141 App units | Receive definitive non-REG unit join | App and independent Luna | Main gate07:43 | merged | App join and independent0736 | All32 own or absent IDs; collection file absent upstream. Both Node ENOENT failures inherited.82e9 applicability0707 recorded. | App4de /82e9 |
 
 | D141l controller ordering | Resolve finite whole-path continuation | Luna reserved | Agent peer0735 and source admission | gated:D89-source | App host0752 requested; Runtime0640 lineage | Six findings from review 0731 received. Sole read-only continuation offered to App at 07:52. Runtime below 4.5 GB; no body or author transfer. | Agent source6a2d1c22 |
 
 | D141l binding return | Retain owning Agent six-finding repair | Luna | Agent source recovery07:51 | doing | Agent 0735 queued locally at 07:51; host offer withdrawn | Agent admitted at 4507217920 bytes; local request 0735 at 07:51:57 owns. Runtime and App author offers withdrawn; no duplicate. | Source6a2d1c22 |
 
+| D141z build stop | Stop whole build process group | Luna reserved | Ordinary App source slot | blocked:app | App host0812 requested | Private source and shared harmless controls only. Six source inputs published. Independent review before install; no rehearsal. | No source change |
+
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
-Blockers: Main host control — Stop 0741 acknowledged, but command descendants and reaping are unknown. Audit original process tree; no replay. Host review requested.
-Next ready: Reserved D141y-b custody review when host audit and4.5GB permit. Owning Agent full/P4, App journeys and D141v still gate F-final.
-live 0 / cap 0; ready-undispatched 0. Below 4.5 GB source floor; original command descendants unknown. App host requests pending; no duplicate starts.
+Blockers: D141z source — Main below 4.5 GB; ordinary App source host requested for process-group stop fix. F-final heavy needs 4.86 GB and independent stop review.
+Next ready: App-host Agent whole-path0752, D141z stop author0812, then custody0756 at ordinary admission. Agent full/P4, App journeys, D141v and heavy headroom still gate F-final.
+live 0 / cap 0; ready-undispatched 0. Main below 4.5 GB. Three source host requests assigned to App at ordinary admission; no local duplicate. Main host audit clear.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Originals retain their original sources. Successor applicability0513 and0637 stays separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
 
@@ -101,3 +103,7 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 08:03 H6 correction: latest Agent board confirms earlier local0735 normal dispatch07:51:57.618076 at4507217920; heartbeat07:54 live1. Runtime0759 authorhost offer WITHDRAWN, direct App0803 noauthor instruction and Agent0803 precedence note published. Existing0640 App-readonly continuation and lowerprioritycustody remain separate. Routing check found ensure-daemons surfaces to-orchestrator, not to-main; hostaudit original0745 forwarded correctly0803 with exact facts, no new invocation.
 
 08:06 watch: Agent peer0751 confirms its normal local0735 first dispatch and withdrawal of earlier unaccepted host offer. Inbox consumed through1838021bytes; same-pass precedence correction already sent to Agent and App. Original0741 STOPPED marker exists, raw stdout165bytes and trace629bytes unchanged; raw command exit and report still absent. Observed trace drop662794240bytes is a lower bound only because sampling stopped, not a qualified peak or new admission rule. Last free4211486720bytes. No new Runtime source worker can dispatch; no invocation, cleanup, build or ZIP.
+
+08:12 D141z applied: Main audited no survivors. Host-control blocker cleared this pass; original0741 exit/reaping stays UNKNOWN. Any delivery-build is HEAVY at4.86GB dispatch, oneheavy/4GB stop, no more rehearsal. New minimal process-group-stop author brief and six immutable source inputs sent App; existing wholepath0752 first, author0812 next, custody0756 last. Runtime dispatches none below4.5GB. All actual proof/pin/build/ZIP gates remain. Inbox consumed1839123bytes.
+
+08:13 maintenance terminal: sweep3 removed0; compact50 packed0scratch/0testdirs and gzipped0workerlogs. Zero clean ended nonKEEP worktrees; dirty3 retained. Separate own closed manager stdout compression archived122 files with decodedSHA/mode checks, saved100400625bytes; no open/ref/KEEP/source/raw/hub change. Free4307189760bytes still below4.5GB. Main authentic host-audit peer080530 consumed through1839856bytes: no survivors,348MB KEEP preserved; original exit unknown. Evidence design/runtime-closed-manager-stdout-compression-0813.json.

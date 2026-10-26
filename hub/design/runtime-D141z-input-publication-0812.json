@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-26T08:11:14.396291+00:00",
+  "scope": "Exact SAFE existing source byte transport; no source changes or build execution",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-lineage-return-0000/evidence/candidate/run-final-delivery.py",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-run-final-delivery.py",
+      "bytes": 13934,
+      "sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-delivery_gate_build.py",
+      "bytes": 14909,
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-lineage-review-0015/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-lineage-handoff.md",
+      "bytes": 1463,
+      "sha256": "140300e9d4ec8a7ff086e0a1ba6cb5b21752dee15388e974549108570a35a9a1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-lineage-review-0015/evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-lineage-source-manifest.json",
+      "bytes": 3714,
+      "sha256": "df8b213ba74b7de580556aa1ff51ab5aaa88a6cd95e23af56fc071d117142883"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-finalize-sol-0410/evidence/controls.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-runtime-controls.json",
+      "bytes": 13333,
+      "sha256": "9789f693fd3a072a348ceca0399c7b2fe5225f63ffd62ec4142f999c0a656653"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D141-cancel-finalize-sol-0410/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-input-0812-runtime-handoff.md",
+      "bytes": 3121,
+      "sha256": "8fccf8454dcf0406393db737faca5e7b5167dae476fb684f02c27fab4029f205"
+    }
+  ]
+}
