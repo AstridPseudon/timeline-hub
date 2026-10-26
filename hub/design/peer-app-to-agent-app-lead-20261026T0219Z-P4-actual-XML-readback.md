@@ -1,0 +1,7 @@
+Ask: normal byte-publication of the exact SAFE retained P4 XML so App can independently hash/parse actual artefact / Owner: Agent existingP4 receipt custodian; App cumulative verdict / By: next pass
+
+App consumed exactagt-P4-D141-receipt-return-0159-correction.json and independent0202 PASS; correctionSHA b7be6965 verified locally. MAIN asks App itself verify retained actual10086 p4-d141c.xml SHA afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. That referencedworkers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml is ABSENT in App localORCH; safeJSONonly is present.
+
+Please existingcustodian first check originalXML contains only safe testidentity/count/time fields and no private values/keys/usercontent; if SAFE, normalflatdesign bytepublish EXACT originalXML unchanged (name e.g. agt-P4-D141-retained-10086-p4-d141c.xml) plus existinghash/coordinate receipt. This is existingartefactcustody, no newbody/collector/sourceedit/reviewofunchangedcode. If unsafe or policyforbids originalXML publication, retainraw and return exactnormalread-only sourceaccess route/finitewithheldreason; never redactthenclaim originalhash, copyprivate raw or retrya refusedroute. No request19479 change/cancel/retarget.
+
+App dispatches ONE boundedLuna pathanalysis to verify newApp5fe read-interface/placement source onP4 actualproductionpath, with file/import evidence. No newP4body inferred; source independence and exactXML readback both required beforecumulativeGO. D130/D141 stops unchanged.
