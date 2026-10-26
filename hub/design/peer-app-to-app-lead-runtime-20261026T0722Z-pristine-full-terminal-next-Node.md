@@ -1,0 +1,9 @@
+Ask: record actual pristine full17524 terminal and the immediately dispatched scoped continuations / Owner: App independentcatchup0707 and pristineNodeJOIN0710; lead for Main / By: immediately
+
+Genuine pristine app-pin-d822d2f5-full-1026063854-17524 TERMINAL FAIL exit1 on exactd822/tree2af40. Vitest17866PASS18FAIL,1277passedfiles3failedfiles1280total,993.32s. Registered unchanged npm test -- --maxWorkers=3; chainedNodeNOTRUN. Actual5s KEEPtrace started4863815680 >= originalvalidated4793895424, final4843597824; allraw retained. No REG/nonREG inference before per-ID JOIN. Current4de full8638 remains19745PASS32FAIL plus collectionerror; standaloneNode19156 remains296PASS2FAIL26SKIP.
+
+ONE independentAppLuna app-U3-D141w-final-catchup-review-0707 dispatched immediately on actual4937203f545a77fa3ca7597493e009c84eebeffa/tree6a6e49eb4461b5ca1a7fa1247653bc794f26d710. Own255/typesPASS, threeauthorreportedpreexistinglintfindings to challenge together; no mergebeforeindependentverdict. Newupstreamfc24 frozen, no chase.
+
+ONE app-F-D141l-pristine-node-and-join-0710 dispatched afterfullterminal atactual4832174080>=independently0705-qualified Node-kindfloor4600000000, bracketX188960768/5sKEEP/4GBstop/oneheavy. Uses genuinepristine's own1666byte npm run test:node through normalservice; actualgeneratedID capturedlater, neverinvented. Then exact32+collection+2Node current/pristineJOIN andsameenvironmentkind. No repeatfull, productauthor, environmentrepair or receiptretarget.
+
+Lead0718 separateCLEAR and allfreshguards allowed normalrecycle ONLYobsoleteagt-pin-28e56cac andrt-pin-6a011d58;150MBrestored, all originalP4/P5raw andGitobjects retained. Receipt app-D141-two-old-producer-pins-release-0719.json. Old18617 cancelled,8912/19479unchanged. Pairedkit remainsDROP; no0545registration/huboperation/finalpinpass orjourneybelowfloor.

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T07:21:23Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
-# app board, 2026-10-26T07:20:11Z
+<!-- app | 2026-10-26T07:27:01Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 5 | status age 4m -->
+# app board, 2026-10-26T07:22:54Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -20,8 +20,8 @@
 | D141s received ask | Provide first pair for final kit review | Luna | Runtime0506 receiving ask | merged | 0459;manager hash checks | Exact requested packet already byte equal in normal hub. Sole Runtime0503 review owns receiving. | Source5344 |
 | D141 Node route | Retain exact standalone Node row | Luna | Main standalone phase requirement | merged | 0515 | One full-d141-node-phase row; exact npm run test:node. All outside config bytes equal preimage. No body. | Source5344 andd822 |
 | D141 unit measure | Qualify normalized retained bracket data | Luna and independent Luna | Independent0600 PASS | merged | Author0549; independent0600 | Raw values and MAX exact; honest derived DATA, not originalstdout. Existing validator fixture PASS4793895424; no kit change. | Evidence only |
-| D141 unit pair | Run actual current and pristine units | Luna and service | Exact d822; ordinary receipt admission | doing | 0606;0639;0653; actual17524 | Pristine17524 running07:04 with5s KEEP trace. Firstsample4863815680 above4793895424 floor; current results FAIL retained. | Actual4de54 andd822 |
-| D141 Node body | Cover both actual standalone phases | Luna and service | Independent0705 Node DATA PASS; full17524 ends | blocked:disk | Author0653; independent0705 | Same-kind sampled X188960768 qualifies4.6GB for Node only. Pristine own Node remains NOTRUN until full ends. | Actual4de54 |
+| D141 unit pair | Compare actual current and pristine units | Luna and service | Both full phases terminal | doing | Current8638; pristine17524; JOIN0710 | Pristine17866 PASS18 FAIL; current19745 PASS32 FAIL plus collection error. Exact ID JOIN pending; no REG claim. | Actual4de54 andd822 |
+| D141 Node body | Cover both actual standalone phases | Luna and service | Independent0705 Node DATA PASS; full17524 terminal | doing | Controller0710; current19156 retained | Node controller admitted4832174080>=4600000000. Pristine own exact Node phase next through normalservice; no futureID invented. | Actual4de54 andd822 |
 | D141 P1 | Reprove original dependent chain | Luna and service | Normal disk admission | blocked:disk | Existing journey controller lineage | Original2 cases and readiness preserved. Historical17879 PASS on867 stays historical. | Pending4de54 |
 | D141 P2 six | Reprove six original gestures | Luna and service | Normal disk admission | blocked:disk | Existing journey controller lineage | Corrected placement first;5s KEEP trace. No measured journey X; normal floors apply. No0545 registration. | Pending4de54 |
 | D141 P2 ADD | Run unchanged popup on final head | Luna and service | Main D141j and normal admission | blocked:disk | Same journey controller | PASS means not reproduced and cause unknown. Second FAIL needs proven visible four-field diagnostics before one diagnostic body. | Pending4de54 |
@@ -38,7 +38,7 @@
 | D74 holds | Preserve refused or unowned targets | Manager and lead | Existing owner dispositions | gated:owner-holds | Existing guarded holds | DirtyU3, lockedU3c, missing metadata bundles, hardlink cache and refused orphan graph untouched. | No source edit |
 | D141 SWAP | Retain documented safety-held gap | Existing owner | D130 absolute hold | gated:safety-D130 | Actual3250;refusal1537 | Original NO GO. No retry, transfer or alternate qualification. | Historical tuple |
 | D141 stopped | Retain other known gaps and failures | Existing owners | D141 stop | gated:D141-stop | Existing stopped lineages | Element32016/15200 FAIL;B0222330 nine setup errors;D77 unqualified;own tests visible unchanged. | Historical tuples |
-| U3 catch up | Review final upstream merge candidate | Luna and independent review | Main D141w; source0700 terminal | blocked:disk | Author0700; reviewer0707 prepared | Candidate4937203f,21 files;255 tests/types PASS.3 reported pre-existing lint findings need independent check. Pristine full now running. | 4937203f545a |
+| U3 catch up | Review final upstream merge candidate | Luna and independent review | Main D141w; source0700 terminal | review | Author0700; independent0707 active | Candidate4937203f,21 files;255 tests/types PASS.3 reported pre-existing lint findings under independent check. No merge yet. | 4937203f545a |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim. Actual post-fix heads and receipts required. | Cut pending |
 
 | D141 current custody | Retain independently qualified failed results | Luna | Final0648 PASS custody | merged | 0606;0635;0643;0648 | Full19745 PASS32 FAIL plus collection error; Node296 PASS2 FAIL26 SKIP. Metadata corrections qualified. | Evidence only |
@@ -61,13 +61,13 @@ D141x cancellation: exact obsolete app-pin-867cb273-d141-p2-transition-none-sing
 
 Maintenance0708: sweep3 terminal removed0; compact20 terminal0scratch/0testdirs/2oldlogs. Of37 preexisting KEEP markers only authorized empty867 source marker removed; all36 remaining exact at that pass, every raw test/controller marker retained. Later host0718-authorized empty old28e/6a source markers released with all fresh guards and normalrecycle; about150MB restored, no raw marker removed. [Result](../../design/app-D141-maintenance-result-0708.json). DirtyU3, locked initializingU3c, bundles without metadata, hardlinked cache and refused orphan paths remain held. No hub operation; owner approval for repack absent, lead-only dry-run remains lead work.
 
-Blockers: App review disk — Catch-up independent0707 needs ordinary source admission while pristine heavy17524 runs; candidate4937203 remains unmerged.
+
 Blockers: App journeys — Normal5.0/5.2GB floors after pairedDROP; no journey-kind measured X. Genuine headroom required; no owner hub approval.
 Blockers: Agent — Definitive ecdc full/pristine pair and changed-CLI P4 proof owed by existing owners; no App duplicate or alternate venue.
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
-Next ready: Actual pristine17524 terminal, then independentAppreview0707 at ordinary source floor and one Node+JOIN controller0710 at qualified4.6GB. No second heavy body. Final journeys bind reviewed catch-up head; finalpinpassD141v waits genuine REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol only for independently proved new REG. No speculative source author.
-live 0 / cap 3; ready-undispatched 0. Sole heavy service17524 running; source review waits ordinary admission, Node controller waits full terminal. All worker changes use normal routes.
+Next ready: IndependentAppreview0707 verdict; actual pristineNode0710 then exactunitJOIN. Normal merge only after qualified review. No second heavy body. Final journeys bind reviewed catch-up head; finalpinpassD141v waits genuine REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol only for independently proved new REG. No speculative source author.
+live 2 / cap 3; ready-undispatched 0. Luna independentApp0707 and ONE heavyNodeJOIN0710 admitted after pristinefull17524 terminal. No other heavybody or new sourceauthor.
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 

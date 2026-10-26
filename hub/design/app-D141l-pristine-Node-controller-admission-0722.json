@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-26T07:22:10.640286+00:00",
+  "available_bytes": 4832174080,
+  "controller": "app-F-D141l-pristine-node-and-join-0710",
+  "kind": "standalone Node on exact pristine d822 after actualfull17524 terminal",
+  "floor_bytes": 4600000000,
+  "stop_bytes": 4000000000,
+  "margin_bytes": 200000000,
+  "growth_bytes": 188960768,
+  "independent_qualification": "app-F-D141l-node-data-independent-0705 NodeDATA PASS",
+  "witness_semantics": "conservative retained admission-to-Node-minimum bracket;19actual5s samples, gaps not continuouspeak",
+  "derived_DATA_not_original_stdout": true,
+  "source_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+  "source_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+  "own_unchanged_command": "npm run test:node",
+  "new_job_ID": "normal service generates later, never invented",
+  "no_other_heavy_body": true,
+  "continuous_service_trace": "5s KEEP,4GBstop,oneheavy",
+  "body_admission": "once controllerdispatch D89c; actualnormalservice independently validates genuinejobreceipt"
+}
