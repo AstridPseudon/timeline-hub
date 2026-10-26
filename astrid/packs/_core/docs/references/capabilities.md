@@ -69,6 +69,8 @@
 | `rendering.html_canvas_effect` | Scaffold a local Remotion HTML-in-canvas effect element. |
 | `rendering.render` | Render a hype timeline to opaque MP4 or explicitly stamped alpha MOV through the selected backend. |
 | `rendering.sprite_sheet` | Generate, slice, and preview GPT Image sprite sheets for batch image work. |
+| `rendering.timeline_export_plan` | Build a read-only timeline export plan and staged artifact. |
+| `rendering.timeline_prepare_import` | Validate and prepare timeline import data without Runtime writes. |
 | `rendering.timeline_storyboard` | Build a static visual storyboard of image inputs associated with timeline shots. |
 | `rendering.timeline_visualize` | Private backend for composed timeline visualization. |
 | `runpod.exec` | Execute a script on an existing RunPod pod and download artifacts. |
@@ -80,8 +82,6 @@
 | `stream_content.clip_candidates` | Score transcript windows as publishable stream clip candidates. |
 | `stream_content.distill` | Distill a long event stream into segments, extracted blocks, candidates, and a review page. |
 | `stream_content.segment_map` | Fuse OCR, transcript density, and scene cuts into a complete stream timeline. |
-| `timeline.export_plan` | Build a read-only timeline export plan and staged artifact. |
-| `timeline.prepare_import` | Validate and prepare timeline import data without Runtime writes. |
 | `training.dataset_build` | Build a generic reviewed video training dataset from configured sources. |
 | `training.pool_build` | Build the candidate clip pool from triaged source-video scenes. |
 | `training.pool_merge` | Merge multiple candidate clip pools into a unified pool for arrangement. |

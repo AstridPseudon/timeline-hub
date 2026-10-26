@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
-guard_canonical_entrypoint("timeline.export_plan")
+guard_canonical_entrypoint("rendering.timeline_export_plan")
 
 import argparse
 from pathlib import Path
 from typing import Any
 
-from astrid.packs.timeline.actions._common import (
+from astrid.packs.rendering.actions.timeline_transfer_common import (
     open_worker_runtime_client,
     output_root,
     run_cli,
@@ -39,7 +39,7 @@ def build_export_plan_artifacts(client: Any, project: str, timeline: str, out_di
     plan_path, result_path = root / "plan.json", root / "result.json"
     write_artifact(plan_path, plan)
     write_artifact(result_path, summary)
-    write_receipt(root, kind="timeline.export_plan", inputs={"project": project, "timeline": timeline}, outputs=[
+    write_receipt(root, kind="rendering.timeline_export_plan", inputs={"project": project, "timeline": timeline}, outputs=[
         {"name": "plan", "path": plan_path.name, "role": "result", "is_primary": True, "type": "file"},
         {"name": "result", "path": result_path.name, "role": "auxiliary", "is_primary": False, "type": "file"},
     ])
@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
         build_export_plan_artifacts(client, args.project, args.timeline, args.out)
         return 0
 
-    return run_cli("timeline.export_plan", _run, argv)
+    return run_cli("rendering.timeline_export_plan", _run, argv)
 
 
 if __name__ == "__main__":

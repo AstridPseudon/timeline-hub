@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
-guard_canonical_entrypoint("timeline.prepare_import")
+guard_canonical_entrypoint("rendering.timeline_prepare_import")
 
 import argparse
 from pathlib import Path
 from typing import Any
 
-from astrid.packs.timeline.actions._common import (
+from astrid.packs.rendering.actions.timeline_transfer_common import (
     MAX_MANIFEST_INLINE_BYTES,
     decode_manifest,
     output_root,
@@ -84,7 +84,7 @@ def build_prepare_import_artifacts(
         "role": "auxiliary" if output_entries else "result",
         "is_primary": not output_entries, "type": "file",
     })
-    write_receipt(root, kind="timeline.prepare_import", inputs=inputs, outputs=output_entries)
+    write_receipt(root, kind="rendering.timeline_prepare_import", inputs=inputs, outputs=output_entries)
     return summary
 
 
@@ -108,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
-    return run_cli("timeline.prepare_import", _run, argv)
+    return run_cli("rendering.timeline_prepare_import", _run, argv)
 
 
 if __name__ == "__main__":

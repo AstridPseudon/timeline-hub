@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 
 from astrid.core._shared.result_manifest import harvest_staged_outputs
-from astrid.packs.timeline.actions._common import decode_manifest
-from astrid.packs.timeline.actions._common import open_worker_runtime_client
-from astrid.packs.timeline.actions.export_plan.run import _summary, build_export_plan_artifacts
-from astrid.packs.timeline.actions.prepare_import.run import build_prepare_import_artifacts
+from astrid.packs.rendering.actions.timeline_transfer_common import decode_manifest
+from astrid.packs.rendering.actions.timeline_transfer_common import open_worker_runtime_client
+from astrid.packs.rendering.actions.timeline_export_plan.run import _summary, build_export_plan_artifacts
+from astrid.packs.rendering.actions.timeline_prepare_import.run import build_prepare_import_artifacts
 
 
 def _empty_source() -> dict:
@@ -126,10 +126,10 @@ def test_action_client_uses_the_host_worker_connection_for_runtime_reads(monkeyp
 def test_transfer_action_receipts_harvest_every_staged_json_output(tmp_path, monkeypatch):
     """Exercise each action receipt through Runtime's actual output harvester."""
     from astrid.core.execution.generic_host import GenericPackHost
-    from astrid.packs.timeline.actions.export_plan import run as export_action
+    from astrid.packs.rendering.actions.timeline_export_plan import run as export_action
 
-    pack_root = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "timeline"
-    host = GenericPackHost(pack_roots=[pack_root])
+    packs_root = Path(__file__).resolve().parents[3] / "astrid" / "packs"
+    host = GenericPackHost(pack_roots=[packs_root])
     records = {record.id: record for record in host.discover()}
 
     def harvest(capability_id, output_root):
@@ -155,7 +155,7 @@ def test_transfer_action_receipts_harvest_every_staged_json_output(tmp_path, mon
 
     export_root = tmp_path / "export"
     build_export_plan_artifacts(object(), "source-project", "main", export_root)
-    exported = harvest("timeline.export_plan", export_root)
+    exported = harvest("rendering.timeline_export_plan", export_root)
     assert {item["name"]: item["artifact_type"] for item in exported} == {
         "plan": "timeline/export-plan",
         "result": "application/json",
@@ -172,7 +172,7 @@ def test_transfer_action_receipts_harvest_every_staged_json_output(tmp_path, mon
     build_prepare_import_artifacts(
         project="target-project", out_dir=check_root, manifest_json=manifest_json, check_only=True,
     )
-    checked = harvest("timeline.prepare_import", check_root)
+    checked = harvest("rendering.timeline_prepare_import", check_root)
     assert [(item["name"], item["artifact_type"]) for item in checked] == [
         ("result", "application/json"),
     ]
@@ -185,7 +185,7 @@ def test_transfer_action_receipts_harvest_every_staged_json_output(tmp_path, mon
         project="target-project", out_dir=prepare_root, manifest_json=manifest_json,
         payload_file=str(payload_path),
     )
-    prepared = harvest("timeline.prepare_import", prepare_root)
+    prepared = harvest("rendering.timeline_prepare_import", prepare_root)
     assert {item["name"]: item["artifact_type"] for item in prepared} == {
         "prepared": "timeline/prepared-import",
         "result": "application/json",
@@ -207,17 +207,17 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
     from astrid.sdk import AstridClient, observe_task_invocation
     from astrid.sdk.pagination import paged_rows
 
-    pack_root = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "timeline"
+    packs_root = Path(__file__).resolve().parents[3] / "astrid" / "packs"
     daemon = real_runtime()
     host = GenericPackHost(
-        pack_roots=[pack_root],
+        pack_roots=[packs_root],
         client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
         executor_id="astrid-pack-host",
         attempt_base=tmp_path / "attempts",
     )
     records = {record.id: record for record in host.discover()}
-    host.preflight("timeline.export_plan")
-    host.preflight("timeline.prepare_import")
+    host.preflight("rendering.timeline_export_plan")
+    host.preflight("rendering.timeline_prepare_import")
     host.register(deliberate=True)
     service = daemon.service
 
@@ -343,21 +343,21 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                 })
                 return observed
 
-            exported = invoke("timeline.export_plan", {"project": project, "timeline": "main"})
+            exported = invoke("rendering.timeline_export_plan", {"project": project, "timeline": "main"})
             plan_output = exported.output("plan")
             plan = json.loads(client.media.read_bytes(plan_output["digest"]))
             assert plan["manifest"]["name"]
             assert plan["timeline"]["timeline_id"] == "main"
             assert plan["manifest"]["media"]
 
-            checked = invoke("timeline.prepare_import", {
+            checked = invoke("rendering.timeline_prepare_import", {
                 "project": project, "manifest": manifest, "check_only": True,
             })
             assert json.loads(client.media.read_bytes(checked.output("result")["digest"]))["check_only"] is True
             with pytest.raises(LookupError):
                 checked.output("prepared")
 
-            prepared = invoke("timeline.prepare_import", {
+            prepared = invoke("rendering.timeline_prepare_import", {
                 "project": project, "manifest": manifest, "payload": payload_digest,
             })
             prepared_output = prepared.output("prepared")

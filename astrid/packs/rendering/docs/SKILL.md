@@ -23,6 +23,23 @@ When the request also needs
 new generated media (for example Foley audio), use [creative work](../../_core/docs/creative-work/SKILL.md)
 to find its generation capability, then return here to assemble the result.
 
+## Timeline transfer
+
+Use `rendering.timeline_export_plan` to read a saved timeline and receive a task
+artifact containing the complete export plan. Fetch the `plan` task output through
+the existing task managed-output API; the action does not assemble an archive or
+create project objects.
+
+Use `rendering.timeline_prepare_import` in two passes. First pass `manifest` (or
+the `manifest_file` fallback) with `check_only=true` before uploading any media.
+After successful compatibility checks and client-side uploads, pass the manifest
+and a JSON `payload` file containing `{ "timeline": ..., "transcripts": ... }`
+to receive a `prepared` commit-body artifact. The prepared body is still only a
+proposal; the client owns upload/commit and any target-project object management.
+
+These actions do not publish timelines, write project documents, or associate
+task artifacts with a project.
+
 ## Worlds (Three.js live scenes)
 
 When the task concerns native Three.js scene code, a world, or a
