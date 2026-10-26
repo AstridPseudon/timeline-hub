@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-26T14:25:52.954947+00:00",
+  "kind": "same-branch continuation after no-op admission misunderstanding",
+  "free_before_dispatch": 4628422656,
+  "admission_floor": 4600000000,
+  "continuous_stop": 4000000000,
+  "base": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "prior_worker": "app-U4p-D141v-final-pin-next",
+  "prior_exit": "0",
+  "prior_report": "# Report\n\n- Task blocked before dispatch: available space was `4,467,990,528` bytes, below the required `4,600,000,000` bytes.\n- Exact producer identities and clean checkouts were verified.\n- No adoption tools, retries, alternate sources, or metadata edits were run.\n- Worktree remains unchanged.\n- No tests were run due to the mandatory safety stop.\n- Wrote the required reason to `BLOCKED`.\n\nRecommended next step: rerun only after disk admission reaches the required threshold.",
+  "source_rule": "BOARD-HEADER D89b; manager checks before each start, worktree plus Luna footprint included; continuous stop unchanged",
+  "no_prior_product_edits_or_tests": true
+}

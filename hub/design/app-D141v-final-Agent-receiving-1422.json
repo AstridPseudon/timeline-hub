@@ -1,0 +1,90 @@
+{
+  "utc": "2026-10-26T14:21:38.399917+00:00",
+  "result": "all final Agent author/independent/REG0 SAFE inputs exact; final HOME/tree and Runtime identity verified with actual Git",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-adoption.json",
+      "sha256": "0477007986bbaaabf565226ad6156ba6f096a480ebabb1459c322ca55cc5116d",
+      "bytes": 686
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-review.json",
+      "sha256": "7efbd752064ecb4b3bd28e6f0d40911dd4912b8b51b69ec6b70a9aa59218a1df",
+      "bytes": 5323
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-source-manifest.json",
+      "sha256": "26115cd23115e74bf495b5460c10ed7cb16f8f53129b11e54308481acc84e558",
+      "bytes": 5706
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-validation.md",
+      "sha256": "54793e77fd5165826f500ef126e92cd241d55dda5fb38e4ef8fb4c6102f9f4ae",
+      "bytes": 1115
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-handoff.md",
+      "sha256": "7b3163ddfc7f147c80845d764aed38a50e957037a6cadbd5a1a4207a02eebf4a",
+      "bytes": 704
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-review-next-adoption.json",
+      "sha256": "38cfd4242be2ed578ed6f1a07712595825c23cb147a11420faadf8732bfad2ab",
+      "bytes": 656
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-review-next-review.json",
+      "sha256": "e8be10f6050a2e1d269731a29ca06248e915b2b8a527625eb4c24131914a4de0",
+      "bytes": 814
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-review-next-source-manifest.json",
+      "sha256": "34e55ceaf2f7b43e5dca615584e3bad9855168aa0fd62592722d64e4f1fd034a",
+      "bytes": 3527
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-review-next-validation.md",
+      "sha256": "a788a946836e21594201000ca1539746904c99e8a3190740c58e607e43cbca45",
+      "bytes": 1048
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-review-next-handoff.md",
+      "sha256": "d2b10d3923c2d3eb2c85cc1663f6d6c2cbc6dee89f414ee85dc76b7905864ac1",
+      "bytes": 894
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-review.json",
+      "sha256": "e6d493f8face280a947fdce177964edb4ed6c9e4b65c0e20aff6115d95efa8fa",
+      "bytes": 2724
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-findings.md",
+      "sha256": "8b1f25187050529dff5ae78078a912eba850eab7eece946cba7e95770f1ddf1e",
+      "bytes": 2378
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-per-id-review.json",
+      "sha256": "d1c524bbf86ff051478137141d7df3b6fe58497fdb4c8c400bf58b0b669e154a",
+      "bytes": 104748
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-source-manifest.json",
+      "sha256": "5fb165e9f86073ce73d4b3064a2b2769fd1df23e290928f7ecfecd353f28e862",
+      "bytes": 27791
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-validation.md",
+      "sha256": "5c2d545624ec63904297d94d8c360e07da73904ff61c3428721d979604f89533",
+      "bytes": 995
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U2-D141ii-integrated-kept53-review-next-handoff.md",
+      "sha256": "dbb6684db52a5e0ac0dcc2e52d863381ce97b1e1e568d69db065234e25567d4d",
+      "bytes": 478
+    }
+  ],
+  "agent_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+  "agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+  "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+}
