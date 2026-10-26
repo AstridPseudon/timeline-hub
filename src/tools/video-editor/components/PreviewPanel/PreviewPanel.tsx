@@ -114,7 +114,8 @@ function PreviewPanelComponent({
         <div className="relative flex min-h-0 flex-1">
           <div
             className={cn(
-              'relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent',
+              // group/preview: the pointer anywhere over the picture, its overlays or its header brings up the player's controls.
+              'group/preview relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent',
               surfaceClassName,
             )}
             style={{ touchAction: gestureOwner === 'preview' ? 'none' : 'manipulation' }}

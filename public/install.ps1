@@ -221,7 +221,8 @@ public sealed class AstridInstallerProcessV4 {
             Invoke-WebRequest -UseBasicParsing "https://astral.sh/uv/$UvVersion/install.ps1" -OutFile $UvScript
             $env:UV_UNMANAGED_INSTALL = $Bootstrap
             $env:UV_NO_MODIFY_PATH = '1'
-            $PowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+            $PowerShellName = if ($PSEdition -eq 'Core') { 'pwsh.exe' } else { 'powershell.exe' }
+            $PowerShell = Join-Path $PSHOME $PowerShellName
             $Result = Invoke-InstallerCommand $PowerShell @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',$UvScript) -LogOutput
             if ($Result.ExitCode -ne 0) { throw 'uv setup failed. Group Policy can override process-level execution-policy Bypass; see the log.' }
         }

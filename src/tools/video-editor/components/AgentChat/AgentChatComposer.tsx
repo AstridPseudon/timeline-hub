@@ -24,6 +24,8 @@ export function AgentChatComposer({
   voice,
   onSend,
   sendDisabled,
+  onStop,
+  stopDisabled,
 }: {
   inputRef?: Ref<HTMLTextAreaElement>;
   value: string;
@@ -37,6 +39,8 @@ export function AgentChatComposer({
   voice?: AgentChatComposerVoice;
   onSend: () => void;
   sendDisabled: boolean;
+  onStop?: () => void;
+  stopDisabled?: boolean;
 }) {
   return (
     <div className="flex items-end gap-2">
@@ -50,15 +54,15 @@ export function AgentChatComposer({
           readOnly={readOnly}
           rows={rows}
           placeholder={placeholder}
-          className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 [@media(pointer:coarse)]:min-h-[3.25rem] [@media(pointer:coarse)]:pr-14 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
+          className={`min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 ${onStop ? 'pr-20 [@media(pointer:coarse)]:pr-28' : 'pr-12 [@media(pointer:coarse)]:pr-14'} [@media(pointer:coarse)]:min-h-[3.25rem] text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50`}
           disabled={inputDisabled}
           onKeyDown={onKeyDown}
         />
 
         {/* A finger gets a 44 px Send, resting in the corner by the thumb. */}
-        <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2 [@media(pointer:coarse)]:inset-y-1 [@media(pointer:coarse)]:right-1 [@media(pointer:coarse)]:w-11">
+        <div className={`absolute inset-y-4 right-2 z-10 flex flex-col gap-2 ${onStop ? 'w-[4.5rem] [@media(pointer:coarse)]:inset-y-1 [@media(pointer:coarse)]:right-1 [@media(pointer:coarse)]:w-24' : 'w-8 [@media(pointer:coarse)]:inset-y-1 [@media(pointer:coarse)]:right-1 [@media(pointer:coarse)]:w-11'}`}>
           {CHAT_VOICE_ENABLED && voice && (
-          <div className="relative flex min-h-0 flex-1 items-center justify-center">
+          <div className={`relative flex min-h-0 flex-1 items-center justify-center ${onStop ? 'w-8 self-end [@media(pointer:coarse)]:w-11' : ''}`}>
             <Button
               type="button"
               size="icon"
@@ -87,12 +91,26 @@ export function AgentChatComposer({
           </div>
           )}
 
-          <div className="flex min-h-0 flex-1 items-center justify-center [@media(pointer:coarse)]:items-end">
+          <div className={`flex min-h-0 flex-1 items-center justify-center [@media(pointer:coarse)]:items-end ${onStop ? 'flex-row gap-2' : ''}`}>
+            {onStop && (
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                className="h-full w-8 shrink-0 rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive [@media(pointer:coarse)]:w-11"
+                onClick={onStop}
+                disabled={stopDisabled}
+                title="Stop"
+                aria-label="Stop"
+              >
+                <Square className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button
               type="button"
               size="icon"
               variant="default"
-              className="h-full w-full rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:rounded-[10px]"
+              className={`h-full ${onStop ? 'min-w-0 flex-1' : 'w-full'} rounded-xl [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:rounded-[10px]`}
               onClick={onSend}
               disabled={sendDisabled}
               title="Send"

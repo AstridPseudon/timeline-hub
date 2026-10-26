@@ -3,11 +3,14 @@ import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
+import type { ServiceStatus } from '@/integrations/runtime/generated.ts';
+import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection.ts';
 import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
   /** `install` for setup/repair and `update` for an incompatible Astrid. */
   readonly mode?: CommandMode;
+  readonly services?: readonly ServiceStatus[];
 }
 
 type CopyStatus = 'idle' | 'copied' | 'failed';
@@ -69,10 +72,10 @@ export function CopyCommandRow({ command, label, copiedLabel = label }: { readon
  * Agent handoff first, as the one primary action; the manual command is the quiet alternative under it, with its own
  * copy action. Nothing else: the card around it says what the instructions are for.
  */
-export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
+export function CopyInstallCommand({ mode = 'install', services }: CopyInstallCommandProps) {
   const copy = RUNTIME_CONNECTION_COPY.agent;
   const localBuild = runtimeOrigin() === '';
-  const instructions = agentInstructions(mode, window.location.origin, localBuild);
+  const instructions = agentInstructions(mode, window.location.origin, localBuild, services);
   const command = installCommand(mode);
   const agentCopy = useCopyAction(instructions);
   const agentCopied = agentCopy.status === 'copied';
@@ -80,6 +83,7 @@ export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps
   return (
     <div className="w-full space-y-4">
       <div className="space-y-2">
+        {detectPlatform() === 'windows' && <p className="text-xs text-muted-foreground">{RUNTIME_CONNECTION_COPY.windowsBeta}</p>}
         <Button type="button" className="h-11 w-full justify-between rounded-xl px-4 text-sm" onClick={() => void agentCopy.copy()}>
           <span aria-live="polite">{agentCopied ? copy.copied : copy.copy}</span>
           {agentCopied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}

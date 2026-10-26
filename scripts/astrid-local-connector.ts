@@ -6,7 +6,7 @@
  */
 import { readFileSync, mkdirSync, chmodSync, writeFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { resolveWorkspaceDiscoveryPath } from './dev-local-workspace-options.mjs';
 import { currentChat } from './runtime-discovery-proxy.mjs';
@@ -33,7 +33,7 @@ const discoveryPath = explicitDiscovery
 const relayOrigin = args.get('relay-origin') || process.env.ASTRID_APP_PAIRED_RELAY_ORIGIN;
 const expectedRealm = args.get('realm') || process.env.ASTRID_APP_PAIRED_REALM_ID;
 const expectedActor = process.env.ASTRID_APP_PAIRED_PRODUCT_ACTOR?.trim();
-const statePath = resolve(args.get('state') || process.env.ASTRID_APP_PAIRED_CONNECTOR_STATE || `${homedir()}/.config/astrid/paired-connector.json`);
+const statePath = resolve(args.get('state') || process.env.ASTRID_APP_PAIRED_CONNECTOR_STATE || join(homedir(), '.config', 'astrid', 'paired-connector.json'));
 const resetPairing = args.has('reset-pairing');
 if (!relayOrigin) throw new Error('paired connector requires --relay-origin or ASTRID_APP_PAIRED_RELAY_ORIGIN');
 if (!expectedActor) throw new Error('paired connector requires ASTRID_APP_PAIRED_PRODUCT_ACTOR');
@@ -57,6 +57,10 @@ function routePath(service: string, path: string): string {
 const discovery = readJson(discoveryPath, 'runtime discovery');
 const endpoint = runtimeEndpoint(discovery.endpoint);
 const credentialPath = resolve(process.env.ASTRID_PRODUCT_TOKEN_FILE || (typeof discovery.credential_file === 'string' ? discovery.credential_file : fail('discovery has no credential_file')));
+function productCredentialMetadataPath(credentialPath: string, pathApi: Pick<typeof import('node:path'), 'basename' | 'dirname' | 'join'> = { basename, dirname, join }): string {
+  const metadataName = pathApi.basename(credentialPath).replace(/\.token$/, '') || 'product';
+  return pathApi.join(pathApi.dirname(credentialPath), `${metadataName}.json`);
+}
 function readProductToken(): string {
   let raw: string;
   try { raw = readFileSync(credentialPath, 'utf8').trim(); } catch (error) { return fail(`cannot read runtime credential: ${error instanceof Error ? error.message : String(error)}`); }
@@ -68,8 +72,7 @@ function readProductToken(): string {
     metadata = credential;
     raw = typeof credential.token === 'string' ? credential.token.trim() : '';
   }
-  const metadataName = credentialPath.split('/').pop()?.replace(/\.token$/, '') || 'product';
-  const metadataPath = resolve(dirname(credentialPath), `${metadataName}.json`);
+  const metadataPath = productCredentialMetadataPath(credentialPath);
   if (!metadata && existsSync(metadataPath)) metadata = readJson(metadataPath, 'runtime credential metadata');
   const requiredScopes = PRODUCT_SCOPES;
   const scopes = Array.isArray(metadata?.scopes) ? metadata.scopes.filter((value): value is string => typeof value === 'string') : [];

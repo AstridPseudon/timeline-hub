@@ -5,7 +5,7 @@ import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionPr
 import type { Health, Realm, ServiceStatus } from '@/integrations/runtime/generated.ts';
 import { Button } from '@/shared/components/ui/button';
 import { SetupStatusLine } from '@/shared/components/RuntimeConnection/SetupStatusLine.tsx';
-import { RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { describeFailure, RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
 import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible';
@@ -24,7 +24,8 @@ function isRuntimeService(value: unknown): value is RuntimeService {
   return typeof service.name === 'string'
     && ['starting', 'running', 'restarting', 'failed'].includes(String(service.state))
     && (typeof service.last_exit === 'number' || service.last_exit === null)
-    && typeof service.restart_count === 'number';
+    && typeof service.restart_count === 'number'
+    && (service.reason === undefined || typeof service.reason === 'string' || service.reason === null);
 }
 
 function statusIcon(status: string) {
@@ -49,7 +50,13 @@ function StatusRow({ label, value, title }: { label: string; value: string | num
 }
 
 function serviceMetadata(service: RuntimeService): string[] {
-  return [COPY.restartCount(service.restart_count)].filter((value): value is string => value !== null);
+  const failure = describeFailure(service);
+  return [
+    COPY.restartCount(service.restart_count),
+    failure.summary,
+    failure.lastExit === null ? null : COPY.lastExit(failure.lastExit),
+    failure.logPath ? COPY.serviceLog(failure.logPath) : null,
+  ].filter((value): value is string => value !== null);
 }
 
 export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
@@ -128,7 +135,10 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
             {connected && details && needsRepair && (
               <>
-                <CopyInstallCommand mode="install" />
+                <CopyInstallCommand
+                  mode="install"
+                  services={services.filter((service) => service.state === 'failed' || service.reason || service.last_exit !== null)}
+                />
                 <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
               </>
             )}

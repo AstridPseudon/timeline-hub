@@ -470,22 +470,37 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
 }));
 
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
-  const executable = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe');
-  context.env.MOCK_SOURCE_UV = path.join(context.root, 'uv-source.exe');
-  await cp(context.env.MOCK_UV_SOURCE, context.env.MOCK_SOURCE_UV);
-  await rm(executable, { force: true });
+  const bootstrapUv = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe');
   context.env.MOCK_BOOTSTRAP_ARGS = path.join(context.root, 'bootstrap-args.json');
   if (process.platform !== 'win32') {
     context.env.SystemRoot = path.join(context.root, 'system root');
-    const powershellShim = path.join(context.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
-    await mkdir(path.dirname(powershellShim), { recursive: true });
-    await writeFile(powershellShim, `#!/usr/bin/env python3
+    context.env.MOCK_SOURCE_UV = path.join(context.root, 'uv-source.exe');
+    await cp(context.env.MOCK_UV_SOURCE, context.env.MOCK_SOURCE_UV);
+    await rm(bootstrapUv, { force: true });
+    await assert.rejects(readFile(bootstrapUv), { code: 'ENOENT' });
+    const installScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
+      .replace('Join-Path $PSHOME $PowerShellName', 'Join-Path $env:SystemRoot $PowerShellName');
+    const scriptPath = path.join(context.root, 'install-current-shell.ps1');
+    await writeFile(scriptPath, installScript);
+    context.env.MOCK_INSTALL_SCRIPT = scriptPath;
+    const executable = path.join(context.env.SystemRoot, 'pwsh.exe');
+    const incompatibleExecutable = path.join(context.env.SystemRoot, 'System32/WindowsPowerShell/v1.0/powershell.exe');
+    await mkdir(context.env.SystemRoot, { recursive: true });
+    await mkdir(path.dirname(incompatibleExecutable), { recursive: true });
+    await writeFile(incompatibleExecutable, `#!/usr/bin/env python3
+import sys
+print('Microsoft.PowerShell.Security could not load from inherited PSModulePath', file=sys.stderr)
+sys.exit(1)
+`, { mode: 0o755 });
+    await writeFile(executable, `#!/usr/bin/env python3
 import json, os, pathlib, shutil, sys
 pathlib.Path(os.environ['MOCK_BOOTSTRAP_ARGS']).write_text(json.dumps(sys.argv[1:]))
 print('bootstrap progress on stderr', file=sys.stderr)
 shutil.copy2(os.environ['MOCK_SOURCE_UV'], pathlib.Path(os.environ['UV_UNMANAGED_INSTALL']) / 'uv.exe')
 `, { mode: 0o755 });
   } else {
+    await rm(bootstrapUv, { force: true });
+    await assert.rejects(readFile(bootstrapUv), { code: 'ENOENT' });
     context.env.MOCK_BOOTSTRAP_STDERR = '1';
   }
   const result = await run();

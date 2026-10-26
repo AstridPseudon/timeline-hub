@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { build as viteBuild } from 'vite';
@@ -16,7 +16,7 @@ afterEach(async () => {
 describe('installer asset build output', () => {
   it('copies each actual public asset unchanged into a real Vite build', async () => {
     const sourcePublicDir = path.resolve(__dirname, '../../public');
-    const fixtureRoot = await mkdtemp(path.join(os.tmpdir(), 'astrid-installer-build-'));
+    const fixtureRoot = await realpath(await mkdtemp(path.join(os.tmpdir(), 'astrid-installer-build-')));
     temporaryDirectories.push(fixtureRoot);
     const fixturePublicDir = path.join(fixtureRoot, 'public');
     await mkdir(fixturePublicDir);

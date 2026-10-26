@@ -59,7 +59,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
 
     expect(screen.getByRole('heading', { name: 'Workspace Runtime is unavailable' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Retry Runtime connection' })).toHaveFocus());
-    expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('The editor could not complete workspace discovery.');
+    expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');
     fireEvent.click(screen.getByText('Show full connection error'));
@@ -117,11 +117,34 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect(screen.getByText(/Do not reset or reinstall the workspace/)).toBeInTheDocument();
   });
 
+  it('keeps the typed recovery action and original error message available', () => {
+    const error = new RuntimeUnavailableError(new Error('startup admission failed'), '/api/runtime');
+    render(<RuntimeConnectorRecoveryBanner retrying={false} error={error} onRetry={vi.fn()} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(error.recoveryAction);
+    fireEvent.click(screen.getByText('Show full connection error'));
+    expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent(error.message);
+  });
+
   it('builds the agent brief with only a sanitized HTTP(S) target', () => {
     expect(buildWorkspaceRestartBrief({ error: '', connectionUrl: 'file:///private/runtime.db' }))
       .not.toContain('file:///private/runtime.db');
     expect(buildWorkspaceRestartBrief({ error: '', connectionUrl: 'not a URL' }))
       .toContain('The editor cannot reach its configured Astrid Runtime.');
+  });
+
+  it('uses the shared diagnostic and PowerShell health check in the Windows restart brief', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Windows');
+    const brief = buildWorkspaceRestartBrief({
+      error: new Error('readiness_timeout'),
+      connectionUrl: 'http://127.0.0.1:17340/api/runtime',
+    });
+
+    expect(brief).toContain('Current editor diagnostic: readiness_timeout');
+    expect(brief).toContain('service-<name>.log under %LOCALAPPDATA%\\Astrid Runtime\\logs');
+    expect(brief).toContain("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health'");
+    expect(brief).toContain(`-Headers @{ Origin = '${window.location.origin}' }`);
   });
 
   it('includes the current project and timeline route identity in the agent brief', () => {
