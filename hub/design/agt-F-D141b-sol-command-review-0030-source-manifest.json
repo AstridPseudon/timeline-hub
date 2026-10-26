@@ -1,0 +1,83 @@
+{
+  "schema": "timeline.f.d141b.sol-command-review.source-manifest.v1",
+  "review": "F/D141b",
+  "verdict": "PASS_COMMAND",
+  "source": {
+    "branch": "tl/agt-F-D141b-command-sol-0019",
+    "commit": "0710897c87834550d1ee68b3f120405a9c81fe8f",
+    "tree": "1861d3e9f3b6fa5cc87660952add8042cabc3227",
+    "parent": "a8118e9a51ccb629e88cb6dcde981b22ba448b98",
+    "status": "clean",
+    "product_source_delta": false
+  },
+  "outputs": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence",
+    "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+    "service_row_sha256": "c3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7",
+    "author_source_manifest_sha256": "44a64b57a3713524ee97d14ad116defb8d963fd16be449497990265021d7e577",
+    "author_admission_sha256": "ed7c942e228760b0f022e9f18d9814fdefddbadd1542b3fbe1b73fbf7a0f2167",
+    "author_findings_map_sha256": "df4ac65b355b9cc27370c56d2ddf53bbdf780a67e01ab5f4dd5389561b9b23a2",
+    "author_validation_sha256": "aa8713f41c326987123d07f8fc179a44f27cf45d8be6e7088d27339ca5dd574d"
+  },
+  "pristine_tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-8b6ed211",
+      "sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "clean": true
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "clean": true
+    },
+    "app": {
+      "path": "/home/user/work/wt/app-pin-7ca61bb3",
+      "sha": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "clean": true
+    },
+    "composition": {
+      "path": "/home/user/work/wt/vw-pin-67b8aa3d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "clean": true
+    }
+  },
+  "u2": {
+    "source_review": "agt-U2-D141-source-receiving-review-0015 PASS_SOURCE_QUALIFICATION",
+    "normal_frozen_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "normal_frozen_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "receiving_peer": "0023"
+  },
+  "execution": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version": "Python 3.13.16",
+    "pytest_args": ["-q", "-n", "3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"],
+    "roots": 17,
+    "disk_bytes": {
+      "source_admission": 4600000000,
+      "body_dispatch": 4700000000,
+      "continuous_stop": 4000000000
+    },
+    "heavy_body_concurrency": 1,
+    "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator",
+    "run_root_observed": "absent",
+    "gates_observed": "absent",
+    "body_executed_by_reviewer": false
+  },
+  "prior_blockers": [
+    "D141B-CUSTODY-006",
+    "D141B-DURABILITY-007",
+    "D141B-DURABILITY-008",
+    "D141B-MONITOR-009",
+    "D141B-LIFETIME-010"
+  ],
+  "qualification_limits": [
+    "source/command qualification only",
+    "no behavior, REG0, or ship credit",
+    "no body, pytest, product import, collection, service submission, or gate-file installation"
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "task": "F/D141b",
+  "verdict": "PASS_SOURCE_READY_REVIEW_PENDING",
+  "label": "PRISTINE COMPARATOR",
+  "worker_base": {
+    "sha": "a8118e9a51ccb629e88cb6dcde981b22ba448b98",
+    "tree": "f648eef205bd9fe39cc12e52eea0322d71a2215b",
+    "status_before": "clean",
+    "source_role": "read-only authoring base; never the comparator source"
+  },
+  "frozen_tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-8b6ed211",
+      "sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "checkout_receipt_sha256": "915cb92977ea0951209472c6b85e69ea3cfed33a8ad41df26c9472130696cd36",
+      "status": "clean"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "checkout_receipt_sha256": "323d3c067f8e39e1aa4ed1adf97a305915503015364d621fd7e530c43f1c94d1",
+      "status": "clean"
+    },
+    "app": {
+      "path": "/home/user/work/wt/app-pin-7ca61bb3",
+      "sha": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "checkout_receipt_sha256": "88b77bc0dd27348b4ea72709886a9cf268d8b780497121afb41c69ea9eb98dd1",
+      "status": "clean"
+    },
+    "composition": {
+      "path": "/home/user/work/wt/vw-pin-67b8aa3d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "checkout_receipt_sha256": "aaa302b63fc5938a6392149153496cb39758eafbe30f899871c27f04cf5b8f35",
+      "status": "clean"
+    }
+  },
+  "roots": {
+    "source": "original design/agt-F-D134-dry-preflight-1848-measurement-command.sh, minus the exact five absent project-only roots",
+    "upstream_present_count": 17,
+    "upstream_present": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py"
+    ],
+    "upstream_present_inventory_sha256": "b1f106c00a6d40804082192e160c80718227acb85af38df2bbebec382411b820",
+    "project_only_absent_count": 5,
+    "project_only_absent": [
+      {
+        "root": "tests/core/test_timeline_element_orphan_cleanup.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/test_timeline_element_orphan_cleanup.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/test_timeline_element_orphan_cleanup.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/core/test_timeline_element_publication_runtime.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/test_timeline_element_publication_runtime.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/test_timeline_element_publication_runtime.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/core/rendering/test_local_schema.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/rendering/test_local_schema.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/rendering/test_local_schema.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/packs/rendering/test_composition_package.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/packs/rendering/test_composition_package.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/packs/rendering/test_composition_package.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/test_installer_bootstrap_schema.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/test_installer_bootstrap_schema.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/test_installer_bootstrap_schema.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      }
+    ],
+    "absent_disposition": "NOT APPLICABLE at pristine; Farm retains every project test",
+    "upstream_present_inventory_hash_format": "SHA-256 of git ls-tree -r --name-only HEAD -- <17 approved roots> stdout, including trailing LF; expanded tracked file inventory, not the 17 root names"
+  },
+  "execution_contract": {
+    "runner_target": "agt-F-D141b-plain-command-2358",
+    "runner_repo": "agent",
+    "source_provenance": "the command changes cwd and PYTHONPATH to the exact frozen Agent and Runtime pinned paths; the test-service snapshot is not a source substitute",
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version_observed": "Python 3.13.16",
+    "python_realpath_guard": "exactly /usr/bin/python3.13",
+    "python_version_guard": "exactly Python 3.13.16",
+    "pytest_settings": [
+      "-q",
+      "-n",
+      "3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45",
+      "durable raw JUnit XML"
+    ],
+    "environment": {
+      "HOME": "/root",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONPATH": "/home/user/work/wt/agt-pin-8b6ed211:/home/user/work/wt/rt-pin-fa9cd546",
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-fa9cd546"
+    },
+    "launcher": "plain pytest; not D73; no positive or poison controls",
+    "disk": {
+      "source_admission_floor_bytes": 4600000000,
+      "start_bytes": 4700000000,
+      "stop_bytes": 4000000000,
+      "heavy_body_concurrency": 1
+    },
+    "durable_outputs": {
+      "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator",
+      "raw_stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/raw-stdout.log",
+      "raw_stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/raw-stderr.log",
+      "pytest_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/pytest.log",
+      "junit_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/pristine-comparator.xml",
+      "body_exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/body-exit.txt",
+      "monitor_exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/monitor-exit.txt",
+      "disk": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/disk.txt",
+      "source_before": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-before.txt",
+      "source_after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt",
+      "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/status.txt",
+      "source_after_errors": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after-errors.txt"
+    },
+    "body_gate": "requires manager-installed PASS markers for U2 final freeze and independent command review",
+    "body_process_ownership": "setsid --wait with job control disabled; supervise only this body PID/process group; stop/reap before final source/log capture; never claim clean after-state while group remains",
+    "output_unwritable": "nonzero NOTRUN with all-four before/after custody and attempted witness contents on service stderr; no durable-path claim; controller must reject stale status/XML on any nonzero attempt",
+    "concurrency": "exclusive existing heavy.lock acquired before witness initialization; a contender emits stderr custody only and never overwrites the active run",
+    "xml_freshness": "truncate JUnit output before admission; missing/empty body XML never yields PASS or behavioral credit"
+  },
+  "scope_exclusions": [
+    "no pytest, collection, imports, or body execution in this source worker",
+    "no D73 launcher, schema overlay, package acquisition, child, Store, fixture, or product-test alteration",
+    "no suite installation, request-test, request-checkout, or live sockets",
+    "no inferred REG or ship credit; later comparison is per-ID against Farm"
+  ],
+  "prior_command_review": {
+    "original": "agt-F-D141b-command-review-0003",
+    "residual": "agt-F-D141b-final-command-review-0014",
+    "wholepath": "agt-F-D141b-wholepath-0019",
+    "wholepath_command_sha256": "75e11e1a1a45b878b11ab68b0431152266c5f3948261c4427e11dd55ac0e053e"
+  },
+  "durable_publication": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence",
+    "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+    "service_row_sha256": "c3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7",
+    "byte_exact_worktree_copies": true
+  }
+}

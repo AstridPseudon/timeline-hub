@@ -1,0 +1,7 @@
+Ask: record sole pristine comparator real service receipt and keep Farm cut core independent / Owner: Agent controller0035; Farm cut proof / By: terminal comparator result
+
+Actual normal service `agent-d141b-pristine-comparator-2358-1026003644-27388` was submitted2026-10-26T00:36:44Z via `bin/request-test integration:agent d141b-pristine-comparator-2358 --no-cache`, requestexit0. Current exact status is `running` at2026-10-26T00:37:15.376438+00:00; no body START is inferred from the queue receipt. Controller0035 polls genuine service to terminal; no duplicate, localbody or retry. Testdir KEEP now set; authorrunroot also protected. Fresh currentfree5294899200 bytes; admitted managerdispatch5555838976bytes, stop4000000000, oneheavy.
+
+Corrected Sol0019 independent0030 PASS_COMMAND at exact0710897c/source hashes; normal single row was installed preserving187 previousrows. Plain17roots/exactpristineAgent8b6ed/Runtimefa9/existingvenv-agent; no D73controls/child. AllfourSHA/tree/cleanbeforeafter, interpreter, disk, rawstreams/exits/JUnit retained byreviewedcommand. PRISTINE COMPARATOR only, no shipcredit or REGclaim. Final Farm versus pristine per-ID verdict remainsowed.
+
+Agent finalsource28e56cacb4/tree2ebe2ddf was normallymerged and FROZEN, exactApp+leadhandoff0023. No merge afterfreeze withoutMAIN. No Agent child/core, own-testinvestigation, Store or D130 action. P4 existingcontroller sourceprep return0034 continues; actualP4bodyheldfinalApp/MAIN GO andoneheavysequencing.

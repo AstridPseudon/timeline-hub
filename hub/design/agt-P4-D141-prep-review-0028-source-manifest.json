@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141 independent preparation review",
+  "reviewed_at": "2026-10-26",
+  "product_base": {
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "agent_parents": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d"
+    ],
+    "agent_path": "/home/user/work/wt/agt-P4-D141-prep-review-0028",
+    "agent_clean": true,
+    "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "runtime_path": "/home/user/work/runtime",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "composition_path": "/home/user/work/composition",
+    "app_commit": null,
+    "app_tree": null,
+    "app_path": null,
+    "app_pending_reason": "The current D141 cut record has no final App head, clean receiving checkout, or normal receiving receipt."
+  },
+  "sourceprep": {
+    "worker": "agt-P4-D141-existing-controller-prep-0026",
+    "evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-existing-controller-prep-0026/evidence",
+    "status": "NOT_READY",
+    "files": {
+      "recipe.json": "sha256:808d5245739b66569f8a3f9aa3a80d6fda95cc4712f93749ecc5cb7e7e3fc191",
+      "handoff.md": "sha256:1f5df7133e845635a2be16291b9660dd3f92a17bbf3abface051f8bf347addb9",
+      "source-manifest.json": "sha256:2cc47df3cd4605d3bfcd0225152de5803b1c38c5c9fc1971a04193fcb5d7b8ed",
+      "validation.md": "sha256:9a46ea1d6aa3e7be4c4b6e1ef4aad95a0ca8110d01ed5941c403c18cdc62df01",
+      "findings.json": "sha256:3d28bbdc17c09c84d94b51820aec574e3f6da4253ffaeecd4beb2aed7d1deb22"
+    }
+  },
+  "d141_control_inputs": {
+    "cut_tuple": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-cut-tuple.md",
+      "sha256": "0a68b24f6f9b385b3b7f0716a64caaf74daa94aa22a0f619ccfffdc3d79b2ad9",
+      "recorded_heads": {
+        "agent": "pending",
+        "app": "pending",
+        "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d"
+      }
+    },
+    "morning_cut": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-morning-cut.md",
+      "sha256": "9291c9a81b102dc93a10181f6bca83c47f90b5b8a7cc307630e154d32c143c82"
+    },
+    "app_journey_packet": {
+      "recipe": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-recipe.json",
+        "sha256": "4d7d89eea571542715f0386532bde64de796c30524b8579c9f8203b06c793818"
+      },
+      "handoff": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-handoff.md",
+        "sha256": "6f67ced810e93bfa2684fee4286bbfc21b9992bc488da80e198fee9c878c02cf"
+      },
+      "source_manifest": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-source-manifest.json",
+        "sha256": "1802e71dc7b45243dc726d4f084584d43f925dd2249cac838f7715493a660608"
+      },
+      "validation": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-validation.md",
+        "sha256": "883cd45806be352d48300c2369372fc32e644cc36265655ac73df00d368a632f"
+      },
+      "findings": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-findings.json",
+        "sha256": "89f5d5ae8934fd8c354693913be3aea2fc12d7ca1a6897c3a9b8fa3cee168f2c"
+      }
+    },
+    "current_main_receiving_records": {
+      "p4_reserved_0010": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-agent-lead-app-20261026T0010Z-D141-P4-reserved.md",
+        "sha256": "d81316ab6c6cc1f61db4a9c48c42962a3608afb2b06a476c9a091319561e747c"
+      },
+      "frozen_receiving_0023": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md",
+        "sha256": "9e13bced03328399aef90eacb4932db76b45b8d5bcf93b68fe185566d46d5a45"
+      },
+      "runtime_docs_0005": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-orchestrator-20261026T0005Z-D141-docs-available.md",
+        "sha256": "62a039ffc2b57d38177873c8ede500b2be4badc19bf5d5390f2b90d19eb63a97"
+      }
+    }
+  },
+  "frozen_r4_refs": {
+    "agent": "origin/codex/handover-timeline-r4-20261019-candidate-sdk@11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "runtime": "origin/codex/handover-timeline-r4-20261019-candidate-runtime@31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "app": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified@8f0c2484463e9b666d184a744d52e252984e551a",
+    "composition": "origin/codex/handover-timeline-r4-20261019-candidate-composition@c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+    "requested_control_path": "docs/projects/timeline-r4",
+    "requested_control_path_status": "not present in the frozen candidate trees or the supplied Agent checkout; no checkout was performed"
+  },
+  "source_files": {
+    "tools/p4-d73-pinned-launch.sh": "sha256:9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "tools/install_p4_launcher.py": "sha256:1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805",
+    "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py": "sha256:8239ad0c3ac7de05d7ab0efac7b12c34532df33f7f22f33c9c270f0aeb30f213",
+    "tests/editing_conformance/test_p4_ten_note_v2_runtime.py": "sha256:c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0",
+    "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py": "sha256:02ffa65700ff1c4d2e4a017fbaef6f646d100de5af61bc85e9003866eb927f36",
+    "tests/sdk/test_p4_commit_v2.py": "sha256:5178784e83817f957bde3d277ef848217575ce9e0b90d36feffa36bf7b2fc83a",
+    "tests/sdk/test_p4_ten_note_provider.py": "sha256:133c2adf8ddf9b2a51f746420859a33e6ece10bea2466226361d2f13c784193c",
+    "tests/sdk/test_p4_note_rerun.py": "sha256:e8a5bc542785a75599619979c4560ccf99f799b4baad9d74ee016a1080ade24a"
+  },
+  "route_verification": {
+    "requested_route": "request-test integration:agent p4-current-becfe-http-3legs --no-cache",
+    "current_registry": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "line": 177,
+      "sha256": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988",
+      "bound_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-R2-D84a-five-2214/evidence/p4-r2-d84a-unprofiled-five.manifest",
+      "bound_manifest_sha256": "13e5c3080d0df736b70924ba785eeb55a8af4ebd7ea575da6e433d4ab93b9636",
+      "selector_count": 5,
+      "selector_shape": "ten-note plus four restart/late-head parameter cases",
+      "row_evidence_sha256": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59"
+    },
+    "prepared_route_claim": {
+      "selector_count": 3,
+      "selectors": [
+        "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+        "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+        "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document"
+      ]
+    },
+    "supported_registration_path": "Render a final p4-d73-v1 manifest and exact owned row, CAS-install it with tools/install_p4_launcher.py after the four-way tuple and ordinary receiving receipts are recorded, then call the existing request-test row. request-test itself accepts only a worker/repo, suite name, optional files, and --no-cache; it has no command/environment submission API. Historical D84 receipts remain immutable and are not retargeted."
+  },
+  "c0_static_contract": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source", "rationale", "group_id", "Idempotency-Key"],
+    "command_fields": ["schema_version", "op", "version", "select", "args"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "reply_fields": ["accepted/merged", "canonical_document", "receipt", "records", "bindings", "effects/derived_writes", "dependencies", "history", "undo_steps", "conflict reason/head", "invalid code/path/hint/suggested_command", "preview would_status/null receipt"],
+    "dto_change": false
+  },
+  "historical_qualification": {
+    "d84a_service": "agent-p4-current-becfe-http-3legs-1024221732-29429",
+    "d84a_scope": "four restart/late-head parameter cases passed; ten-note selector timed out at 45.314s; not a five-node pass",
+    "d97_original_service": "agent-p4-d97-original-0445-1025044719-22560",
+    "d97_scope": "sole accepted historical ten-note proof: one real HTTP body, 28.101s, per-step inverse/undo/redo, history/receipt, restart, no-write/no-leak",
+    "three_primary_originals": "all three source files are present and hash-verified; no original selector was removed or rewritten",
+    "receipt_policy": "old receipts are historical evidence only and are not retargeted"
+  }
+}

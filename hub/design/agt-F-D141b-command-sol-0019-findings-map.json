@@ -1,0 +1,75 @@
+{
+  "schema": "timeline.f.d141b.command-return.findings.v1",
+  "source_review": "a8118e9a51ccb629e88cb6dcde981b22ba448b98",
+  "verdict": "PASS_SOURCE_READY_REVIEW_PENDING",
+  "findings": [
+    {
+      "id": "D141B-DURABILITY-001",
+      "status": "corrected_pending_independent_review",
+      "evidence": "finish / raw stream initialization",
+      "resolution": "Separate raw streams and fresh JUnit target; checked body/monitor/terminal witnesses and combined log; any missing evidence refuses PASS."
+    },
+    {
+      "id": "D141B-MONITOR-002",
+      "status": "corrected_pending_independent_review",
+      "evidence": "monitor_disk / stop_body / final waits",
+      "resolution": "Every nonzero monitor status propagates; record actual body and monitor exits separately."
+    },
+    {
+      "id": "D141B-DISK-003",
+      "status": "corrected_pending_independent_review",
+      "evidence": "SOURCE_FLOOR_BYTES / START_BYTES / STOP_BYTES",
+      "resolution": "Unchanged decimal 4.6 GB source, one-time 4.7 GB dispatch, 4.0 GB stop thresholds."
+    },
+    {
+      "id": "D141B-INTERPRETER-004",
+      "status": "corrected_pending_independent_review",
+      "evidence": "python_realpath / python_version guards",
+      "resolution": "Unchanged exact interpreter realpath and version checks."
+    },
+    {
+      "id": "D141B-PUBLISH-005",
+      "status": "corrected_pending_independent_review",
+      "evidence": "service-row.txt / admission.json / durable published copies",
+      "resolution": "Exact absolute command and row exist outside recycled worktrees; hash guards are rebound to the corrected bytes."
+    },
+    {
+      "id": "D141B-CUSTODY-006",
+      "status": "corrected_pending_independent_review",
+      "evidence": "guard_repo / capture_sources / finish",
+      "resolution": "Probe each field independently, emit all four repository rows despite any earlier failure, and aggregate admission status. Capture before mkdir; capture after on terminal paths; fall back to stderr if output cannot be owned/written."
+    },
+    {
+      "id": "D141B-DURABILITY-007",
+      "status": "corrected_pending_independent_review",
+      "evidence": "trap setup / initial source capture / write_witness / finish",
+      "resolution": "Install EXIT/INT/TERM handling before all probes, mkdir and initialization. Report admission NOTRUN and nonzero on initialization failures; no impossible durable-output claim."
+    },
+    {
+      "id": "D141B-DURABILITY-008",
+      "status": "corrected_pending_independent_review",
+      "evidence": "write_witness / finish / final waits",
+      "resolution": "Use checked waits; retain actual exits; explicitly check all durable writes even under trap set +e; evidence error replaces only a zero wrapper return."
+    },
+    {
+      "id": "D141B-MONITOR-009",
+      "status": "corrected_pending_independent_review",
+      "evidence": "monitor_disk / stop_body",
+      "resolution": "Stop the owned body group before attempting disk-read or low-disk failure logging. A normal disk witness append failure also stops the group before return."
+    },
+    {
+      "id": "D141B-LIFETIME-010",
+      "status": "corrected_pending_independent_review",
+      "evidence": "setsid --wait / body_alive / stop_body / finish",
+      "resolution": "Consume the finite wholepath0019 finding: supervise only the wrapper-owned group including xdist workers; TERM then bounded grace/KILL; reap direct children before source/log capture; a still-present group prevents clean/PASS credit."
+    }
+  ],
+  "scope_preserved": [
+    "no body, pytest, import, collection, socket, installation, or service submission",
+    "exact 17 upstream-present roots",
+    "existing venv and pristine Agent/Runtime source paths",
+    "normal service and only independent-review plus U2-freeze gates",
+    "no product, schema, pin, generated, shared dependency, or checkout writes"
+  ],
+  "wholepath_review_consumed": true
+}

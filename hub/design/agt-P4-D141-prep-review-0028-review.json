@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141 independent read-only preparation review",
+  "reviewed_at": "2026-10-26",
+  "verdict": "FAIL",
+  "preparation_status": "NOT_READY",
+  "source_failure": false,
+  "verdict_basis": "The Agent source and historical qualification packet are substantially preserved, but the named central route does not currently contain the three-leg command claimed by the preparation packet, and the packet carries unsupported body-admission floor variants. FAIL is for those independently verified preparation defects, not merely for missing external receiving inputs.",
+  "scope": {
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "app_commit": null,
+    "controller_policy": "one existing Agent controller only",
+    "body_run": false,
+    "go": false,
+    "registration_credit": false,
+    "ship_credit": false
+  },
+  "findings": [
+    {
+      "id": "P4-D141-F001",
+      "severity": "blocking",
+      "kind": "route_membership_mismatch",
+      "finding": "The current central row named p4-current-becfe-http-3legs is bound to the historical D84 five-selector command, not the three primary P4 selectors in the source-preparation packet.",
+      "evidence": [
+        "orch/tests/suites.conf:177",
+        "agt-P4-R2-D84a-five-2214/evidence/p4-r2-d84a-unprofiled-five.row",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/handoff.md:16-25"
+      ],
+      "actual_current_row": "ten-note plus four test_public_helper_restart_exact_retry_later_head_inverse_redo parameter cases, using the old D84 manifest",
+      "required_action": "Manager must render the final p4-d73-v1 manifest and exact owned row for the final tuple, then use the existing CAS installer and the existing request-test row. Do not add a controller, pass command/environment fields through a nonexistent request-test API, or retarget the D84 receipt."
+    },
+    {
+      "id": "P4-D141-F002",
+      "severity": "blocking_if_body_admission_uses_packet_value",
+      "kind": "unsupported_floor",
+      "finding": "The source-preparation handoff requires 4,700,000,000 bytes before the body, while the App journey packet carries a 5,000,000,000-byte admission. The settled task authority is a 4.6 GB source floor, 4 GB stop, and default 180; neither 4.7 GB nor 5 GB is an automatic P4 preparation or body gate.",
+      "evidence": [
+        "agt-P4-D141-existing-controller-prep-0026/evidence/handoff.md:46",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/recipe.json:154",
+        "design/app-D141-journey-prep-2346-recipe.json:183-190"
+      ],
+      "required_action": "At continuation, measure the actual current P4 admission against the authoritative 4.6 GB floor and stop at 4 GB. Do not block preparation on disk, and do not elevate D89a/core4.7 or the App packet's 5 GB to an invented rule."
+    },
+    {
+      "id": "P4-D141-F003",
+      "severity": "blocking_for_continuation",
+      "kind": "cut_tuple_incomplete",
+      "finding": "The authoritative D141 cut tuple still records Agent and App as pending. The source worker has an exact Agent binding, but that fact has not been reconciled into the authoritative cut record; final App identity and receiving receipt remain absent.",
+      "evidence": [
+        "design/D141-cut-tuple.md",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/source-manifest.json",
+        "design/app-D141-journey-prep-2346-handoff.md"
+      ],
+      "required_action": "Record the exact Agent and final App commit/tree/parents, clean checkout paths, and ordinary receiving receipts in the authoritative cut tuple before registration or body."
+    },
+    {
+      "id": "P4-D141-F004",
+      "severity": "blocking_for_continuation",
+      "kind": "main_go_missing",
+      "finding": "No explicit recorded MAIN GO was found. Reservation, clock time, source preparation, or comparator progress cannot substitute for it.",
+      "evidence": [
+        "design/D141-morning-cut.md:7,19-21",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/findings.json"
+      ],
+      "required_action": "Manager records MAIN GO after the normal sequencing decision. This review grants no GO."
+    },
+    {
+      "id": "P4-D141-F005",
+      "severity": "blocking_for_continuation",
+      "kind": "registration_missing",
+      "finding": "No D141-specific service row or registration receipt exists. The current old row is historical and cannot establish final-tuple identity.",
+      "evidence": [
+        "orch/tests/suites.conf:177",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/findings.json",
+        "tools/install_p4_launcher.py",
+        "scratchpad/orch/bin/request-test"
+      ],
+      "required_action": "Use the supported normal route: exact candidate row and manifest, CAS installation of only the owned route row, then request-test by its existing name. request-test has no direct command/environment submission surface."
+    },
+    {
+      "id": "P4-D141-F006",
+      "severity": "sequencing_input_not_preparation_gate",
+      "kind": "comparator_pending",
+      "finding": "No same-cut pristine comparator result or per-ID REG closure is recorded. The comparator must finish before the one-heavy-body P4 sequence, but no settled rule requires comparator PASS or REG closure before P4 source preparation.",
+      "evidence": [
+        "design/D141-morning-cut.md:19-21",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/handoff.md:40,46"
+      ],
+      "required_action": "Keep this as a receiving/sequencing input for body dispatch, not as a reason to reject the prepared Agent source or invent a comparator hard gate for preparation."
+    },
+    {
+      "id": "P4-D141-F007",
+      "severity": "conditional",
+      "kind": "ast_hashes_absent",
+      "finding": "AST hashes are absent from retained App evidence.",
+      "evidence": [
+        "design/app-D141-journey-prep-2346-recipe.json:229",
+        "agt-P4-D141-existing-controller-prep-0026/evidence/findings.json"
+      ],
+      "required_action": "Supply AST hashes only if the final cut record explicitly requires them. Do not invent an approval requirement."
+    }
+  ],
+  "verified_without_credit": [
+    "All three primary P4 source selectors and their original source hashes are preserved.",
+    "The D84a result is correctly bounded to four passed restart/late-head cases and one timed-out ten-note case.",
+    "The D97 original is the sole accepted historical ten-note proof; its receipt is not retargeted.",
+    "Restart, history, undo/redo, conflict/rerun, receipt, and no-write/no-leak predicates are retained as historical or source-preparation requirements; they are not claimed as a new D141 body result.",
+    "Static generated DTOs and the commitTimeline caller match the settled C0 request/reply contract; no DTO change is needed.",
+    "The existing p4-current-single row is a duplicate CLI leg, not permission for a second P4 controller."
+  ],
+  "missing_receiving_inputs": [
+    "authoritative cut record reconciled with exact Agent source and final App commit/tree/parents",
+    "final App clean checkout path and ordinary receiving receipt",
+    "four-way tuple with clean checkout receipts and final source/import/profile identities",
+    "D141-specific exact manifest, owned route row, and registration receipt",
+    "explicit MAIN GO",
+    "same-cut pristine comparator result and later REG closure as sequencing inputs",
+    "fresh measured disk admission at the authoritative 4.6 GB floor with 4 GB stop",
+    "AST hashes only if explicitly required by the final cut record"
+  ]
+}
