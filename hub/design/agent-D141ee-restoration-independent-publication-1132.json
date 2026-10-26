@@ -1,0 +1,61 @@
+{
+  "recorded_at": "2026-10-26T11:30:43.512265+00:00",
+  "kind": "manager byte publication of worker originals; source PASS and behavior FAIL kept separate",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-next/evidence/findings.md",
+      "destination": "design/agt-U2-D141ee-restore-next-findings.md",
+      "sha256": "889ab605e04ef1595b473288845db2eb56341cb5cf03a9da320ebd000d0e0319",
+      "bytes": 1346
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-next/evidence/source-manifest.json",
+      "destination": "design/agt-U2-D141ee-restore-next-source-manifest.json",
+      "sha256": "35ea9eef32cbcbc5633b2bd67d1f684035439c7016092d2e0fc61bdcc9f9af17",
+      "bytes": 9643
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-next/evidence/validation.md",
+      "destination": "design/agt-U2-D141ee-restore-next-validation.md",
+      "sha256": "94b590e2e9f03fbb719c03b8867cb3470438898c4a633dd9908a08be911ad5b9",
+      "bytes": 1405
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-next/evidence/handoff.md",
+      "destination": "design/agt-U2-D141ee-restore-next-handoff.md",
+      "sha256": "6f977e106b075ac9d80518cfc90acd27b5c4191b8071b936a905be5ff79c69d4",
+      "bytes": 317
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/findings.md",
+      "destination": "design/agt-U2-D141ee-restore-review-next-findings.md",
+      "sha256": "ecfc2454b17d412045dd0c139066a4634f4ec79fb0037718ec9f8f55cb8586f7",
+      "bytes": 1613
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/source-manifest.json",
+      "destination": "design/agt-U2-D141ee-restore-review-next-source-manifest.json",
+      "sha256": "70c3735ae9d370af53eaec2d50b1a37bb54217176db95ed6c0cbb909ed22d21d",
+      "bytes": 9848
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/validation.md",
+      "destination": "design/agt-U2-D141ee-restore-review-next-validation.md",
+      "sha256": "21b8c845533a7f43e13d0e6bb6284736581660753c37941d2687a75bd42c376b",
+      "bytes": 1809
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/handoff.md",
+      "destination": "design/agt-U2-D141ee-restore-review-next-handoff.md",
+      "sha256": "9ef86ca8d20965c7ee12a69c1b456e86db01c50651a7287efe6afca48aa2a908",
+      "bytes": 543
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/review.json",
+      "destination": "design/agt-U2-D141ee-restore-review-next-review.json",
+      "sha256": "e443ae9be1d460f6855ac8cb6a758257e1f9db6632cdab3fd6d699d5da28fca4",
+      "bytes": 17703
+    }
+  ],
+  "raw": "Private XML/stdout/stderr not published. Original references retained; existence checked separately."
+}

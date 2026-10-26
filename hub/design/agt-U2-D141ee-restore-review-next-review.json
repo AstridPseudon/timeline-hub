@@ -1,0 +1,346 @@
+{
+  "schema": "timeline.f.d141ee.protected-review.v1",
+  "result": "PASS_SOURCE_RESTORATION",
+  "restored_targeted_behavior": "FAIL_WITH_VISIBLE_FAILURES_AND_COLLECTION_ERRORS",
+  "ship_or_REG0_claim": false,
+  "commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+  "base": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+  "pristine": "64197afa297f86f1e738238d5e80aff6d33e303a",
+  "classification": "64 total = 9 passing moves + 55 dropped_REG + 0 owner retirements",
+  "conservation": {
+    "accepted_nodes": 55,
+    "unique_nodes": 55,
+    "blob_matches": 55,
+    "ast_matches": 55,
+    "inverse_file_byte_identical": true,
+    "current_tests_preserved": "PASS: diff is additions-only; no current test/helper/predicate line was overwritten"
+  },
+  "test_runs": {
+    "exact_55": {
+      "command_record": "evidence/pytest-command.txt",
+      "exit": 4,
+      "combined_xml": "/tmp/agt-U2-D141ee-restore-review-next-run/restored-independent.xml",
+      "combined_log": "evidence/restored-independent.log",
+      "stdout_stderr": "captured together in evidence/restored-independent.log (2>&1)",
+      "pytest_summary": {
+        "name": "pytest tests"
+      },
+      "collection_errors": [
+        {
+          "module": "tests/timeline/test_authoring_bundle.py",
+          "error": "ImportError: cannot import name promote_approved_authoring_candidate"
+        },
+        {
+          "module": "tests/timeline/test_inverses.py",
+          "error": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+        }
+      ],
+      "executed_in_this_invocation": 0,
+      "not_run_due_to_collection_error": 40
+    },
+    "unaffected_15": {
+      "command_record": "evidence/pytest-unaffected-command.txt",
+      "exit": 1,
+      "xml": "/tmp/agt-U2-D141ee-restore-review-next-run/restored-unaffected.xml",
+      "log": "evidence/restored-unaffected.log",
+      "stdout_stderr": "captured together in evidence/restored-unaffected.log (2>&1)",
+      "pytest_summary": {
+        "name": "pytest tests"
+      },
+      "executed": 15,
+      "failed": 15,
+      "passed": 0
+    }
+  },
+  "node_results": [
+    {
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "status": "collection_error",
+      "detail": "ModuleNotFoundError: No module named astrid.core.timeline.inverses"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision",
+      "status": "collection_error",
+      "detail": "ImportError: cannot import name promote_approved_authoring_candidate"
+    },
+    {
+      "id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "status": "collection_error",
+      "detail": "ImportError: cannot import name promote_approved_authoring_candidate"
+    },
+    {
+      "id": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/test_installer_schema.py::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    },
+    {
+      "id": "tests/test_installer_schema.py::test_remotion_lock_pins_the_transitive_schema_package",
+      "status": "failed",
+      "detail": "executed by exact unaffected selector; assertion/behavior failure recorded in restored-unaffected.xml"
+    }
+  ],
+  "checks": {
+    "ruff_exit": 1,
+    "ruff_expected_pristine_diagnostics": [
+      "tests/timeline/test_inverses.py:10:1 I001",
+      "tests/timeline/test_inverses.py:46:5 F401 InverseRequest"
+    ],
+    "git_diff_check_exit": 0,
+    "typecheck": "N/A: no targeted typecheck workflow applies to this test-only restoration; no product source changed",
+    "module_origins": "evidence/module-origins.txt"
+  },
+  "decisions": [
+    "No source repair, product fix, route revival, guard weakening, new retirement, skip, xfail, deselect, or assertion/input adaptation performed.",
+    "The two current import failures remain visible and are classified as collection errors; no behavior PASS is claimed."
+  ]
+}
