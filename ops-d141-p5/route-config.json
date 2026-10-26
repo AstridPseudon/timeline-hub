@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "route": {
+    "name": "d141-p5-cut",
+    "kind": "cut",
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "checkout": "/home/user/work/runtime",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
+    },
+    "agent": {
+      "status": "pending",
+      "commit": null,
+      "tree": null,
+      "checkout": null,
+      "receipt": null,
+      "provider_origin": null,
+      "client_origin": null,
+      "schema_digest": null,
+      "lock_values": null
+    }
+  },
+  "pytest": {
+    "interpreter": "/home/user/work/venv-runtime/bin/python",
+    "environment_unset": ["NODE_OPTIONS", "NODE_PATH"],
+    "arguments": [
+      "-m", "pytest", "-q", "-n3", "-p", "no:cacheprovider",
+      "-m", "integration",
+      "tests/test_timeline_commit_integration.py",
+      "tests/test_timeline_commit_crash.py"
+    ],
+    "junit_name": "d141-p5-cut.xml"
+  },
+  "source": {
+    "membership_only": true,
+    "files": [
+      {
+        "path": "tests/test_timeline_commit_integration.py",
+        "sha256": "867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534"
+      },
+      {
+        "path": "tests/test_timeline_commit_crash.py",
+        "sha256": "9a7d201f6d3e2d66898ab6f901a5567c9808bf23520be5b50d06a148813f1e63"
+      }
+    ]
+  },
+  "required": [
+    "frozen Runtime checkout with exact commit and tree",
+    "genuine final Agent cut receipt with exact clean checkout tuple",
+    "provider and generated-client origins from that receipt",
+    "schema digest and actual lock values from the bound checkouts"
+  ]
+}
