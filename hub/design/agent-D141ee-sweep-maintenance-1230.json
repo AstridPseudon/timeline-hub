@@ -1,0 +1,14 @@
+{
+  "kind": "manager-recorded actual maintenance terminal",
+  "tool": "bin/sweep-tmp 3",
+  "start_utc": "2026-10-26T12:29:42.648653+00:00",
+  "end_utc": "2026-10-26T12:32:33.748222+00:00",
+  "exit": 0,
+  "free_before_bytes": 6538149888,
+  "free_after_bytes": 6539108352,
+  "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 6236M -> 6237M\n",
+  "stderr_bytes": 0,
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_first_lines": [],
+  "scope": "Normal guarded tool only; no manager hub operation or KEEP override."
+}
