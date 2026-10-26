@@ -1,0 +1,92 @@
+{
+  "utc": "2026-10-26T10:05:56.924924+00:00",
+  "normal_route_transport": [
+    {
+      "file": "app-F-D141z-sol-independent-0944-report.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-review.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-findings.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-source-map.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-source-manifest.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-controls.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-validation.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-handoff.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-disk-trace.txt",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-F-D141z-sol-independent-0944-sampler-lifecycle.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141z-qualified-61f915-check.sh",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141z-qualified-61f915-delivery_lifecycle.py",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141z-qualified-61f915-install-map.json",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141z-qualified-61f915-run-final-delivery.py",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141bb-app-U4p-D141v-final-pin-next.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141bb-app-U4p-D141v-final-pin-review-next.md",
+      "exists": true,
+      "sha256_matches": true
+    },
+    {
+      "file": "app-D141bb-main-stop-install-brief-0958.md",
+      "exists": true,
+      "sha256_matches": true
+    }
+  ],
+  "canonical_receiving_unverified": true,
+  "source_only": true
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T10:01:28Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
-# app board, 2026-10-26T09:59:39.394582+00:00
+<!-- app | 2026-10-26T10:06:49Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# app board, 2026-10-26T10:05:56.924924+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -91,7 +91,7 @@ live 0 / cap 3; ready-undispatched 0. Independent0944 terminal PASS bounded sour
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through2881124 bytes; board rewritten 2026-10-26T09:41:33.210911+00:00.
+INBOX consumed through2885256 bytes; latest pass and transport readback below.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.
 
@@ -156,3 +156,7 @@ D141bb pre-stage 2026-10-26T09:59:39.394582+00:00: New Main09:42 decision consum
 Maintenance terminal 2026-10-26T09:59:56.163600+00:00: sweep3 and compact1 exit0;1scratch/0testsdirs,1oldlog compressed;46baselineKEEP hashes/modes exact. Census11sources zeroeligibleendednonKEEP; allheldtargets untouched. Actualfree4649648128bytes, normaljourneyfloor remainsunmet. [Receipt](../../design/app-D141-maintenance-result-1000.json).
 
 Maintenance detail1000: the1scratch archive is old0847/private-controls.tgz (normalhelper,394053bytes); fulltarstream readable, originalreview/evidence remain. No priorperfilebaseline, nohistoricalhashidentityclaim. PendingRuntimeintake now explicitlyKEEP-protects0847and0944 workerrecords, addedtoday/notbackdated; all46baselineKEEP unchanged. No rawtestdir packed or removed.
+
+H6 2026-10-26T10:02:23.876696+00:00: Read current headerD141bb and owningAgent09:54 board: authornativecompletion terminal, soleindependent actuallyactive09:51:48. Fullpair4714564096 andnativeCLI5GB remainowndiskgated; D141v allREG gateunchanged. Runtime09:47 stillordinarysourcefloorheld. Normalhubreadback sourcePASSpublication0954 byteexact; finalbriefpacket sync separately checked. App actualfree4645507072bytes, noheavy orreadyadmittedrow. Inbox consumedthrough2885256. No source/pin/body/queue/hubmutation.
+
+Final delivery readback 2026-10-26T10:05:56.924924+00:00: all10independentrevieworiginals,4reviewedsourceexports and3install/pinbriefs matchfullhashes inNORMALhub. Both finitepeerhandoffs presentbyteexact. Runtimecanonicalreceiving remains owningfloor-gated; no repeatedpush or duplicateworker. ActualAppfree4645216256bytes; live0/cap3,readyundispatched0. [Normal delivery](../../design/app-D141bb-normal-delivery-1005.json).
