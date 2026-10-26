@@ -1398,6 +1398,13 @@
 .astrid-agent-launcher { view-transition-name: astrid-agent-launcher; }
 ::view-transition-old(astrid-agent-launcher) { display: none; }
 ::view-transition-new(astrid-agent-launcher) { animation: none; }
+/* Riders (publicAstridRiders.ts) float above the panels, so each gets a layer of its own that shows
+   live: left in the page's layer it would sit under the panels' layer until the wash ends, then pop in.
+   No old image and no group animation, so what is painted is the rider loop's box and the CSS fade. */
+[data-astrid-rider] { view-transition-name: match-element; view-transition-class: astrid-rider; }
+:root:not([data-astrid-page-transition])::view-transition-group(*.astrid-rider),
+:root:not([data-astrid-page-transition])::view-transition-new(*.astrid-rider) { animation: none; }
+:root:not([data-astrid-page-transition])::view-transition-old(*.astrid-rider) { display: none; }
 @supports not (view-transition-name: none) {
   .astrid-public-site { transition: background-color 600ms ease, color 600ms ease; }
   .astrid-editor-stage { transition: box-shadow 600ms ease, background-color 600ms ease, border-color 600ms ease; }
