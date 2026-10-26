@@ -413,7 +413,6 @@ for (const agent of ['codex', 'hermes'] as const) {
 
 for (const [label, agentContextForCommand] of [
   ['empty output', async () => ''],
-  ['a failure', async () => { throw new Error('astrid --agent-context failed'); }],
 ] as const) {
   for (const agent of EXTERNAL_AGENT_IDS) {
     test(`${agent} starts without a preferences block after ${label} from the context command`, async () => {
@@ -448,6 +447,23 @@ for (const [label, agentContextForCommand] of [
       }
     });
   }
+}
+
+for (const agent of EXTERNAL_AGENT_IDS) {
+  test(`${agent} surfaces a failure from the context command`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-context-error-'));
+    const f = fixture(directory);
+    try {
+      await assert.rejects(createLocalAgentAcpProcessHost(agent, {
+        cwd: f.cwd,
+        env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+        profileFileForCommand: () => f.profile,
+        agentContextForCommand: async () => { throw new Error('astrid --agent-context failed'); },
+      }), /astrid --agent-context failed/);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 }
 
 test('resolveAstridAgentContext runs `astrid --agent-context` and never throws', async () => {

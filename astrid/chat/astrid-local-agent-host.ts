@@ -106,8 +106,8 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio
   const launch = await localAgentLaunch(agent, env);
   const profilePath = (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(options.command ?? ASTRID_ACP_COMMAND, env);
   const profile = renderAgentProfile(readFileSync(profilePath, 'utf8'), profilePath);
-  // A fresh snapshot per host; failure or timeout means no preferences block, never a failed launch.
-  const preferences = (await (options.agentContextForCommand ?? resolveAstridAgentContext)(options.command ?? ASTRID_ACP_COMMAND, env).catch(() => '')).trim();
+  // A fresh snapshot per host; empty output or timeout means no preferences block.
+  const preferences = (await (options.agentContextForCommand ?? resolveAstridAgentContext)(options.command ?? ASTRID_ACP_COMMAND, env)).trim();
   return new LocalAgentAcpHost(agent, [
     profile,
     'You are the selected local agent in the Astrid App. Use Astrid skills and its installed CLI tools for creative work. Load the relevant Astrid SKILL.md when needed, as installed by `python3 -m astrid.skills.cli sync`. Do not run skill sync or change global agent settings during a chat.',
