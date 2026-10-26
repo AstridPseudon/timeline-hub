@@ -1,0 +1,40 @@
+{
+  "utc": "2026-10-26T10:40:50.069314+00:00",
+  "kind": "manager byte-exact SAFE operational summary publication; repo-relative author outputs disclosed; no branch merge",
+  "subject_commit": "a5f1c40b47",
+  "qualification": "MEASUREMENT ONLY; independent custody pending",
+  "entries": [
+    {
+      "original": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/result.json",
+      "published": "design/agt-F-D141l-fullpair-controller-next-result.json",
+      "sha256": "bcee9154bafb307ae8f9db51b92b72b9a8ce7cdf77efabdc36ddf34e4177f3c2",
+      "bytes": 3838,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-fullpair-controller-next-handoff.md",
+      "sha256": "94a7ecd650552c4cf331f3f98a7331865e725f3b97a99a4dd3c2e9069a25144f",
+      "bytes": 1495,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-fullpair-controller-next-validation.md",
+      "sha256": "cbeb9ddc85ce89a239cb14211422e28bbf1c6a5725ba416e013b21fef6ac0850",
+      "bytes": 2214,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-fullpair-controller-next-source-manifest.json",
+      "sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+      "bytes": 24537,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}
