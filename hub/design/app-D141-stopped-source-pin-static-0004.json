@@ -1,0 +1,29 @@
+[
+  {
+    "worker": "rt-pin-42aad0e9",
+    "path": "/home/user/work/wt/rt-pin-42aad0e9",
+    "head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "clean": true,
+    "running_marker": false,
+    "KEEP_present": true,
+    "lease_hits": []
+  },
+  {
+    "worker": "rt-pin-5e9ad1c6",
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "clean": true,
+    "running_marker": false,
+    "KEEP_present": true,
+    "lease_hits": []
+  },
+  {
+    "worker": "agt-pin-d133a148",
+    "path": "/home/user/work/wt/agt-pin-d133a148",
+    "head": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "clean": true,
+    "running_marker": false,
+    "KEEP_present": true,
+    "lease_hits": []
+  }
+]
