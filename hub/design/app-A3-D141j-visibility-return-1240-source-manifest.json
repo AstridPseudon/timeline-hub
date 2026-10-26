@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.app.d141j.visibility-source-return-manifest.v1",
+  "base_commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+  "prior_candidate_commit": "c2f8c697ce2da6c25dcc9af1ae10e9f50b6cc15f",
+  "prior_candidate_tree": "ba3077ec9a0cd45913ac35b165b8f293e548d4b9",
+  "original_author_manifest_working_tree_commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "observed_worktree": {
+    "branch": "tl/app-A3-D141j-visibility-return-1240",
+    "head_commit": "c2f8c697ce2da6c25dcc9af1ae10e9f50b6cc15f",
+    "head_tree": "ba3077ec9a0cd45913ac35b165b8f293e548d4b9",
+    "dirty": true,
+    "working_tree_diff_sha256": "bcea7fc4d49912d6cb91398aa72cf317e427b4fb9749c111ce0d02409d249c66"
+  },
+  "prospective_harness_terminal_commit": "NOT_YET_ASSIGNED; harness finalizes it",
+  "source_predicates_unchanged": true,
+  "files": [
+    {"path":"src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts","sha256":"504088ca11b9522f39e38328cfcd636f621768387c4dc2b5c461a76ab9856e56","git_blob":"UNCOMMITTED"},
+    {"path":"src/tools/video-editor/adapters/app/useAstridShotsHost.ts","sha256":"59c1982900d564564487fb871527ac92e7b80e61350793ac36491ccaf3e8ffdf","git_blob":"UNCOMMITTED"},
+    {"path":"src/tools/video-editor/hooks/useShotGroups.ts","sha256":"f8545d3e1decc55a5d84a35ba2ef68fc63dd221789be18a1cd2537a8f334207e","git_blob":"c91a5fd682d90a3ea6bdb767906612726f59606f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx","sha256":"555526c695eafb2d6436344e31ce6a824b10932e1c48f40a40ec97d334adda44","git_blob":"e27b4e4e488f52fbc0fa1ebcc0b434a26a04892f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx","sha256":"4f9ed3c617ecbd4619b233960053e0e571ad00e6dea7a108226d9aab584e4a07","git_blob":"UNCOMMITTED"},
+    {"path":"scripts/testing/check-d141j-visibility.mjs","sha256":"bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27","git_blob":"UNCOMMITTED"}
+  ]
+}

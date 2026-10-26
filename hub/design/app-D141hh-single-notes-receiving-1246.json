@@ -1,0 +1,104 @@
+{
+  "utc": "2026-10-26T12:46:22.866524+00:00",
+  "publication": "/home/user/timeline-hub/hub/design/runtime-D141hh-single-notes-installed-publication-1234.json",
+  "publication_sha256": "d32786f04bbef67f31a49c1fbd3b7030e13e710eefe8e72da2586fa9d6433038",
+  "verdict": "RECEIVED_EXACT_19_ORIGINALS_NORMAL_HUB",
+  "scope": "Independent PASS_BOUNDED_CAS is Runtime owning verdict. Canonical715a/d001 current; prior pairs immutable prefixes; App did not run installer/render/body or Main canonical readback. Procedural monitor limits and original FAIL retained. ORCH mirror lag avoided by read-only exact normal-hub receipt; no hub write.",
+  "files": [
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-report.md",
+      "sha256": "8f412b2967d60d119804e6ac80d5efecfd45428b0efcef87f1e52848aef13e50",
+      "bytes": 1250
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-installation.json",
+      "sha256": "14811a586a2d2ba90c4cc725a0b073ec4899cfd6e24801636438dd70868bce8a",
+      "bytes": 4579
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-source-manifest.json",
+      "sha256": "377f3bcd75dd9f61fbe8c54f6c2146d2acb02b75ff5e480c988af934a398d1bb",
+      "bytes": 8698
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-outside-before.json",
+      "sha256": "39f6842837ab584c3b0a6afa7f04ed62f3478dadc70c8ca47118e1292617b342",
+      "bytes": 172040
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-outside-after.json",
+      "sha256": "66c15a2ff306cfb014d6eedbf6e67cb9627a4b977885d95030b8f4a4b4839d22",
+      "bytes": 172048
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-validation.md",
+      "sha256": "a2da06554a219d5069a456d1fe86b576311bd11e1d280e6cb052acc71d54c618",
+      "bytes": 1606
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-handoff.md",
+      "sha256": "4768248da3bf6666a2d2409b190531cc41f6f39f5a21d49779fdb8a5e8a0e91e",
+      "bytes": 848
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-disk-trace.txt",
+      "sha256": "ccfa2678457a6a9e509fa2ddcd614831c88122d81b89f552d773b25902c88ae9",
+      "bytes": 562
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-sampler-lifecycle.json",
+      "sha256": "bbac3ef9ea53064863faff4ffeed21a858ec5eb201b7712737952b44c1f9c2f7",
+      "bytes": 1550
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-backup-README.template.md",
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "bytes": 41963
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-notes-install-next-backup-gate-results.md",
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "bytes": 37956
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-report.md",
+      "sha256": "584a9462773686702fc9b5b07ec119b1c7c19cb08e93bdf72726bef501e25ad6",
+      "bytes": 1003
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-review.json",
+      "sha256": "7f8a71257e3a4ee185c192aa769a46287cef5667b5ecbbcbaf4fecdd7becf15a",
+      "bytes": 5273
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-findings.md",
+      "sha256": "431737d448ad6fa9ad60a928e5af573b7c286d5afedfc32d1b1bdc40750342b1",
+      "bytes": 2438
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-source-manifest.json",
+      "sha256": "650d5815166e85e52835b30fb6288034c4a5923eadf35b840a792dabcb7a8d59",
+      "bytes": 5980
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-validation.md",
+      "sha256": "40235123bdc71403b1f00a5931e157f0eccfdf36e181bae8b8fb0665e4330220",
+      "bytes": 1543
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-handoff.md",
+      "sha256": "23cf130ec6f1bd509803cab60174424fbe694f4f40ea160723b3b17ae68dce19",
+      "bytes": 687
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-disk-trace.txt",
+      "sha256": "840f7ad4250108f5581b2a35abbb26010f040a8bac21a098239e5f7d0f7b02d1",
+      "bytes": 258
+    },
+    {
+      "normal_hub_path": "/home/user/timeline-hub/hub/design/rt-F-D141hh-single-install-review-next-sampler-lifecycle.json",
+      "sha256": "5a3c10717f99675595267f9e69a369a2a787ed4056cb99afc881256fa2766169",
+      "bytes": 971
+    }
+  ]
+}

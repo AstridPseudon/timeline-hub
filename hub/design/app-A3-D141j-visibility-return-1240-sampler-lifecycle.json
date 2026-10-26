@@ -1,0 +1,10 @@
+{
+  "schema": "timeline.app.d141j.visibility-sampler-lifecycle.v2",
+  "initial_command": "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence && background 5-second df sampler writing evidence/disk-trace.txt",
+  "initial_sampler_limit": "background sampler was not observable as a live PID after its launching shell exited; one initial sample was retained",
+  "final_command": "timeout 5s sh -c 'while :; do date -u +%FT%TZ; df -h /home/user/work/wt/app-A3-D141j-visibility-return-1240 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence; sleep 1; done' >> /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/disk-trace.txt 2>&1",
+  "final_sampler_exit": 124,
+  "final_sampler_reaped": true,
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/disk-trace.txt",
+  "body_or_service_started": false
+}

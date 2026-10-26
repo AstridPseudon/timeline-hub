@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.app.d141j.visibility-control.v2",
+  "status": "PASS_SOURCE_ONLY",
+  "candidate_unmerged": true,
+  "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+  "node_version": "v20.19.4",
+  "full_touched_test_argv": "D141J_VISIBILITY_ARTIFACT_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/visibility-proof.json D141J_VISIBILITY_STALE_ARTIFACT_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/stale-artifact.json /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx",
+  "full_touched_test_result": "exit 0; 1 file, 13 tests passed, 0 failed",
+  "focused_control_result": "test passed, but wrapper exit 1 from 12 undeclared filtered skips; not counted as acceptance",
+  "checker_argv": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node scripts/testing/check-d141j-visibility.mjs /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/visibility-proof.json",
+  "checker_result": "exit 0; status PASS; readCount 2; heads timeline-rev-2 then timeline-rev-3",
+  "stale_checker_result": "exit 1; rejected active occurrences as not uniquely correlated to accepted-read-2",
+  "retained_artifact": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/visibility-proof.json",
+    "sha256": "3812b3ea12cfbf8b89a9251eee56a811ff01e0f4a76ace13a59063b93fe94832"
+  },
+  "stale_artifact": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-return-1240/evidence/stale-artifact.json",
+    "sha256": "c35dd908233bcd844019bb45e297223e04b9af0b026df8e2b64fba724f21f92e"
+  },
+  "synthetic_control_inputs": true,
+  "historical_27026_replayed": false,
+  "diagnostic_body": "NOTRUN",
+  "cause": "UNKNOWN"
+}
