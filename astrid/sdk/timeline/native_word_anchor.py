@@ -277,6 +277,9 @@ def compile_authored(bundle, sources):
             shot['internal_timeline']['clips'] = [row for row in shot['internal_timeline']['clips']
                 if any(owner[1:] == (sid, row['id']) for owner in owners)]
     transcript_sources = [row for row in sources if row['document']['kind'] == 'media.transcript']
+    config = projection['parent'].get('config')
+    if isinstance(config, dict) and isinstance(config.get('clips'), list):
+        config['clips'] = projection['parent']['clips']
     result = compile_timing(TimingInputs(projection, sources=transcript_sources, bindings=bindings))
     return replace(result, bundle=copy.deepcopy(bundle))
 

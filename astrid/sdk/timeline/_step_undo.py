@@ -251,6 +251,16 @@ def _native_mirror_partition(record, step, nested):
                             and equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips'])))
             if leaf:
                 compile_mirror()
+        # Anchor inverses restore/recompute their literal cache after authored
+        # writes. Replay those exact derived observations before the final
+        # compiler mirror, and still require the complete accepted effect image.
+        while cursor < len(writes) and writes[cursor]['ref'].startswith('parent/clip:'):
+            write = writes[cursor]
+            if write['path'] not in (['at'], ['hold']) or not equal(
+                    state.get(write['ref'], write['path']), write['before']):
+                raise CommandError('nested inverse timing differs from history', kind='history_unavailable')
+            state.set(write['ref'], write['path'], write['after'])
+            cursor += 1
         compile_mirror()
         after = state.get('parent', ['clips'])
         observed = (state.bundle['parent'] if root_effect
@@ -273,7 +283,9 @@ def _nested_mirror_partition(record, step, nested):
     from ._doc_patch import replace_at, value_at
 
     writes = record.get('derived_writes', [])
-    if any(write.get('ref') != 'parent' or write.get('path') != ['config', 'clips']
+    if any(not ((write.get('ref') == 'parent' and write.get('path') == ['config', 'clips'])
+               or (write.get('ref', '').startswith('parent/clip:')
+                   and write.get('path') in (['at'], ['hold'])))
            or type(write.get('cause')) is not int or write['cause'] != record['ordinal']
            for write in writes):
         raise CommandError('nested inverse derived attribution differs from history', kind='history_unavailable')
