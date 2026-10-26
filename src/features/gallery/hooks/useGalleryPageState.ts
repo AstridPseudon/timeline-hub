@@ -58,13 +58,10 @@ function useGenerationsPageLogic({
     applyQueryFallback,
   } = filterState;
 
+  // Any filter change restarts pagination from the first page.
   useEffect(() => {
     setPage(1);
-  }, [selectedShotFilter, excludePositioned]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [mediaType, starredOnly]);
+  }, [selectedShotFilter, excludePositioned, searchTerm, mediaType, starredOnly]);
 
   const generationsQuery = useProjectGenerations(
     shouldLoadData && !runtimeProjectId ? selectedProjectId : null,
@@ -82,6 +79,23 @@ function useGenerationsPageLogic({
   const isPlaceholderData = generationsQuery.isPlaceholderData;
 
   const isLoading = generationsQuery.isLoading || (isFetching && isPlaceholderData);
+
+  /**
+   * The Runtime route returns no real total. While `hasMore` is true, `total` is a
+   * look-ahead estimate (offset + items + 1); it is exact only once `hasMore` is false.
+   * Consumers that show a total count or a last-page number should check this flag.
+   */
+  const totalIsExact = generationsResponse !== undefined && generationsResponse.hasMore === false;
+
+  // Keep the current page inside [1, totalPages] when the response total or page size shrinks
+  // (filter change, deletions, resize). Never clamp without a response: a loading query has no total.
+  useEffect(() => {
+    if (generationsResponse === undefined) return;
+    const totalPages = Math.max(1, Math.ceil(generationsResponse.total / itemsPerPage));
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [generationsResponse, itemsPerPage, page]);
 
   useEffect(() => {
     applyQueryFallback({
@@ -196,6 +210,7 @@ function useGenerationsPageLogic({
     paginatedData,
     lastAffectedShotId,
     totalCount: generationsResponse?.total ?? 0,
+    totalIsExact,
 
     page,
     selectedShotFilter,

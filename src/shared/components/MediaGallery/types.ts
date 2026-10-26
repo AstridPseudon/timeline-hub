@@ -160,6 +160,9 @@ interface MediaGalleryActionsProps {
   onBackfillRequest?: () => Promise<void>;
   onImageClick?: (image: GeneratedImageWithMetadata, modifiers?: { multiSelect: boolean }) => void;
   onContextMenu?: (event: MouseEvent, image: GeneratedImageWithMetadata) => void;
+  /** Adds the generation to the editor timeline; the tile shows a "+" control only when this is set. */
+  onAddToTimeline?: (generationId: string) => void;
+  addToTimelineDisabledReason?: string;
   formAssociatedShotId?: string | null;
   onSwitchToAssociatedShot?: (shotId: string) => void;
 }

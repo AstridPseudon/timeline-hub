@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { useGenerationsPaneController } from './useGenerationsPaneController';
 
 const mocks = vi.hoisted(() => ({
@@ -162,6 +162,7 @@ function buildPanesState(overrides: Record<string, unknown> = {}) {
     isGenerationsPaneOpen: true,
     setIsGenerationsPaneOpen: vi.fn(),
     generationsPaneHeight: 280,
+    setGenerationsPaneContentHeight: vi.fn(),
     isShotsPaneLocked: true,
     shotsPaneWidth: 100,
     isTasksPaneLocked: false,
@@ -399,7 +400,7 @@ describe('useGenerationsPaneController', () => {
 
     const { result } = renderHook(() => useGenerationsPaneController());
 
-    await waitFor(() => expect(result.current.gallery.emptyStateMessage).toBe('No generations in this view.'));
+    await waitFor(() => expect(result.current.gallery.emptyState.message).toBe('No generations yet.'));
     expect(result.current.filters.mediaTypeFilter).toBe('all');
     expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['all']);
     expect(mocks.useProjectGenerations).not.toHaveBeenCalled();
@@ -434,5 +435,74 @@ describe('useGenerationsPaneController', () => {
     expect(params.get('timeline')).toBe('timeline-A');
     expect(params.get('addGenerationProject')).toBe('project-B');
     expect(params.get('addGenerationTimeline')).toBe('timeline-B');
+  });
+
+  it('lays out with the measured content width, without subtracting the gallery padding again', () => {
+    mocks.useContainerWidth.mockReturnValue([{ current: null }, 1200]);
+
+    renderHook(() => useGenerationsPaneController());
+
+    // useContainerWidth reports the content box; the gallery padding is already excluded.
+    expect(mocks.calculateGalleryLayout).toHaveBeenCalledWith(1.6, false, 1200, undefined, true);
+  });
+
+  describe('published content height', () => {
+    const publishedHeights = () => {
+      const publish = mocks.panesState.setGenerationsPaneContentHeight as unknown as Mock;
+      return publish.mock.calls.map(([height]) => height);
+    };
+    const lastPublishedHeight = () => publishedHeights().at(-1);
+
+    function renderWithResponse(response: { total: number; hasMore: boolean }, page = 1) {
+      mocks.useGalleryPageState.mockReturnValue(buildGalleryPageState({
+        generationsResponse: response,
+        totalCount: response.total,
+        totalIsExact: response.hasMore === false,
+        page,
+      }));
+      return renderHook(() => useGenerationsPaneController());
+    }
+
+    beforeEach(() => {
+      // Six columns and an uncapped pane, so the height is the natural row count.
+      mocks.calculateGalleryLayout.mockReturnValue({ columns: 6 });
+      mocks.panesState = buildPanesState({ generationsPaneHeight: 10_000, setGenerationsPaneContentHeight: vi.fn() });
+    });
+
+    it('keeps the same height on page 1 and page 2 of one set', () => {
+      // Page size is 12. Page 1 of a longer set reports a look-ahead total of 13, page 2 reports 25.
+      renderWithResponse({ total: 13, hasMore: true }, 1);
+      const page1Height = lastPublishedHeight();
+      renderWithResponse({ total: 25, hasMore: true }, 2);
+      const page2Height = lastPublishedHeight();
+
+      expect(page1Height).toBeGreaterThan(0);
+      expect(page2Height).toBe(page1Height);
+    });
+
+    it('gives a five-item set a smaller height than a full set', () => {
+      renderWithResponse({ total: 13, hasMore: true }, 1);
+      const fullHeight = lastPublishedHeight();
+      renderWithResponse({ total: 5, hasMore: false }, 1);
+      const shortHeight = lastPublishedHeight();
+
+      expect(shortHeight).toBeLessThan(fullHeight as number);
+    });
+
+    it('gives an empty set a compact height', () => {
+      renderWithResponse({ total: 13, hasMore: true }, 1);
+      const fullHeight = lastPublishedHeight();
+      renderWithResponse({ total: 0, hasMore: false }, 1);
+      const emptyHeight = lastPublishedHeight();
+
+      expect(emptyHeight).toBeLessThan(fullHeight as number);
+    });
+
+    it('publishes null when the pane is on the image generation page', () => {
+      mocks.useLocation.mockReturnValue({ pathname: '/tools/image-generation', search: '' });
+      renderWithResponse({ total: 13, hasMore: true }, 1);
+
+      expect(lastPublishedHeight()).toBeNull();
+    });
   });
 });

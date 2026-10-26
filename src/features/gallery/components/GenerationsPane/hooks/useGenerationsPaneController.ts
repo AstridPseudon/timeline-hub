@@ -26,6 +26,13 @@ import {
 import { useStableObject } from '@/shared/hooks/useStableObject';
 import { usePaneInteractionLifecycle } from '@/shared/components/panes/usePaneInteractionLifecycle';
 import { SHOT_FILTER, isSpecialFilter } from '@/shared/constants/filterConstants';
+import {
+  computePaneLayout,
+  parseProjectRatio,
+  type PaneLayout,
+  type PaneLayoutInput,
+} from '../lib/paneGridLayout';
+import { describeEmptyState, type EmptyStateShotScope } from '../lib/emptyState';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 import { withRuntimeDocumentParams } from '@/app/runtime/runtimeDocument';
 import { useResolvedGalleryProject } from '@/app/runtime/useResolvedGalleryProject';
@@ -276,29 +283,106 @@ const usePaneLifecycle = ({
   };
 };
 
-const usePaneLayout = (projectAspectRatio: ProjectAspectRatio | undefined, expandedRows = false) => {
+// Pixels the gallery surface adds around its grid (see the container classes in GenerationsPaneGallery).
+/** The controls bar above the grid: `py-2` (16px) around an `h-7` (28px) row. */
+const PANE_BAR_HEIGHT = 44;
+/** The pane's `border-t`, counted in its border-box height. */
+const PANE_BORDER_HEIGHT = 1;
+const PANE_CHROME_HEIGHT = PANE_BAR_HEIGHT + PANE_BORDER_HEIGHT;
+/**
+ * Tile model of MediaGalleryItem: the image box has padding-bottom = clamp(100 / ratio, 60%, 200%) of the tile
+ * width and min-height 120px, inside a 1px border top and bottom. Audio tiles use 160px instead.
+ */
+const TILE_PADDING_MIN_PERCENT = 60;
+const TILE_PADDING_MAX_PERCENT = 200;
+const TILE_MIN_HEIGHT = 120;
+const TILE_BORDER_HEIGHT = 2;
+/** Gallery container `pt-2`. */
+const PANE_GRID_TOP_PADDING = 8;
+/** Gallery container `pb-2`. */
+const PANE_GRID_BOTTOM_PADDING = 8;
+/** Breakpoint for the grid gap (`sm`). */
+const MOBILE_BREAKPOINT_PX = 640;
+/** Grid gap: `gap-2` below the `sm` breakpoint, `sm:gap-4` from it. */
+const MOBILE_GRID_GAP = 8;
+const DESKTOP_GRID_GAP = 16;
+
+type PaneGeometry = Omit<PaneLayoutInput, 'itemCount'>;
+
+interface PaneDisplayLayout {
+  cols: number;
+  rows: number;
+  /** Page size. Always cols * maxRows, so a page fills the grid exactly. */
+  itemsPerPage: number;
+  /** Grid width when the tiles were shrunk to fit the cap; undefined means the full container width. */
+  gridWidth: number | undefined;
+  /** Pane content height (controls bar, padding and grid) in px. */
+  paneHeight: number;
+}
+
+/**
+ * Stage 2 of the layout: rows follow the item count, columns and tile sizes stay those of stage 1.
+ * Page size never depends on the item count, so only the rows change between pages of one set.
+ */
+function resolvePaneDisplay(
+  geometry: PaneGeometry,
+  stage1: PaneLayout,
+  cols: number,
+  itemCount: number,
+): PaneDisplayLayout {
+  const itemsPerPage = cols * geometry.maxRows;
+  const final = computePaneLayout({ ...geometry, baseCols: cols, itemCount });
+  // Tiles were shrunk to fit the cap, so keep stage 1's tile size for the final row count.
+  const imageHeight = stage1.constrained ? stage1.cellHeight : final.cellHeight;
+  const rowHeight = Math.max(imageHeight, TILE_MIN_HEIGHT) + TILE_BORDER_HEIGHT;
+  const gridHeight = final.rows * rowHeight + (final.rows - 1) * geometry.gap;
+  return {
+    cols,
+    rows: final.rows,
+    itemsPerPage,
+    gridWidth: stage1.constrained ? stage1.gridWidth : undefined,
+    paneHeight: geometry.chromeHeight + geometry.topPadding + geometry.bottomPadding + gridHeight,
+  };
+}
+
+/** Width / height of a tile's image box, as MediaGalleryItem renders it (the padding is clamped). */
+function tileRatio(projectAspectRatio: string | undefined): number {
+  const percent = 100 / parseProjectRatio(projectAspectRatio);
+  const clamped = Math.min(Math.max(percent, TILE_PADDING_MIN_PERCENT), TILE_PADDING_MAX_PERCENT);
+  return 100 / clamped;
+}
+
+const usePaneGeometry = (
+  projectAspectRatio: ProjectAspectRatio | undefined,
+  expandedRows: boolean,
+  cap: number,
+) => {
   const isMobile = useIsMobile();
   const [galleryContainerRef, containerWidth] = useContainerWidth();
+  const maxRows = expandedRows ? PANE_ROWS_EXPANDED : PANE_ROWS;
 
-  const paneLayout = useMemo(() => {
-    const layout = calculateGalleryLayout(
-      projectAspectRatio,
-      isMobile,
-      containerWidth,
-      undefined,
-      true,
-    );
-    const rows = expandedRows ? PANE_ROWS_EXPANDED : PANE_ROWS;
+  const geometry = useMemo((): PaneGeometry => {
+    const narrow = window.innerWidth < MOBILE_BREAKPOINT_PX;
     return {
-      ...layout,
-      itemsPerPage: layout.columns * rows,
+      // useContainerWidth reports the content box, so the gallery padding is already excluded.
+      width: containerWidth,
+      ratio: tileRatio(projectAspectRatio),
+      gap: narrow ? MOBILE_GRID_GAP : DESKTOP_GRID_GAP,
+      baseCols: calculateGalleryLayout(projectAspectRatio, isMobile, containerWidth, undefined, true).columns,
+      maxRows,
+      cap,
+      chromeHeight: PANE_CHROME_HEIGHT,
+      topPadding: PANE_GRID_TOP_PADDING,
+      bottomPadding: PANE_GRID_BOTTOM_PADDING,
     };
-  }, [projectAspectRatio, isMobile, containerWidth, expandedRows]);
+  }, [projectAspectRatio, isMobile, containerWidth, maxRows, cap]);
 
   return {
     galleryContainerRef,
+    geometry,
     isMobile,
-    paneLayout,
+    /** False until the container has been measured. */
+    measured: containerWidth > 0,
   };
 };
 
@@ -334,7 +418,18 @@ export const useGenerationsPaneController = () => {
   const shouldEnableDataLoading = !isOnImageGenerationPage
     && (isGenerationsPaneOpen || isGenerationsPaneLocked);
 
-  const { galleryContainerRef, isMobile, paneLayout } = usePaneLayout(projectAspectRatio, isEditorPaneLocked);
+  const setGenerationsPaneContentHeight = usePanesStore((state) => state.setGenerationsPaneContentHeight);
+  const { galleryContainerRef, geometry, isMobile, measured } = usePaneGeometry(
+    projectAspectRatio,
+    isEditorPaneLocked,
+    generationsPaneHeight,
+  );
+  // Stage 1: columns and page size come from the width and the cap only, never from the item count.
+  const stage1 = useMemo(
+    () => computePaneLayout({ ...geometry, itemCount: geometry.baseCols * geometry.maxRows }),
+    [geometry],
+  );
+  const stage1Cols = measured ? stage1.cols : geometry.baseCols;
 
   const [savedMediaTypeFilter] = useState(readSessionMediaType);
   const [mediaTypeFilter, setMediaTypeFilterState] = useState<MediaTypeFilter>(savedMediaTypeFilter ?? 'all');
@@ -343,7 +438,7 @@ export const useGenerationsPaneController = () => {
     setMediaTypeFilterState(next);
   }, []);
   const generationData = useGenerationData({
-    itemsPerPage: paneLayout.itemsPerPage,
+    itemsPerPage: stage1Cols * geometry.maxRows,
     mediaTypeFilter,
     shouldEnableDataLoading,
     runtimeProjectId: resolvedGalleryProject.projectId,
@@ -402,6 +497,45 @@ export const useGenerationsPaneController = () => {
     navigate({ pathname: location.pathname, search: `?${nextSearch.toString()}` });
   }, [addTargetProjectMismatch, location.pathname, location.search, navigate, selectedEditor?.projectId, selectedEditor?.timelineId]);
 
+  // Stage 2: the rows follow the set size. The Runtime total is a look-ahead while more pages exist, which
+  // is still >= the page size, so the rows stay stable across pages of one set. Until a response arrives,
+  // keep the last known count so the height does not jump while a query is in flight.
+  const responseTotal = generationData.generationsResponse === undefined ? undefined : generationData.totalCount;
+  const lastItemCountRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (responseTotal !== undefined) lastItemCountRef.current = responseTotal;
+  }, [responseTotal]);
+  const itemCount = responseTotal ?? lastItemCountRef.current ?? stage1Cols * geometry.maxRows;
+  const paneLayout = resolvePaneDisplay(geometry, stage1, stage1Cols, itemCount);
+
+  // Publish the content height so the pane, its tab and the layout follow it. The image generation page hides the pane.
+  const publishedContentHeight = isOnImageGenerationPage ? null : Math.round(paneLayout.paneHeight);
+  useEffect(() => {
+    setGenerationsPaneContentHeight(publishedContentHeight);
+  }, [publishedContentHeight, setGenerationsPaneContentHeight]);
+  useEffect(() => () => setGenerationsPaneContentHeight(null), [setGenerationsPaneContentHeight]);
+
+  const selectedShotFilter = generationData.selectedShotFilter;
+  const shotScope: EmptyStateShotScope = selectedShotFilter === SHOT_FILTER.ALL
+    ? { kind: 'all' }
+    : selectedShotFilter === SHOT_FILTER.NO_SHOT
+      ? { kind: 'none' }
+      : { kind: 'shot', name: generationData.shotsForFilter.find((shot) => shot.id === selectedShotFilter)?.name };
+  const emptyDescription = describeEmptyState({
+    mediaType: mediaTypeFilter,
+    starredOnly: generationData.starredOnly,
+    searchTerm: generationData.searchTerm,
+    shotScope,
+  });
+  const showEverything = () => {
+    setMediaTypeFilter('all');
+    filters.setStarredOnly(false);
+    filters.setSearchTerm('');
+    filters.setIsSearchOpen(false);
+    filters.setSelectedShotFilter(SHOT_FILTER.ALL);
+    filters.setExcludePositioned(false);
+  };
+
   useRenderLogger('GenerationsPane', {
     page: generationData.page,
     totalItems: generationData.totalCount,
@@ -427,7 +561,6 @@ export const useGenerationsPaneController = () => {
       error: resolvedGalleryProject.error ?? generationData.error,
       runtimeProjectId: resolvedGalleryProject.projectId,
       runtimeAuthority: resolvedGalleryProject.runtimeAuthority,
-      expectedItemCount: generationData.expectedItemCount,
       handleAddToShot: generationData.handleAddToShot,
       handleAddToShotWithoutPosition: generationData.handleAddToShotWithoutPosition,
       handleServerPageChange: generationData.handleServerPageChange,
@@ -437,10 +570,12 @@ export const useGenerationsPaneController = () => {
       paginatedData: generationData.paginatedData,
       shotsData: generationData.shotsData,
       totalCount: generationData.totalCount,
+      totalIsExact: generationData.totalIsExact,
       readOnly: resolvedGalleryProject.runtimeAuthority,
-      emptyStateMessage: mediaTypeFilter === 'all'
-        ? 'No generations in this view.'
-        : `No ${mediaTypeFilter === 'image' ? 'images' : mediaTypeFilter === 'video' ? 'videos' : 'audio'} in this view.`,
+      emptyState: {
+        message: emptyDescription.message,
+        onShowEverything: emptyDescription.hasActiveFilters ? showEverything : undefined,
+      },
       config: resolvedGalleryProject.runtimeAuthority ? {
         showDelete: false,
         showStar: false,

@@ -94,4 +94,50 @@ describe('SelectionContextMenu', () => {
     expect(onOpenGenerateVideo).toHaveBeenCalledWith({ id: 'shot-2', name: 'Shot 2' });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it('offers Add to timeline without any shot and calls the handler once, then closes', () => {
+    const onClose = vi.fn();
+    const onAddToTimeline = vi.fn();
+
+    render(
+      <SelectionContextMenu
+        position={{ x: 24, y: 48 }}
+        onClose={onClose}
+        onAddToTimeline={onAddToTimeline}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add to timeline' }));
+
+    expect(onAddToTimeline).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('omits the timeline item when no handler is given', () => {
+    render(
+      <SelectionContextMenu position={{ x: 24, y: 48 }} onClose={vi.fn()} existingShots={existingShots} />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Add to timeline' })).not.toBeInTheDocument();
+  });
+
+  it('disables the timeline item with the reason when adding is refused', () => {
+    const onAddToTimeline = vi.fn();
+    const reason = "This gallery's project is not the selected editor's project";
+
+    render(
+      <SelectionContextMenu
+        position={{ x: 24, y: 48 }}
+        onClose={vi.fn()}
+        onAddToTimeline={onAddToTimeline}
+        addToTimelineDisabledReason={reason}
+      />,
+    );
+
+    const item = screen.getByRole('button', { name: 'Add to timeline' });
+    expect(item).toBeDisabled();
+    expect(item).toHaveAttribute('title', reason);
+    fireEvent.click(item);
+    expect(onAddToTimeline).not.toHaveBeenCalled();
+  });
 });

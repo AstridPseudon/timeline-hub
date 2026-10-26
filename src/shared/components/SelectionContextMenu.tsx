@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Clapperboard } from 'lucide-react';
+import { ArrowRight, Clapperboard, Plus } from 'lucide-react';
 import type { Shot } from '@/domains/generation/types';
 import { usePortalMousedownGuard } from '@/shared/hooks/usePortalMousedownGuard';
 
@@ -11,6 +11,10 @@ interface SelectionContextMenuProps {
   onOpenGenerateVideo?: (shot: Shot) => void;
   /** Shots that already contain every selected item. */
   existingShots?: Shot[];
+  /** Adds the single selected item to the timeline. Absent: no timeline item. */
+  onAddToTimeline?: () => void;
+  /** When set, the timeline item is disabled and this explains why. */
+  addToTimelineDisabledReason?: string;
 }
 
 export function SelectionContextMenu({
@@ -19,6 +23,8 @@ export function SelectionContextMenu({
   onNavigateToShot,
   onOpenGenerateVideo,
   existingShots,
+  onAddToTimeline,
+  addToTimelineDisabledReason,
 }: SelectionContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [adjustedPos, setAdjustedPos] = useState<{ x: number; y: number } | null>(null);
@@ -62,7 +68,8 @@ export function SelectionContextMenu({
     };
   }, [position, onClose]);
 
-  if (!position || !existingShots || existingShots.length === 0) {
+  const hasShots = Boolean(existingShots && existingShots.length > 0);
+  if (!position || (!hasShots && !onAddToTimeline)) {
     return null;
   }
 
@@ -74,7 +81,19 @@ export function SelectionContextMenu({
       className="fixed z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
       style={{ left: displayPos.x, top: displayPos.y }}
     >
-      {existingShots.map((shot) => (
+      {onAddToTimeline && (
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+          disabled={Boolean(addToTimelineDisabledReason)}
+          title={addToTimelineDisabledReason}
+          onClick={() => { onAddToTimeline(); onClose(); }}
+        >
+          <Plus className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate">Add to timeline</span>
+        </button>
+      )}
+      {existingShots?.map((shot) => (
         <div key={shot.id} className="flex w-full items-center gap-1 rounded-sm px-2 py-1.5 text-sm">
           <span className="min-w-0 flex-1 truncate">{shot.name}</span>
           {onOpenGenerateVideo && (

@@ -52,7 +52,9 @@ interface GenerationsPaneFiltersModel {
 }
 
 interface GenerationsPanePaginationModel {
+  /** Exact total when totalIsExact is true; otherwise a look-ahead estimate that must never be shown as a total. */
   totalCount: number;
+  totalIsExact: boolean;
   perPage: number;
   page: number;
   onPageChange: (nextPage: number) => void;
@@ -79,16 +81,15 @@ export function GenerationsPaneControls({
   pagination,
   interaction,
 }: GenerationsPaneControlsProps): React.ReactElement {
-  const { page, perPage, totalCount } = pagination;
+  const { page, perPage, totalCount, totalIsExact } = pagination;
   const totalPages = Math.ceil(totalCount / perPage);
   const currentShotId = filters.currentShotId;
   const hasScope = filters.shots.length > 0 || Boolean(currentShotId);
   const disabledDimming = interaction.isInteractionDisabled && 'pointer-events-none opacity-70';
   const mediaTypeLabel = MEDIA_TYPE_OPTIONS.find((o) => o.value === filters.mediaTypeFilter)?.label ?? 'All';
 
-  const rangeStart = (page - 1) * perPage + 1;
-  const rangeEnd = Math.min(page * perPage, totalCount);
-  const rangeText = `${rangeStart}–${rangeEnd} of ${totalCount}`;
+  const pageLabel = totalIsExact ? `Page ${page} of ${totalPages}` : `Page ${page}`;
+  const narrowPageLabel = totalIsExact ? `${page} / ${totalPages}` : `${page}`;
 
   const typeMenu = (
     <DropdownMenu>
@@ -179,7 +180,7 @@ export function GenerationsPaneControls({
               className={cn(
                 'h-7 w-7 p-0 rounded-md',
                 filters.starredOnly
-                  ? 'text-amber-300 bg-white/[0.06] hover:bg-white/10'
+                  ? 'text-orange-300 bg-white/[0.06] hover:bg-white/10'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5',
               )}
             >
@@ -250,14 +251,6 @@ export function GenerationsPaneControls({
           disabledDimming,
         )}
       >
-        {totalCount === 0 && <span className="text-[12px] text-zinc-500 whitespace-nowrap">No items</span>}
-
-        {totalCount > 0 && totalPages <= 1 && (
-          <span className="text-[12px] tabular-nums text-zinc-400 whitespace-nowrap">
-            {totalCount} item{totalCount !== 1 ? 's' : ''}
-          </span>
-        )}
-
         {totalCount > 0 && totalPages > 1 && (
           <>
             <Button
@@ -274,13 +267,11 @@ export function GenerationsPaneControls({
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(GHOST_TEXT_BUTTON, 'tabular-nums')}
-                title={rangeText}
-                aria-label={`Page ${page} of ${totalPages}, ${rangeText}`}
+                title={pageLabel}
+                aria-label={pageLabel}
               >
-                <span className="hidden @[420px]:inline">{rangeText}</span>
-                <span className="@[420px]:hidden">
-                  {page}/{totalPages}
-                </span>
+                <span className="hidden @[420px]:inline">{pageLabel}</span>
+                <span className="@[420px]:hidden">{narrowPageLabel}</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className={MENU_CONTENT}>
                 <DropdownMenuRadioGroup

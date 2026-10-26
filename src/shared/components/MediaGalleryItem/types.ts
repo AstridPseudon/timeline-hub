@@ -79,6 +79,10 @@ export interface ItemActions {
   onToggleStar?: (id: string, starred: boolean) => void;
   onImageClick?: (image: GeneratedImageWithMetadata, modifiers?: { multiSelect: boolean }) => void;
   onContextMenu?: (event: MouseEvent, image: GeneratedImageWithMetadata) => void;
+  /** Adds the generation to the editor timeline. Absent: no add-to-timeline control on the tile. */
+  onAddToTimeline?: (generationId: string) => void;
+  /** Set when adding is refused; the tile control is shown disabled with this as its tooltip. */
+  addToTimelineDisabledReason?: string;
   /** Callback when the image has fully loaded and is visible */
   onImageLoaded?: (imageId: string) => void;
 }
