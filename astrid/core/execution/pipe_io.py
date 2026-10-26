@@ -79,6 +79,16 @@ class PipeReader:
             except queue.Full:
                 pass
 
+    @property
+    def error(self):
+        """Return the sticky underlying reader or sink error, if any."""
+        return self._error
+
+    @property
+    def alive(self):
+        """Whether the blocking reader worker is still using its pipe."""
+        return self._thread.is_alive()
+
     @staticmethod
     def receive(events, *, deadline, guard=lambda: None, poll_interval=0.05):
         while True:

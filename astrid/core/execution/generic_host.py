@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import codecs
 import copy
 import faulthandler
 import hashlib
@@ -2169,6 +2170,11 @@ def _source_digest(root: Path) -> str:
             continue
         entries.append((path.relative_to(root).as_posix(), hashlib.sha256(path.read_bytes()).hexdigest()))
     return _canonical_digest(entries)
+
+
+_TASK_OUTPUT_TAIL_BYTES = 64 * 1024
+_TASK_OUTPUT_TAIL_NAMES = {"stdout": "task-stdout-tail.log", "stderr": "task-stderr-tail.log"}
+_TASK_OUTPUT_METADATA_NAME = "task-output-capture.json"
 
 
 def _attempt_tree_bytes(root: Path) -> int:
@@ -5279,6 +5285,179 @@ def _publish_busy(path: Path | None, delta: int) -> None:
             pass  # A missing record only makes replacement more cautious.
 
 
+class _TaskOutputCapture:
+    """Drain child pipes continuously and retain only scrubbed bounded tails."""
+
+    def __init__(self, attempt: Path, secrets: Mapping[str, str], scrub):
+        self._paths = {name: attempt / filename for name, filename in _TASK_OUTPUT_TAIL_NAMES.items()}
+        self._metadata_path = attempt / _TASK_OUTPUT_METADATA_NAME
+        self._secrets = tuple(value for value in secrets.values() if isinstance(value, str) and value)
+        self._secret_trie: dict[str, Any] = {}
+        for secret in set(self._secrets):
+            node = self._secret_trie
+            for char in secret:
+                node = node.setdefault(char, {})
+            node[""] = True
+        self._scrub = scrub
+        self._lock = threading.Lock()
+        self._tails = {name: b"" for name in self._paths}
+        self._total_bytes = {name: 0 for name in self._paths}
+        self._available = {name: False for name in self._paths}
+        self._reader_errors: dict[str, str | None] = {name: None for name in self._paths}
+        self._diagnostic_errors: dict[str, str | None] = {name: None for name in self._paths}
+        self._written = {name: -1 for name in self._paths}
+        self._streams = {}
+        self._readers: dict[str, PipeReader] = {}
+        self._decoders = {name: codecs.getincrementaldecoder("utf-8")(errors="replace") for name in self._paths}
+        self._pending = {name: "" for name in self._paths}
+        self._finalized: set[str] = set()
+
+    @property
+    def error(self) -> str | None:
+        with self._lock:
+            for name, reader in self._readers.items():
+                if reader.error is not None:
+                    self._reader_errors[name] = type(reader.error).__name__
+            return next((f"{name}:{value}" for name, value in self._reader_errors.items() if value), None)
+
+    def start(self, process: subprocess.Popen) -> None:
+        for name in self._paths:
+            stream = getattr(process, name, None)
+            if stream is None:
+                with self._lock:
+                    self._reader_errors[name] = "pipe_unavailable"
+                continue
+            try:
+                self._streams[name] = stream
+                self._readers[name] = PipeReader(
+                    stream, chunk_size=4096, sink=lambda chunk, stream_name=name: self._receive(stream_name, chunk),
+                )
+                self._available[name] = True
+            except BaseException as exc:
+                with self._lock:
+                    self._reader_errors[name] = type(exc).__name__
+        self.persist(force=True)
+
+    def _receive(self, name: str, chunk: bytes) -> None:
+        decoded = self._pending[name] + self._decoders[name].decode(chunk)
+        safe, pending = self._redact_prefix(decoded, final=False)
+        self._append(name, safe)
+        self._pending[name] = pending
+
+    def _redact_prefix(self, decoded: str, *, final: bool) -> tuple[str, str]:
+        output: list[str] = []
+        offset = 0
+        while offset < len(decoded):
+            node = self._secret_trie
+            cursor = offset
+            last_match = None
+            while cursor < len(decoded) and decoded[cursor] in node:
+                node = node[decoded[cursor]]
+                cursor += 1
+                if "" in node:
+                    last_match = cursor
+            if cursor == len(decoded) and not final and any(key for key in node):
+                break
+            if last_match is not None:
+                output.append("<redacted>")
+                offset = last_match
+                continue
+            output.append(decoded[offset])
+            offset += 1
+        return "".join(output), decoded[offset:]
+
+    def _append(self, name: str, text: str) -> None:
+        if not text:
+            return
+        scrubbed = self._scrub(text, dict(enumerate(self._secrets)))
+        data = scrubbed.encode("utf-8")
+        with self._lock:
+            combined = self._tails[name] + data
+            if len(combined) > _TASK_OUTPUT_TAIL_BYTES:
+                combined = combined[-_TASK_OUTPUT_TAIL_BYTES:]
+            self._tails[name] = combined.decode("utf-8", errors="ignore").encode("utf-8")
+            self._total_bytes[name] += len(data)
+
+    def tails(self) -> tuple[str, str]:
+        with self._lock:
+            return tuple(self._tails[name].decode("utf-8", errors="replace") for name in ("stdout", "stderr"))
+
+    def wait_for_readers(self, timeout: float = 1.0) -> None:
+        deadline = time.monotonic() + timeout
+        for name, reader in self._readers.items():
+            try:
+                reader.close(timeout=max(0.0, deadline - time.monotonic()))
+            except BaseException as exc:
+                with self._lock:
+                    self._reader_errors[name] = type(exc).__name__
+            if not reader.alive:
+                try:
+                    self._streams[name].close()
+                except OSError:
+                    pass
+                self._finalize(name)
+            else:
+                with self._lock:
+                    self._reader_errors[name] = "reader_did_not_stop"
+        for name, stream in self._streams.items():
+            if name in self._readers:
+                continue
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+    def _finalize(self, name: str) -> None:
+        if name in self._finalized:
+            return
+        decoded = self._pending[name] + self._decoders[name].decode(b"", final=True)
+        safe, pending = self._redact_prefix(decoded, final=True)
+        self._append(name, safe + pending)
+        self._pending[name] = ""
+        self._finalized.add(name)
+
+    def persist(self, *, force: bool = False) -> None:
+        with self._lock:
+            rows = {
+                name: (
+                    self._tails[name], self._total_bytes[name], self._available[name],
+                    self._reader_errors[name], self._diagnostic_errors[name],
+                )
+                for name in self._paths
+            }
+        for name, (tail, total, available, reader_error, diagnostic_error) in rows.items():
+            if not force and total == self._written[name]:
+                continue
+            try:
+                self._paths[name].write_bytes(tail)
+                self._written[name] = total
+            except OSError as exc:
+                with self._lock:
+                    self._diagnostic_errors[name] = type(exc).__name__
+        metadata = {
+            "schema_version": 1,
+            "streams": {
+                name: {
+                    "file": self._paths[name].name,
+                    "available": available,
+                    "byte_count": len(tail),
+                    "truncated": total > len(tail),
+                    "error": reader_error or diagnostic_error,
+                }
+                for name, (tail, total, available, reader_error, diagnostic_error) in rows.items()
+            },
+        }
+        try:
+            self._metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+        except OSError as exc:
+            with self._lock:
+                self._diagnostic_errors["stdout"] = type(exc).__name__
+
+    def finish(self) -> None:
+        self.wait_for_readers(timeout=2.0)
+        self.persist(force=True)
+
+
 class GenericPackHost:
     """Discover, register, preflight, and execute pack capabilities."""
 
@@ -8252,8 +8431,7 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
-                errors="replace", pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8264,14 +8442,61 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
-        if remotion_lease is not None:
-            remotion_lease.launched()
         self._track_process(process)
+        stream_secrets = dict(secrets)
+        stream_secrets.update({
+            key: value for key, value in env.items()
+            if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIAL"))
+        })
+        output_capture = _TaskOutputCapture(attempt, stream_secrets, self._scrub_secret_text)
+        output_capture.start(process)
         review_snapshot = None
         execution_error = None
+        cleanup_attempted = False
+        teardown_complete = False
+        process_proven_gone = False
+        output_finished = False
+
+        def cleanup_once() -> None:
+            nonlocal cleanup_attempted, teardown_complete, process_proven_gone, review_snapshot
+            if cleanup_attempted:
+                return
+            cleanup_attempted = True
+            try:
+                # Observe before terminating the original owner, never adopt a
+                # post-exit PID. A force-killed action cannot run its finally.
+                observation_error = None
+                if review_session:
+                    try:
+                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
+                    except Exception as exc:
+                        observation_error = exc
+                _terminate_process_group(process)
+                process_proven_gone = True
+                if observation_error is not None:
+                    raise observation_error
+                if review_session:
+                    _retire_owned_review_session(attempt, review_snapshot)
+                teardown_complete = True
+            except TaskScopeUnresolved as exc:
+                teardown_complete = True
+                self._unresolved_task_scopes.append(exc.report.describe())
+                detail = f"task scope cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+            except BaseException as exc:
+                self._latch_cleanup_uncertainty(str(exc))
+                detail = f"owned command cleanup uncertain: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+
         try:
+            if child_bridge is not None:
+                child_bridge.launched()
+            if remotion_lease is not None:
+                remotion_lease.launched()
             if review_session:
                 process._astrid_process_birth = process_birth_identity(process.pid)
                 process._astrid_review_launch_nonce = review_nonce
@@ -8285,12 +8510,21 @@ class GenericPackHost:
                 # tree and call the Runtime; sample them at a bounded rate.
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
+                    output_capture.persist()
+                    if output_capture.error:
+                        raise HostError(f"capability {record.id!r} output capture failed: {output_capture.error}")
                     _assert_live_storage_envelope(storage_estimate, attempt, output_root)
                     if cancelled is not None and cancelled():
                         # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {record.id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            cleanup_once()
+            output_capture.finish()
+            output_finished = True
+            output_capture.persist()
+            stdout, stderr = output_capture.tails()
+            if output_capture.error:
+                raise HostError(f"capability {record.id!r} output capture failed: {output_capture.error}")
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {record.id!r} cancelled")
             returncode = process.returncode
@@ -8345,43 +8579,11 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
             raise
         finally:
-            teardown_complete = False
-            process_proven_gone = False
             try:
-                # Observe before terminating the original owner, never adopt a
-                # post-exit PID. A force-killed action cannot run its finally.
-                observation_error = None
-                if review_session:
-                    try:
-                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
-                    except Exception as exc:
-                        observation_error = exc
-                _terminate_process_group(process)
-                # terminate_tree + verify_tree_absent returned without raising:
-                # the child is reaped and its session is provably empty, so it
-                # is no longer custody-relevant even if the review-session
-                # observation/retirement below fails and the attempt is kept.
-                process_proven_gone = True
-                if observation_error is not None:
-                    raise observation_error
-                if review_session:
-                    _retire_owned_review_session(attempt, review_snapshot)
-                teardown_complete = True
-            except TaskScopeUnresolved as exc:
-                # Fails this task only; the host is not latched. Keep a note.
-                teardown_complete = True
-                self._unresolved_task_scopes.append(exc.report.describe())
-                detail = f"task scope cleanup unresolved: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
-                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
-            except BaseException as exc:
-                self._latch_cleanup_uncertainty(str(exc))
-                detail = f"owned command cleanup uncertain: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
-                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+                cleanup_once()
             finally:
+                if not output_finished:
+                    output_capture.finish()
                 if teardown_complete or process_proven_gone:
                     self._untrack_process(process)
                 if remotion_lease is not None:
@@ -8486,6 +8688,10 @@ class GenericPackHost:
             dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
         )
         env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+        secret_values = {
+            key: value for key, value in env.items()
+            if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIAL"))
+        }
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
         argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()
@@ -8507,8 +8713,7 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
-                errors="replace", pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8519,32 +8724,67 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
-        if remotion_lease is not None:
-            remotion_lease.launched()
         self._track_process(process)
+        output_capture = _TaskOutputCapture(attempt_path, secret_values, self._scrub_secret_text)
+        output_capture.start(process)
         execution_error = None
+        cleanup_attempted = False
+        teardown_complete = False
+        process_proven_gone = False
+        output_finished = False
+
+        def cleanup_once() -> None:
+            nonlocal cleanup_attempted, teardown_complete, process_proven_gone
+            if cleanup_attempted:
+                return
+            cleanup_attempted = True
+            try:
+                _terminate_process_group(process)
+                process_proven_gone = True
+                teardown_complete = True
+            except TaskScopeUnresolved as exc:
+                teardown_complete = True
+                self._unresolved_task_scopes.append(exc.report.describe())
+                detail = f"capability {capability_id!r}: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+            except BaseException as exc:
+                self._latch_cleanup_uncertainty(str(exc))
+                detail = f"capability {capability_id!r} cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+
         try:
+            if child_bridge is not None:
+                child_bridge.launched()
+            if remotion_lease is not None:
+                remotion_lease.launched()
             guards_due = 0.0
             while process.poll() is None:
                 if render_scope:
                     observe_tree(process)
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
+                    output_capture.persist()
+                    if output_capture.error:
+                        raise HostError(f"capability {capability_id!r} output capture failed: {output_capture.error}")
                     _assert_live_storage_envelope(storage_estimate, attempt_path, attempt_path / "outputs")
                     if cancelled is not None and cancelled():
                         # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {capability_id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            cleanup_once()
+            output_capture.finish()
+            output_finished = True
+            output_capture.persist()
+            stdout, stderr = output_capture.tails()
+            if output_capture.error:
+                raise HostError(f"capability {capability_id!r} output capture failed: {output_capture.error}")
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {capability_id!r} cancelled")
             if process.returncode != 0:
-                secret_values = {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }
                 detail = self._scrub_secret_text((stderr or stdout).strip(), secret_values)
                 raise HostError(
                     f"capability {capability_id!r} child exited {process.returncode}"
@@ -8567,43 +8807,27 @@ class GenericPackHost:
             child_payload = dict(result.get("payload") or {})
             child_payload.setdefault("process_id", process_id)
             child_payload.setdefault("returncode", returncode)
-            return SimpleNamespace(
+            result_object = SimpleNamespace(
                 ok=True,
                 returncode=returncode,
                 outputs=result.get("outputs") or [],
                 payload=child_payload,
-                stdout=self._scrub_secret_text(stdout, {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }),
-                stderr=self._scrub_secret_text(stderr, {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }),
+                stdout=stdout,
+                stderr=stderr,
                 process_id=process_id,
             )
+            return result_object
         except BaseException as exc:
             execution_error = exc
             raise
         finally:
             try:
-                _terminate_process_group(process)
-                self._untrack_process(process)
-            except TaskScopeUnresolved as exc:
-                # Fails this task only; the host is not latched. Keep a note.
-                self._untrack_process(process)
-                self._unresolved_task_scopes.append(exc.report.describe())
-                detail = f"capability {capability_id!r}: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}"
-                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
-            except BaseException as exc:
-                self._latch_cleanup_uncertainty(str(exc))
-                detail = f"capability {capability_id!r} cleanup unresolved: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}"
-                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+                cleanup_once()
             finally:
+                if not output_finished:
+                    output_capture.finish()
+                if teardown_complete or process_proven_gone:
+                    self._untrack_process(process)
                 if remotion_lease is not None:
                     remotion_lease.close()
                 env.clear()
