@@ -1,0 +1,166 @@
+{
+  "$design": "DRAFT DESIGN FILE ONLY. Not a repo file. Intended target when the release is built: Runtime conformance/fixtures/shot-layering-v1.json (design/shot-layering-PLAN.md section 4.1, lines 120-121). Read by App and Astrid tests; Runtime only loads it.",
+  "$status": "Every value the plan does not ground is the string UNKNOWN. Nothing here is a verified timeline or a rendered result.",
+  "$sources": {
+    "model": "PLAN section 3, lines 95-112",
+    "fixture_cases": "PLAN section 4.1, line 121",
+    "film_facts": "PLAN sections 1.1 (lines 15-27), 2.2 (lines 52-58), 6 (lines 200-204)",
+    "migration_stills": "PLAN section 5.2 (lines 163-182)",
+    "acceptance": "PLAN section 4.5 (lines 146-154)"
+  },
+  "representation": {
+    "group_track_id": "<occurrence>~<inner track>, for example UNKNOWN_occurrence~plate (PLAN section 3, line 112)",
+    "group_tag": {
+      "where": "track.app.group (PLAN section 3: a new top-level track field would be dropped by the App save sanitiser)",
+      "shape": { "id": "UNKNOWN (the id format is not in the plan)", "sourceTrack": "the inner track id, for example plate" }
+    },
+    "placement": "Each shot's group tracks sit directly above the shot's row in the flat track list (PLAN section 3, line 112).",
+    "inner_audio": "Inner audio tracks still merge by id, not by group (PLAN section 3, line 112).",
+    "clip_track": "Each clip of a shot takes its namespaced group track id (PLAN section 4.2, line 124; section 4.3, line 135).",
+    "runtime_rule": "Runtime does not learn the rule; the fixture is shared by App and Astrid tests (PLAN section 4.1, line 121; section 4.4, line 144)."
+  },
+  "input_shape": {
+    "note": "The saved timeline schema beyond the names in the plan is not given. Only the names used in the plan are listed here.",
+    "main_tracks": [ { "id": "UNKNOWN", "order": "UNKNOWN" } ],
+    "shots": [
+      {
+        "occurrence": "UNKNOWN",
+        "row": "UNKNOWN (plan: a track id such as picture, or missing)",
+        "span_s": ["UNKNOWN", "UNKNOWN"],
+        "inner_tracks": [ { "id": "UNKNOWN", "clips": [] } ]
+      }
+    ],
+    "loose_clips": [ { "id": "UNKNOWN", "track": "UNKNOWN", "span_s": ["UNKNOWN", "UNKNOWN"] } ]
+  },
+  "cases": [
+    {
+      "id": "film-picture-over-type",
+      "plan": "section 4.1 'the film (shot on picture, loose clip on type)'; section 1.1; section 6",
+      "input": {
+        "main_tracks": "UNKNOWN beyond: picture is above type (PLAN section 6: clip-0 is hidden under shot 02, so type sits below picture); the other main rows are UNKNOWN",
+        "shots": [
+          {
+            "occurrence": "UNKNOWN (plan: shot 02, 'The Vision')",
+            "row": "picture",
+            "span_s": [9.1, 28.7],
+            "inner_tracks": [
+              { "id": "plate", "clips": "UNKNOWN (plan: footage on plate)" },
+              { "id": "UNKNOWN", "clips": "UNKNOWN" }
+            ]
+          }
+        ],
+        "loose_clips": [
+          { "id": "clip-0", "track": "type", "span_s": [23.867, 28.867], "kind": "still image, one hold clip", "opacity": 1 }
+        ]
+      },
+      "expected": {
+        "track_order": "UNKNOWN beyond: the shot's group tracks sit directly above picture, and picture is above type",
+        "group_tags": "each inner track of shot 02 gets track.app.group with sourceTrack set to that inner track id",
+        "clip_tracks": {
+          "clip-0": "type (id unchanged; it is a loose clip, not moved)",
+          "shot 02 plate clips": "UNKNOWN_occurrence~plate"
+        },
+        "warnings": [],
+        "acceptance": "Preview at 24.5 s shows shot 02's footage; clip-0 is hidden from 23.867 to 28.867 s (PLAN section 4.5 item 1; section 6)."
+      }
+    },
+    {
+      "id": "loose-above-shot",
+      "plan": "section 4.1 'loose above'; section 3 table row 'Loose clip on a row above the shot's row'",
+      "input": {
+        "main_tracks": "UNKNOWN: a row above the shot's row exists",
+        "shots": [ { "occurrence": "UNKNOWN", "row": "UNKNOWN", "span_s": ["UNKNOWN", "UNKNOWN"], "inner_tracks": [ { "id": "UNKNOWN", "clips": "UNKNOWN" } ] } ],
+        "loose_clips": [ { "id": "UNKNOWN", "track": "UNKNOWN (a row above the shot's row)", "span_s": ["UNKNOWN", "UNKNOWN"] } ]
+      },
+      "expected": {
+        "track_order": "the loose clip's track is above the shot's group tracks",
+        "group_tags": "UNKNOWN beyond the usual: one per inner track",
+        "clip_tracks": { "loose clip": "UNKNOWN (its own track, unchanged)" },
+        "warnings": [],
+        "meaning": "The loose clip draws over the whole shot (PLAN section 3)."
+      }
+    },
+    {
+      "id": "loose-same-row",
+      "plan": "section 4.1 'same row'; section 3 table row 'Loose clip on the same row as the shot'",
+      "input": {
+        "main_tracks": "UNKNOWN",
+        "shots": [ { "occurrence": "UNKNOWN", "row": "UNKNOWN", "span_s": ["UNKNOWN", "UNKNOWN"], "inner_tracks": [ { "id": "UNKNOWN", "clips": "UNKNOWN" } ] } ],
+        "loose_clips": [ { "id": "UNKNOWN", "track": "same as the shot's row (UNKNOWN which row)", "span_s": ["UNKNOWN", "UNKNOWN"] } ]
+      },
+      "expected": {
+        "track_order": "the shot's group tracks sit directly above the shared row, so the shot draws over the loose clip while the shot is active",
+        "group_tags": "UNKNOWN beyond the usual",
+        "clip_tracks": { "loose clip": "UNKNOWN (same row as the shot)" },
+        "warnings": "UNKNOWN (plan does not say whether a warning is raised; the editor avoids creating this case)",
+        "meaning": "PLAN section 3 table row 'Loose clip on the same row as the shot'."
+      }
+    },
+    {
+      "id": "shot-only-suffix-tracks",
+      "plan": "section 4.1 'shot-only suffix tracks (the old bottom-append bug)'; section 2.6 item 2 (titles under plate, 17 Oct)",
+      "input": {
+        "main_tracks": "UNKNOWN",
+        "shots": [
+          {
+            "occurrence": "UNKNOWN",
+            "row": "UNKNOWN",
+            "span_s": ["UNKNOWN", "UNKNOWN"],
+            "inner_tracks": [
+              { "id": "UNKNOWN (plan: a shot-only title track, not present on the parent)", "clips": "UNKNOWN" },
+              { "id": "UNKNOWN (a track the parent also has)", "clips": "UNKNOWN" }
+            ]
+          }
+        ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": "the shot-only track is NOT appended at the bottom of the stack; the shot's group tracks sit directly above the shot's row (PLAN sections 2.1, 2.6, 4.1)",
+        "group_tags": "each inner track, including the shot-only one, gets track.app.group",
+        "clip_tracks": { "shot-only clips": "UNKNOWN_occurrence~UNKNOWN" },
+        "warnings": []
+      }
+    },
+    {
+      "id": "two-shots-one-row",
+      "plan": "section 4.1 'two shots on one row'",
+      "input": {
+        "main_tracks": "UNKNOWN",
+        "shots": [
+          { "occurrence": "UNKNOWN (first shot)", "row": "UNKNOWN (the same row)", "span_s": ["UNKNOWN", "UNKNOWN"], "inner_tracks": [ { "id": "UNKNOWN", "clips": "UNKNOWN" } ] },
+          { "occurrence": "UNKNOWN (second shot)", "row": "UNKNOWN (the same row)", "span_s": ["UNKNOWN", "UNKNOWN"], "inner_tracks": [ { "id": "UNKNOWN", "clips": "UNKNOWN" } ] }
+        ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": "UNKNOWN: the plan does not say how the two shots order against each other on one row",
+        "group_tags": "each shot's inner tracks are tagged with that shot's occurrence",
+        "clip_tracks": "UNKNOWN",
+        "warnings": "UNKNOWN"
+      }
+    },
+    {
+      "id": "shot-row-missing",
+      "plan": "section 4.1 'a shot whose row is missing (falls back to the top of the stack with a warning)'; section 5.2 (the smoke timeline 'Opening' has no picture row)",
+      "input": {
+        "main_tracks": "UNKNOWN: no row named as the shot's row",
+        "shots": [ { "occurrence": "UNKNOWN", "row": "missing (no such track)", "span_s": ["UNKNOWN", "UNKNOWN"], "inner_tracks": [ { "id": "UNKNOWN", "clips": "UNKNOWN" } ] } ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": "the shot's group tracks go to the top of the stack",
+        "group_tags": "each inner track gets track.app.group",
+        "clip_tracks": "UNKNOWN_occurrence~UNKNOWN for each clip",
+        "warnings": [ { "code": "UNKNOWN", "message": "UNKNOWN (plan: 'with a warning'; the text and code are not given)" } ]
+      }
+    }
+  ],
+  "open_items": [
+    "The saved timeline schema beyond track ids and track.app.group (clip field names, time units, speed, offset) is not in the plan.",
+    "The occurrence id format and the group id format are not in the plan.",
+    "The full main track order of the film is not in the plan; only picture above type is stated (PLAN section 6).",
+    "Expected warning code and text for the missing-row case are not in the plan.",
+    "Order of two shots on one row is not in the plan.",
+    "Whether the same-row case raises a warning is not in the plan."
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "task": "F-shot-layering-prep part 2: settle the four 'not yet verified' items of shot-layering-PLAN.md by reading code only",
+  "worker": "tf-shot-layering-verify-1320",
+  "date": "2026-10-26",
+  "method": "read-only: git show/grep/log/merge-base on checkouts and upstream; file reads; no renders, no tests, no installs, no fetch, no source writes",
+  "heads": {
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "checkout": "/home/user/work/wt/agt-pin-ecdc242e", "tree": "clean"},
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "checkout": "/home/user/work/wt/app-pin-82e9e13d", "tree": "clean"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "checkout": "/home/user/work/wt/rt-pin-95d98f03", "tree": "clean"},
+    "app_upstream_tip": {"sha": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671", "source": "/home/user/work/app origin/main (no fetch)", "contains_636444302b": true, "contains_e2bfb1304d": true, "app_head_82e9e13d_contains_e2bfb1304d": false},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "checkout": "/home/user/work/wt/tf-shot-layering-verify-1320", "note": "used as the source of the export package; matched to Agent remotion/package.json:18 by artifact file name only, content not compared"}
+  },
+  "items": [
+    {
+      "id": "a",
+      "item": "Pinned-row AI buttons (upstream App e2bfb1304d)",
+      "verdict": "VERIFIED",
+      "summary": "The AI generation, extension and effect/animation buttons only put an unsent draft into the agent composer. In the shell they create no clip. The one clip-writing path on the row (the effect-layer drag fallback) is reached only when no prompt host is passed, and the shell always passes one. That fallback is an add flow the plan's section 4.3 list does not name.",
+      "evidence": [
+        "e2bfb1304d is an ancestor of upstream origin/main, and not of App head 82e9e13d (merge-base --is-ancestor exit 0 and 1).",
+        "origin/main TimelineCreateTools.tsx:7-9 drafts (AI_GENERATION_DRAFT, EXTENSION_DRAFT, EFFECT_OR_ANIMATION_DRAFT, not sent); :79-83 AI and extension buttons; :85-103 effect button, drag source when effectDragSource, else ToolButton; :92 setData('effect-layer').",
+        "origin/main TimelineCanvas.tsx:1067 handleCreateEffect -> openDraft(EFFECT_OR_ANIMATION_DRAFT); :1484-1488 wiring: AI/extension only when hasPromptHost; effect uses handleCreateEffect; effectDragSource = !onOpenElementCreationPrompt.",
+        "origin/main TimelineEditorShellCore.tsx:315-320 openElementCreationPrompt = activate timeline chat, requestComposerPrompt(prompt), setIsTasksPaneLocked(true). No clip write. :909 passes it unconditionally.",
+        "origin/main useExternalDrop.ts:117-120 effect-layer drop -> handleEffectLayerDrop (external-drop-utils.ts:223-236) -> insertEffectLayerAt (external-drop-utils.ts:148-221): creates an effect-layer clip on a visual track at the drop time (or a new visual track); no shot-row check.",
+        "e2bfb1304d also removes the T text drag tool and the onAddTextAt / onOpenSequenceCreator props from TimelineCanvas, so the plan's text-drag add-flow reference is stale for upstream."
+      ],
+      "unverified": [
+        "Whether the agent, after a draft is sent, writes clips onto a shot's row (that is the agent patch path, the plan's clip.add item; not traced here).",
+        "Whether handleAddTextAt (hooks/clip-editing/useClipTextOverlay.ts:23) is still reachable from any control after e2bfb1304d; not traced.",
+        "The App head (82e9e13d) does not have e2bfb1304d, so the pinned row only arrives with the planned catch-up merge; the merged file needs re-reading after that merge."
+      ]
+    },
+    {
+      "id": "b",
+      "item": "Guard in remapIndependentInternalTimeline",
+      "verdict": "PARTIAL",
+      "summary": "The guard's behaviour is settled. The plan's line reference is wrong: the guard is at 160 inside the function, not at 305-309. Reading the code also shows a risk the guard does not cover: a settings-only edit to a shared shot can prefix clip ids a second time. That is a code-read conclusion; nothing was executed and no test covers it.",
+      "evidence": [
+        "App head shotCompositionEditor.ts:157-171 remapIndependentInternalTimeline. :160 guard: if (!timeline || !Array.isArray(timeline.clips)) return internal (clone returned unprefixed). :161-169 prefix each clip with a string id as `${prefix}:${id}`. Only clip ids are touched.",
+        "Plan's ':305-309' is not a guard inside the function. Line 305 is the conditional spread of internal_timeline_revision in updateCanonicalShotRevision. The call-site guard is :317 (if (updatedRevision.internal_timeline_revision)) inside if (sharedSource) at :310; the post-remap digest guard is :331. The plan's 148-160 is now 157-171.",
+        "Only caller: updateCanonicalShotRevision :318, reached only when sharedSource (:258-261). Settings path: updateCanonicalShotSettings :404-410 -> ShotEditorView.tsx:161 passes no timeline, so updatedInternal is undefined and the stored source clips go through remap again.",
+        "Timeline path: updateCanonicalShotTimeline (:476-491) -> shotTimelineDataProvider.ts:1376. On a shared source the output clip ids are prefixed (:169).",
+        "Double-prefix path (code read): occ-1 timeline edit on a shared shot gives new shot S1 with ids S1:x (:169). duplicateLinkedOccurrence :628-640 keeps shot_id (withOccurrenceIdentity :103), so occ-3 shares S1. A settings edit on occ-1 then has sharedSource true and remaps S1:x to S2:S1:x. The guard at :160 does not detect already-prefixed ids.",
+        "Tests: shotCompositionEditor.test.ts:256-275 asserts the prefix on a shared timeline edit; :277-294 shared update with bare ids; :178-197 settings-only shared update checks item_id prefix only. No test found with a timeline lacking a clips array, or with an already-prefixed shared source."
+      ],
+      "unverified": [
+        "Whether a real shot's internal timeline can lack a clips array (the guard's negative branch). Only the one editor caller was read; its timeline source was not traced to the dialog.",
+        "The impact of the double prefix (whether the parent projection or the save-side prefix stripping at shotTimelineDataProvider.ts:135-156 breaks on it). Not executed.",
+        "Whether the planned removal of remapIndependentInternalTimeline removes the risk. It would, if shot-local revisions store bare ids as the plan says, but the settings path would also need checking."
+      ]
+    },
+    {
+      "id": "c",
+      "item": "expand_shot_clips callers outside Runtime",
+      "verdict": "VERIFIED",
+      "summary": "No production caller outside Runtime. In Runtime the only production call is timeline_inspection.py:505, as the plan says. Agent's same-named expand_shot_clips (astrid/core/timeline/expand_shots.py) is referenced only by its own tests and one planning doc. App and Composition have no references.",
+      "evidence": [
+        "Agent HEAD (agt-pin-ecdc242e and integration /home/user/work/agent): astrid/core/timeline/expand_shots.py:28 __all__, :37 def. Other references: tests/core/timeline/test_expand_shots.py:17 (import; calls from :128 on), tests/test_storyboard_repair_p4_p5.py:11,91,130, docs/plans/shot-generation-timeline.md:32 (prose), tests/.test_durations (data). No production import; managed_timeline.py does not reference it.",
+        "App pinned 82e9e13d and upstream origin/main: zero matches for expand_shot_clips | expand_shots | ShotExpansionError.",
+        "Composition HEAD and integration Runtime grep: zero matches outside Runtime files.",
+        "Runtime: def runtime_protocol/managed_render_snapshot.py:28; production call runtime_protocol/timeline_inspection.py:16 (import), :505 (call inside _attach_render_timing, :491-520). Tests: tests/test_asset_identity.py:7,36; tests/test_direct_render_admission.py:15,452-570.",
+        "Comment timeline_inspection.py:491 ('same shot clipping producer as managed rendering') is false: nothing in managed rendering calls expand_shot_clips, in Runtime or in Agent."
+      ],
+      "unverified": [
+        "Only HEAD of each checkout was searched. Non-HEAD refs (the R4 candidate branches and other branches) and repos not listed were not searched. No network."
+      ]
+    },
+    {
+      "id": "d",
+      "item": "Whether element frames are clip-local in the renderer",
+      "verdict": "PARTIAL",
+      "summary": "Element frames are Remotion Sequence-local, so they are clip-local for an element with no transition, in both App preview and export. With transitions the answer depends on the renderer and the transition policy. Reading settles the mechanism, not the final frame values, which needs a render (not run).",
+      "evidence": [
+        "Remotion (app node_modules, dist/cjs/use-current-frame.js contextOffset): useCurrentFrame() = timeline frame minus (cumulatedFrom + relativeFrom) of the nearest Sequence. Inside a Sequence the frame is Sequence-local.",
+        "am-sprite component.tsx:149 useCurrentFrame(); keyframes compared with that frame at :64-66 (key.frame <= sf). am-footage component.tsx:186 same pattern. No component under astrid/packs reads globalFrame.",
+        "App preview, effect elements: TimelineRenderer.tsx:1355-1368 -> AstridEffectPreviewSequence (:356-403) mounts Component in <Sequence from=round(clip.at*fps)> (:382-384). Frame 0 = clip start. Transitions ignored on this path.",
+        "App preview, animation elements: AstridAnimationPreviewSequence (:405-430) from = secondsToFrames(clip.at) minus transitionFrames when there is a predecessor transition (:417-420, :426). Frame 0 = clip start minus pre-roll.",
+        "Export (composition repo): TimelineComposition.tsx:84-112 mounts element EffectComponent inside ClipLook; :166-170 visual clip in <Sequence from={plan.drawStart}>, with TransitionLayer when needsLayer.",
+        "No transition: drawStart = span.start (transition-spans.ts:103-104), so clip-local.",
+        "Default outgoing dissolve/dip: incoming drawStart moves back by T (transition-spans.ts:139-140); TransitionLayer.tsx:17-19 wraps content in <Freeze frame={contentFrame}>; contentFrame = ownFrame (evaluation.ts:63-64; ownFrame transition-spans.ts:183-190), so the content clock is clip-local. Freeze's frame offset read in freeze.js:43-53 (first part only).",
+        "Opt-in preroll-crossfade (only fade/cross-fade may declare it, transitions.tsx:62): no Freeze (TransitionLayer.tsx:17); contentFrame = draw-local (evaluation.ts:64; comment TransitionLayer.tsx:4-6 'keeps this draw-local clock, including preroll'). Element frame 0 is T frames before the clip start. transition-spans.ts:94-97 and :144-145 set the policy."
+      ],
+      "unverified": [
+        "Whether the film or the chapters timelines have transitions on am-sprite or other element clips (not checked; the plan does not say).",
+        "Final frame values with transitions in App preview vs export. That disagreement (App effects ignore transitions; App animations and export preroll shift frames) needs a 2-clip render, which this brief does not allow.",
+        "Freeze's exact frame semantics in the installed Remotion version (read only the first part of freeze.js)."
+      ]
+    }
+  ],
+  "other_findings": [
+    "Plan section 4.3 add-flow list omits insertEffectLayerAt / handleEffectLayerDrop (external-drop-utils.ts:148-236), reachable from the pinned effect button when no prompt host is passed.",
+    "Upstream e2bfb1304d removes the text drag tool, so the plan's text-drag add flow is stale for upstream.",
+    "Plan line references drift at App head 82e9e13d (e.g. remapIndependentInternalTimeline 148-160 is now 157-171). This brief did not re-map all references (lead job step 1)."
+  ],
+  "not_done": [
+    "Lead job step 1 (re-map every PLAN.md file:line against heads): not in this brief.",
+    "Lead job step 3 (draft conformance/fixtures/shot-layering-v1.json): not in this brief.",
+    "No renders, test runs, installs, fetches or source writes."
+  ]
+}

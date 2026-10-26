@@ -1,0 +1,4834 @@
+{
+ "bases": {
+  "agent": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+  "app": "e62f98690",
+  "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+ },
+ "scores": {
+  "agent:8b6ed2116fd1803d24b2be5bc08bd9490407fe4a": [
+   3,
+   41
+  ],
+  "agent:64197afa297f86f1e738238d5e80aff6d33e303a": [
+   3,
+   41
+  ],
+  "app:e62f98690": [
+   28,
+   62
+  ],
+  "app:636444302b": [
+   28,
+   62
+  ],
+  "app:e2bfb1304": [
+   28,
+   62
+  ],
+  "runtime:fa9cd5464a8b37b02f971de375e56be846cd69e2": [
+   4,
+   10
+  ]
+ },
+ "refs": [
+  {
+   "id": 1,
+   "plan_line": 42,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/data/shotCompositionProjection.ts:271-316",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      280,
+      325
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      271,
+      316
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 2,
+   "plan_line": 42,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/data/shotCompositionProjection.ts:318-433",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "changed",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      327,
+      458
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      318,
+      433
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 3,
+   "plan_line": 42,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/data/shotCompositionProjection.ts:359",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      383,
+      383
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      359,
+      359
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 4,
+   "plan_line": 42,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/data/shotCompositionProjection.ts:440-590",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "changed",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      465,
+      617
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      440,
+      590
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 5,
+   "plan_line": 42,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/data/shotCompositionProjection.ts:532",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      558,
+      558
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      532,
+      532
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 6,
+   "plan_line": 43,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "astrid/core/timeline/shot_composition_projection.py:241-269",
+   "anchors": [
+    "config.clips",
+    "config.tracks"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      292
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      292
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 7,
+   "plan_line": 43,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "astrid/core/timeline/shot_composition_projection.py:291-366",
+   "anchors": [
+    "config.clips",
+    "config.tracks"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      314,
+      389
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      314,
+      389
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 8,
+   "plan_line": 44,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/compositions/TimelineRenderer.tsx:1598",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1598,
+      1598
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1598,
+      1598
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 9,
+   "plan_line": 44,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "VE/compositions/TimelineRenderer.tsx:1664-1701",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1664,
+      1701
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1664,
+      1701
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 10,
+   "plan_line": 44,
+   "section": "2.1 The timeline shows a layer; preview and export draw a flattened pile",
+   "original": "TimelineComposition.tsx:266",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+     "range": [
+      266,
+      266
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+     "range": [
+      266,
+      266
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+    "app:vendor/timeline-composition/typescript/src/TimelineComposition.tsx"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base; candidates: docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx, vendor/timeline-composition/typescript/src/TimelineComposition.tsx",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 11,
+   "plan_line": 54,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/sdk/timeline_restructure.py:413-427",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 12,
+   "plan_line": 54,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/sdk/timeline_restructure.py:413-421",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      421
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      421
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 13,
+   "plan_line": 54,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/sdk/timeline_restructure.py:422-427",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      422,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      422,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 14,
+   "plan_line": 58,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/sdk/timeline/checkout.py:39-41",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline/checkout.py",
+     "range": [
+      39,
+      41
+     ],
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline/checkout.py",
+     "range": [
+      39,
+      41
+     ],
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline/checkout.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline/checkout.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 15,
+   "plan_line": 58,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/sdk/timeline/checkout.py:325-327",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/sdk/timeline/checkout.py",
+     "range": [
+      457,
+      459
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/sdk/timeline/checkout.py",
+     "range": [
+      457,
+      459
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline/checkout.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline/checkout.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 16,
+   "plan_line": 58,
+   "section": "2.2 How the loose image got there",
+   "original": "timeline_restructure.py:295",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      295,
+      295
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      295,
+      295
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 17,
+   "plan_line": 58,
+   "section": "2.2 How the loose image got there",
+   "original": "astrid/core/timeline/onscreen.py:248-292",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/onscreen.py",
+     "range": [
+      186,
+      230
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/onscreen.py",
+     "range": [
+      186,
+      230
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/onscreen.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/onscreen.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 18,
+   "plan_line": 58,
+   "section": "2.2 How the loose image got there",
+   "original": "duration.py:292-309",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/core/timeline/duration.py",
+     "range": [
+      292,
+      309
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/core/timeline/duration.py",
+     "range": [
+      292,
+      309
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/duration.py",
+    "agent:astrid/packs/training/actions/dataset_build/filter_stages/duration.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/duration.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base; candidates: astrid/core/timeline/duration.py, astrid/packs/training/actions/dataset_build/filter_stages/duration.py",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 19,
+   "plan_line": 62,
+   "section": "2.3 A second bug waiting: effects and blends leak out of shots",
+   "original": "VE/compositions/TimelineRenderer.tsx:1664-1701",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1664,
+      1701
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1664,
+      1701
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 20,
+   "plan_line": 62,
+   "section": "2.3 A second bug waiting: effects and blends leak out of shots",
+   "original": "EffectLayerSequence.tsx:19-72",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/EffectLayerSequence.tsx",
+     "range": [
+      19,
+      72
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/EffectLayerSequence.tsx",
+     "range": [
+      19,
+      72
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/EffectLayerSequence.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/EffectLayerSequence.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 21,
+   "plan_line": 68,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "VE/compositions/TimelineRenderer.tsx:212-276",
+   "anchors": [
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      212,
+      276
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      212
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      212,
+      276
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      212
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": "ShotClipSequence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 22,
+   "plan_line": 68,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "VE/compositions/TimelineRenderer.tsx:1415-1416",
+   "anchors": [
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1415,
+      1416
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      1416
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1415,
+      1416
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      1416
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": "ShotClipSequence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 23,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "VE/data/canonicalCompositionState.ts:36-39",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+     "range": [
+      36,
+      39
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      36
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+     "range": [
+      36,
+      39
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      36
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/canonicalCompositionState.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 24,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "useRenderState.ts:568-574",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/hooks/useRenderState.ts",
+     "range": [
+      568,
+      574
+     ],
+     "anchor_line": [
+      "userId",
+      570
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/hooks/useRenderState.ts",
+     "range": [
+      568,
+      574
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      570
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/hooks/useRenderState.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/hooks/useRenderState.ts",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 25,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "CompactPreview.tsx:28-34",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/CompactPreview.tsx",
+     "range": [
+      28,
+      34
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      30
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/CompactPreview.tsx",
+     "range": [
+      28,
+      34
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      30
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/CompactPreview.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/CompactPreview.tsx",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 26,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "hooks/useTimelineState.ts:1136",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/hooks/useTimelineState.ts",
+     "range": [
+      1087,
+      1087
+     ],
+     "anchor_at_head": "userId",
+     "anchor_line": [
+      "userId",
+      1087
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/hooks/useTimelineState.ts",
+     "range": [
+      1136,
+      1136
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      1136
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/hooks/useTimelineState.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/hooks/useTimelineState.ts",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": false
+   }
+  },
+  {
+   "id": 27,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "AuthContext.tsx:55",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/shared/contexts/AuthContext.tsx",
+     "range": [
+      55,
+      55
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      55
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/shared/contexts/AuthContext.tsx",
+     "range": [
+      55,
+      55
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      55
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/shared/contexts/AuthContext.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/shared/contexts/AuthContext.tsx",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 28,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "AuthContext.tsx:87",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/shared/contexts/AuthContext.tsx",
+     "range": [
+      87,
+      87
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      87
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/shared/contexts/AuthContext.tsx",
+     "range": [
+      87,
+      87
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      87
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/shared/contexts/AuthContext.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/shared/contexts/AuthContext.tsx",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 29,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "pages/VideoEditorPage.tsx:149",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+     "range": [
+      149,
+      149
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      149
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+     "range": [
+      149,
+      149
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      149
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/pages/VideoEditorPage.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 30,
+   "plan_line": 70,
+   "section": "2.4 Two drawing paths in the editor, chosen by a sentinel",
+   "original": "pages/VideoEditorPage.tsx:168",
+   "anchors": [
+    "userId"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+     "range": [
+      168,
+      168
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      168
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+     "range": [
+      168,
+      168
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "userId",
+      168
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/pages/VideoEditorPage.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/pages/VideoEditorPage.tsx",
+   "base_anchor": "userId",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 31,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "runtime_protocol/visual_seam.py:312-346",
+   "anchors": [
+    "shot_composition_projection.py",
+    "render_config",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "changed",
+     "path": "runtime_protocol/visual_seam.py",
+     "range": [
+      345,
+      378
+     ],
+     "anchor_at_head": "render_config",
+     "anchor_line": [
+      "render_config",
+      368
+     ]
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/visual_seam.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/visual_seam.py",
+   "base_anchor": "render_config",
+   "resolution": "anchored",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 32,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "store.py:2047",
+   "anchors": [
+    "render_config",
+    "shot_composition_projection.py",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "moved",
+     "path": "runtime_protocol/store.py",
+     "range": [
+      2240,
+      2240
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/store.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/store.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 33,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "store.py:2312-2326",
+   "anchors": [
+    "render_config",
+    "shot_composition_projection.py",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "changed",
+     "path": "runtime_protocol/store.py",
+     "range": [
+      2553,
+      2568
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/store.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/store.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 34,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "invocation.py:1310",
+   "anchors": [
+    "render_config",
+    "shot_composition_projection.py",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/sdk/invocation.py",
+     "range": [
+      1312,
+      1312
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/sdk/invocation.py",
+     "range": [
+      1312,
+      1312
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/invocation.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/invocation.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 35,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "managed_timeline.py:903",
+   "anchors": [
+    "render_config",
+    "shot_composition_projection.py",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/packs/rendering/actions/render/managed_timeline.py",
+     "range": [
+      894,
+      894
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/packs/rendering/actions/render/managed_timeline.py",
+     "range": [
+      894,
+      894
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/packs/rendering/actions/render/managed_timeline.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/packs/rendering/actions/render/managed_timeline.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": false
+   }
+  },
+  {
+   "id": 36,
+   "plan_line": 74,
+   "section": "2.5 Copies of the same logic",
+   "original": "invocation.py:1424",
+   "anchors": [
+    "render_config",
+    "shot_composition_projection.py",
+    "shotCompositionProjection.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/sdk/invocation.py",
+     "range": [
+      1426,
+      1426
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/sdk/invocation.py",
+     "range": [
+      1426,
+      1426
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/invocation.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/invocation.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 37,
+   "plan_line": 75,
+   "section": "2.5 Copies of the same logic",
+   "original": "shotCompositionProjection.ts:271-315",
+   "anchors": [
+    "tracksFor",
+    "_track_merge",
+    "timeline_restructure.py",
+    "flatten.add_track"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      280,
+      324
+     ],
+     "anchor_at_head": "tracksFor",
+     "anchor_line": [
+      "tracksFor",
+      280
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+     "range": [
+      271,
+      315
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "tracksFor",
+      271
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.ts",
+   "base_anchor": "tracksFor",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 38,
+   "plan_line": 75,
+   "section": "2.5 Copies of the same logic",
+   "original": "shot_composition_projection.py:241-270",
+   "anchors": [
+    "_track_merge",
+    "timeline_restructure.py",
+    "tracksFor",
+    "flatten.add_track"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      293
+     ],
+     "anchor_at_head": "_track_merge",
+     "anchor_line": [
+      "_track_merge",
+      264
+     ]
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      293
+     ],
+     "anchor_at_head": "_track_merge",
+     "anchor_line": [
+      "_track_merge",
+      264
+     ]
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": "_track_merge",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 39,
+   "plan_line": 75,
+   "section": "2.5 Copies of the same logic",
+   "original": "timeline_restructure.py:212-245",
+   "anchors": [
+    "_layer_order",
+    "flatten.add_track",
+    "timeline_restructure.py",
+    "_track_merge"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      212,
+      245
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      212,
+      245
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 40,
+   "plan_line": 75,
+   "section": "2.5 Copies of the same logic",
+   "original": "timeline_restructure.py:451-470",
+   "anchors": [
+    "_layer_order",
+    "flatten.add_track",
+    "timeline_restructure.py",
+    "_track_merge"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      451,
+      470
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "_layer_order",
+      451
+     ]
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      451,
+      470
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "_layer_order",
+      451
+     ]
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": "_layer_order",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 41,
+   "plan_line": 76,
+   "section": "2.5 Copies of the same logic",
+   "original": "managed_render_snapshot.py:28-220",
+   "anchors": [
+    "managed_render_snapshot.expand_shot_clips"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "unchanged",
+     "path": "runtime_protocol/managed_render_snapshot.py",
+     "range": [
+      28,
+      220
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/managed_render_snapshot.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/managed_render_snapshot.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 42,
+   "plan_line": 76,
+   "section": "2.5 Copies of the same logic",
+   "original": "timeline_inspection.py:499-506",
+   "anchors": [
+    "managed_render_snapshot.expand_shot_clips"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "moved",
+     "path": "runtime_protocol/timeline_inspection.py",
+     "range": [
+      500,
+      507
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/timeline_inspection.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/timeline_inspection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 43,
+   "plan_line": 76,
+   "section": "2.5 Copies of the same logic",
+   "original": "timeline_inspection.py:491",
+   "anchors": [
+    "managed_render_snapshot.expand_shot_clips"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "moved",
+     "path": "runtime_protocol/timeline_inspection.py",
+     "range": [
+      492,
+      492
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/timeline_inspection.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/timeline_inspection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 44,
+   "plan_line": 78,
+   "section": "2.5 Copies of the same logic",
+   "original": "TimelineComposition.tsx:61-63",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+     "range": [
+      61,
+      63
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+     "range": [
+      61,
+      63
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+    "app:vendor/timeline-composition/typescript/src/TimelineComposition.tsx"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base; candidates: docs/reference/timeline-composition-v0.0.6/TimelineComposition.tsx, vendor/timeline-composition/typescript/src/TimelineComposition.tsx",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 45,
+   "plan_line": 78,
+   "section": "2.5 Copies of the same logic",
+   "original": "remotion/src/ThreeTimelineComposition.tsx:343-387",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "remotion/src/ThreeTimelineComposition.tsx",
+     "range": [
+      343,
+      387
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "remotion/src/ThreeTimelineComposition.tsx",
+     "range": [
+      343,
+      387
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:remotion/src/ThreeTimelineComposition.tsx"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "remotion/src/ThreeTimelineComposition.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 46,
+   "plan_line": 78,
+   "section": "2.5 Copies of the same logic",
+   "original": "remotion/src/ThreeTimelineComposition.tsx:451",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "remotion/src/ThreeTimelineComposition.tsx",
+     "range": [
+      451,
+      451
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "remotion/src/ThreeTimelineComposition.tsx",
+     "range": [
+      451,
+      451
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:remotion/src/ThreeTimelineComposition.tsx"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "remotion/src/ThreeTimelineComposition.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 47,
+   "plan_line": 78,
+   "section": "2.5 Copies of the same logic",
+   "original": "packs/rendering/.../ffmpeg/command.py:78-88",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/packs/rendering/rendering/renderers/ffmpeg/command.py",
+     "range": [
+      78,
+      88
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/packs/rendering/rendering/renderers/ffmpeg/command.py",
+     "range": [
+      78,
+      88
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/packs/rendering/rendering/renderers/ffmpeg/command.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/packs/rendering/rendering/renderers/ffmpeg/command.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 48,
+   "plan_line": 79,
+   "section": "2.5 Copies of the same logic",
+   "original": "timeline_restructure.py:19-22",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      19,
+      22
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      19,
+      22
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 49,
+   "plan_line": 112,
+   "section": "3. The decided model",
+   "original": "VE/lib/timeline-domain.ts:212",
+   "anchors": [
+    "track.app.group"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/lib/timeline-domain.ts",
+     "range": [
+      213,
+      213
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/timeline-domain.ts",
+     "range": [
+      212,
+      212
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/timeline-domain.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/timeline-domain.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 50,
+   "plan_line": 112,
+   "section": "3. The decided model",
+   "original": "VE/lib/timeline-domain.ts:2482-2505",
+   "anchors": [
+    "track.app.group"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/lib/timeline-domain.ts",
+     "range": [
+      2490,
+      2513
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/timeline-domain.ts",
+     "range": [
+      2482,
+      2505
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/timeline-domain.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/timeline-domain.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 51,
+   "plan_line": 124,
+   "section": "4.2 Astrid",
+   "original": "shot_composition_projection.py:241-269",
+   "anchors": [
+    "_track_merge"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      292
+     ],
+     "anchor_at_head": "_track_merge",
+     "anchor_line": [
+      "_track_merge",
+      264
+     ]
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      264,
+      292
+     ],
+     "anchor_at_head": "_track_merge",
+     "anchor_line": [
+      "_track_merge",
+      264
+     ]
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": "_track_merge",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 52,
+   "plan_line": 124,
+   "section": "4.2 Astrid",
+   "original": "shot_composition_projection.py:291-366",
+   "anchors": [
+    "_track_merge"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      314,
+      389
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      314,
+      389
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 53,
+   "plan_line": 124,
+   "section": "4.2 Astrid",
+   "original": "shot_composition_projection.py:165-166",
+   "anchors": [
+    "_track_merge"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      186,
+      187
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/shot_composition_projection.py",
+     "range": [
+      186,
+      187
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/shot_composition_projection.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/shot_composition_projection.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 54,
+   "plan_line": 125,
+   "section": "4.2 Astrid",
+   "original": "timeline_restructure.py:413-427",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      413,
+      427
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 55,
+   "plan_line": 129,
+   "section": "4.2 Astrid",
+   "original": "astrid/sdk/timeline/edits.py:165",
+   "anchors": [
+    "Cut.split"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/sdk/timeline/edits.py",
+     "range": [
+      156,
+      156
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/sdk/timeline/edits.py",
+     "range": [
+      156,
+      156
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline/edits.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline/edits.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 56,
+   "plan_line": 129,
+   "section": "4.2 Astrid",
+   "original": "astrid/sdk/timeline/doc.py:56-64",
+   "anchors": [
+    "Cut.split"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline/doc.py",
+     "range": [
+      56,
+      64
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline/doc.py",
+     "range": [
+      56,
+      64
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline/doc.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline/doc.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 57,
+   "plan_line": 130,
+   "section": "4.2 Astrid",
+   "original": "timeline_restructure.py:608-631",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      608,
+      631
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      608,
+      631
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 58,
+   "plan_line": 131,
+   "section": "4.2 Astrid",
+   "original": "tests/sdk/test_timeline_restructure.py:163-177",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      178,
+      192
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      178,
+      192
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:tests/sdk/test_timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "tests/sdk/test_timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 59,
+   "plan_line": 131,
+   "section": "4.2 Astrid",
+   "original": "tests/sdk/test_timeline_restructure.py:549-562",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      968,
+      981
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      968,
+      981
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:tests/sdk/test_timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "tests/sdk/test_timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 60,
+   "plan_line": 131,
+   "section": "4.2 Astrid",
+   "original": "tests/sdk/test_timeline_restructure.py:249-262",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      278,
+      291
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      278,
+      291
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:tests/sdk/test_timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "tests/sdk/test_timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 61,
+   "plan_line": 131,
+   "section": "4.2 Astrid",
+   "original": "tests/sdk/test_timeline_restructure.py:180-183",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      195,
+      198
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "tests/sdk/test_timeline_restructure.py",
+     "range": [
+      195,
+      198
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:tests/sdk/test_timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "tests/sdk/test_timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 62,
+   "plan_line": 137,
+   "section": "4.3 App",
+   "original": "VE/data/visualSeamContract.ts:340-357",
+   "anchors": [
+    "app.group.sourceTrack",
+    "portableVisualSeamIntent.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      340,
+      357
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      340,
+      357
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/visualSeamContract.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/visualSeamContract.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 63,
+   "plan_line": 137,
+   "section": "4.3 App",
+   "original": "VE/data/visualSeamContract.ts:517",
+   "anchors": [
+    "app.group.sourceTrack",
+    "portableVisualSeamIntent.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      517,
+      517
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      517,
+      517
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/visualSeamContract.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/visualSeamContract.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 64,
+   "plan_line": 137,
+   "section": "4.3 App",
+   "original": "VE/data/visualSeamContract.ts:523",
+   "anchors": [
+    "app.group.sourceTrack",
+    "portableVisualSeamIntent.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      523,
+      523
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/visualSeamContract.ts",
+     "range": [
+      523,
+      523
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/visualSeamContract.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/visualSeamContract.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 65,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts:191-234",
+   "anchors": [
+    "projectCanonicalComposition",
+    "app.group",
+    "updateCanonicalShotTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "changed",
+     "path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+     "range": [
+      271,
+      893
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+     "range": [
+      191,
+      234
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/travel-between-images/components/shotTimelineDataProvider.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 66,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts:135-156",
+   "anchors": [
+    "updateCanonicalShotTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "projectCanonicalComposition",
+    "app.group"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "changed",
+     "path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+     "range": [
+      166,
+      236
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+     "range": [
+      135,
+      156
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/travel-between-images/components/shotTimelineDataProvider.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 67,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "VE/data/shotCompositionEditor.ts:465",
+   "anchors": [
+    "updateCanonicalShotTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "remapIndependentInternalTimeline",
+    "projectCanonicalComposition"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      476,
+      476
+     ],
+     "anchor_at_head": "updateCanonicalShotTimeline",
+     "anchor_line": [
+      "updateCanonicalShotTimeline",
+      476
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      465,
+      465
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "updateCanonicalShotTimeline",
+      465
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "updateCanonicalShotTimeline",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 68,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "VE/data/shotCompositionEditor.ts:136",
+   "anchors": [
+    "remapIndependentInternalTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "updateCanonicalShotTimeline",
+    "projectCanonicalComposition"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      145,
+      145
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      136,
+      136
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 69,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "VE/data/shotCompositionEditor.ts:144",
+   "anchors": [
+    "remapIndependentInternalTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "updateCanonicalShotTimeline",
+    "projectCanonicalComposition"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      153,
+      153
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      144,
+      144
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 70,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "shotCompositionEditor.ts:148-160",
+   "anchors": [
+    "remapIndependentInternalTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "updateCanonicalShotTimeline",
+    "projectCanonicalComposition"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      157,
+      169
+     ],
+     "anchor_at_head": "remapIndependentInternalTimeline",
+     "anchor_line": [
+      "remapIndependentInternalTimeline",
+      157
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      148,
+      160
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "remapIndependentInternalTimeline",
+      148
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "remapIndependentInternalTimeline",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 71,
+   "plan_line": 138,
+   "section": "4.3 App",
+   "original": "shotCompositionEditor.ts:305-309",
+   "anchors": [
+    "remapIndependentInternalTimeline",
+    "occurrence.revision.internal_timeline_revision.timeline",
+    "updateCanonicalShotTimeline",
+    "projectCanonicalComposition"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      314,
+      318
+     ],
+     "anchor_at_head": "remapIndependentInternalTimeline",
+     "anchor_line": [
+      "remapIndependentInternalTimeline",
+      318
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      305,
+      309
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "remapIndependentInternalTimeline",
+      309
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "remapIndependentInternalTimeline",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 72,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "VE/commands/media.ts:129-205",
+   "anchors": [
+    "clip.add",
+    "handleAddTextAt"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/commands/media.ts",
+     "range": [
+      173,
+      249
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/commands/media.ts",
+     "range": [
+      129,
+      205
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/commands/media.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/commands/media.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 73,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "lib/panel-clip-drag.ts:146-158",
+   "anchors": [
+    "clip.add",
+    "handleAddTextAt"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/panel-clip-drag.ts",
+     "range": [
+      146,
+      158
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "clip.add",
+      157
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/panel-clip-drag.ts",
+     "range": [
+      146,
+      158
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "clip.add",
+      157
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/panel-clip-drag.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/panel-clip-drag.ts",
+   "base_anchor": "clip.add",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 74,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "lib/timeline-patch.ts:1099-1165",
+   "anchors": [
+    "clip.add",
+    "handleAddTextAt"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/lib/timeline-patch.ts",
+     "range": [
+      1121,
+      1187
+     ],
+     "anchor_at_head": "clip.add",
+     "anchor_line": [
+      "clip.add",
+      1120
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/timeline-patch.ts",
+     "range": [
+      1099,
+      1165
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "clip.add",
+      1098
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/timeline-patch.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/timeline-patch.ts",
+   "base_anchor": "clip.add",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 75,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "lib/external-drop-utils.ts:87-97",
+   "anchors": [
+    "clip.add",
+    "handleAddTextAt"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/lib/external-drop-utils.ts",
+     "range": [
+      88,
+      98
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/external-drop-utils.ts",
+     "range": [
+      87,
+      97
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/external-drop-utils.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/external-drop-utils.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": false
+   }
+  },
+  {
+   "id": 76,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "lib/external-drop-utils.ts:280-400",
+   "anchors": [
+    "clip.add",
+    "handleAddTextAt"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "changed",
+     "path": "src/tools/video-editor/lib/external-drop-utils.ts",
+     "range": [
+      309,
+      445
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/external-drop-utils.ts",
+     "range": [
+      280,
+      400
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/external-drop-utils.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/external-drop-utils.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": false
+   }
+  },
+  {
+   "id": 77,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "lib/shot-group-pack-commands.ts:152-226",
+   "anchors": [
+    "handleAddTextAt",
+    "clip.add"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+     "range": [
+      152,
+      226
+     ],
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+     "range": [
+      152,
+      226
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/lib/shot-group-pack-commands.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 78,
+   "plan_line": 139,
+   "section": "4.3 App",
+   "original": "hooks/clip-editing/useClipTextOverlay.ts:74-88",
+   "anchors": [
+    "handleAddTextAt",
+    "clip.add"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/hooks/clip-editing/useClipTextOverlay.ts",
+     "range": [
+      74,
+      88
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "handleAddTextAt",
+      86
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/hooks/clip-editing/useClipTextOverlay.ts",
+     "range": [
+      74,
+      88
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "handleAddTextAt",
+      86
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/hooks/clip-editing/useClipTextOverlay.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/hooks/clip-editing/useClipTextOverlay.ts",
+   "base_anchor": "handleAddTextAt",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 79,
+   "plan_line": 140,
+   "section": "4.3 App",
+   "original": "shotCompositionProjection.test.ts:61",
+   "anchors": [
+    "shotCompositionProjection.test.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      61,
+      61
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      61,
+      61
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.test.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 80,
+   "plan_line": 140,
+   "section": "4.3 App",
+   "original": "shotCompositionProjection.test.ts:288",
+   "anchors": [
+    "shotCompositionProjection.test.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      288,
+      288
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      288,
+      288
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.test.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 81,
+   "plan_line": 140,
+   "section": "4.3 App",
+   "original": "shotCompositionProjection.test.ts:414",
+   "anchors": [
+    "shotCompositionProjection.test.ts"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      414,
+      414
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+     "range": [
+      414,
+      414
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionProjection.test.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionProjection.test.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 82,
+   "plan_line": 143,
+   "section": "4.4 Runtime",
+   "original": "runtime_protocol/timeline_inspection.py:490-520",
+   "anchors": [
+    "expand_shot_clips",
+    "render_timing"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "moved",
+     "path": "runtime_protocol/timeline_inspection.py",
+     "range": [
+      491,
+      521
+     ],
+     "anchor_at_head": "expand_shot_clips",
+     "anchor_line": [
+      "expand_shot_clips",
+      505
+     ]
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/timeline_inspection.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/timeline_inspection.py",
+   "base_anchor": "expand_shot_clips",
+   "resolution": "anchored",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 83,
+   "plan_line": 143,
+   "section": "4.4 Runtime",
+   "original": "runtime_protocol/timeline_inspection.py:491",
+   "anchors": [
+    "render_timing",
+    "expand_shot_clips"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "moved",
+     "path": "runtime_protocol/timeline_inspection.py",
+     "range": [
+      492,
+      492
+     ],
+     "anchor_at_head": "render_timing",
+     "anchor_line": [
+      "render_timing",
+      491
+     ]
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/timeline_inspection.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/timeline_inspection.py",
+   "base_anchor": "render_timing",
+   "resolution": "anchored",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 84,
+   "plan_line": 144,
+   "section": "4.4 Runtime",
+   "original": "visual_seam.py:337-346",
+   "anchors": [
+    "expand_shot_clips"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "changed",
+     "path": "runtime_protocol/visual_seam.py",
+     "range": [
+      370,
+      378
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/visual_seam.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/visual_seam.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 85,
+   "plan_line": 182,
+   "section": "5.2 Migration",
+   "original": "service.py:2580",
+   "anchors": [
+    "restore_project_parent_composition_revision"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "runtime_95d98f03": {
+     "status": "removed",
+     "path": "runtime_protocol/service.py",
+     "range": null,
+     "anchor_elsewhere": [
+      "restore_project_parent_composition_revision",
+      2731
+     ]
+    }
+   },
+   "candidates_all": [
+    "runtime:runtime_protocol/service.py"
+   ],
+   "base_repo": "runtime",
+   "base_sha": "fa9cd5464a",
+   "base_path": "runtime_protocol/service.py",
+   "base_anchor": "restore_project_parent_composition_revision",
+   "resolution": "anchored",
+   "alt_base_same_file": {}
+  },
+  {
+   "id": 86,
+   "plan_line": 185,
+   "section": "5.3 UI changes",
+   "original": "AstridTimelineEditor.tsx:615-650",
+   "anchors": [
+    "handleOpenCanonicalOccurrence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+     "range": [
+      615,
+      650
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+     "range": [
+      615,
+      650
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/AstridTimelineEditor.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 87,
+   "plan_line": 185,
+   "section": "5.3 UI changes",
+   "original": "AstridTimelineEditor.tsx:309-314",
+   "anchors": [
+    "handleOpenCanonicalOccurrence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+     "range": [
+      309,
+      314
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "handleOpenCanonicalOccurrence",
+      309
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+     "range": [
+      309,
+      314
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "handleOpenCanonicalOccurrence",
+      309
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/AstridTimelineEditor.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/AstridTimelineEditor.tsx",
+   "base_anchor": "handleOpenCanonicalOccurrence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 88,
+   "plan_line": 186,
+   "section": "5.3 UI changes",
+   "original": "PropertiesPanel.tsx:167-186",
+   "anchors": [
+    "assertParentLanePlacement"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx",
+     "range": [
+      168,
+      187
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx",
+     "range": [
+      167,
+      186
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/PropertiesPanel/PropertiesPanel.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 89,
+   "plan_line": 186,
+   "section": "5.3 UI changes",
+   "original": "shotCompositionEditor.ts:212-237",
+   "anchors": [
+    "assertParentLanePlacement"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      221,
+      246
+     ],
+     "anchor_at_head": "assertParentLanePlacement",
+     "anchor_line": [
+      "assertParentLanePlacement",
+      221
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      212,
+      237
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "assertParentLanePlacement",
+      212
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "assertParentLanePlacement",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 90,
+   "plan_line": 187,
+   "section": "5.3 UI changes",
+   "original": "shotCompositionEditor.ts:563",
+   "anchors": [
+    "moveCanonicalOccurrence",
+    "TimelineCanvas"
+   ],
+   "path_inferred": "file not named in plan; inferred from the identifier in the same bullet",
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      574,
+      574
+     ],
+     "anchor_at_head": "moveCanonicalOccurrence",
+     "anchor_line": [
+      "moveCanonicalOccurrence",
+      574
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      563,
+      563
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "moveCanonicalOccurrence",
+      563
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "moveCanonicalOccurrence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 91,
+   "plan_line": 187,
+   "section": "5.3 UI changes",
+   "original": "TimelineCanvas.tsx:751-792",
+   "anchors": [
+    "TimelineCanvas",
+    "moveCanonicalOccurrence"
+   ],
+   "path_inferred": "file not named in plan; inferred from the identifier in the same bullet",
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+     "range": [
+      752,
+      793
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+     "range": [
+      751,
+      792
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 92,
+   "plan_line": 190,
+   "section": "5.4 Deletions",
+   "original": "onscreen.py:248",
+   "anchors": [
+    "app.group.sourceTrack"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/timeline/onscreen.py",
+     "range": [
+      186,
+      186
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/timeline/onscreen.py",
+     "range": [
+      186,
+      186
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/timeline/onscreen.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/timeline/onscreen.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 93,
+   "plan_line": 190,
+   "section": "5.4 Deletions",
+   "original": "timeline_visualize/model.py:524",
+   "anchors": [
+    "app.group.sourceTrack"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/packs/rendering/actions/timeline_visualize/model.py",
+     "range": [
+      516,
+      516
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/packs/rendering/actions/timeline_visualize/model.py",
+     "range": [
+      516,
+      516
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/packs/rendering/actions/timeline_visualize/model.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/packs/rendering/actions/timeline_visualize/model.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 94,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "TimelineRenderer.tsx:212-276",
+   "anchors": [
+    "ShotClipSequence",
+    "TimelineRenderer.shots.test.tsx",
+    "hasNestedShots"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      212,
+      276
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      212
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      212,
+      276
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      212
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": "ShotClipSequence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 95,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "TimelineRenderer.tsx:1415-1416",
+   "anchors": [
+    "ShotClipSequence",
+    "TimelineRenderer.shots.test.tsx",
+    "hasNestedShots"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1415,
+      1416
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      1416
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      1415,
+      1416
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      1416
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": "ShotClipSequence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 96,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "TimelineRenderer.tsx:139-187",
+   "anchors": [
+    "ShotClipSequence",
+    "TimelineRenderer.shots.test.tsx",
+    "hasNestedShots"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      139,
+      187
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      179
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+     "range": [
+      139,
+      187
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "ShotClipSequence",
+      179
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/compositions/TimelineRenderer.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/compositions/TimelineRenderer.tsx",
+   "base_anchor": "ShotClipSequence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 97,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "TimelineEditorCore.tsx:575",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+     "range": [
+      577,
+      577
+     ],
+     "anchor_at_head": "hasNestedShots",
+     "anchor_line": [
+      "hasNestedShots",
+      577
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+     "range": [
+      575,
+      575
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "hasNestedShots",
+      575
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+   "base_anchor": "hasNestedShots",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 98,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "...Body.tsx:549",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+     "range": [
+      551,
+      551
+     ],
+     "anchor_at_head": "hasNestedShots",
+     "anchor_line": [
+      "hasNestedShots",
+      551
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+     "range": [
+      549,
+      549
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "hasNestedShots",
+      549
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+   "base_anchor": "hasNestedShots",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 99,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "ClipAction.tsx:601",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/TimelineEditor/ClipAction.tsx",
+     "range": [
+      601,
+      601
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/components/TimelineEditor/ClipAction.tsx",
+     "range": [
+      601,
+      601
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/components/TimelineEditor/ClipAction.tsx"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/components/TimelineEditor/ClipAction.tsx",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 100,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "canonicalCompositionState.ts:36-39",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+     "range": [
+      36,
+      39
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+     "range": [
+      36,
+      39
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/canonicalCompositionState.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/canonicalCompositionState.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 101,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "exportGuard.ts:1050",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/runtime/exportGuard.ts",
+     "range": [
+      1050,
+      1050
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/runtime/exportGuard.ts",
+     "range": [
+      1050,
+      1050
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/runtime/exportGuard.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/runtime/exportGuard.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 102,
+   "plan_line": 191,
+   "section": "5.4 Deletions",
+   "original": "managedRuntimeClipTypes.ts:9",
+   "anchors": [
+    "hasNestedShots",
+    "TimelineRenderer.shots.test.tsx",
+    "ShotClipSequence"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/runtime/managedRuntimeClipTypes.ts",
+     "range": [
+      9,
+      9
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/runtime/managedRuntimeClipTypes.ts",
+     "range": [
+      9,
+      9
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/runtime/managedRuntimeClipTypes.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/runtime/managedRuntimeClipTypes.ts",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 103,
+   "plan_line": 193,
+   "section": "5.4 Deletions",
+   "original": "scripts/astrid-landing/public-source.patch:287",
+   "anchors": [
+    "AudioTrack",
+    "VisualClip",
+    "TimelineComposition",
+    "registry.generated"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "scripts/astrid-landing/public-source.patch",
+     "range": [
+      287,
+      287
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "TimelineComposition",
+      287
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "scripts/astrid-landing/public-source.patch",
+     "range": [
+      287,
+      287
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "TimelineComposition",
+      287
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:scripts/astrid-landing/public-source.patch"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "scripts/astrid-landing/public-source.patch",
+   "base_anchor": "TimelineComposition",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 104,
+   "plan_line": 194,
+   "section": "5.4 Deletions",
+   "original": "timeline_restructure.py:218-242",
+   "anchors": [
+    "timeline_restructure.py"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      218,
+      242
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      218,
+      242
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 105,
+   "plan_line": 194,
+   "section": "5.4 Deletions",
+   "original": "timeline_restructure.py:451-469",
+   "anchors": [
+    "timeline_restructure.py"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      451,
+      469
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "unchanged",
+     "path": "astrid/sdk/timeline_restructure.py",
+     "range": [
+      451,
+      469
+     ],
+     "file_identical": true,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/sdk/timeline_restructure.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/sdk/timeline_restructure.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  },
+  {
+   "id": 106,
+   "plan_line": 239,
+   "section": "9. Offers",
+   "original": "documentPlacement.ts:70-99",
+   "anchors": [
+    "pinnedShotGroups"
+   ],
+   "path_inferred": null,
+   "heads": {
+    "app_82e9e13d": {
+     "status": "unchanged",
+     "path": "src/shared/lib/placement/documentPlacement.ts",
+     "range": [
+      70,
+      99
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "pinnedShotGroups",
+      70
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/shared/lib/placement/documentPlacement.ts",
+     "range": [
+      70,
+      99
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "pinnedShotGroups",
+      70
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/shared/lib/placement/documentPlacement.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/shared/lib/placement/documentPlacement.ts",
+   "base_anchor": "pinnedShotGroups",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 107,
+   "plan_line": 241,
+   "section": "9. Offers",
+   "original": "shotCompositionEditor.ts:583",
+   "anchors": [
+    "trimCanonicalOccurrence"
+   ],
+   "path_inferred": "file not named in plan; inferred from the identifier in the same bullet",
+   "heads": {
+    "app_82e9e13d": {
+     "status": "moved",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      594,
+      594
+     ],
+     "anchor_at_head": "trimCanonicalOccurrence",
+     "anchor_line": [
+      "trimCanonicalOccurrence",
+      594
+     ]
+    },
+    "app_upstream_00a014e2": {
+     "status": "unchanged",
+     "path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+     "range": [
+      583,
+      583
+     ],
+     "file_identical": true,
+     "anchor_line": [
+      "trimCanonicalOccurrence",
+      583
+     ]
+    }
+   },
+   "candidates_all": [
+    "app:src/tools/video-editor/data/shotCompositionEditor.ts"
+   ],
+   "base_repo": "app",
+   "base_sha": "e62f98690",
+   "base_path": "src/tools/video-editor/data/shotCompositionEditor.ts",
+   "base_anchor": "trimCanonicalOccurrence",
+   "resolution": "anchored",
+   "alt_base_same_file": {
+    "636444302b": true,
+    "e2bfb1304": true
+   }
+  },
+  {
+   "id": 108,
+   "plan_line": 242,
+   "section": "9. Offers",
+   "original": "core/rendering/service.py:1188",
+   "anchors": [],
+   "path_inferred": null,
+   "heads": {
+    "agent_ecdc242e": {
+     "status": "moved",
+     "path": "astrid/core/rendering/service.py",
+     "range": [
+      1178,
+      1178
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    },
+    "agent_tests_14ccf296": {
+     "status": "moved",
+     "path": "astrid/core/rendering/service.py",
+     "range": [
+      1178,
+      1178
+     ],
+     "anchor_at_head": null,
+     "anchor_line": null
+    }
+   },
+   "candidates_all": [
+    "agent:astrid/core/rendering/service.py"
+   ],
+   "base_repo": "agent",
+   "base_sha": "8b6ed2116f",
+   "base_path": "astrid/core/rendering/service.py",
+   "base_anchor": null,
+   "resolution": "NOT anchored at base",
+   "alt_base_same_file": {
+    "64197afa29": true
+   }
+  }
+ ]
+}
