@@ -1,0 +1,72 @@
+{
+  "schema": "timeline.d141ee.inverse38.protected-review.v1",
+  "verdict": "PASS",
+  "task": "agt-U2-D141ee-inverse38-decision-next-review",
+  "review_basis": "One independent protected review against the recorded 38 approved IDs and exact additive restoration scope.",
+  "author_commit": "2ffdfdb7d78e8a63d40d01b11c1afd460a1e0228",
+  "parent_base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "diff_scope": [
+    "astrid/core/timeline/inverses.py"
+  ],
+  "approved_ids": 38,
+  "actual_results": {
+    "PASS": 38,
+    "FAIL": 0,
+    "ERROR": 0,
+    "SKIP": 0,
+    "XFAIL": 0
+  },
+  "targeted_xml": {
+    "testcase": 38,
+    "failure": 0,
+    "error": 0,
+    "skipped": 0
+  },
+  "checks": {
+    "exact_pristine_planner": true,
+    "exact_restored_test_blob": true,
+    "outside_blob_conserved": true,
+    "authenticated_undo_byte_exact": true,
+    "pytest": {
+      "exit": 0,
+      "result": "38 passed"
+    },
+    "mypy": {
+      "exit": 0,
+      "result": "Success: no issues found in 1 source file"
+    },
+    "git_diff_check": {
+      "exit": 0,
+      "result": "clean"
+    },
+    "ruff_changed": {
+      "exit": 1,
+      "diagnostics": [
+        "astrid/core/timeline/inverses.py:770:16 BLE001"
+      ]
+    },
+    "ruff_pristine": {
+      "exit": 1,
+      "diagnostics": [
+        "/tmp/pristine-inverses.py:770:16 BLE001"
+      ]
+    },
+    "ruff_introduced_diagnostics": 0
+  },
+  "findings": [
+    "No in-scope source or protected-assertion defect found; the planner is byte-identical to the approved pristine blob.",
+    "Ruff BLE001 at line 770 is present in both changed and pristine source; it is pre-existing upstream lint debt and was not suppressed or edited.",
+    "Erased-payload cases pass and remain non-invertible, but the pristine planner returns caller-supplied before/after projections; the approved tests do not prove projection redaction. No stronger guarantee is inferred.",
+    "No external production caller was found. The approved supported surface is the direct public pure-planner import exercised by the 38 exact tests; authenticated SDK undo remains a separate unchanged route."
+  ],
+  "not_run_and_not_credited": [
+    "full",
+    "core",
+    "browser",
+    "install",
+    "render",
+    "child",
+    "broader/unassigned tests"
+  ],
+  "next_owner_action": "Manager may proceed with protected PASS handling; any broader-suite conflict or lint cleanup requires its own scope decision."
+}

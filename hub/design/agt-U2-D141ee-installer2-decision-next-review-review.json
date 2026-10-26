@@ -1,0 +1,40 @@
+{
+  "schema": "timeline.agt.u2.d141ee.installer2.review.v1",
+  "verdict": "PASS",
+  "reviewed_commit": "e8d1598458cc18a4fe34a75f1b9225ad01b3861e",
+  "parent": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "reviewed_tree": "36685788803295ce10a6399099535d5b90a5bc79",
+  "owner_approval": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+    "sha256": "2f844fc0fdd8286d1743bfed0a114f0ebe255411f735ec602b39da7d6a9b442a",
+    "date": "2026-10-26",
+    "quote": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay."
+  },
+  "scope": {
+    "changed_paths": ["tests/test_installer_schema.py"],
+    "removed_ids": [
+      "tests/test_installer_schema.py::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "tests/test_installer_schema.py::test_remotion_lock_pins_the_transitive_schema_package"
+    ],
+    "other_git_blobs_changed": false,
+    "product_files_changed": false
+  },
+  "conservation": {
+    "parent_functions": 8,
+    "current_functions": 6,
+    "retained_functions_byte_identical": 6,
+    "removed_definitions_only": true,
+    "ast_filtered_identical": true,
+    "git_diff_check": "PASS",
+    "ruff": "PASS"
+  },
+  "targeted": {
+    "tests": 4,
+    "passed": 4,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 1.741
+  },
+  "findings": []
+}

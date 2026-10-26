@@ -1,0 +1,77 @@
+{
+  "utc": "2026-10-26T13:09:40.627950+00:00",
+  "source": "inverse38 exact upstream restoration and independent protected PASS",
+  "home_head_tree_parents": "e631b0382f8085cb3f8495717f06a94c9fed56fa 838126ef642398cc69bb46056d42941a039d9b6c 14ccf296f3768fcde857047b263834e4a6bbe52e 2ffdfdb7d78e8a63d40d01b11c1afd460a1e0228",
+  "author_commit": "2ffdfdb7d78e8a63d40d01b11c1afd460a1e0228",
+  "results": "author38 PASS, independent38 PASS; mypy/diff PASS; Ruff one same pristine BLE001, not lint green",
+  "limits": "pure public planner exact scope; no projection-redaction guarantee, current authenticated undo unchanged, initial author trace gap disclosed; final integrated kept53 proof still pending",
+  "raw_policy": "only finite source/validation summaries published; no raw stdout/stderr/test XML or process data copied",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/disposition.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-disposition.json",
+      "sha256": "30476dc4863b568ddce79157edd00eb88811924b28beb0c75ae1a57791f09a7e",
+      "bytes": 1858
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-per-id.json",
+      "sha256": "3d125d7c02169644bdc8340f93047974808c7ce798d1b0152c974cc7d287a121",
+      "bytes": 80928
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-source-manifest.json",
+      "sha256": "a9b6b1accfc5e6fc2cc9811a94e016f0c7479b0cb8356ee4de049851aadfc864",
+      "bytes": 3034
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-validation.md",
+      "sha256": "45183d52a269d4db441eaee711f0a4b881763e48c701910cc8985fa58da01779",
+      "bytes": 7918
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-handoff.md",
+      "sha256": "9b64dbecde87157ef09b485012d9facda3923bc3fb9c66ba026b50c1659a726f",
+      "bytes": 2422
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/review.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-review.json",
+      "sha256": "a8092aba8ba9cd52a09bbf69916eab5451c8b8208db85604b2698606b66bff8e",
+      "bytes": 2421
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/findings.md",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-findings.md",
+      "sha256": "7ae7de53d10af6697594979a71740524af55ce9806b15e592f43fff213ce03cf",
+      "bytes": 1221
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-per-id.json",
+      "sha256": "4a2ebd11c7dcb57cd3df33979191acb1d329b2b28a51662c2c8334153338df0a",
+      "bytes": 65608
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-source-manifest.json",
+      "sha256": "26d566b4ca0f5311eadd35171d11f80aa19c751748a68ed77d08a6f496de7ed8",
+      "bytes": 2398
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-validation.md",
+      "sha256": "af9750483406f0689029792fd66244b92c0856ac53c030bcefd3e07f0ce1bfc5",
+      "bytes": 2377
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next-review/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-inverse38-decision-next-review-handoff.md",
+      "sha256": "dc480fd8933b7935707c76975ed2bf1be7896ce0497e32b574e1a91a9d402f6f",
+      "bytes": 1111
+    }
+  ]
+}

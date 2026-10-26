@@ -1,0 +1,88 @@
+{
+  "utc": "2026-10-26T13:10:20.473519+00:00",
+  "result": "independent protected PASS; source merge requested, no integrated kept53 or REG0 claim",
+  "author_commit": "e8d1598458cc18a4fe34a75f1b9225ad01b3861e",
+  "author": "exact two approved test definitions removed; four remaining controls PASS1.82s",
+  "review": "exact two removals and preserved outside blobs; four controls PASS1.74s; lint/diff/AST PASS",
+  "ledger": {
+    "path": "design/deletion-ledger.agent.md",
+    "pre_sha256": "dc9ff7dabf0078f7e9b9d1ec6b9ff176abcfe9e78995fb9b0a558b4ca5d905b7",
+    "worker_authored_append_sha256": "5bb9882552fb384a3b1ae67387b5b3c21a9e761725a44f4e01f8a93c861c4b5d",
+    "post_sha256": "8d147f5ae5eaad4651f65ac97629d5f22cfbc304e41d48096e522d4a318c47c5",
+    "note": "Manager appended reviewed worker bytes verbatim, one exact owner quote/date per ID; no manager authored entries"
+  },
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/disposition.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-disposition.json",
+      "sha256": "8363017e07732e00272412e64f28bb407f6295525bf9832060e9e662f17d5980",
+      "bytes": 2142
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-per-id.json",
+      "sha256": "8bbf13b42359d133da9f2e04164e6c9f3ab23524c05173bbfb432c3dbbacc53d",
+      "bytes": 3148
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-source-manifest.json",
+      "sha256": "a1756cb2263c23c5c3a1da2207f8961e960db93dd1e979efae2e75f9958c73f6",
+      "bytes": 1941
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-validation.md",
+      "sha256": "429aca3b2773a02db143915a4ced32895ad4001a2442ec1a0747aeffee9b87b8",
+      "bytes": 3242
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-handoff.md",
+      "sha256": "eb985cf5966191e3ea66f21dad8cba78582a561c4831d3fa8930e1f35f9fa4a4",
+      "bytes": 1367
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/retirement-ledger-entries.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-retirement-ledger-entries.md",
+      "sha256": "5bb9882552fb384a3b1ae67387b5b3c21a9e761725a44f4e01f8a93c861c4b5d",
+      "bytes": 2210
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/review.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-review.json",
+      "sha256": "e721ab23f435319cd0f476a5181dfa86cc2e85a761beb6fdec1b326a3e36eff3",
+      "bytes": 1538
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/findings.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-findings.md",
+      "sha256": "8c18290a8ff904e4cfa5a53cf9be335e42069d832af6a5ec896d60925d4cb40f",
+      "bytes": 710
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-per-id.json",
+      "sha256": "441075c1e98731b1164baabeb5eab7f03ed36650713e1518f860bdce2ad6ceb2",
+      "bytes": 2880
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-source-manifest.json",
+      "sha256": "5aa83bb2cde2b088b65b08265b8726501bef685b1e6240b0f1d6914071af896e",
+      "bytes": 1794
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-validation.md",
+      "sha256": "92fc110ec7feeb6d5e984247fa62be611748245671e0727ba3185a6800a2dd67",
+      "bytes": 1796
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next-review/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-handoff.md",
+      "sha256": "961145cb72a43b0aa5a4f0df3e31158eb9f6381057cf943c1125a8423f7aa536",
+      "bytes": 605
+    }
+  ]
+}

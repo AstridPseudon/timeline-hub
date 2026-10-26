@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.d141ee.inverse38.protected-review-source-manifest.v1",
+  "reviewer_worktree": "/home/user/work/wt/agt-U2-D141ee-inverse38-decision-next-review",
+  "base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "author_commit": "2ffdfdb7d78e8a63d40d01b11c1afd460a1e0228",
+  "pristine_source_commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+  "runtime_source": {
+    "checkout": "/home/user/work/runtime",
+    "rev_parse": "95d98f038320d5d46bd679ac000ab3e15825c935"
+  },
+  "changed_files": [
+    "astrid/core/timeline/inverses.py"
+  ],
+  "expected_changed_files": [
+    "astrid/core/timeline/inverses.py"
+  ],
+  "outside_blob_conservation": {
+    "only_expected_file_changed": true,
+    "tests_changed": false,
+    "authenticated_undo_files_unchanged": true,
+    "runtime_files_changed": false
+  },
+  "files": {
+    "astrid/core/timeline/inverses.py": {
+      "current_sha256": "e67002be0ddf041cfc4e80ee23e727d2d4f0479c11fec07f387e349c657b530c",
+      "current_git_blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+      "pristine_git_blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+      "byte_equal_to_pristine": true
+    },
+    "tests/timeline/test_inverses.py": {
+      "current_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025",
+      "current_git_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "recorded_pristine_git_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "byte_equal_to_recorded_pristine": true
+    }
+  },
+  "reference_scope": {
+    "authority_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-owner-relay-1257.md",
+    "authority_sha256": "fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22",
+    "approved_scope_ids": 38,
+    "installer2": "HOLD/outside scope",
+    "writers15": "outside scope"
+  },
+  "production_caller_search": {
+    "external_production_callers_found": [],
+    "supported_public_use": "direct import of InverseRequest, plan_inverse, plan_inverses; exact approved tests exercise this surface",
+    "internal_call": "astrid/core/timeline/inverses.py:plan_inverses calls plan_inverse",
+    "authenticated_undo_route": "astrid/sdk/timeline/sync.py:422 -> commitTimeline -> astrid/sdk/timeline/commands.py:268 apply_inverse"
+  },
+  "targeted_xml_sha256": "fa97135f117aeef34445d73f4d94e09a6beff4bc8409ae70cddb5f6fd991fa80"
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.agt.u2.d141ee.installer2.review-per-id.v1",
+  "date": "2026-10-26",
+  "verdict": "PASS",
+  "owner_quote": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+  "ids": [
+    {
+      "id": "tests/test_installer_schema.py::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "date": "2026-10-26",
+      "owner_quote_verbatim": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+      "disposition": "OWNER_APPROVED_RETIREMENT",
+      "original_function_source_sha256": "a918238932392fdab15be4cd797092af1d14853e3060a9efab48dfb4d43c60d6",
+      "current_definition": "absent",
+      "replacement_controls": [
+        "tests/test_installer_schema.py::test_staging_verifies_the_local_schema_before_declaring_services",
+        "tests/test_installer_schema.py::test_local_schema_verification_rejects_a_changed_schema",
+        "astrid/installer/backend.py::Backend.stage -> _verify_local_timeline_schema -> Runtime-pinned local schema"
+      ],
+      "supported_caller": "astrid/installer/backend.py::Backend.stage verifies the local canonical schema before the ordinary installs, locked Remotion staging, and service declaration.",
+      "replacement_controls_passed": true,
+      "findings": []
+    },
+    {
+      "id": "tests/test_installer_schema.py::test_remotion_lock_pins_the_transitive_schema_package",
+      "date": "2026-10-26",
+      "owner_quote_verbatim": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+      "disposition": "OWNER_APPROVED_RETIREMENT",
+      "original_function_source_sha256": "c10befe3af82a12a9bb69c04a7fc919506ac6bef39341576c254b14c99540069",
+      "current_definition": "absent",
+      "replacement_controls": [
+        "tests/test_installer_schema.py::test_remotion_lock_pins_the_immutable_composition_public_entry",
+        "tests/test_installer_schema.py::test_d66_upstream_remotion_lock_pins_the_transitive_schema_package",
+        "astrid/installer/backend.py::Backend.install_remotion_dependencies using the locked local Composition 0.0.14 artifact"
+      ],
+      "supported_caller": "astrid/installer/backend.py::Backend.install_remotion_dependencies stages the locked local Composition dependency path.",
+      "replacement_controls_passed": true,
+      "findings": []
+    }
+  ],
+  "non_retired": "All other tests, helpers, assertions, product files, package locks, schemas, generated clients, provenance pins, and writer/contract surfaces remain unchanged."
+}

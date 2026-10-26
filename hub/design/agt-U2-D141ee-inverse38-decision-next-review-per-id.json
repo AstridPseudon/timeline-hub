@@ -1,0 +1,1146 @@
+{
+  "schema": "timeline.d141ee.inverse38.protected-review-per-id.v1",
+  "scope_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-inverse38-scope-1134-per-id.json",
+  "assigned_count": 38,
+  "actual_counts": {
+    "PASS": 38,
+    "FAIL": 0,
+    "ERROR": 0,
+    "SKIP": 0
+  },
+  "mapping_note": "Each approved original ID was passed unchanged as one pytest selector; current_replacement_selectors are recorded analogues only and receive no behavior credit.",
+  "cases": [
+    {
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "source_line": 344,
+      "group": "erased_payload_confidentiality",
+      "original_purpose": "Pass an ErasedPayload as clip.removed while the before projection contains secret.mp4; prove the planner refuses inversion rather than recovering erased content.",
+      "protected_assertions": [
+        "result.invertible is False",
+        "\"erased\" occurs in result.revert_reason.lower()"
+      ],
+      "input": "clip.removed + ErasedPayload(policy/admin/2026-05-21) + before clips=[c1, secret.mp4] + after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback; no mechanical clip.added payload is produced.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector: accepted command records do not carry ErasedPayload event objects or expose erased event content to apply_inverse.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The event schema/projection still has ErasedPayload, but no production caller reaches the deleted planner and no current authenticated inverse assertion is equivalent.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+        "current_selector": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "source_line": 328,
+      "group": "erased_payload_confidentiality",
+      "original_purpose": "Treat an erased payload attached to clip.added as non-invertible.",
+      "protected_assertions": [
+        "result.invertible is False",
+        "result.revert_kind == timeline.reverted",
+        "\"erased\" occurs in result.revert_reason.lower()"
+      ],
+      "input": "clip.added + ErasedPayload(policy/admin/2026-05-21), no projections",
+      "expected_old_behavior": "timeline.reverted fallback with an erased-payload reason.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector: authenticated timeline.inverse consumes persisted writes/bindings, not erased event payloads.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "No production caller or same-body replacement was found; event-schema retention prevents assuming retirement.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+        "current_selector": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.branched_from and return the audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.branched_from with branch_timeline_id and anchor_event_id; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback preserving before/after projections and event identity in the reason.",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_restore_inverse_redo_and_exact_retry_survive_runtime_restart"
+      ],
+      "current_replacement_status": "Analogous authenticated revision restoration only; not a branch-event inverse and not same assertions.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current restore/inverse operates on accepted command history; no branch-event planner caller was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.created and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.created with timeline_id/slug/name; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_structural_reservations_and_receipt_retry_survive_runtime_restart"
+      ],
+      "current_replacement_status": "Analogous accepted structural create/undo, not TimelineEvent inverse planning.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Runtime still emits timeline.created for timeline creation, but the supported undo path does not invoke plan_inverse.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.deleted and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.deleted with empty payload; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact selector: current Runtime archive/delete lifecycle is not a TimelineEvent inverse.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "No current authenticated inverse caller for timeline.deleted was found; no owner-approved retirement exists under D141ee.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.erased and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.erased with selector_summary/reason/affected_count; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact selector: accepted command history has no event-planner erased-event inverse.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Erasure is a retained event kind and confidentiality-sensitive; do not infer retirement from missing inverses.py.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.recovered and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.recovered with anchor_event_id/anchor_type/reason; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_restore_inverse_redo_and_exact_retry_survive_runtime_restart"
+      ],
+      "current_replacement_status": "Analogous authenticated timeline.restore/undo retry only; not same event behavior.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Runtime still has timeline.recovered lifecycle events, while current undo is accepted-record based.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse recursive blind inversion of timeline.reverted and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.reverted with target_event_id/reason; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings"
+      ],
+      "current_replacement_status": "Authenticated undo of accepted commit records only; not recursive event revert planning.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "No current caller submits or plans TimelineEvent.reverted; no retirement approval was located.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "source_line": 303,
+      "group": "non_reversible_event_kind",
+      "original_purpose": "Refuse blind inversion of timeline.tombstoned and return audit projections.",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "input": "timeline.tombstoned with reason; before clips=[c1]; after clips=[]",
+      "expected_old_behavior": "timeline.reverted fallback with both projections and event identity in the reason.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact selector: lifecycle tombstone is outside current accepted command inverse semantics.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The event kind remains in the schema but is not reached by current authenticated timeline.inverse.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+        "current_selector": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "source_line": 441,
+      "group": "planner_purity",
+      "original_purpose": "Prove repeated plan_inverse calls with the same TimelineEvent and before/after projections return equal inverse fields.",
+      "protected_assertions": [
+        "r1/r2 invertible equal",
+        "r1/r2 inverse_kind equal",
+        "r1/r2 inverse_payload equal"
+      ],
+      "input": "clip.added event, empty before, one-clip after, called twice",
+      "expected_old_behavior": "Deterministic pure planner output with no side effects.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No current selector: authenticated apply_inverse is state/history execution, not a pure event planner API.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Purity is an interface contract for the deleted planner; no production caller was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+        "current_selector": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "source_line": 458,
+      "group": "planner_purity",
+      "original_purpose": "Prove repeated plan_inverses calls over clip.added and track.added return equal lengths and inverse fields.",
+      "protected_assertions": [
+        "len(r1) == len(r2)",
+        "each invertible equal",
+        "each inverse_kind equal",
+        "each inverse_payload equal"
+      ],
+      "input": "clip.added and track.added event sequence, called twice",
+      "expected_old_behavior": "Deterministic pure sequence planner output.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No current selector: no production plan_inverses caller and no same-body replacement.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "This tests the old event-sequence API rather than current accepted command history.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+        "current_selector": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "source_line": 400,
+      "group": "planner_sequence",
+      "original_purpose": "Walk clip.added followed by timeline.deleted and retain one inverse result per event with mixed invertibility.",
+      "protected_assertions": [
+        "len(results) == 2",
+        "results[0].invertible is True",
+        "results[1].invertible is False"
+      ],
+      "input": "clip.added then timeline.deleted",
+      "expected_old_behavior": "One mechanical clip.removed plan followed by one timeline.reverted fallback.",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings"
+      ],
+      "current_replacement_status": "Current selector covers accepted command-record undo, not mixed event planner output.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "No production caller combines these event kinds through plan_inverses.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+        "current_selector": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "source_line": 373,
+      "group": "planner_sequence",
+      "original_purpose": "Walk clip.added, track.added, and pool.asset_added and return one inverse per event in original order.",
+      "protected_assertions": [
+        "len(results) == 3",
+        "all results invertible",
+        "inverse kinds are clip.removed/track.removed/pool.asset_removed in order"
+      ],
+      "input": "clip.added, track.added, pool.asset_added",
+      "expected_old_behavior": "Three ordered mechanical inverse plans.",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_track_create_inverse_redo_exact_opaque_row_and_identity_collision",
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings"
+      ],
+      "current_replacement_status": "Current selectors separately cover native track/accepted-record undo; no pool event-sequence equivalent.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The old sequence helper has no current production caller and pool.asset_added is not a current event inverse command.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+        "current_selector": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "source_line": 415,
+      "group": "planner_sequence",
+      "original_purpose": "Walk clip.added followed by an erased-payload clip.moved and keep the erased event non-invertible.",
+      "protected_assertions": [
+        "len(results) == 2",
+        "results[0].invertible is True",
+        "results[1].invertible is False"
+      ],
+      "input": "clip.added then clip.moved + ErasedPayload",
+      "expected_old_behavior": "Mechanical clip.removed followed by erased fallback.",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No current selector: accepted command history has no erased event payload sequence.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "This combines the deleted planner sequence API with confidentiality-sensitive erased input.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+        "current_selector": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "arrangement.replaced",
+      "expected_inverse_kind": "arrangement.replaced",
+      "original_purpose": "Restore the prior arrangement object from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == arrangement.replaced",
+        "result.inverse_payload is not None"
+      ],
+      "input": "arrangement {clips:[c2]} over before {arrangement:{clips:[c1]}}",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse",
+        "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+      ],
+      "current_replacement_status": "Generic doc.patch/accepted-record inverse analogue; no arrangement event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The current path can reverse authenticated payload changes, but it does not plan arrangement.replaced events.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "audio.bound",
+      "expected_inverse_kind": "audio.unbound",
+      "original_purpose": "Produce audio.unbound from the clip/audio binding payload.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == audio.unbound",
+        "result.inverse_payload is not None"
+      ],
+      "input": "audio.bound clip c1 to song.mp3; before clips empty; after contains asset_id",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_committed_move_then_parent_label_and_occurrence_params_reload_undo_redo",
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse"
+      ],
+      "current_replacement_status": "Authenticated scalar/doc.patch inverse analogue; no audio.bound event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current native media operations use clip/occurrence media commands and provider records, not audio event planner kinds.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "audio.unbound",
+      "expected_inverse_kind": "audio.bound",
+      "original_purpose": "Recover the prior audio asset binding from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == audio.bound",
+        "result.inverse_payload is not None"
+      ],
+      "input": "audio.unbound clip c1; before asset song.mp3; after asset empty",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_null_assignment_then_explicit_clear_accepted_reload_and_exact_inverse"
+      ],
+      "current_replacement_status": "Authenticated clear/inverse analogue; no audio.unbound event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The current inverse restores accepted writes, not a generated audio.bound event.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.added",
+      "expected_inverse_kind": "clip.removed",
+      "original_purpose": "Turn clip.added into clip.removed using the clip ID.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.removed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.added c1 visual/a1 on visual; before clips empty; after contains c1",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_clip_add_provider.py::test_first_clip_provider_closed_reload_reservations_inverse_redo",
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order"
+      ],
+      "current_replacement_status": "Current native clip.add/clip.delete and authenticated inverse analogue; not same event planner body.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "A live current clip creation/removal path exists, but no production caller needs this old event-kind planner result.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.annotated",
+      "expected_inverse_kind": "clip.annotated",
+      "original_purpose": "Restore the prior clip note from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.annotated",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.annotated c1 new note over before note old note",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_clip_scalar_provider.py::test_original_app_fields_provider_reload_exact_inverse_redo_and_disjoint_rebase",
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse"
+      ],
+      "current_replacement_status": "Generic scalar/doc.patch inverse analogue; no clip.annotated event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current scalar edits can preserve and undo authored fields, but no event planner caller was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.moved",
+      "expected_inverse_kind": "clip.moved",
+      "original_purpose": "Restore the clip's prior list index from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.moved",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.moved c1 to index 5; before/after each contain c1",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_exact_authored_move_inverse_redo",
+        "tests/sdk/test_timeline_clip_scalar_provider.py::test_original_app_fields_provider_reload_exact_inverse_redo_and_disjoint_rebase"
+      ],
+      "current_replacement_status": "Current clip.move and authenticated inverse cover live move undo with guards; not same event planner assertion.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "This is the strongest live analogue, but the old TimelineEvent planner has no current caller and no same-body migration.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.removed",
+      "expected_inverse_kind": "clip.added",
+      "original_purpose": "Recover the full removed clip row and its prior index from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.added",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.removed c1; before full visual/a1 row; after clips empty",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order",
+        "tests/sdk/test_timeline_clip_add_provider.py::test_first_clip_provider_closed_reload_reservations_inverse_redo"
+      ],
+      "current_replacement_status": "Current structural inverse restores authenticated rows/order; no event planner caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current live removal is semantic clip.delete/structural inverse, not clip.removed event planning.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.replaced",
+      "expected_inverse_kind": "clip.replaced",
+      "original_purpose": "Restore the prior asset_id from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.replaced",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.replaced c1 new_a1 over before old_a1",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_producer_insertion.py::test_assembled_insert_or_explicit_replace_exact_inverse_redo",
+        "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure"
+      ],
+      "current_replacement_status": "Current explicit media replacement/doc.patch inverse analogue; old event kind is not a current command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Replacement is live through current media/patch commands, but no event planner caller was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.retimed",
+      "expected_inverse_kind": "clip.retimed",
+      "original_purpose": "Restore prior clip start and duration from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.retimed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.retimed c1 to start 10/duration 5 over before start 0/duration 3",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_clip_trim_provider.py::test_trim_committed_reload_exact_inverse_redo_keeps_registry_and_child_pins",
+        "tests/sdk/test_timeline_clip_trim_provider.py::test_move_then_trim_is_an_ordinary_native_writer_and_undo_keeps_the_move"
+      ],
+      "current_replacement_status": "Current clip.trim/authenticated inverse is a live timing analogue; no clip.retimed event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current trim semantics use source windows/hold rather than old start/duration event payloads.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.swapped",
+      "expected_inverse_kind": "clip.swapped",
+      "original_purpose": "Emit the same clip pair swap as its mechanical inverse.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.swapped",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.swapped c1/c2; before order c1,c2; after order c2,c1",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse",
+        "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+      ],
+      "current_replacement_status": "Generic list/order patch inverse analogue; no current clip.swapped command or event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The old event planner exposes pair swap, while current list/order edits require authenticated doc.patch changes or semantic commands.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "clip.text_set",
+      "expected_inverse_kind": "clip.text_set",
+      "original_purpose": "Restore old clip text from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.text_set",
+        "result.inverse_payload is not None"
+      ],
+      "input": "clip.text_set c1 new text over before old text",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse",
+        "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+      ],
+      "current_replacement_status": "Generic authored-field inverse analogue; no clip.text_set event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current supported path can patch authored fields, but no event planner caller was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "effect.added",
+      "expected_inverse_kind": "effect.removed",
+      "original_purpose": "Remove the effect by clip_id/effect_id as the mechanical inverse.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.removed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "effect.added blur on c1; before empty; after c1 effects=[blur]",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings",
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse"
+      ],
+      "current_replacement_status": "Authenticated effect/write inverse analogue; no effect.added event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Effects remain authored JSON but have no dedicated current event inverse caller.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "effect.removed",
+      "expected_inverse_kind": "effect.added",
+      "original_purpose": "Recover removed effect parameters from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.added",
+        "result.inverse_payload is not None"
+      ],
+      "input": "effect.removed blur on c1; before params radius=5; after effects empty",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings",
+        "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+      ],
+      "current_replacement_status": "Authenticated effect/write inverse analogue; no event planner caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current inverse restores recorded field/item writes rather than constructing effect.added events.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "effect.tuned",
+      "expected_inverse_kind": "effect.tuned",
+      "original_purpose": "Restore an effect parameter's prior value from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.tuned",
+        "result.inverse_payload is not None"
+      ],
+      "input": "effect.tuned c1/blur/radius from 5 to 10",
+      "current_replacement_selectors": [
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_public_undo_redo_persists_v2_effect_bindings",
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_parent_param_binding_uses_main_effective_registry"
+      ],
+      "current_replacement_status": "Authenticated scalar inverse analogue; no effect.tuned event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The current path can undo authored params but does not invoke the old event planner.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "pool.asset_added",
+      "expected_inverse_kind": "pool.asset_removed",
+      "original_purpose": "Remove the newly added pool asset alias.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_removed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "pool entry img1.png score 0.0 added to empty pool",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector for the old pool.asset event; current source has shot.pool action but no same event planner test found.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "A current shot.pool operation exists, but the old pool event and its inverse payload are not proven equivalent.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "pool.asset_removed",
+      "expected_inverse_kind": "pool.asset_added",
+      "original_purpose": "Restore the removed pool asset alias and prior score.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_added",
+        "result.inverse_payload is not None"
+      ],
+      "input": "pool asset img1.png score 0.5 removed to empty entries",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector for pool asset event inversion; shot.pool is a different authenticated command shape.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Do not classify as C0-refused or retired without an owner decision on the retained pool event model.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "pool.asset_scored",
+      "expected_inverse_kind": "pool.asset_scored",
+      "original_purpose": "Restore the pool asset's prior score.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_scored",
+        "result.inverse_payload is not None"
+      ],
+      "input": "pool asset img1.png score 0.9 over prior score 0.5",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector; current shot.pool manages membership/binding, not score event planning.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The old score behavior has no proven current supported caller.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "theme.overridden",
+      "expected_inverse_kind": "theme.overridden",
+      "original_purpose": "Restore the prior theme override value.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == theme.overridden",
+        "result.inverse_payload is not None"
+      ],
+      "input": "theme.overridden color.primary from #fff to #000",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse",
+        "tests/sdk/test_d136_fps_upstream_compat.py::test_open_canvas_forms_follow_upstream_fallback_through_production_provider"
+      ],
+      "current_replacement_status": "Generic config-field inverse analogue; no theme.overridden event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current validation retains theme_overrides data, but no event planner caller or dedicated theme command was found.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "theme.set",
+      "expected_inverse_kind": "theme.set",
+      "original_purpose": "Restore the prior theme value.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == theme.set",
+        "result.inverse_payload is not None"
+      ],
+      "input": "theme.set dark over before theme light",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse"
+      ],
+      "current_replacement_status": "Generic config-field inverse analogue; no theme.set event command.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Theme fields remain in the authored payload, but old event planner behavior is not wired to current undo.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "timeline.config_replaced",
+      "expected_inverse_kind": "timeline.config_replaced",
+      "original_purpose": "Restore the prior complete timeline config object.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == timeline.config_replaced",
+        "result.inverse_payload is not None"
+      ],
+      "input": "timeline.config_replaced to empty tracks/clips over prior video track config",
+      "current_replacement_selectors": [
+        "tests/sdk/test_p1_doc_patch_provider.py::test_parent_vectors_use_runtime_commit_service_and_inverse",
+        "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+      ],
+      "current_replacement_status": "C0 root replacement/doc.patch inverse is guarded and provider-authenticated; no timeline.config_replaced event caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Current root patch semantics are not the deleted event planner's config replacement API.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "track.added",
+      "expected_inverse_kind": "track.removed",
+      "original_purpose": "Remove a newly added track by track_id.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == track.removed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "track.added t1 visual Track 1 over empty tracks",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_track_create_inverse_redo_exact_opaque_row_and_identity_collision",
+        "tests/sdk/test_timeline_commit_provider_runtime.py::test_structural_reservations_and_receipt_retry_survive_runtime_restart"
+      ],
+      "current_replacement_status": "Current track.create + authenticated structural inverse analogue; no event planner caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Live track creation/undo exists through current semantic commands, but not through track.added events.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "track.removed",
+      "expected_inverse_kind": "track.added",
+      "original_purpose": "Recover a removed track row and its prior label/kind from before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == track.added",
+        "result.inverse_payload is not None"
+      ],
+      "input": "track.removed t1; before audio/music row; after tracks empty",
+      "current_replacement_selectors": [
+        "tests/editing_conformance/test_parent_track_label.py::test_deleted_parent_track_can_be_recreated_without_stale_capture",
+        "tests/editing_conformance/test_recipe_m1_commands.py::test_track_create_inverse_redo_exact_opaque_row_and_identity_collision"
+      ],
+      "current_replacement_status": "Current structural track inverse analogue; no event planner caller.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "The current path can recreate authenticated track state, but old track.removed planning is not wired.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": true
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "transition.removed",
+      "expected_inverse_kind": "transition.set",
+      "original_purpose": "Recover the prior transition object from the left clip's before projection.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == transition.set",
+        "result.inverse_payload is not None"
+      ],
+      "input": "transition.removed c1/c2; before cross-fade duration 1; after no transition",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector: clip.set explicitly says transition authoring is outside v1 and native media code refuses unsupported transitions.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "This is a candidate C0/v1 refusal, but D141ee does not authorize calling it retired without owner decision; generic doc.patch equivalence is not proven here.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    },
+    {
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "source_line": 267,
+      "group": "reversible_event_kind",
+      "event_kind": "transition.set",
+      "expected_inverse_kind": "transition.removed",
+      "original_purpose": "Remove a newly set transition using its left/right clip IDs.",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == transition.removed",
+        "result.inverse_payload is not None"
+      ],
+      "input": "transition.set c1/c2 cross-fade duration 1; before clips empty; after c1 transition",
+      "current_replacement_selectors": [],
+      "current_replacement_status": "No exact current selector: current clip.set contract excludes transition authoring and native media path rejects it.",
+      "classification": "UNRESOLVED_OWNER_SCOPE",
+      "reason": "Possible C0-refused scope, but no owner-approved retirement or generic patch proof is present.",
+      "review_outcome": "PASS",
+      "selector_outcome": "PASS",
+      "protected_input_preserved": true,
+      "protected_assertions_preserved": true,
+      "original_to_current_mapping": {
+        "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+        "current_selector": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+        "current_result": "PASS",
+        "replacement_is_analogue_only": false
+      }
+    }
+  ]
+}

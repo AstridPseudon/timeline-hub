@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.agt.u2.d141ee.installer2.review-source-manifest.v1",
+  "reviewed_commit": "e8d1598458cc18a4fe34a75f1b9225ad01b3861e",
+  "parent": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "parent_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+  "reviewed_tree": "36685788803295ce10a6399099535d5b90a5bc79",
+  "changed_paths": ["tests/test_installer_schema.py"],
+  "file_blobs": {
+    "tests/test_installer_schema.py": {
+      "parent_blob": "cb05ed8e2a641e3fd9ea9331dd10b82ea43abbb5",
+      "reviewed_blob": "0d8632739be80bea240a91e9a5431d44ed3b7ffa",
+      "reviewed_sha256": "8db79801ac31df852f3ba69185669faeff9013fa2558fef63489a543c223b478",
+      "change": "exactly two top-level test definitions deleted"
+    }
+  },
+  "outside_blob_check": {
+    "git_diff_name_only_excluding_changed_file": [],
+    "product_files_changed": false,
+    "package_locks_changed": false,
+    "schema_or_generated_client_changed": false,
+    "writer_or_contract_changed": false,
+    "source_hashes": {
+      "astrid/installer/backend.py": "5663a4eda0d58a446cf0564897340df275e218a9d0fd3fba4f902b3d0d19b0d6",
+      "runtime.lock.json": "cc1661b12d9d0a4600c79adab4e2d962db455b5819dee78a0353787d8d4f2b82",
+      "remotion/package.json": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723",
+      "remotion/package-lock.json": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "astrid/core/timeline/schema/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    }
+  },
+  "approval_sha256": "2f844fc0fdd8286d1743bfed0a114f0ebe255411f735ec602b39da7d6a9b442a",
+  "scope_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-installer2-scope-1134-per-id.json"
+}

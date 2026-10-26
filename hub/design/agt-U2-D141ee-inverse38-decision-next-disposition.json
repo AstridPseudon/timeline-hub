@@ -1,0 +1,37 @@
+{
+  "task": "U2 D141ee inverse38",
+  "authority": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-owner-relay-1257.md",
+    "sha256": "fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22",
+    "verbatim_owner_file_received": false
+  },
+  "decision": "RESTORE_EXACT",
+  "completed": true,
+  "approved_count": 38,
+  "passed": 38,
+  "failed": 0,
+  "collection_errors": 0,
+  "skipped": 0,
+  "xfail": 0,
+  "test_changes": [],
+  "retirements": [],
+  "reference_changes": [],
+  "authenticated_sdk_undo_changes": [],
+  "checks": {
+    "pytest": 0,
+    "ruff": 1,
+    "mypy": 0,
+    "git_diff_check": 0
+  },
+  "findings": [
+    "Ruff BLE001 at inverses.py:770 is present in the exact pristine blob; no suppression or edit is authorized by this exact-restoration task.",
+    "Erased payload tests assert non-invertibility and the erased reason. The pristine implementation also returns caller-supplied before/after projections, including caller-supplied sensitive data. These tests do not prove projection redaction.",
+    "Pure planner purity tests prove repeatable inverse outputs for their supplied examples; they do not prove deep-copy isolation or every input is immutable.",
+    "No in-repository production writer calls this planner. D141ii explicitly approves direct public pure planning use; no production writer was invented.",
+    "The initial detached sampler launch did not persist under the terminal lifecycle; no initial disk-trace file was produced. Replaced it with a retained terminal session sampling real available bytes every five seconds before validation. The early interval has no trace; it is not reconstructed."
+  ],
+  "blocked": false,
+  "independent_review_required": true,
+  "installer2": "HOLD; untouched",
+  "writers15": "outside this task; untouched"
+}
