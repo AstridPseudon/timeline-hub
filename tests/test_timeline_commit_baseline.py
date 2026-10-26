@@ -18,6 +18,7 @@ from runtime_protocol.store import expired_command_result, expired_publication_r
 from runtime_protocol.timeline_commit_baseline import (
     baseline_install_plan,
     bootstrap_install_plan,
+    default_bootstrap_document,
     empty_bootstrap_document,
     verify_baseline,
 )
@@ -314,6 +315,20 @@ def test_empty_bootstrap_uses_authoritative_timeline_config_schema():
         "expected_head": None, "parent_revision_id": document["parent_revision"]["revision_id"],
         "parent_composition": payload,
     })
+
+
+def test_default_bootstrap_tracks_are_valid_and_detached():
+    document = default_bootstrap_document("project", "main", "initial-parent")
+    payload = document["parent_revision"]["payload"]
+    assert [(track["id"], track["label"], track["kind"]) for track in payload["config"]["tracks"]] == [
+        ("V1", "V1", "visual"), ("A1", "A1", "audio"),
+    ]
+    schema_path = Path(__file__).resolve().parents[1] / "contract" / "schemas" / "timeline-config.schema.json"
+    Draft7Validator(json.loads(schema_path.read_text())).validate(payload["config"])
+    from runtime_protocol.timeline_commit_port import digest
+    assert document["parent_revision"]["content_digest"] == digest(payload)
+    payload["config"]["tracks"][0]["label"] = "Changed"
+    assert default_bootstrap_document("project", "other", "other-parent")["parent_revision"]["payload"]["config"]["tracks"][0]["label"] == "V1"
 
 
 @pytest.mark.parametrize("field,value", [

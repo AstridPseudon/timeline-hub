@@ -414,13 +414,25 @@ def baseline_install_plan(connection, facts, *, read_object, existing_head=None)
 
 
 def empty_bootstrap_document(project_id, timeline_id, revision_id):
-    """Candidate for acceptance's constrained, renderer-free publication hook."""
+    """Legacy track-less candidate retained for bootstrap adoption."""
     _require(all(isinstance(value, str) and value for value in (project_id, timeline_id, revision_id)), "bootstrap_identity_missing")
     payload = {"config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": []}
     return {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
             "parent_revision": {"revision_id": revision_id, "payload": payload, "content_digest": digest(payload)},
             "shot_revisions": [], "internal_timeline_revisions": [],
             "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}}
+
+
+def default_bootstrap_document(project_id, timeline_id, revision_id):
+    """Initial editable document for every catalog timeline creator."""
+    document = empty_bootstrap_document(project_id, timeline_id, revision_id)
+    payload = document["parent_revision"]["payload"]
+    payload["config"]["tracks"] = [
+        {"id": "V1", "kind": "visual", "label": "V1", "scale": 1, "fit": "contain", "opacity": 1, "blendMode": "normal"},
+        {"id": "A1", "kind": "audio", "label": "A1", "scale": 1, "fit": "contain", "opacity": 1, "blendMode": "normal"},
+    ]
+    document["parent_revision"]["content_digest"] = digest(payload)
+    return document
 
 
 def bootstrap_install_plan(connection, project_id, timeline_id, *, read_object):
@@ -431,8 +443,12 @@ def bootstrap_install_plan(connection, project_id, timeline_id, *, read_object):
     """
     _require(connection.in_transaction, "installation_requires_transaction")
     facts = verify_baseline(connection, project_id, timeline_id, read_object=read_object)
-    expected = empty_bootstrap_document(project_id, timeline_id, facts["head"]["revision_id"])
-    _require(facts["canonical_document"] == expected and len(facts["entries"]) == 1, "bootstrap_requires_empty_initial_publication")
+    revision_id = facts["head"]["revision_id"]
+    # Existing empty publications remain adoptable; new ones have the exact
+    # canonical starter tracks. Arbitrary authored content is still refused.
+    expected = (default_bootstrap_document(project_id, timeline_id, revision_id),
+                empty_bootstrap_document(project_id, timeline_id, revision_id))
+    _require(facts["canonical_document"] in expected and len(facts["entries"]) == 1, "bootstrap_requires_empty_initial_publication")
     event = _row(connection, "SELECT payload_json FROM timeline_events WHERE id=?", (facts["entries"][0]["receipt"]["event_ids"][0],))
     _require(_json(event["payload_json"])["old_head"] is None, "bootstrap_has_previous_head")
     entry = facts["entries"][0]

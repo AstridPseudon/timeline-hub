@@ -6,7 +6,9 @@ import pytest
 from runtime_protocol.errors import ConflictError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
-from runtime_protocol.timeline_commit_baseline import empty_bootstrap_document, verify_baseline
+from runtime_protocol.timeline_commit_baseline import (
+    bootstrap_install_plan, default_bootstrap_document, empty_bootstrap_document, verify_baseline,
+)
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from test_timeline_commit_port import PreparedProvider
 
@@ -46,7 +48,12 @@ def _assert_empty_bootstrap(runtime, project, created):
     head = created["data"]
     facts = verify_baseline(runtime.store.conn, project, "main", read_object=runtime.cas.read)
     assert head["head_publication_id"] == facts["head"]["publication_id"]
-    assert facts["canonical_document"] == empty_bootstrap_document(project, "main", head["head_revision_id"])
+    assert facts["canonical_document"] == default_bootstrap_document(project, "main", head["head_revision_id"])
+    config = facts["canonical_document"]["parent_revision"]["payload"]["config"]
+    assert config["clips"] == []
+    assert [(track["id"], track["label"], track["kind"]) for track in config["tracks"]] == [
+        ("V1", "V1", "visual"), ("A1", "A1", "audio"),
+    ]
     history = runtime.list_timeline_commits(project, "main", authorize=lambda: None)
     assert [entry["intent"] for entry in history["items"]] == ["bootstrap"]
 
@@ -107,6 +114,21 @@ def test_unrelated_catalog_and_foreign_orphan_do_not_block_fresh_create(realm):
     _assert_empty_bootstrap(runtime, project, created)
     assert {table: [tuple(row) for row in runtime.store.conn.execute(f"SELECT * FROM {table}")] for table in tables} == before
     assert _tree(runtime.store.cas_root) == cas_before and _tree(runtime.store.staging_root) == staging_before
+
+
+def test_legacy_trackless_bootstrap_remains_adoptable(realm, monkeypatch):
+    runtime, project = realm
+    runtime.register_timeline_commit_provider(PreparedProvider())
+    # Produce the former bootstrap through the same publication transaction.
+    with monkeypatch.context() as legacy:
+        legacy.setattr("runtime_protocol.timeline_commit_baseline.default_bootstrap_document", empty_bootstrap_document)
+        created = runtime.create_timeline(project, "main", idempotency_key="create")
+    before, changes = _state(runtime), runtime.store.conn.total_changes
+    with runtime.store._transaction():
+        plan = bootstrap_install_plan(runtime.store.conn, project, "main", read_object=runtime.cas.read)
+    assert plan["head"]["revision_id"] == created["data"]["head_revision_id"]
+    assert plan["entries"][0]["intent"] == "bootstrap"
+    assert _state(runtime) == before and runtime.store.conn.total_changes == changes
 
 
 def test_no_provider_main_creation_and_original_replay_stay_valid(realm, monkeypatch):

@@ -2170,7 +2170,7 @@ class TimelineCommitStore:
 
     def bootstrap(self, project_id, timeline_id, *, authorize):
         from .cas import ContentAddressedStore
-        from .timeline_commit_baseline import bootstrap_install_plan, empty_bootstrap_document
+        from .timeline_commit_baseline import bootstrap_install_plan, default_bootstrap_document
 
         # May compose with main's atomic create transaction. This is the sole
         # exception to accept's outer-transaction requirement.
@@ -2183,7 +2183,7 @@ class TimelineCommitStore:
                 if current["publication_id"]:
                     return self.head(project_id, timeline_id)
                 reject("history_unavailable", diagnostic_reason="store_bootstrap_unpublished_head")
-            document = empty_bootstrap_document(project_id, timeline_id, "bootstrap-" + new_id())
+            document = default_bootstrap_document(project_id, timeline_id, "bootstrap-" + new_id())
             self._validate_closure(document)
             self._persist_closure(document)
             parent, timestamp = document["parent_revision"], now()
