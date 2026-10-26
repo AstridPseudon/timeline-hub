@@ -28,7 +28,7 @@ def canonical_bytes(v:Any)->bytes: return json.dumps(_nfc(v),ensure_ascii=False,
 def framed_hash(label:str,v:Any)->str:
     a,b=unicodedata.normalize("NFC",label).encode(),canonical_bytes(v); return hashlib.sha256(len(a).to_bytes(8,"big")+a+len(b).to_bytes(8,"big")+b).hexdigest()
 def _git(root:Path,*args:str,text:bool=True,optional:bool=False)->str|bytes:
-    try: r=subprocess.run(["git","-C",str(root),*args],capture_output=True,text=text,check=True,timeout=30)
+    try: r=subprocess.run(["git","-C",str(root),*args],stdin=subprocess.DEVNULL,capture_output=True,text=text,check=True,timeout=30)
     except (OSError,subprocess.CalledProcessError,subprocess.TimeoutExpired) as e:
         if optional:return "" if text else b""
         raise ReleaseIdentityError(f"git observation failed: {' '.join(args)}") from e
@@ -121,18 +121,18 @@ def _filesystem_snapshot(root:Path)->dict[str,tuple[str,str]]:
     return result
 def _remove_git_remotes(root:Path)->None:
     for remote in _gt(root,"remote",optional=True).splitlines():
-        if remote: subprocess.run(["git","-C",str(root),"remote","remove",remote],check=True,timeout=30)
+        if remote: subprocess.run(["git","-C",str(root),"remote","remove",remote],stdin=subprocess.DEVNULL,check=True,timeout=30)
 def _clean_git_checkout(source:Path,destination:Path,expected_oid:str,approved:Path|None=None)->None:
-    source_identity=git_identity(source); local_submodules=_submodule_sources(source,(approved or source.parent).resolve()); result=subprocess.run(["git","clone","--quiet","--no-hardlinks",str(source),str(destination)],capture_output=True,text=True,check=False,timeout=60)
+    source_identity=git_identity(source); local_submodules=_submodule_sources(source,(approved or source.parent).resolve()); result=subprocess.run(["git","clone","--quiet","--no-hardlinks",str(source),str(destination)],stdin=subprocess.DEVNULL,capture_output=True,text=True,check=False,timeout=60)
     if result.returncode!=0:raise ReleaseIdentityError("B11.1 could not create a clean pinned checkout")
     _remove_git_remotes(destination)
-    subprocess.run(["git","-C",str(destination),"checkout","--quiet","--detach","HEAD"],check=True,timeout=30)
+    subprocess.run(["git","-C",str(destination),"checkout","--quiet","--detach","HEAD"],stdin=subprocess.DEVNULL,check=True,timeout=30)
     if _gt(destination,"rev-parse","HEAD")!=expected_oid:raise ReleaseIdentityError("B11.1 clone is not pinned to integrated_oid")
-    for item in local_submodules:subprocess.run(["git","-C",str(destination),"config",f"submodule.{item['name']}.url",item["url"]],check=True,timeout=30)
-    if local_submodules and subprocess.run(["git","-C",str(destination),"-c","protocol.file.allow=always","submodule","update","--init","--recursive"],check=False,timeout=120).returncode!=0:raise ReleaseIdentityError("B11.1 local submodule initialization failed")
+    for item in local_submodules:subprocess.run(["git","-C",str(destination),"config",f"submodule.{item['name']}.url",item["url"]],stdin=subprocess.DEVNULL,check=True,timeout=30)
+    if local_submodules and subprocess.run(["git","-C",str(destination),"-c","protocol.file.allow=always","submodule","update","--init","--recursive"],stdin=subprocess.DEVNULL,check=False,timeout=120).returncode!=0:raise ReleaseIdentityError("B11.1 local submodule initialization failed")
     for item in source_identity["submodules"]:
         clone_sub=destination/item["path"]
-        if item["head_ref"]!=NONE and clone_sub.is_dir():subprocess.run(["git","-C",str(clone_sub),"checkout","--quiet",item["head_ref"]],check=True,timeout=30)
+        if item["head_ref"]!=NONE and clone_sub.is_dir():subprocess.run(["git","-C",str(clone_sub),"checkout","--quiet",item["head_ref"]],stdin=subprocess.DEVNULL,check=True,timeout=30)
         if clone_sub.is_dir(): _remove_git_remotes(clone_sub)
     clone_identity=git_identity(destination)
     projection=lambda values:[{k:x[k] for k in ("path","oid","head_ref","detached","dirty_paths")} for x in values]
@@ -162,9 +162,9 @@ def run_b11_1(component_rows:Sequence[Mapping[str,Any]],generator_definitions:Se
                 component_path=None
                 if component_manifest_bytes is not None:
                     component_path=inp/"component-manifest.json";component_path.write_bytes(component_manifest_bytes);input_digests[component_path]=hashlib.sha256(component_manifest_bytes).hexdigest()
-                checkout_snapshot=_filesystem_snapshot(checkout);exe=str(d.get("interpreter_path") or d.get("executable") or "python3");argv=[exe,str(ep_run),"--contract",str(cp),"--schema-manifest",str(sp)]
+                checkout_snapshot=_filesystem_snapshot(checkout);exe=str(d.get("interpreter_path") or d.get("executable") or "python3");argv=[exe,"-X","utf8",str(ep_run),"--contract",str(cp),"--schema-manifest",str(sp)]
                 if component_path is not None:argv.extend(["--component-manifest",str(component_path)])
-                argv.extend(["--output-root",str(stage)]);before=_dirty(checkout);res=subprocess.run(_sandbox_command(argv,staging=stage),cwd=str(checkout),capture_output=True,check=False,timeout=300,env={"PATH":os.environ.get("PATH","") ,"PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1"});after=_dirty(checkout)
+                argv.extend(["--output-root",str(stage)]);before=_dirty(checkout);res=subprocess.run(_sandbox_command(argv,staging=stage),cwd=str(checkout),stdin=subprocess.DEVNULL,capture_output=True,check=False,timeout=300,env={"PATH":os.environ.get("PATH","") ,"PYTHONDONTWRITEBYTECODE":"1","PYTHONNOUSERSITE":"1"});after=_dirty(checkout)
                 if _filesystem_snapshot(source_checkout)!=source_snapshot or _dirty(source_checkout)!=source_status:raise ReleaseIdentityError("B11.1 generator mutated the reviewed source checkout")
                 if _filesystem_snapshot(checkout)!=checkout_snapshot or before!=after:raise ReleaseIdentityError("B11.1 generator changed its clean pinned checkout")
                 for path,digest in input_digests.items():
@@ -172,7 +172,7 @@ def run_b11_1(component_rows:Sequence[Mapping[str,Any]],generator_definitions:Se
                 if res.returncode!=0:raise ReleaseIdentityError(f"B11.1 generator failed: {gid}")
                 inv=_directory_inventory(stage)
                 if not inv:raise ReleaseIdentityError("B11.1 generator produced no output")
-                stable_argv=["<interpreter>","<component-checkout>/"+str(d["entrypoint_path"]),"--contract","<contract-input>","--schema-manifest","<schema-manifest-input>"]
+                stable_argv=["<interpreter>","-X","utf8","<component-checkout>/"+str(d["entrypoint_path"]),"--contract","<contract-input>","--schema-manifest","<schema-manifest-input>"]
                 if component_path is not None:stable_argv.extend(["--component-manifest","<component-manifest-input>"])
                 stable_argv.extend(["--output-root","<staging-output-root>"]);invs.append(inv);receipts.append({"schema_version":1,"artifact_kind":"generator-run-receipt","generator_id":gid,"run_ordinal":n,"argv":stable_argv,"argv_sha256":framed_hash("astrid_runtime.generator-run-argv.v1",stable_argv),"output_rows":inv,"exit_code":0})
             if invs[0]!=invs[1]:raise ReleaseIdentityError("B11.1 generator runs are not byte-identical")

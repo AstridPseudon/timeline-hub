@@ -668,6 +668,26 @@ class _Job:
         if not kernel.AssignProcessToJobObject(self.handle, int(process._handle)):
             raise ctypes.WinError(ctypes.get_last_error())
 
+    def active_processes(self):
+        from ctypes import wintypes
+        class Accounting(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_int64) for name in (
+                "TotalUserTime", "TotalKernelTime", "ThisPeriodTotalUserTime", "ThisPeriodTotalKernelTime",
+            )] + [(name, ctypes.c_uint32) for name in (
+                "TotalPageFaultCount", "TotalProcesses", "ActiveProcesses", "TotalTerminatedProcesses",
+            )]
+        kernel = _kernel()
+        kernel.QueryInformationJobObject.argtypes = [
+            wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel.QueryInformationJobObject.restype = wintypes.BOOL
+        accounting = Accounting()
+        if not kernel.QueryInformationJobObject(
+            self.handle, 1, ctypes.byref(accounting), ctypes.sizeof(accounting), None,
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return accounting.ActiveProcesses
+
     def close(self):
         if getattr(self, "handle", None):
             _kernel().CloseHandle(self.handle); self.handle = None
@@ -720,6 +740,8 @@ def spawn_tree(argv, *, detached=False, hidden=False, **kwargs):
     Detached Windows daemons and retained Workers inherit their Job handles,
     preserving custody across an orderly owner exit.
     """
+    if kwargs.get("stdin") is None:
+        kwargs["stdin"] = subprocess.DEVNULL
     if sys.platform != "win32":
         kwargs.setdefault("start_new_session", True)
         return subprocess.Popen(argv, **kwargs)
@@ -792,7 +814,7 @@ def _posix_group_holds_only_zombies(pgid):
     An empty listing, a failed `ps`, or any non-zombie row returns False.
     """
     try:
-        listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="],
+        listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="], stdin=subprocess.DEVNULL,
                                  capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.SubprocessError):
         return False
@@ -854,6 +876,19 @@ def tree_exited(process):
         with getattr(process, "_waitpid_lock", nullcontext()):
             return _darwin_tree_exited(process)
     return process.poll() is not None
+
+
+def tree_drained(process):
+    """Confirm a Windows process tree once its retained Job has no members."""
+    job = getattr(process, "_runtime_job", None)
+    if job is None:
+        raise ProcessLookupError("process has no Windows Job Object")
+    if not job.handle:
+        return True
+    if job.active_processes():
+        return False
+    job.close()
+    return True
 
 
 def _darwin_tree_exited(process):
@@ -1276,14 +1311,10 @@ def signal_process(expected, signum):
             # CTRL_BREAK is cooperative and addressed to the isolated group;
             # force termination always uses the identity-checked kernel handle.
             if signum != KILL:
-                try:
-                    os.kill(pid, signal.CTRL_BREAK_EVENT)
+                kernel.GenerateConsoleCtrlEvent.argtypes = [wintypes.DWORD, wintypes.DWORD]
+                kernel.GenerateConsoleCtrlEvent.restype = wintypes.BOOL
+                if kernel.GenerateConsoleCtrlEvent(signal.CTRL_BREAK_EVENT, pid):
                     return
-                except OSError:
-                    # Services and console-less processes have no console
-                    # control channel. In that case fail closed to the
-                    # identity-checked process handle below.
-                    pass
             kernel.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
             if not kernel.TerminateProcess(handle, 1):
                 raise ctypes.WinError(ctypes.get_last_error())

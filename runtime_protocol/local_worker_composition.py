@@ -260,7 +260,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     environment["VIRTUAL_ENV"] = str(env_root)
                     environment["PATH"] = str(runtime_platform.venv_python(env_root).parent) + os.pathsep + environment.get("PATH", "")
                 worker = runtime_platform.spawn_tree(
-                    [str(executable), "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
+                    [str(executable), "-X", "utf8", "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
                     cwd=str(Path(self.config["support_root"])),
                     env=environment,
                     stdin=subprocess.DEVNULL,
@@ -490,7 +490,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     ledger_root=scope / "relay-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch,
                     timeout=min(self.timeout_seconds, 60.0))
-                argv = [sys.executable, "-I", "-m", "runtime_protocol.local_execution_supervisor", "--prepared-control-fd", str(child.fileno())]
+                argv = [sys.executable, "-X", "utf8", "-I", "-m", "runtime_protocol.local_execution_supervisor", "--prepared-control-fd", str(child.fileno())]
                 environment = {k: v for k, v in os.environ.items() if k not in {"PYTHONPATH", "PYTHONHOME"} and not k.startswith("ASTRID_RUNTIME_CUSTODY_")}
                 environment.update({k: v for k, v in self.environment.items() if k in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}})
                 environment.update(broker.child_environment(argv, start_new_session=True))
@@ -988,6 +988,7 @@ def _listening_socket_owner(pid: int, endpoint: str) -> tuple[int, str]:
     expected = (ipaddress.ip_address(parsed.hostname or ""), int(parsed.port or 0))
     result = subprocess.run(
         ["lsof", "-a", "-p", str(int(pid)), "-n", "-P", "-iTCP", "-sTCP:LISTEN", "-Fpn"],
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         check=False,
@@ -1286,10 +1287,10 @@ def _pack_inventory(value):
     if not root.is_absolute() or root.is_symlink() or not root.is_dir() or any(p.is_symlink() for p in root.parents):
         raise ConflictError("additional pack root is not an exact admitted directory")
     rows = {}
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).parts):
         if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}: continue
         if path.is_symlink(): raise ConflictError("additional pack inventory contains an alias")
-        if path.is_file(): rows[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if path.is_file(): rows[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
     if not rows: raise ConflictError("additional pack inventory is empty")
     return rows
 
@@ -1302,7 +1303,7 @@ def _verify_installed_host_records(profile, config):
     records = {}
     for package in ("astrid", "astrid-runtime"):
         distribution = importlib.metadata.distribution(package)
-        if Path(distribution.locate_file("")).resolve() != source:
+        if Path(distribution.locate_file("")).resolve() != source.resolve():
             raise ConflictError("host-only release is outside current installed root")
         record = distribution.read_text("RECORD")
         if not record: raise ConflictError("host-only installed release has no RECORD")

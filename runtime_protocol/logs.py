@@ -5,21 +5,17 @@ from __future__ import annotations
 import io
 import sys
 import threading
-import time
 from pathlib import Path
 
 from . import platform
 
 
 def _replace(source, destination):
-    for attempt in range(6):
-        try:
-            source.replace(destination)
-            return
-        except PermissionError as exc:
-            if sys.platform != "win32" or getattr(exc, "winerror", None) not in {32, 33} or attempt == 5:
-                raise
-            time.sleep(0.01 * (2 ** attempt))
+    def operation():
+        return source.replace(destination)
+    if sys.platform == "win32":
+        return platform._retry_windows_sharing_violation(operation)
+    return operation()
 
 
 class RotatingLog(io.TextIOBase):

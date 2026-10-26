@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import importlib.metadata
 from pathlib import Path
 import platform
 import signal
 import socket
 import subprocess
 import sys
+from pathlib import PureWindowsPath
 from types import SimpleNamespace
 
 import pytest
@@ -23,6 +25,7 @@ from runtime_protocol.local_worker_composition import (
     OSProcessInspector,
     _PreparedWorker,
     _listening_socket_owner,
+    _pack_inventory,
     load_local_worker_composition,
 )
 
@@ -33,6 +36,59 @@ def _digest(char: str) -> str:
 
 def _content_digest(value: bytes) -> str:
     return "sha256:" + hashlib.sha256(value).hexdigest()
+
+
+def _simulate_windows_path_semantics(monkeypatch):
+    path_type = type(Path())
+    relative_to = path_type.relative_to
+
+    def windows_relative_to(path, other, *args, **kwargs):
+        relative = relative_to(path, other, *args, **kwargs)
+        return PureWindowsPath(*relative.parts)
+
+    monkeypatch.setattr(path_type, "relative_to", windows_relative_to)
+    monkeypatch.setattr(path_type, "parts", property(lambda path: PureWindowsPath(path.as_posix()).parts))
+    monkeypatch.setattr(
+        path_type,
+        "__lt__",
+        lambda path, other: tuple(part.casefold() for part in path.parts)
+        < tuple(part.casefold() for part in other.parts),
+    )
+
+
+def test_installed_host_root_comparison_resolves_both_sides(tmp_path, monkeypatch):
+    from runtime_protocol import local_worker_composition as composition
+    from runtime_protocol.verified_host_launch import raw_digest
+
+    selected = tmp_path / "site-packages"
+    selected.mkdir()
+    alias = tmp_path / "site-alias"
+    alias.symlink_to(selected, target_is_directory=True)
+    record = "file.py,,\n"
+    distribution = SimpleNamespace(
+        locate_file=lambda _relative: selected,
+        read_text=lambda _name: record,
+    )
+    monkeypatch.setattr(importlib.metadata, "distribution", lambda _package: distribution)
+    records = {name: hashlib.sha256(record.encode()).hexdigest() for name in ("astrid", "astrid-runtime")}
+    profile = SimpleNamespace(release_digest="sha256:" + raw_digest(records))
+
+    assert composition._verify_installed_host_records(profile, {"source_checkout": str(alias)}) == records
+
+
+def test_pack_inventory_uses_portable_nested_keys(tmp_path, monkeypatch):
+    root = tmp_path / "packs"
+    for relative, content in {"Z/effect.py": b"z", "a/x.py": b"x", "a.txt": b"a"}.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    inventory = _pack_inventory(root)
+    assert list(inventory) == ["Z/effect.py", "a/x.py", "a.txt"]
+    assert all("\\" not in key for key in inventory)
+    _simulate_windows_path_semantics(monkeypatch)
+    inventory = _pack_inventory(root)
+    assert list(inventory) == ["Z/effect.py", "a/x.py", "a.txt"]
+    assert all("\\" not in key for key in inventory)
 
 
 def _profile_document(tmp_path: Path) -> tuple[dict[str, object], Path, Path, Path]:
@@ -336,6 +392,73 @@ def test_cross_process_abort_is_bounded_and_reaps_after_kill(tmp_path, monkeypat
     assert worker.poll() == -signal.SIGKILL
     assert handle.closed is True
     assert preparer._active is None
+
+
+def test_prepared_worker_launch_uses_utf8_interpreter_flag(tmp_path, monkeypatch):
+    profile, _handle = _inspector_fixture(tmp_path)
+    preparer = CrossProcessWorkerPreparer(
+        profile=profile,
+        config={"support_root": str(tmp_path)},
+        environment={},
+    )
+    captured = []
+
+    def stop_after_capture(argv, **_kwargs):
+        captured.append(list(argv))
+        raise RuntimeError("stop after launch capture")
+
+    monkeypatch.setattr(runtime_platform, "spawn_tree", stop_after_capture)
+    with pytest.raises(RuntimeError, match="stop after launch capture"):
+        preparer.prepare(profile, operation_id="operation", channel_id="channel")
+
+    assert captured[0][:4] == [str(profile.worker_executable), "-X", "utf8", "-m"]
+
+
+def test_prepared_relay_and_custody_launches_keep_utf8_flags(tmp_path, monkeypatch):
+    from dataclasses import replace
+    import runtime_protocol.local_worker_composition as composition
+    import runtime_protocol.local_execution_supervisor as supervisor
+    import astrid_runtime.custody_broker as custody
+
+    profile, _handle = _inspector_fixture(tmp_path)
+    profile = replace(profile, engine_launch={"session_root": str(tmp_path / "session")})
+    preparer = CrossProcessWorkerPreparer(
+        profile=profile,
+        config={"runtime_instance_id": "epoch"},
+        environment={},
+    )
+    captured = {}
+    monkeypatch.setattr(composition, "_selected_profile_payload", lambda _profile: {})
+    monkeypatch.setattr(composition, "_actual_executable", lambda _pid: profile.worker_executable)
+    monkeypatch.setattr(composition, "_file_digest", lambda _path: profile.worker_artifact_digest)
+    monkeypatch.setattr(supervisor, "host_prepare_request", lambda **_kwargs: {})
+    monkeypatch.setattr(custody, "default_process_identity", lambda _pid: {"pid": 1, "birth_id": "owner"})
+
+    class Broker:
+        def __init__(self, **_kwargs):
+            pass
+
+        def child_environment(self, argv, **_kwargs):
+            captured["target"] = list(argv)
+            return {}
+
+        def abort_before_spawn(self):
+            pass
+
+    monkeypatch.setattr(custody, "RoleBoundCustodyBroker", Broker)
+
+    def stop_after_capture(argv, **_kwargs):
+        captured["wrapper"] = list(argv)
+        raise RuntimeError("stop after wrapper capture")
+
+    monkeypatch.setattr(runtime_platform, "spawn_tree", stop_after_capture)
+    with pytest.raises(RuntimeError, match="stop after wrapper capture"):
+        preparer.prepare(profile, operation_id="operation", channel_id="channel")
+
+    assert captured["target"][:6] == [
+        sys.executable, "-X", "utf8", "-I", "-m", "runtime_protocol.local_execution_supervisor",
+    ]
+    assert captured["wrapper"][:4] == [sys.executable, "-X", "utf8", "-I"]
 
 
 def test_cancel_current_is_observable_while_spawn_handoff_is_locked(tmp_path):

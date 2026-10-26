@@ -5280,7 +5280,7 @@ class RuntimeService:
             kind = "audio" if normalized.startswith("audio/") else "video"
             probe = subprocess.run(["ffprobe", *common, "-select_streams", "a:0" if kind == "audio" else "v:0", "-show_entries",
                 "stream=codec_type,codec_name,width,height,duration:format=duration", "-of", "json", str(staged.path)],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30, check=True)
+                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30, check=True)
             info = json.loads(probe.stdout)
             streams = [item for item in info.get("streams", []) if item.get("codec_type") == kind]
             if not streams or any(int(item.get("width", 0)) * int(item.get("height", 0)) > 67108864 for item in streams):
@@ -5288,7 +5288,7 @@ class RuntimeService:
             # Decode at least one frame/sample, beyond a merely recognizable header.
             decoded = subprocess.run(["ffmpeg", *common, "-threads", "1", "-i", str(staged.path),
                 "-map", "0:a:0" if kind == "audio" else "0:v:0", "-frames:a" if kind == "audio" else "-frames:v", "1",
-                "-threads", "1", "-f", "framehash", "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30, check=True)
+                "-threads", "1", "-f", "framehash", "-"], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=30, check=True)
             if not any(line and not line.startswith(b"#") for line in decoded.stdout.splitlines()):
                 raise ValidationError("media import has no decodable media frames")
         except (OSError, ValueError, subprocess.SubprocessError) as exc:

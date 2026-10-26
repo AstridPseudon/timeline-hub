@@ -3,9 +3,13 @@
 The portability CI job runs the platform boundary, native process custody,
 foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu and macOS.
 The `windows-realm-publication` job runs native Windows realm publication,
-console-signal, and foreground cleanup checks. The portability job invokes its
-selected tests with `-m ""` because pytest's default configuration excludes
-integration-marked tests.
+console-signal, foreground cleanup, owner identity, and M1 security checks,
+including `tests/test_m1_review.py` and
+`tests/test_runtime_cli_serve_cleanup.py`. Astrid also runs an exploratory
+Windows install and task-host journey. The portability-lifecycle matrix remains
+Ubuntu/macOS; eight native Windows dir-fd tests are not wired into a Windows job
+and still need qualification. The selected tests use `-m ""` because pytest's
+default configuration excludes integration-marked tests.
 
 Run the same host-specific subset locally after installing the test and
 generated-client packages:

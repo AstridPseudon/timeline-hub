@@ -4,7 +4,7 @@ import copy
 import hashlib
 import importlib.util
 import json
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import pickle
 import sys
 import subprocess
@@ -24,6 +24,108 @@ def _metadata_binding(tmp_path):
     inventory=gate.installed_inventory(root);identity=gate.raw_digest(inventory)
     rows=gate._distribution_metadata([{'path':str(root),'inventory_digest':identity}],{identity:inventory})
     return root,metadata,rows
+
+
+def _simulate_windows_path_semantics(monkeypatch):
+    path_type = type(Path())
+    relative_to = path_type.relative_to
+
+    def windows_relative_to(path, other, *args, **kwargs):
+        relative = relative_to(path, other, *args, **kwargs)
+        return PureWindowsPath(*relative.parts)
+
+    monkeypatch.setattr(path_type, "relative_to", windows_relative_to)
+    monkeypatch.setattr(path_type, "parts", property(lambda path: PureWindowsPath(path.as_posix()).parts))
+    monkeypatch.setattr(
+        path_type,
+        "__lt__",
+        lambda path, other: tuple(part.casefold() for part in path.parts)
+        < tuple(part.casefold() for part in other.parts),
+    )
+
+
+@pytest.mark.parametrize("validator", ["_inventory", "_local_inventory"])
+def test_inventory_verifiers_accept_posix_keys_with_windows_native_paths(tmp_path, monkeypatch, validator):
+    root = tmp_path / "installed"
+    target = root / "Pkg" / "Mixed.py"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"module")
+    key = PureWindowsPath(r"C:\\installed\\Pkg\\Mixed.py").relative_to(
+        PureWindowsPath(r"C:\\installed")
+    ).as_posix()
+    value = {"root": str(root), "files": {key: hashlib.sha256(b"module").hexdigest()}}
+    monkeypatch.setattr(gate, "Path", PureWindowsPath)
+    monkeypatch.setattr(gate, "_absolute", lambda _value: root)
+    if validator == "_inventory":
+        monkeypatch.setattr(gate, "read_source", lambda *_args: b"module")
+    else:
+        monkeypatch.setattr(gate, "_local_read", lambda *_args: b"module")
+        monkeypatch.setattr(gate, "installed_inventory", lambda _root: value)
+    assert getattr(gate, validator)(value) == value
+
+    for invalid in ("C:/escape.py", "../outside.py"):
+        nonportable = {"root": str(root), "files": {invalid: hashlib.sha256(b"module").hexdigest()}}
+        with pytest.raises(gate.HostLaunchError, match="unsupported file representation"):
+            getattr(gate, validator)(nonportable)
+
+
+def test_source_checkout_closure_pins_component_sorted_posix_rows(tmp_path, monkeypatch):
+    root = tmp_path / "checkout"
+    component = root / "fixture"
+    for relative, content in {
+        "Z.py": b"upperZ", "a.py": b"lowerA", "a/x.txt": b"x", "a.txt": b"dot",
+        "MiXeD/Child.py": b"mixed",
+    }.items():
+        target = component / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    monkeypatch.setattr(gate, "_COMPONENTS", {"fixture": "fixture"})
+    measured = gate.source_checkout_closure(root)
+    assert measured["digest"] == "c076c538c6959e13c556034aad26deeece61390dda01399617821c6a2f2bd483"
+    _simulate_windows_path_semantics(monkeypatch)
+    assert gate.source_checkout_closure(root)["digest"] == "c076c538c6959e13c556034aad26deeece61390dda01399617821c6a2f2bd483"
+
+
+def test_installed_inventory_emits_forward_slash_keys_and_pinned_files(tmp_path, monkeypatch):
+    root = tmp_path / "site"
+    for relative, content in {"Z.py": b"upper", "pkg/Mixed.py": b"nested"}.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    inventory = gate.installed_inventory(root)
+    assert list(inventory["files"]) == ["Z.py", "pkg/Mixed.py"]
+    assert all("\\" not in key for key in inventory["files"])
+    assert gate.raw_digest(inventory["files"]) == "66b348169f7506bd80122d6ae00e4fcd496b858bfaa675fa81fd883af979bff3"
+    # Exercise the real producer under Windows path ordering and separators.
+    _simulate_windows_path_semantics(monkeypatch)
+    inventory = gate.installed_inventory(root)
+    assert list(inventory["files"]) == ["Z.py", "pkg/Mixed.py"]
+    assert gate.raw_digest(inventory["files"]) == "66b348169f7506bd80122d6ae00e4fcd496b858bfaa675fa81fd883af979bff3"
+
+
+def test_runtime_relative_keys_use_posix_spelling_for_windows_paths(monkeypatch):
+    root = PureWindowsPath(r"C:\runtime")
+    interpreter = root / "Scripts" / "python.exe"
+    monkeypatch.setattr(gate, "Path", lambda _value: root)
+    monkeypatch.setattr(PureWindowsPath, "resolve", lambda self, strict=False: self, raising=False)
+    assert gate.HostLaunchVerifier()._runtime_relative(interpreter, {"root": str(root)}) == "Scripts/python.exe"
+    assert gate.TrustedLocalHostLaunchVerifier.__new__(gate.TrustedLocalHostLaunchVerifier)._runtime_relative(
+        interpreter, {"root": str(root)}
+    ) == "Scripts/python.exe"
+
+
+def test_mapped_distribution_uses_native_windows_path_checks_and_posix_keys(monkeypatch):
+    root = PureWindowsPath(r"C:\site-packages")
+    pins = {"astrid-7.dist-info/METADATA": hashlib.sha256(b"metadata").hexdigest(),
+            "astrid/data.txt": hashlib.sha256(b"data").hexdigest()}
+    monkeypatch.setattr(gate, "Path", PureWindowsPath)
+    monkeypatch.setattr(gate, "_local_read", lambda _path, pin: b"metadata" if pin == pins["astrid-7.dist-info/METADATA"] else b"data")
+    distribution = gate._MappedDistribution(root, "astrid-7.dist-info", pins)
+    assert distribution.read_text("METADATA") == "metadata"
+    assert distribution.locate_file("astrid/data.txt").as_posix() == "C:/site-packages/astrid/data.txt"
+    for invalid in ("C:/escape.txt", "../outside.txt"):
+        with pytest.raises(gate.HostLaunchError):
+            distribution.locate_file(invalid)
 
 
 @pytest.mark.integration
@@ -183,7 +285,7 @@ def fixture_authority(tmp_path):
 def test_private_retained_result_selects_exact_isolated_launch_once(tmp_path):
     f=fixture_authority(tmp_path);proof=f.verifier.verify(**f.args)
     argv,payload=f.verifier.claim(proof,**f.args,binding_fd=31)
-    assert argv==[f.args['host_argv'][0],'-I','-S',str(f.launcher),'--binding-fd','31']
+    assert argv==[f.args['host_argv'][0],'-X','utf8','-I','-S',str(f.launcher),'--binding-fd','31']
     body=json.loads(payload);assert body['host_argv'][-2:]==['--source-closure-digest',f.record['host_protocol']['source_closure_digest']]
     assert body['mapping'][gate.HOST_MODULE]['path']==str(f.source/'astrid/core/execution/generic_host.py')
     assert body['mapping']['astrid.core.execution']['package']
@@ -366,7 +468,7 @@ def test_trusted_local_explicit_constructor_keeps_default_closed_and_record_priv
     f.record['source_components'][0]['sha256'] = '0' * 64
     proof = f.verifier.verify(**f.args)
     argv, data = f.verifier.claim(proof, **f.args, binding_fd=9)
-    assert argv[1:3] == ['-I', '-S']
+    assert argv[1:5] == ['-X', 'utf8', '-I', '-S']
     assert json.loads(data)['mode'] == gate.TRUSTED_LOCAL_MODE
     with pytest.raises(gate.HostLaunchError): gate.HostLaunchVerifier().verify(**f.args)
     with pytest.raises(TypeError): pickle.dumps(proof)

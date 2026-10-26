@@ -9,6 +9,7 @@ import pytest
 
 from astrid_runtime import cli
 from astrid_runtime.bootstrap import BootstrapError, BootstrapResult, DoorSettings
+from astrid_runtime.io import atomic_write_json
 from astrid_runtime.paths import RuntimePaths
 
 
@@ -25,11 +26,10 @@ def _result(*, realm="realm-a", instance="instance-a", endpoint=ENDPOINT, origin
 
 
 def _discovery(paths, result, *, instance="instance-a", realm="realm-a"):
-    paths.discovery_path.parent.mkdir(parents=True, exist_ok=True)
-    paths.discovery_path.write_text(json.dumps({
+    atomic_write_json(paths.discovery_path, {
         "pid": 42, "process_birth_id": "birth-a", "runtime_instance_id": instance,
         "active_realm": realm, "door_endpoint": result.door_endpoint, "door_origin": result.door_origin,
-    }))
+    })
 
 
 class _Boundary:

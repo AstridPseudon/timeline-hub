@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+import ctypes
 import os
 from pathlib import Path
 import signal
@@ -19,6 +21,92 @@ from tests.lanes import (
 )
 
 from runtime_protocol import platform
+
+
+@pytest.mark.parametrize("stdin", ["omitted", None])
+def test_spawn_tree_defaults_missing_stdin_to_devnull(monkeypatch, stdin):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    kwargs = {} if stdin == "omitted" else {"stdin": stdin}
+    platform.spawn_tree(["child"], **kwargs)
+    assert calls[0]["stdin"] == subprocess.DEVNULL
+
+
+@pytest.mark.parametrize("stdin", [subprocess.PIPE, subprocess.DEVNULL])
+def test_spawn_tree_preserves_explicit_stdin(monkeypatch, stdin):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    platform.spawn_tree(["child"], stdin=stdin)
+    assert calls[0]["stdin"] == stdin
+
+
+@pytest.mark.parametrize("stdin", ["omitted", None, subprocess.PIPE])
+def test_spawn_tree_windows_dispatch_applies_or_preserves_stdin(monkeypatch, stdin):
+    calls = []
+    process = object()
+
+    def spawn(_argv, **kwargs):
+        calls.append(kwargs)
+        return process
+
+    monkeypatch.setattr(platform.sys, "platform", "win32")
+    monkeypatch.setattr(platform, "_spawn_windows_tree", spawn)
+    kwargs = {} if stdin == "omitted" else {"stdin": stdin}
+    assert platform.spawn_tree(["child"], **kwargs) is process
+    expected = subprocess.DEVNULL if stdin in ("omitted", None) else stdin
+    assert calls[0]["stdin"] == expected
+
+
+def test_spawn_tree_preserves_explicit_stdin_file_and_descriptor(monkeypatch, tmp_path):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    path = tmp_path / "stdin.txt"
+    path.write_text("input")
+    with path.open("rb") as stream:
+        platform.spawn_tree(["child"], stdin=stream)
+        assert calls[-1]["stdin"] is stream
+        platform.spawn_tree(["child"], stdin=stream.fileno())
+        assert calls[-1]["stdin"] == stream.fileno()
+
+
+def test_runtime_direct_subprocess_runs_do_not_inherit_stdin():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1] / "runtime_protocol"
+    unsafe = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "run" and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "subprocess"):
+                continue
+            keywords = {item.arg: item.value for item in node.keywords if item.arg is not None}
+            if "input" in keywords:
+                continue
+            stdin = keywords.get("stdin")
+            is_none = isinstance(stdin, ast.Constant) and stdin.value is None
+            if stdin is None or is_none:
+                unsafe.append(f"{path.relative_to(root)}:{node.lineno}")
+    assert unsafe == []
 
 
 def test_windows_durable_replace_retries_only_transient_sharing_failures(monkeypatch):
@@ -420,3 +508,57 @@ def test_eperm_from_group_with_a_live_member_is_a_real_failure(monkeypatch):
     finally:
         monkeypatch.undo()
         platform.stop_tree(process, grace=.1)
+
+
+@pytest.mark.parametrize("active_processes, drained", [(0, True), (1, False)])
+def test_windows_tree_drained_queries_job_and_closes_only_when_empty(monkeypatch, active_processes, drained):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    calls = []
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    def query(handle, info_class, info, size, _returned):
+        calls.append((handle, info_class, size))
+        fields = ctypes.cast(info, ctypes.POINTER(ctypes.c_uint32))
+        fields[10] = active_processes
+        return 1
+
+    kernel = SimpleNamespace(
+        QueryInformationJobObject=Function(query),
+        CloseHandle=Function(lambda handle: calls.append(("close", handle)) or 1),
+    )
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    job = object.__new__(platform._Job)
+    job.handle = 77
+    process = SimpleNamespace(_runtime_job=job)
+
+    assert platform.tree_drained(process) is drained
+    assert calls[0] == (77, 1, 48)
+    assert (("close", 77) in calls) is drained
+    assert job.handle == (None if drained else 77)
+
+
+def test_windows_tree_drained_requires_a_job(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    with pytest.raises(ProcessLookupError, match="no Windows Job Object"):
+        platform.tree_drained(SimpleNamespace())
+
+
+def test_windows_tree_drained_accepts_retained_closed_job_without_query(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    job = SimpleNamespace(handle=None, active_processes=lambda: pytest.fail("queried a closed Job"))
+
+    assert platform.tree_drained(SimpleNamespace(_runtime_job=job)) is True
+
+
+def test_windows_tree_drained_preserves_query_errors(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    job = SimpleNamespace(handle=77, active_processes=lambda: (_ for _ in ()).throw(OSError("query failed")))
+
+    with pytest.raises(OSError, match="query failed"):
+        platform.tree_drained(SimpleNamespace(_runtime_job=job))
+    assert job.handle == 77

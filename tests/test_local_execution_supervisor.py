@@ -706,7 +706,7 @@ def test_g1b_native_session_fake_launch_preserves_v1_or_consumes_closed_gate(tmp
         assert broker_calls==['reserve','seal','bind-actor']
         session._verify_launch_host()
         if requested:
-            assert launched[0][1:3]==['-I','-S']
+            assert launched[0][1:5]==['-X','utf8','-I','-S']
             assert session.bridge._host_current_roles_version==supervisor.CURRENT_ROLES_VERSION
             assert session.binding_file.closed
         else:

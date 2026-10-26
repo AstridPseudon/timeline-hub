@@ -16,7 +16,7 @@ so Astrid's dependencies stay in the agent environment.
 
 Independent neutral runtime and protocol repository for the Astrid Stage 1 beta and later Astrid App integration.
 
-**Windows is supported as a beta.** Native Windows has been exercised by testers; CI runs on Linux and macOS only.
+**Windows support is in beta.** Native Windows has been exercised by testers; CI runs on Linux, macOS and Windows. See [portability testing](docs/runtime-portability-testing.md) for coverage and limitations.
 
 The repository contains the first independently runnable neutral-runtime slice. It is dependency-free Python and can be exercised without any product checkout or hosted service. The daemon owns one realm's canonical SQLite database, append-only SHA-256 CAS, task/event ledger, credentials, and loopback HTTP boundary. Realm creation is explicit; startup and doctor never migrate or repair an existing root.
 

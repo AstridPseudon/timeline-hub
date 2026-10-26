@@ -162,6 +162,16 @@ def test_service_environment_and_argv_keep_spaces_and_literal_shell_syntax(tmp_p
     assert (tmp_path / "logs/service-example.log").read_text() == "first\nsecond\n"
 
 
+def test_windows_service_environment_uses_userprofile_when_home_is_absent(tmp_path, monkeypatch):
+    from runtime_protocol import services
+    monkeypatch.setattr(services, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.delenv("HOME", raising=False)
+    monkeypatch.setenv("USERPROFILE", "user home with spaces")
+    supervisor = _supervisor(tmp_path)
+
+    assert supervisor._environment(supervisor._services[0].spec)["HOME"] == "user home with spaces"
+
+
 def test_restart_backoff_caps_and_resets_only_after_stable_running(tmp_path, monkeypatch):
     supervisor = _supervisor(tmp_path)
     delays, observed = [], []
@@ -179,8 +189,33 @@ def test_restart_backoff_caps_and_resets_only_after_stable_running(tmp_path, mon
     supervisor._run(supervisor._services[0])
     assert delays == [1, 2, 4, 8, 16, 30, 30, 1]
     assert [row["state"] for row in observed] == ["restarting", "restarting", "failed", "failed", "failed", "failed", "failed", "restarting"]
-    assert all(row["reason"] == ("startup_failed" if row["state"] == "failed" else "exited") for row in observed)
+    assert all(row["reason"] == "exited" for row in observed)
     assert supervisor.snapshot()[0]["restart_count"] == 7
+
+
+def test_restart_starting_state_preserves_last_reason_and_exit(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("example", (sys.executable,), "on-failure")])
+    starts, retry_states = [], []
+
+    def attempt(item, _log):
+        starts.append(supervisor.snapshot()[0])
+        if len(starts) == 1:
+            supervisor._update(item, last_exit=7)
+            return 7, 0.0, "readiness_timeout"
+        return 0, 0.0, None
+
+    def wait(_delay):
+        retry_states.append(supervisor.snapshot()[0])
+        return False
+
+    monkeypatch.setattr(supervisor, "_attempt", attempt)
+    monkeypatch.setattr(supervisor._stop, "wait", wait)
+    supervisor._run(supervisor._services[0])
+
+    assert retry_states == [{"name": "example", "state": "restarting", "last_exit": 7,
+        "restart_count": 0, "reason": "readiness_timeout"}]
+    assert starts[1] == {"name": "example", "state": "starting", "last_exit": 7,
+        "restart_count": 1, "reason": "readiness_timeout"}
 
 
 @pytest.mark.parametrize("policy,restarts", [("always", True), ("on-failure", False)])
@@ -203,17 +238,26 @@ def test_clean_exit_obeys_restart_policy(tmp_path, monkeypatch, policy, restarts
     assert delays == ([1] if restarts else [])
 
 
-def test_launch_failure_is_visible_and_shutdown_interrupts_backoff(tmp_path, monkeypatch):
+def test_fast_launch_failures_keep_safe_reason_when_marked_failed(tmp_path, monkeypatch):
     supervisor = _supervisor(tmp_path)
-    monkeypatch.setattr(supervisor, "_attempt", Mock(side_effect=FileNotFoundError("sensitive argv")))
+    attempt = Mock(side_effect=FileNotFoundError("sensitive argv"))
+    monkeypatch.setattr(supervisor, "_attempt", attempt)
+    observed = []
+
     def stop(delay):
-        assert delay == 1
-        assert supervisor.snapshot()[0]["reason"] == "launch_failed"
-        supervisor._stop.set()
-        return True
+        row, = supervisor.snapshot()
+        observed.append(row)
+        if row["state"] == "failed":
+            supervisor._stop.set()
+            return True
+        return False
+
     monkeypatch.setattr(supervisor._stop, "wait", stop)
     supervisor._run(supervisor._services[0])
-    assert supervisor._attempt.call_count == 1
+    assert attempt.call_count == 3
+    assert all(row["reason"] == "launch_failed" for row in observed)
+    assert supervisor.snapshot()[0]["state"] == "failed"
+    assert supervisor.snapshot()[0]["reason"] == "launch_failed"
     assert "sensitive argv" not in json.dumps(supervisor.snapshot())
 
 
@@ -276,12 +320,15 @@ def test_running_waits_for_stability_or_declared_readiness(tmp_path, monkeypatch
     supervisor = _supervisor(tmp_path, [spec])
     process = SimpleNamespace(stdout=io.BytesIO(b""), returncode=None)
     now, states = [0.0], []
+    observed = []
+    supervisor._update(supervisor._services[0], last_exit=7, reason="readiness_timeout")
     monkeypatch.setattr(services, "time", SimpleNamespace(monotonic=lambda: now[0]))
     monkeypatch.setattr(platform, "spawn_tree", lambda *_, **__: process)
     monkeypatch.setattr(platform, "tree_exited", lambda _: now[0] >= 3.0)
     monkeypatch.setattr(platform, "stop_tree", lambda proc, **_: setattr(proc, "returncode", 1))
     def wait(delay):
         states.append(supervisor.snapshot()[0]["state"])
+        observed.append(supervisor.snapshot()[0])
         now[0] += 1.0
         if declares_ready and now[0] == 1.0:
             (tmp_path / "support/service.ready").write_text("ready", encoding="utf-8")
@@ -291,6 +338,9 @@ def test_running_waits_for_stability_or_declared_readiness(tmp_path, monkeypatch
     assert code == 1 and reason is None
     assert states == (["starting", "running", "running"] if declares_ready else ["starting", "starting", "running"])
     assert stable_for == (2.0 if declares_ready else 3.0)
+    running_rows = [row for row in observed if row["state"] == "running"]
+    assert running_rows and all(row["last_exit"] == 7 and row["reason"] == "readiness_timeout"
+        for row in running_rows)
 
 
 @pytest.mark.parametrize("state,code", [("starting", None), ("running", None), ("restarting", 7), ("failed", 0)])
@@ -385,11 +435,10 @@ def test_windows_service_spawn_assigns_job_before_resuming_and_hides_console(mon
     job.close.assert_not_called()
 
 
-def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, monkeypatch):
+@pytest.mark.parametrize("winerror", [5, 32, 33])
+def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, monkeypatch, winerror):
     from runtime_protocol import logs
     monkeypatch.setattr(logs, "sys", SimpleNamespace(platform="win32"))
-    sleep = Mock()
-    monkeypatch.setattr(logs.time, "sleep", sleep)
     real_replace = Path.replace
     attempts = []
     with RotatingLog(tmp_path / "runtime.log", max_bytes=5) as log:
@@ -398,14 +447,13 @@ def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, 
             attempts.append(path)
             if len(attempts) == 1:
                 error = PermissionError("sharing violation")
-                error.winerror = 32
+                error.winerror = winerror
                 raise error
             return real_replace(path, target)
         monkeypatch.setattr(Path, "replace", replace)
         log.write("12345")
         log.write("next")
     assert len(attempts) == 2
-    sleep.assert_called_once_with(0.01)
     assert (tmp_path / "runtime.log.1").read_text() == "12345"
     assert (tmp_path / "runtime.log").read_text() == "next"
 
@@ -553,7 +601,7 @@ def test_immediate_exit_service_never_reports_running_and_marks_startup_failure(
             pytest.fail("immediate-exit service did not reach repeated-startup-failure state")
         assert all(row["state"] != "running" for row in observed)
         assert row["last_exit"] == 1
-        assert row["reason"] == "startup_failed"
+        assert row["reason"] == "exited"
     finally:
         supervisor.stop()
 

@@ -59,6 +59,39 @@ def test_runtime_receipt_cannot_be_written_inside_component(tmp_path: Path) -> N
     with pytest.raises(ReleaseIdentityError, match="inside"):
         create_pre_live_identity({"NEUTRAL-RUNTIME": repo}, output=repo / "receipt.json")
 
+
+def test_runtime_generator_uses_utf8_mode_and_records_the_launch_flag(tmp_path: Path, monkeypatch) -> None:
+    import base64
+    import json
+    import runtime_protocol.release_identity as identity
+
+    repo = _git_repo(tmp_path)
+    (repo / "generator.py").write_text(
+        "import argparse, pathlib, sys; assert sys.flags.utf8_mode == 1; "
+        "p=argparse.ArgumentParser(); "
+        "p.add_argument('--contract'); p.add_argument('--schema-manifest'); "
+        "p.add_argument('--output-root'); a=p.parse_args(); "
+        "pathlib.Path(a.output_root, 'out').write_bytes(b'ok')\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "generator.py"], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-qm", "add generator"], check=True)
+    monkeypatch.setattr(identity, "_sandbox_command", lambda argv, *, staging: argv)
+
+    rows = run_b11_1(
+        [resolve_component("NEUTRAL-RUNTIME", repo)],
+        [{"generator_id": "GEN", "component_id": "NEUTRAL-RUNTIME", "checkout": str(repo),
+          "entrypoint_path": "generator.py"}],
+        contract_bytes=b"{}", schema_manifest_bytes=b"{}", output_root=tmp_path,
+    )
+
+    observation = rows[0]["generator_observation_rows"][0]
+    assert observation["argv_formula_id"] == "GENERATOR-ARGV-V1"
+    receipt = json.loads(
+        base64.b64decode(observation["run_receipt_evidence_rows"][0]["canonical_content_base64"])
+    )
+    assert receipt["argv"][1:3] == ["-X", "utf8"]
+
 def test_runtime_cli_consumes_exact_seed_directory_manifest(tmp_path: Path) -> None:
     repo = _git_repo(tmp_path); seed_dir = tmp_path / "seed-bytes"; seed_dir.mkdir(); manifest = {}
     from runtime_protocol.release_identity import PRELIVE_SEEDS

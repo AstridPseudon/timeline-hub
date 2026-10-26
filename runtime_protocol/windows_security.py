@@ -82,20 +82,28 @@ def _unsafe(reason):
     raise PermissionError(errno.EACCES, "unsafe Windows owner/DACL: " + reason)
 
 
-def _user_sid():
+def _token_sid(information_class):
     adv, kernel = _api()
     token = w.HANDLE()
     _check(adv.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token)))
     try:
         size = w.DWORD()
-        adv.GetTokenInformation(token, 1, None, 0, ctypes.byref(size))
+        adv.GetTokenInformation(token, information_class, None, 0, ctypes.byref(size))
         buffer = ctypes.create_string_buffer(size.value)
-        _check(adv.GetTokenInformation(token, 1, buffer, size, ctypes.byref(size)))
+        _check(adv.GetTokenInformation(token, information_class, buffer, size, ctypes.byref(size)))
         sid = ctypes.cast(buffer, ctypes.POINTER(P))[0]
         _check(adv.IsValidSid(sid))
         return ctypes.create_string_buffer(ctypes.string_at(sid, adv.GetLengthSid(sid)))
     finally:
         kernel.CloseHandle(token)
+
+
+def _user_sid():
+    return _token_sid(1)  # TokenUser
+
+
+def _default_owner_sid():
+    return _token_sid(4)  # TokenOwner
 
 
 def _sid_text(sid):
@@ -162,8 +170,10 @@ def _validate_handle(handle, *, owner_only=False):
     if result:
         raise ctypes.WinError(result)
     try:
-        if not owner or not adv.IsValidSid(owner) or not adv.EqualSid(owner, _user_sid()):
-            _unsafe("owner is not the current token user")
+        user_sid = _user_sid()
+        if (not owner or not adv.IsValidSid(owner) or
+                not (adv.EqualSid(owner, user_sid) or adv.EqualSid(owner, _default_owner_sid()))):
+            _unsafe("owner is not the current token user or default owner")
         if owner_only:
             return
         control, revision = w.WORD(), w.DWORD()
@@ -171,7 +181,7 @@ def _validate_handle(handle, *, owner_only=False):
         if not control.value & 0x1000 or not dacl or not adv.IsValidAcl(dacl):
             _unsafe("a protected, non-NULL DACL is required")
         acl = ctypes.cast(dacl, ctypes.POINTER(_Acl)).contents
-        owner_access = False
+        user_access = False
         for index in range(acl.count):
             ace = P()
             _check(adv.GetAce(dacl, index, ctypes.byref(ace)))
@@ -183,12 +193,12 @@ def _validate_handle(handle, *, owner_only=False):
             if not adv.IsValidSid(sid) or 8 + adv.GetLengthSid(sid) > size:
                 _unsafe("invalid ACE SID")
             trustee = _sid_text(sid)
-            if trustee not in {_sid_text(owner), "S-1-5-18"}:
-                _unsafe("DACL grants access outside owner and SYSTEM")
-            if adv.EqualSid(sid, owner) and not header[1] & 8:
-                owner_access = True
-        if not owner_access:
-            _unsafe("DACL has no owner access ACE")
+            if trustee not in {_sid_text(user_sid), "S-1-5-18"}:
+                _unsafe("DACL grants access outside current token user and SYSTEM")
+            if adv.EqualSid(sid, user_sid) and not header[1] & 8:
+                user_access = True
+        if not user_access:
+            _unsafe("DACL has no current token user access ACE")
     finally:
         kernel.LocalFree(descriptor)
 

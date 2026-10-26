@@ -26,6 +26,20 @@ from .errors import ConflictError
 _pins = weakref.WeakKeyDictionary()
 _pins_lock = threading.Lock()
 IDENTITY_FIELDS = ("pid", "uid", "birth_id")
+_SINGLE_INTERPRETER_FLAGS = ("-I", "-S", "-u", "-B", "-s", "-E")
+
+
+def _consume_interpreter_prefix(arguments):
+    flags = []
+    arguments = list(arguments)
+    while arguments:
+        if arguments[0] in _SINGLE_INTERPRETER_FLAGS:
+            flags.append(arguments.pop(0))
+        elif arguments[:2] == ["-X", "utf8"]:
+            flags.extend((arguments.pop(0), arguments.pop(0)))
+        else:
+            break
+    return flags, arguments
 
 
 def identity(value):
@@ -331,11 +345,7 @@ class InheritedHandles:
             kwargs.update(env=environment, close_fds=True)
             # Strict workers install their network guard before site.main;
             # the authenticated bootstrap must also suppress automatic site.
-            flags = []
-            for argument in argv[1:]:
-                if argument not in ("-I", "-S", "-u", "-B", "-s", "-E"):
-                    break
-                flags.append(argument)
+            flags, _arguments = _consume_interpreter_prefix(argv[1:])
             self.argv = [executable, *flags, str(Path(__file__).with_name("windows_worker_bootstrap.py"))]
         except BaseException:
             self.close()
@@ -401,13 +411,13 @@ def enter_module(argv):
     # A same-process module transition cannot switch Python installations.
     if os.path.normcase(os.path.realpath(argv[0])) != os.path.normcase(os.path.realpath(sys.executable)):
         raise ConflictError("Windows custody target requires the selected Python interpreter")
-    arguments = argv[1:]
-    while arguments and arguments[0] in ("-I", "-S", "-u", "-B", "-s", "-E"):
-        arguments = arguments[1:]
+    flags, arguments = _consume_interpreter_prefix(argv[1:])
+    if "-X" in flags and sys.flags.utf8_mode != 1:
+        raise ConflictError("Windows custody UTF-8 flag was not active in the selected interpreter")
     if len(arguments) < 2 or arguments[0] not in ("-m", "-c"):
         raise ConflictError("Windows worker launch requires a Python module or command")
-    if "-I" not in argv[1:argv.index(arguments[0])]:
-        roots = [] if "-E" in argv[1:argv.index(arguments[0])] else os.environ.get("PYTHONPATH", "").split(os.pathsep)
+    if "-I" not in flags:
+        roots = [] if "-E" in flags else os.environ.get("PYTHONPATH", "").split(os.pathsep)
         sys.path[:0] = [os.getcwd(), *[root for root in roots if root and root not in sys.path]]
     if arguments[0] == "-c":
         sys.argv = ["-c", *arguments[2:]]
