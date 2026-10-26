@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-26T06:22:58.675283+00:00",
+  "files": [
+    {
+      "path": "design/rt-P5-D141-final-Agent-tree-correction-0619-correction.json",
+      "bytes": 6041,
+      "sha256": "4f8326ae2b4d32cbe0fffd33bcf2986e300af16554a97bde8700ce165c39a83b"
+    },
+    {
+      "path": "design/rt-P5-D141-final-Agent-tree-correction-0619-p5-applicability-corrected.json",
+      "bytes": 8585,
+      "sha256": "688d08bc899c3c1583fb2010d0f8ff2251e2c593b24d62d2a703856d90a26ce6"
+    },
+    {
+      "path": "design/rt-P5-D141-final-Agent-tree-correction-0619-validation.md",
+      "bytes": 3509,
+      "sha256": "a794f2aabedffec825d369631b2c3c7117a88ba5f0f720633b02e69e736f6af9"
+    },
+    {
+      "path": "design/rt-P5-D141-final-Agent-tree-correction-0619-handoff.md",
+      "bytes": 1583,
+      "sha256": "e41b3a2ac99b12fafd52533792e7428861f94c3fc43480fea8a54e22bac37739"
+    }
+  ],
+  "original_unchanged": true,
+  "only_pointer_changed": true
+}

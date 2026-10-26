@@ -1,0 +1,125 @@
+{
+  "schema": "timeline.p5.d141.immutable-correction-receipt.v1",
+  "immutable": true,
+  "task": "P5 D141 immutable Agent tree correction",
+  "correction": {
+    "time_utc": "2026-10-26T06:19:50Z",
+    "disposition": "finite_fact_correction_only; original_preserved; production_caller_unchanged",
+    "json_pointer": "/actual_integrated_heads/agent/tree",
+    "original_value": "92a3ffdb5a8bf476f10bfa1bbda3e2856fb9938c",
+    "corrected_value": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "value_basis": "authenticated from local Agent Git object 8585ed9c0404d0187b2ce70242d25114a32747c2^{tree}; not guessed",
+    "exact_single_pointer_change": true
+  },
+  "original": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-p5-applicability.json",
+    "sha256": "a46bcb2d7e566b01c54da297968a2236eb81d6598f5ac85bf18c55e70d096389",
+    "bytes": 8585,
+    "metadata_identity": {
+      "schema": "timeline.f.d141.p5-applicability-final.v1",
+      "read_only": true,
+      "verdict": "P5_PRIOR_RECEIPT_APPLICABLE_PATH_INDEPENDENTLY_CONFIRMED",
+      "scope": "Applicability of the retained 38-case P5 receipt to the exact integrated Runtime and Agent heads; no P5 rerun, no new body receipt, no automatic retarget."
+    },
+    "original_38_case_identity": {
+      "request_id": "runtime-d141-p5-cut-1026013331-6934",
+      "status": "pass",
+      "summary": "38 passed in 31.02s",
+      "runtime_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "agent_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "xml_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-d141-p5-cut-1026013331-6934/d66/d141-p5-cut.xml",
+      "xml_sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688",
+      "case_set_sha256": "024cd7c2dd2f90c142727b1825bf5d6ee3ee72384547f6cfc925267586c5075c",
+      "counts": {
+        "unique": 38,
+        "passed": 38,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "xfail": 0
+      }
+    }
+  },
+  "corrected_derivative": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-final-Agent-tree-correction-0619/evidence/p5-applicability-corrected.json",
+    "sha256": "688d08bc899c3c1583fb2010d0f8ff2251e2c593b24d62d2a703856d90a26ce6",
+    "bytes": 8585,
+    "name": "p5-applicability-corrected.json",
+    "preserves_original_field_values_except_pointer": true
+  },
+  "git_proof": {
+    "repository": "/home/user/work/agent",
+    "ref": "tl/integration",
+    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "head_object_verified": true,
+    "head_tree_from_git": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "tree_object_type": "tree",
+    "expected_tree_from_controlling_records": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "head_parents": [
+      "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "5d202569f3af3852476d182ff49683787bb1e881"
+    ],
+    "matches_handoff_and_git": true,
+    "matches_source_manifest": false,
+    "source_manifest_recorded_agent_tree": "92a3ffdb5a8bf476f10bfa1bbda3e2856fb9938c"
+  },
+  "final_integrated_applicability_identity": {
+    "runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": [
+        "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
+        "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+      ]
+    },
+    "agent": {
+      "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "parents": [
+        "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "5d202569f3af3852476d182ff49683787bb1e881"
+      ]
+    },
+    "distinction": "This final 95d/8585 changed-path applicability metadata is distinct from the original 6934 38/38 proof at Runtime 6a/Agent 28."
+  },
+  "controlling_sources": {
+    "plan": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    },
+    "c0": {
+      "path": "/home/user/timeline-hub/hub/design/commit-v2.md",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    },
+    "source_independent_0513_handoff": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-handoff.md",
+      "sha256": "53604c56e3d3083960de700c79160b22e186401732edad734ae1083b320e67cb"
+    },
+    "source_manifest_0513": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-postREG-custody-review-0513-source-manifest.json",
+      "sha256": "9eb45d29e3c51ea639835b7aec3526fb4b5532b68e6cd618de37c967a424e5f2"
+    }
+  },
+  "preservation_and_scope": {
+    "original_sha256_rechecked": true,
+    "original_path_unchanged": true,
+    "original_38_case_not_retargeted": true,
+    "same_request_xml_case_set_and_source_paths": true,
+    "only_copied_tree_string_corrected": true,
+    "source_independent_0513_pass_remains_controlling": true,
+    "new_p5_receipt": false,
+    "new_semantic_review": false,
+    "collection_import_provider_body_changes": false,
+    "production_caller_uses_original_p5_path": true,
+    "unrelated_findings": "finite stale source-manifest tree text reported; not expanded or modified"
+  },
+  "controlling_source_comparison": {
+    "handoff_agent_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "source_manifest_agent_tree": "92a3ffdb5a8bf476f10bfa1bbda3e2856fb9938c",
+    "git_agent_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "derivative_agent_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "handoff_git_derivative_agree": true,
+    "source_manifest_discrepancy": "finite stale copied metadata outside the authorized applicability pointer",
+    "source_manifest_modified": false
+  }
+}

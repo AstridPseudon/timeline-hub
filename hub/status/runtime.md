@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T06:21:57Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+<!-- main | 2026-10-26T06:27:06Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
 # runtime board, 2026-10-26T06:21Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -52,14 +52,16 @@
 
 | D141u hosted REG | Qualify Agent publication caller repair | Luna | Actual0510 cut2FAIL pristine2PASS | merging | Author0606; reviewer0611 PASS | One-line timeline_document caller repair; tests exact. Independent0611 PASS:2 original nodes PASS2.972s on finalRuntime95d; D71/D141r static custody PASS. Agent HOME queue request0616 sent. | tl/rt-F-D141u-hosted-REG-0606 |
 
-| P5 metadata fact | Correct copied final Agent tree | Luna | App0556 exact typo | doing | rt-P5-D141-final-Agent-tree-correction-0619 | Immutable correction only; original0513 applicability and actual38case receipt remain scoped and unchanged. | Evidence only |
+| P5 metadata fact | Retain immutable Agent tree correction | Luna | Exact Git and original hashes | merged | Metadata0619; publication0624 | Corrected688d08bc differs only one tree pointer; originala46b unchanged. Source-manifest same typo disclosed in receipt. No new body/review. | Evidence only |
+
+| F-final witness note | Disclose reformatted App disk witness | Luna | Main06:08 and review0600 PASS | doing | rt-F-D141-derived-witness-note-install-0625 | Exact disclosure in two canonical notes; preserve all prior text and outside files. Controlled render only; no build. | Evidence only |
 
 
 Runtime REG closed: final95d98 source and integrated15 PASS independently qualified0513. P5 original38 PASS and final95d98/8585 path applicability PASS0513; original immutable receipts retain their scopes.
 D141s input wait cleared: actual App4de54 HOME and authentic final0545 builder packet received; bindingSHA6e9a9a1c, commands55da9058/f20ab22c. Literal worker0601 queued at4661424128 bytes; mechanical same74 then CAS by06:30Z.
 Blockers: Safety — D130, old venvs, agent-remotion and sealed1811 remain held. D141t KEEP protects sealed originals and adjacent archives as found. No hub-repack owner approval. Refused smoke dropped.
-Next ready: publish immutable P5 fact correction0619 when terminal. Main lead remote transport for qualified U4a00ec; Agent own command return/full/P4 keep actual floors. Final packaging gated on actual freeze2 receipts and zero REG.
-live 1 / cap 3; ready-undispatched 0; metadata correction0619 running. Pairedkit dropped; no heavy body. No Runtime heavy body. Hosted U4a00ec qualified and sent Agent HOME normal queue0553; home receipt still owed.
+Next ready: independent witness-note custody review on0625 terminal. Main lead remote transport for qualified U4a00ec; Agent own command return/full/P4 keep actual floors. Final packaging gated on actual freeze2 receipts and zero REG.
+live 1 / cap 3; ready-undispatched 0; witness note0625 queued. P5 fact correction complete and published. Pairedkit dropped; no heavy body. No Runtime heavy body. Hosted U4a00ec qualified and sent Agent HOME normal queue0553; home receipt still owed.
 H6: App published board05:42 and Agent05:46 remain stale on several already-delivered Runtime facts. Actual App postREG normal HOME0545 local and qualified; final builder0545 genuine all8 pairs now received. Farm04:25 retains conditional chain; transport closed, original kit pair/67wheel EXACT MISSING, no hunt/rebuild.
 Final Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Original Runtime18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS; P56934=38PASS. Exact integrated15 actual0508 and independent0513 PASS. Raw XML, trace and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/P419479/old18617 unstarted; final source already includes qualified18617 hold but not live until CAS.
 D141s source2733/treeeb04 and independent0529 PASS74 retained. All lifecycle/security findings closed; no new logic/review loop. Exact literal scope resolved0548. Prepared literal and CAS briefs name their exact worker outputs at dispatch.

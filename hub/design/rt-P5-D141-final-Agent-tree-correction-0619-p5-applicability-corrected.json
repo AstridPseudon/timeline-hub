@@ -1,0 +1,89 @@
+{
+  "schema": "timeline.f.d141.p5-applicability-final.v1",
+  "read_only": true,
+  "verdict": "P5_PRIOR_RECEIPT_APPLICABLE_PATH_INDEPENDENTLY_CONFIRMED",
+  "scope": "Applicability of the retained 38-case P5 receipt to the exact integrated Runtime and Agent heads; no P5 rerun, no new body receipt, no automatic retarget.",
+  "prior_receipt": {
+    "request_id": "runtime-d141-p5-cut-1026013331-6934",
+    "status": "pass",
+    "summary": "38 passed in 31.02s",
+    "runtime_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "agent_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "xml_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-d141-p5-cut-1026013331-6934/d66/d141-p5-cut.xml",
+    "xml_sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688",
+    "case_set_sha256": "024cd7c2dd2f90c142727b1825bf5d6ee3ee72384547f6cfc925267586c5075c",
+    "counts": {"unique": 38, "passed": 38, "failed": 0, "errors": 0, "skipped": 0, "xfail": 0},
+    "interpreter": "/home/user/work/venv-runtime/bin/python",
+    "raw_xml_retained_in_place": true
+  },
+  "actual_integrated_heads": {
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"]},
+    "agent": {"head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c", "parents": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "5d202569f3af3852476d182ff49683787bb1e881"]}
+  },
+  "retained_p5_executed_boundaries": {
+    "tests": ["tests.test_timeline_commit_integration", "tests.test_timeline_commit_crash", "tests.door_helpers", "tests.lanes", "test_timeline_commit_input_integration", "timeline_commit_film_fixture"],
+    "runtime_modules": ["runtime_protocol/__init__.py", "runtime_protocol/contract_metadata.py", "runtime_protocol/service.py", "runtime_protocol/daemon.py", "runtime_protocol/door.py", "runtime_protocol/store.py", "runtime_protocol/timeline_commit_port.py", "runtime_protocol/timeline_commit_store.py", "runtime_protocol/timeline_commit_provider.py", "runtime_protocol/upgrade.py", "runtime_protocol/util.py", "runtime_protocol/visual_seam.py"],
+    "agent_modules": ["astrid/sdk/timeline/api.py", "astrid/sdk/timeline/capture.py", "astrid/sdk/timeline/commit.py", "astrid_runtime_client/generated.py", "astrid_runtime_client/contract_metadata.py"],
+    "behaviors": ["renderer-off Runtime commit door and provider registration", "authorization and project-scope admission", "accepted/merged/conflict/invalid/preview store paths", "lost-ack exact retry and restart", "crash boundaries before/after commit and restore", "changed payload under the same idempotency key", "canonical migration setup for the mutable duplicate realm"]
+  },
+  "runtime_delta_challenge": [
+    {
+      "path": "runtime_protocol/upgrade.py",
+      "changed_hunk": "threading import; staged RealmStore inspector db_path and RLock in _validate_candidate",
+      "p5_boundary": "The P5 crash setup calls migrate_canonical_to_current at tests/test_timeline_commit_crash.py:81. The changed _validate_candidate helper is called by upgrade_realm, not by this P5 migration route.",
+      "imported": true,
+      "changed_hunk_executed": false,
+      "reproof_required": false,
+      "reason": "Static caller/path inspection; the separate exact-15 REG selectors cover upgrade_realm and passed."
+    },
+    {
+      "path": "conformance/typescript/contract-metadata.ts",
+      "p5_boundary": "No P5 import; P5 uses Python runtime_protocol.contract_metadata.py.",
+      "imported": false,
+      "changed_hunk_executed": false,
+      "reproof_required": false
+    },
+    {
+      "path": "conformance/typescript/generated.ts",
+      "p5_boundary": "No P5 import; P5 uses Agent astrid_runtime_client/generated.py where retained.",
+      "imported": false,
+      "changed_hunk_executed": false,
+      "reproof_required": false
+    }
+  ],
+  "agent_delta_challenge": {
+    "base": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "integrated": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "changed_path_count": 54,
+    "changed_paths": [
+      "artifacts.json", "astrid/core/cli/domain_product.py", "astrid/core/execution/custody_broker.py", "astrid/core/execution/generic_host.py", "astrid/core/execution/platform_helpers.py", "astrid/core/execution/task_scope.py", "astrid/core/gateway/__init__.py", "astrid/core/generation/gpu_environment.py", "astrid/core/structure.py", "astrid/installer/backend.py", "astrid/installer/cli.py", "astrid/installer/service.py", "astrid/installer/tools.py", "astrid/mcp_server.py", "astrid/omp_invoke.py", "astrid/packs/rendering/actions/render/managed_timeline.py", "astrid/packs/rendering/docs/references/document-checkout.md", "astrid/packs/runpod/worker_process.py", "astrid/packs/shots/cli.py", "astrid/packs/timeline/cli.py", "astrid/sdk/authoring_media.py", "astrid/services.py", "cli-surface.json", "docs/README.md", "docs/architecture/top-level-inventory.json", "docs/giant-file-rationale.md", "docs/guides/mcp.md", "docs/setup/openshell-sandbox.md", "remotion/scripts/fetch-shared-browser.mjs", "remotion/shared-browser.mjs", "remotion/tests/shared-browser.test.cjs", "scripts/gen_cli_surface.py", "scripts/openshell/astrid-openshell.sh", "scripts/openshell/catalog.json", "scripts/openshell/compose_policy.py", "scripts/openshell/install-openshell.sh", "scripts/openshell/sandbox/comfyui-relay.py", "tests/conftest.py", "tests/core/execution/test_pidfd_callers.py", "tests/core/execution/test_platform_helpers.py", "tests/core/generation/test_gpu_environment.py", "tests/lanes.py", "tests/packs/rendering/test_render_registry_editor_metadata.py", "tests/packs/runpod/test_worker_process.py", "tests/test_installer_asset_checksums.py", "tests/test_installer_lifecycle.py", "tests/test_installer_omp_source.py", "tests/test_installer_remotion.py", "tests/test_installer_sources.py", "tests/test_installer_tools.py", "tests/test_mcp_server.py", "tests/test_openshell_compose_policy.py", "tests/test_windows_gpu_availability.py", "tests/timeline/test_authoring_media.py"
+    ],
+    "potentially_confusing_paths": {
+      "tests/conftest.py": {"agent_changed": true, "p5_loaded": false, "actual_loaded": "/home/user/work/runtime/tests/conftest.py", "basis": "Runtime pytest root owns conftest collection; ASTRID_CHECKOUT is only prepended by Runtime tests/astrid_checkout.py fixture."},
+      "tests/lanes.py": {"agent_changed": true, "p5_loaded": false, "actual_loaded": "/home/user/work/runtime/tests/lanes.py", "basis": "P5 crash source imports tests.lanes while running from Runtime; no Agent tests path is inserted for this module."},
+      "astrid/packs/timeline/cli.py": {"agent_changed": true, "p5_loaded": false, "basis": "P5 provider imports are astrid.sdk.timeline API/capture/commit; no CLI parser path is called."},
+      "astrid/sdk/authoring_media.py": {"agent_changed": true, "p5_loaded": false, "basis": "Not in retained Agent module origins and not imported by the P5 provider boundary."},
+      "artifacts.json": {"agent_changed": true, "p5_loaded": false, "basis": "Receiving manifest input only; P5 does not execute Agent manifest tooling. The actual Runtime producer manifest and Agent runtime.lock are separately hash-checked in producer-corrected.json."}
+    },
+    "executed_affected_boundaries": [],
+    "strict_path_independence": true,
+    "separate_agent_reproof_obligation": "Agent full/P4 obligations remain separate; this finding does not waive them and does not retarget P5."
+  },
+  "applicability_finding": {
+    "p5_scope_preserved": true,
+    "all_38_prior_passes_remain_visible": true,
+    "affected_executed_path": false,
+    "new_p5_receipt": false,
+    "automatic_retarget": false,
+    "app_p4_obligation_changed": false,
+    "full_suite_go": false
+  },
+  "mechanical_basis": [
+    "git diff --name-status 28e56cacb42d3da85b02e5b3543895b44f3d0f70..8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "static source inspection of Runtime tests/conftest.py, tests/astrid_checkout.py, tests/lanes.py, P5 test imports, and runtime_protocol/timeline_commit_provider.py",
+    "git diff --name-status 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d..95d98f038320d5d46bd679ac000ab3e15825c935",
+    "prior retained XML and module-origin custody; no import or collection command rerun"
+  ]
+}
