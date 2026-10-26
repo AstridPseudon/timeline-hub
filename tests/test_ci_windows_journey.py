@@ -133,7 +133,7 @@ def test_failed_follow_cancels_and_settles_before_returning_failure(tmp_path, mo
     assert calls[-2:] == [("tasks", "show"), ("tasks", "events")]
 
 
-def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monkeypatch):
+def test_timeout_stream_tails_are_captured_before_cancellation_and_bounded(tmp_path, monkeypatch):
     monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
     monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
     logs = tmp_path / "logs"
@@ -192,6 +192,40 @@ def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monke
 
     assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
     assert (tmp_path / "task-timeout-service-pack-host.log").read_text(encoding="utf-8") == "host at timeout\n"
+
+
+def test_snapshot_failure_does_not_prevent_cancel_or_hide_follow_failure(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
+    (tmp_path / "logs").mkdir()
+    calls = []
+    state = "running"
+
+    def cli(module, argv, name, **kwargs):
+        nonlocal state
+        calls.append(tuple(argv[:2]))
+        if tuple(argv[:2]) in (("projects", "create"), ("tasks", "events")):
+            return json.dumps({"ok": True, "data": []})
+        if argv[:2] == ["tasks", "create"]:
+            return json.dumps({"ok": True, "data": {"task_id": "task-1"}})
+        if argv[:2] == ["tasks", "follow"]:
+            raise RuntimeError("follow timed out")
+        if argv[:2] == ["tasks", "show"]:
+            return json.dumps({"ok": True, "data": {"state": state}})
+        if argv[:2] == ["tasks", "cancel"]:
+            state = "cancelled"
+            return json.dumps({"ok": True})
+        raise AssertionError(argv)
+
+    monkeypatch.setattr(journey, "cli", cli)
+    monkeypatch.setattr(
+        journey, "snapshot", lambda name: (_ for _ in ()).throw(RuntimeError("snapshot failed")),
+    )
+    with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
+        journey.task()
+
+    assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
+    assert (tmp_path / "processes-after-task-follow-error.json").is_file()
 
 
 def test_sfx_output_capture_restricts_path_to_the_journey_attempt(tmp_path, monkeypatch):
