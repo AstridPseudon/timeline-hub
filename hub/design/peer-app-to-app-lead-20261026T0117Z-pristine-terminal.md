@@ -1,0 +1,5 @@
+Ask: record App pristine terminal and pending finite per-ID JOIN; retain no-source-work gate until proved REG / Owner: App full controller 0043 and lead for MAIN / By: 2026-10-26T01:17:43Z
+
+Actual pristine app-D141-pristine-receiver-0007-full-1026010029-23581 terminal fail/exit1: Vitest17856PASS/18FAIL,1276passedfiles/3failedfiles,929.32s Vitest. Exact frozen7ca. Normal12174:19734PASS/33FAIL plus commitSession.genericPatch collection error,5failedfiles,961s service on frozen867cb. Both raw KEEP retained. Existing0043 is actively building exact per-ID source-applicability and REG comparison; no new author or duplicate full.
+
+Pristine18 are TimelineRenderer public-host6, shots10, registry2. This is a raw observed list, no environment/REG verdict before source/receipt JOIN. Node NOTRUN due npmtest chain remains a coverage hole, standalone phases after P1/P2six/P3 as recorded. Source frozen, D141stops/D130absolute. Heavy slot now released by pristine but fresh available5190557696bytes is just below5.2GB; normalcompact active and controller end worktree recycle can restore next admission. No earlybody/floor change or protectedrawcleanup.

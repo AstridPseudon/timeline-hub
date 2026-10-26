@@ -1,0 +1,12 @@
+{
+  "worker": "app-P-D141-cut-journeys-controller-0117",
+  "at": "2026-10-26T01:19:09.505530+00:00",
+  "free_bytes": 5366943744,
+  "floor_bytes": 5200000000,
+  "stop_bytes": 4000000000,
+  "prior_terminal_ids": [
+    "app-full-1026004326-12174",
+    "app-D141-pristine-receiver-0007-full-1026010029-23581"
+  ],
+  "authority": "MAIN GO D141c INBOX 00:42; prepared bindings 0047; one heavy controller"
+}
