@@ -9,17 +9,19 @@
         "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
       },
       "agent": {
-        "status": "pending",
-        "expected_commit": null,
-        "expected_tree": null,
-        "commit": null,
-        "tree": null,
-        "checkout": null,
-        "receipt": null,
-        "provider_origin": null,
-        "client_origin": null,
-        "schema_digest": null,
-        "lock_values": null
+        "status": "qualified",
+        "expected_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "expected_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+        "checkout": "/home/user/work/wt/agt-pin-28e56cac",
+        "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "provider_origin": "/home/user/work/wt/agt-pin-28e56cac/astrid/sdk/timeline/api.py",
+        "client_origin": "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/generated.py",
+        "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+        "lock_values": {
+          "runtime.lock.json": "sha256:0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3"
+        }
       }
     },
     {
@@ -30,17 +32,19 @@
         "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
       },
       "agent": {
-        "status": "pending",
+        "status": "qualified",
         "expected_commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
         "expected_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
-        "commit": null,
-        "tree": null,
-        "checkout": null,
-        "receipt": null,
-        "provider_origin": null,
-        "client_origin": null,
-        "schema_digest": null,
-        "lock_values": null
+        "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+        "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+        "checkout": "/home/user/work/wt/agt-pin-8b6ed211",
+        "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+        "provider_origin": "/home/user/work/wt/agt-pin-8b6ed211/astrid/sdk/timeline/api.py",
+        "client_origin": "/home/user/work/wt/agt-pin-8b6ed211/astrid_runtime_client/generated.py",
+        "schema_digest": "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47",
+        "lock_values": {
+          "runtime.lock.json": "sha256:025a4d0bd24bd28dcc34e7bea06ae8ce7466e83bafbb858b8e3ccda95a0e1af4"
+        }
       }
     }
   ],
