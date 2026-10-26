@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { classifyPairedRoute } from '../../../../config/vite/pairedRoutePolicy.ts';
 import { readStoredZip, writeStoredZip } from './timeline-transfer-zip.ts';
 import { exportTimelineArchive, importTimelineArchive } from './timeline-transfer.ts';
 
@@ -95,6 +96,34 @@ afterEach(() => {
 });
 
 describe('timeline transfer workflows', () => {
+  it('discovers default Runtime actions through the paired Astrid catalog route', async () => {
+    const paths: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(input instanceof Request ? input.url : String(input), 'http://localhost');
+      paths.push(url.pathname + url.search);
+      expect(classifyPairedRoute(url.pathname + url.search, 'GET')?.service).toBe('astrid');
+      const body = JSON.stringify({
+        items: [{ capability_id: 'timeline.export_plan', definition_digest: artifactDigest, status: 'ready', required_resource_keys: [], estimated_scratch_bytes: 0, estimated_output_bytes: 0 }],
+        next_cursor: null,
+      });
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }));
+    (globalThis as typeof globalThis & { showSaveFilePicker?: unknown }).showSaveFilePicker = vi.fn(async () => ({ createWritable: async () => new WritableStream<Uint8Array>() }));
+    const plan = { manifest: { format: 'astrid.timeline/1', elements: [], media: [], transcripts: [] }, timeline: {}, transcripts: {}, media: [] };
+    const client = {
+      admitTask: vi.fn(async () => ({ task_id: 'task', state: 'succeeded' })),
+      getTask: vi.fn(),
+      listManagedOutputs: vi.fn(async () => ({ items: [{ output_port: 'plan', digest: artifactDigest }], next_cursor: null })),
+      ingestProjectObject: vi.fn(), listProjectObjects: vi.fn(), importTimeline: vi.fn(),
+    };
+    await exportTimelineArchive(
+      { projectId: 'catalog-route-test', timelineId: 'timeline', timelineName: 'Catalog route', flushPendingSave: async () => undefined },
+      { client: client as never, fetchImpl: actionFetch(plan) },
+    );
+    expect(paths).toEqual(['/api/astrid/v1/capabilities?limit=100']);
+    expect(paths.some((path) => path === '/api/runtime/v1/capabilities')).toBe(false);
+  });
+
   it('acquires the save handle in the click call before flushing and streams the returned plan artifact', async () => {
     const writes: Uint8Array[] = [];
     const order: string[] = [];
