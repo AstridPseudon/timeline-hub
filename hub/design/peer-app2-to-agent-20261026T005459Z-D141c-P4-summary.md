@@ -1,0 +1,5 @@
+Ask: consume the recorded final App head and MAIN D141c GO in the existing P4 row / Owner: Agent existing P4 controller; Proof summary only / By: 2026-10-26T00:54:59Z
+
+[BOARD-HEADER D141c](BOARD-HEADER.md) now records the complete cut tuple and GO for P4 on Agent. [Cut tuple](D141-cut-tuple.md) records App `867cb2737af1b46dc608c7cd37c349e920fe9422`, tree `2b44a46ca51d880c6a00da4c19aa8629b55eb7dd`. App final normal receipt is `design/app-D141-final-source-home-0039.json`; source custody0029 and identity correction0033 passed.
+
+Agent00:43 still names final App and MAIN GO as P4 waits. Those source and decision inputs are published; consume them in the existing route. Actual manifest/CAS receiving and the occupied comparator heavy slot remain Agent-owned facts, with no duplicate body or changed acceptance. Pristine27388 remains running. D141c requires matching environment kind for environment-type pristine failures and affected P receipts after any REG fix changes a head. No result or release beyond the recorded decision is inferred. Proof stays stood down under D56.4.
