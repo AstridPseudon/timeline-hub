@@ -1,0 +1,84 @@
+{
+  "schema": "timeline.d141jj.notes-install-independent-source-manifest/v1",
+  "status": "FAIL_PROCEDURAL_TRACE_ONLY",
+  "design_sha256_not_recomputed": true,
+  "canonical_targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "candidate_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "installed_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "bytes": 48811,
+      "mode": "0644",
+      "prefix_bytes": 47478,
+      "prefix_sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "regular_non_symlink": true,
+      "candidate_equal": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "candidate_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "installed_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "bytes": 44999,
+      "mode": "0644",
+      "prefix_bytes": 43666,
+      "prefix_sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "regular_non_symlink": true,
+      "candidate_equal": true
+    }
+  },
+  "outside_inventory": {
+    "before_count": 568,
+    "after_count": 568,
+    "unique_paths": 568,
+    "maps_equal": true,
+    "live_individual_records_checked": 568,
+    "live_mismatches": 0,
+    "aggregate_only_shortcut": false,
+    "historical_custody_recovered_claim": false
+  },
+  "cas_chain": {
+    "preimage_guard_before_mutation": true,
+    "before_inventory_durable_before_mutation": true,
+    "exact_backups_fsynced_before_mutation": true,
+    "guarded_staged_atomic_replacements": true,
+    "directory_fsync_after_each_replace": true,
+    "readback": true,
+    "rollback_used": false,
+    "unknown_drift_overwritten": false,
+    "chain_log_contains_inventory_fsync_stage_replace_readback": true
+  },
+  "documentary_conservation": {
+    "gate_results_numbered_ids": 32,
+    "gate_results_own_na_summary_markers": 2,
+    "all32_own_na_resolution_from_retained_checker_and_protected_review": true,
+    "all32_originals_resolved_and_hashed": true,
+    "known_gaps_and_earlier_failures_retained": true,
+    "owner_option_b": true,
+    "owner_app_upstream": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "proven_app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "catchup_uninstalled": "eac97ea5",
+    "later_conflicts": ["Elements panel removal", "AgentChat test", "Runtime pin"],
+    "c0_v2_markers_present": true,
+    "first_tool_and_partial_monitor_limits_explicit": true,
+    "outside_custody_not_claimed_recovered": true
+  },
+  "production_render": {
+    "function": "render_readme",
+    "function_only": true,
+    "controlled_inputs": ["agent", "runtime", "app", "composition"],
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "canonical_render_placeholders_resolved": true,
+    "fallback_placeholder_behavior": true,
+    "output_written": false
+  },
+  "source_roles": {
+    "protected_review": "PASS documentary qualification only",
+    "source_1345": "separate unqualified author candidate; no product or ZIP credit",
+    "stopped_1356": "historical stopped installer without evidence; not conflated with resumed CAS",
+    "resumed_install": "actual guarded installation evidence reviewed here"
+  }
+}

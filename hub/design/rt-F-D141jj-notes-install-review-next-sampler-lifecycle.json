@@ -1,0 +1,26 @@
+{
+  "schema": "d141jj-independent-review-lifecycle-v1",
+  "status": "FAIL_FIRST_TOOL_PERMISSION_REFUSED",
+  "tmpdir_pointer": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-review-next/tmpdir",
+  "tmpdir_pointer_regular_file": true,
+  "resolved_tmpdir": "/tmp/w-f998174359",
+  "metadata_created_before_keep": true,
+  "keep_created_after_metadata": true,
+  "first_tool": {
+    "required": "real strace with 4GB stop and observable PID/exit/wait/reap",
+    "attempted": true,
+    "permission_refused": true,
+    "error": "PTRACE_TRACEME: Operation not permitted",
+    "retry": false,
+    "alternate_tracer": false,
+    "coverage_claimed": false
+  },
+  "sampler_pid": null,
+  "exit_code": null,
+  "waited": null,
+  "reaped": null,
+  "stop_free_bytes": 4000000000,
+  "stop_reached": null,
+  "trace_path": "evidence/disk-trace.txt",
+  "coverage_bound": "No lifecycle or disk-stop coverage is claimed for this reviewer. The resumed installer and protected review sampler PID/exit/wait/reap evidence remains limited to those workers."
+}

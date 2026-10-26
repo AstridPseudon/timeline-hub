@@ -1,0 +1,187 @@
+{
+  "schema": "timeline.d141jj.notes-review-clarification/v1",
+  "task": "F D141jj",
+  "worker": "rt-F-D141jj-notes-review-clarification-next",
+  "result": "PASS_BOUNDED_INSTALLATION_WITH_REVIEW_MONITOR_GAP",
+  "original_review": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-review-next/evidence/review.json",
+    "output_path": "evidence/review.json",
+    "sha256": "81e12aeed5ec09f9a033dd4baa343d9a804a1dcbd65efadfa8176dee013674e5",
+    "bytes": 5886,
+    "byte_identical_copy": true,
+    "verdict_preserved": "FAIL",
+    "finding_count": 8
+  },
+  "original_findings": [
+    {
+      "id": "D141JJ-REVIEW-001",
+      "status": "FAIL",
+      "finding": "The required first-tool real strace/lifecycle observation was attempted in the pointed private tmpdir but sandbox ptrace permission was refused (PTRACE_TRACEME: Operation not permitted). No retry or alternate tracer was used, and no PID/exit/wait/reap or 4 GB-stop coverage is claimed for this reviewer."
+    },
+    {
+      "id": "D141JJ-REVIEW-002",
+      "status": "PASS",
+      "finding": "The two current canonical targets are regular non-symlink mode-0644 files and equal the exact accepted candidates: README 60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f (48811 bytes), gate-results 7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7 (44999 bytes)."
+    },
+    {
+      "id": "D141JJ-REVIEW-003",
+      "status": "PASS",
+      "finding": "Both predecessor backups are regular 0644 files. README prefix is 47478 bytes with sha256 3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4; gate-results prefix is 43666 bytes with sha256 c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb. Each accepted file has the candidate suffix exactly once, with 1333 suffix bytes."
+    },
+    {
+      "id": "D141JJ-REVIEW-004",
+      "status": "PASS",
+      "finding": "The immediate before/after maps contain 568 unique outside paths and are byte-for-byte equal. A fresh read-only scan of all 568 individual paths found zero path, regular/symlink, byte-count, mode, or SHA-256 mismatches; neither canonical target appears in the outside map."
+    },
+    {
+      "id": "D141JJ-REVIEW-005",
+      "status": "PASS_WITH_LIMIT",
+      "finding": "The resumed installation chain records preimage guards, durable backups before mutation, staged atomic replacement, file and directory fsync, readback, no rollback, and no unknown drift; the retained worker log contains the corresponding inventory/fsync/stage/os.replace/readback chain. This is installation evidence review, not a new syscall trace."
+    },
+    {
+      "id": "D141JJ-REVIEW-006",
+      "status": "PASS",
+      "finding": "The mandated readonly check_notes.py command exited 0. The protected 1350 review remains distinct from the source author's 1345 unqualified candidate and from the stopped 1356 history."
+    },
+    {
+      "id": "D141JJ-REVIEW-007",
+      "status": "PASS",
+      "finding": "Document conservation checks retain all 32 numbered gate-results IDs; the retained source-checker/protected review resolves the complete set as OWN/N/A, while the installed text itself has only its summary markers. The 3c32/c610 historical prefixes, known gaps and earlier failures, owner option-B base fc24f849, proven 82e9e13d identity, uninstalled eac97ea5 catch-up, and three named later conflicts remain present. C0 v2 field/example markers remain present."
+    },
+    {
+      "id": "D141JJ-REVIEW-008",
+      "status": "PASS",
+      "finding": "Production delivery-build render_readme was invoked as a function only, with controlled agent/runtime/app/composition result inputs, canonical gate input, and a missing-gate fallback. Builder SHA matched ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca; no CLI/main/build/rehearsal/ZIP was run."
+    }
+  ],
+  "interpretation": {
+    "manager_adjudication": "The phrase FIRSTTOOLreal5strace means a real free-disk sample every five seconds; it never required strace(2), PTRACE_TRACEME, or syscall tracing.",
+    "contract_or_scope_change": false,
+    "syscall_trace_acceptance_gate": false,
+    "f001": {
+      "original_status": "FAIL",
+      "corrected_role": "reviewer_historical_monitor_limit",
+      "material_installation_blocker": false,
+      "actual_limit": "The original reviewer encountered sandbox EPERM for its ptrace attempt.",
+      "action": "Retain the EPERM and the original overall FAIL unchanged; do not retry, use another tracer, transfer the operation, request privilege, or claim tracing recovered."
+    },
+    "f002_f008": {
+      "original_material_results_preserved": true,
+      "qualification_support": "The prior actual canonical, backup/prefix, 568-path conservation, CAS/readback, checker, documentary-conservation, and production render_readme function checks remain material evidence.",
+      "statuses": [
+        "PASS",
+        "PASS",
+        "PASS_WITH_LIMIT",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    "source_roles": {
+      "source_1345": "standalone unqualified candidate; not the protected notes-1345 source",
+      "protected_1350": "separate actual semantic PASS",
+      "resumed_cas": "separate actual installation evidence",
+      "conflation": false
+    }
+  },
+  "qualification": {
+    "material_installation_checks": "PASS_BOUNDED_INSTALLATION_WITH_REVIEW_MONITOR_GAP",
+    "finite_actual_blocking_finding": null,
+    "overall_original_review": "FAIL",
+    "overall_fail_reason": "original F001 only, retained as historical reviewer monitor limit",
+    "actual_production_render_readme_check": "retained as actual material evidence, not replayed",
+    "document_inputs_not_wire": true,
+    "c0_v2_normative_examples": "not reinterpreted or changed; documentary inputs are not wire"
+  },
+  "preserved_material_basis": {
+    "canonical_targets": {
+      "README.template.md": {
+        "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+        "bytes": 48811,
+        "mode": "0644",
+        "regular_non_symlink": true,
+        "accepted_candidate_equal": true
+      },
+      "gate-results.md": {
+        "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+        "bytes": 44999,
+        "mode": "0644",
+        "regular_non_symlink": true,
+        "accepted_candidate_equal": true
+      }
+    },
+    "backups_and_prefixes": {
+      "README.template.md": {
+        "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+        "bytes": 47478,
+        "suffix_bytes": 1333,
+        "suffix_occurrences": 1
+      },
+      "gate-results.md": {
+        "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+        "bytes": 43666,
+        "suffix_bytes": 1333,
+        "suffix_occurrences": 1
+      }
+    },
+    "outside_inventory": {
+      "before_count": 568,
+      "after_count": 568,
+      "unique_paths": 568,
+      "maps_equal": true,
+      "live_individual_records_checked": 568,
+      "live_mismatches": 0,
+      "live_symlinks": 0,
+      "canonical_targets_in_outside_map": false
+    },
+    "cas_and_readback": {
+      "preimage_guard_before_mutation": true,
+      "durable_before_mutation": true,
+      "backups_fsynced": true,
+      "guarded_staged_atomic_replacements": true,
+      "directory_fsync_after_each_replace": true,
+      "readback": true,
+      "rollback_used": false,
+      "unknown_drift_overwritten": false
+    },
+    "retained_controls": {
+      "readonly_checker_exit": 0,
+      "production_render_readme_function_only": true,
+      "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "all32_gate_ids_conserved": true
+    }
+  },
+  "current_sampler": {
+    "source": "os.statvfs and df -P -B1 /",
+    "pid": 4,
+    "interval_seconds": 5,
+    "samples": 3,
+    "stop_free_bytes": 4000000000,
+    "stop_reached": false,
+    "minimum_free_bytes": 5065125888,
+    "exit_code": 0,
+    "waited": true,
+    "reaped": true,
+    "ptrace_or_strace": false,
+    "coverage": "own_current_sampler_only",
+    "historical_gap_backfilled": false
+  },
+  "source_hashes_manifest": "evidence/source-manifest.json",
+  "operations": {
+    "second_semantic_review": false,
+    "reinstall": false,
+    "canonical_write": false,
+    "product_write": false,
+    "product_tests_types_lint": "N_A",
+    "render_or_body_replay": false,
+    "zip_build_staging_cloning": false
+  },
+  "limits": [
+    "The original review.json remains FAIL and byte-identical; this receipt qualifies material installation checks separately.",
+    "The original sandbox EPERM and historical first-tool monitor limit remain disclosed; no tracing was recovered and no syscall-trace gate exists.",
+    "The current sampler is finite and did not reach the four-GB threshold; its PID, clean exit, wait, and reap are recorded.",
+    "No product tests, types, lint, live services, sourcecheck, build, ZIP, pin qualification, or final GO are claimed.",
+    "The protected 1350 semantic review and source 1345 standalone candidate remain separate."
+  ]
+}

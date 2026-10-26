@@ -1,0 +1,7 @@
+{"event": "sampler_started", "interval_seconds": 5, "pid": 4, "source": "os.statvfs and df -P -B1 /", "started_at": "2026-10-26T14:20:08.925791+00:00", "stop_free_bytes": 4000000000}
+{"df_free_bytes": 5065404416, "event": "sample", "observed_at": "2026-10-26T14:20:08.926107+00:00", "pid": 4, "sample": 1, "statvfs_free_bytes": 5065404416, "stop_free_bytes": 4000000000}
+{"df_free_bytes": 5065125888, "event": "sample", "observed_at": "2026-10-26T14:20:13.926364+00:00", "pid": 4, "sample": 2, "statvfs_free_bytes": 5065125888, "stop_free_bytes": 4000000000}
+{"df_free_bytes": 5065359360, "event": "sample", "observed_at": "2026-10-26T14:20:18.926729+00:00", "pid": 4, "sample": 3, "statvfs_free_bytes": 5065359360, "stop_free_bytes": 4000000000}
+{"event": "sampler_exited", "exit_code": 0, "exited_at": "2026-10-26T14:20:18.926871+00:00", "pid": 4, "reason": "threshold_not_reached_bounded_window"}
+{"event": "parent_observation", "pid": 4, "ps_observed_before_wait": true, "wait_status": 0, "waited": true, "reaped": true, "ps_absent_after_wait": true}
+{"event": "qualification", "stop_free_bytes": 4000000000, "stop_reached": false, "ptrace": false, "coverage": "own_current_sampler_only"}

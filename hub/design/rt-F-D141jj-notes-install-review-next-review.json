@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.d141jj.notes-install-independent-review/v1",
+  "task": "F D141jj",
+  "worker": "rt-F-D141jj-notes-install-review-next",
+  "verdict": "FAIL",
+  "scope": "Independent read-only review of the resumed CAS installation; no product, test, generated, pin, registry, build, ZIP, or canonical write was performed by this reviewer.",
+  "basis": {
+    "design": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-notes-resumed-CAS-publication-1413.json",
+    "resumed_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence",
+    "protected_review": "rt-F-D141jj-notes-review-1350",
+    "source_author": "rt-F-D141jj-notes-1345"
+  },
+  "findings": [
+    {
+      "id": "D141JJ-REVIEW-001",
+      "status": "FAIL",
+      "finding": "The required first-tool real strace/lifecycle observation was attempted in the pointed private tmpdir but sandbox ptrace permission was refused (PTRACE_TRACEME: Operation not permitted). No retry or alternate tracer was used, and no PID/exit/wait/reap or 4 GB-stop coverage is claimed for this reviewer."
+    },
+    {
+      "id": "D141JJ-REVIEW-002",
+      "status": "PASS",
+      "finding": "The two current canonical targets are regular non-symlink mode-0644 files and equal the exact accepted candidates: README 60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f (48811 bytes), gate-results 7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7 (44999 bytes)."
+    },
+    {
+      "id": "D141JJ-REVIEW-003",
+      "status": "PASS",
+      "finding": "Both predecessor backups are regular 0644 files. README prefix is 47478 bytes with sha256 3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4; gate-results prefix is 43666 bytes with sha256 c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb. Each accepted file has the candidate suffix exactly once, with 1333 suffix bytes."
+    },
+    {
+      "id": "D141JJ-REVIEW-004",
+      "status": "PASS",
+      "finding": "The immediate before/after maps contain 568 unique outside paths and are byte-for-byte equal. A fresh read-only scan of all 568 individual paths found zero path, regular/symlink, byte-count, mode, or SHA-256 mismatches; neither canonical target appears in the outside map."
+    },
+    {
+      "id": "D141JJ-REVIEW-005",
+      "status": "PASS_WITH_LIMIT",
+      "finding": "The resumed installation chain records preimage guards, durable backups before mutation, staged atomic replacement, file and directory fsync, readback, no rollback, and no unknown drift; the retained worker log contains the corresponding inventory/fsync/stage/os.replace/readback chain. This is installation evidence review, not a new syscall trace."
+    },
+    {
+      "id": "D141JJ-REVIEW-006",
+      "status": "PASS",
+      "finding": "The mandated readonly check_notes.py command exited 0. The protected 1350 review remains distinct from the source author's 1345 unqualified candidate and from the stopped 1356 history."
+    },
+    {
+      "id": "D141JJ-REVIEW-007",
+      "status": "PASS",
+      "finding": "Document conservation checks retain all 32 numbered gate-results IDs; the retained source-checker/protected review resolves the complete set as OWN/N/A, while the installed text itself has only its summary markers. The 3c32/c610 historical prefixes, known gaps and earlier failures, owner option-B base fc24f849, proven 82e9e13d identity, uninstalled eac97ea5 catch-up, and three named later conflicts remain present. C0 v2 field/example markers remain present."
+    },
+    {
+      "id": "D141JJ-REVIEW-008",
+      "status": "PASS",
+      "finding": "Production delivery-build render_readme was invoked as a function only, with controlled agent/runtime/app/composition result inputs, canonical gate input, and a missing-gate fallback. Builder SHA matched ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca; no CLI/main/build/rehearsal/ZIP was run."
+    }
+  ],
+  "lifecycle": {
+    "first_tool_strace_attempted": true,
+    "strace_permission_refused": true,
+    "sampler_pid": null,
+    "exit_code": null,
+    "waited": null,
+    "reaped": null,
+    "stop_free_bytes": 4000000000,
+    "stop_reached": null,
+    "tmpdir_pointer_was_regular_file": true,
+    "keep_created_after_metadata": true,
+    "no_backfill": true
+  },
+  "tests": [
+    {"command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-1345/evidence/check_notes.py", "result": "PASS, exit 0"},
+    {"command": "read-only Python audit of canonical files, backups, prefixes/suffixes, 568 outside rows and live hashes/modes", "result": "PASS, 568/568 rows, zero mismatches"},
+    {"command": "function-only delivery-build.render_readme audit", "result": "PASS, canonical and fallback renders; builder hash exact"},
+    {"command": "read-only JSON loads and Python AST parse", "result": "PASS, 7 JSON files and 2 Python files"}
+  ],
+  "limits": [
+    "This review does not re-review protected note semantics; it verifies current installation bytes, chain evidence, and canonical readback.",
+    "The resumed installer’s historical first-tool gap, partial monitor limits, and earlier custody/measurement failures remain disclosed; no tracing backfill or recovered historical custody is claimed.",
+    "The reviewer’s own required strace was refused by sandbox permission, so overall verdict is FAIL despite material CAS/content checks passing.",
+    "Product tests, types, lint, full suites, live services, sourcecheck, delivery build, ZIP, pin qualification, and final GO remain unverified and unclaimed."
+  ],
+  "side_effects": {"product_changes": false, "canonical_changes_by_reviewer": false, "test_changes": false, "build_or_zip": false}
+}

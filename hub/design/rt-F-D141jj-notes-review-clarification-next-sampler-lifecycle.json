@@ -1,0 +1,23 @@
+{
+  "schema": "timeline.d141jj.notes-review-clarification-sampler/v1",
+  "status": "PASS_CURRENT_REAL_DISK_SAMPLER",
+  "sampler_pid": 4,
+  "interval_seconds": 5,
+  "sample_count": 3,
+  "stop_free_bytes": 4000000000,
+  "stop_reached": false,
+  "minimum_statvfs_free_bytes": 5065125888,
+  "minimum_df_free_bytes": 5065125888,
+  "exit_code": 0,
+  "waited": true,
+  "reaped": true,
+  "observable_pid_lifecycle": true,
+  "trace_path": "evidence/disk-trace.txt",
+  "observation_source": ["os.statvfs", "df -P -B1 /"],
+  "ptrace_or_strace": false,
+  "alternate_tracer": false,
+  "coverage": "own_current_sampler_only",
+  "historical_monitor_gap_backfilled": false,
+  "stop_reason": "threshold_not_reached_bounded_review_window",
+  "note": "The real free-disk sampler ran at five-second intervals, remained above the four-GB stop threshold, then exited cleanly after the finite clarification observation window. The prior reviewer strace EPERM remains an historical monitor limit and was not retried or reclassified as a syscall-trace gate."
+}
