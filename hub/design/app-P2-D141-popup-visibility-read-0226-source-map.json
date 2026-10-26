@@ -1,0 +1,65 @@
+{
+  "plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "use": "governing task graph and C0 contract"
+  },
+  "actual_run": {
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/manifest.json",
+    "run_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/log.txt",
+    "error_context": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/p2-popup-add/three-products.p2-popup-P2-ae6fa-currence-fork-and-A2-commit/error-context.md",
+    "private_phase_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/runtime-private/p2-commit-phase.jsonl and launch-*/p2-commit-phase-2.jsonl",
+    "observed": [
+      "D66 normal launch/native seed/Agent identity/history PASS",
+      "mounted readiness PASS",
+      "original test FAIL at tests/e2e/local/three-products.p2-popup.spec.ts:356",
+      "DOM includes connected editor and No shots yet; no data-shot-group-key for the requested shared occurrence"
+    ]
+  },
+  "original_test": {
+    "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+    "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "setup_lines": "220-306",
+    "locator_lines": "351-361",
+    "add_case_lines": "941-947",
+    "preserved_contract": "commitFixtureCommand and later assertFullRequest/accepted assertions preserve the requested API, command, step, merge, idempotency, receipt, accepted/conflict/invalid/preview, and canonical document fields; no test was edited"
+  },
+  "precut_pass": {
+    "run": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "app_head": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+    "agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd3",
+    "runtime_head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "test_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "readiness_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "result": "the same original ADD test passed; the overall retained suite had unrelated failures"
+  },
+  "production_caller": [
+    {"path": "src/tools/video-editor/adapters/app/useAstridShotsHost.ts", "lines": "170-220, 279-301", "role": "loads canonical composition and exposes scoped canonicalOccurrences"},
+    {"path": "src/tools/video-editor/components/AstridTimelineEditor.tsx", "lines": "119-123, 300-310, 581-587", "role": "passes canonicalOccurrences into useShotGroups and TimelineEditorCore"},
+    {"path": "src/tools/video-editor/hooks/useShotGroups.ts", "lines": "175-198 onward", "role": "maps canonical occurrences into shot groups keyed by occurrence identity"},
+    {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "lines": "752-793, 1305-1320", "role": "positions and renders shot-group labels"},
+    {"path": "src/tools/video-editor/components/TimelineEditor/ShotGroupOverlay.tsx", "lines": "121-123", "role": "emits data-shot-group-key used by the unchanged locator"}
+  ],
+  "source_identity": {
+    "App867_vs_pre_cut_source_object_hashes": {
+      "AstridTimelineEditor.tsx": "d508a5e888285accf54d4953520779609b587b53",
+      "useAstridShotsHost.ts": "3abdbc6c773564708df1ada08e0dfe9cdca2e847",
+      "useShotGroups.ts": "6bc64cb6059ba41b0cd04b4f4200f72231c578f7",
+      "ShotGroupOverlay.tsx": "df0e2ae3e5775a9c510e9ba7fa9c8649b10e6a7b",
+      "TimelineCanvas.tsx": "b2b45d4f2ff773dce2e3a12a049bdc1429f60633"
+    }
+  },
+  "agent_semantics": {
+    "path": "/home/user/work/agent/astrid/sdk/timeline/native_occurrence_shared.py",
+    "lines": "295-326",
+    "role": "occurrence.place-shared validates explicit occurrence ownership and creates the requested parent occurrence entity"
+  },
+  "app5fe": {
+    "commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "parents": ["867cb2737af1b46dc608c7cd37c349e920fe9422", "a1955216f947f9d84c3154d3bd715e65bc945452"],
+    "changed_paths": ["src/integrations/runtime/dataProvider.ts", "src/shared/lib/placement/placementService.ts", "src/tools/video-editor/data/DataProvider.ts", "src/tools/video-editor/lib/shot-group-pack-commands.test.ts", "src/tools/video-editor/lib/shot-group-pack-commands.ts"],
+    "relevance": "not on the actual App867 run and does not change the canonical occurrence host/renderer chain"
+  }
+}

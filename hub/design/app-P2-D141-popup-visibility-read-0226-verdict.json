@@ -1,0 +1,27 @@
+{
+  "verdict": "PROVED_PRODUCT_GAP",
+  "scope": "P2 popup mounted ADD on selected child, shared-occurrence fork, A2 commit",
+  "boundary": "accepted fixture head -> mounted canonical occurrence projection -> shared occurrence shot-group locator",
+  "actual_run": {
+    "app_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "agent_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "readiness": "PASS",
+    "original_test": "FAIL at the original 5s shared-occurrence shot-group locator"
+  },
+  "missing_record": "The retained actual-run record does not contain a mounted canonical read/projection showing the seeded shared occurrence f2-occurrence-copy in runtime.shots.canonicalOccurrences/useShotGroups output before openPopup line 356.",
+  "proof": [
+    "The fixture helper's two setup commits each assert HTTP 200, data.status=accepted, exact base revision/publication, and rebased_onto=null before returning setupHead.",
+    "The Agent occurrence.place-shared implementation creates the requested parent occurrence entity; the following doc.patch is also accepted by the helper.",
+    "The actual retained DOM has the editor mounted and connected but reports No shots yet; the exact original locator [data-shot-group-key^=\"f2-occurrence-copy:\"] finds no element.",
+    "An authentic pre-cut PASS exists for the identical original test blob and identical Composition head/tree, and the production caller/renderer source object hashes are identical between that App source and App867.",
+    "The failing assertion is before dblclick, dialog visibility, popup ADD, canonical save, reload, undo, or any later predicate."
+  ],
+  "not_proved": [
+    "No causal attribution to App867, Agent, or Runtime alone.",
+    "No claim about the post-run App5fe merge fixing or causing this run."
+  ],
+  "next_action": "Within D104/D120 purpose, obtain one structural canonical-read/projection record for the accepted setupHead: occurrence identity/presence and head continuity only. If absent at the read boundary, route to the producing Runtime/Agent contract owner; if present in the read but absent from mounted canonicalOccurrences, route to App host projection. Do not alter the selector, waits, fixture, or request contract."
+}

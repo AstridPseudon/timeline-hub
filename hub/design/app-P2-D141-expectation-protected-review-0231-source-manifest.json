@@ -1,0 +1,33 @@
+{
+  "review": "app-P2-D141-expectation-protected-review-0231",
+  "source_role": "harnesscommitted finalsource",
+  "repo": "app",
+  "worktree": "/home/user/work/wt/app-P2-D141-expectation-protected-review-0231",
+  "candidate": {
+    "commit": "ffbe6e2c971d522422a108946fd36891420c9be2",
+    "parent": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "4a41d2978636a570c8f70952d25b969a5482926b",
+    "spec_blob": "81ce5f8b15c3469f511aec0ab64280bd5d72315d",
+    "commit_subject": "test(app): D141d bind placement materialization expectation"
+  },
+  "parent": {
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "spec_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"
+  },
+  "source_diff": {
+    "changed_paths": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+    "allowed_paths": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+    "changed_path_count": 1,
+    "numstat": {"insertions": 19, "deletions": 1},
+    "diff_sha256": "b5c006342f1054179aeb39de2ecc3eb802f2a440208a86fa9f974ae33ca062c5",
+    "outside_blobs_exact": true
+  },
+  "protected_source": {
+    "prior_15203_spec_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "prior_15203_spec_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "safe_added_key_paths": 22,
+    "safe_actual_binding_objects": 2,
+    "safe_expected_binding_objects": 0
+  },
+  "verdict": "FAIL_SCOPE_SHARED_HELPER"
+}

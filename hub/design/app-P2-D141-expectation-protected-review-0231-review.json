@@ -1,0 +1,36 @@
+{
+  "review": "app-P2-D141-expectation-protected-review-0231",
+  "task": "D141d",
+  "status": "FAIL",
+  "decision": "scope-fail-immediate",
+  "candidate": {
+    "commit": "ffbe6e2c971d522422a108946fd36891420c9be2",
+    "parent": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "4a41d2978636a570c8f70952d25b969a5482926b",
+    "subject": "test(app): D141d bind placement materialization expectation"
+  },
+  "scope": {
+    "changed_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+    "numstat": "19\t1\ttests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "allowed_file_count": 1,
+    "outside_blobs_exact": true,
+    "scope_result": "FAIL"
+  },
+  "finding_ids": ["D141d-SCOPE-001"],
+  "approved_our_p2_note": "P2 placement expectation updated to the D124 materialization contract",
+  "ledger_zip_status": "NOT_CLAIMED: OUR P2 test change; no upstream ledger row applies and candidate contains no notes edits",
+  "validation": {
+    "git_diff_check": "PASS",
+    "author_commands": "NOT_RUN",
+    "reason": "The brief requires immediate FAIL and no broad tests when scope fails."
+  },
+  "references_read": [
+    "PLAN.md",
+    "app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "app-P2-D141-history-safe-fields-0146-prior-pass.json",
+    "app-P2-D141-history-safe-fields-0146-handoff.md",
+    "app-P-D141-postREG-proof-prep-0213-affected-paths.json",
+    "app-P-D141-postREG-proof-prep-0213-handoff.md",
+    "rt-P2-D141-history-final-review-0213-handoff.md"
+  ]
+}

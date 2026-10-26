@@ -1,0 +1,27 @@
+{
+  "actual_pins": {
+    "app": {"head": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "agent": {"head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+    "runtime": {"head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "actual_artifacts": {
+    "readiness_test_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "original_test_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "readiness_exit": 0,
+    "original_exit": 1,
+    "original_failure": "shared occurrence shot group locator at source line 356 after 5000ms"
+  },
+  "precut_artifacts": {
+    "run": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "original_test_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "result": "same original ADD case passed; retained run overall was not a whole-suite PASS"
+  },
+  "inspection_policy": {
+    "private_raw": "inspected in place",
+    "published": "structural paths, outcomes, source citations, hashes, and boundary only",
+    "not_published": "payloads, request bodies, media bytes, credentials, idempotency values, receipt contents, or raw transfer"
+  }
+}

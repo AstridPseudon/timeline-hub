@@ -1,0 +1,35 @@
+{
+  "task": "D141d",
+  "candidate_commit": "ffbe6e2c971d522422a108946fd36891420c9be2",
+  "parent_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "predicates": [
+    {
+      "id": "scope.single-file",
+      "expected": "exactly one allowed spec file changes",
+      "observed": "PASS: tests/e2e/local/three-products.p2-elements-assets.spec.ts only"
+    },
+    {
+      "id": "scope.gesture-local",
+      "expected": "only automatic-child-placement expected.records changes",
+      "observed": "FAIL: shared assertNativeHistoryEntry and assertUndoHistoryEntry path changed",
+      "evidence": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:748-780"
+    },
+    {
+      "id": "scope.other-gestures-exact",
+      "expected": "element-edit and registerAsset history/undo expectations remain exact",
+      "observed": "FAIL by shared helper reachability",
+      "evidence": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1129,1145,1216"
+    },
+    {
+      "id": "scope.outside-blobs",
+      "expected": "all outside blobs remain exact",
+      "observed": "PASS: no outside path changed"
+    },
+    {
+      "id": "validation.author-commands",
+      "expected": "run only after scope passes",
+      "observed": "NOT_RUN: immediate scope FAIL rule"
+    }
+  ],
+  "verdict": "FAIL"
+}

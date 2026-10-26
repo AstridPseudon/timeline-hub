@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T02:32:42Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 3m -->
-# app board, 2026-10-26T02:28Z
+<!-- app | 2026-10-26T02:37:34Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 1m -->
+# app board, 2026-10-26T02:36Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,16 +15,16 @@
 | D141 pristine | Retain exact frozen full comparator | Luna and service | Environment qualification | review | Controller0043; actual23581 | 17856 PASS,18 FAIL in3 files. Snapshot exact frozen tree and parent. Node NOTRUN. | 7ca61bb3280b |
 | D141 REG join | Qualify exact33-ID comparison | HARD Sol and independent Luna | Actual full receipts | review | Sol0126; path0126 | 32 ours-only; one independently proved product REG; collection file absent upstream. Node and pristine env receipts owed. | Frozen cut |
 | A2 D141 REG | Restore duplicate caller read count | HARD Sol and protected Luna | Independent0203 PASS | merged | Author0149; review0203 | Actual home tree equals reviewed candidate;22/22, both types and lint PASS. All16 guards and loads=2 exact. | 5fe3e4debec5 |
-| D141 test notes | Record approved upstream mock support | Exact worker text and notes owner | Review0203 PASS and normal merge | blocked:runtime | App ledger installed; Runtime notes owner | Exact reviewed ledger line installed0211. Final ZIP line handed existing Runtime notes owner; installation receipt owed. | Source5fe3e4de |
+| D141 test notes | Install approved upstream mock note | Runtime Luna | App source5fe merged | doing | Runtime notes0215; protected0203 | Exact App ledger installed0211. Runtime existing owner installs approved ZIP line; receipt pending. | Source5fe3e4de |
 | D141 P1 | Reprove original dependent chain | Luna and service | Final expectation head and admission | gated:D141-admission | Prep0213; actual17879 historical | Prior867 PASS179s; original2 PASS44.3s. Post-REG and final expectation head bodies NOTRUN. | Final head pending |
 | D141 P2 six | Reprove six original gestures | Luna and service | Final reviewed head and admission | gated:D141-admission | Prep0213; original0127 checkpointed | Old867 placement3118 FAIL, ADD1368 FAIL, parent25698 PASS. Original18617 queued unchanged. Final head bodies NOTRUN. | Final head pending |
 | D141 P2 evidence | Supply extra keys and passing comparator | Luna and independent Luna | Independent0153 PASS | merged | Reader0146; review0153 | Safe22 added paths and exact prior15203 placement PASS; same specblob. Published0150 and0158. | No source edit |
-| D141 P2 history | Adopt exact materialization expectation | Luna and protected review | MAIN D141d intended contract | doing | app-P2-D141-materialization-expectation-0225 | Actual two objects and22 paths qualified by Runtime final0213; only placement expected.records authorized. No body yet. | Base5fe3e4de |
-| D141 P2 ADD | Classify original popup visibility failure | Luna read only | Retained actual1368 | doing | app-P2-D141-popup-visibility-read-0226 | Original5s shared occurrence locator failed; readiness PASS. Finite path and authentic comparator read, no retry or source edit. | Original867 scope |
+| D141 P2 history | Correct placement expectation locally | Luna and protected review | First protected0231 FAIL | doing | First return0235; reviewer0231 | First candidate changed shared helper and was rejected. Same-branch local correction active; no source merge or body. | Base5fe3e4de |
+| D141 P2 ADD | Qualify popup failure and exact source change | Luna read only | Retained1368 and authentic prior PASS | review | Reader0226; independent0232 | First product-gap claim lacks canonical projection record. Reviewer checks exact last PASS and introducing commit; cause not credited. | Original867 scope |
 | D141 P3 | Reprove original Gate5 journey | Luna and service | Final reviewed head and admission | gated:D141-admission | Same-lineage prep0213 | Original full tail retained. New head body NOTRUN; historical receipts stay distinct. | Final head pending |
 | D141 post-REG prep | Retain exact affected reproof recipe | Luna | Normal source HOME5fe | merged | app-P-D141-postREG-proof-prep-0213 | Source preparation complete and byte published. New expectation head must bind final plans; old18617 immutable. No body. | 5fe3e4debec5 |
 | D141f admission | Retain honest missing measurement | Luna and independent Luna | Independent0216 PASS | merged | Reader0209; independent0216 | No paired/continuous same-kind samples; X null. FiveGB fallback retained. D141g first-witness exception awaits reviewed Runtime seam. | No kit edit |
-| D141 P4 | Qualify corrected three-leg proof custody | Agent and App Luna | Actual XML plus path check | review | Source0219; independent0226 | Source says five App files outside executed P4 path. XML absent locally; actual3 PASS not credited until bytes/hash checked. | Historical867 tuple |
+| D141 P4 | Receive original XML for cumulative verdict | Agent custody and App Luna | Actual original XML bytes | blocked:agent | Source0219 and independent0226 PASS | Five App changes outside executed P4 path. Original XML absent locally;3 PASS still uncredited pending own hash and parse. | Historical867 tuple |
 | D141 P5 | Receive Runtime cut proof | Runtime and service | Normal service admission | blocked:runtime | Review0116 PASS; service6934 queued | Fourteen controls PASS; exact38-case body queued. No actual cut P5 GO. | Frozen cut |
 | D141 core | Receive ship core and REG comparison | Farm and Runtime | Farm missing-input packet | blocked:farm | Farm census0140; Runtime0101 PASS | Census NOT READY22 checks; full packet sent lead. No child/import/preflight/core body. | Frozen cut |
 | D141 Node | Complete coverage on both heads | Luna and service | Journey sequence and admission | gated:D141-heavy-slot | Prepared Node controller | Registered App phase short-circuited Node on both. Exact standalone Node command equal; both actual phases NOTRUN. | Cut and frozen7ca |
@@ -50,7 +50,7 @@ Blockers: Runtime P5 — source0116 PASS, same normal request6934 queued for adm
 Blockers: Farm core — complete Runtime handoff received; Farm0140 census NOT READY22 checks, full owner packet sent lead. Child/core NOTRUN.
 Blockers: SWAP safety — automatic refusal1537/D130 held; existing Runtime disposition owns it. No retry, transfer or alternative qualification.
 Next ready: Placement0225 terminal -> one protected review -> premerge full candidate notice -> normal merge and final head. D141g reviewed kit -> one traced placement -> measured later P1/P2/P3. P4 XML/path review; Node and pristine env after journeys.
-live 3 / cap 3 source while no actual heavy body; ready-undispatched 0. Placement author0225, independent P4 path0226 and popup visibility reader0226 are active. All Luna. No reduced body floor until exact reviewed Runtime seam is installed.
+live 2 / cap 3; ready-undispatched 0. Critical placement return0235 and popup review0232 only. No unrelated source worker while restoring journey headroom; no actual heavy body.
 
 H6: Runtime0201 owns real Farm missing-input producers and sole independent history0201; pristine8912/P56934 queued. P4 admission cancelled perMain, Agent owes immutable10086 correction. Farm0140 NOT READY22 checks. Runtime owns new approved per-job measured-floor kit seam, no App kit writer.
 
@@ -76,4 +76,7 @@ Current full12174, pristine23581, P1preflight3972/body17879 and placement10335/b
 
 Pass 2026-10-26T02:28Z: D141d intended contract ruling consumed; source and independent path work dispatched immediately. D141f independent0216 PASS_NOT_QUALIFIED and exact source prep0213 published. D141g helper SHA1f6926c6 verified; helper20 zero reclaimed, concurrent App checkout accounts for lower free bytes. Recent17 archives all nonKEEP/unreferenced and match prior manager0146 sweep11scratch/6tests. No protected compression found under current references; no historic raw baseline invented. Main and Runtime notified by peers0228. P4 original XML remains absent here. No source merge or new heavy body this pass.
 
-INBOX consumed through 2686427 bytes. Board overwritten 2026-10-26T02:28Z.
+
+Pass 2026-10-26T02:36Z: Protected placement review0231 FAIL on shared-helper scope, candidate not merged. First same-branch Luna return0235 restores shared helpers and must isolate the exact approved expectation. Popup independent0232 incorporates MAIN exact-change classification request; no second author or body. P4 source0219 and independent0226 qualify path separation, XML remains absent; existing Agent peer request retained. Runtime owns kit0215 same-branch D141g continuation and notes0215; no App kit edits.
+
+INBOX consumed through 2693459 bytes. Board overwritten 2026-10-26T02:36Z.
