@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T01:39:48Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-26T01:37:24Z
+<!-- main | 2026-10-26T01:44:21Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 1m -->
+# runtime board, 2026-10-26T01:41:07Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -16,10 +16,11 @@
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Normal5GB admission | doing | Controller0129; service6934 | Exact reviewed row installed; sole runtime-d141-p5-cut-1026013331-6934 queued. Whole run KEEP; no actual body or GO yet. | Frozen cut |
+| P2 placement cut | Classify added undo history binding fields | Luna | Main0139 actual3118 failure | doing | rt-P2-D141-history-binding-classify-0140 | Read-only exact commit and contract intent; verdict to App and Main. No product or test change, no body. | Frozen cut |
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
 | F-final install | Receive exact final packaging inputs | Luna | Actual gate tuple and pristine results | gated:D141-results | Installer resume0129 complete | All four source guards PASS; only three disjoint registry rows differ. No install: immutable tuple and actual gates remain missing. | Qualified chain0015 |
 | F-final notes | Install reviewed D141 notes | Luna | Independent0032 PASS | merged | rt-F-D141-notes-install-0038 | Exact pair installed;568 outside files unchanged; App paragraphs unchanged; render PASS. No ZIP claim. | 5738d66d / f4bb7346 |
-| D141 REG comparison | Review exact per-ID census | Luna | Cut18778 actual receipt | review | Census0132; independent0137 | Count7392 reconciled;53 bad IDs:15 source mapped and38 new ours, provisional until review. Pristine unrun; no behavioral verdict. | Frozen sources |
+| D141 REG comparison | Correct two census metadata findings | Luna | Independent0137 scoped FAIL | doing | Census0132; return0143 | Counts and all mappings PASS; mutable queue diagnostic hash and two tree placeholders need derivative correction. Pristine unrun; no REG verdict. | Frozen sources |
 | F-final and ZIP | Build exact cut and verify fresh patches | Luna and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP. Qualified private packaging route awaits final tuple, install and actual proofs. | No delivery artifact |
 | D141 other proofs | Receive core and P1 to P4 | Farm App Agent | Final cut and GO | doing | Farm waits; App0043; Agent0035 then P4 | App full/pristine dispatched; Agent pristine27388 running. Farm source review0049 active. No duplicate Runtime body. | Frozen cut |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Farm cut core, with no duplicate cohort body. | Agent c585 |
@@ -34,6 +35,6 @@ Blockers: Runtime service — Pristine8912 is queued. Retained start/end bracket
 Blockers: P5 — Sole normal service6934 queued after reviewed row install. Actual38-case proof unrun; dispatcher keeps light5GB admission. Raw run KEEP.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
 Next ready: Pristine normal admission and P5 normal request after disk; final immutable packaging inputs after actual receipts; actual REG comparison after pristine receipt.
-live 1 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.78GB; ordinary maintenance complete; sealed fixture compaction held; dirty v1 trees retained by guards.
+live 2 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.78GB; ordinary maintenance complete; sealed fixture compaction held; dirty v1 trees retained by guards.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
-INBOX consumed through 1734443 bytes. Peer boards read Farm01:30 App01:12 Agent01:13. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
+INBOX consumed through 1735514 bytes. Peer boards read Farm01:30 App01:12 Agent01:13. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
