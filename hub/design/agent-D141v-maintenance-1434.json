@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-26T14:34:24.687859+00:00",
+  "kind": "manager terminal guarded maintenance receipt",
+  "tools": {
+    "compact": {
+      "stdout": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-compact.stdout",
+        "bytes": 133,
+        "sha256": "3235e424ff68e95d1017d9170232a621411ae2201a3fe351622e8e617efe03c4",
+        "text": "packed 0 scratch dirs; free 5284M -> 5284M\ngzipped 0 old worker logs; free now 5284M\npacked 0 finished test-run dirs; free now 5284M\n"
+      },
+      "stderr": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-compact.stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text": ""
+      },
+      "exit": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-compact.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "text": "0\n"
+      }
+    },
+    "sweep": {
+      "stdout": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-sweep.stdout",
+        "bytes": 99,
+        "sha256": "71f76eb2e5a4f0b167b14b7b9fb02abaae3a080614f5d298f7583cc2cc199f4f",
+        "text": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5284M -> 5282M\n"
+      },
+      "stderr": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-sweep.stderr",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "text": ""
+      },
+      "exit": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1430Z-sweep.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "text": "0\n"
+      }
+    }
+  },
+  "free_bytes": 5537796096,
+  "scope": "normal compact0 and sweep3; no protected cleanup or recycle; no pre-run KEEP inventory so no marker byte-equality claim"
+}
