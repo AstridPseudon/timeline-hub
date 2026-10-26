@@ -10,6 +10,7 @@
     "roots": 17,
     "absent_project_only_roots": 5,
     "settings": "-q -n 3 -o addopts= -p no:cacheprovider --timeout=45",
+    "source_admission_floor_bytes": 4600000000,
     "disk_start_bytes": 4700000000,
     "disk_stop_bytes": 4000000000,
     "heavy_body_limit": 1,
@@ -25,8 +26,13 @@
       "a D73 launcher or any overlay"
     ]
   },
-  "command_sha256": "3b5dd427d52febe81277b2e47af3f52b2fc5de8fe17ceeed1fa0480921ff5bc6",
-  "service_row_sha256": "b43ecc72c1b90d2d0563e08ba31814e3705bc301ee8e008fe0b896f79fdd5f48",
+  "command_sha256": "75e11e1a1a45b878b11ab68b0431152266c5f3948261c4427e11dd55ac0e053e",
+  "service_row_sha256": "5d8a263b1919302b398f7f4d2eac3de5b80baeebe0f1b04f1a9af703fe5853c1",
+  "durable_publication": {
+    "worker_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-return-0008/evidence",
+    "command_path_verified_before_body": true,
+    "service_row_path_verified_before_body": true
+  },
   "review_requirement": "one independent command review must PASS before a controller installs or submits the row",
   "freeze_requirement": "U2 final freeze must PASS before body execution",
   "no_body_evidence": true

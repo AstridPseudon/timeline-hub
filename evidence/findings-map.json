@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.f.d141b.command-return.findings.v1",
+  "source_review": "6274c362f902632a99ab0f676ad458ace08f550b",
+  "verdict": "PASS_SOURCE_READY",
+  "findings": [
+    {
+      "id": "D141B-DURABILITY-001",
+      "status": "resolved",
+      "evidence": "command.sh:33-48,97-124,257-268",
+      "resolution": "Separate durable raw stdout/raw stderr, retain pytest.log and JUnit XML, and record body/monitor/wrapper exit values including zero."
+    },
+    {
+      "id": "D141B-MONITOR-002",
+      "status": "resolved",
+      "evidence": "command.sh:147-154,211-230,271-276",
+      "resolution": "Unreadable disk measurements return a monitor failure, terminate only the wrapper-owned body, and propagate the monitor result as the wrapper result."
+    },
+    {
+      "id": "D141B-DISK-003",
+      "status": "resolved",
+      "evidence": "command.sh:16-18,157-160,174-177",
+      "resolution": "Record and enforce the 4.6 GB source-admission floor separately from the one-time 4.7 GB body-dispatch floor, retaining the 4.0 GB continuous stop threshold."
+    },
+    {
+      "id": "D141B-INTERPRETER-004",
+      "status": "resolved",
+      "evidence": "command.sh:11-13,133-140",
+      "resolution": "Require the existing venv target to resolve exactly to /usr/bin/python3.13 and report exactly Python 3.13.16 before admission."
+    },
+    {
+      "id": "D141B-PUBLISH-005",
+      "status": "resolved",
+      "evidence": "service-row.txt:9-12; admission.json:34-39",
+      "resolution": "Bind the normal service row to the absolute return-worker publication root and require command and row existence before body admission."
+    }
+  ],
+  "scope_preserved": [
+    "no body, pytest, import, collection, socket, installation, or service submission",
+    "exact 17 upstream-present roots",
+    "existing venv and pristine Agent/Runtime source paths",
+    "normal service and only independent-review plus U2-freeze gates",
+    "no product, schema, pin, generated, shared dependency, or checkout writes"
+  ]
+}

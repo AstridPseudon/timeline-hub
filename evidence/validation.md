@@ -22,18 +22,22 @@ Checks performed:
 - Each exact excluded root was checked with `git cat-file -e HEAD:<root>`
   (exit `128`) and `git ls-tree` (zero lines).
 - JSON syntax, source SHA/tree fields, root membership, pytest settings, clean
-  checkout state, interpreter path/version, and disk thresholds were checked.
+  checkout state, exact interpreter path/version guards, separate 4.6 GB source
+  admission and 4.7 GB body-dispatch floors, and the 4.0 GB stop threshold were
+  checked.
 - The candidate row is documented only in `service-row.txt`; it was not added
   to `tests/suites.conf` and no service was submitted.
-- Final SHA guards are bound: command
-  `3b5dd427d52febe81277b2e47af3f52b2fc5de8fe17ceeed1fa0480921ff5bc6`, row
-  `b43ecc72c1b90d2d0563e08ba31814e3705bc301ee8e008fe0b896f79fdd5f48`.
+- Final SHA guards are bound after the durable publication copy is verified;
+  the exact values are recorded in `admission.json`.
 
 The wrapper records durable command, interpreter, source-before/source-after,
-disk, status, raw pytest log, and JUnit XML receipts under the fixed manager
-run path. It refuses unless both manager-installed PASS gate markers exist,
-starts only at `>=4700000000` bytes, stops the body below `4000000000` bytes,
-and holds one heavy-body lock.
+disk, status, separate raw stdout and raw stderr, a combined compatibility log,
+body and monitor exit witnesses, and JUnit XML under the fixed manager run path.
+It refuses unless both manager-installed PASS gate markers exist, admits the
+source only at `>=4600000000` bytes, dispatches the body only at
+`>=4700000000` bytes, stops the body below `4000000000` bytes, and holds one
+heavy-body lock. An unreadable monitor measurement terminates the wrapper-owned
+body and returns a failure status.
 
 Unsupported or intentionally deferred:
 
