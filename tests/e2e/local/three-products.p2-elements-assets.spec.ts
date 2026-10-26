@@ -755,7 +755,25 @@ function assertNativeHistoryEntry(page: HistoryPage, post: CommitPost, result: C
   expect(page.items).toHaveLength(context.priorHistory.items.length + 1);
   const entry = page.items.find((item) => item.publication_id === publication);
   expect(entry).toEqual({ publication_id: publication, revision_id: context.restored.parent_revision.revision_id,
-    previous, receipt: result.receipt, intent: 'recorded', records: expected.records,
+    previous, receipt: result.receipt, intent: 'recorded', records: (() => {
+      const target = context.priorHistory.items.find((item) => item.publication_id === context.targetPublication)!;
+      const materializations = target.records!.commands.flatMap((record) => record.bindings)
+        .filter((binding) => binding.key === 'commit.materialization');
+      if (!materializations.length) return expected.records;
+      expect(materializations).toHaveLength(2);
+      const base = { revision_id: post.body.base_revision_id, publication_id: post.body.base_publication_id };
+      const submitted = post.body.steps![0]!;
+      const boundary = { base_revision_id: base.revision_id, base_publication_id: base.publication_id,
+        evaluated_head: base, step_id: submitted.id, command_ordinal: 0, phase: 'input' };
+      const bindings = materializations.map((source) => {
+        const binding = nativeBinding(context.before, source.successor!, source.successor!, boundary);
+        return { ...binding, key: 'commit.materialization', policy: 'fixed', dependencies: [],
+          successor: source.physical_ref, owner: source.owner, edge_before: source.edge_after,
+          edge_after: source.edge_before, step_id: submitted.id };
+      });
+      const command = expected.records.commands[0]!;
+      return { ...expected.records, commands: [{ ...command, bindings: [...command.bindings, ...bindings] }] };
+    })(),
     provider_version: expected.data.provider_version, compiler_version: expected.data.compiler_version,
     publisher: expected.data.publisher, source: { via: 'app' }, label: 'Undo timeline', merge: 'fields',
     merge_mode: 'fields', reads: [], steps: expected.data.steps, recorder_abi: 2 });
