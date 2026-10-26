@@ -170,6 +170,21 @@ describe('AstridStatusSection', () => {
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
 
+  it('labels the Runtime repair surface as beta on Windows only', async () => {
+    const platform = vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    const userAgent = vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Windows');
+    const view = render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByText(CONNECTION_COPY.windowsBeta)).toBeInTheDocument();
+    expect(screen.getByText('irm https://astrid.haus/install.ps1 | iex')).toBeInTheDocument();
+
+    platform.mockReturnValue('MacIntel');
+    userAgent.mockReturnValue('Macintosh');
+    view.rerender(<AstridStatusSection isOpen />);
+    expect(screen.queryByText(CONNECTION_COPY.windowsBeta)).not.toBeInTheDocument();
+    expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
+  });
+
   it('copies the same install command shown in the repair control', async () => {
     render(<AstridStatusSection isOpen />);
     expect(await screen.findByRole('button', { name: 'Copy command' })).toBeInTheDocument();

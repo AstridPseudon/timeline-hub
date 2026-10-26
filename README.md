@@ -14,7 +14,7 @@ macOS or Linux, in Terminal:
 curl -fsSL https://astrid.haus/install | sh
 ```
 
-Windows, in PowerShell:
+Windows: beta, in PowerShell:
 
 ```powershell
 irm https://astrid.haus/install.ps1 | iex

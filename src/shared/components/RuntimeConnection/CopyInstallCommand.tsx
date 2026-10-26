@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { runtimeOrigin } from '@/integrations/runtime/connection.ts';
 import type { ServiceStatus } from '@/integrations/runtime/generated.ts';
+import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection.ts';
 import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
@@ -82,6 +83,7 @@ export function CopyInstallCommand({ mode = 'install', services }: CopyInstallCo
   return (
     <div className="w-full space-y-4">
       <div className="space-y-2">
+        {detectPlatform() === 'windows' && <p className="text-xs text-muted-foreground">{copy.windowsBeta}</p>}
         <Button type="button" className="h-11 w-full justify-between rounded-xl px-4 text-sm" onClick={() => void agentCopy.copy()}>
           <span aria-live="polite">{agentCopied ? copy.copied : copy.copy}</span>
           {agentCopied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}

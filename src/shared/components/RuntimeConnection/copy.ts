@@ -280,6 +280,7 @@ export interface RuntimeConnectionCopy {
   readonly commands: typeof ASTRID_COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
+  readonly windowsBeta: string;
   /** The quiet status line along the bottom of a card that waits for something done elsewhere; it becomes `connected`. */
   readonly waiting: string;
   /** While the first probe is in flight (and while Astrid is still starting): the one line under the mark. */
@@ -343,6 +344,8 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   commands: ASTRID_COMMANDS,
 
   panelLabel: 'Connect to Astrid',
+
+  windowsBeta: 'Windows: beta',
 
   waiting: 'Waiting for Astrid on this computer…',
 
