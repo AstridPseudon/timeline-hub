@@ -66,7 +66,7 @@ if os.environ.get('MOCK_CORE_DISK_FAILURE'):
     print('Details: ' + os.environ['MOCK_LOG'])
     sys.exit(1)
 if os.environ.get('MOCK_REMOVE_BOOTSTRAP'):
-    shutil.rmtree(pathlib.Path(sys.argv[0]).parent)
+    shutil.rmtree(pathlib.Path(os.environ.get('MOCK_UV_BOOTSTRAP', pathlib.Path(sys.argv[0]).parent)))
 if os.environ.get('MOCK_CORE_EXIT'):
     print(${JSON.stringify(failure)})
     print('Details: ' + os.environ['MOCK_LOG'])
@@ -134,12 +134,13 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
       env.LOCALAPPDATA = path.join(root, 'Windows Local Data');
       env.MOCK_LOG = path.join(env.LOCALAPPDATA, 'Astrid Runtime/logs/install.log');
       const windowsBootstrap = path.join(env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
-      await mkdir(windowsBootstrap, { recursive: true });
+      env.MOCK_UV_BOOTSTRAP = windowsBootstrap;
+      await mkdir(env.LOCALAPPDATA, { recursive: true });
       if (process.platform === 'win32') {
         const mockScript = path.join(root, 'mock-uv.py');
         const launcherSource = path.join(root, 'mock-uv-launcher.cs');
         const launcherScript = path.join(root, 'build-mock-uv.ps1');
-        const executable = path.join(windowsBootstrap, 'uv.exe');
+        const executable = path.join(root, 'mock-uv.exe');
         await writeFile(mockScript, mockUv);
         await writeFile(launcherSource, String.raw`
 using System;
@@ -189,10 +190,14 @@ Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_UV_LAUNCHER_SOURCE)) 
         env.MOCK_UV_PYTHON = process.env.ASTRID_TEST_PYTHON || 'python';
         env.MOCK_UV_LAUNCHER_SOURCE = launcherSource;
         env.MOCK_UV_EXECUTABLE = executable;
+        await rm(executable, { force: true });
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', launcherScript], { cwd: repo, env });
+        env.MOCK_UV_SOURCE = executable;
       } else {
-        await cp(path.join(bootstrap, 'uv'), path.join(windowsBootstrap, 'uv.exe'));
-        await chmod(path.join(windowsBootstrap, 'uv.exe'), 0o755);
+        env.MOCK_UV_SOURCE = path.join(windowsBootstrap, 'uv.exe');
+        await mkdir(windowsBootstrap, { recursive: true });
+        await cp(path.join(bootstrap, 'uv'), env.MOCK_UV_SOURCE);
+        await chmod(env.MOCK_UV_SOURCE, 0o755);
       }
       const harness = path.join(root, 'invoke.ps1');
       await writeFile(harness, `
@@ -200,8 +205,14 @@ $ErrorActionPreference = 'Continue'
 function Invoke-WebRequest {
     param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
     if ($env:MOCK_FETCH_EXIT) { throw 'The fixture download failed.' }
-    if ($Uri.EndsWith('/developer-manifest.json') -or $Uri.EndsWith('/install-manifest.json')) { [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri) }
-    Copy-Item $env:MOCK_MANIFEST $OutFile
+    if ($Uri.StartsWith('https://astral.sh/')) {
+        [IO.File]::WriteAllText($OutFile, @'
+Copy-Item -LiteralPath $env:MOCK_UV_SOURCE -Destination (Join-Path $env:UV_UNMANAGED_INSTALL 'uv.exe') -Force
+'@)
+    } else {
+        if ($Uri.EndsWith('/developer-manifest.json') -or $Uri.EndsWith('/install-manifest.json')) { [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri) }
+        Copy-Item $env:MOCK_MANIFEST $OutFile
+    }
 }
 try {
     if ($args.Count) {

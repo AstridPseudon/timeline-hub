@@ -102,6 +102,9 @@ async function windowsDirectories(context, env = {}) {
   await writeFile(target, script);
   context.env.MOCK_INSTALL_SCRIPT = target;
   context.env.MOCK_PRIVATE_DIRS = path.join(context.root, 'private-dirs');
+  const bootstrap = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap');
+  await mkdir(bootstrap, { recursive: true });
+  await cp(context.env.MOCK_UV_SOURCE, path.join(bootstrap, 'uv.exe'));
   const prelude = `
 Add-Type -TypeDefinition @'
 using System;
@@ -339,16 +342,18 @@ test('PowerShell preserves the installer low-space failure without adding a seco
 }));
 
 test('PowerShell preserves output after uninstall removes bootstrap', () => scenario(async (context, run) => {
-  const result = await run(['--uninstall'], { MOCK_REMOVE_BOOTSTRAP: '1' });
+  const result = await run(['--uninstall'], process.platform === 'win32' ? {} : { MOCK_REMOVE_BOOTSTRAP: '1' });
   alive(result);
   assert.match(result.stdout, /Astrid was uninstalled\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
+  await assert.rejects(readFile(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe')), { code: 'ENOENT' });
 }));
 
 test('PowerShell removes its external bootstrap and lock after successful uninstall, repeatedly', () => scenario(async (context, run) => {
   const installerRoot = path.join(context.env.LOCALAPPDATA, 'Astrid Installer');
   for (let attempt = 0; attempt < 2; attempt++) {
-    if (attempt) await context.powershell();
+    const ready = await run();
+    alive(ready);
     await writeFile(path.join(installerRoot, 'astrid-install.lock'), 'held by core until it exits');
     const result = await run(['--uninstall']);
     alive(result);
@@ -434,8 +439,8 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
   const executable = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe');
   context.env.MOCK_SOURCE_UV = path.join(context.root, 'uv-source.exe');
-  await cp(executable, context.env.MOCK_SOURCE_UV);
-  await rm(executable);
+  await cp(context.env.MOCK_UV_SOURCE, context.env.MOCK_SOURCE_UV);
+  await rm(executable, { force: true });
   context.env.MOCK_BOOTSTRAP_ARGS = path.join(context.root, 'bootstrap-args.json');
   if (process.platform !== 'win32') {
     context.env.SystemRoot = path.join(context.root, 'system root');
