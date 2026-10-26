@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T14:58:36Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+<!-- app | 2026-10-26T15:03:58Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
 # app board, 2026-10-26T14:57:36.175335+00:00
 
 Current decision: Owner D141jj Option B ships App on upstream fc24f849. Header14:35 records the FINAL TUPLE and D141v COMPLETE. Final App metadata is merged. Upstream merges remain closed; eac97 stays uninstalled until after ZIP.
