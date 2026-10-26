@@ -1,0 +1,339 @@
+{
+  "acceptance": {
+    "1_archive_identity_integrity": {
+      "details": "Regular ZIP and sidecar; byte count 16036421; programmatic SHA match; ZipFile.testzip None; 12 unique safe regular members; extracted bytes match; SHA256SUMS all 11 entries match; nested extra ZIP testzip passes with 2 safe unique members.",
+      "status": "PASS"
+    },
+    "2_patch_authentication_and_tree": {
+      "details": "All four fresh private repos at exact full base; git am exit 0; synthetic applied heads and trees recorded per repo; trees equal wanted final trees; meaningful diff-check diagnostics recorded as OBS-001.",
+      "status": "PASS_WITH_FINDING"
+    },
+    "3_bundle_authentication_and_tree": {
+      "details": "All four private repos at required base; git bundle verify/list-heads/fetch exits 0; bundle tips and trees equal final tuple/tree.",
+      "status": "PASS"
+    },
+    "4_readme_contract_and_disclosures": {
+      "details": "README names exact tuple/tree, App option B fc24f849, later Elements/AgentChat/Runtime-pin conflicts, SWAP/Element/popup ADD gaps, App 32+collection+2 Node+3 lint, Agent 397/64/53 and historical non-retarget boundaries. C0 \u00a71/\u00a74 was read; packaging inputs are not wire payloads. Full product tests/typecheck/lint: N/A.",
+      "status": "PASS"
+    },
+    "5_main_direct_build_and_custody": {
+      "details": "Main release at runtime INBOX/BOARD header records direct bin/delivery-build EXIT 0 and exact ZIP; independent evidence is this review. Prior service refusals/failures and historical monitor limits remain original; no service ID/request/native lease invented.",
+      "status": "PASS_WITH_BOUNDED_CUSTODY"
+    }
+  },
+  "archive": {
+    "bytes": 16036421,
+    "internal_checksums": "SHA256SUMS authenticated all 11 non-SHA256SUMS members",
+    "member_count": 12,
+    "members": [
+      {
+        "bytes": 103828,
+        "compressed_bytes": 26537,
+        "name": "README.md",
+        "sha256": "c31dc6e598403eb4ff48758eb755759336f15c60a18a27ec5afa6687dc3e6a30"
+      },
+      {
+        "bytes": 1205,
+        "compressed_bytes": 644,
+        "name": "SHA256SUMS",
+        "sha256": "6de78a065037866179d4c89e919d0a918adba35b268a8108f3c275f78db70283"
+      },
+      {
+        "bytes": 4391972,
+        "compressed_bytes": 4285325,
+        "name": "bundles/agent.bundle",
+        "sha256": "1085a9d3fcc2a7ddf5aa30356afc31555cb727b6a8e9595bb3573f42c50af6b9"
+      },
+      {
+        "bytes": 3346693,
+        "compressed_bytes": 3242076,
+        "name": "bundles/app.bundle",
+        "sha256": "6b500f1af0815e077569b92132d91eb04d024f50fe149a9581ce306cadd805b6"
+      },
+      {
+        "bytes": 242315,
+        "compressed_bytes": 239249,
+        "name": "bundles/composition.bundle",
+        "sha256": "69b77d88d08869e464221b50e64b9afec79154f1c71a676094855088e2a5495b"
+      },
+      {
+        "bytes": 2243472,
+        "compressed_bytes": 2202967,
+        "name": "bundles/runtime.bundle",
+        "sha256": "5c17c0b9b5c221c7525641e5ddfcb5e3a02a9e83a2d7c515a95a02e8a876cc5a"
+      },
+      {
+        "bytes": 10519,
+        "compressed_bytes": 4891,
+        "name": "extras/owner-film-differences.md",
+        "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+      },
+      {
+        "bytes": 12221,
+        "compressed_bytes": 12160,
+        "name": "extras/owner_film_cliplook_scan-v1.0.8.zip",
+        "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+      },
+      {
+        "bytes": 12625820,
+        "compressed_bytes": 2511905,
+        "name": "patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+        "sha256": "6309365b84619c9e52b36e111bd8beecae2ce8ac8178976c875b39759284517f"
+      },
+      {
+        "bytes": 9832308,
+        "compressed_bytes": 1660617,
+        "name": "patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+        "sha256": "f8bcbe216094db9875c2d5413a7a542c4c4d8d23557bd5764e8a09a240a84d7f"
+      },
+      {
+        "bytes": 507922,
+        "compressed_bytes": 123458,
+        "name": "patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+        "sha256": "bf0e02726a4ddcd62e10b50bf7d881779c397ffe1ddb7fc1647317086ea227df"
+      },
+      {
+        "bytes": 15160252,
+        "compressed_bytes": 1724702,
+        "name": "patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+        "sha256": "4e61a7a2ba2f3dfde93c7b568f8f08e8505f49d421f64d629cc8e260dde7e7f5"
+      }
+    ],
+    "nested_extra": "owner_film_cliplook_scan-v1.0.8.zip: 2 members, testzip PASS, no duplicate or unsafe paths",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/timeline-delivery-20261026T183845Z.zip",
+    "sha256": "5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a",
+    "sha_match": true,
+    "sidecar_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/timeline-delivery-20261026T183845Z.zip.sha256",
+    "sidecar_sha256": "5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a",
+    "zip_testzip": true
+  },
+  "canonical_notes": {
+    "README.template.md": {
+      "bytes": 52052,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+    },
+    "distinction": "canonical notes were read-only checked; rendered archive README is the delivered artifact and is not conflated with the canonical template.",
+    "gate-results.md": {
+      "bytes": 48240,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+    }
+  },
+  "contract_basis": {
+    "boundary": "archive packaging inputs are patches, bundles, README, extras and SHA256SUMS; they are not v2 wire commit payloads; no validators/interface changes were made.",
+    "sections": [
+      "\u00a71 Request",
+      "\u00a74 Replies"
+    ],
+    "source": "/home/user/work/runtime at final Runtime head, git show 95d98f...:contract/commit-v2.md"
+  },
+  "findings": [
+    {
+      "id": "OBS-001",
+      "severity": "nonblocking",
+      "status": "observed",
+      "text": "Meaningful git diff --check base..result reports preserved whitespace diagnostics: Agent exit 2/153 lines (136 added-whitespace lines), Runtime exit 2/4 lines, App exit 2/56 lines; Composition exit 0/0 lines. git am itself exited 0 for all four and all resulting trees match exactly."
+    },
+    {
+      "id": "OBS-002",
+      "severity": "informational",
+      "status": "observed",
+      "text": "The rendered README retains the template/canonical historical PENDING language and older historical receipts, while generated per-repository sections and the D141jj suffix name the actual final tuple and App fc24f849 option B. Historical receipts are not retargeted."
+    },
+    {
+      "id": "OBS-003",
+      "severity": "bounded-custody",
+      "status": "observed",
+      "text": "The detached sampler shell was reaped by the harness after one valid sample; its initial attempt also logged a quoting error. A foreground sampler then recorded valid 5-second samples at 18:46:09Z and 18:46:14Z, exited 130 on explicit Ctrl-C, and the review guard armed a 4,000,000,000-byte process-group threshold. No threshold trip occurred; no continuous historical peak is claimed."
+    },
+    {
+      "id": "OBS-004",
+      "severity": "informational",
+      "status": "observed",
+      "text": "The archive has no separate machine-readable manifest beyond SHA256SUMS; README, patches, bundles, extras, and SHA256SUMS are the actual contents authenticated here. No invented manifest was required."
+    }
+  ],
+  "main_release": {
+    "board_header": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md:1155-1156",
+    "fact": "Main direct bin/delivery-build EXIT 0; all four applied/bundle/wanted trees identical; release expressly authorizes this one independent review.",
+    "runtime_inbox": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md:9305-9307"
+  },
+  "overall": "PASS",
+  "overall_qualification": "PASS_WITH_NONBLOCKING_FINDINGS",
+  "per_repository": {
+    "agent": {
+      "base": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "base_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+      "bundle_command_exits": {
+        "checkout exact base": 0,
+        "git bundle list-heads": 0,
+        "git bundle verify": 0,
+        "git diff --check base..verify-bundle": 2,
+        "git fetch delivered bundle": 0,
+        "git init": 0,
+        "git rev-parse verify-bundle^{tree}": 0,
+        "update-ref base": 0
+      },
+      "bundle_route_result": "PASS",
+      "bundle_sha": "1085a9d3fcc2a7ddf5aa30356afc31555cb727b6a8e9595bb3573f42c50af6b9",
+      "bundle_tip": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "bundle_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "bundle_tree_matches_wanted": true,
+      "diff_check": 2,
+      "diff_check_lines": 153,
+      "patch": "patches/agent/0001-Squash-tl/integration-of-agent-onto-origin-main.patch",
+      "patch_command_exits": {
+        "checkout exact base": 0,
+        "git am delivered patch": 0,
+        "git diff --check base..HEAD": 2,
+        "git init": 0,
+        "git rev-parse HEAD^{tree}": 0,
+        "update-ref base": 0
+      },
+      "patch_head": "bc4dd3454211da7faae49ba74053c455fa0211f3",
+      "patch_route_result": "PASS",
+      "patch_sha": "6309365b84619c9e52b36e111bd8beecae2ce8ac8178976c875b39759284517f",
+      "patch_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "patch_tree_matches_wanted": true,
+      "source_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "source_tree_matches_wanted": true,
+      "wanted_tree": "83b84c79941917fde535ee3ddba5533a776cace3"
+    },
+    "app": {
+      "base": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+      "base_tree": "faf477adef3ec24c9cc359486ac16866500ab219",
+      "bundle_command_exits": {
+        "checkout exact base": 0,
+        "git bundle list-heads": 0,
+        "git bundle verify": 0,
+        "git diff --check base..verify-bundle": 2,
+        "git fetch delivered bundle": 0,
+        "git init": 0,
+        "git rev-parse verify-bundle^{tree}": 0,
+        "update-ref base": 0
+      },
+      "bundle_route_result": "PASS",
+      "bundle_sha": "6b500f1af0815e077569b92132d91eb04d024f50fe149a9581ce306cadd805b6",
+      "bundle_tip": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+      "bundle_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+      "bundle_tree_matches_wanted": true,
+      "diff_check": 2,
+      "diff_check_lines": 56,
+      "patch": "patches/app/0001-Squash-tl/integration-of-app-onto-origin-main.patch",
+      "patch_command_exits": {
+        "checkout exact base": 0,
+        "git am delivered patch": 0,
+        "git diff --check base..HEAD": 2,
+        "git init": 0,
+        "git rev-parse HEAD^{tree}": 0,
+        "update-ref base": 0
+      },
+      "patch_head": "91e02aaf753d9fa8e7cfe6a54f0fe10919e392f1",
+      "patch_route_result": "PASS",
+      "patch_sha": "f8bcbe216094db9875c2d5413a7a542c4c4d8d23557bd5764e8a09a240a84d7f",
+      "patch_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+      "patch_tree_matches_wanted": true,
+      "source_head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+      "source_tree_matches_wanted": true,
+      "wanted_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd"
+    },
+    "composition": {
+      "base": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "base_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "bundle_command_exits": {
+        "checkout exact base": 0,
+        "git bundle list-heads": 0,
+        "git bundle verify": 0,
+        "git diff --check base..verify-bundle": 0,
+        "git fetch delivered bundle": 0,
+        "git init": 0,
+        "git rev-parse verify-bundle^{tree}": 0,
+        "update-ref base": 0
+      },
+      "bundle_route_result": "PASS",
+      "bundle_sha": "69b77d88d08869e464221b50e64b9afec79154f1c71a676094855088e2a5495b",
+      "bundle_tip": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "bundle_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "bundle_tree_matches_wanted": true,
+      "diff_check": 0,
+      "diff_check_lines": 0,
+      "patch": "patches/composition/0001-Squash-tl/integration-of-composition-onto-origin-mai.patch",
+      "patch_command_exits": {
+        "checkout exact base": 0,
+        "git am delivered patch": 0,
+        "git diff --check base..HEAD": 0,
+        "git init": 0,
+        "git rev-parse HEAD^{tree}": 0,
+        "update-ref base": 0
+      },
+      "patch_head": "7e59ec762688b43d7d26a98783289a30007e7125",
+      "patch_route_result": "PASS",
+      "patch_sha": "bf0e02726a4ddcd62e10b50bf7d881779c397ffe1ddb7fc1647317086ea227df",
+      "patch_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "patch_tree_matches_wanted": true,
+      "source_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "source_tree_matches_wanted": true,
+      "wanted_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "base": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "base_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "bundle_command_exits": {
+        "checkout exact base": 0,
+        "git bundle list-heads": 0,
+        "git bundle verify": 0,
+        "git diff --check base..verify-bundle": 2,
+        "git fetch delivered bundle": 0,
+        "git init": 0,
+        "git rev-parse verify-bundle^{tree}": 0,
+        "update-ref base": 0
+      },
+      "bundle_route_result": "PASS",
+      "bundle_sha": "5c17c0b9b5c221c7525641e5ddfcb5e3a02a9e83a2d7c515a95a02e8a876cc5a",
+      "bundle_tip": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "bundle_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "bundle_tree_matches_wanted": true,
+      "diff_check": 2,
+      "diff_check_lines": 4,
+      "patch": "patches/runtime/0001-Squash-tl/integration-of-runtime-onto-origin-main.patch",
+      "patch_command_exits": {
+        "checkout exact base": 0,
+        "git am delivered patch": 0,
+        "git diff --check base..HEAD": 2,
+        "git init": 0,
+        "git rev-parse HEAD^{tree}": 0,
+        "update-ref base": 0
+      },
+      "patch_head": "0dbccb5d83b2695415d0d33eff82d7f7953ce3a5",
+      "patch_route_result": "PASS",
+      "patch_sha": "4e61a7a2ba2f3dfde93c7b568f8f08e8505f49d421f64d629cc8e260dde7e7f5",
+      "patch_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "patch_tree_matches_wanted": true,
+      "source_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "source_tree_matches_wanted": true,
+      "wanted_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "readme_checks": {
+    "agent_397_64_53": true,
+    "app_32_collection_2node_3lint": true,
+    "app_option_b_fc24": true,
+    "contract_boundary_visible": true,
+    "element_gap_visible": true,
+    "final_trees_exact": true,
+    "final_tuple_exact": true,
+    "later_conflicts_named": true,
+    "popup_add_gap_visible": true,
+    "receipt_scope_evidence": "README line 591 says existing 82e9 receipts remain bound and not retargeted; lines 406/467/591 preserve historical and no-final-claim limits.",
+    "receipt_scope_preserved": true,
+    "swap_gap_visible": true
+  },
+  "review": "F-final independent read-only review of actual Main ZIP",
+  "tests": {
+    "product_suite": "N/A: read-only packaging validation; no full product test/typecheck/lint run",
+    "targeted_review_commands": "python zipfile/hash validation; git am; git bundle verify/fetch; git diff --check"
+  }
+}

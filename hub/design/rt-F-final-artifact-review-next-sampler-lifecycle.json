@@ -1,0 +1,46 @@
+{
+  "sampler_attempts": [
+    {
+      "pid": 3,
+      "kind": "detached",
+      "status": "invalid_monitor",
+      "reason": "initial awk quoting error",
+      "evidence": "disk-trace.txt: 18:43:31Z empty available_bytes and shell integer-expression error"
+    },
+    {
+      "pid": 3,
+      "kind": "detached_corrected",
+      "status": "reaped_by_harness_before_explicit_stop",
+      "valid_samples": [
+        "2026-10-26T18:45:44Z available_bytes=5859561472"
+      ],
+      "stop_attempt": {
+        "signal": "TERM",
+        "kill_exit": 1,
+        "observed_not_alive": true
+      }
+    },
+    {
+      "pid": 3,
+      "pgid": 1,
+      "kind": "foreground",
+      "status": "completed",
+      "valid_samples": [
+        "2026-10-26T18:46:09Z available_bytes=5859020800",
+        "2026-10-26T18:46:14Z available_bytes=5858975744"
+      ],
+      "stop": "Ctrl-C via write_stdin",
+      "exit_code": 130,
+      "wait": "tool session completed with exit 130",
+      "reap": "session reaped by harness"
+    }
+  ],
+  "review_guard": {
+    "threshold_bytes": 4000000000,
+    "observed_pgid": 2,
+    "samples": "tmp/private-git-review.log REVIEW_GUARD lines",
+    "stop_triggered": false,
+    "unrelated_processes_signaled": false
+  },
+  "monitor_gap": "No continuous review-history sampler claim; first malformed detached attempt and harness reaping are retained, not backfilled."
+}

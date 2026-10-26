@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T18:43:09Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 2m -->
-# runtime board, 2026-10-26T18:40:26.756091+00:00
+<!-- main | 2026-10-26T18:48:46Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# runtime board, 2026-10-26T18:48:56.104403+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -35,7 +35,7 @@
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
 | D141 REG upgrade | Retain merged13 case upgrade correction | Luna | Independent0458 and0505 PASS | merged | Author fix-next; review0458; identity0505 | Author13 and independent13 PASS; exact source merged95d. Integrated15 actual0508 and independent0513 PASS. | 012889c1 /95d98 |
 | D141 REG TypeScript | Retain regenerated conformance outputs | Luna | Independent0458 PASS | merged | Author fix-next; independent0458 | Exact2pytest, generatorcheck and TS PASS. Normal857e joined95d; integrated15 actual0508 and independent0513 PASS. | 4a66dee1 /857e |
-| F-final and ZIP | Receive Main direct build result | Main | Main18:39 owner disposition | doing | Main direct group6105 | Header records rerun18:40 with4GB watchdog. Prior stopped build and refusal retained; actual terminal and ZIP pending. | Final tuple unchanged |
+| F-final and ZIP | Retain independently verified final archive | Luna | Main direct EXIT0 and release | merged | rt-F-final-artifact-review-next | [Independent PASS](../../design/runtime-F-final-artifact-independent-publication-1848.json); four actual gitam and bundle trees exact. Monitor and whitespace limits retained. | Final tuple unchanged |
 | D141 other proofs | Retain accepted original App journeys | App and Runtime | Owner D141jj frozen App choice | merged | App original controllers and custody | Seven original journeys qualified with disclosed gaps; popup known gap. No deferred catch-up enters this ZIP. Final metadata successor separate. | App82e / Agentecdc |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
 | D136 original nine | Retain independently qualified failure | App and Runtime | D141 stop | gated:D141-stop | Actual 2330; independent 2335 | Nine setup errors in 39.34 seconds; cause UNKNOWN. No reporting fix, producer investigation or next body. | Captured ab1e delta |
@@ -95,12 +95,11 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: Independent read-only artifact review after Main names the actual ZIP and reports. Main direct build owns execution; no competing Runtime dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 6.53 GB. Main direct build active by recorded disposition; Runtime waits for actual ZIP and Main report.
+Next ready: None. Terminal independent artifact PASS published to Main; exact ZIP and hash returned. Runtime lane complete at retained scopes.
+live 0 / cap 6; ready-undispatched 0. Final actual ZIP independently PASS; free5698830336bytes. No new product, build or cleanup task.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
-Blockers: Main — Direct F-final rerun group6105 started18:40 under4GB watchdog. Await actual terminal and named ZIP; then independent artifact review. Main18:39 clears prior owner decision wait.
-Blockers: Safety — D130 and protected targets remain held. Main18:39 disposition covers completed Main cleanup; no Runtime cleanup or alternate build is released. Raw KEEP and held19479 retained.
+Blockers: Safety — D130 and protected targets remain held. Prior cleanup denial and stopped builds remain historical; Main18:39 disposition and18:40 artifact release recorded. Raw KEEP retained.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
 
@@ -189,3 +188,7 @@ Current pass 2026-10-26T18:31:19.024637+00:00: PLAN and MANAGER-COMMON read firs
 Current pass 2026-10-26T18:37:55.565664+00:00: Read PLAN and MANAGER-COMMON first. INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 Runtime HOLD remain controlling. Complete bin/workers rt- exit0,2716 rows, zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked; App and Agent now explicitly retain Main safety HOLD. No released Runtime dependency or named ZIP. Historical census metadata warnings retained without repair. Free 5255323648 bytes does not release the safety hold. No dispatch, cleanup, repack, retry, alternate route or artifact review. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T183755Z-pass.json).
 
 Current pass 2026-10-26T18:40:26.756091+00:00: PLAN and MANAGER-COMMON read first. INBOX1938506 unchanged; HEADER262789 adds Main18:39 owner disposition, completed cleanup and direct F-final rerun group6105 at18:40. Prior decision wait cleared; historical refusal retained. No Runtime running markers; all33 evidence hashes exact. Main owns actual body and watchdog, no named ZIP yet. Runtime artifact review remains gated on Main report. No competing build, cleanup or dispatch. Free6530392064. [Pass evidence](rounds/20261026T184026Z-pass.json).
+
+Current pass 2026-10-26T18:43:24.238609+00:00: New Main18:40:39 reports actual direct builderEXIT0 and names delivery/timeline-delivery-20261026T183845Z.zip,16036421bytes. Main expressly releases one independent review with four fresh gitam and bundle tree checks. Sole rt-F-final-artifact-review-next queued immediately --net --heavy/default180, bounded shared-object private repos/real5s4GBstop, no secondbuild. ZIP and sidecar unchanged; historical failures/denial retained. INBOX1939692 HEADER263436 consumed.
+
+Current pass 2026-10-26T18:48:56.104403+00:00: Independent reviewer terminal18:47:38 exit0/substantivePASS. Published10 exact originals and reported PASS to Main through normal peer. Actual ZIPtimeline-delivery-20261026T183845Z.zip,16036421bytes, toolcalculatedSHA5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a. All4 fresh gitam0 and bundleverify0; all applied/bundle/wantedtrees exact. README/ZIP/checksums PASS. Whitespace, original sampler gaps and reviewer pathfield typo disclosed immutably; no originals/ZIP rewritten. No task ready. [Publication](../../design/runtime-F-final-artifact-independent-publication-1848.json).

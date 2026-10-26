@@ -1,0 +1,361 @@
+=== agent PATCH ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch init
+REVIEW_GUARD 2026-10-26T18:44:46Z pgid=2 available_bytes=6477688832 threshold=4000000000
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch update-ref refs/heads/base 64197afa297f86f1e738238d5e80aff6d33e303a
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch checkout --detach 64197afa297f86f1e738238d5e80aff6d33e303a
+HEAD is now at 64197afa29 fix(rendering): translate import metadata when writing registry entries
+COMMAND_EXIT=0
+PATCH_BASE=64197afa297f86f1e738238d5e80aff6d33e303a PATCH_BASE_TREE=6c0488b3efdfa47479b0ad1b7bd20608383be26e
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch am /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch
+.git/rebase-apply/patch:47625: trailing whitespace.
+3135: 
+.git/rebase-apply/patch:47628: trailing whitespace.
+3138: 
+.git/rebase-apply/patch:47687: trailing whitespace.
+3197: 
+.git/rebase-apply/patch:47693: trailing whitespace.
+14603: 
+.git/rebase-apply/patch:47696: trailing whitespace.
+14606: 
+warning: squelched 131 whitespace errors
+warning: 136 lines add whitespace errors.
+Applying: Squash tl/integration of agent onto origin/main
+REVIEW_GUARD 2026-10-26T18:44:47Z pgid=2 available_bytes=6323183616 threshold=4000000000
+COMMAND_EXIT=0
+PATCH_HEAD=bc4dd3454211da7faae49ba74053c455fa0211f3 PATCH_TREE=83b84c79941917fde535ee3ddba5533a776cace3 WANTED_TREE=83b84c79941917fde535ee3ddba5533a776cace3
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-patch diff --check
+COMMAND_EXIT=0
+=== agent BUNDLE ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle update-ref refs/heads/base 64197afa297f86f1e738238d5e80aff6d33e303a
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle checkout --detach 64197afa297f86f1e738238d5e80aff6d33e303a
+HEAD is now at 64197afa29 fix(rendering): translate import metadata when writing registry entries
+COMMAND_EXIT=0
+BUNDLE_BASE=64197afa297f86f1e738238d5e80aff6d33e303a
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle bundle verify /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/agent.bundle
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/agent.bundle is okay
+The bundle contains this ref:
+ec0a9f5baef2c31bc5179087b83f044524575182 refs/heads/tl/integration
+The bundle requires these 12 refs:
+e51595c68fc23d3d1734a0885c84a6511999697b 
+96b283d5d6fd8031538f881e486bb2ebf45dce75 
+a9a3550cdebfb748ec44e2fa7bcb136bc0af614f 
+497714c73531f164082555ec81b61ca5bc8b6554 
+431681a6d3cfa0bba2c8c9baa03f152d33032df1 
+74f3f7edba35230d0a01824eae7b663143e6aa5b 
+92443771676ef2bbb547d0a103d708fa8bec4c63 
+0d5d16af6f83d595144d21ea1cef2b5a468b9836 
+25359ed6877b9e13e07799bb2c9600fd143fde88 
+886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55 
+8b6ed2116fd1803d24b2be5bc08bd9490407fe4a 
+64197afa297f86f1e738238d5e80aff6d33e303a 
+The bundle uses this hash algorithm: sha1
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle bundle list-heads /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/agent.bundle
+ec0a9f5baef2c31bc5179087b83f044524575182 refs/heads/tl/integration
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-agent-bundle fetch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/agent.bundle refs/heads/tl/integration:refs/heads/verify-bundle
+REVIEW_GUARD 2026-10-26T18:44:48Z pgid=2 available_bytes=6230700032 threshold=4000000000
+From /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/agent.bundle
+ * [new branch]            tl/integration -> verify-bundle
+COMMAND_EXIT=0
+BUNDLE_TIP=ec0a9f5baef2c31bc5179087b83f044524575182 BUNDLE_TREE=83b84c79941917fde535ee3ddba5533a776cace3 WANTED_TREE=83b84c79941917fde535ee3ddba5533a776cace3
+RESULT_agent=PASS
+=== runtime PATCH ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch update-ref refs/heads/base fa9cd5464a8b37b02f971de375e56be846cd69e2
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch checkout --detach fa9cd5464a8b37b02f971de375e56be846cd69e2
+HEAD is now at fa9cd5464a Use expected render storage and a one GiB reserve
+COMMAND_EXIT=0
+PATCH_BASE=fa9cd5464a8b37b02f971de375e56be846cd69e2 PATCH_BASE_TREE=124e10dbcd54fb90219e783ec11aa34f8c91590c
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch am /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch
+.git/rebase-apply/patch:33400: new blank line at EOF.
++
+.git/rebase-apply/patch:71961: new blank line at EOF.
++
+.git/rebase-apply/patch:107305: new blank line at EOF.
++
+.git/rebase-apply/patch:112063: new blank line at EOF.
++
+warning: 4 lines add whitespace errors.
+Applying: Squash tl/integration of runtime onto origin/main
+COMMAND_EXIT=0
+PATCH_HEAD=0dbccb5d83b2695415d0d33eff82d7f7953ce3a5 PATCH_TREE=78df31d62c5b9ba4c84dee4ea346e43a767718c1 WANTED_TREE=78df31d62c5b9ba4c84dee4ea346e43a767718c1
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-patch diff --check
+COMMAND_EXIT=0
+=== runtime BUNDLE ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle update-ref refs/heads/base fa9cd5464a8b37b02f971de375e56be846cd69e2
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle checkout --detach fa9cd5464a8b37b02f971de375e56be846cd69e2
+HEAD is now at fa9cd5464a Use expected render storage and a one GiB reserve
+COMMAND_EXIT=0
+BUNDLE_BASE=fa9cd5464a8b37b02f971de375e56be846cd69e2
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle bundle verify /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/runtime.bundle
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/runtime.bundle is okay
+The bundle contains this ref:
+95d98f038320d5d46bd679ac000ab3e15825c935 refs/heads/tl/integration
+The bundle requires these 11 refs:
+8c1830d1ca64a3934c37611a28ffe8db7df879ea 
+240d5bb202af709294551045554012f079fd06ca 
+29d0954b6d78a7d7937d81bc36567b6dee7ca976 
+b535646faaad2f8ae7968dfe0f4fa3057f960264 
+4563bb5ff06171b3290fc5e2300e08d7fa125b01 
+a98fbc2f9544a8be14281e32afde8aafa098f5f7 
+795379a67ed71bfc5c0eeee51a0ab883b3210fb8 
+aa6c5b0cb1b05e47fc3bb597f63565f1aa8f7a70 
+d4f496ec4fbcae7a1f3a51d47ed5147c561117ad 
+fa9cd5464a8b37b02f971de375e56be846cd69e2 
+dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f 
+The bundle uses this hash algorithm: sha1
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle bundle list-heads /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/runtime.bundle
+95d98f038320d5d46bd679ac000ab3e15825c935 refs/heads/tl/integration
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-runtime-bundle fetch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/runtime.bundle refs/heads/tl/integration:refs/heads/verify-bundle
+REVIEW_GUARD 2026-10-26T18:44:49Z pgid=2 available_bytes=6201618432 threshold=4000000000
+From /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/runtime.bundle
+ * [new branch]            tl/integration -> verify-bundle
+COMMAND_EXIT=0
+BUNDLE_TIP=95d98f038320d5d46bd679ac000ab3e15825c935 BUNDLE_TREE=78df31d62c5b9ba4c84dee4ea346e43a767718c1 WANTED_TREE=78df31d62c5b9ba4c84dee4ea346e43a767718c1
+RESULT_runtime=PASS
+=== app PATCH ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch update-ref refs/heads/base fc24f84994dc36cfae9349112782ab4d91dbc73b
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch checkout --detach fc24f84994dc36cfae9349112782ab4d91dbc73b
+HEAD is now at fc24f84994 fix: export complete agent chats
+COMMAND_EXIT=0
+PATCH_BASE=fc24f84994dc36cfae9349112782ab4d91dbc73b PATCH_BASE_TREE=faf477adef3ec24c9cc359486ac16866500ab219
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch am /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch
+REVIEW_GUARD 2026-10-26T18:44:50Z pgid=2 available_bytes=6034436096 threshold=4000000000
+.git/rebase-apply/patch:86005: trailing whitespace.
+  
+.git/rebase-apply/patch:86006: trailing whitespace.
+  // Authenticated user actions - moderate  
+.git/rebase-apply/patch:86008: trailing whitespace.
+  
+.git/rebase-apply/patch:86011: trailing whitespace.
+  
+.git/rebase-apply/patch:86014: trailing whitespace.
+  
+warning: squelched 39 whitespace errors
+warning: 44 lines add whitespace errors.
+Applying: Squash tl/integration of app onto origin/main
+COMMAND_EXIT=0
+PATCH_HEAD=91e02aaf753d9fa8e7cfe6a54f0fe10919e392f1 PATCH_TREE=e2632a4fbe63cadbd03b03edc5d34196a37304fd WANTED_TREE=e2632a4fbe63cadbd03b03edc5d34196a37304fd
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-patch diff --check
+COMMAND_EXIT=0
+=== app BUNDLE ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle update-ref refs/heads/base fc24f84994dc36cfae9349112782ab4d91dbc73b
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle checkout --detach fc24f84994dc36cfae9349112782ab4d91dbc73b
+REVIEW_GUARD 2026-10-26T18:44:51Z pgid=2 available_bytes=5932904448 threshold=4000000000
+HEAD is now at fc24f84994 fix: export complete agent chats
+COMMAND_EXIT=0
+BUNDLE_BASE=fc24f84994dc36cfae9349112782ab4d91dbc73b
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle bundle verify /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/app.bundle
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/app.bundle is okay
+The bundle contains this ref:
+abac6c809da25f4c6cc7cce61a7d5ea2ac067067 refs/heads/tl/integration
+The bundle requires these 16 refs:
+60aa26b9529dcfa94f8ffdbd5edf42fa6c1babd2 
+17e46de99b7cef52fe494de1703a9865a8d4be24 
+44f0b9ca9d0247d909f86f56955a04ef6c18a2aa 
+574e97f44a81e0ec1a896fc3fb8626deb2f1edf0 
+bebadd0e1283753e3805c2d61688e3dee8b929e2 
+860d43b331fb4422b16bc0dbd7b08666a0c766a0 
+83717af0c756ed3d4cf12a744f648849f3d1b153 
+7c17cc9d9f9504b578862e2ffd27623fca08a04f 
+2a288e629c47d3020cd1fd83558ac949eec3d6cf 
+09c84403303d617af4bd7426d29bb80002253e08 
+3881e9440688f774878e18806da2dc5c993a9b00 
+36e1ef39c03c2c91a36fd964e3a2385a410bc06c 
+213318f1ec6ea5c324787bbd1c30a73072d1151a 
+7ca61bb3280beca21d98a854af266a382f7ce5df 
+d822d2f5d2bd05187b4ff5b6071c3e13945d4747 
+fc24f84994dc36cfae9349112782ab4d91dbc73b 
+The bundle uses this hash algorithm: sha1
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle bundle list-heads /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/app.bundle
+abac6c809da25f4c6cc7cce61a7d5ea2ac067067 refs/heads/tl/integration
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-app-bundle fetch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/app.bundle refs/heads/tl/integration:refs/heads/verify-bundle
+From /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/app.bundle
+ * [new branch]            tl/integration -> verify-bundle
+COMMAND_EXIT=0
+BUNDLE_TIP=abac6c809da25f4c6cc7cce61a7d5ea2ac067067 BUNDLE_TREE=e2632a4fbe63cadbd03b03edc5d34196a37304fd WANTED_TREE=e2632a4fbe63cadbd03b03edc5d34196a37304fd
+RESULT_app=PASS
+=== composition PATCH ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch update-ref refs/heads/base 67b8aa3d0d6831d3e3504a340ff583c3da253707
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch checkout --detach 67b8aa3d0d6831d3e3504a340ff583c3da253707
+HEAD is now at 67b8aa3d0d v0.0.6
+COMMAND_EXIT=0
+PATCH_BASE=67b8aa3d0d6831d3e3504a340ff583c3da253707 PATCH_BASE_TREE=62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch am /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch
+Applying: Squash tl/integration of composition onto origin/main
+COMMAND_EXIT=0
+PATCH_HEAD=7e59ec762688b43d7d26a98783289a30007e7125 PATCH_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148 WANTED_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-patch diff --check
+COMMAND_EXIT=0
+=== composition BUNDLE ROUTE ===
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle/.git/
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle config user.name Artifact Review
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle config user.email artifact-review@invalid
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle update-ref refs/heads/base 67b8aa3d0d6831d3e3504a340ff583c3da253707
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle checkout --detach 67b8aa3d0d6831d3e3504a340ff583c3da253707
+HEAD is now at 67b8aa3d0d v0.0.6
+COMMAND_EXIT=0
+BUNDLE_BASE=67b8aa3d0d6831d3e3504a340ff583c3da253707
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle bundle verify /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/composition.bundle
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/composition.bundle is okay
+The bundle contains this ref:
+635f4de06fda22a85fc2e4cfc764d0153a4c9f40 refs/heads/tl/integration
+The bundle requires this ref:
+67b8aa3d0d6831d3e3504a340ff583c3da253707 
+The bundle uses this hash algorithm: sha1
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle bundle list-heads /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/composition.bundle
+635f4de06fda22a85fc2e4cfc764d0153a4c9f40 refs/heads/tl/integration
+COMMAND_EXIT=0
++ git -C /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/private-composition-bundle fetch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/composition.bundle refs/heads/tl/integration:refs/heads/verify-bundle
+REVIEW_GUARD 2026-10-26T18:44:52Z pgid=2 available_bytes=5876289536 threshold=4000000000
+From /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-artifact-review-next/evidence/tmp/archive/bundles/composition.bundle
+ * [new branch]            tl/integration -> verify-bundle
+COMMAND_EXIT=0
+BUNDLE_TIP=635f4de06fda22a85fc2e4cfc764d0153a4c9f40 BUNDLE_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148 WANTED_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148
+RESULT_composition=PASS
+REVIEW_ALL=PASS

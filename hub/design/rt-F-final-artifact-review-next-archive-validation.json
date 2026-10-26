@@ -1,0 +1,214 @@
+{
+  "archive": {
+    "bytes": 16036421,
+    "mode": "0o600",
+    "regular": true,
+    "sha256": "5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a",
+    "sidecar_bytes": 197,
+    "sidecar_match": true,
+    "sidecar_mode": "0o644",
+    "sidecar_regular": true,
+    "sidecar_sha256": "5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a",
+    "sidecar_text": "5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/timeline-delivery-20261026T183845Z.zip\n"
+  },
+  "internal_sha256sums": {
+    "actual_non_checksum_count": 11,
+    "all_match": true,
+    "comparisons": {
+      "README.md": {
+        "actual": "c31dc6e598403eb4ff48758eb755759336f15c60a18a27ec5afa6687dc3e6a30",
+        "declared": "c31dc6e598403eb4ff48758eb755759336f15c60a18a27ec5afa6687dc3e6a30",
+        "match": true
+      },
+      "bundles/agent.bundle": {
+        "actual": "1085a9d3fcc2a7ddf5aa30356afc31555cb727b6a8e9595bb3573f42c50af6b9",
+        "declared": "1085a9d3fcc2a7ddf5aa30356afc31555cb727b6a8e9595bb3573f42c50af6b9",
+        "match": true
+      },
+      "bundles/app.bundle": {
+        "actual": "6b500f1af0815e077569b92132d91eb04d024f50fe149a9581ce306cadd805b6",
+        "declared": "6b500f1af0815e077569b92132d91eb04d024f50fe149a9581ce306cadd805b6",
+        "match": true
+      },
+      "bundles/composition.bundle": {
+        "actual": "69b77d88d08869e464221b50e64b9afec79154f1c71a676094855088e2a5495b",
+        "declared": "69b77d88d08869e464221b50e64b9afec79154f1c71a676094855088e2a5495b",
+        "match": true
+      },
+      "bundles/runtime.bundle": {
+        "actual": "5c17c0b9b5c221c7525641e5ddfcb5e3a02a9e83a2d7c515a95a02e8a876cc5a",
+        "declared": "5c17c0b9b5c221c7525641e5ddfcb5e3a02a9e83a2d7c515a95a02e8a876cc5a",
+        "match": true
+      },
+      "extras/owner-film-differences.md": {
+        "actual": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220",
+        "declared": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220",
+        "match": true
+      },
+      "extras/owner_film_cliplook_scan-v1.0.8.zip": {
+        "actual": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee",
+        "declared": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee",
+        "match": true
+      },
+      "patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch": {
+        "actual": "6309365b84619c9e52b36e111bd8beecae2ce8ac8178976c875b39759284517f",
+        "declared": "6309365b84619c9e52b36e111bd8beecae2ce8ac8178976c875b39759284517f",
+        "match": true
+      },
+      "patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch": {
+        "actual": "f8bcbe216094db9875c2d5413a7a542c4c4d8d23557bd5764e8a09a240a84d7f",
+        "declared": "f8bcbe216094db9875c2d5413a7a542c4c4d8d23557bd5764e8a09a240a84d7f",
+        "match": true
+      },
+      "patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch": {
+        "actual": "bf0e02726a4ddcd62e10b50bf7d881779c397ffe1ddb7fc1647317086ea227df",
+        "declared": "bf0e02726a4ddcd62e10b50bf7d881779c397ffe1ddb7fc1647317086ea227df",
+        "match": true
+      },
+      "patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch": {
+        "actual": "4e61a7a2ba2f3dfde93c7b568f8f08e8505f49d421f64d629cc8e260dde7e7f5",
+        "declared": "4e61a7a2ba2f3dfde93c7b568f8f08e8505f49d421f64d629cc8e260dde7e7f5",
+        "match": true
+      }
+    },
+    "declared_count": 11,
+    "extra_declarations": [],
+    "missing_declarations": []
+  },
+  "members": {
+    "README.md": {
+      "bytes": 103828,
+      "compressed_bytes": 26537,
+      "crc32": "3164e689",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "c31dc6e598403eb4ff48758eb755759336f15c60a18a27ec5afa6687dc3e6a30"
+    },
+    "SHA256SUMS": {
+      "bytes": 1205,
+      "compressed_bytes": 644,
+      "crc32": "7bd0a313",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "6de78a065037866179d4c89e919d0a918adba35b268a8108f3c275f78db70283"
+    },
+    "bundles/agent.bundle": {
+      "bytes": 4391972,
+      "compressed_bytes": 4285325,
+      "crc32": "d09fe1ac",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "1085a9d3fcc2a7ddf5aa30356afc31555cb727b6a8e9595bb3573f42c50af6b9"
+    },
+    "bundles/app.bundle": {
+      "bytes": 3346693,
+      "compressed_bytes": 3242076,
+      "crc32": "4b1617e6",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "6b500f1af0815e077569b92132d91eb04d024f50fe149a9581ce306cadd805b6"
+    },
+    "bundles/composition.bundle": {
+      "bytes": 242315,
+      "compressed_bytes": 239249,
+      "crc32": "b9b26e63",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "69b77d88d08869e464221b50e64b9afec79154f1c71a676094855088e2a5495b"
+    },
+    "bundles/runtime.bundle": {
+      "bytes": 2243472,
+      "compressed_bytes": 2202967,
+      "crc32": "9804e0d0",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "5c17c0b9b5c221c7525641e5ddfcb5e3a02a9e83a2d7c515a95a02e8a876cc5a"
+    },
+    "extras/owner-film-differences.md": {
+      "bytes": 10519,
+      "compressed_bytes": 4891,
+      "crc32": "39b40912",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+    },
+    "extras/owner_film_cliplook_scan-v1.0.8.zip": {
+      "bytes": 12221,
+      "compressed_bytes": 12160,
+      "crc32": "de55cc46",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+    },
+    "patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch": {
+      "bytes": 12625820,
+      "compressed_bytes": 2511905,
+      "crc32": "3786a6f1",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "6309365b84619c9e52b36e111bd8beecae2ce8ac8178976c875b39759284517f"
+    },
+    "patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch": {
+      "bytes": 9832308,
+      "compressed_bytes": 1660617,
+      "crc32": "30dd38bb",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "f8bcbe216094db9875c2d5413a7a542c4c4d8d23557bd5764e8a09a240a84d7f"
+    },
+    "patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch": {
+      "bytes": 507922,
+      "compressed_bytes": 123458,
+      "crc32": "548f7625",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "bf0e02726a4ddcd62e10b50bf7d881779c397ffe1ddb7fc1647317086ea227df"
+    },
+    "patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch": {
+      "bytes": 15160252,
+      "compressed_bytes": 1724702,
+      "crc32": "2353c20d",
+      "extracted_match": true,
+      "extracted_regular": true,
+      "sha256": "4e61a7a2ba2f3dfde93c7b568f8f08e8505f49d421f64d629cc8e260dde7e7f5"
+    }
+  },
+  "nested_extras": {
+    "extras/owner_film_cliplook_scan-v1.0.8.zip": {
+      "duplicates": [],
+      "member_count": 2,
+      "members": [
+        "README.md",
+        "owner_film_cliplook_scan.py"
+      ],
+      "testzip": true,
+      "unsafe_paths": []
+    }
+  },
+  "readme_checks": {
+    "agent_history": true,
+    "app_failures": true,
+    "app_option_b_base": true,
+    "final_agent": true,
+    "final_app": true,
+    "final_composition": true,
+    "final_runtime": true,
+    "historical_receipts_evidence": "README D141jj says existing 82e9 receipts remain bound and are not retargeted; historical suffixes preserve no-final-claim boundaries.",
+    "historical_receipts_not_retargeted": true,
+    "known_gap_element": true,
+    "known_gap_popup_add": true,
+    "known_gap_swap": true,
+    "later_conflicts": true,
+    "notes_not_wire": true
+  },
+  "summary": {
+    "all_extracted_match": true,
+    "duplicates": [],
+    "member_count": 12,
+    "nonregular_members": [],
+    "overall_archive_validation": true,
+    "readme_all_required": true,
+    "testzip": true,
+    "unsafe_paths": []
+  }
+}

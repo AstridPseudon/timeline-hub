@@ -1,0 +1,8 @@
+awk: 1: unexpected character '\'
+2026-10-26T18:43:31Z available_bytes=
+bash: line 1: [: : integer expression expected
+2026-10-26T18:45:44Z available_bytes=5859561472
+sampler_pid=3
+sampler_pgid=1
+2026-10-26T18:46:09Z available_bytes=5859020800
+2026-10-26T18:46:14Z available_bytes=5858975744
