@@ -10,3 +10,4 @@ Lessons #109–#112 in LOOPS.md plus the Opus 18:45Z second opinion. No new feat
 7. **Disk floors from measured peaks per repo** (the App verify peaked at ~1.8 GB against a 1.3 GB estimate).
 8. **Remove the broken delivery_gate_build wrapper** from the kit copies (it drops --source-tuple and hides SystemExit).
 9. **Queued tests expire** after 6 h without a fresh KEEP.
+10. **README status generated from recorded gates.** The ZIP README's gate table is static template text and shipped stale (PENDING) on 26 Oct.
