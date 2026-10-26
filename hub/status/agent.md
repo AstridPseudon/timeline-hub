@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T23:54:31Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 1m -->
+<!-- agent | 2026-10-25T23:58:27Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
 # agent board, 2026-10-25T23:48Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -124,9 +124,12 @@
 | D100a source intake | Receive qualified first item birth source | Luna | Independent receiving PASS | merged | Intake2336; receiver2341 | PASS_RECEIVING_CUSTODY | Exact two blobs and approved delta HOME; prior27/security/noB022 PASS. Farm behavior pending. | c585cb2aa7 / bbeea |
 | D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 | D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
-| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Exact cut tip received | doing | agt-U2-D141-final-join-2355 | Manager merge stage applied | Two conflicts: generated chat bundle and Runtime lock. Preserve current qualified source; normal tools only. | Base c585 / upstream8b6ed |
-| F D141 pristine comparator | Resolve exact upstream measurement recipe | Luna | MAIN pristine scope | blocked:orchestrator | Prep2350; independent2353 | NOT_READY; source review active | Five roots and project launcher absent upstream. No controls/body. Exact scope question2353 filed. | 1de87d source |
-| F D141 own failure notes | List unchanged own failures by root cluster | Luna | Independent documentary review | review | Prep2350; reviewer2353 | Historical classification only | All370 IDs and52 clusters retained. Source-only setup changes deduct nothing; no own-test investigation. | 1de87d source |
+| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Independent final review | review | Author2355; reviewer2357 | True merge aa5a91 with resolved content | Bundle and lock resolved; wrong shared Runtime blocked Python. Reviewer uses exact pristinefa9 pin; chat evidence incomplete. | aa5a91a618 |
+| F D141 pristine comparator | Resolve exact upstream measurement recipe | Luna | MAIN pristine scope | gated:D141-freeze | Prep2350; independent2353 | NOT_READY; source review active | D141b authorizes17 roots and plain pytest,noD73 controls. Old recipe superseded; source2358 active,no body. | 1de87d source |
+| F D141 own failure notes | List unchanged own failures by root cluster | Luna | Notes source review complete | merged | Prep2350; reviewer2353 | Documentary conservation PASS | All370 IDs and52 clusters exact; media48 nested in105. Old executable recipe FAIL is superseded. No behavior credit. | Evidence only |
+
+| F D141b command | Prepare reviewed plain pristine pytest | Luna | D141b and exact checkouts | doing | agt-F-D141b-plain-command-2358 | No body | Four normal checkout receipts received;17 roots with exactsettings. Independent review then controller afterfreeze. | Source pending |
+| U4 App cut handoff | Supply exact frozen Agent receiving inputs | Manager | Final reviewed freeze | blocked:agent | Agent manager after2357 | No handoff yet | Send SHA/tree/ref/parents/receipts and Runtimefa9 cut tuple to App and lead together at freeze. | Cut pending |
 
 Integration: c585cb2aa73c5298d474e614cb2144f58f27e605; tree81999820a81432c06ef7aefc4519dc84e71f56f7. D100a exact reviewed own delta merged normally. Previous identity16 normal9521 retained. Final U2 freeze pending exact upstream8b6ed received object and reviewed join. Nothing merges after final freeze without MAIN ruling.
 
@@ -134,10 +137,10 @@ Core open: 370 measured (D134, measurement-only), ship-grade pending.
 Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190 FAIL,180 ERROR,173 subtests PASS,1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Independent2029 source classification370: own344 =132 setup,0 proved product,212 UNKNOWN; host14 UNVERIFIED,other12 UNKNOWN. Source edits deduct nothing.
 
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
-Blockers: MAIN — pristine comparator scope: five requested roots and project launcher absent upstream. Escalation agent-20261025T2353Z-D141-pristine-suite-scope.md. No subset/overlay/bypass assumed.
+Blockers: Agent comparator — D141b scope cleared; plain17-root command2358 must receive one independent review and U2 freeze before body. No D73 controls required.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: final U2 source2355 active after normal merge stage. live2 / cap6; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
+Next ready: final U2 source2355 active after normal merge stage. live2 / cap3; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -147,4 +150,4 @@ Disk: 4.98GB at23:49Z. Sweep3 removed11 stale tempdirs; compact packed0 scratch/
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
-INBOX consumed through 1954964 bytes. [Latest handoff](../../design/peer-agent-to-agent-lead-runtime-20261025T2348Z-D141-source-and-D100a-home.md).
+INBOX consumed through 1957557 bytes. [Latest handoff](../../design/peer-agent-to-agent-lead-runtime-20261025T2348Z-D141-source-and-D100a-home.md).

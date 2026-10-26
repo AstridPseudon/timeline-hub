@@ -1,0 +1,143 @@
+{
+  "schema": "timeline.d141.pristine-source-review.v1",
+  "verdict": "FAIL",
+  "target": {
+    "repo": "agent",
+    "prep_commit": "1de87d66097b3e17c684f18674870e556cfcbc99",
+    "base_commit": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "review_mode": "independent read-only source/evidence review",
+    "product_adoption": false
+  },
+  "retained_claims": {
+    "frozen_tuple": "PASS",
+    "frozen_origins": "PASS",
+    "same22_roots_and_argv": "PASS",
+    "d134_conservation": "PASS",
+    "named_slice_semantics": "PASS",
+    "c0_wire_inventory": "PASS",
+    "pristine_not_ready": "RETAINED",
+    "controls_proof_reg_credit": "NONE"
+  },
+  "checks": {
+    "tuple": {
+      "status": "PASS",
+      "agent": {"commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "origin": "https://github.com/peteromallet/astrid-agent"},
+      "runtime": {"commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+      "app": {"commit": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "origin": "https://github.com/banodoco/reigh-app"},
+      "composition": {"commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "origin": "https://github.com/peteromallet/timeline-composition"}
+    },
+    "pristine_agent_inventory": {
+      "status": "PASS",
+      "required_root_count": 22,
+      "absent_named_roots": [
+        "tests/core/test_timeline_element_orphan_cleanup.py",
+        "tests/core/test_timeline_element_publication_runtime.py",
+        "tests/core/rendering/test_local_schema.py",
+        "tests/packs/rendering/test_composition_package.py",
+        "tests/test_installer_bootstrap_schema.py"
+      ],
+      "launcher": "absent",
+      "manifest_maker": "absent"
+    },
+    "launcher_guard_inventory": {
+      "status": "FAIL_FOR_PREP_INVENTORY",
+      "current_launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "current_launcher_git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+      "additional_absent_frozen_agent_inputs": [
+        "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+        "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+        "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py"
+      ],
+      "guard_locations": ["launcher lines 46 and 58 in current source"]
+    },
+    "d134_root_conservation": {
+      "status": "PASS",
+      "groups": 52,
+      "ids": 370,
+      "unique_ids": 370,
+      "classification": {"TEST_SETUP_OR_EXPECTATION_PROVED": 132, "PRODUCT_FAULT_PROVED": 0, "UNKNOWN": 212, "UNVERIFIED_CURRENT_REG": 14, "PRIOR_UNKNOWN": 12},
+      "media48_is_subset_of_managed105": true,
+      "managed105_count": 105,
+      "media48_count": 48,
+      "additive_sum_rejected": 153
+    },
+    "c0_inventory": {
+      "status": "PASS",
+      "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
+      "command_fields": ["schema_version", "op", "version", "select", "args"],
+      "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+      "accepted_merged": ["accepted", "merged", "canonical", "base", "landing", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+      "conflict": ["reason", "head"],
+      "invalid": ["code", "path", "hint", "suggested_command"],
+      "preview": {"would_status": "present", "receipt": null, "writes": null}
+    },
+    "recipe_bash_syntax": "PASS",
+    "evidence_json_parse": "PASS",
+    "exact_diff_check": {"status": "FAIL", "result": "evidence/notes-input.md:244: new blank line at EOF."}
+  },
+  "findings": [
+    {
+      "id": "D141-REV-001",
+      "severity": "blocking",
+      "title": "Exact prep commit fails its claimed diff check",
+      "evidence": "git diff --check c585cb2aa73c5298d474e614cb2144f58f27e605 1de87d66097b3e17c684f18674870e556cfcbc99",
+      "result": "exit 2; evidence/notes-input.md:244: new blank line at EOF.",
+      "impact": "evidence/validation.md incorrectly records git diff --check as PASS"
+    },
+    {
+      "id": "D141-REV-002",
+      "severity": "blocking",
+      "title": "Recipe does not implement the advertised positive/poison controls",
+      "evidence": "recipe.sh hashes CONTROL_STUB and checks counter line counts, but contains no P4_STUB_COUNT binding, no dry invocation, no control-stub invocation, and no poison launcher invocation; its only launcher call is positive-manifest run.",
+      "impact": "service-row.txt advertises positive preflight 0/stub 17/1 call and poison 1/0 calls without an executable recipe path for those results"
+    },
+    {
+      "id": "D141-REV-003",
+      "severity": "blocking",
+      "title": "Recipe omits required current-launcher environment bindings",
+      "evidence": "Current launcher requires P4_D73_EVIDENCE and P4_D73_REQUEST_ID; recipe's env -i body binds neither, and service-row.txt does not bind them either.",
+      "impact": "Even with a compatible launcher and manifest, the advertised run exits before launcher preflight/evidence capture"
+    },
+    {
+      "id": "D141-REV-004",
+      "severity": "blocking",
+      "title": "Finite missing-input inventory omits launcher-required P4 sources",
+      "evidence": "git cat-file -e against frozen Agent 8b6ed2116fd1803d24b2be5bc08bd9490407fe4a reports all three original P4 test paths absent; current launcher hashes them at its original_p4_test_hash guard.",
+      "impact": "The current launcher cannot target pristine merely by being supplied externally; this is in addition to the self-location guard and the five named missing roots"
+    },
+    {
+      "id": "D141-REV-005",
+      "severity": "material",
+      "title": "Source-floor setting is conflated with the core-start setting",
+      "evidence": "Prep preflight-inventory.json, recipe.sh, and service-row.txt use 4700000000 as the sole start threshold; this review brief requires source floor 4600000000 and stop 4000000000. D139 distinguishes source floor 4600000000 from one-time core start 4700000000.",
+      "impact": "The artifact does not conserve the required source-floor setting and would over-gate source-only preparation if used as written"
+    },
+    {
+      "id": "D141-REV-006",
+      "severity": "material",
+      "title": "No truly supported pristine-compatible external route is evidenced",
+      "evidence": "The only identified launcher is the current Agent launcher, whose self-location guard requires launcher directory = pinned agent_path/tools; the identified maker is a manager recipe, not a pristine external generator; the Composition candidate README says CANDIDATE_NOT_INSTALLED/NOT_READY.",
+      "impact": "supported_route must remain a missing input, not a claim of an existing route or permission to copy/overlay/alternate-body"
+    },
+    {
+      "id": "D141-REV-007",
+      "severity": "material",
+      "title": "Manifest/dependency guard inventory is incomplete",
+      "evidence": "Prep source-manifest.json and recipe check only existence for Python, Node, profile, schema, node_modules, package-lock, and registry state. They do not record/verify the D73-required node version, profile lock/archive/registry hashes, schema digest, composition version, runtime.lock file hashes/source commit, parent guards, or original_p4_test_hash.",
+      "impact": "The claimed exact manifest/recipe guard set is not source-complete; later launcher validation would be the first place several missing guards fail"
+    }
+  ],
+  "exact_scope_questions": [
+    "Who owns a real external launcher/manifest-maker that can satisfy pristine self-location and P4-source guards without copying or overlaying source? Until an actual source receipt exists, remain NOT_READY.",
+    "Should the 4600000000 source floor and 4700000000 one-time core-start guard both be carried, or is this row source-only? Do not collapse them into one value.",
+    "A final U2 freeze receipt/head and fresh manifests/counters remain unbound; no current comparator result can be claimed."
+  ],
+  "no_execution": {
+    "reviewer_product_tests": false,
+    "reviewer_imports": false,
+    "reviewer_provider_or_collection": false,
+    "reviewer_controls": false,
+    "reviewer_body": false,
+    "reviewer_git_write_or_checkout": false
+  }
+}
