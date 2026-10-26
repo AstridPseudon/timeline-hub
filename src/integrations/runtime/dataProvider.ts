@@ -34,6 +34,7 @@ import {
   type TimelineCommitCapability,
   type TimelineCommitResult,
   type TimelineCommandBasis,
+  type TimelineCommandBasisWithDisplay,
   type TimelineRecoveryIdentity,
   type LoadedReferencedTimeline,
   type ProjectObjectStorage,
@@ -991,6 +992,16 @@ export class RuntimeDataProvider implements DataProvider {
       finishLoader(false);
       throw error;
     }
+  }
+
+  async loadTimelineCommandBasisWithDisplay(timelineId: string): Promise<TimelineCommandBasisWithDisplay> {
+    const basis = await this.loadTimelineCommandBasis(timelineId);
+    const { timeline, registry } = await this.loadReferencedTimeline(timelineId);
+    if (timeline.head?.headRevisionId !== basis.head.revisionId
+      || timeline.head.headPublicationId !== basis.head.publicationId) {
+      throw new TimelineVersionConflictError('Timeline document changed while pairing authoring basis and display');
+    }
+    return { basis, timeline, registry };
   }
 
   async loadTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedTimeline> {
