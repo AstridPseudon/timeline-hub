@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T04:14:57.756705+00:00",
+  "pre_available": 4974968832,
+  "post_available": 4971036672,
+  "KEEP_count": 27,
+  "KEEP_changed": [],
+  "sweep3": "exit0; removed0; harmless ls broken-pipe diagnostics from existing helper",
+  "compact1": "exit0; packed0scratch,2unreferenced nonKEEP finished test dirs, gzipped0logs",
+  "recycle": "No eligible ended nonKEEP worktree; all guarded holds conserved",
+  "hub": "Untouched D141o"
+}

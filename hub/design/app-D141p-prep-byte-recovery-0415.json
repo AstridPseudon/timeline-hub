@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-26T04:15:59.722295+00:00",
+  "worker": "app-P-D141p-freeze2-proof-prep-0412",
+  "commit": "644424bc1ce768c42db1fc1f4bda8482006359a5",
+  "delivery_failure": "Author wrote repo-relative evidence; manager exact byte recovery ONLY, independent review pending; branch never merges.",
+  "files": [
+    {
+      "source": "evidence/binding-recipe.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/binding-recipe.md",
+      "bytes": 5718,
+      "sha256": "001377b4e1b60ecc57831143c2594e8f58f122692f29ced1a6f4f39fb9d51361"
+    },
+    {
+      "source": "evidence/controller.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/controller.md",
+      "bytes": 4822,
+      "sha256": "ffe4f9649e911aedd46708a8e58342648c631944a792cafe50273af114eaf0b6"
+    },
+    {
+      "source": "evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/handoff.md",
+      "bytes": 2378,
+      "sha256": "e5e973147cb4388f04db9f7bdeae119be9449212f46139624e6babba4b0d368a"
+    },
+    {
+      "source": "evidence/pure-builder-receive.mjs",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/pure-builder-receive.mjs",
+      "bytes": 4564,
+      "sha256": "868c98255b5fbf66e5c07de53aa97957b5d8fd649033f9f229f5a95506cee968"
+    },
+    {
+      "source": "evidence/readiness.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/readiness.json",
+      "bytes": 3747,
+      "sha256": "91cf8e45ea9cdfd59bac073eeedbcde6c64de670c4a7c4ed91c16b24193fa3be"
+    },
+    {
+      "source": "evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/source-manifest.json",
+      "bytes": 7498,
+      "sha256": "c12f9816e0fc723ec00aeb4fbfaf533b98beef7fbbfa386f9aedd3437cd21dd3"
+    },
+    {
+      "source": "evidence/unit-recipe.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/unit-recipe.md",
+      "bytes": 3828,
+      "sha256": "663e3086cc35c661fd33fca8d80c3b9b3f2ef2d356bfb9cc4991f19a0f88fdea"
+    },
+    {
+      "source": "evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-freeze2-proof-prep-0412/evidence/validation.md",
+      "bytes": 2186,
+      "sha256": "d4642f0f3aef3c991bd78d1a982dff9a2247f735ae1fd45864fc5a53b7ec30cf"
+    }
+  ]
+}
