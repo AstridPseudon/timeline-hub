@@ -297,8 +297,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       handleAddTrack: vi.fn(),
       handleClearUnusedTracks: vi.fn(),
       unusedTrackCount: 0,
-      handleAddText: vi.fn(),
-      handleAddTextAt: vi.fn(),
       reloadFromServer: vi.fn(),
       retrySaveAfterConflict: vi.fn(),
       startRender: vi.fn(),

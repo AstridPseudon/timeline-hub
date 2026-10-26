@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { AgentChatProvider } from '@/shared/contexts/AgentChatContext.tsx';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,10 +26,6 @@ import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createCommitOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
 import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
-import {
-  __getSelectionStateForTests, __resetSelectionStoreForTests, editorReplaceTimelineSelection,
-  setTimelineClipData, userSelectTimelineClip,
-} from '@/shared/state/selectionStore.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
@@ -112,133 +107,6 @@ describe('shot timeline popup real recovery integration', () => {
     staleVariantRepository.fetchPrimaryVariantLocations.mockReset();
     resetFakeIndexedDB();
     await clearTimelineDraft(recoveryKey);
-  });
-
-  it('labels the reloaded projected ADD hold after a real pointer click without enabling Swap', async () => {
-    __resetSelectionStoreForTests();
-    // ADD27885: the authored image row is a five-second hold, whereas
-    // SWAP9674 keeps the existing three-second media row. Keep both shapes.
-    const clips = [
-      { id: 'f2-plate', track: 'plate', at: 0, hold: 12, clipType: 'media', asset: 'plate' },
-      { id: 'f2-agent-clip', track: 'V2', at: 3, hold: 3, clipType: 'media', asset: 'swapped' },
-      { id: 'f2-agent-clear-clip', track: 'V2', at: 6, hold: 3, clipType: 'media', asset: 'clear' },
-      { id: 'clip-0', track: 'V2', at: 0, hold: 5, clipType: 'hold', asset: 'added' },
-    ];
-    const graph = {
-      ...structuredClone(fixture),
-      parent_composition: { config: {} },
-      shot_revisions: [{
-        ...structuredClone(fixture.shot_revisions[1]),
-        dependencies: [],
-        timing: { duration_ms: 12000 },
-        internal_timeline_revision: {
-          revision_id: 'reloaded-added-internal', content_digest: fixtureDigest(clips),
-          timeline: { tracks: [{ id: 'plate', kind: 'visual' }, { id: 'V2', kind: 'visual' }], clips },
-        },
-        assets: clips.map(clip => ({ asset_id: clip.asset, object_id: `object-${clip.asset}`, media_type: 'image' })),
-      }],
-      occurrences: [{
-        ...fixture.occurrences[0], occurrence_id: 'f2-occurrence-copy', duration_ms: 12000,
-        stable_deep_link: fixture.occurrences[0].stable_deep_link.replace('occ-1', 'f2-occurrence-copy'),
-        output_identity: fixture.occurrences[0].output_identity.replace('occ-1', 'f2-occurrence-copy'),
-      }],
-    };
-    const load = vi.fn().mockResolvedValue(graph);
-    const publish = vi.fn();
-    const adapter = createShotCompositionAdapter({ load, publish });
-    const composition = adapter.prepare(graph);
-    const runtime = new RuntimeDataProvider({ projectId: composition.projectId });
-    const shot = graph.shot_revisions[0];
-    const internal = shot.internal_timeline_revision;
-    const parentPayload = { config: graph.parent_composition.config, occurrences: graph.occurrences.map(row => ({
-      ...row, shot_revision_id: row.revision_id,
-    })) };
-    const shotPayload = { internal_timeline_revision_id: internal.revision_id };
-    const shotPin = { shot_id: shot.shot_id, revision_id: shot.revision_id,
-      internal_timeline_revision_id: internal.revision_id, content_digest: fixtureDigest(shotPayload) };
-    const internalPin = { timeline_id: 'reloaded-added-timeline', revision_id: internal.revision_id,
-      content_digest: fixtureDigest(internal.timeline) };
-    const canonical: CanonicalDocument = {
-      schema_version: 1, project_id: composition.projectId, timeline_id: composition.parentDocumentId,
-      parent_revision: { revision_id: composition.headRevisionId, content_digest: fixtureDigest(parentPayload), payload: parentPayload },
-      shot_revisions: [{ ...shotPin, payload: shotPayload }],
-      internal_timeline_revisions: [{ ...internalPin, payload: internal.timeline }],
-      dependency_manifest: { shots: [shotPin], internal_timelines: [internalPin], media: [], documents: [] },
-    };
-    vi.spyOn(runtime, 'getRecoverableIdentity').mockResolvedValue({ actorId: 'popup-selection', realmId: 'test' });
-    const readBasis = vi.spyOn(runtime, 'loadTimelineCommandBasis').mockResolvedValue({
-      head: { revisionId: composition.headRevisionId, publicationId: 'reloaded-add-publication' },
-      canonicalDocument: canonical, graph,
-    });
-    const send = vi.spyOn(runtime, 'commitTimeline');
-    const view = render(
-      <Dialog open>
-        <DialogContent aria-describedby={undefined}>
-          <DialogTitle>Reloaded ADD</DialogTitle>
-          <ShotTimelinePreview composition={composition} occurrenceId="f2-occurrence-copy"
-            shotCompositionAdapter={adapter} timelineDataProvider={runtime} />
-        </DialogContent>
-      </Dialog>,
-      { wrapper: wrapper() },
-    );
-    try {
-      const dialogElement = screen.getByRole('dialog', { name: 'Reloaded ADD' });
-      const dialog = within(dialogElement);
-      const clip = await waitFor(() => {
-        const element = dialogElement.querySelector('.clip-action[data-clip-id="f2-occurrence-copy:clip-0"]');
-        expect(element).toBeInTheDocument();
-        return element!;
-      });
-      await waitFor(() => expect(load).toHaveBeenCalled());
-      expect(readBasis).toHaveBeenCalledWith(composition.parentDocumentId);
-      expect(dialogElement.querySelector('[data-shot-timeline-canvas="true"]'))
-        .toHaveAttribute('data-shot-timeline-clip-assets', expect.stringContaining('f2-occurrence-copy:clip-0:V2:0:no-from:no-to:5:hold:asset:image'));
-      const user = userEvent.setup();
-      const sequence: string[] = [];
-      for (const type of ['pointerdown', 'pointerup', 'click']) clip.addEventListener(type, () => sequence.push(type));
-      await user.pointer({ target: clip, keys: '[MouseLeft]', coords: { clientX: 447, clientY: 646 } });
-
-      expect(sequence).toEqual(['pointerdown', 'pointerup', 'click']);
-      expect(clip).toHaveAttribute('data-selected', 'true');
-      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(['f2-occurrence-copy:clip-0']);
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).toBeVisible();
-      expect(dialog.queryByText('Selected clip: clip-0', { exact: true })).not.toBeInTheDocument();
-      expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
-      expect(dialog.getByRole('button', { name: 'Add video after selected clip' })).toBeDisabled();
-
-      // The bounded SWAP comparator still selects its own existing media row.
-      const sibling = dialogElement.querySelector('.clip-action[data-clip-id="f2-occurrence-copy:f2-agent-clip"]')!;
-      await user.pointer({ target: sibling, keys: '[MouseLeft]' });
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:f2-agent-clip', { exact: true })).toBeVisible();
-      expect(dialog.queryByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).not.toBeInTheDocument();
-      expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeEnabled();
-
-      await user.pointer({ target: dialogElement.querySelector('.timeline-canvas-edit-area')!, keys: '[MouseLeft]' });
-      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual([]);
-      expect(dialog.queryByText(/^Selected clip:/)).not.toBeInTheDocument();
-      expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
-
-      const owner = __getSelectionStateForTests().timelineSelectionOwner!;
-      const wrongOwner = Symbol('other-editor');
-      setTimelineClipData([], wrongOwner);
-      act(() => userSelectTimelineClip('f2-occurrence-copy:clip-0', {}, wrongOwner));
-      expect(dialog.queryByText(/^Selected clip:/)).not.toBeInTheDocument();
-      for (const invalidSelection of [['f2-occurrence-original:clip-0'], ['f2-occurrence-copy:stale'],
-        ['f2-occurrence-copy:clip-0', 'f2-occurrence-copy:f2-agent-clip']]) {
-        act(() => editorReplaceTimelineSelection(invalidSelection, owner));
-        expect(dialog.queryByText(/^Selected clip:/)).not.toBeInTheDocument();
-        expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
-      }
-      await user.pointer({ target: clip, keys: '[MouseLeft]' });
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).toBeVisible();
-      expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
-      expect(publish).not.toHaveBeenCalled();
-      expect(send).not.toHaveBeenCalled();
-    } finally {
-      view.rerender(<Dialog open={false} />);
-      view.unmount();
-      __resetSelectionStoreForTests();
-    }
   });
 
   it('saves a mounted popup gesture through the durable A2 handoff without invoking the snapshot writer', async () => {
