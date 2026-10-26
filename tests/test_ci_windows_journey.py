@@ -374,6 +374,50 @@ def test_timeout_manifest_marks_missing_task_streams(tmp_path, monkeypatch):
     }
 
 
+def test_python_stacks_capture_uses_py_spy_for_each_python_pid(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, 0, stdout="Thread 0 (active)\n", stderr="")
+
+    monkeypatch.setattr(journey.subprocess, "run", fake_run)
+    journey.capture_task_python_stacks([
+        process(31, 1, "10:00", exe=r"C:\Astrid\python.exe"),
+        process(32, 31, "10:01", command=r'"C:\Astrid\python.exe" -m worker'),
+        process(33, 31, "10:02", exe=r"C:\Astrid\node.exe"),
+    ])
+
+    assert calls == [["py-spy", "dump", "--pid", "31"], ["py-spy", "dump", "--pid", "32"]]
+    assert (tmp_path / "task-timeout-pystack-31.txt").read_text() == "Thread 0 (active)\n"
+    assert (tmp_path / "task-timeout-pystack-32.txt").read_text() == "Thread 0 (active)\n"
+    assert not (tmp_path / "task-timeout-pystack-33.txt").exists()
+
+
+def test_python_stack_failure_is_saved_and_does_not_raise(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+
+    def fake_run(argv, **kwargs):
+        return subprocess.CompletedProcess(argv, 5, stdout="", stderr="Access denied")
+
+    monkeypatch.setattr(journey.subprocess, "run", fake_run)
+    journey.capture_task_python_stacks([process(41, 1, "10:00", exe=r"C:\Astrid\python.exe")])
+
+    assert (tmp_path / "task-timeout-pystack-41.txt").read_text() == (
+        "py-spy dump failed with exit 5\nAccess denied"
+    )
+
+
+def test_python_stack_without_pid_is_recorded(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    journey.capture_task_python_stacks([{"ppid": 1, "created": "10:00", "exe": r"C:\Astrid\python.exe"}])
+
+    assert (tmp_path / "task-timeout-pystack-missing-pid.txt").read_text() == (
+        "py-spy dump not run: Python process has invalid pid None\n"
+    )
+
+
 def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
     monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
     with pytest.raises(RuntimeError, match="exit 7"):

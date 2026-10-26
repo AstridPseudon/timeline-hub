@@ -206,6 +206,7 @@ def task():
     except (RuntimeError, subprocess.TimeoutExpired) as follow_error:
         process_rows = best_effort("processes-after-task-follow.json", lambda: snapshot(
             "processes-after-task-follow.json"))
+        best_effort("task-python-stacks-before-cancel", lambda: capture_task_python_stacks(process_rows))
         if process_rows is not None:
             best_effort("task-sfx-output-evidence.json", lambda: capture_sfx_output(task_id, process_rows))
         best_effort("task-logs-before-cancel", lambda: capture_task_logs(task_id, process_rows))
@@ -257,6 +258,48 @@ def task():
 
 def process_key(row):
     return (row["pid"], row["created"])
+
+
+def capture_task_python_stacks(process_rows):
+    """Best-effort stacks for Python processes in the task's captured process tree."""
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    if process_rows is None:
+        (EVIDENCE / "task-timeout-pystack-process-tree.txt").write_text(
+            "py-spy dump not run: process tree snapshot unavailable\n", encoding="utf-8",
+        )
+        return
+
+    for row in process_rows:
+        executable = row.get("exe") or ""
+        command = row.get("command") or ""
+        if not any(re.search(
+                r"(?i)(?:^|[\\/\s\"'])python(?:\d+(?:\.\d+)?)?w?\.exe(?=$|[\s\"'])", value,
+        ) for value in (executable, command)):
+            continue
+        pid = row.get("pid")
+        if type(pid) is not int or pid <= 0:
+            (EVIDENCE / "task-timeout-pystack-missing-pid.txt").write_text(
+                f"py-spy dump not run: Python process has invalid pid {pid!r}\n", encoding="utf-8",
+            )
+            continue
+        evidence = EVIDENCE / f"task-timeout-pystack-{pid}.txt"
+        try:
+            result = subprocess.run(
+                ["py-spy", "dump", "--pid", str(pid)], capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=30, check=False,
+            )
+            content = result.stdout
+            if result.stderr:
+                content += ("\n" if content and not content.endswith("\n") else "") + result.stderr
+            if result.returncode:
+                content = f"py-spy dump failed with exit {result.returncode}\n{content}"
+        except Exception as exc:
+            content = f"py-spy dump failed: {type(exc).__name__}: {exc}\n"
+        try:
+            evidence.write_text(content or "py-spy returned no stack output\n", encoding="utf-8")
+        except OSError:
+            # Stack capture is diagnostic only; it must never delay cancellation.
+            pass
 
 
 def best_effort(label, action):
