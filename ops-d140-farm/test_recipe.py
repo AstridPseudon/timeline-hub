@@ -6,6 +6,8 @@ import hashlib
 import os
 import re
 import subprocess
+import types
+import sys
 from pathlib import Path
 
 import pytest
@@ -16,7 +18,7 @@ COMMANDS = (ROOT / "commands.md").read_text()
 RECEIVER = (ROOT / "receive-farm.sh").read_text()
 
 
-def run_receiver(tmp_path: Path, phase: str, **bindings: str) -> dict:
+def run_receiver(tmp_path: Path, phase: str, receiver: Path | None = None, **bindings: str) -> dict:
     env = os.environ.copy()
     for name in list(env):
         if name.startswith("FARM_") or name.endswith("_SHA256") or name == "KIT_SOURCE_CHECKOUT":
@@ -39,7 +41,7 @@ def run_receiver(tmp_path: Path, phase: str, **bindings: str) -> dict:
     env["D140_PHASE"] = phase
     env.update(bindings)
     result = subprocess.run(
-        [str(ROOT / "receive-farm.sh"), "--check-only"],
+        [str(receiver or ROOT / "receive-farm.sh"), "--check-only"],
         cwd=ROOT.parent,
         env=env,
         check=False,
@@ -130,6 +132,8 @@ def test_phase_census_does_not_admit_future_inputs_or_start_routes(tmp_path: Pat
     assert "binding.CHILD_RECEIPT" not in pre_ids
     assert "binding.P4_D73_MANIFEST" not in pre_ids
     assert "binding.OUTPUT_ROOT" not in pre_ids
+    assert {"binding.FARM_DISTRIBUTION_SOURCE", "distribution.original-bootstrap", "route.farm-distribution-join"} <= pre_ids
+    assert "receipt.FARM_D73_RECEIPT" not in pre_ids | post_ids
     assert "binding.CHILD_RECEIPT" in post_ids
     assert "binding.P4_D73_MANIFEST" in post_ids
     assert "binding.OUTPUT_ROOT" in post_ids
@@ -195,7 +199,7 @@ def test_poison_and_d124_controls_are_not_weakened() -> None:
     assert 'only agent_sha replaced by forty zeroes' in RECEIVER
     assert 'check_source_receipt' in RECEIVER
     assert 'check_d73_receipt' in RECEIVER
-    assert '"git", "-C", str(repo)' in (ROOT / "receipts.py").read_text()
+    assert 'GIT, "--no-replace-objects", "-C", str(repo)' in (ROOT / "receipts.py").read_text()
     assert COMMANDS.count("tests/") >= 22
     assert "-k " not in COMMANDS
     assert "--collect-only" not in COMMANDS
@@ -219,7 +223,7 @@ def custody(tmp_path: Path) -> dict:
     bindings = {"FARM_ORCH_ROOT": str(orch)}
     live = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin")
     # These are tiny reviewed operational sources, never shared dependencies.
-    for name in ("make-checkout", "dispatcher-daemon", "bench_store.py", "verify_dependency_seed.py"):
+    for name in ("make-checkout", "dispatcher-daemon", "bench_store.py", "verify_dependency_seed.py", "verify_farm_distribution_inputs.py"):
         path = orch / "bin" / name
         path.write_bytes((live / name).read_bytes())
         path.chmod(0o755)
@@ -227,10 +231,17 @@ def custody(tmp_path: Path) -> dict:
         path = orch / "bin" / name
         path.write_bytes((ROOT.parent / "ops-child-custody" / name).read_bytes())
         path.chmod(0o755)
+    bindings.update({name: str(orch / "bin" / tool) for tool, names in (
+        ("make-child-venv", ("MAKER_PATH", "RECEIVED_MAKER")),
+        ("request-child-venv", ("WRAPPER_PATH", "NORMAL_REQUEST_ROUTE")),
+        ("check-child-imports", ("CHECKER_PATH", "IMPORT_CHECK_ROUTE")),
+    ) for name in names})
     for kind in ("agent", "runtime", "app", "composition"):
         commit = constants[kind.upper() + "_SHA"]
-        repo = tmp_path / kind
-        repo.mkdir()
+        prefix = {"agent": "agt", "runtime": "rt", "app": "app", "composition": "vw"}[kind]
+        worker = prefix + "-pin-" + commit[:8]
+        repo = tmp_path / "work/wt" / worker
+        repo.mkdir(parents=True)
         bindings[kind.upper() + "_CHECKOUT"] = str(repo)
         name = "FARM_CURRENT_" + kind.upper() + "_RECEIPT"
         path = orch / "queue/done" / f"checkout-{kind}-{commit}"
@@ -269,7 +280,7 @@ def custody(tmp_path: Path) -> dict:
     fake_git.write_text(
         "#!/usr/bin/python3\nimport sys\nfrom pathlib import Path\n"
         f"states={states!r}\nroot={str(ROOT.parent)!r}\n"
-        "repo=sys.argv[2]; args=sys.argv[3:]\ncommit,tree=states[repo]\n"
+        "i=sys.argv.index('-C'); repo=sys.argv[i+1]; args=sys.argv[i+2:]\ncommit,tree=states[repo]\n"
         "if args[0]=='rev-parse': print(tree if 'tree' in args[-1] else commit)\n"
         "elif args[0]=='status': pass\n"
         "elif args[0]=='rev-list': print(commit)\n"
@@ -281,6 +292,19 @@ def custody(tmp_path: Path) -> dict:
     )
     fake_git.chmod(0o755)
     bindings["PATH"] = str(tmp_path) + os.pathsep + os.environ["PATH"]
+    # Private OS boundary only: production has no env override for these roots
+    # or Git. All admission functions and the shell caller run unchanged.
+    overlay = tmp_path / "receiver"
+    overlay.mkdir()
+    receiver = overlay / "receive-farm.sh"
+    receiver.write_text(RECEIVER)
+    receiver.chmod(0o755)
+    checker = (ROOT / "receipts.py").read_text()
+    checker = re.sub(r'^NORMAL_ORCH_ROOT = Path\(.*\)$', f'NORMAL_ORCH_ROOT = Path({str(orch)!r})', checker, flags=re.M)
+    checker = checker.replace('NORMAL_WORK_ROOT = Path("/home/user/work")', f'NORMAL_WORK_ROOT = Path({str(tmp_path / "work")!r})')
+    checker = checker.replace('GIT = "/usr/bin/git"', f'GIT = {str(fake_git)!r}')
+    (overlay / "receipts.py").write_text(checker)
+    bindings["receiver"] = receiver
     return {"bindings": bindings, "constants": constants, "orch": orch,
             "client_identity": f"{client_rel}={sha(client)}", "tmp": tmp_path}
 
@@ -348,7 +372,7 @@ def kit_artifacts(custody: dict) -> None:
     value = {"schema": "timeline.ops.d137.installed-kit/v1", "status": "qualified_for_one_request", "installer": installer,
              "source": {"commit": "a" * 40, "tree": "b" * 40, "review": "PASS_SOURCE_SECURITY", "reviewed_installer": "installer1826"},
              "protected_helpers": helpers, "receipts": {"installation": str(path)}}
-    bind_artifact(custody, "FARM_D139A_KIT_RECEIPT", custody["tmp"] / "kit.json", json.dumps(value).encode())
+    bind_artifact(custody, "FARM_INSTALLED_KIT_SUMMARY", custody["tmp"] / "kit.json", json.dumps(value).encode())
     assert bindings["KIT_SOURCE_CHECKOUT"]
 
 
@@ -356,7 +380,7 @@ def kit_artifacts(custody: dict) -> None:
 def test_installed_kit_authenticates_composition_source_and_installation(custody: dict, fault: str | None) -> None:
     kit_artifacts(custody)
     bindings = custody["bindings"]
-    name = "FARM_D139A_KIT_RECEIPT"
+    name = "FARM_INSTALLED_KIT_SUMMARY"
     path = Path(bindings[name])
     value = json.loads(path.read_bytes())
     if fault == "producer":
@@ -376,22 +400,11 @@ def test_installed_kit_authenticates_composition_source_and_installation(custody
     if fault in {"schema", "tree", "source"}:
         bind_artifact(custody, name, path, json.dumps(value).encode())
     result = run_receiver(custody["tmp"], "pre-child", **bindings)
-    assert receipt_status(result, name) == ("PASS" if fault is None else "MISMATCH")
+    assert next(row["status"] for row in result["checks"] if row["id"] == "operational.installation-summary") == ("PASS" if fault is None else "MISMATCH")
 
 
-def child_artifacts(custody: dict, reused: bool = False) -> None:
+def child_artifacts(custody: dict, reused: bool = False, farm_authority: str | None = None) -> None:
     constants, bindings, orch = custody["constants"], custody["bindings"], custody["orch"]
-    child = custody["tmp"] / ("child-" + "c" * 64)
-    (child / "bin").mkdir(parents=True)
-    (child / "bin/python").write_text("#!/bin/sh\nexit 1\n")
-    (child / "bin/python").chmod(0o755)
-    bindings["P4_PYTHON"] = bindings["CHILD_PYTHON"] = str(child / "bin/python")
-    imports = ""
-    for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
-        origin = child / "lib/python3.13/site-packages" / name / "__init__.py"
-        origin.parent.mkdir(parents=True)
-        origin.write_text("")
-        imports += f"{name}={origin}\n"
     for name in ("SCHEMA_RECORD_CLOSURE", "SCHEMA_SOURCE_MANIFEST", "SCHEMA_DIRECT_URL"):
         path = custody["tmp"] / name
         path.write_text("{}\n")
@@ -403,15 +416,41 @@ def child_artifacts(custody: dict, reused: bool = False) -> None:
               "record_rows": 18, "record_hashed_rows": 12, "tree_tie": "UNAVAILABLE", "record_sha256": sha(b"{}\n"),
               "manifest_sha256": sha(b"{}\n"), "direct_url_sha256": sha(b"{}\n")}
     schema_text = json.dumps(schema, sort_keys=True, separators=(",", ":"))
-    metadata = "schema_source_identity=" + schema_text + "\nastrid_name=astrid\n"
-    for name, data in ((".schema-source-identity", schema_text + "\n"), (".astrid-import-origins", imports),
+    client_tuple = dict(line.split("=", 1) for line in custody["client_identity"].splitlines())
+    if farm_authority is None:
+        client_tuple["__timeline_schema_identity__"] = schema_text
+    identity = {"agent_sha": constants["AGENT_SHA"], "backend_sha": constants["RUNTIME_SHA"],
+                "client_tuple": client_tuple, "bootstrap_authority": "b" * 64}
+    parts = ["child", identity["agent_sha"], identity["backend_sha"], client_tuple, identity["bootstrap_authority"]]
+    if farm_authority is not None:
+        identity["farm_authority"] = farm_authority
+        parts.append(farm_authority)
+    key = sha(json.dumps(parts, sort_keys=True, separators=(",", ":")).encode())
+    store = custody["tmp"] / "work/bench-store"
+    child = store / "entries" / ("child-" + key)
+    (child / "bin").mkdir(parents=True)
+    (child / "bin/python").write_text("#!/bin/sh\nexit 1\n")
+    (child / "bin/python").chmod(0o755)
+    bindings["P4_PYTHON"] = bindings["CHILD_PYTHON"] = str(child / "bin/python")
+    imports = ""
+    for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
+        origin = child / "lib/python3.13/site-packages" / name / "__init__.py"
+        origin.parent.mkdir(parents=True)
+        origin.write_text("")
+        imports += f"{name}={origin}\n"
+    metadata = ("schema_source_identity=" + schema_text + "\n" if farm_authority is None else "") + "astrid_name=astrid\n"
+    for name, data in ((".astrid-import-origins", imports),
+                       (".bootstrap-authority", identity["bootstrap_authority"] + "\n"),
                        (".astrid-distribution-metadata", metadata), (".astrid-source-commit", constants["AGENT_SHA"] + "\n"),
                        (".astrid-runtime-source-commit", constants["RUNTIME_SHA"] + "\n"),
                        (".astrid-runtime-client-identity", custody["client_identity"] + "\n")):
         (child / name).write_text(data)
+    if farm_authority is None:
+        (child / ".schema-source-identity").write_text(schema_text + "\n")
+    schema_header = f"schema_source_identity_sha256={sha(schema_text.encode())}\n" if farm_authority is None else ""
     report = (f"status=passed\nagent_sha={constants['AGENT_SHA']}\nruntime_sha={constants['RUNTIME_SHA']}\n"
               f"runtime_client_identity_sha256={sha(custody['client_identity'].encode())}\n"
-              f"schema_source_identity_sha256={sha(schema_text.encode())}\nrequirements_path=requirements/proof.lock\n"
+              f"{schema_header}requirements_path=requirements/proof.lock\n"
               f"requirements_lock_sha256={constants['PROOF_LOCK_SHA']}\ninstalled_import_origins:\n{imports}"
               f"installed_distribution_metadata:\n{metadata}pip_freeze:\nastrid==0.1.0\n")
     (child / ".provision-report").write_text(report)
@@ -424,11 +463,25 @@ def child_artifacts(custody: dict, reused: bool = False) -> None:
     namespace = {"pathlib": __import__("pathlib"), "hashlib": hashlib,
                  "report_bytes": lambda path: (path / ".provision-report").read_bytes(),
                  "tests": str(orch / "tests"), "name": "venv-agent-child-d140", "agent": constants["AGENT_SHA"],
-                 "backend": constants["RUNTIME_SHA"], "remotion": "", "schema_required": "1", "schema_identity_json": schema_text}
+                 "backend": constants["RUNTIME_SHA"], "remotion": "", "schema_required": "1" if farm_authority is None else "0", "schema_identity_json": schema_text}
     exec(compile(ast.parse("def success_receipt(entry, report):" + formatter), "maker formatter", "exec"), namespace)
-    receipt = namespace["success_receipt"]({"path": str(child), "key": "c" * 64, "reused": reused}, report.encode())
+    receipt = namespace["success_receipt"]({"path": str(child), "key": key, "reused": reused}, report.encode())
     path = orch / "queue/done/childvenv-venv-agent-child-d140"
     bind_artifact(custody, "CHILD_RECEIPT", path, (receipt + "\n").encode())
+    # Retained normal registration files only; no Store is initialized or run.
+    (store / "locks").mkdir()
+    lock = store / "locks" / child.name
+    lock.touch()
+    owner = {"version": 1, "uid": os.getuid(), "id": "private-owner", "root": str(store), "tests": str(orch / "tests")}
+    marker = {"owner": owner["id"], "component": "child", "key": key, "identity": identity}
+    entry = {**marker, "path": str(child), "seq": 1,
+             "node": [child.stat().st_dev, child.stat().st_ino], "lock": [lock.stat().st_dev, lock.stat().st_ino]}
+    reg = {"env": "", "suite": "", "requires": [child.name], "report": report, "report_sha256": sha(report.encode())}
+    reg["hash"] = sha(json.dumps(reg, sort_keys=True, separators=(",", ":")).encode())
+    index = {"version": 1, "seq": 1, "entries": {child.name: entry}, "registrations": {"venv-agent-child-d140": reg},
+             "retired": [], "retired_suites": []}
+    for path, value in ((store / "owner.json", owner), (store / "index.json", index), (child / ".bench-owner.json", marker)):
+        path.write_text(json.dumps(value, sort_keys=True, separators=(",", ":")))
     custody["child"] = child
 
 
@@ -485,8 +538,21 @@ def d73_artifacts(custody: dict) -> None:
         values[kind + "_tree"] = constants[kind.upper() + "_TREE"]
         values[kind + "_path"] = bindings[kind.upper() + "_CHECKOUT"]
     data = "".join(f"{key}={value}\n" for key, value in values.items()).encode()
-    bind_artifact(custody, "P4_D73_MANIFEST", custody["tmp"] / "positive.manifest", data)
-    bind_artifact(custody, "FARM_D73_RECEIPT", custody["tmp"] / "retained.manifest", data)
+    (custody["orch"] / "tests").mkdir(exist_ok=True)
+    bind_artifact(custody, "P4_D73_MANIFEST", custody["orch"] / "tests/positive.manifest", data)
+    evidence = custody["orch"] / "tests/d140-keep"
+    evidence.mkdir(parents=True)
+    bindings.update(P4_D73_EVIDENCE=str(evidence), KEEP_ROOT=str(evidence), P4_D73_REQUEST_ID="d140-positive")
+    bind_artifact(custody, "FARM_D73_RECEIPT", evidence / "d140-positive.manifest", data)
+    # Run only the launcher's actual harmless evidence writer, with its parser.
+    # No preflight, original P4 test, child import or body executes.
+    launcher = Path(bindings["D73_LAUNCHER"]).read_text()
+    parser = launcher[launcher.index("declare -A pin"):launcher.index("\nrequired=(")]
+    writer = "evidence=${" + launcher.split("evidence=${", 1)[1].split("\npreflight()", 1)[0]
+    subprocess.run(["bash", "-c", "manifest=$1\n" + parser + "\n" + writer, "writer", bindings["P4_D73_MANIFEST"]],
+                   env={**os.environ, "P4_D73_EVIDENCE": str(evidence), "P4_D73_REQUEST_ID": "d140-positive"}, check=True)
+    for suffix, content in (("preflight.exit", "0\n"), ("body.exit", "17\n"), ("preflight.log", ""), ("body.log", ""), ("command", "stub\n")):
+        (evidence / f"d140-positive.{suffix}").write_text(content)
 
 
 @pytest.mark.parametrize("fault", [None, "producer", "schema", "digest", "tree", "copy", "missing-field", "parents", "input"])
@@ -514,5 +580,163 @@ def test_d73_receipt_authenticates_manager_digest_and_all_sources(custody: dict,
             data = data.replace(b"python=/private/child/bin/python", b"python=/other/bin/python")
         for name in ("P4_D73_MANIFEST", "FARM_D73_RECEIPT"):
             bind_artifact(custody, name, Path(bindings[name]), data)
-    result = run_receiver(custody["tmp"], "post-child", **bindings)
+    result = run_receiver(custody["tmp"], "post-launch", **bindings)
     assert receipt_status(result, "FARM_D73_RECEIPT") == ("PASS" if fault is None else "MISMATCH")
+
+
+def checker_module(custody: dict, monkeypatch):
+    module = types.ModuleType("private_d140_checker")
+    exec(compile((Path(custody["bindings"]["receiver"]).parent / "receipts.py").read_bytes(), "private receiver", "exec"), module.__dict__)
+    for name, value in {**custody["constants"], **custody["bindings"]}.items():
+        if isinstance(value, str):
+            monkeypatch.setenv(name, value)
+    return module
+
+
+def checker_call(module, monkeypatch, kind: str, name: str) -> int:
+    monkeypatch.setattr(sys, "argv", ["receipts.py", kind, name])
+    return module.main()
+
+
+@pytest.fixture(scope="module")
+def genuine_wheel_receipt():
+    """Validate the original five wheels in place, without copying a bench."""
+    orch = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
+    seed = types.ModuleType("private_seed_control")
+    seed.__file__ = str(orch / "bin/verify_dependency_seed.py")
+    data = Path(seed.__file__).read_bytes()
+    assert sha(data) == "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    exec(compile(data, seed.__file__, "exec"), seed.__dict__)
+    component = seed.farm_component()
+    wheelhouse = orch / "workers/rt-OPS-farm-bootstrap-wheel-input-0932/evidence/bootstrap-wheel-input/wheelhouse"
+    wheels = component.validate_wheel_inputs(wheelhouse)
+    assert wheels["schema"] == "timeline.farm-distribution-inputs.v1"
+    assert len(wheels["roles"]["bootstrap3"]) == 3
+    assert len(wheels["roles"]["test2"]) == 2
+    assert wheels["roles"]["additional"] == []
+    assert len(wheels["lock"]) == len(wheels["distributions"]) == 5
+    assert wheels["ownership"]
+    assert wheels["component_identity"] == component._json_digest({k: v for k, v in wheels.items() if k != "component_identity"})
+    return component, wheelhouse, wheels
+
+
+def test_real_farm_producer_validates_exact_original_packet(genuine_wheel_receipt) -> None:
+    component, wheelhouse, wheels = genuine_wheel_receipt
+    assert component.validate_wheel_inputs(wheelhouse) == wheels
+    with pytest.raises(component.ValidationError, match="additional wheel authority"):
+        component.validate_wheel_inputs(wheelhouse, additional_wheels=[component.APPROVED_WHEELS[0]])
+
+
+@pytest.mark.parametrize("phase", ["pre-child", "post-child"])
+@pytest.mark.parametrize("fault", [None, "legacy", "identity", "roles", "raw", "retained", "mode", "registration"])
+def test_farm_main_calls_real_producer_and_retention_boundary(custody: dict, monkeypatch, genuine_wheel_receipt, phase: str, fault: str | None) -> None:
+    component, wheelhouse, _ = genuine_wheel_receipt
+    # No genuine selected schema checkout is available. This explicit validator
+    # double isolates the caller/retention seam; it is never a source positive.
+    monkeypatch.setattr(component, "validate_schema_source", lambda _: {"private_schema_validator_double": True})
+    packet = component.validate_farm_distribution_inputs(schema_source=custody["tmp"], wheelhouse=wheelhouse)
+    if phase == "post-child":
+        child_artifacts(custody, farm_authority=packet["component_identity"])
+    module = checker_module(custody, monkeypatch)
+    child = custody.get("child", custody["tmp"] / "absent-future-child")
+    calls = []
+
+    def inputs(source, archive):
+        assert source == custody["tmp"]
+        assert archive == archive_path
+        calls.append("farm_inputs")
+        return packet
+
+    def retained(path, authority):
+        assert path == child and authority == packet["component_identity"]
+        calls.append("retained_farm")
+        if fault == "retained":
+            raise ValueError("dependency closure changed")
+        return packet, {}, set()
+
+    # The full source/archive validators are not replaced in production. This
+    # control checks main -> kit -> exact helper args and canonical retention.
+    monkeypatch.setattr(module, "seed_component", lambda _: types.SimpleNamespace(farm_inputs=inputs, retained_farm=retained))
+    if fault == "registration" and phase == "post-child":
+        index_path = child.parent.parent / "index.json"
+        index = json.loads(index_path.read_bytes())
+        index["registrations"]["venv-agent-child-d140"]["report_sha256"] = "0" * 64
+        index_path.write_text(json.dumps(index))
+    archive_path = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts") / f"bootstrap-wheel-input-0932-{module.ARCHIVE_SHA}.tgz"
+    real_physical = module.physical
+
+    def physical(path, directory=False):
+        if Path(path) == custody["orch"] / "artifacts" / archive_path.name:
+            return real_physical(archive_path)
+        return real_physical(path, directory)
+
+    monkeypatch.setattr(module, "physical", physical)
+    monkeypatch.setenv("FARM_DISTRIBUTION_SOURCE", str(custody["tmp"]))
+    monkeypatch.setenv("D140_PHASE", phase)
+    value = json.loads(module.canonical(packet))
+    if fault == "legacy":
+        value = {"schema": "timeline.ops.d137.installed-kit/v1", "status": "qualified_for_one_request"}
+    elif fault == "identity":
+        value["component_identity"] = "0" * 64
+    elif fault == "roles":
+        value["wheel_inputs"]["roles"]["test2"] = []
+    raw = module.canonical(value) + (b"\n" if fault == "raw" else b"")
+    path = child / ".farm-receipt.json"
+    if phase == "post-child":
+        path.write_bytes(raw)
+        path.chmod(0o644 if fault == "mode" else 0o400)
+        monkeypatch.setenv("FARM_D139A_KIT_RECEIPT", str(path))
+        monkeypatch.setenv("FARM_D139A_KIT_RECEIPT_SHA256", sha(raw))
+    # The pre-child check must ignore even a wrong future receipt. Post-child
+    # must reject it despite a matching caller-supplied consistency hash.
+    assert checker_call(module, monkeypatch, "kit", "FARM_D139A_KIT_RECEIPT") == (0 if phase == "pre-child" or fault is None else 1)
+    assert calls == (["farm_inputs", "retained_farm"] if phase == "post-child" and fault in {None, "retained"} else ["farm_inputs"])
+    if phase == "pre-child":
+        assert not child.exists()
+
+
+@pytest.mark.parametrize("fault", ["detached", "request-id", "runmanifest", "run-tuple", "preflight", "body-exit", "missing-runmanifest", "evidence-root"])
+def test_d73_main_refuses_detached_or_changed_genuine_writer_outputs(custody: dict, monkeypatch, fault: str) -> None:
+    d73_artifacts(custody)
+    bindings = custody["bindings"]
+    evidence = Path(bindings["P4_D73_EVIDENCE"])
+    if fault == "detached":
+        path = custody["tmp"] / "detached.manifest"
+        bind_artifact(custody, "FARM_D73_RECEIPT", path, Path(bindings["FARM_D73_RECEIPT"]).read_bytes())
+    elif fault == "evidence-root":
+        bindings["KEEP_ROOT"] = str(custody["tmp"])
+    else:
+        suffix = {"request-id": "request-id", "runmanifest": "runmanifest", "run-tuple": "runmanifest", "preflight": "preflight.exit",
+                  "body-exit": "body.exit", "missing-runmanifest": "runmanifest"}[fault]
+        path = evidence / ("d140-positive." + suffix)
+        if fault == "missing-runmanifest":
+            path.rename(evidence / "detached.runmanifest")
+        else:
+            data = path.read_bytes()
+            path.write_bytes(data.replace(custody["constants"]["AGENT_SHA"].encode(), b"0" * 40) if fault == "run-tuple" else data + b"changed\n")
+    module = checker_module(custody, monkeypatch)
+    assert checker_call(module, monkeypatch, "d73", "FARM_D73_RECEIPT") == 1
+
+
+def test_matching_hash_cannot_register_an_arbitrary_owner_root(custody: dict) -> None:
+    bindings = custody["bindings"].copy()
+    bindings.pop("receiver")  # Use the actual production root policy.
+    result = run_receiver(custody["tmp"], "pre-child", **bindings)
+    assert receipt_status(result, "FARM_CURRENT_AGENT_RECEIPT") == "MISMATCH"
+    assert result["status"] == "NOT_READY"
+
+
+def test_real_normal_caller_refuses_d139a_farm_join_before_any_queue(custody: dict, monkeypatch) -> None:
+    module = checker_module(custody, monkeypatch)
+    assert checker_call(module, monkeypatch, "caller", "normal-request") == 1
+    result = run_receiver(custody["tmp"], "pre-child", **custody["bindings"])
+    assert next(row["status"] for row in result["checks"] if row["id"] == "route.farm-distribution-join") == "MISMATCH"
+    wrapper = (ROOT.parent / "ops-child-custody/request-child-venv").read_text()
+    guard_end = wrapper.index('\nif [ "$SCHEMA_REQUIRED" = 1 ]; then')
+    parser = wrapper[:guard_end]
+    result = subprocess.run(["bash", "-c", parser, "request-control", "venv-agent-child-d140", custody["constants"]["AGENT_SHA"],
+                             "--farm-distributions", "--schema-installed-distribution", "/private/dist-info", "--schema-source-manifest", "/private/manifest"],
+                            capture_output=True, text=True, check=False)
+    assert result.returncode == 2
+    assert "installed schema input cannot be combined with Farm schema authority" in result.stderr
+    assert not list((custody["orch"] / "queue/done").glob("childvenv-*"))

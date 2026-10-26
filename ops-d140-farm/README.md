@@ -2,7 +2,7 @@
 
 This is a source-only, portable receiving recipe. `receive-farm.sh` has one
 supported mode, `--check-only`; it performs a read-only census and emits a
-complete JSON result. It does not create a child, import a module, invoke
+complete JSON result. It does not create a child, import child/product code, invoke
 pytest, run an installer, touch a Store or queue, acquire packages, or use a
 fallback profile/interpreter.
 
@@ -20,53 +20,82 @@ venue is `EXACTMISSING`; the old shared venv, arbitrary old child, alternate
 mirror, package acquisition, source invention, and `--farm-schema-source`
 substitution are not substitutes.
 
-Receipt trust starts with the Farm owner's independently authenticated handoff:
-bind `FARM_ORCH_ROOT` and the SHA-256 of each original artifact as
-`<receipt binding>_SHA256`. This includes the four `FARM_CURRENT_*_RECEIPT`
-bindings, `FARM_D139A_KIT_RECEIPT`, and, after the request, `CHILD_RECEIPT`,
-`P4_D73_MANIFEST`, and `FARM_D73_RECEIPT`. Do not derive trusted digests from
-untrusted files during the census. Missing trust bindings give `NOT_READY`.
-These are receiving inputs, not a new receipt format or a signature scheme;
-an operator who controls the trusted handoff controls this authority boundary.
+Receipt admission uses the OS custody of the recorded normal Farm installation.
+`FARM_ORCH_ROOT` must equal the root embedded in the qualified dispatcher and
+maker; it cannot register another installation. The checker pins executable
+bytes/modes, physical paths, ownership and safe ancestry. It uses isolated
+Python and a fixed Git executable/environment. `<binding>_SHA256` values remain
+required consistency assertions, but matching a caller hash grants no authority.
+The owner of the qualified installation is the authority boundary; this does
+not authenticate against a malicious privileged owner.
 
-The checker reads existing producer artifacts only:
+The production caller is `receive-farm.sh:check_producer_receipt` ->
+`receipts.py:main`. It invokes all of these checks:
 
-- Source receipts are the original `queue/done/checkout-<repo>-<full SHA>`
-  dispatcher results, with exact `created ... (detached at ..., KEEP)` or
-  `exists: ... at ...` text. They close to the normal worker `meta` and `KEEP`
-  records and the clean checkout/tree. `make-checkout` and `dispatcher-daemon`
-  must have the reviewed bytes. Arbitrary JSON cannot replace these results.
-- The kit receipt uses the existing `timeline.ops.d137.installed-kit/v1`
-  lead summary and the `installer1826` `PASS_INSTALL` installation JSON.
-  Bind `FARM_KIT_INSTALLATION` and its independently supplied
-  `FARM_KIT_INSTALLATION_SHA256`, plus `KIT_SOURCE_CHECKOUT`. The latter is
-  the reviewed **Composition OPS source**, whose maker/wrapper/checker bytes
-  must match D139a. It is distinct from the four film source checkouts.
-  The original D137 capture has the wrong maker bytes and cannot qualify D139a.
-  No new D139a receipt is asserted to exist. The installed maker and protected
-  helpers must match the summary and source; child/Store component key/value
-  receipts are not installed-kit receipts.
-- The child receipt is the original normal queue result for
-  `venv-agent-child-d140`. The maker's final `created`/`reused child venv`
-  line must include the registered key, actual/requested tuple, provision-report
-  path and digest, and installed-schema identity digest. The original report
-  under `tests/provision/` must match the child's `.provision-report`, source
-  markers, generated-client identity, schema identity and inventory sections.
-  Redacted `allowlisted_fields` JSON and legacy success text are insufficient.
-  This reads retained evidence; it does not open or validate a live Store.
-- D73 uses the manager-rendered `p4-d73-v1` manifest, independently bound by
-  digest. The receipt must be byte-identical to it and contain all launcher
-  required fields, exact four-source paths/trees/parents, and bound interpreter,
-  Node and profile. The launcher must be the reviewed file in the pinned Agent
-  checkout. A manifest copy alone does not authenticate its producer.
+- `source` accepts only the dispatcher's normal `queue/done/checkout-<repo>-<SHA>`
+  result, exact `make-checkout` destination, worker `meta`/`KEEP`, clean source
+  commit/tree and pinned producer. Arbitrary JSON or an arbitrary owned root
+  with locally computed hashes cannot qualify a checkout.
+- `normal_kit` binds maker/requester/import checker to their installed normal
+  paths and reviewed bytes/modes. `installation` checks the historical
+  `timeline.ops.d137.installed-kit/v1` summary and installation/source closure
+  as **supporting installation evidence only**, through the separate
+  `FARM_INSTALLED_KIT_SUMMARY` and `FARM_KIT_INSTALLATION` bindings. Neither
+  summary is a Farm distribution receipt.
+- `kit` loads only the pinned `verify_dependency_seed.py` and
+  `verify_farm_distribution_inputs.py` source bytes. Before child creation it
+  calls the existing `farm_inputs` input gate with `FARM_DISTRIBUTION_SOURCE`
+  and the normal retained original bootstrap archive. The actual producer
+  returns `{schema_source, wheel_inputs, component_identity}`; `wheel_inputs`
+  is `timeline.farm-distribution-inputs.v1`, including roles, lock,
+  distributions, ownership and component identity. No future child receipt is
+  required before creation. After creation, `FARM_D139A_KIT_RECEIPT` must be
+  the registered child's exact mode-0400 `.farm-receipt.json`, byte-identical
+  to that producer output. `retained_farm` revalidates source custody, original
+  archive, schema carrier and retained test-wheel/lock closure against the
+  registered `farm_authority`. There is no replacement receipt protocol.
+- `child` accepts the normal queue result for `venv-agent-child-d140` and the
+  maker's real final success line. `registered_child` checks retained normal
+  owner/index/entry/registration metadata, key, source/client/schema/bootstrap
+  identity and report bytes. It does not instantiate or operate a Store.
+- `d73_input` checks the manager's complete `p4-d73-v1` input under the normal
+  owner root, pinned launcher, four source tuples/paths/parents and tool inputs.
+  `d73` additionally requires the exact
+  `$P4_D73_EVIDENCE/$P4_D73_REQUEST_ID.manifest` path, request-id file and
+  launcher-created runmanifest. Expected runmanifest bytes and SHA-256 derive
+  from the same checked manifest fields; the launcher has no digest field to
+  invent. Preflight/body exit and log/command paths belong to that same request.
+  A detached valid manifest is refused. `post-child` checks inputs before the
+  launcher; `post-launch` checks retained results after it. No future launcher
+  output is required at either earlier phase.
+
+**Current normal-caller incompatibility: NOT_READY.** The real
+`request-child-venv` parser and `make-child-venv` both explicitly refuse combining
+D139a installed-schema input with Farm schema authority. The normal D140
+request below selects installed-schema input and therefore cannot produce a
+Farm `.farm-receipt.json`. `caller`, reached through `check_normal_caller`,
+reports this as `route.farm-distribution-join=MISMATCH` even when individual
+input controls pass. No command is changed to bypass that guard, and no
+Farm source replaces the D139a installed carrier. A compatible producer join
+requires an orchestrator decision outside this private receiving scope.
+
+Producer path: `request-child-venv` serializes `CHILDVENV` ->
+`dispatcher-daemon:prov` invokes `make-child-venv` -> its inline Farm gate calls
+`verify_dependency_seed.farm_inputs` ->
+`validate_farm_distribution_inputs` -> `validate_schema_source` and
+`validate_wheel_inputs`. The maker binds `component_identity` as
+`identity.farm_authority` before key selection; `prepare_farm` retains the exact
+receipt and `_retained_farm` revalidates it. Installed-schema-only requests
+cannot take that path. The receiver checks this actual caller constraint.
 
 Each failure remains in the complete census; a valid checkout never upgrades
-an unauthenticated receipt. No producer, request, or D73 body is run by these
-checks. A changed producer requires a new reviewed handoff, with no fallback.
+an unauthenticated receipt. Only the pinned read-only input verifier runs;
+no maker, request or D73 body runs. A changed producer requires a new reviewed
+handoff, with no fallback.
 
-Run the sequence in [commands.md](commands.md) only after the pre-child census
-is `READY`; the post-child census is a separate admission after the normal
-request returns its registered child receipt. The command file preserves the
+The sequence in [commands.md](commands.md) remains blocked by the normal-caller
+join. The post-child census is a separate admission after a normal request;
+post-launch retained-result admission follows launcher execution. The command file preserves the
 normal request wrapper, registered-child import checker, D134
 positive/poison accounting, and the unfiltered D124 22-root core selector.
 The existing reviewed D73 launcher remains the sole launcher. `CORE_ROUTE`
@@ -80,3 +109,14 @@ are not `optionalreads`; accepted output uses `canonical_document`, explicit
 base/previous/accepted IDs and `rebased_onto`, while conflict details use
 `current` and `conflicts`. Record nesting, `receipt`, and the separate
 history/head shapes remain the Runtime schema’s shapes.
+
+The pinned `41ad/f103/569/635f` tuple is SOURCE_ONLY. D141's actual Runtime
+`6a` cut is frozen and Agent/App remain pending; this packet does not retarget
+pins or claim readiness. Missing venue inputs remain: the qualified four
+source checkouts and normal queue results; the compatible normal caller join;
+authentic Farm selected schema source/original input and retained dependency
+closure; the D139a installed carrier and installation evidence; a registered
+child/result/report; fresh manager manifest, controls, request-scoped D73
+results; profile/Node/service routes, admission and durable output roots.
+These must be supplied and verified at the venue, without acquisition or a
+substitute route.

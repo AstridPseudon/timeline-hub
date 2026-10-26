@@ -51,8 +51,8 @@ readonly SCHEMA_MANIFEST_CANONICAL_SHA=c9a87be9485f79878262cc9a193bfa9e4932cf0a9
 
 readonly D140_PHASE=${D140_PHASE:-pre-child}
 case "$D140_PHASE" in
-    pre-child|post-child) ;;
-    *) printf '%s\n' 'D140_PHASE must be pre-child or post-child' >&2; exit 2 ;;
+    pre-child|post-child|post-launch) ;;
+    *) printf '%s\n' 'D140_PHASE must be pre-child, post-child or post-launch' >&2; exit 2 ;;
 esac
 
 checks=()
@@ -247,11 +247,11 @@ check_producer_receipt() {
     if ! physical_path "$path" file; then
         add_check "$id" MISSING 'Farm receipt owner' "$name must bind the original producer artifact"
     elif [ -z "${!digest_name-}" ] || [ -z "${FARM_ORCH_ROOT-}" ]; then
-        add_check "$id" MISSING 'Farm receipt owner' "$digest_name and FARM_ORCH_ROOT require independent trusted receiving bindings"
+        add_check "$id" MISSING 'Farm receipt owner' "$digest_name consistency assertion and recorded FARM_ORCH_ROOT are required"
     else
         receipt_sha=$(sha256sum "$path" | awk '{print $1}')
-        if python3 -B "$RECEIPT_CHECKER" "$kind" "$name" "$@"; then
-            add_check "$id" PASS 'Farm receipt owner' "$name sha256=$receipt_sha matches the trusted digest, normal producer format, and source closure"
+        if /usr/bin/python3 -I -B "$RECEIPT_CHECKER" "$kind" "$name" "$@"; then
+            add_check "$id" PASS 'Farm receipt owner' "$name sha256=$receipt_sha closes to the recorded normal producer/custody/source path; caller digest is consistency only"
         else
             add_check "$id" MISMATCH 'Farm receipt owner' "$name failed producer/digest/format/source closure (sha256=$receipt_sha)"
         fi
@@ -269,7 +269,16 @@ check_child_receipt() {
 }
 
 check_farm_kit_receipt() {
-    check_producer_receipt "$1" "$2" kit
+    # Before create, qualify the real maker's inputs, never its future receipt.
+    if [ "$D140_PHASE" = pre-child ]; then
+        if /usr/bin/python3 -I -B "$RECEIPT_CHECKER" kit "$2"; then
+            add_check "$1" PASS 'Farm distribution owner' 'normal producer validated immutable Farm inputs; retained child receipt is deferred until post-child'
+        else
+            add_check "$1" MISMATCH 'Farm distribution owner' 'normal Farm input producer/source/archive closure is unavailable or refused'
+        fi
+    else
+        check_producer_receipt "$1" "$2" kit
+    fi
 }
 
 check_d73_receipt() {
@@ -277,7 +286,15 @@ check_d73_receipt() {
 }
 
 check_d73_manifest() {
-    check_producer_receipt manifest.d73-content P4_D73_MANIFEST d73
+    check_producer_receipt manifest.d73-content P4_D73_MANIFEST d73-input
+}
+
+check_normal_caller() {
+    if /usr/bin/python3 -I -B "$RECEIPT_CHECKER" caller normal-request; then
+        add_check route.farm-distribution-join PASS 'normal Farm caller owner' 'qualified caller supports the required producer join'
+    else
+        add_check route.farm-distribution-join MISMATCH 'normal Farm caller owner' 'D139a installed-schema request and Farm authority are mutually refused by the qualified requester/maker; no authorized joined producer exists'
+    fi
 }
 
 check_poison_manifest() {
@@ -331,6 +348,17 @@ check_git_file source.agent.d73-suite AGENT_CHECKOUT AGENT_CHECKOUT "$AGENT_SHA"
 check_hash_mode operational.maker MAKER_PATH "$MAKER_SHA" 111171 755 'D139a joined source owner'
 check_hash_mode operational.wrapper WRAPPER_PATH "$WRAPPER_SHA" 18066 755 'D139a request-carrier owner'
 check_hash_mode operational.checker CHECKER_PATH "$CHECKER_SHA" 14033 755 'D139a census owner'
+require_env FARM_ORCH_ROOT 'normal Farm owner'
+require_env FARM_DISTRIBUTION_SOURCE 'Farm distribution owner'
+check_bound_path distribution.source FARM_DISTRIBUTION_SOURCE dir 'Farm distribution owner'
+normal_archive="${FARM_ORCH_ROOT-}/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz"
+if [ -n "${FARM_ORCH_ROOT-}" ] && physical_path "$normal_archive" file; then
+    add_check distribution.original-bootstrap PASS 'Farm distribution owner' 'normal original archive is present; the pinned input verifier must authenticate its bytes'
+else
+    add_check distribution.original-bootstrap MISSING 'Farm distribution owner' 'normal original five-wheel archive is unavailable; no acquisition or alternate packet'
+fi
+check_producer_receipt operational.installation-summary FARM_INSTALLED_KIT_SUMMARY installation
+check_normal_caller
 check_bound_path operational.received-maker RECEIVED_MAKER file 'Farm receiving owner'
 if [ -n "${RECEIVED_MAKER-}" ] && physical_path "$RECEIVED_MAKER" file && [ "$(stat -c '%a' "$RECEIVED_MAKER")" = 755 ]; then
     add_check operational.received-maker-mode PASS 'Farm receiving owner' 'received maker is a regular physical 0755 file'
@@ -425,7 +453,9 @@ else
     check_source_receipt receipt.FARM_CURRENT_APP_RECEIPT FARM_CURRENT_APP_RECEIPT "${APP_CHECKOUT-}" "$APP_SHA" "$APP_TREE"
     check_source_receipt receipt.FARM_CURRENT_COMPOSITION_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT "${COMPOSITION_CHECKOUT-}" "$COMPOSITION_SHA" "$COMPOSITION_TREE"
     check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
-    check_d73_receipt receipt.FARM_D73_RECEIPT FARM_D73_RECEIPT
+    if [ "$D140_PHASE" = post-launch ]; then
+        check_d73_receipt receipt.FARM_D73_RECEIPT FARM_D73_RECEIPT
+    fi
 fi
 
 printf '{\n'
@@ -442,7 +472,8 @@ for i in "${!checks[@]}"; do
 done
 printf '\n  ],\n'
 next_step='If NOT_READY, stop and name every owner. When pre-child is READY, run only the normal child request and repeat with D140_PHASE=post-child.'
-[ "$D140_PHASE" = post-child ] && next_step='If NOT_READY, stop and name every owner. When READY, run commands.md exactly once in order; check-only never starts bodies.'
+[ "$D140_PHASE" = post-child ] && next_step='If NOT_READY, stop and name every owner. When READY, run imports and dry controls; then require post-launch retained evidence before core. No future launcher artifacts are required here.'
+[ "$D140_PHASE" = post-launch ] && next_step='If NOT_READY, stop and name every owner. Retained launcher evidence has been checked; this is not a new Farm body result.'
 printf '  "next": %s\n' "$(json_quote "$next_step")"
 printf '}\n'
 

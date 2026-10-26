@@ -1,14 +1,21 @@
 # D140 Farm commands
 
 These are manager commands, not execution evidence. Run the receiver in two
-phases: `D140_PHASE=pre-child receive-farm.sh --check-only` admits only
+input phases: `D140_PHASE=pre-child receive-farm.sh --check-only` admits only
 preexisting inputs; after the normal child request, run
 `D140_PHASE=post-child receive-farm.sh --check-only` with the produced child,
-manifest, controls, receipts, and output roots. A missing gate is finite
+manager manifest, controls, and output roots. After the launcher, use
+`D140_PHASE=post-launch` to check request-scoped retained results. A missing gate is finite
 `NOT_READY`; do not continue or substitute another route.
 
+The current qualified requester/maker refuse the D139a installed-schema +
+Farm-authority join. The receiver records `route.farm-distribution-join` as
+`MISMATCH`; this sequence is not executable as a qualified Farm run until the
+orchestrator resolves that producer incompatibility. Keep the existing guards.
+Do not add Farm flags to the installed-schema request or substitute its carrier.
+
 The receiver never starts a body. The post-child census authenticates the
-registered child, tuple receipts, key/value D73 manifest, exact poison
+registered child, tuple receipts, key/value D73 input manifest, exact poison
 comparison, and durable output roots before the sequence below.
 The existing `p4-d73-pinned-launch.sh` route is the only launcher named here.
 
@@ -38,7 +45,9 @@ or a legacy retained child.
 The normal route must return the registered child receipt. Bind its actual
 `bin/python` as `CHILD_PYTHON` and its maker-selected bootstrap as
 `CHILD_BOOTSTRAP`; neither may be replaced by Main's interpreter or a copied
-venv. Then run the post-child census and stop unless it is `READY`.
+venv. Then render the manager input manifest, bind its consistency digest and run
+the post-child census. Stop unless it is `READY`. This phase requires no
+launcher-created retained manifest, request-id, runmanifest or exit files.
 
 ```sh
 D140_PHASE=post-child ops-d140-farm/receive-farm.sh --check-only
@@ -147,6 +156,7 @@ must exit `17` after exactly one call. The poison manifest changes only
 counter at zero. These are pre-body controls, not a body result.
 
 ```sh
+test "$P4_D73_EVIDENCE" = "$KEEP_ROOT"
 set +e
 P4_STUB_COUNT="$POSITIVE_COUNTER" P4_D73_MANIFEST="$P4_D73_MANIFEST" \
   P4_D73_EVIDENCE="$P4_D73_EVIDENCE" P4_D73_REQUEST_ID=d140-positive \
@@ -164,6 +174,11 @@ poison_rc=$?
 set -e
 test "$poison_rc" -ne 0
 test "$(wc -l < "$POISON_COUNTER")" = 0
+
+D140_PHASE=post-launch P4_D73_REQUEST_ID=d140-positive \
+  FARM_D73_RECEIPT="$P4_D73_EVIDENCE/d140-positive.manifest" \
+  FARM_D73_RECEIPT_SHA256="$P4_D73_MANIFEST_SHA256" \
+  ops-d140-farm/receive-farm.sh --check-only
 ```
 
 `POISON_MANIFEST` is an actual manager-rendered copy of the authenticated D73
@@ -211,6 +226,9 @@ test -f "$KEEP_ROOT/$P4_D73_REQUEST_ID.manifest"
 test -f "$KEEP_ROOT/$P4_D73_REQUEST_ID.runmanifest"
 test -d "$RETAINED_ROOT"
 test "$core_rc" = 0
+D140_PHASE=post-launch FARM_D73_RECEIPT="$KEEP_ROOT/$P4_D73_REQUEST_ID.manifest" \
+  FARM_D73_RECEIPT_SHA256="$P4_D73_MANIFEST_SHA256" \
+  ops-d140-farm/receive-farm.sh --check-only
 ```
 
 The selector above is exactly 22 roots and has no marker, `-k`, row filter or

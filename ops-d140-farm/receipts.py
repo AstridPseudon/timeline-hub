@@ -1,7 +1,7 @@
-"""Read normal producer artifacts using Farm's separately authenticated bindings.
+"""Read normal producer artifacts under the recorded Farm OS custody.
 
-No producer is executed. Digests are supplied by the receiving owner, never
-learned from the file being checked. These are custody checks, not signatures.
+Only the pinned input verifier runs; no maker, queue, Store or body runs.
+Caller digests are consistency assertions, never an authority source.
 """
 
 from __future__ import annotations
@@ -14,6 +14,21 @@ import re
 import stat
 import subprocess
 import sys
+import types
+
+
+# These are the roots embedded in the qualified dispatcher/make-checkout/maker.
+# Moving the installation requires source review, not an environment override.
+NORMAL_ORCH_ROOT = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
+NORMAL_WORK_ROOT = Path("/home/user/work")
+GIT = "/usr/bin/git"
+SEED_SHA = "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+FARM_SHA = "c2163184ed51e893c6d194930c061474de08bfe707907a2f43abb5332b62397d"
+ARCHIVE_SHA = "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+
+
+def canonical(value: object) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
 def bound(name: str) -> str:
@@ -27,8 +42,13 @@ def physical(path: str | Path, directory: bool = False) -> Path:
     path = Path(path)
     if not path.is_absolute() or path.resolve(strict=True) != path:
         raise ValueError("path is not physical and absolute")
+    for parent in path.parents:
+        info = parent.stat()
+        sticky = parent == Path("/tmp") and info.st_uid == 0 and stat.S_IMODE(info.st_mode) == 0o1777
+        if info.st_uid not in {0, os.getuid()} or (info.st_mode & 0o7022 and not sticky):
+            raise ValueError("unsafe artifact ancestry")
     info = path.stat()
-    if info.st_uid != os.getuid() or info.st_mode & 0o022:
+    if info.st_uid != os.getuid() or info.st_mode & 0o7022:
         raise ValueError("foreign owner or broadly writable artifact")
     if directory:
         if not stat.S_ISDIR(info.st_mode):
@@ -47,7 +67,7 @@ def authenticated(name: str) -> tuple[Path, bytes]:
     expected = bound(name + "_SHA256")
     data = path.read_bytes()
     if not re.fullmatch(r"[0-9a-f]{64}", expected) or digest(data) != expected:
-        raise ValueError(f"{name} digest mismatch")
+        raise ValueError(f"{name} consistency digest mismatch")
     return path, data
 
 
@@ -59,7 +79,18 @@ def producer(root: Path, name: str, expected: str) -> Path:
 
 
 def git(repo: str | Path, *args: str) -> bytes:
-    return subprocess.check_output(["git", "-C", str(repo), *args], stderr=subprocess.DEVNULL)
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull, GIT_OPTIONAL_LOCKS="0")
+    return subprocess.check_output([GIT, "--no-replace-objects", "-C", str(repo), *args],
+                                   env=env, stderr=subprocess.DEVNULL)
+
+
+def normal_root() -> Path:
+    root = physical(bound("FARM_ORCH_ROOT"), directory=True)
+    if root != NORMAL_ORCH_ROOT:
+        raise ValueError("unregistered Farm root; caller hashes cannot authorize an installation")
+    producer(root, "dispatcher-daemon", "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed")
+    return root
 
 
 def checkout(repo: str | Path, commit: str, tree: str) -> None:
@@ -87,6 +118,8 @@ def source(root: Path, name: str, repo: str, commit: str, tree: str) -> None:
     kind = name.removeprefix("FARM_CURRENT_").removesuffix("_RECEIPT").lower()
     prefix = {"agent": "agt", "runtime": "rt", "app": "app", "composition": "vw"}[kind]
     worker = f"{prefix}-pin-{commit[:8]}"
+    if Path(repo) != NORMAL_WORK_ROOT / "wt" / worker:
+        raise ValueError("not the normal make-checkout destination")
     if path != root / "queue" / "done" / f"checkout-{kind}-{commit}":
         raise ValueError("not the normal checkout queue result")
     if raw.decode() not in (
@@ -103,11 +136,10 @@ def source(root: Path, name: str, repo: str, commit: str, tree: str) -> None:
     checkout(repo, commit, tree)
 
 
-def kit(root: Path, name: str) -> None:
+def installation(root: Path, name: str) -> None:
     _, raw = authenticated(name)
     value = json.loads(raw)
-    # This is the existing lead's installed-kit summary, not a child or a
-    # farm-distribution-inputs component receipt. Its digest is external trust.
+    # Supporting installation evidence only. This never admits Farm inputs.
     if value["schema"] != "timeline.ops.d137.installed-kit/v1" or value["status"] != "qualified_for_one_request":
         raise ValueError("unsupported installed-kit format")
     installer = value["installer"]
@@ -152,13 +184,116 @@ def kit(root: Path, name: str) -> None:
         raise ValueError("installation/source closure mismatch")
 
 
+def seed_component(root: Path):
+    path = producer(root, "verify_dependency_seed.py", SEED_SHA)
+    producer(root, "verify_farm_distribution_inputs.py", FARM_SHA)
+    module = types.ModuleType("d140_dependency_seed")
+    module.__file__ = str(path)
+    exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
+    return module
+
+
+def normal_kit(root: Path) -> None:
+    for executable, sha, bindings in (
+        ("make-child-venv", "MAKER_SHA", ("MAKER_PATH", "RECEIVED_MAKER")),
+        ("request-child-venv", "WRAPPER_SHA", ("WRAPPER_PATH", "NORMAL_REQUEST_ROUTE")),
+        ("check-child-imports", "CHECKER_SHA", ("CHECKER_PATH", "IMPORT_CHECK_ROUTE")),
+    ):
+        path = producer(root, executable, bound(sha))
+        if any(bound(binding) != str(path) for binding in bindings):
+            raise ValueError("detached installed normal caller: " + executable)
+
+
+def caller(root: Path, name: str) -> None:
+    normal_kit(root)
+    guard = b"installed schema input cannot be combined with Farm schema authority"
+    if all(guard in (root / "bin" / tool).read_bytes() for tool in ("request-child-venv", "make-child-venv")):
+        raise ValueError("NOT_READY: qualified normal caller refuses D139a installed schema + Farm authority; no joined producer exists")
+    raise ValueError("unreviewed normal caller compatibility")
+
+
+def registered_child(root: Path, child_path: Path, report: bytes | None = None) -> dict:
+    """Read the maker's retained registration; never construct/open a Store."""
+    store = NORMAL_WORK_ROOT / "bench-store"
+    if child_path.parent != store / "entries":
+        raise ValueError("child is not in the normal registered entries")
+    owner = json.loads(physical(store / "owner.json").read_bytes())
+    index = json.loads(physical(store / "index.json").read_bytes())
+    marker_raw = physical(child_path / ".bench-owner.json").read_bytes()
+    marker = json.loads(marker_raw)
+    entry = index["entries"][child_path.name]
+    identity = marker["identity"]
+    required = {"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority"}
+    if set(identity) not in (required, required | {"farm_authority"}):
+        raise ValueError("unsupported registered child identity")
+    if (not re.fullmatch(r"[0-9a-f]{64}", identity["bootstrap_authority"])
+            or physical(child_path / ".bootstrap-authority").read_bytes() != (identity["bootstrap_authority"] + "\n").encode()):
+        raise ValueError("registered bootstrap identity mismatch")
+    parts = ["child", identity["agent_sha"], identity["backend_sha"], identity["client_tuple"], identity["bootstrap_authority"]]
+    if "farm_authority" in identity:
+        parts.append(identity["farm_authority"])
+    key = digest(canonical(parts))
+    reg = index["registrations"]["venv-agent-child-d140"]
+    if (owner["version"] != 1 or owner["uid"] != os.getuid() or owner["root"] != str(store)
+            or owner["tests"] != str(root / "tests") or index["version"] != 1
+            or "venv-agent-child-d140" in index["retired"]
+            or child_path.name != "child-" + key
+            or marker != {"owner": owner["id"], "component": "child", "key": key, "identity": identity}
+            or marker_raw != canonical(marker)
+            or entry["owner"] != owner["id"] or entry["identity"] != identity
+            or entry["component"] != "child" or entry["key"] != key or entry["path"] != str(child_path)
+            or entry["node"] != [child_path.stat().st_dev, child_path.stat().st_ino]
+            or identity["agent_sha"] != bound("AGENT_SHA") or identity["backend_sha"] != bound("RUNTIME_SHA")
+            or child_path.name not in reg["requires"]
+            or reg["requires"] != [child_path.name] or reg["env"] != "" or reg["suite"] != ""
+            or reg["hash"] != digest(canonical({k: v for k, v in reg.items() if k != "hash"}))):
+        raise ValueError("normal owner/key/source/registration mismatch")
+    lock = physical(store / "locks" / child_path.name)
+    if entry["lock"] != [lock.stat().st_dev, lock.stat().st_ino]:
+        raise ValueError("registered child lock changed")
+    retained = physical(child_path / ".provision-report").read_bytes()
+    if (reg["report"].encode() != retained or reg["report_sha256"] != digest(retained)
+            or (report is not None and report != retained)):
+        raise ValueError("registered provision report mismatch")
+    client = pairs(physical(child_path / ".astrid-runtime-client-identity").read_text())
+    if "farm_authority" in identity:
+        if not re.fullmatch(r"[0-9a-f]{64}", identity["farm_authority"]):
+            raise ValueError("invalid registered Farm authority")
+    else:
+        client["__timeline_schema_identity__"] = physical(child_path / ".schema-source-identity").read_text().strip()
+    if identity["client_tuple"] != client:
+        raise ValueError("registered client/schema source closure mismatch")
+    return identity
+
+
+def kit(root: Path, name: str) -> None:
+    """Use the maker's exact input gate before create and retention gate after."""
+    normal_kit(root)
+    seed = seed_component(root)
+    archive = physical(root / "artifacts" / f"bootstrap-wheel-input-0932-{ARCHIVE_SHA}.tgz")
+    source_path = physical(bound("FARM_DISTRIBUTION_SOURCE"), directory=True)
+    receipt = seed.farm_inputs(source_path, archive)
+    if os.environ.get("D140_PHASE", "pre-child") == "pre-child":
+        # prepare_farm writes .farm-receipt.json only after child creation.
+        # Inputs, rather than a future retained receipt, are qualified here.
+        return
+    path, raw = authenticated(name)
+    child_path = physical(Path(bound("CHILD_PYTHON")).parent.parent, directory=True)
+    identity = registered_child(root, child_path)
+    if (path != child_path / ".farm-receipt.json" or path.stat().st_mode & 0o777 != 0o400
+            or raw != canonical(receipt) or identity.get("farm_authority") != receipt["component_identity"]):
+        raise ValueError("Farm canonical receipt/path/registered authority mismatch")
+    retained, _, _ = seed.retained_farm(child_path, identity["farm_authority"])
+    if canonical(retained) != raw:
+        raise ValueError("Farm dependency/source retention mismatch")
+
+
 def child(root: Path, name: str) -> None:
     path, raw = authenticated(name)
     request = "venv-agent-child-d140"
     if path != root / "queue" / "done" / f"childvenv-{request}":
         raise ValueError("not a normal child queue result")
-    producer(root, "make-child-venv", bound("MAKER_SHA"))
-    producer(root, "request-child-venv", bound("WRAPPER_SHA"))
+    normal_kit(root)
     # The dispatcher retains producer progress before this final success line.
     line = raw.decode().splitlines()[-1]
     match = re.fullmatch(r"(?:created |reused child venv path=)(/\S+) (.+)", line)
@@ -181,6 +316,7 @@ def child(root: Path, name: str) -> None:
     if (fields["provision_report"] != str(report) or digest(data) != fields["provision_report_sha256"]
             or physical(child_path / ".provision-report").read_bytes() != data):
         raise ValueError("provision report digest/path mismatch")
+    registered_child(root, child_path, data)
     header, sections = data.decode().split("installed_import_origins:\n", 1)
     imports, sections = sections.split("installed_distribution_metadata:\n", 1)
     metadata, freeze = sections.split("pip_freeze:\n", 1)
@@ -228,9 +364,11 @@ def child(root: Path, name: str) -> None:
         checkout(bound(kind + "_CHECKOUT"), bound(kind + "_SHA"), bound(kind + "_TREE"))
 
 
-def d73(root: Path, name: str) -> None:
+def d73_input(root: Path, name: str) -> dict[str, str]:
     _, raw = authenticated(name)
-    _, positive = authenticated("P4_D73_MANIFEST")
+    manifest, positive = authenticated("P4_D73_MANIFEST")
+    if not manifest.is_relative_to(root):
+        raise ValueError("D73 manager input is outside the normal Farm owner root")
     if raw != positive:
         raise ValueError("D73 receipt differs from manager's authenticated manifest")
     launcher = physical(Path(bound("AGENT_CHECKOUT")) / "tools/p4-d73-pinned-launch.sh")
@@ -251,19 +389,52 @@ def d73(root: Path, name: str) -> None:
     for field, binding in (("python", "P4_PYTHON"), ("node", "NODE_BIN"), ("profile", "PROFILE")):
         if values[field] != bound(binding):
             raise ValueError("D73 input binding mismatch")
+    return values
+
+
+def d73(root: Path, name: str) -> None:
+    values = d73_input(root, name)
+    evidence = physical(bound("P4_D73_EVIDENCE"), directory=True)
+    if evidence != physical(bound("KEEP_ROOT"), directory=True) or not evidence.is_relative_to(root):
+        raise ValueError("D73 evidence is not in the normal retained Farm root")
+    request = bound("P4_D73_REQUEST_ID")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", request):
+        raise ValueError("unsafe D73 request id")
+    path, raw = authenticated(name)
+    if path != evidence / f"{request}.manifest":
+        raise ValueError("detached D73 retained manifest")
+    if physical(evidence / f"{request}.request-id").read_bytes() != (request + "\n").encode():
+        raise ValueError("D73 request-id mismatch")
+    fields = "agent_sha runtime_sha app_sha composition_sha original_p4_test_hash service_versions junit_paths".split()
+    expected = "".join(f"{field}={values[field]}\n" for field in fields).encode()
+    runmanifest = physical(evidence / f"{request}.runmanifest")
+    data = runmanifest.read_bytes()
+    # The launcher records no digest field. Derive the expected bytes from the
+    # same checked input, rather than inventing a digest-bearing receipt format.
+    if data != expected or digest(data) != digest(expected) or raw != physical(bound("P4_D73_MANIFEST")).read_bytes():
+        raise ValueError("D73 retained runmanifest bytes/digest/tuple mismatch")
+    if physical(evidence / f"{request}.preflight.exit").read_bytes() != b"0\n":
+        raise ValueError("D73 preflight did not succeed")
+    expected_exit = b"17\n" if request == "d140-positive" else b"0\n"
+    if physical(evidence / f"{request}.body.exit").read_bytes() != expected_exit:
+        raise ValueError("D73 body/control exit mismatch")
+    for suffix in ("preflight.log", "body.log", "command"):
+        physical(evidence / f"{request}.{suffix}")
 
 
 def main() -> int:
     try:
+        # Authenticated helper code also invokes Git. Caller PATH/PYTHONPATH
+        # must not substitute a Git probe or an import before it runs.
+        os.environ["PATH"] = "/usr/local/bin:/usr/bin:/bin"
         kind, name, *args = sys.argv[1:]
-        root = physical(bound("FARM_ORCH_ROOT"), directory=True)
-        producer(root, "dispatcher-daemon", "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed")
+        root = normal_root()
         if kind == "source":
             producer(root, "make-checkout", "8430f253367b308ba69b93e084e57351891bce42235a018d061d2b07c5dc6ffc")
             source(root, name, *args)
         else:
-            {"child": child, "kit": kit, "d73": d73}[kind](root, name)
-    except (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.CalledProcessError) as error:
+            {"child": child, "kit": kit, "caller": caller, "installation": installation, "d73-input": d73_input, "d73": d73}[kind](root, name)
+    except (OSError, ValueError, KeyError, TypeError, IndexError, SystemExit, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr)
         return 1
     return 0
