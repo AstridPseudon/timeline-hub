@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T04:33:13Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-26T04:30:53Z
+<!-- main | 2026-10-26T04:38:01Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-26T04:37:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -14,7 +14,7 @@
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | gated:D141-kit | Controls0247; independent0250 PASS | Row source15 selectors and CAS PASS. Independent actual valid and poison controls PASS; old8912 intact. Ready after separate kit held-ID clearance. No body. | fa9 / 8b6 |
-| D89d measured admission | Qualify exact App paired admission | Luna | Main D141g-a recorded | blocked:runtime | Scope0400 PASS61; resume0418 queued | Synthetic authority removed; shared trace donor0402 failed cancellation. Join WIP retained until qualified Sol0410 donor; new App binding still owed. | Private0400 |
+| D89d measured admission | Qualify exact App paired admission | Luna | Main D141g-a recorded | blocked:runtime | Scope0400 PASS61; resume0418 queued | SEC002 fixed0400. Donor56f2 accepted49. Resume0418 hits paired cancellation and supervisor failures; independent path0437 dispatched. New App binding still owed. | Private0400 |
 | D141h Runtime split | Install independently qualified Runtime kit | Sol and Luna | Independent0418 PASS49 before04:30 | merging | Sol0410; review0418; CAS0422 active | [Acceptance](../../design/rt-OPS-D141-cancel-final-verify-0418-review.json). All49 controls and custody PASS. CAS five files authorized; no live install yet. | 56f2d56e |
 | D141g App binding | Retain historical first placement caller | App Luna | Author0309 terminal | merged | app-P-D141g-first-suite-binding-0309 | Exact520d target suite source and builder command hashes published. Prospective only; actual D66 registered bytes must match before either part. | App520d |
 | D141g paired preflight | Apply recorded one unit admission | Luna | D141g-a and D141l binding | doing | SEC002 return0400 | Preflight and body one admission at4.6. No second floor gate; trace stop and heavy protection cover whole pair. Exact builder bytes before either part. | App520d |
@@ -47,7 +47,7 @@ Blockers: Runtime service — MainD141h replaces full comparator with exact15 ta
 Blockers: P5 — Sole service6934 queued. MainD141h authorizes4.6GB plus trace; Final source56f2 and independent0418 PASS49; CAS0422 now owns install; pairedApp0331 separate. No live admission change or service reissue.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
 Next ready: independent cancellation0418 and paired resume0418, then CAS on PASS before04:30; D141m smoke dropped after Main04:03; App0400 source complete; resume0408 WIP only after qualified new trace donor and actual App binding. Historical App binding wait cleared; freeze2 binding waits qualified Agent and App source. Farm cheap schema verification now; original input hunt parked under D141k until actual Agent join requires it. Keep8912/P419479 unstarted; sameP56934 waits kit.
-live 2 / cap 3; ready-undispatched 0. Independent0418 terminalPASS before04:30; CAS0422 active immediately. Paired resume0418 active on retainedWIP. No heavy body or gate GO.
+live 3 / cap 3; ready-undispatched 0. CAS0422 finishes installed smoke/receipt; pair resume0418 active; mandatory readonly pair path0437 queued after repeated lifecycle failures. No actual heavy body.
 D141o: Hub objects wait for owner morning decision. No hub repo, repack or manual disk mutation.
 D141l/m: App merges freeze2 now; Agent after current core and join. Runtime and Composition unchanged. Both kit reviews timebox04:30Z; a later FAIL goes to Main, no next loop. App520d source evidence historical; paired source cannot release a new head without its authentic builder binding.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted freeze2 post-fix heads.
@@ -61,3 +61,5 @@ Disk current pass: 4692791296 bytes; fresh Runtime census finds only three prior
 Path0410 evidence: [Finite startup and caller findings](../../workers/rt-OPS-D141-cancel-wholepath-0410/evidence/findings.md). Direct whole-group cancellation FAIL; actual production stop-test UNKNOWN. No new scope decision inferred; existing author may fix robust finalization within its brief.
 
 04:30 kit checkpoint: Runtime review PASS, CAS active. App pair resume still active; no paired final verdict or authentic freeze2 builder binding. No new author loop after a later FAIL; report it to Main. Reviewer0418 relative evidence recovered byte-exact from committed Git blobs to stable absolute evidence and flat design, originals retained.
+
+04:37 paired gate: source resume has repeated cancellation/supervisor failures before terminal acceptance. D33 readonly path0437 compares actual paired caller with passing Runtime56f2 while same author completes finite pass. No new fix worker or release; later terminal FAIL goes Main.
