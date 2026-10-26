@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -10,13 +10,24 @@ import { declaredSkip } from '../../scripts/quality/declared-skip.mjs';
 // CI selects pwsh on POSIX and both Windows PowerShell 5.1 and pwsh on Windows.
 const powershell = process.env.ASTRID_TEST_PWSH || 'pwsh';
 
-function assertLocalRequirement(localInstall, expectedPath, sha, suffix = '') {
+async function assertLocalRequirement(localInstall, expectedPath, sha, suffix = '') {
   const requirement = localInstall.find((argument) => argument.startsWith('git+') && argument.endsWith(`@${sha}${suffix}`));
   assert.ok(requirement, JSON.stringify(localInstall));
   const pinned = suffix ? requirement.slice(4, -suffix.length) : requirement.slice(4);
   const revision = pinned.lastIndexOf('@');
   assert.equal(pinned.slice(revision + 1), sha);
-  assert.equal(fileURLToPath(pinned.slice(0, revision)), expectedPath);
+  const actualPath = await canonicalTestPath(fileURLToPath(pinned.slice(0, revision)));
+  const expected = await canonicalTestPath(expectedPath);
+  assert.equal(process.platform === 'win32' ? actualPath.toLowerCase() : actualPath, process.platform === 'win32' ? expected.toLowerCase() : expected);
+}
+
+async function canonicalTestPath(value) {
+  const resolved = path.resolve(value);
+  try { return await realpath(resolved); }
+  catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    return path.join(await realpath(path.dirname(resolved)), path.basename(resolved));
+  }
 }
 
 test('PowerShell opens install log appends with sharing compatible with the running service', async () => {
@@ -236,8 +247,8 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   assert.ok(calls.every((args) => !args.includes('--require-hashes')), 'bootstrap must not install third-party dependencies');
   const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
   assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
-  assertLocalRequirement(localInstall, path.join(context.root, 'runtime source'), context.manifest.runtime.sha, '#subdirectory=packages/python');
-  assertLocalRequirement(localInstall, path.join(context.root, 'source with spaces'), context.manifest.agent.sha);
+  await assertLocalRequirement(localInstall, path.join(context.root, 'runtime source'), context.manifest.runtime.sha, '#subdirectory=packages/python');
+  await assertLocalRequirement(localInstall, path.join(context.root, 'source with spaces'), context.manifest.agent.sha);
   assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
   assert.ok(!core.includes('--with'));
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /native progress on stderr/);
@@ -538,7 +549,7 @@ test('PowerShell accepts localhost file URLs as local pinned repositories', () =
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
   const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
-  assertLocalRequirement(localInstall, repoPath, context.manifest.agent.sha);
+  await assertLocalRequirement(localInstall, repoPath, context.manifest.agent.sha);
 }));
 
 test('PowerShell streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {
