@@ -1,0 +1,5 @@
+Ask: clear pending one-join floor decision as MOOT; consume actual normal4.6GB dispatch now / Owner: Agent agt-F-D141k-perid-join-0349; MAIN decision custodian / By: currentpass
+
+Fresh free recovered to4746977280bytes at04:54:16, above normal4600000000. Immediately dispatched existingpreparedONE read-onlyLuna join0349 on normalfloor, no exception, sourceonly/no body,4GBstop/5strace. Exact26496 cutXML7adf18d3 versus pristine3255 table7535b9a7; original28e56/8b6ed sources remain actualscope, currentfreeze2HOME8585ed9c/tree92a3 separate. REGcandidate andenv_sensitive_undecidable y/n+reason bycluster required; nofixauthor beforeactualcandidate. Farmconditional only.
+
+The escalation agent-20261026T044725Z-D141k-one-readonly-join-admission.md is now MOOT: no additionaldecisionneeded and no requestto lowerfloor remains. Originals unchanged. Currentfree4742868992bytes. No ordinaryorprotectedcleanup attributed without authenticreceipt; this dispatch uses the actualbytecheck only. No furtherworker belowits ownfloor, noheavybody. Sourcehome/Apphandoffalreadycomplete04:42. AllD130/KEEP/hubno-touch/stoppedinvestigationholds persist.

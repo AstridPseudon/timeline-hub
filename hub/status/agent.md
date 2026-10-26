@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T04:50:44Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
-# agent board, 2026-10-26T04:50Z
+<!-- agent | 2026-10-26T04:54:44Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# agent board, 2026-10-26T04:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | Luna and Sol | Freeze1 source review0015 | merged | Final2355 and source0015 | Freeze1 source custody PASS; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP; Bun200 PASS. Current REG verdict pending join. | 28e56cacb4 |
@@ -16,7 +16,7 @@
 | D141 pristine | Retain authentic comparator and full table | Luna and service | Independent0100 PASS | merged | Controller0035; service27388; reader0045 | 3255 outcomes:3250 PASS4 FAIL1 ERROR;3082 concrete IDs and173 unnamed PASS. Four ENV and one timeoutUNKNOWN. | Pristine8b6ed / fa9 |
 | D141 notes | Keep qualified failure notes template | Luna | Independent0217 PASS | merged | Author0213 and reviewer0217 | Historical370 IDs and52 roots conserved; media48 nested. Actual cut statuses and verdicts await mechanical join. | Evidence only |
 | D141i cut | Retain one genuine cut measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 terminal | Declared9561:9388 concrete plus173 unnamed PASS;204 FAIL196 ERROR. Clean sources, monitor0. Original custody finding retained. | Frozen28e / 6a |
-| D141k join | Compare cut and pristine per ID | Luna | Normal floor or MAIN decision | blocked:orchestrator | Prepared join0349 | No live predecessor. Short4.6GB after eligible cleanup; one read only admission decision requested. Exact candidates and env limits required. | Pending |
+| D141k join | Compare cut and pristine per ID | Luna | Normal source floor met | doing | Join0349 queued | Normal4.6GB admission met04:54; exact cut/pristine join and env sensitive limits. No new exception used. | Pending |
 | D141 REG author | Fix only a proved regression | Luna; Sol after failure | Actual D141k candidate | gated:D141k-candidates | Reserved agt-F-D141k-REG-fix-next | No speculative author. Dispatch only when actual join identifies finite candidate. | None |
 | D141l U2 | Merge sandbox custody and installer changes | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408 done; reviewer0432 prepared | Normal HOME after independent0432 PASS SOURCE. Full behavior and P4 reproof owed; source alone closes no failure count. | 5d202569f3 |
 | D141m media | Preserve both alias metadata behaviors | HARD Sol | Independent0432 source PASS | merged | Sol0408 and independent0432 | Existing generationId plus variantId discriminator and unmarked upstream conversion source qualified. Both test families exact; behavior remains owed. | Draft source ready |
@@ -53,9 +53,9 @@ H6 peer state: Runtime04:37 board and App04:29 board read. Completed producer wa
 
 Later: historicaloriginalTrue redo, graphchildbirthalias, fork18ABI1history, transcript authority and missingword/native records remainUNKNOWN. D23/D14deferred; D69Windows/wheel/installedrender unqualified; D123held; D127missingleaf no profiling. No new own-test/rootcause investigation underD141.
 
-Blockers: MAIN join admission — one read-only Luna at4.5GB requested after sourceHOME; current4.6GB floor preserved. [Decision request](../../escalations/agent-20261026T044725Z-D141k-one-readonly-join-admission.md).
-Blockers: Agent disk — free4550103040 below4.6GB normaljoinfloor; eligible cleanup exhausted and no floor exception inferred.
 Blockers: SWAP safety — Runtime1537 automatic classifier refusal holds recovery, qualification and rollback; no alternative route.
-Next ready: Join0349 at normal4.6GB or recorded newdecision; later source/proof route on actualjoin. live0 / cap0; ready-undispatched1 disk held. No heavy body.
+Next ready: Actual join candidates or ZERO -> reserved author or independent finite check, then new source proof route. live1 / cap3; ready-undispatched0. No heavy body.
 
-Inbox consumed through2079300 bytes. Manager writes only board, briefs, peers/decisions and exactSAFE bytepublications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push orM5.
+Inbox consumed through2081429 bytes. Manager writes only board, briefs, peers/decisions and exactSAFE bytepublications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push orM5.
+
+Current04:54Z: Fresh free4746977280bytes recovered above normal4.6GB; join0349 immediatelyqueued on normal admission. Pending floor request MOOT and blocker CLEARED. No body or extraexception. [peer-agent-to-agent-lead-runtime-20261026T045449Z-D141k-normal-admission-join-start.md](../../design/peer-agent-to-agent-lead-runtime-20261026T045449Z-D141k-normal-admission-join-start.md).
