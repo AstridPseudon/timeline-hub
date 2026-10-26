@@ -5,6 +5,7 @@ import json
 import os
 import py_compile
 import socket
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -2465,3 +2466,37 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     expected = ["lsof", *(["-O"] if platform == "darwin" else []), "-nP"]
     expected += ["-a","-p","910002","-iTCP:8188","-sTCP:LISTEN"] if phase == "registry" else ["-t","-iTCP:8188","-sTCP:LISTEN"]
     assert calls == [expected]
+
+
+@pytest.mark.parametrize("acl_allows", [True, False])
+def test_cli_credential_admission_uses_windows_acl_not_mode_bits(tmp_path, monkeypatch, acl_allows):
+    from astrid.core.execution import generic_host as module
+
+    credential = tmp_path / "credential"
+    credential.write_text("token")
+    credential.chmod(0o600)
+    real_stat = Path.stat
+    def windows_stat(candidate, *args, **kwargs):
+        result = real_stat(candidate, *args, **kwargs)
+        if candidate == credential:
+            return os.stat_result((stat.S_IFREG | 0o666, *result[1:]))
+        return result
+    monkeypatch.setattr(Path, "stat", windows_stat)
+    monkeypatch.setattr(module.platform, "is_owner_only", lambda _path: acl_allows)
+    monkeypatch.setattr(sys, "argv", ["generic-host", "--pack-root", str(tmp_path),
+                                       "--credential-file", str(credential)])
+
+    class ReachedCredentialRead(Exception):
+        pass
+
+    def reached(*_args):
+        raise ReachedCredentialRead
+
+    monkeypatch.setattr(module, "_compose_cli_boot_manifest", reached)
+    if acl_allows:
+        with pytest.raises(ReachedCredentialRead):
+            module._cli()
+    else:
+        with pytest.raises(SystemExit) as error:
+            module._cli()
+        assert error.value.code == 2

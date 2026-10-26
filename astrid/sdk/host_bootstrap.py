@@ -927,7 +927,7 @@ class _ParkedPackHostPreparer:
             raise PackHostBootstrapError("parked host grant is foreign")
         credential_path = Path(grant["credential_file"])
         if (credential_path.is_symlink() or not credential_path.is_file()
-                or credential_path.stat().st_mode & 0o777 != 0o600):
+                or not platform.is_owner_only(credential_path)):
             raise PackHostBootstrapError("parked host credential reference is unsafe")
         process = {"pid": handle.process.pid, "birth_id": handle.state["process_birth_id"]}
         # Freeze the exact grant before delivery; callback code cannot mutate
@@ -1325,7 +1325,7 @@ def ensure_pack_host(
         raise PackHostBootstrapError(f"generic Astrid pack host handoff is unsafe; {reconfigure_action}") from exc
     if (not worker_path.is_file() or worker_path.is_symlink()
             or not source_path.is_dir() or source_path.is_symlink()
-            or worker_path.stat().st_mode & 0o777 != 0o600):
+            or not platform.is_owner_only(worker_path)):
         raise PackHostBootstrapError(f"generic Astrid pack host handoff is unavailable; {reconfigure_action}")
     host_python = _pack_host_python_executable()
     if _foreground and host_python != _venv_interpreter_name(os.path.abspath(sys.executable)):

@@ -82,12 +82,18 @@ def _safe_path(value: str) -> Path:
 
 def _private_dir(path: Path, *, exclusive: bool = False) -> None:
     _safe_path(str(path))
-    path.mkdir(mode=0o700, parents=True, exist_ok=not exclusive)
+    try:
+        path.mkdir(mode=0o700, parents=True, exist_ok=False)
+    except FileExistsError:
+        if exclusive:
+            raise
+    else:
+        platform.owner_only(path)
     info = path.stat()
     if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(path, info):
         raise WorkerProcessError("ownership directory has a different owner")
-    if stat.S_IMODE(info.st_mode) != 0o700:
-        raise WorkerProcessError("ownership directory must have mode 0700")
+    if not platform.is_owner_only(path):
+        raise WorkerProcessError("ownership directory must be owner-only")
 
 
 @dataclass(frozen=True)
