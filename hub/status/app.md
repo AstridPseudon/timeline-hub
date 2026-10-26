@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T13:30:02Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
-# app board, 2026-10-26T13:26:09.687427+00:00
+<!-- app | 2026-10-26T13:35:32Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-26T13:35:37.205374+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,7 +46,7 @@
 | D141ff notes | Retain installed popup gap paragraph | Runtime Luna and review | Independent1150 PASS install | merged | Runtime1133 and CAS1147; review1150 | Exact installed popup known gap qualifies; source/install monitor limits disclosed, actual1368/27026 and cancelled IDs distinct. | Evidence only |
 | D141j visibility | Retain qualified per-read source visibility | Luna and independent Luna | Independent1245 PASS source | merged | Return1240; independent1245 | Two-read artifact regenerated, stale association refused, full13/types/scopedlint PASS. Private source only; no diagnostic body. | Private3bb09fc6 |
 | D141j capture | Retain private mounted source readiness | Luna and independent Luna | Independent1320 PASS source | merged | Return1313; independent1320 | Actual04545a1e sharedfixture opt-in qualified;6+41/types/lint PASS. Nativeobservations NOTRUN; prior1305FAIL conserved. | Private04545a1e |
-| D141j route | Compose actual qualified diagnostic recipe | Luna | Source04545 and finitepacket PASS | doing | app-P-D141j-final-route-source-1326 | Genuinebuilder prospectivepacket for actualprivatecandidate and realoccurrence opt-in. No body/registration; oldFAIL2 retained. | Operational only |
+| D141j route | Review actual qualified diagnostic recipe | Luna and independent Luna | Finalsource1326 terminal | review | Source1326; independent1333 | Private04545/f2-occurrence-copy observationalopt-in; purebuilder/propagationcontrolsPASS. NativeNOTRUN/unmaterialized. | Operational only |
 | D141 parent | Accept scoped parent pass with trace gap | Luna and independent Luna | Main D141gg | merged | Author1121; review1130; Main | Main accepts16601 PASS0/237s; F001 first sampler failure and later72sample trace disclosed. Original review FAIL retained; no reproof. | App82e9 |
 | D141 single | Retain first no-body invocation failure | Luna and independent Luna | Independent1135 FAIL | gated:superseded-scope | First single; custody1135 | Wrong SHA and four path deltas refused before request. No body; all5 findings retained. Main permits distinct new scope only. | App82e9 |
 | D141gg single | Retain accepted single pass and both gaps | Luna and independent Luna; Main | Main D141hh12:02 | merged | Controller1145; custody1156 | Main accepts24271 PASS0/257s with raw KEEP timing and private path relocation disclosed. Original FAIL retained; no rerun. | App82e9 |
@@ -60,7 +60,7 @@
 | D141 P4 freeze2 | Receive changed CLI path reproof | Agent and App | Independent CLI custody PASS | merged | Actual14092; Agent custody-next; App1101 | Exact1 PASS4.643s; XML7ff7 and packet trace58/min7.406GB checked. Native LIGHT trace gap disclosed; historical3 separate. | Actualecdc tuple |
 | D141 P5 | Retain38 and exact bounded applicability | Runtime and service | Independent0513 and correction0619 | merged | Actual6934;0513;0619; App0645 | Original38 PASS31.02s retained. Independent0637 qualifies95d/ecdc source path; normal originals and actualGit verified0708. No newbody or retarget. | Historical6a tuple |
 | D141 core | Receive definitive behavior preservation | Agent Luna and reviews | Recorded owner scope implementation | blocked:agent | Agent scope owners | Latest owning board must show actual dispositions and qualified REG0. Earlier FINAL55 retained; no early pins. | Agent14cc historical |
-| D141ii unit pair | Compare new home with new pristine | Luna and independent Luna | Reviewed D141ii actual home | gated:catchup | Prepared existing unit lineage | One new full pair, same environment and per-ID JOIN. Separate Node phases if full chain stops; no old receipt retarget. | Pending |
+| D141ii unit pair | Hold fresh upstream comparison | Luna reserved | MAIN13:34 recorded HOLD | gated:owner-D141ii | Prepared app-F-D141ii-unit-pair-next | Brief unrequested; no bodyqueue/request. Old4de/d822 outcomes and82e applicability intact. | Pending decision |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
 | D74 headroom | Recycle obsolete source pins | Manager and lead | Host0550/0702/0718 CLEAR; repeated guards | merged | Recycle5344;867; oldAgent28e andRuntime6a | Four exact superseded source pins recycled normally; old28e/6a freed150MB. All proof rawKEEP and Git source objects retained. | No source edit |
 | D74 completed pins | Recycle completed source checkouts | Manager and lead | Host0750 CLEAR; fresh guards | merged | Static0748; release0752 | Oldd822 and8585 source pins recycled normally; about286MB restored. All rawKEEP and Git source objects retained; no metadata pointer changed. | No source edit |
@@ -68,7 +68,7 @@
 | D141 SWAP | Retain documented safety-held gap | Existing owner | D130 absolute hold | gated:safety-D130 | Actual3250;refusal1537 | Original NO GO. No retry, transfer or alternate qualification. | Historical tuple |
 | D141 stopped | Retain other known gaps and failures | Existing owners | D141 stop | gated:D141-stop | Existing stopped lineages | Element32016/15200 FAIL;B0222330 nine setup errors;D77 unqualified;own tests visible unchanged. | Historical tuples |
 | U3 catch up | Final upstream merge home | Luna and independent Luna | Independent0707 PASS | merged | Author0700; review0707 | HOME82e9 tree equals reviewed493.255 tests and both types PASS;3 existing lint errors retained. | 82e9e13ddf1d |
-| U3 D141ii | Correct original journey path handoff | Luna and independent Luna | Independent1317 sourcePASS mapFAIL2 | doing | app-U3-D141ii-map-return-1329 | Source750e unchanged;526/types/lint PASS. Adopt independentlycorrected8actualjourney maps; finitecheck thenmerge. OriginalFAIL retained. | Candidateeac97ea5 |
+| U3 D141ii | Finish allowed map closure; retain candidate | Luna and independent Luna | MAIN13:34 owner cost HOLD | gated:owner-D141ii | Candidate1305; mapclosure1333 active | Source526/types/lintPASS; originalmapFAIL2 retained; finiteclosureallowed. NO merge/fullpair/journeybody/pinrelease. | Privateeac97ea5 |
 | D141w review offer | Retain unused Runtime host offer | Runtime Luna | Existing App0707 already completed | gated:no-duplicate-review | Runtime0725 offer; local0707 PASS | Earlier local review takes precedence; normal merge82e9 complete. No transfer or new reviewer. | Evidence only |
 | D141y receiving | Receive ordinary build ancestry report | Runtime Luna | Existing App catch-up owner | merged | Runtime0710; review0719 owns custody | Old4de dry-run exit2 at App ancestor guard; actual patch/apply not reached. App82e9 now contains namedfc24; no build rerun or credit. | Report only |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim. Actual post-fix heads and receipts required. | Cut pending |
@@ -96,11 +96,11 @@ Maintenance: Guarded sweep3 and compact1 terminal0 at12:35, removed0/packed0/gzi
 Blockers: Agent — Recorded scope implementation and definitive REG0 remain owning Agent; D141v gated.
 Blockers: Optional diagnostic — Private04545 sourcePASS1320; finalprospective route1326 composes realfixtureopt-in. Nativebody needs qualifiedroute/exactcheckout/fresh5.2GB.
 Blockers: Safety — D130 absolute hold, no SWAP retry/transfer/alternatequalification/rollback. Dirty, unowned, sealed, refused and hardlinked targets retained.
-Next ready: Catch-up1305 terminal then ONE review as slot/admission opens. Each bounded optional return gets independent review. Fresh fullpair after reviewednewhome; D141v after AgentREG0.
+Next ready: Allowed finite mapclosure1333 terminal; existingpure diagnosticrecipe review terminal. Merge/fullpair/alljourneybodies and82e/4de sourcepin release await recordedownerrelay.
 
 Later: Gate3/D133B/D23/D14/D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped.8912/19479 unchanged;18617 supported cancelled, originals/rawKEEP retained. Main upstream-drift scope decision remains Main-owned, no upstream chase. No globalGO/build/ZIP. INBOX consumed through2969808bytes.
 
-live 2 / cap 3; ready-undispatched 0. Current 2026-10-26T13:26:09.687427+00:00; free 4698963968 bytes. Catch-upreview and tinyfinaldiagnosticroute; no heavy.
+live 2 / cap 3; ready-undispatched 0. Current 2026-10-26T13:35:37.205374+00:00; free 4849094656 bytes. Two finite readonlychecks; no heavy. MAIN13:34 HOLD controlsnextsteps.
 
 Visibility source1226 actualterminalc2f8c697/treeba3077ec at12:34:09, [eleven originals](../../design/app-D141j-visibility-source-publication-1236.json); author claims mounted12/types/scopedlint/check PASS. One independent Luna1234 immediately queued on exactterminal source. Candidate remains private and unmerged, actualdiagnostic NOTRUN, causeUNKNOWN.
 
@@ -117,3 +117,6 @@ Lead13:07 fresh fetch==lsremote confirms00a014e2/tree2d148. Supported merge-forw
 Maintenance13:06 pass terminal0: sweep3 removed0; compact1 packed0scratch/0testdirs/gzipped0. No clean ended nonKEEP App worktree eligible; all42 rawtestKEEP hashes/modes exact. Freechanges include ordinaryworkercheckout/recycle, no cleanup-onlysavingsclaim. [Receipt](../../design/app-D141ii-maintenance-1308.json). No hub operation/repack/heldtarget release.
 
 MAIN13:22 accepts incomingAgent e1c751de metadata pendingnormalD141v; reviewneedsonlynoteit, no handpin. AfterreviewednewHOME, guardedstatic+leadhostCLEAR mayreleaseONLYsuperseded82e9/4de5 sourcepins; reportactualfreeafter. Anysecondhubrepack requiresnewownertypedapproval, notassumed. Nothingelse deleted. INBOX consumedthrough2972695bytes.
+
+Blockers: Owner D141ii — MAIN13:34 cost HOLD. Finishmaponlyclosure; do NOT merge eac97, queue/startfullpair or ANYjourneybody. No82e/4de pinrecycle/sourceKEEP/staticreceipt/hostauditrequest untilrecordedanswer. Existingownerdecisionlineage, no duplicate escalation.
+INBOX consumed through2974959bytes at2026-10-26T13:35:37.205374+00:00; immediateHOLDack [peer](../../design/peer-app-to-app-lead-20261026T1335Z-D141ii-HOLD-ack.md). EarliernextstepinstructionsarehistoricalandsupersededbyHOLD. ActualAppHOME82e9 andalloriginalproofs/rawKEEP unchanged.
