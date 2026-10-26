@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-26T13:45:37.433199+00:00",
+  "results": [
+    {
+      "command": [
+        "bin/sweep-tmp",
+        "3"
+      ],
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4624M -> 4619M\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bin/compact-scratch",
+        "1"
+      ],
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 4619M -> 4619M\ngzipped 0 old worker logs; free now 4619M\npacked 0 finished test-run dirs; free now 4618M\n",
+      "stderr": ""
+    }
+  ],
+  "keep_count": 90,
+  "keep_exact": true,
+  "keep_deltas": [],
+  "eligible_app_worktrees": [],
+  "held_source_pins_82e9_and_4de5_untouched": true,
+  "free_after": 4841807872
+}
