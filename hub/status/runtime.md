@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T01:30:25Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-26T01:26:10Z
+<!-- main | 2026-10-26T01:35:07Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-26T01:33:57Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -15,11 +15,11 @@
 | D89d pristine admission | Retain recorded floor measurement | Manager and Luna | Main0123 no interface decision | gated:normal-disk | Source0125 never started | Bracket delta759521280 and floor4959521280 recorded. No per-job interface or floor change; original8912 waits normal5.2GB. | No install |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
-| P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Normal floor and source receiving | doing | rt-P5-D141-cut-controller-0129 | Source PASS and Main GO clear. One normal service request then exact receiver; raw KEEP and every outcome preserved. | Frozen cut |
+| P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Normal5GB admission | doing | Controller0129; service6934 | Exact reviewed row installed; sole runtime-d141-p5-cut-1026013331-6934 queued. Whole run KEEP; no actual body or GO yet. | Frozen cut |
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
-| F-final install | Install qualified packaging services | Luna | Main source sync receipt0106 | doing | rt-F-final-cut-install-resume-0129 | Actual four clean cut source refs received. Resume strict source guard and scoped CAS; no final capture, build or ZIP. | Qualified chain0015 |
+| F-final install | Receive exact final packaging inputs | Luna | Actual gate tuple and pristine results | gated:D141-results | Installer resume0129 complete | All four source guards PASS; only three disjoint registry rows differ. No install: immutable tuple and actual gates remain missing. | Qualified chain0015 |
 | F-final notes | Install reviewed D141 notes | Luna | Independent0032 PASS | merged | rt-F-D141-notes-install-0038 | Exact pair installed;568 outside files unchanged; App paragraphs unchanged; render PASS. No ZIP claim. | 5738d66d / f4bb7346 |
-| D141 REG comparison | Classify actual cut versus pristine | Luna | Authentic full results | gated:D141-results | Later one owner per proved REG root | Zero REG is sole fixing gate. Own nonREG failures remain unchanged and visible; no counts inferred before receipts. | Pending |
+| D141 REG comparison | Prepare exact per-ID comparison | Luna | Cut18778 actual receipt | doing | rt-F-D141-cut-failure-census-0132 | Cut bad IDs and finite pristine selector mapping only. Actual pristine8912 still unrun; no behavioral REG verdict or own-test investigation. | Frozen sources |
 | F-final and ZIP | Build exact cut and verify fresh patches | Luna and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP. Qualified private packaging route awaits final tuple, install and actual proofs. | No delivery artifact |
 | D141 other proofs | Receive core and P1 to P4 | Farm App Agent | Final cut and GO | doing | Farm waits; App0043; Agent0035 then P4 | App full/pristine dispatched; Agent pristine27388 running. Farm source review0049 active. No duplicate Runtime body. | Frozen cut |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Farm cut core, with no duplicate cohort body. | Agent c585 |
@@ -29,11 +29,11 @@
 | Staging and Store tools | Preserve deferred private source | Existing owners | D140 and D141 | gated:post-ZIP | No new author or cleanup | Source and failed findings retained; no installation, retirement or new cleanup round. | Held candidates |
 | OPS headroom | Preserve guarded cleanup holds | Manager route | Main0123 and0130 decisions | gated:safety | Prior maintenance complete | Sweep removed0; compact packed0 dirs and gzipped5 logs. Sealed fixtures, dirty trees, KEEP data and three old venvs retained. | No product change |
 
-Blockers: Farm — Complete core handoff01:10:36 and review0101 PASS are published. Fresh peer0125 clears stale Farm source wait; Farm owns prerequisite census then child/import/controls/core.
+Blockers: Farm — Source wait cleared. Published Farm0130 has sole prerequisite census tf-core-D141-census-0130 active; child/import/controls/core follow only real READY.
 Blockers: Runtime service — Pristine8912 is queued. Retained start/end bracket gives floor4959521280; normal handler still5.2GB. Main0123 stops per-job interface. Original8912 waits normal5.2GB; no floor change.
-Blockers: P5 — Normal controller0129 active after independent0116 PASS. Actual38-case proof unrun; normal light5GB admission remains.
+Blockers: P5 — Sole normal service6934 queued after reviewed row install. Actual38-case proof unrun; dispatcher keeps light5GB admission. Raw run KEEP.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
-Next ready: Pristine normal admission and P5 normal request after disk; final packaging service install now; actual REG comparison after pristine receipt.
-live 2 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.78GB; ordinary maintenance complete; sealed fixture compaction held; dirty v1 trees retained by guards.
+Next ready: Pristine normal admission and P5 normal request after disk; final immutable packaging inputs after actual receipts; actual REG comparison after pristine receipt.
+live 1 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.78GB; ordinary maintenance complete; sealed fixture compaction held; dirty v1 trees retained by guards.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
-INBOX consumed through 1734443 bytes. Peer boards read Farm01:20 App01:12 Agent01:13. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
+INBOX consumed through 1734443 bytes. Peer boards read Farm01:30 App01:12 Agent01:13. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
