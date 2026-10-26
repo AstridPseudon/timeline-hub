@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-26T07:08:56.500246+00:00",
+  "owning_independent_verdict": "PASS_SOURCE_APPLICABILITY",
+  "original_byte_equal": [
+    "design/rt-P5-D141-ecdc-applicability-0637-review.json",
+    "design/rt-P5-D141-ecdc-applicability-0637-findings.md",
+    "design/rt-P5-D141-ecdc-applicability-0637-source-manifest.json",
+    "design/rt-P5-D141-ecdc-applicability-0637-validation.md",
+    "design/rt-P5-D141-ecdc-applicability-0637-handoff.md"
+  ],
+  "actual_Git": [
+    "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+  ],
+  "scope": "bounded source applicability only; original6934 38PASS receipt stays actual6a/28e tuple; no newbody or retarget"
+}

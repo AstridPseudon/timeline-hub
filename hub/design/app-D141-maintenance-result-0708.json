@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-26T07:08:56.492143+00:00",
+  "helpers": {
+    "sweep": [
+      "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4323M -> 4313M"
+    ],
+    "compact": [
+      "packed 0 scratch dirs; free 4313M -> 4318M",
+      "gzipped 2 old worker logs; free now 4479M",
+      "packed 0 finished test-run dirs; free now 4478M"
+    ]
+  },
+  "pre_KEEP": 37,
+  "post_KEEP": 36,
+  "changed_KEEP": [],
+  "removed_KEEP": [
+    "workers/app-pin-867cb273/KEEP"
+  ],
+  "authorized_empty_source_KEEP_only": "design/app-D141x-old867-release-0703.json",
+  "host_CLEAR": "design/app-pin-host-process-use-0702.md",
+  "raw_test_and_controller_KEEP": "all retained exact",
+  "free": 4644270080
+}

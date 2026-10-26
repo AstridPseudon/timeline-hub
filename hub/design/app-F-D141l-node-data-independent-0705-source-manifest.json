@@ -1,0 +1,41 @@
+{
+  "schema": "D141l-independent-source-manifest-v1",
+  "composition": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "node_source": {
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "request_sha256": "a4b7491f3e153a8541c877d8f6954a4211f793e3efc6b7a5cdd9f84b59133877",
+    "snap_sha256": "8a3aa9c0e7eb14c080bae37ba2d8000919cb15ae5b826cb26980402235e031b2",
+    "summary_sha256": "cb2f6cbae49d74547da72370f9bea03128cb0cac7faff0c5d20edc92c2f251b1",
+    "receipt_sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8",
+    "trace_sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b"
+  },
+  "controller_admission": {
+    "path": "/home/user/timeline-hub/hub/design/app-D141l-unit-controller-admission-0606.json",
+    "sha256": "640b02686aae1e2182024d3d9fb1aee5a78e767ddfb9b464cf76151202e4b567",
+    "available_bytes": 4814028800,
+    "byte_range": {"start": 104, "end_exclusive": 137}
+  },
+  "pristine_source": {
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "request_sha256": "26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321",
+    "receipt_sha256": "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc",
+    "floor_bytes": 4793895424,
+    "request_body_present": false
+  },
+  "operational_source": {
+    "manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-OPS-D74-closed-stdout-capacity-0647/evidence/manifest.json",
+    "precheck_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-OPS-D74-closed-stdout-capacity-0647/evidence/precheck.json",
+    "result_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-OPS-D74-closed-stdout-capacity-0647/evidence/result.json",
+    "manifest_preimage_records": 161,
+    "preexisting_compressed_records": 111,
+    "preexisting_keep_markers": 38,
+    "current_date_prefix_excluded": "20261026"
+  }
+}

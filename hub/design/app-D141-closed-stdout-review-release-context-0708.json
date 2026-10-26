@@ -1,0 +1,27 @@
+{
+  "at": "2026-10-26T07:08:56.492765+00:00",
+  "independent_review": "workers/app-F-D141l-node-data-independent-0705/evidence/review.json",
+  "independent_original_verdicts_preserved": true,
+  "context": "review observes one missing empty sourceKEEP after separately authorized source recycle; not attributable to prior log compression",
+  "missing_marker": "workers/app-pin-867cb273/KEEP",
+  "supporting_receipts": [
+    "design/app-D141x-old867-source-static-0704.json",
+    "design/app-pin-host-process-use-0702.md",
+    "design/app-D141x-old867-release-0703.json"
+  ],
+  "release_preceded_independent_read": true,
+  "review_read": "2026-10-26T07:05:42.116Z",
+  "source_release_record": {
+    "at": "2026-10-26T07:02:33.063131+00:00",
+    "target": "/home/user/work/wt/app-pin-867cb273",
+    "host": "design/app-pin-host-process-use-0702.md",
+    "repeated_guards": "all PASS",
+    "only_source_KEEP_released": "workers/app-pin-867cb273/KEEP",
+    "raw_unchanged": "all test/controller KEEP retained; Git objects/branches retained",
+    "result": "bin/recycle PASS",
+    "source_absent": true,
+    "after_free": 4694601728
+  },
+  "log_decoded_checks": "independent161/161 and preexisting111/111 PASS; current26Oct12 logs exact; all rawKEEP exact",
+  "no_rewrite_or_new_qualification": "independentFAIL retained; controlling authorized-release receipt resolves sole current-marker missingness, no new compression or delete"
+}

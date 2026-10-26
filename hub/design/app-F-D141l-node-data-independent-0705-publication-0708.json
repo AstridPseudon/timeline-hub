@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-26T07:08:00.762691+00:00",
+  "exact_committed_original_recovery": [
+    {
+      "git_commit": "efe636ab596a0b33c80288dbb8077c7aedb9bc31",
+      "git_path": "evidence/review.json",
+      "recovered": "workers/app-F-D141l-node-data-independent-0705/evidence/review.json",
+      "published": "design/app-F-D141l-node-data-independent-0705-review.json",
+      "sha256": "34f86c37d92d0b9f5c7200eb2df4f81421054408a01f52fd064de925ce6b33c1"
+    },
+    {
+      "git_commit": "efe636ab596a0b33c80288dbb8077c7aedb9bc31",
+      "git_path": "evidence/findings.md",
+      "recovered": "workers/app-F-D141l-node-data-independent-0705/evidence/findings.md",
+      "published": "design/app-F-D141l-node-data-independent-0705-findings.md",
+      "sha256": "73b7d2b2b233662e89dc2e19f88fd61f8ce1482a2923fb82141591e26eaf20d3"
+    },
+    {
+      "git_commit": "efe636ab596a0b33c80288dbb8077c7aedb9bc31",
+      "git_path": "evidence/source-manifest.json",
+      "recovered": "workers/app-F-D141l-node-data-independent-0705/evidence/source-manifest.json",
+      "published": "design/app-F-D141l-node-data-independent-0705-source-manifest.json",
+      "sha256": "13c13255beee180765c663c940338ac429de3a27167416c75f4039cb90b6e839"
+    },
+    {
+      "git_commit": "efe636ab596a0b33c80288dbb8077c7aedb9bc31",
+      "git_path": "evidence/validation.md",
+      "recovered": "workers/app-F-D141l-node-data-independent-0705/evidence/validation.md",
+      "published": "design/app-F-D141l-node-data-independent-0705-validation.md",
+      "sha256": "5d3f72d3a2d2a454041a73235dd07d0d07c72364b5adee05491f493a4e6cd32c"
+    },
+    {
+      "git_commit": "efe636ab596a0b33c80288dbb8077c7aedb9bc31",
+      "git_path": "evidence/handoff.md",
+      "recovered": "workers/app-F-D141l-node-data-independent-0705/evidence/handoff.md",
+      "published": "design/app-F-D141l-node-data-independent-0705-handoff.md",
+      "sha256": "a5fbc2e0604960f00c4e9c066003018e3ca05b6344f1028bcb69b2c2907d6bc5"
+    }
+  ],
+  "reason": "reviewer used relative evidence despite absolute-path brief; final report exact names, harness committed docs and autorecycled"
+}
