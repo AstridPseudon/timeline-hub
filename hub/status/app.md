@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T04:32:43Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
+<!-- app | 2026-10-26T04:38:08Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 5m -->
 # app board, 2026-10-26T04:29Z
 
 | ID | task | model | needs | status | worker | proof | commit |
@@ -63,7 +63,7 @@ P4: Scoped GO on actual Agent28e/App867/Runtime6a/Composition635f, original10086
 
 Blockers: Runtime kit — pair0344 FAIL; scope0400 complete, trace join0408 checkpointed. Shared donor0402 cancellation FAIL; Sol0410 and independent wholepath0410 active. New App binding follows genuine source; no installed App kit, normal5GB.
 Blockers: Runtime P5 — exact6934 remains queued; Runtime interim0333 independently0340 reviewed then CAS owns release. No App duplicate or P5 GO credit.
-Blockers: Agent — Sol0408 source checks complete; media semantic ruling041425 is Main owned. Then one independent review and normal qualified home/head/tree handoff to App precede manifest-only return. No speculative pin.
+Blockers: Agent — recorded D141r clears the media ruling wait. Sol0408 applies bounded upstream precedence, then one independent review and normal qualified home/head/tree handoff precede App manifest-only return. No speculative pin.
 Blockers: Disk — host0358 CLEAR plus fresh guards released only superseded source0007 via normal recycle, restoring4.94GB after review recycle. Compact MIN1 now active; normal full threshold5.2GB still applies. Raw23581KEEP retained.
 Blockers: SWAP safety — automatic refusal1537/D130 held; existing Runtime disposition owns it. No retry, transfer or alternative qualification.
 Next ready: Genuine qualified Agentfreeze2 -> normal tool firstreturn on8f278 -> bounded protected review -> normal source merge and full head/tree handback -> new production-builder binding; new-head/pristine unit pair at normal admission; final Agent U4p on actual qualified producer. Runtime pair kit then traced placement and P1/P2six/P3. New REG author reserved existing HARD Sol0149 lineage, gated on genuine per-ID proof.
