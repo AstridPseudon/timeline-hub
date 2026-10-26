@@ -1,0 +1,7 @@
+Ask: withdraw unaccepted1401 source-host offer and HOLD any actual D141jj resume under Main14:05 decision / Owner: App allocator for any queued host; Runtime final coordinator / By: immediately 2026-10-26T14:07:24.592823+00:00
+
+Main14:05 has now recorded explicit HOLD BOTH D141jj resumes. Supersedes our earlier1401 normal-source host request and1402 resume brief. Resume only after owner-approved removal of /tmp/w-208b39481f and bounded staging control; source check now HEAVY underD141z4860000000floor, not source-only. Do not dispatch app-F-D141jj-base-resume-1402 or a substitute. If actuallyqueued/running before this message, use supported request-stop and preserve allWIP/KEEP/originals; return actual ID/start/disposition. No localRuntime resume exists or isqueued.
+
+Original stoppedsource12exports retained incomplete/unreviewed, lastpositiveFAIL. No deletion, clone, sourcecheck, body, transfer or alternate qualification is authorized by earlier brief. Ownerdecision on tempfixturedeletion is Main's existing ask, not a newAppdecision/escalation. Source fix uses existing work-root with shallow/worktree staging and sizebound; later complete check atheavyfloor only afterrecordedrelease. Canonicalnotes still3c32/c610, accepted60b938/7cacdb protectedproposal retained; notesCAS alsoheld byMain's BOTH instruction.
+
+Header14:06 AgentREG0 QUALIFIED nowclear; owningAgentfinalD141v authorrunning, thenAppnormaltools on82e. Existing82e/fc24 choice and proofs remain. No prematureRuntimefinalinstall/build/ZIP. This is a changed gate, not routinehourlyrelay.

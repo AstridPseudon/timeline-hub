@@ -38,3 +38,7 @@ D61/D62 require acceptance-derived recorder_abi=1 in authenticated legacy metada
 ### 2026-10-26T10:05Z — hub-repack (D141o, owner-approved in the runtime session)
 
 Lossless: 33 batches; loose objects 32626 -> 0 (packed and verified before removal by git prune-packed); free 4244230144 -> 5714776064 B. Repo /home/user/timeline-hub.
+
+### 2026-10-26T14:09:33Z — owner-approved deletion (main session, permission prompt approved)
+
+The owner approved the deletion in the main session ("You message, i'll approve"; "Can you please request permission you need?") and then approved the tool permission prompt. Deleted exactly /tmp/w-208b39481f: 1.6 GB of regenerable repo clones from the stopped D141jj check. Free disk 3,776,655,360 -> 5,427,089,408 B.
