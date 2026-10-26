@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T22:59:15Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
-# runtime board, 2026-10-26T22:49:48.954123+00:00
+<!-- main | 2026-10-26T23:04:12Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-26T23:02:49.841080+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -100,9 +100,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
-Blockers: Safety — D130 and protected targets remain held. Historical refusals remain recorded; owner approval is again required for deletion. No active ZIP blocker.
+Blockers: D130 and protected targets remain held; historical refusals stay recorded. Main owns scoped new-phase cleanup under Runbook section 0c. No active Runtime or ZIP blocker.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 4640141312 bytes. Main owns active new-phase disk diagnosis; no eligible Runtime recycle.
+live 0 / cap 3; ready-undispatched 0. Free 5797916672 bytes. Main owns active new-phase disk diagnosis; no eligible Runtime recycle.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -113,4 +113,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Recheck complete at 2026-10-26T22:49:48.954123+00:00. INBOX and HEADER unchanged; no new Runtime ask. Full bin/workers rt- exit 0, 2717 rows; no running row or marker and census bytes unchanged. Five owner boards rechecked; Farm change is heartbeat only, with no new task or gate. DEPLOYED remains present. Main and A/B/C own the active work and disk diagnosis. All 36 Runtime trees remain protected by KEEP or dirty; no eligible recycle. Delivered archive and sidecar match the original hash. No Runtime dispatch, test, product edit, Git mutation, cleanup, hub write or daemon action. [Pass evidence](rounds/20261026T224948Z-pass.json).
+Current pass: Recheck complete at 2026-10-26T23:02:49.841080+00:00. New round: PLAN and MANAGER-COMMON read. INBOX and HEADER unchanged; no new Runtime ask. Full bin/workers rt- exit 0, 2717 rows; no running row or marker; historical census unchanged. Five owner boards rechecked with no new gate. DEPLOYED present; Main and A/B/C leads retain new-phase ownership. No old Runtime row is ready. All 36 Runtime trees remain protected KEEP or dirty; no eligible recycle. Free 5798764544 bytes. Delivered ZIP and sidecar still match original hash. No Runtime dispatch, test, product edit, Git mutation, cleanup, hub write or daemon action. [Pass evidence](rounds/20261026T230228Z-pass.json).
