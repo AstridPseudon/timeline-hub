@@ -8,6 +8,7 @@ import { test as base } from './support/app.ts';
 
 // An ephemeral (incognito-style) browser context caps OPFS writes near 0.5 GiB, far below the 2.2 GB large archive. A
 // persistent profile gets the real quota, so this case drives its own persistent Chrome instead of the shared fixture context.
+let pageCrashed = false;
 const test = base.extend({
   page: async ({ harness }, use) => {
     const userDataDir = mkdtempSync(path.join(process.env.TMPDIR ?? '/private/tmp', 'n4-profile-'));
@@ -18,6 +19,8 @@ const test = base.extend({
       ...(downloads ? { downloadsPath: downloads } : {}),
     });
     const page = context.pages()[0] ?? await context.newPage();
+    pageCrashed = false;
+    page.on('crash', () => { pageCrashed = true; });
     try { await use(page); } finally {
       await context.close().catch(() => undefined);
       rmSync(userDataDir, { recursive: true, force: true });
@@ -31,6 +34,7 @@ async function settleTransfer(page: Page, testInfo: TestInfo, label: 'Export' | 
   const failed = page.locator('.group.destructive');
   const started = Date.now();
   while (Date.now() - started < timeout) {
+    if (pageCrashed || page.isClosed()) throw new Error(`${label} failed after ${((Date.now() - started) / 1000).toFixed(1)} s: the browser page crashed or closed`);
     if (await ok.first().isVisible().catch(() => false)) return;
     if (await failed.first().isVisible().catch(() => false)) {
       const message = ((await failed.first().innerText().catch(() => '')) || '(no text)').trim();
