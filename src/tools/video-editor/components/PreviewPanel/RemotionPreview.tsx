@@ -661,14 +661,16 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           Output · source tracks excluded
         </div>
       )}
-      <div
-        data-testid="preview-revision-label"
-        aria-label={displayedRevisionLabel}
-        title={delivery.revision.reason}
-        className="pointer-events-none absolute right-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-      >
-        {displayedRevisionLabel}
-      </div>
+      {displayedRevisionLabel && (
+        <div
+          data-testid="preview-revision-label"
+          aria-label={displayedRevisionLabel}
+          title={delivery.revision.reason}
+          className="pointer-events-none absolute right-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+        >
+          {displayedRevisionLabel}
+        </div>
+      )}
       {unavailableTarget && (
         <div
           data-testid="preview-revision-unavailable"

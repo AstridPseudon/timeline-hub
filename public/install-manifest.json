@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "agent": {
-    "sha": "7c4e6e2956d63a2e7930544760099f073c126ed6"
+    "sha": "6f088202103cec40f92c6669b8192011d7eccbc4"
   },
   "runtime": {
-    "sha": "c13379e22557b03dee0c0f36ae6f29ef6b674ca1",
+    "sha": "fb40c2618444e2b4a3a03d0acd5992dcccfb7ac0",
     "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
   },
   "vibecomfy": {
