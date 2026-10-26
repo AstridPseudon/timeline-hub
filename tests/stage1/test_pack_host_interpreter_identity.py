@@ -82,7 +82,6 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
     # Interpreter selection is the unit boundary. Exercise the real registration/marker
     # retirement, while no process probe is started.
     monkeypatch.setattr(bootstrap, "_terminate_old_host", lambda state: terminated.append(state["pid"]))
-    monkeypatch.setattr(bootstrap, "_prepare_render_validation", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(bootstrap, "_capture_native_host_launch_identity", lambda pid: {
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1, "start_usec": 0,
     })
@@ -121,7 +120,6 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
         assert terminated == [101]
         assert launched == [selected_python]
         assert bootstrap._read_object(support / "generic-host.json")["python_executable"] == launched[0]
-
 
 
 

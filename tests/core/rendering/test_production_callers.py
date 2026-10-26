@@ -92,12 +92,6 @@ _ALLOWED_FILES: dict[str, str] = {
         "the importlib.util.find_spec probe table; it only locates the module "
         "to bind the installed product root and never imports or spawns it"
     ),
-    "astrid/core/rendering/remotion_runtime.py": (
-        "Remotion runtime owner: lazily imports the concrete remotion "
-        "renderer's lock and run modules because it IS the server-owned "
-        "Remotion runtime (project discovery, render lock, frame capture), "
-        "not a backend-neutral caller"
-    ),
     "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": (
         "timeline_visualize composed-frame capture: lazily imports the "
         "remotion renderer's frame-capture entrypoints "

@@ -84,7 +84,7 @@ the full Remotion dependency tree remained absent.
   Runtime. Backend verification passed while pack-host was still `starting`.
 - `astrid_runtime status --data-root <data> --json`: healthy Runtime, epoch 1,
   chat running. Pack-host subsequently failed with
-  `RemotionValidationError: launch validation needs the installed composition output directory`.
+  `RemotionValidationError: launch validation needs the installed composition output directory` (historical; launch validation was removed on 26 Oct).
   A later status showed four supervisor retries, so this cannot prove no-restart readiness.
 - Candidate `py/bin/python -I`: imports of `vibecomfy`, `vibecomfy.runtime.run`,
   `huggingface_hub.hf_hub_download`, and `hf_xet` passed; `run_sync` and

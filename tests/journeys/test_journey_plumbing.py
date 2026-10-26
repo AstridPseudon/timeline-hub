@@ -35,32 +35,21 @@ POLLUTED = {
     "NODE_OPTIONS": "--require x", "NODE_PATH": "/n", "LD_PRELOAD": "/x.so", "LD_LIBRARY_PATH": "/l",
     "DYLD_INSERT_LIBRARIES": "/x", "DYLD_LIBRARY_PATH": "/d", "GIT_DIR": "/g", "GIT_CONFIG_GLOBAL": "/c",
     "GIT_WORK_TREE": "/w", "ASTRID_NODE_EXECUTABLE": "/node", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/p",
-    "OTTO_HEAVY_LEASE": "lease", "ASTRID_REMOTION_VALIDATION_PATH": "/v", "ASTRID_RENDER_CACHE": "/r",
+    "OTTO_HEAVY_LEASE": "lease", "ASTRID_RENDER_CACHE": "/r",
     "PYTHONHOME": "/py", "PYTHONSTARTUP": "/s", "NODE_ICU_DATA": "/i", "OPENSSL_CONF": "/o",
 }
 KEPT = {"PATH": "/usr/bin", "HOME": "/home/x", "TMPDIR": "/tmp", "GIT_EDITOR": "vi", "GIT_TERMINAL_PROMPT": "0",
         "GIT_AUTHOR_NAME": "n", "ASTRID_PACKS_PATH": "/packs", "ASTRID_RUNTIME_DATA_ROOT": "/data"}
 
 
-def test_scrub_removes_what_remotion_refuses_and_keeps_the_rest() -> None:
+def test_scrub_removes_shell_overrides_and_keeps_the_rest() -> None:
     scrubbed = journey.scrub_child_env({**POLLUTED, **KEPT})
     assert scrubbed == KEPT
 
 
 @pytest.mark.parametrize("key", sorted(POLLUTED))
-def test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces(key: str) -> None:
-    from astrid.core.rendering.remotion_runtime import RemotionValidationError, _registry_context
-    env = {"HOME": "/home/x", "PATH": "/usr/bin", key: POLLUTED[key]}
-    if not key.startswith(("ASTRID_", "OTTO_")):
-        with pytest.raises(RemotionValidationError):  # the validation that fails closed on it ...
-            _registry_context(env, generator=True)
-    assert key not in journey.scrub_child_env(env)
-    _registry_context(journey.scrub_child_env(env), generator=True)  # ... passes once scrubbed
-
-
-def test_scrubbed_env_with_interactive_git_set_still_passes_validation() -> None:
-    from astrid.core.rendering.remotion_runtime import _registry_context
-    assert _registry_context(journey.scrub_child_env({**POLLUTED, **KEPT}), generator=True) is not None
+def test_each_shell_override_is_scrubbed(key: str) -> None:
+    assert key not in journey.scrub_child_env({**KEPT, key: POLLUTED[key]})
 
 
 def test_every_runner_child_gets_the_scrubbed_env(tmp_path: Path) -> None:

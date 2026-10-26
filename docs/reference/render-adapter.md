@@ -77,7 +77,12 @@ invokes `[ASTRID_NODE_EXECUTABLE, <project>/node_modules/@remotion/cli/remotion-
 the ambient `PATH`. Set `ASTRID_TIMELINE_SCHEMA_PYTHONPATH` to the separate
 server-owned Python install root containing `banodoco_timeline_schema`; its
 module origin is checked before admission and propagated to renderer children.
-The public task envelope cannot override these paths. Media-only timelines may
+The public task envelope cannot override these paths. Host preflight and render
+admission run the same direct checks; a failure makes rendering unavailable with
+its reason while the host remains running. Registry generation stays under the
+render lock: source checkouts regenerate stale outputs, and installed bundles
+must provide their generated registries. These checks do not publish or consume
+a launch validation artifact. Media-only timelines may
 continue through the existing FFmpeg fallback when the optional Remotion
 runtime is absent.
 

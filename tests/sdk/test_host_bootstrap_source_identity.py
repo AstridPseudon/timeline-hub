@@ -3,13 +3,11 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.rendering.remotion_runtime import RemotionValidationError
 from astrid.sdk import host_bootstrap
 from astrid.core.execution.generic_host import (
     source_checkout_closure_digest,
@@ -405,9 +403,6 @@ def test_bootstrap_refuses_runtime_health_without_ok_status(
 
 
 
-
-
-
 def _owned_registration(tmp_path, monkeypatch, process):
     support = tmp_path / "runtime"
     support.mkdir()
@@ -425,17 +420,6 @@ def _owned_registration(tmp_path, monkeypatch, process):
     process._astrid_host_registration = (state_path, ready_path, dict(state))
     monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, (process.pid, state["process_birth_id"]), process)
     return state, state_path, ready_path
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -495,7 +479,6 @@ def test_parked_launch_diagnostics_preserve_exact_ready_identity(monkeypatch, tm
     monkeypatch.setattr(host_bootstrap, "_installed_execution_origins", lambda *_: origins)
     monkeypatch.setattr(host_bootstrap, "_dependency_pythonpath", lambda: [])
     monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_: None)
-    monkeypatch.setattr(host_bootstrap, "_prepare_render_validation", lambda *_: None)
     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda *_: "birth")
     monkeypatch.setattr(host_bootstrap, "_capture_native_host_launch_identity", lambda pid: {
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
@@ -650,8 +633,6 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
 
 
 
-
-
 @pytest.fixture
 def native_host_command_fixture(monkeypatch, tmp_path):
     from astrid.core.execution import custody_broker as broker
@@ -780,7 +761,6 @@ def test_launch_capacity_is_validated_before_pin(argv):
 
 
 
-
 def test_parked_inspector_rejects_capacity_drift_after_full_native_identity(native_host_command_fixture, monkeypatch, tmp_path):
     from astrid.core.execution.process_group import _ProcessInfo
     f = native_host_command_fixture
@@ -844,13 +824,6 @@ def _framework_native_fixture(f, monkeypatch):
 
 
 
-
-
-
-
-
-
-
 @pytest.mark.parametrize(
     "overrides",
     [
@@ -887,35 +860,3 @@ def test_bootstrap_refuses_worker_credential_outside_the_pack_host_contract(
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="least-privilege pack-host contract"):
         host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
-
-
-def _validating_launch(monkeypatch, tmp_path):
-    """Run the host launch transaction with the validator's real environment refusal and no spawned probes."""
-    from astrid.core.rendering import remotion_runtime
-
-    def validate_contexts(*, host_environment, python_executable, contexts, **_kwargs):
-        for value in contexts.values():
-            for environment in ([value] if isinstance(value, dict) else value):
-                remotion_runtime.probe_context(environment=environment, python_executable=python_executable)
-        return {}
-
-    monkeypatch.setattr(remotion_runtime, "prepare_remotion_validation", validate_contexts)
-
-    def prepare(extra: dict[str, str]):
-        home = tmp_path / "home"
-        home.mkdir(exist_ok=True)
-        env = {"HOME": str(home), "PATH": os.defpath, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path / "remotion"), **extra}
-        launch = host_bootstrap._prepare_render_validation(tmp_path, env, tmp_path / "support", sys.executable)
-        return launch, env
-
-    return prepare
-
-
-def test_host_launch_drops_shell_loader_keys_but_still_refuses_interpreter_overrides(monkeypatch, tmp_path):
-    prepare = _validating_launch(monkeypatch, tmp_path)
-    launch, env = prepare({"LD_LIBRARY_PATH": "/opt/hostedtoolcache/lib", "DYLD_LIBRARY_PATH": "/x", "LD_PRELOAD": "/y"})
-    assert launch is not None
-    assert not [key for key in env if key.startswith(("LD_", "DYLD_"))]
-    for name in ("NODE_OPTIONS", "PYTHONHOME"):
-        with pytest.raises(RemotionValidationError, match="unsupported loader/interpreter overrides"):
-            prepare({"LD_LIBRARY_PATH": "/opt/lib", name: "x"})

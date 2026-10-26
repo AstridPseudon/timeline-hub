@@ -314,27 +314,6 @@ def test_pid_reused_by_unrelated_process_is_never_signalled(harness):
         host_bootstrap._stop_group(os.getpgrp())  # never our own group
 
 
-def test_host_whose_validation_does_not_cover_this_caller_is_replaced_not_refused(harness, monkeypatch):
-    # Before: "prior Remotion launch validation is stale; reconfigure explicitly",
-    # and the healthy host stayed unusable for this caller. Now it is replaced when idle.
-    from astrid.core.rendering import remotion_runtime
-    proc, _ = harness.host()
-    reference = {"ASTRID_REMOTION_VALIDATION_PATH": "/x", "ASTRID_REMOTION_VALIDATION_SHA256": "a" * 64,
-                 "ASTRID_REMOTION_VALIDATION_LAUNCH": "b" * 32, "ASTRID_REMOTION_VALIDATION_ROLE": "host"}
-    harness.register(proc.pid, remotion_validation=reference)
-    ready = harness.marker("generic-host.ready.json")
-    ready["remotion_validation"] = reference
-    (harness.support / "generic-host.ready.json").write_text(json.dumps(ready), encoding="utf-8")
-    monkeypatch.setattr(host_bootstrap, "_host_render_environment",
-                        lambda _source: {"ASTRID_REMOTION_PROJECT_DIR": str(harness.tmp)})
-    def stale(*_a, **_k):
-        raise remotion_runtime.RemotionValidationError("consumer context differs")
-    monkeypatch.setattr(remotion_runtime, "_validated_runtime", stale)
-    monkeypatch.setattr(host_bootstrap, "_prepare_render_validation", lambda *a, **k: None)  # the fresh launch
-    harness.ensure()
-    assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
-    assert proc.wait(timeout=10) is not None
-
 
 def test_host_helper_in_its_own_group_is_not_work(harness):
     # The per-claim git preflight runs in the host's own process group: not a task.

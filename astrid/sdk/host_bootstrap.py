@@ -420,10 +420,10 @@ def _host_start_phase(log_path: Path) -> str:
     except OSError:
         return "waiting for host ready file"
     for line in reversed(tail.splitlines()):
-        if "astrid.remotion_validation_phase" in line:
+        if "astrid.host_startup_phase" in line:
             try:
                 row = json.loads(line)
-                return f"remotion validation phase {row.get('phase')} ({row.get('outcome')})"
+                return f"host startup phase {row.get('phase')}"
             except (ValueError, AttributeError):
                 break
     return "waiting for host ready file"
@@ -506,9 +506,9 @@ def _provision_render_runtime_env(
             override=(child_env.get(ASTRID_NODE_EXECUTABLE) or "").strip() or None,
             search_path=child_env.get("PATH"),
         )
-        if not resolution.ok:
-            raise PackHostBootstrapError(f"the pack host was not started: {resolution.problem}")
-        child_env[ASTRID_NODE_EXECUTABLE] = str(resolution.path)
+        if resolution.ok:
+            child_env[ASTRID_NODE_EXECUTABLE] = str(resolution.path)
+        # Missing or invalid tools are reported by render preflight; the host can still run other work.
     elif ASTRID_NODE_EXECUTABLE not in child_env:
         node = shutil.which("node", path=child_env.get("PATH"))
         if node:
@@ -760,49 +760,6 @@ def _host_render_environment(source_path: Path) -> dict[str, str]:
     return environment
 
 
-def _prepare_render_validation(source_path: Path, env: dict[str, str],
-                               support_root: Path, python_executable: str,
-                               pack_roots: tuple[Path, ...] = ()) -> str | None:
-    from astrid.core.env_vars import (
-        ASTRID_REMOTION_PROJECT_DIR,
-        ASTRID_REMOTION_VALIDATION_LAUNCH,
-        ASTRID_REMOTION_VALIDATION_PATH,
-        ASTRID_REMOTION_VALIDATION_ROLE,
-        ASTRID_REMOTION_VALIDATION_SHA256,
-    )
-    from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
-    from astrid.core.subprocess_env import build_child_subprocess_env
-
-    for name in (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
-                 ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE):
-        env.pop(name, None)  # A new launch never imports another host's readiness.
-    if not env.get(ASTRID_REMOTION_PROJECT_DIR):
-        return None  # No provisioned Remotion: existing unavailable capability.
-    # The launched host needs no dynamic-loader overrides of the launching shell (setup-python and CUDA images
-    # export LD_*), and the validator refuses them: drop them from the host env. Interpreter overrides such as
-    # NODE_OPTIONS and PYTHONHOME stay, so the validator keeps refusing those.
-    for name in [key for key in env if key.startswith(('LD_', 'DYLD_'))]:
-        del env[name]
-    launch_id = secrets.token_hex(16)
-    # This is the canonical worker filter. Invocation metadata added later is
-    # outside the explicitly adopted clean probe environment contract.
-    if pack_roots:
-        from astrid.core.execution.generic_host import _launch_worker_probe_environments
-        matrix = source_path / 'config' / 'astrid-beta-capabilities.json'
-        workers = _launch_worker_probe_environments(
-            pack_roots, env, matrix if matrix.is_file() else None,
-            remotion_only=True)  # Validate what renders, not every pack's worker.
-    else:
-        workers = [build_child_subprocess_env(base=env, parent=env)]
-    reference = prepare_remotion_validation(
-        artifact_directory=Path(support_root) / 'remotion-validation',
-        host_environment=env, python_executable=python_executable,
-        launch_id=launch_id, contexts={'host': dict(env), 'worker': workers},
-    )
-    env.update(reference)
-    return launch_id
-
-
 # Launch state the owner holds about a parked host that the host never writes into its ready marker:
 # the process identity is compared field by field, and the launch argv pin and native launch identity
 # are verified against the live process by _parked_host_identity_matches.
@@ -885,9 +842,6 @@ class _ParkedPackHostPreparer:
             ))
         env["PYTHONUNBUFFERED"] = "1"
         _provision_render_runtime_env(reference.source_checkout, env)
-        validation_launch = _prepare_render_validation(
-            reference.source_checkout, env, Path(reference.support_root), str(launch.argv[0]),
-            tuple(Path(root) for root in reference.pack_roots))
         parent, child = socket.socketpair()
         operation_id, channel_id = secrets.token_hex(16), secrets.token_hex(16)
         launch_argv = list(launch.argv)
@@ -899,8 +853,6 @@ class _ParkedPackHostPreparer:
                 "--activation-operation-id", operation_id,
                 "--activation-channel-id", channel_id,
                 "--activation-timeout-seconds", str(self.timeout_seconds)]
-        if validation_launch is not None:
-            argv.extend(("--remotion-validation-launch-id", validation_launch))
         log_path = Path(reference.support_root) / f"generic-host-{operation_id}.log"
         launch_digest = _launch_argv_digest(argv)
         try:
@@ -919,7 +871,6 @@ class _ParkedPackHostPreparer:
         state = {
             "launch_argv_sha256": launch_digest,
             "pid": process.pid, "process_birth_id": _host_birth_identity(process.pid),
-            "remotion_validation": {k: v for k, v in env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
             "ready_file": str(reference.ready_file), "source_checkout": str(reference.source_checkout),
             "credential_file": reference.credential_ref.removeprefix("file:"),
             "support_root": str(reference.support_root), "endpoint": reference.runtime_endpoint,
@@ -1246,7 +1197,6 @@ class _ParkedPackHostInspector:
         return observed
 
 
-_STALE_VALIDATION = object()  # sentinel: reuse refused; replace the host when idle
 
 
 def _attach_resident_host(
@@ -1528,42 +1478,20 @@ def ensure_pack_host(
                 and all(ready.get(key) == expected_value for key, expected_value in expected.items())
                 and str(ready.get("pid")) == str(current.get("pid"))
                 and str(ready.get("process_birth_id")) == str(current.get("process_birth_id"))):
-            reference = current.get("remotion_validation")
-            reuse_env = _host_render_environment(source_path)
-            if reuse_env.get("ASTRID_REMOTION_PROJECT_DIR") and reference is None:
-                raise PackHostBootstrapError("prior Remotion host lacks launch validation; reconfigure explicitly")
-            if reference is not None:
-                from astrid.core.env_vars import ASTRID_REMOTION_PROJECT_DIR
-                from astrid.core.rendering.remotion_runtime import (
-                    RemotionValidationError,
-                    _validated_runtime,
-                )
-                if ready.get("remotion_validation") != reference:
-                    raise PackHostBootstrapError("prior Remotion launch validation marker differs")
-                try:
-                    _validated_runtime(Path(reuse_env[ASTRID_REMOTION_PROJECT_DIR]),
-                                       environment={**reuse_env, **reference}, python_executable=host_python)
-                except (KeyError, RemotionValidationError, RuntimeError, OSError, ValueError, TypeError, ImportError,
-                        subprocess.SubprocessError):
-                    # This caller's render context wasn't validated by that launch
-                    # (different PATH, packs, interpreter...): replace the host below,
-                    # when idle, instead of refusing.
-                    reference = _STALE_VALIDATION
-            if reference is not _STALE_VALIDATION:
-                return {
-                    "host_status": "ready",
-                    "host_pid": int(current["pid"]),
-                    "host_executor_id": PACK_HOST_ACTOR,
-                    "host_ready_file": str(ready_path),
-                    "host_ready_capabilities": list(ready.get("ready_capabilities", [])),
-                    "host_runtime_instance_id": str(runtime_instance_id),
-                    "host_runtime_epoch": runtime_epoch,
-                    "host_source_checkout_digest": source_digest,
-                    "host_source_closure_digest": source_closure_digest,
-                    "host_source_inventory_identity": inventory_identity,
-                    "host_boot_manifest_path": str(boot_manifest_path),
-                    "host_boot_manifest_hash": boot_manifest_hash,
-                }
+            return {
+                "host_status": "ready",
+                "host_pid": int(current["pid"]),
+                "host_executor_id": PACK_HOST_ACTOR,
+                "host_ready_file": str(ready_path),
+                "host_ready_capabilities": list(ready.get("ready_capabilities", [])),
+                "host_runtime_instance_id": str(runtime_instance_id),
+                "host_runtime_epoch": runtime_epoch,
+                "host_source_checkout_digest": source_digest,
+                "host_source_closure_digest": source_closure_digest,
+                "host_source_inventory_identity": inventory_identity,
+                "host_boot_manifest_path": str(boot_manifest_path),
+                "host_boot_manifest_hash": boot_manifest_hash,
+            }
         if current:
             # Any Astrid process may replace the host its registration names, but
             # reconfiguration is not cancellation: a host with child work is left
@@ -1608,11 +1536,6 @@ def ensure_pack_host(
         if matrix.is_file():
             argv.extend(("--capability-matrix", str(matrix)))
         child_env = _host_render_environment(source_path)
-        validation_launch = _prepare_render_validation(
-            source_path, child_env, runtime_support, host_python,
-            (pack_root, *managed_inventory.roots))
-        if validation_launch is not None:
-            argv.extend(("--remotion-validation-launch-id", validation_launch))
         if _foreground:
             process_state = {
                 "execution_profile": _execution_profile(), "execution_origins": execution_origins,
@@ -1620,7 +1543,6 @@ def ensure_pack_host(
                 "version": 2,
                 "pid": os.getpid(),
                 "process_birth_id": _host_birth_identity(os.getpid()),
-                "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
             }
             if not process_state["process_birth_id"]:
                 raise PackHostBootstrapError("foreground pack host identity could not be captured")
@@ -1654,7 +1576,6 @@ def ensure_pack_host(
             "version": 2,
             "pid": process.pid,
             "process_birth_id": _host_birth_identity(process.pid),
-            "remotion_validation": {k: v for k, v in child_env.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
         }
         if not process_state["process_birth_id"]:
             process.poll()

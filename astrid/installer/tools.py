@@ -470,8 +470,7 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str
         raise ValueError("OMP source staging requires the bundled recipe's Bun version.")
     windows = target.startswith("windows-")
     suffix = ".exe" if windows else ""
-    # Keep UTF-8 stdio without an interpreter startup override: the rendering
-    # launch validation deliberately refuses PYTHONUTF8 in service environments.
+    # Keep UTF-8 stdio in service environments.
     env = {"PYTHONIOENCODING": "utf-8"}
     paths = []
     for name in ("bun", "node"):

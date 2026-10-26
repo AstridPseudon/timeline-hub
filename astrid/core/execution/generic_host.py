@@ -107,8 +107,8 @@ from astrid.core.env_vars import (
     ASTRID_PACKS_PATH,
     ASTRID_VIBECOMFY_CHECKOUT,
 )
+from astrid.core.execution import task_scope as _task_scope
 from astrid.core.execution.capability_ledger import load_capability_ledger
-from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.guards import (
     EVIDENCE_STATUS_NAME,
     EvidenceCapError,
@@ -116,16 +116,16 @@ from astrid.core.execution.guards import (
     ExecutionGuardPolicy,
     write_evidence_status,
 )
+from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.managed_inputs import managed_file_digest
 from astrid.core.execution.managed_tool_session import (
-    SessionCapacityError,
-    CapabilityDescriptor,
     AdmissionToken,
-    StaleAdmissionError,
+    CapabilityDescriptor,
     ManagedToolSession,
     SessionBinding,
+    SessionCapacityError,
+    StaleAdmissionError,
 )
-from astrid.core.execution.warm_hold import DEFAULT_IDLE_SECONDS, WarmHolds, WarmLease, idle_seconds
 from astrid.core.execution.process_group import (
     CLEANUP_LATCH_NAME,
     CleanupUncertainError,
@@ -148,21 +148,18 @@ from astrid.core.execution.process_group import (
 from astrid.core.execution.process_group import (
     signal_group as _signal_owned_group,
 )
-from astrid.core.execution.process_group import (
-    terminate_group as _terminate_owned_group,
-)
-from astrid.core.execution import task_scope as _task_scope
-from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn as spawn_task_scope
 from astrid.core.execution.provider_route_grant import (
     ProviderRouteGrantAuthority,
     ProviderRouteGrantError,
 )
+from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn as spawn_task_scope
 from astrid.core.execution.thumbnails import (
     THUMBNAIL_RECIPE_VERSION,
     ThumbnailError,
     extract_thumbnail,
     is_visual_media_type,
 )
+from astrid.core.execution.warm_hold import DEFAULT_IDLE_SECONDS, WarmHolds, WarmLease, idle_seconds
 from astrid.core.generation.model_root import (
     MODEL_ROOT_BINDING_ENV,
     MODEL_ROOT_ENV,
@@ -194,15 +191,6 @@ def _managed_input_staging_name(port: str, digest: str, original_name: str | Non
 
 if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
-
-
-def _remotion_readiness_message(exc: BaseException) -> str:
-    """Plain-language readiness failure that keeps the underlying reason."""
-    reason = str(exc).strip() or type(exc).__name__
-    message = f"worker Remotion readiness context is unavailable: {reason}"
-    if "registry corpus changed" in reason:
-        message += "; restart Astrid to re-bind it"
-    return message
 
 
 class HostError(RuntimeError):
@@ -1307,12 +1295,12 @@ def _prepare_vibecomfy_execution_identity(
     readiness_profile: Mapping[str, Any] | None,
 ) -> tuple[str, str, str, Mapping[str, Any]]:
     """Select and identify the exact VibeComfy input form before launch."""
-    from astrid.packs.vibecomfy.shared.bundle_inputs import staged_workflow_path
     from astrid.packs.vibecomfy.production_engine import (
         load_workflow_path,
         loaded_workflow_execution_identity,
         loaded_workflow_session_requirements,
     )
+    from astrid.packs.vibecomfy.shared.bundle_inputs import staged_workflow_path
 
     previous_headless = os.environ.get("VIBECOMFY_HEADLESS")
     os.environ["VIBECOMFY_HEADLESS"] = "1"
@@ -1820,119 +1808,6 @@ def _fixed_worker_environment(record: "CapabilityRecord", explicit_env: Mapping[
         elif name.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD")):
             raise HostError(f"undeclared secret environment variable {name!r}")
     return explicit
-
-
-def _record_may_render(record: 'CapabilityRecord') -> bool:
-    """True when a capability can run Remotion (so its worker context needs validation)."""
-    if str(record.definition.metadata.get('source_pack') or '') == 'rendering':
-        return True
-    try:
-        return AdapterRegistry.from_matrix(record.definition, record.matrix).remotion != 'never'
-    except HostError:
-        return True  # Unknown adapter: stay strict rather than skip validation.
-
-
-def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
-                                     capability_matrix: Path | None = None,
-                                     *, remotion_only: bool = False) -> list[dict[str, str]]:
-    """Project only fixed launch-known inputs; never expand task placeholders.
-
-    With ``remotion_only`` just the worker environments of capabilities that
-    can render are kept (matrix/metadata ``requires_remotion`` or the
-    rendering pack itself); the host baseline variant is always present.
-    A render in any other context is refused by ``_validated_runtime``.
-    """
-    from astrid.core.rendering.remotion_runtime import _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS
-    from astrid.core.subprocess_env import (
-        _SAFE_BASE_ENV,
-        _WINDOWS_BASE_ENV,
-        _is_secret_name,
-        _normalize_secret_names,
-    )
-    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
-    from astrid.core.execution.executor.schema import ExecutorValidationError
-    matrix = GenericPackHost._load_matrix(capability_matrix)
-    safe_base_env = set(_SAFE_BASE_ENV)
-    if sys.platform == "win32":
-        safe_base_env.update(_WINDOWS_BASE_ENV)
-    records: dict[str, CapabilityRecord] = {}
-    for root in pack_roots:
-        for executor_root in discover_folder_executor_roots(root):
-            try:
-                definition = load_folder_executor(executor_root)
-            except (ExecutorValidationError, OSError, ValueError):
-                continue  # Same unavailable optional definition as host discovery.
-            definition = _attach_pack_metadata(definition, executor_root)
-            records[definition.id] = CapabilityRecord(
-                definition=definition, capability_digest='', source_digest='',
-                source_root=executor_root, matrix=matrix.get(definition.id, {}))
-    # Match host discovery's strict V3 projection and exact source roots. A
-    # local orchestration action is deliberately not a host worker definition.
-    from astrid.core.pack.discovery import discover_pack_metadata
-    from astrid.sdk.actions import action_executor_definition
-    for discovered_pack in discover_pack_metadata(
-        project_root=pack_roots[0] if pack_roots else Path.cwd(),
-        extra_pack_roots=tuple(str(root) for root in pack_roots),
-    ):
-        pack = discovered_pack.pack
-        pack_root = pack.root.resolve()
-        if not any(pack_root == root or pack_root.is_relative_to(root) for root in pack_roots):
-            continue
-        for local_id, declaration in pack.actions.items():
-            try:
-                definition = action_executor_definition(discovered_pack, local_id, declaration)
-            except (ExecutorValidationError, OSError, ValueError):
-                continue  # Same unavailable optional action as host discovery.
-            records[definition.id] = CapabilityRecord(
-                definition=definition, capability_digest='', source_digest='',
-                source_root=pack_root, matrix=matrix.get(definition.id, {}))
-    # The SDK caller can carry import paths removed from the installed host
-    # launch. Qualify the explicit host mapping, not that caller's ambient env.
-    dependencies = dependency_pythonpath(environment)
-    baseline = build_child_subprocess_env(base=environment, parent=environment)
-    variants = [baseline]
-    for record in records.values():
-        if remotion_only and not _record_may_render(record):
-            continue
-        # Startup validation has no task credential channel. Legacy manifests
-        # can still list credentials in passthrough: omit those names entirely,
-        # while retaining their syntax checks without declaring any authority.
-        passthrough = record.definition.isolation.env_passthrough
-        omitted = tuple(name for name in passthrough if _is_secret_name(name))
-        _normalize_secret_names(omitted, 'probe_omitted_secrets')
-        public_passthrough = tuple(name for name in passthrough if not _is_secret_name(name))
-        command = record.definition.command
-        fixed = {str(k): str(v) for k, v in (getattr(command, 'env', {}) or {}).items()
-                 if '{' not in str(v) and '}' not in str(v)} if command is not None else {}
-        fixed = _fixed_worker_environment(record, fixed, environment)
-        relevant = {k: v for k, v in fixed.items()
-                    if k in set(_NODE_ENV_KEYS) | safe_base_env | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
-                    or k.startswith(('DYLD_', 'LD_'))
-                    or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
-                             'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'}}
-        projected = build_child_subprocess_env(
-            base=environment, parent=environment, explicit_env=relevant,
-            passthrough=public_passthrough,
-            declared_passthrough=public_passthrough)
-        native = dict(projected)
-        native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
-        native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-            str(Path(__file__).resolve().parents[3]), *dependencies,
-            *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
-        variants.append(native)
-        # The command builder supplies a canonical default, then command/env
-        # and required nonsecret configuration override it, in the real order.
-        command_fixed = _fixed_worker_environment(record, {
-            'PYTHONPATH': os.pathsep.join((str(Path(__file__).resolve().parents[3]), *dependencies)),
-            **fixed}, environment)
-        command_relevant = {**relevant, 'PYTHONPATH': command_fixed['PYTHONPATH']}
-        command_variant = build_child_subprocess_env(
-            base=environment, parent=environment, explicit_env=command_relevant,
-            passthrough=public_passthrough,
-            declared_passthrough=public_passthrough)
-        command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
-        variants.append(command_variant)
-    return variants
 
 
 def _command_worker_pythonpath(record: 'CapabilityRecord', existing: str) -> str:
@@ -2787,8 +2662,9 @@ def _interactive_review_authority(
     Private lineage stays in this closure. No worker input or environment carries
     it, and no authority issuance or parent heartbeat is needed by a child.
     """
-    from ._child_bridge import _snapshot_grant, task_resource
     from astrid.sdk._child_bridge import _validate_child_policy
+
+    from ._child_bridge import _snapshot_grant, task_resource
 
     parent_id = "iteration.experiment_review_session"
     child_id = "editorial.human_review"
@@ -3785,8 +3661,9 @@ def _training_review_authority(
     attempt_id: str, lease_id: str, fence: int, runtime_epoch: int,
 ) -> _ReviewIntervalAccounting | None:
     """Observe only this bridge's exact Training admissions through public reads."""
-    from ._child_bridge import _child_wire_id, _snapshot_grant, task_resource
     from astrid.sdk._child_bridge import _validate_child_policy
+
+    from ._child_bridge import _child_wire_id, _snapshot_grant, task_resource
 
     if record.id != "training.dataset_build" or bridge is None:
         return None
@@ -4545,7 +4422,12 @@ def _prepare_review_resume_input(client: Any, *, source_task_id: str, source_att
     No lease or inherited bridge is used or returned. Failure returns no descriptor.
     """
     from ._child_bridge import (
-        ChildBridgeError, _DIGEST, _snapshot_grant, _verify_snapshot_row, resource, task_resource,
+        _DIGEST,
+        ChildBridgeError,
+        _snapshot_grant,
+        _verify_snapshot_row,
+        resource,
+        task_resource,
     )
 
     if (any(type(value) is not str or not value for value in (
@@ -5166,8 +5048,14 @@ def component_load_failures(pack_roots: Any = None) -> list[dict[str, Any]]:
     discovery, so the doctor section and the pack validator cannot disagree with
     what discovery drops. Read-only and never raises for one bad manifest.
     """
-    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
-    from astrid.core.execution.orchestrator.folder import discover_folder_orchestrator_roots, load_folder_orchestrator
+    from astrid.core.execution.executor.folder import (
+        discover_folder_executor_roots,
+        load_folder_executor,
+    )
+    from astrid.core.execution.orchestrator.folder import (
+        discover_folder_orchestrator_roots,
+        load_folder_orchestrator,
+    )
     from astrid.core.pack.loader import _default_pack_roots
 
     roots = tuple(pack_roots) if pack_roots is not None else _default_pack_roots()
@@ -6189,58 +6077,19 @@ class GenericPackHost:
                     owner._registration_refresh_blocked or self._registration_refresh_blocked else None))
 
     def _remotion_idle_context(self) -> str | None:
-        """Bind idle observation reuse, without walking the native installation.
+        """Key the last readiness observation by server-owned configuration.
 
-        This is not a validation receipt or execution admission. The small
-        launch-reference file and exact effective probe/registry context must
-        still match the successful full observation. Tasks always validate
-        all installed inputs again.
+        Idle renewal does not probe executables; task admission checks them again.
         """
-        from astrid.core.rendering import remotion_runtime as runtime
-
-        env = os.environ
-        try:
-            context = runtime.probe_context(environment=env, python_executable=sys.executable)
-            context["registry_context"] = runtime._registry_context(env, generator=False)
-            names = (runtime.REMOTION_PROJECT_DIR_ENV, runtime.NODE_EXECUTABLE_ENV,
-                     runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV, *runtime._REF_ENV_KEYS)
-            configuration = {name: env[name] for name in names}
-            if any(not value for value in configuration.values()):
-                return None
-            # Constant-size filesystem checks only: no node_modules/schema
-            # tree enumeration, imports, subprocess probes, or registry writes.
-            selected = {}
-            for name in names[:3]:
-                path = Path(configuration[name]).expanduser()
-                if not path.is_absolute():
-                    return None
-                resolved = path.resolve(strict=True)
-                facts = resolved.stat()
-                selected[name] = (str(resolved), facts.st_dev, facts.st_ino,
-                                  facts.st_mode, facts.st_uid)
-            reference = Path(configuration[runtime.ASTRID_REMOTION_VALIDATION_PATH])
-            before = reference.stat()
-            if (not reference.is_absolute() or reference.is_symlink()
-                    or not stat.S_ISREG(before.st_mode) or not owned_by_current_user(reference, before, mode=0o600)
-                    or before.st_size > runtime._VALIDATION_MAX_BYTES):
-                return None
-            raw = reference.read_bytes()
-            after = reference.stat()
-            def identity(facts):
-                return (facts.st_dev, facts.st_ino, facts.st_mode, facts.st_uid,
-                        facts.st_size, facts.st_mtime_ns, facts.st_ctime_ns)
-            if (identity(before) != identity(after)
-                    or hashlib.sha256(raw).hexdigest() != configuration[runtime.ASTRID_REMOTION_VALIDATION_SHA256]):
-                return None
-            context.update(configuration=configuration, selected=selected,
-                           reference_identity=identity(after),
-                           interpreter=(sys.prefix, sys.exec_prefix, sys.base_prefix,
-                                        sys.base_exec_prefix, sys.version,
-                                        sys.implementation.cache_tag, sys.platform,
-                                        getattr(sys, "abiflags", "")))
-            return _canonical_digest(context)
-        except (OSError, KeyError, ValueError, runtime.RemotionValidationError):
-            return None
+        from astrid.core.rendering.remotion_runtime import (
+            NODE_EXECUTABLE_ENV,
+            REMOTION_PROJECT_DIR_ENV,
+            TIMELINE_SCHEMA_PYTHONPATH_ENV,
+        )
+        values = [os.environ.get(name) for name in (
+            REMOTION_PROJECT_DIR_ENV, NODE_EXECUTABLE_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV,
+        )]
+        return _canonical_digest(values) if all(values) else None
 
     def _forget_failed_remotion_observation(self, capability_id: str, context: str | None) -> None:
         owner = self._handoff_accounting_owner
@@ -6261,6 +6110,7 @@ class GenericPackHost:
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
         gpu_detection = None
+        remotion_status = None
         remotion_context = self._remotion_idle_context() if any(record.adapter.remotion != "never" for record in selected) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
@@ -6306,7 +6156,9 @@ class GenericPackHost:
                         self._remotion_full_preflight.pop(record.id, None)
                     try:
                         from astrid.core.rendering.remotion_runtime import remotion_runtime_status
-                        status = remotion_runtime_status(require_explicit_project=True)
+                        if remotion_status is None:
+                            remotion_status = remotion_runtime_status(require_explicit_project=True)
+                        status = remotion_status
                     except BaseException:
                         self._forget_failed_remotion_observation(record.id, remotion_context)
                         raise
@@ -7678,7 +7530,6 @@ class GenericPackHost:
         admission: Mapping[str, Any] | None = None,
         network_broker: _NetworkBrokerContext | None = None,
         network_policy: Mapping[str, Any] | None = None,
-        readiness_worker_kind: str = 'native',
         allow_runtime_connection: bool = True,
     ) -> tuple[dict[str, str], dict[str, str]]:
         """Build a redacted, manifest-scoped child environment.
@@ -7844,46 +7695,6 @@ class GenericPackHost:
             broker = policy.get("broker")
             if allow_runtime_connection and isinstance(broker, Mapping) and broker.get("evidence_path"):
                 env["ASTRID_NETWORK_BROKER_EVIDENCE"] = str(broker["evidence_path"])
-        from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_ROLE, ASTRID_REMOTION_PROJECT_DIR
-        if ASTRID_REMOTION_VALIDATION_ROLE in env and not _record_may_render(record):
-            # Launch validated only render-capable workers; any other worker
-            # carries no Remotion readiness, so it must not claim (or check) one.
-            from astrid.core.env_vars import (
-                ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_PATH,
-                ASTRID_REMOTION_VALIDATION_SHA256,
-            )
-            for name in (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
-                         ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE):
-                env.pop(name, None)
-        if ASTRID_REMOTION_VALIDATION_ROLE in env:
-            env[ASTRID_REMOTION_VALIDATION_ROLE] = "worker"
-            # Verify the launch-known import context without replacing the
-            # actual command environment's host-installed network-policy hook.
-            readiness_env = dict(env)
-            readiness_path = env.get('PYTHONPATH', '')
-            if policy is not None:
-                installed_hook = str(hook_root)
-                if readiness_path == installed_hook:
-                    readiness_path = ''
-                elif readiness_path.startswith(installed_hook + os.pathsep):
-                    readiness_path = readiness_path[len(installed_hook) + 1:]
-                else:
-                    raise HostError('host network hook context differs before readiness validation')
-            if readiness_worker_kind == 'command':
-                readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
-            elif readiness_worker_kind == 'native':
-                readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
-                readiness_env['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-                    str(Path(__file__).resolve().parents[3]), *_dependency_pythonpath(),
-                    *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
-            else:
-                raise HostError('unknown internal readiness worker projection')
-            from astrid.core.rendering.remotion_runtime import _validated_runtime
-            try:
-                _validated_runtime(Path(env[ASTRID_REMOTION_PROJECT_DIR]), environment=readiness_env)
-            except Exception as exc:
-                secrets.clear()
-                raise HostError(_remotion_readiness_message(exc)) from exc
         return env, secrets
 
     @staticmethod
@@ -8230,7 +8041,6 @@ class GenericPackHost:
             authority_context=authority_context,
             admission=admission,
             network_broker=network_broker,
-            readiness_worker_kind='command',
             network_policy=(
                 _network_policy(record, inputs)
                 if record.id == "vibecomfy.run" and inputs.get("comfy_url") else None
@@ -12405,7 +12215,6 @@ class LocalExecutionPreparation:
             raise HostError("host-only concurrency must be explicitly bounded")
         if _handoff_digest(launch) != profile["session_config_digest"]:
             raise HostError("host-only launch configuration digest differs")
-        from astrid.core.execution import custody_broker as custody_module
         peer = self._retained_relay_actor
         if peer is None or any(peer.verify().get(k) != request["runtime_owner"].get(k) for k in ("pid", "uid", "birth_id")):
             raise HostError("host-only preparation is not from original Runtime peer")
@@ -12416,7 +12225,10 @@ class LocalExecutionPreparation:
         if not interpreter.is_absolute() or not interpreter.is_file() or "sha256:" + hashlib.sha256(interpreter.read_bytes()).hexdigest() != profile["host_artifact_digest"]:
             raise HostError("host-only selected interpreter differs")
         boot = Path(launch["boot_manifest_path"])
-        from astrid.core._shared.boot_manifest import load_boot_manifest_hash, normalize_sha256_digest
+        from astrid.core._shared.boot_manifest import (
+            load_boot_manifest_hash,
+            normalize_sha256_digest,
+        )
         try:
             stamped_boot_hash = load_boot_manifest_hash(boot, support_root=profile["support_root"])
             selected_boot_hash = normalize_sha256_digest(launch["boot_manifest_hash"], label="host-only boot pin")
@@ -12440,7 +12252,8 @@ class LocalExecutionPreparation:
         with self._lock:
             if self._aborted or (self._intent is not None and self._intent != intent):
                 raise HostError("host-only preparation replay conflicts")
-            self._intent = intent; self._request = json.loads(json.dumps(dict(request)))
+            self._intent = intent
+            self._request = json.loads(json.dumps(dict(request)))
             result = {"version": _LOCAL_PREPARATION_VERSION, "status": "prepared",
                 "execution_mode": "host_only_cpu", "operation_id": self.operation_id, "channel_id": self.channel_id,
                 "owner_epoch": request["owner_epoch"], "session_config_digest": profile["session_config_digest"],
@@ -12491,7 +12304,8 @@ class LocalExecutionPreparation:
             reply = {**abort_bound, "custody_capabilities": dict(capabilities), "status": "cleaned",
                      "cleanup": {"host_children": "absent"}}
             with self._lock:
-                self._aborted = True; self._abort_ack = reply
+                self._aborted = True
+                self._abort_ack = reply
             return json.loads(json.dumps(reply))
         except BaseException as exc:
             self.control_error = exc
@@ -13719,7 +13533,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     parser.add_argument("--runtime-instance-id", help="runtime instance identity bound to this host")
     parser.add_argument("--source-inventory-identity", help="verified managed source inventory identity bound to this host")
     parser.add_argument("--boot-manifest-path", help="existing explicit boot-manifest path")
-    parser.add_argument("--remotion-validation-launch-id", help=argparse.SUPPRESS)
     parser.add_argument("--boot-manifest-hash", help="expected SHA-256 hash of the boot manifest")
     parser.add_argument("--readiness-profile-path", help="Worker-published readiness profile")
     parser.add_argument("--readiness-profile-hash", help="expected SHA-256 hash of the readiness profile")
@@ -13739,12 +13552,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     )
     args = parser.parse_args()
     _emit_startup_phase("cli_args_parsed")
-    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE
-    declared_validation = os.environ.get(ASTRID_REMOTION_VALIDATION_LAUNCH)
-    if declared_validation != args.remotion_validation_launch_id:
-        parser.error("Remotion readiness reference belongs to a foreign launch")
-    if declared_validation and os.environ.get(ASTRID_REMOTION_VALIDATION_ROLE) != "host":
-        parser.error("Remotion readiness context is not the host launch context")
     if args.attempt_root and args.attempt_base:
         parser.error("--attempt-root and --attempt-base are mutually exclusive")
     if (args.readiness_profile_path is None) != (args.readiness_profile_hash is None):
@@ -14131,7 +13938,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     if ready_path is not None:
         ready_payload = {
             "status": "ready",
-            "remotion_validation": {k: v for k, v in os.environ.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
             "python_executable": os.path.abspath(sys.executable),
             "pid": os.getpid(),
             "process_birth_id": process_birth_identity(),

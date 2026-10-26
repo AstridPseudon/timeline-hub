@@ -1,8 +1,7 @@
 """GenericPackHost acceptance for the real Remotion render capability.
 
 The test renders with the repository's own provisioned Remotion install
-(``npm ci --prefix remotion``, which the lanes workflow runs) and the launch-owned
-validation the host bootstrap normally issues (tests/helpers/remotion_validation.py).
+(``npm ci --prefix remotion``, which the lanes workflow runs).
 """
 
 from __future__ import annotations
@@ -10,22 +9,13 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
-import os
-import sys
 import shutil
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from astrid.core.env_vars import (
-    ASTRID_REMOTION_VALIDATION_LAUNCH,
-    ASTRID_REMOTION_VALIDATION_PATH,
-    ASTRID_REMOTION_VALIDATION_ROLE,
-    ASTRID_REMOTION_VALIDATION_SHA256,
-)
-from astrid.sdk.host_bootstrap import _prepare_render_validation
-from tests.helpers.remotion_validation import remotion_install_problems
+from tests.helpers.remotion_runtime import remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -154,7 +144,7 @@ def _make_media(root: Path) -> tuple[Path, Path]:
 
 @pytest.fixture
 def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """The provisioned Remotion install plus the launch-owned validation its runtime requires."""
+    """Select the provisioned server-owned Remotion install."""
 
     problems = remotion_install_problems()
     if problems:
@@ -167,23 +157,6 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION.resolve()))
     with _execution_env():
-        # The host bootstrap's own launch transaction: it validates the host and the worker contexts it spawns.
-        env = dict(os.environ)
-        launch = _prepare_render_validation(
-            ROOT, env, tmp_path / "support", sys.executable, (ROOT / "astrid" / "packs" / "rendering",)
-        )
-        assert launch is not None
-        # This process stands in for the launched host: it carries exactly the environment the launch prepared,
-        # so the loader keys a CI shell exports (setup-python sets LD_LIBRARY_PATH) that the launch dropped go too.
-        for name in [key for key in os.environ if key not in env and key.startswith(("DYLD_", "LD_"))]:
-            monkeypatch.delenv(name)
-        for name in (
-            ASTRID_REMOTION_VALIDATION_PATH,
-            ASTRID_REMOTION_VALIDATION_SHA256,
-            ASTRID_REMOTION_VALIDATION_LAUNCH,
-            ASTRID_REMOTION_VALIDATION_ROLE,
-        ):
-            monkeypatch.setenv(name, env[name])
         yield REMOTION
 
 

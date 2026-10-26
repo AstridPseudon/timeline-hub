@@ -33,7 +33,7 @@ from astrid.core.rendering.contracts import AudioOwnership, RenderRequest, SCHEM
 from astrid.core.rendering.registry import load_default_registries
 from astrid.core.rendering.service import RenderService
 from astrid.sdk.rendering import support
-from tests.helpers.remotion_validation import issue_remotion_launch_validation, remotion_install_problems
+from tests.helpers.remotion_runtime import configure_remotion_runtime, remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env, _source_video
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -493,11 +493,10 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path, monkeypatch: pytes
     if problems:
         pytest.fail("the combined render needs the provisioned Remotion install: " + "; ".join(problems), pytrace=False)
     # RenderService exposes the extra pack root to its renderer children as ASTRID_PACKS_PATH, and Remotion's
-    # launch validation covers that variable; name the root before issuing the validation so the two agree.
     monkeypatch.setenv("ASTRID_PACKS_PATH", str(PACK_ROOT.resolve()))
     try:
         with _execution_env():
-            issue_remotion_launch_validation(tmp_path, monkeypatch)
+            configure_remotion_runtime(monkeypatch)
             published = RenderService(extra_pack_roots=(str(PACK_ROOT),)).render(
                 RenderRequest(
                     schema_version=SCHEMA_VERSION,

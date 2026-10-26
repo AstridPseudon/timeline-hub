@@ -16,7 +16,6 @@ from astrid.sdk import storage_root
 
 
 def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_path, monkeypatch):
-    from astrid.core.rendering.remotion_runtime import probe_context
     from astrid.installer.backend import Backend
 
     monkeypatch.delenv("PYTHONUTF8", raising=False)
@@ -29,7 +28,7 @@ def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_pa
     ]))
 
     assert environment["PYTHONIOENCODING"] == "utf-8"
-    probe_context(environment=environment, python_executable=sys.executable)
+    assert environment["HOME"] == str(tmp_path)
 
 
 class LifecycleBackend:
