@@ -73,6 +73,27 @@ def test_machine_paths_and_loopback_urls_are_removed_or_normalized():
     assert cleaned["parent"]["registry"]["assets"]["a"]["media_id"] == "sha256:" + "a" * 64
 
 
+def test_transcript_document_listing_reads_every_page():
+    calls = []
+
+    class Transport:
+        def list_documents(self, project_id, *, cursor=None, limit=50, kind=None):
+            calls.append((project_id, cursor, limit, kind))
+            page = int(cursor or 0)
+            start = page * limit
+            stop = min(start + limit, 205)
+            rows = [{"document_id": f"doc-{index}", "kind": "media.transcript"}
+                    for index in range(start, stop)]
+            return rows, str(page + 1) if stop < 205 else None
+
+    rows = timeline_export._list_transcript_documents(
+        SimpleNamespace(_transport=Transport()), "project"
+    )
+    assert len(rows) == 205 and rows[-1]["document_id"] == "doc-204"
+    assert [call[1] for call in calls] == [None, "1", "2"]
+    assert all(call[0] == "project" and call[2:] == (100, "media.transcript") for call in calls)
+
+
 def test_compiler_media_closure_is_the_export_closure():
     from tests.timeline.test_authoring_bundle import _closure
 
@@ -129,34 +150,31 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
         saved_internal = service.get_project_timeline_revision(project_id, "main", "internal-1")
         bundle = open_authoring_bundle(saved_parent, shot_revisions=[saved_shot], internal_timeline_revisions=[saved_internal])
         class Transport:
-            calls = []
-            def get_project_timeline(self, project_id, timeline_id):
-                self.calls.append("GET")
-                return service.get_project_timeline(project_id, timeline_id)
-            def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
-                self.calls.append("GET")
-                return service.get_project_parent_composition_revision(project_id, timeline_id, revision)
-            def get_project_shot_revision(self, project_id, shot_id, revision):
-                self.calls.append("GET")
-                return service.get_project_shot_revision(project_id, shot_id, revision)
-            def get_project_timeline_revision(self, project_id, timeline_id, revision):
-                self.calls.append("GET")
-                return service.get_project_timeline_revision(project_id, timeline_id, revision)
             def list_project_objects(self, _project, *, cursor=None, limit=50):
                 result = service.list_project_objects(_project, cursor=cursor, limit=limit)
                 return result["items"], result["next_cursor"]
             def list_timelines(self, _project, *, cursor=None, limit=50):
                 return [{"timeline_id": "main", "name": "Fixture"}], None
+            def list_documents(self, _project, *, cursor=None, limit=50, kind=None):
+                result = service.list_documents(_project, cursor=cursor, limit=limit, kind=kind)
+                return result["items"], result["next_cursor"]
+
+        opened_calls = []
 
         client = SimpleNamespace(
             projects=SimpleNamespace(show=lambda _project: SimpleNamespace(ok=True, data={"project_id": project_id})),
             _remote=SimpleNamespace(_transport=Transport()),
-            documents=SimpleNamespace(list=lambda **_kwargs: SimpleNamespace(ok=True, data=[])),
+            timelines=SimpleNamespace(open_bundle=lambda project, ref: (
+                opened_calls.append((project, ref)) or SimpleNamespace(ok=True, data={
+                    "bundle": bundle, "project_id": project_id, "timeline_id": "main",
+                })
+            )),
         )
         plan = export_plan(client, project_id, "main")
         assert {"sha256:" + row["sha256"] for row in plan["media"]} == {
             row["media_id"] for row in published_manifest["media"]
-        } | {binding_pin["media_id"]}
+        }
+        assert binding_pin["media_id"] in {row["media_id"] for row in published_manifest["media"]}
         assert plan["media"] == plan["manifest"]["media"]
         assert any(row["sha256"] == binding_pin["media_id"].removeprefix("sha256:")
                    and row["size"] == len(binding_text.encode("utf-8")) for row in plan["media"])
@@ -166,7 +184,7 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
         assert exported_binding["binding_id"] == binding_pin["binding_id"]
         assert exported_binding["media_id"] == binding_pin["media_id"]
         assert exported_binding["text"] == binding_text
-        assert client._remote._transport.calls and set(client._remote._transport.calls) == {"GET"}
+        assert opened_calls == [(project_id, "main")]
     finally:
         service.close()
 
@@ -230,8 +248,9 @@ def test_export_plan_refuses_project_pack_effect_by_name(monkeypatch):
         "revision": "sha256:" + "a" * 64,
     }}]}}
     monkeypatch.setattr(timeline_export, "compile_authoring_candidate", lambda _bundle: SimpleNamespace(publication={"dependency_manifest": {"media": []}}))
-    monkeypatch.setattr(timeline_export, "_saved_head_bundle", lambda *_args: (bundle, "project-1", "main"))
-    client = SimpleNamespace()
+    client = SimpleNamespace(timelines=SimpleNamespace(open_bundle=lambda *_args: SimpleNamespace(ok=True, data={
+        "bundle": bundle, "project_id": "project-1", "timeline_id": "main",
+    })))
     with pytest.raises(ValueError, match="project-shimmer"):
         export_plan(client, "project-1", "main")
 

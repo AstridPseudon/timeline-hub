@@ -215,6 +215,27 @@ def _configure_export(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_cmd_export)
 
 
+def _cmd_import(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_transfer import import_timeline
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+
+    try:
+        receipt = import_timeline(parsed.client, parsed.file, parsed.project, name=parsed.name)
+        return print_result(DomainResult.success(receipt), as_json=parsed.json)
+    except Exception as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            "validation_error", str(exc), {"file": str(parsed.file), "project": parsed.project}
+        )), as_json=parsed.json)
+
+
+def _configure_import(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("file", type=Path, help=".astrid timeline archive to import.")
+    subparser.add_argument("--name", help="Display name for the imported timeline.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_import)
+
+
 def _cmd_list(parsed: argparse.Namespace) -> int:
     result = parsed.client.timelines.list(
         parsed.project, include_archived=parsed.include_archived
@@ -3865,6 +3886,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("import", help="Import a validated .astrid timeline archive into a project.", configure=_configure_import),
     CommandSpec("export", help="Export the saved head and its media into a .astrid archive.", configure=_configure_export),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),

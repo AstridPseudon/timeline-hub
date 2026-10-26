@@ -12,7 +12,7 @@ from typing import Any, Mapping
 from urllib.parse import quote, unquote
 from zipfile import ZIP_STORED, ZipFile, ZipInfo
 
-from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.client import SCHEMA_DIGEST
 from astrid.sdk.pagination import paged_rows
 from astrid.version import ASTRID_VERSION
@@ -233,8 +233,36 @@ def _text_binding_media(bundle: Mapping[str, Any]) -> set[str]:
     return result
 
 
-def _resolve_project(client: Any, project: str) -> str:
-    result = client.projects.show(project)
+def _list_transcript_documents(client: Any, project_id: str) -> list[Mapping[str, Any]]:
+    """Read every transcript page; a single 100-row page is not a closure."""
+    rows = paged_rows(_transport(client).list_documents, project_id, limit=100, kind="media.transcript")
+    if rows is None:
+        raise ValueError("cannot list transcripts: Runtime returned malformed pagination")
+    output = []
+    for raw in rows:
+        row = _plain(raw)
+        if isinstance(row, Mapping):
+            output.append(row)
+    return output
+
+
+def _resolve_project(client: Any, project: str | None) -> str:
+    ref = project
+    timeline_service = getattr(client, "timelines", None)
+    resolver = getattr(timeline_service, "_resolve_project_ref", None)
+    if callable(resolver):
+        resolved = resolver(project)
+        if hasattr(resolved, "ok") and not resolved.ok:
+            raise ValueError(f"cannot resolve project {project!r}: {getattr(resolved, 'error', None)}")
+        ref = getattr(resolved, "data", resolved)
+    elif project in (None, ""):
+        current = client._transport.current_project()
+        current_data = _plain(getattr(current, "data", current))
+        current_row = current_data.get("project") if isinstance(current_data, Mapping) else None
+        ref = (current_row or {}).get("project_id") or (current_row or {}).get("id") or (current_row or {}).get("slug")
+        if not isinstance(ref, str) or not ref:
+            raise ValueError("no current project is selected")
+    result = client.projects.show(ref)
     data = _plain(getattr(result, "data", result))
     if hasattr(result, "ok") and not result.ok:
         raise ValueError(f"cannot resolve project {project!r}: {result.error}")
@@ -247,6 +275,9 @@ def _resolve_project(client: Any, project: str) -> str:
 
 
 def _transport(client: Any) -> Any:
+    transport = getattr(client, "_transport", None)
+    if transport is not None:
+        return transport
     remote = getattr(client, "_remote", None)
     transport = getattr(remote, "_transport", None)
     if transport is None:
@@ -256,62 +287,17 @@ def _transport(client: Any) -> Any:
     return transport
 
 
-def _saved_head_bundle(client: Any, project: str, timeline: str) -> tuple[Mapping[str, Any], str, str]:
-    """Read the saved head closure through the GET-only revision API."""
-    project_id = _resolve_project(client, project)
-    transport = _transport(client)
-    timeline_rows = paged_rows(transport.list_timelines, project_id, limit=50)
-    if timeline_rows is None:
-        raise ValueError("Runtime could not list project timelines")
-    row = next((item for item in timeline_rows if isinstance(item, Mapping) and
-                timeline in {str(item.get("timeline_id") or ""), str(item.get("id") or ""),
-                             str(item.get("name") or ""), str(item.get("slug") or "")}), None)
-    timeline_id = str(row.get("timeline_id") or row.get("id")) if row else timeline
-    head_result = transport.get_project_timeline(project_id, timeline_id)
-    head_row = _data(head_result, "timeline head")
-    head = head_row.get("head_revision_id") or head_row.get("parent_revision_id")
-    if not isinstance(head, str) or not head:
-        raise ValueError(f"timeline {timeline!r} has no saved parent-composition head")
-    parent = _data(transport.get_project_parent_composition_revision(project_id, timeline_id, head), "saved parent revision")
-    if str(parent.get("revision_id") or parent.get("parent_revision_id") or "") != head:
-        raise ValueError("Runtime returned a parent revision that does not match the saved head")
-    payload = parent.get("payload")
-    occurrences = payload.get("occurrences") if isinstance(payload, Mapping) else None
-    if not isinstance(occurrences, list):
-        raise ValueError("saved parent revision has no occurrence list")
-    shots: dict[str, Mapping[str, Any]] = {}
-    internals: dict[str, Mapping[str, Any]] = {}
-    for occurrence in occurrences:
-        if not isinstance(occurrence, Mapping):
-            raise ValueError("saved parent occurrence is not an object")
-        shot_id = occurrence.get("shot_id")
-        shot_revision = occurrence.get("shot_revision_id") or occurrence.get("revision_id")
-        if not isinstance(shot_id, str) or not isinstance(shot_revision, str):
-            raise ValueError("saved parent occurrence has no pinned shot revision")
-        if shot_revision not in shots:
-            shot = _data(transport.get_project_shot_revision(project_id, shot_id, shot_revision), "saved shot revision")
-            if str(shot.get("project_id") or project_id) != project_id or str(shot.get("revision_id") or "") != shot_revision:
-                raise ValueError("Runtime returned a shot revision that does not match the saved pin")
-            shots[shot_revision] = shot
-        shot = shots[shot_revision]
-        shot_payload = shot.get("payload")
-        internal_revision = shot.get("internal_timeline_revision_id")
-        if not isinstance(internal_revision, str) and isinstance(shot_payload, Mapping):
-            internal_revision = shot_payload.get("internal_timeline_revision_id")
-        if not isinstance(internal_revision, str) or not internal_revision:
-            raise ValueError("saved shot revision has no pinned internal timeline revision")
-        if internal_revision not in internals:
-            internal = _data(transport.get_project_timeline_revision(project_id, timeline_id, internal_revision), "saved internal timeline revision")
-            if str(internal.get("project_id") or project_id) != project_id or str(internal.get("revision_id") or "") != internal_revision:
-                raise ValueError("Runtime returned an internal timeline revision that does not match the saved pin")
-            internals[internal_revision] = internal
-    return open_authoring_bundle(parent, shot_revisions=list(shots.values()), internal_timeline_revisions=list(internals.values())), project_id, timeline_id
-
-
-def export_plan(client: Any, project: str, timeline: str) -> dict[str, Any]:
+def export_plan(client: Any, project: str | None, timeline: str) -> dict[str, Any]:
     """Build metadata and exact media closure for the saved current head."""
-    bundle, export_project_id, timeline_id = _saved_head_bundle(client, project, timeline)
-    bundle = _plain(bundle)
+    opened = _data(client.timelines.open_bundle(project, timeline), "saved timeline bundle")
+    bundle = opened.get("bundle")
+    export_project_id = opened.get("project_id")
+    timeline_id = opened.get("timeline_id")
+    if not isinstance(bundle, Mapping) or not isinstance(export_project_id, str) or not isinstance(timeline_id, str):
+        raise ValueError("Runtime returned an incomplete saved timeline bundle")
+    # Canonicalize Runtime object URLs before compiling the dependency closure;
+    # the compiler and package format both use sha256 object identities.
+    bundle = _strip_machine_paths(_plain(bundle))
     compilation = compile_authoring_candidate(bundle)
     elements = inventory_elements(bundle)
     custom = [item for item in elements if item["packId"].startswith("project_")]
@@ -354,10 +340,7 @@ def export_plan(client: Any, project: str, timeline: str) -> dict[str, Any]:
     name = str(row.get("name") or row.get("slug") or timeline_id)
     transcript_docs: dict[str, dict[str, Any]] = {}
     refs = _transcript_refs(bundle)
-    docs_result = client.documents.list(project=project_id, kind="media.transcript", limit=100)
-    if hasattr(docs_result, "ok") and not docs_result.ok:
-        raise ValueError(f"cannot list transcripts: {docs_result.error}")
-    doc_rows = _plain(getattr(docs_result, "data", docs_result))
+    doc_rows = _list_transcript_documents(client, project_id)
     closure = {"sha256:" + item["sha256"] for item in media}
     for doc in doc_rows if isinstance(doc_rows, list) else []:
         if not isinstance(doc, Mapping) or doc.get("kind") != "media.transcript":
