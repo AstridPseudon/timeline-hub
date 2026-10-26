@@ -120,6 +120,56 @@ def test_check_import_manifest_reports_unpinned_missing_and_different():
     assert [row["id"] for row in result["different_effects"]] == ["changed"]
 
 
+def test_builtin_hold_clip_round_trips_through_inventory_and_prepare():
+    from astrid.core.element.catalog import list_element_descriptors
+    from astrid.sdk.timeline_export import inventory_elements
+
+    source = _source_bundle()
+    builtins = [
+        {"id": "legacy-hold", "clipType": "hold", "track": "type", "at": 0, "hold": 1},
+        {"id": "effect-layer", "clipType": "effect-layer", "track": "effects", "at": 0, "hold": 1},
+    ]
+    source["parent"]["clips"] = builtins
+    source["parent"]["config"]["clips"] = copy.deepcopy(builtins)
+    catalog = list_element_descriptors()
+    elements = inventory_elements(source, elements=catalog)
+    manifest = {"format": "astrid.timeline/1", "name": "Hold fixture", "elements": elements}
+
+    prepared = prepare_import(source, manifest, {}, "target", elements=catalog, timeline_id="target-timeline")
+
+    assert not any(row["id"] in {"hold", "effect-layer", "legacy-hold"} for row in elements)
+    assert all(row["packId"] for row in elements)
+    assert prepared["differences"] == {"missing_effects": [], "different_effects": []}
+    assert prepared["publication"]["parent_composition"]["clips"] == builtins
+
+
+def test_inventory_to_prepare_reports_unknown_unpinned_transition_from_source_pack():
+    from astrid.core.element.catalog import list_element_descriptors
+    from astrid.sdk.timeline_export import inventory_elements
+
+    source = _source_bundle()
+    clip = {
+        "id": "legacy-unknown", "clipType": "media", "track": "v1", "at": 0, "hold": 1,
+        "transition": {"packId": "source_motion", "id": "not-installed-transition", "revision": ""},
+    }
+    source["parent"]["clips"] = [clip]
+    source["parent"]["config"]["clips"] = [copy.deepcopy(clip)]
+    catalog = list_element_descriptors()
+    elements = inventory_elements(source, elements=catalog)
+    manifest = {"format": "astrid.timeline/1", "name": "Missing effect fixture", "elements": elements}
+
+    prepared = prepare_import(source, manifest, {}, "target", elements=catalog, timeline_id="target-timeline")
+
+    assert {"packId", "kind", "id", "revision", "pinned"} <= set(elements[0])
+    assert {row["id"] for row in elements} == {"not-installed-transition", "am-snap-plate"}
+    assert next(row for row in elements if row["id"] == "not-installed-transition") == {
+        "packId": "source_motion", "kind": "transition", "id": "not-installed-transition", "revision": "", "pinned": False,
+    }
+    assert prepared["differences"]["missing_effects"] == [
+        next(row for row in elements if row["id"] == "not-installed-transition")
+    ]
+
+
 def test_check_import_manifest_refuses_unknown_format_and_unsatisfied_pin():
     with pytest.raises(TimelineEditError, match="newer Astrid"):
         check_import_manifest({"format": "astrid.timeline/2", "elements": []}, elements=[])

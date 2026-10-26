@@ -13,6 +13,7 @@ from urllib.parse import quote, unquote
 from zipfile import ZIP_STORED, ZipFile, ZipInfo
 
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+from astrid.core.timeline.banodoco_schema import BUILTIN_CLIP_TYPES
 from astrid.sdk.client import SCHEMA_DIGEST
 from astrid.sdk.pagination import paged_rows
 from astrid.version import ASTRID_VERSION
@@ -21,7 +22,7 @@ __all__ = ["export_plan", "export_timeline", "inventory_elements"]
 
 _HEX = re.compile(r"^[0-9a-f]{64}$")
 _OBJECT_URL = re.compile(r"^https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?/(?:api/runtime/)?v1/objects/([^/?#]+)(?:[?#].*)?$")
-_DEFAULT_MEDIA = {"media", "video", "audio", "image", "shot", "text", "solid", "group"}
+_DEFAULT_MEDIA = set(BUILTIN_CLIP_TYPES) | {"video", "audio", "image", "shot", "solid", "group"}
 _KIND_MAP = {"effects": "effect", "effect": "effect", "animations": "animation", "animation": "animation", "transitions": "transition", "transition": "transition"}
 
 
