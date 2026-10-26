@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-26T14:43:03.063960+00:00",
+  "results": {
+    "compact": {
+      "exit": 0,
+      "before_free": 5531054080,
+      "after_free": 5530968064,
+      "stdout": "packed 0 scratch dirs; free 5275M -> 5275M\ngzipped 0 old worker logs; free now 5275M\npacked 0 finished test-run dirs; free now 5275M\n",
+      "stderr": ""
+    },
+    "sweep": {
+      "exit": 0,
+      "before_free": 5530968064,
+      "after_free": 5527588864,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5275M -> 5272M\n",
+      "stderr": ""
+    }
+  },
+  "note": "Prior orphaned launch143807 has no terminal marker and receives no completion credit. This invocation is awaited. No KEEP operation, hub operation, product edit or body."
+}
