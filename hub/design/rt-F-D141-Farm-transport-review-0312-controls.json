@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.d141i.transport-independent-controls.v1",
+  "status": "PASS",
+  "review0253_replay": {
+    "command": "TMPDIR=/tmp/w-df84da38f9/d141-matrix python3 -I -B ops-d141-farm-artifacts/test_review0253_matrix.py --archive /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-schema-record-closure-c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f.tgz --expected-sha256 c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f",
+    "result": "PASS",
+    "total": 16,
+    "accepted": ["baseline", "exact 18/12/6 and c9a87 manifest"],
+    "rejected": ["sidecar tamper", "unknown file", "missing file", "absolute path", "traversal", "symlink", "hardlink", "mode", "ownership", "duplicate member", "extra directory", "oversize", "refreshed direct_url", "duplicate JSON key"],
+    "unexpected_accepts": 0
+  },
+  "independent_new_harness": {
+    "result": "PASS",
+    "total": 16,
+    "accepted": 2,
+    "rejected": 14,
+    "unexpected_accepts": 0,
+    "scratch": "/tmp/w-df84da38f9/d141-independent-new",
+    "additional": [
+      "mutated archive rejected with manager SHA and attacker-selected refreshed SHA",
+      "digest-named helper same-byte retry idempotent",
+      "different-byte helper overwrite refused"
+    ]
+  },
+  "corrected_controls": {
+    "command": "TMPDIR=/tmp/w-df84da38f9/d141-controls python3 -I -B ops-d141-farm-artifacts/test_transport_security.py --archive /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-schema-record-closure-c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f.tgz --expected-sha256 c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f --dist /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
+    "result": "PASS",
+    "unittest_groups": 15,
+    "coverage": ["source/archive conservation", "external expected SHA fail-closed", "sidecar custody/consistency", "duplicate/missing/unknown members", "nonregular/link/path attacks", "compressed/expanded limits", "strict JSON", "RECORD/direct_url/manifest identity", "mode-preserving advice"]
+  },
+  "immutable_inputs": {
+    "archive": {"sha256": "c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f", "bytes": 13285, "mode": "0644", "uid": 0, "gid": 0, "nlink": 1},
+    "archive_sidecar": {"content": "c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f\\n", "sha256": "ffc55343fb6879c833ef7251c16c3be9535c44b425b53347a1ac374ed202fa81", "bytes": 65, "mode": "0644"},
+    "helper": {"sha256": "729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528", "bytes": 26956, "mode": "0644", "uid": 0, "gid": 0, "nlink": 1},
+    "record": {"sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220", "bytes": 1593, "mode": "0644", "rows": 18, "hashed": 12, "named_unhashed": 6},
+    "direct_url": {"sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e", "bytes": 254, "mode": "0644"},
+    "trusted_manifest": {"sha256": "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d", "keys": ["url", "commit", "subdirectory", "source_tree"]}
+  },
+  "receiver_advice": {
+    "verification": "python3 -I -B \"$VERIFIER\" --verify-archive \"$ARCHIVE\" --expected-sha256 \"$MANAGER_PEER_SHA256\"",
+    "extraction_after_review_only": "env -u TAR_OPTIONS /usr/bin/tar --extract --gzip --file \"$ARCHIVE\" --no-same-owner --same-permissions --keep-old-files --directory \"$STAGE\"",
+    "production_caller_after_all_genuine_bindings": "D140_PHASE=pre-child ops-d140-farm/receive-farm.sh --check-only",
+    "executed": false
+  },
+  "production_boundary": "receive-farm.sh does not infer Farm READY from transport PASS; it emits READY only when every D140/D139a/source/ownership/receipt binding passes."
+}

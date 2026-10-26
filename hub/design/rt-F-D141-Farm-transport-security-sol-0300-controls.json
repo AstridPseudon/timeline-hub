@@ -1,0 +1,166 @@
+{
+  "schema": "timeline.d141.transport-security-controls/v1",
+  "status": "PASS_ISOLATED_TRANSPORT_CONTROLS_INDEPENDENT_CORRECTED_REVIEW_PENDING",
+  "independent_review": "NOT_RUN; manager must commission corrected independent review",
+  "review0253_matrix": {
+    "total": 16,
+    "positive": 2,
+    "adversarial": 14,
+    "passed": 16,
+    "unexpected_accepts": 0,
+    "results": [
+      {
+        "case": "sidecar tamper",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "unknown regular file",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "missing closure file",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "absolute path",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "traversal path",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "symlink",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "hardlink",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "payload mode mismatch",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "payload ownership mismatch",
+        "prior_result": "PASS",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "duplicate tar member",
+        "prior_result": "FAIL",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "extra directory",
+        "prior_result": "FAIL",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "oversize 22041952-byte archive",
+        "prior_result": "FAIL",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "altered direct_url with refreshed closure hash",
+        "prior_result": "FAIL",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      },
+      {
+        "case": "duplicate trusted-manifest JSON key",
+        "prior_result": "FAIL",
+        "result": "PASS",
+        "observed": "REJECT Refusal"
+      }
+    ],
+    "adaptations": [
+      "required external-digest API; deliberately authorize fixture digest for structural attacks",
+      "parameterized original path and source path",
+      "scratch under TMPDIR; no cleanup",
+      "formatting and final all-pass assertion"
+    ],
+    "result": "PASS"
+  },
+  "own_controls": {
+    "test_groups": 15,
+    "result": "PASS",
+    "coverage": [
+      "exact archive/source 18-file conservation including unhashed bytes and ownership",
+      "missing/malformed/wrong external expected SHA; CLI omission refuses",
+      "fully self-refreshed hashed/unhashed/direct-url closure and sidecar cannot authorize changed bytes",
+      "sidecar consistency, physical files, symlink/hardlink/FIFO custody",
+      "duplicate files/directories, missing and unknown files/directories, unsafe names",
+      "nonregular, sparse, extension, modes, ownership, entry manifest types",
+      "compressed and expanded size bounds",
+      "duplicate nested JSON keys and invalid JSON",
+      "pinned RECORD and four-key identity, exact direct URL",
+      "invalid gzip and hidden trailing archive data",
+      "mode-preserving advice and independent-review gate"
+    ]
+  },
+  "static_checks": [
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check --no-cache ops-d141-farm-artifacts",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": "All checks passed!\n"
+    },
+    {
+      "command": "bash -n ops-d140-farm/receive-farm.sh ops-child-custody/request-child-venv ops-child-custody/make-child-venv",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": ""
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": ""
+    },
+    {
+      "command": "git diff --exit-code HEAD -- . ':!ops-d141-farm-artifacts'",
+      "exit_code": 0,
+      "result": "PASS",
+      "output": ""
+    }
+  ],
+  "scoped_ast": "PASS; all three transport Python sources",
+  "source_conservation": {
+    "result": "PASS",
+    "archive_sha256": "c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f",
+    "archive_bytes": 13285,
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "unhashed_rows": 6,
+    "production_and_c0_diff": "empty outside ops-d141-farm-artifacts"
+  },
+  "receiver_advice": "PASS_STATIC_MODE_PRESERVING_RECIPE; extraction deliberately NOT_RUN",
+  "forbidden_actions": "NOT_RUN: Farm/check-only/extraction/install/child/product import/collection/request/body/service/network/packages/acquisition/census/registry/Store/cleanup/delete/hub/build/ZIP/full suites",
+  "published_helper_smoke": {
+    "command": "python3 -I -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-transport-verifier-729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528.py --verify-archive /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-schema-record-closure-c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f.tgz --expected-sha256 c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f",
+    "exit_code": 0,
+    "result": "PASS_TRANSPORT_CLOSURE",
+    "helper_sha256": "729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528"
+  }
+}

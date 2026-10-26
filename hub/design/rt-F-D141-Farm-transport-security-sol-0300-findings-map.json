@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.d141.transport-security-findings/v1",
+  "prior_review": "rt-F-D141-Farm-artifact-final-review-0253",
+  "findings": [
+    {
+      "id": "D141-SEC-001",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "duplicate tar names rejected before constructing an indexed member set"
+    },
+    {
+      "id": "D141-SEC-002",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "all files and directories must equal the pinned RECORD-derived exact closure"
+    },
+    {
+      "id": "D141-SEC-003",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "20 MiB compressed stat/read guard and bounded expanded snapshot before tar parsing"
+    },
+    {
+      "id": "D141-SEC-004",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "external manager-peer expected SHA, pinned RECORD hashes, exact direct URL SHA and pinned object; source identity checked"
+    },
+    {
+      "id": "D141-SEC-005",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "recursive duplicate-key refusal for every parsed JSON object before digest comparison"
+    },
+    {
+      "id": "D141-RECEIVE-001",
+      "status": "PASS_LOCAL_CORRECTION_PENDING_INDEPENDENT_REVIEW",
+      "correction": "historical embedded advice superseded externally; --same-permissions with --no-same-owner in private empty stage after corrected review PASS"
+    }
+  ],
+  "prior_positive_controls": "preserved: original payload, 18/12/six names, pinned RECORD/direct URL/four-key manifest, source custody, production caller and C0",
+  "original0229_0238_0245_evidence": "preserved; no edits to prior evidence",
+  "unresolved": [
+    {
+      "id": "installed-kit-pair",
+      "status": "MISSING",
+      "owner": "D139a installation/kit owner",
+      "required": "current timeline.ops.d137.installed-kit/v1 summary plus separate matching original PASS_INSTALL FARM_KIT_INSTALLATION"
+    },
+    {
+      "id": "original67",
+      "status": "MISSING",
+      "owner": "Farm distribution/seed owner plus original67 artifact owner",
+      "required": "physical authenticated original67 wheelhouse and genuine verifier manifest through DEPENDENCY_SEED"
+    },
+    {
+      "id": "review-and-receiving",
+      "status": "PENDING",
+      "owner": "manager and Farm receiving/integration owner",
+      "required": "corrected independent review PASS before actual receiving steps; unchanged production admission only after all genuine bindings exist"
+    }
+  ],
+  "farm_ready": false
+}

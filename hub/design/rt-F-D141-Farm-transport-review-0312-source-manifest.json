@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.d141i.transport-independent-review.source.v1",
+  "reviewed_commit": "25ddf3fec4631c0e689d91dae358e68bd045309b",
+  "reviewed_tree": "e43261f85b5044f1cb90b647fc26f8fac01ae728",
+  "reviewed_branch": "tl/rt-F-D141-Farm-transport-review-0312",
+  "target_branch_commit": "25ddf3fec4631c0e689d91dae358e68bd045309b",
+  "base_commit": "59ab7b78b09dc077f7c9c6f60ede1c77d178ab12",
+  "scope": [
+    "ops-d141-farm-artifacts/",
+    "ops-d140-farm/receive-farm.sh supported --check-only interface"
+  ],
+  "source_files": {
+    "ops-d141-farm-artifacts/package_record_closure.py": {
+      "sha256": "729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528",
+      "bytes": 26956,
+      "mode": "0644"
+    },
+    "ops-d141-farm-artifacts/RECEIVING.md": {
+      "sha256": "c585b1ccf505be4f9a3887041fd154866880091f405848580def26eae0352699",
+      "bytes": 5247,
+      "mode": "0644"
+    },
+    "ops-d141-farm-artifacts/test_review0253_matrix.py": {
+      "sha256": "7af14022325c2debf94f03557c38e84757a6c455e5e102a947b1326200f7e729",
+      "bytes": 6785,
+      "mode": "0644"
+    },
+    "ops-d141-farm-artifacts/test_transport_security.py": {
+      "sha256": "ffd1b1b67a5d7554a50ffbc14ae6f53f200a8deb3791f797bf82e575af2f4444",
+      "bytes": 14789,
+      "mode": "0644"
+    }
+  },
+  "immutable_schema_identity": {
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "trusted_manifest_sha256": "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d"
+  },
+  "archive": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-schema-record-closure-c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f.tgz",
+    "sha256": "c1c2a6892226f63306148f8fc570fe5b793e07c554c8acc49ec3cd89cd86097f",
+    "bytes": 13285,
+    "mode": "0644",
+    "uid": 0,
+    "gid": 0,
+    "nlink": 1,
+    "sidecar_sha256": "ffc55343fb6879c833ef7251c16c3be9535c44b425b53347a1ac374ed202fa81"
+  },
+  "helper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/timeline-d141-transport-verifier-729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528.py",
+    "sha256": "729e8a08def9ffb845b3181fa85ccf083ed3ef7982852aff74b022947abac528",
+    "bytes": 26956,
+    "mode": "0644",
+    "uid": 0,
+    "gid": 0,
+    "nlink": 1,
+    "source_equal": true,
+    "sidecar_sha256": "3cdb540ae4ead593cc4a52fa1bd17cf6e5338638cd513444d3d39d9a21620bdb"
+  },
+  "installed_closure": {
+    "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+    "record_bytes": 1593,
+    "record_mode": "0644",
+    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "direct_url_bytes": 254,
+    "direct_url_mode": "0644",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "named_unhashed_rows": 6
+  },
+  "frozen_inputs_read": [
+    "PLAN.md F/C0",
+    "D139a strict five-condition source/custody decision",
+    "independent0253 full 16-subtest matrix and six evidence files",
+    "final0300 six evidence files"
+  ]
+}

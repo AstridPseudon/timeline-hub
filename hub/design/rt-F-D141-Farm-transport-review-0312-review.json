@@ -1,0 +1,56 @@
+{
+  "schema": "timeline.d141i.transport-independent-security-review.v1",
+  "task": "F D141i ONE independent Luna security/source review",
+  "verdict": "PASS_TRANSPORT_SECURITY_REVIEW",
+  "farm_ready": false,
+  "reviewed_commit": "25ddf3fec4631c0e689d91dae358e68bd045309b",
+  "reviewed_tree": "e43261f85b5044f1cb90b647fc26f8fac01ae728",
+  "base_commit": "59ab7b78b09dc077f7c9c6f60ede1c77d178ab12",
+  "scope": [
+    "private ops-d141-farm-artifacts source/helper/tests",
+    "supported ops-d140-farm/receive-farm.sh --check-only interface",
+    "immutable archive c1c2a68918/12/6 closure and trusted manifest c9a87"
+  ],
+  "prohibited_actions": {
+    "extraction": false,
+    "farm_check_only": false,
+    "installation": false,
+    "livekit": false,
+    "queue": false,
+    "product_mutation": false,
+    "network_or_acquisition": false,
+    "child_or_body": false,
+    "hub_or_git_write": false
+  },
+  "results": {
+    "review0253_matrix": {
+      "total": 16,
+      "positive_accepted": 2,
+      "attacks_rejected": 14,
+      "unexpected_accepts": 0
+    },
+    "independent_new_harness": {
+      "total": 16,
+      "positive_accepted": 2,
+      "attacks_rejected": 14,
+      "unexpected_accepts": 0
+    },
+    "corrected_security_controls": {
+      "unittest_groups": 15,
+      "result": "PASS"
+    },
+    "cli": "PASS_TRANSPORT_CLOSURE",
+    "ast": "PASS",
+    "ruff": "PASS",
+    "shell_syntax": "PASS",
+    "git_diff_check": "PASS",
+    "outside_scope_conservation": "PASS"
+  },
+  "security_conclusion": "No transport-security finding remains in the frozen corrected source. External manager-peer SHA binding, exact closure, strict metadata, mode/ownership checks, and pre-extraction refusal are independently exercised.",
+  "known_readiness_limits": [
+    "Current genuine installed-kit summary plus separate matching PASS_INSTALL pair is missing.",
+    "Original67 wheelhouse and genuine verifier manifest remain missing.",
+    "No receiver/extraction/Farm admission was run; PASS_TRANSPORT_CLOSURE is not Farm READY."
+  ],
+  "c0v2": "Unchanged: request base revision/publication pair, commands, label, per-step patches/reads, merge, dry-run/idempotency and accepted/merged/conflict/invalid/preview replies remain outside this transport change."
+}
