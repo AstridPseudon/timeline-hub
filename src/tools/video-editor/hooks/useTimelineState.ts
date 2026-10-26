@@ -909,7 +909,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     uploadImageGeneration: assetManagement.uploadImageGeneration,
     uploadVideoGeneration: assetManagement.uploadVideoGeneration,
     handleAssetDrop: assetManagement.handleAssetDrop,
-    handleAddTextAt: clipEditing.handleAddTextAt,
     onSeekToTime: playback.onClickTimeArea,
     finalVideoMap,
   });

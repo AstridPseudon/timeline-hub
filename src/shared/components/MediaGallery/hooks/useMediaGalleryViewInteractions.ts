@@ -78,6 +78,8 @@ interface UseMediaGalleryViewInteractionsParams {
   onApplySettings?: ((metadata: DisplayableMetadata | undefined) => Promise<void> | void) | undefined;
   onImageClick?: ((image: GeneratedImageWithMetadata, modifiers?: { multiSelect: boolean }) => void) | undefined;
   onContextMenu?: ((event: MouseEvent, image: GeneratedImageWithMetadata) => void) | undefined;
+  onAddToTimeline?: ((generationId: string) => void) | undefined;
+  addToTimelineDisabledReason?: string | undefined;
   isDeleting?: string | boolean | null;
   currentViewingShotId?: string;
   activeLightboxMediaId?: string;
@@ -107,6 +109,8 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
     onApplySettings,
     onImageClick,
     onContextMenu,
+    onAddToTimeline,
+    addToTimelineDisabledReason,
     isDeleting,
     currentViewingShotId,
     activeLightboxMediaId,
@@ -165,6 +169,8 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
     onApplySettings,
     onImageClick,
     onContextMenu,
+    onAddToTimeline,
+    addToTimelineDisabledReason,
     isDeleting,
     selectedShotIdLocal: stateHook.state.selectedShotIdLocal,
     setSelectedShotIdLocal: stateHook.setSelectedShotIdLocal,

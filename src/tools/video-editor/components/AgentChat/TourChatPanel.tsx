@@ -50,11 +50,11 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   const reducedMotion = useEditorTour((state) => state.reducedMotion);
   const instant = useEditorTour((state) => state.instant);
   const skipAnimation = useEditorTour((state) => state.skipAnimation);
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const script = EDITOR_TOUR_SCRIPT.acts[act];
   const [coarsePointer] = useState(() => window.matchMedia?.('(pointer: coarse)').matches === true);
 
-  useEffect(() => { setIsTasksPaneOpen(true); }, [setIsTasksPaneOpen]);
+  useEffect(() => { setIsTasksPaneLocked(true); }, [setIsTasksPaneLocked]);
 
   const [clock, setClock] = useState(() => ({ runId, ms: Date.now() }));
   if (clock.runId !== runId) setClock({ runId, ms: Date.now() });

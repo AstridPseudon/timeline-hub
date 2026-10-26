@@ -134,7 +134,7 @@ describe('GenerationsPane with an open lightbox', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('pane-state')).toHaveAttribute('data-open', 'false');
-      expect(screen.getByTestId('pane-state')).toHaveAttribute('data-height', String(PANE_CONFIG.dimensions.DEFAULT_HEIGHT));
+      expect(screen.getByTestId('pane-state')).toHaveAttribute('data-height', '321');
     });
     expect(screen.getByTestId('generations-pane')).toHaveClass('translate-y-full');
     expect(popup).toHaveClass('inset-0', 'w-full', 'h-full');

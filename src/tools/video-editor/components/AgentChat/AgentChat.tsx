@@ -54,7 +54,8 @@ import { useSetting } from '@/shared/settings/useSetting.ts';
 import { terminalNudgeSeen } from '@/shared/settings/declarations.ts';
 import { CommandLine } from './CommandLine';
 import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
-import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
+import { ProjectChatDraftPersistence, mergeQueues, sameProjectDraft } from './projectChatDraftPersistence';
+import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { AgentChatComposer } from './AgentChatComposer';
 import { TourChatPanel } from './TourChatPanel';
 import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
@@ -81,6 +82,10 @@ type OptimisticMessage = QueuedMessage & {
   sentAtMs: number;
   priorTurnCount: number;
 };
+
+function isDraftConflict(error: unknown): boolean {
+  return error instanceof BridgeRouteError && error.status === 409 && (error.code === 'draft_conflict' || /draft/i.test(error.detail ?? ''));
+}
 
 const unsavedProjectChatDrafts = new Map<string, { text: string; queue: QueuedMessage[]; dirty: boolean; scopeKey: string; persistence: ProjectChatDraftPersistence<QueuedMessage> }>();
 type AgentSessionView = {
@@ -298,7 +303,7 @@ function AvailableAgentChatPanel({
   // Engagement signal: when the pane is locked the user has clearly committed to
   // having chat visible, so auto-create can fire without an explicit click.
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const modelCatalog = useAgentModels(true, activeSessionId, projectId);
   const configureSession = useConfigureAgentSession(projectId);
@@ -368,13 +373,6 @@ function AvailableAgentChatPanel({
     if (wasStarting && !startingAgent) inputRef.current?.focus({ preventScroll: true });
   }, [startingAgent]);
 
-
-  useEffect(() => {
-    if (!pendingComposerPrompt) return;
-    setDraft(pendingComposerPrompt);
-    clearPendingComposerPrompt?.();
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, [clearPendingComposerPrompt, pendingComposerPrompt]);
 
   const activeSession = useAgentSession(activeSessionId, projectId);
   // Non-editor hosts may still provide the legacy settings-backed timeline
@@ -460,6 +458,20 @@ function AvailableAgentChatPanel({
         setOptimisticMessage(item => item && recoveredIds.has(item.id) ? null : item);
         sendingRef.current = false;
       }
+      const idle = draftPersistenceRef.current;
+      // Another client's newer draft is adopted only by a composer that is unfocused, has nothing in flight and no
+      // edits since its last save. Otherwise what is on screen wins and the next save simply overwrites.
+      if (idle && projectChat.data.draft.revision > idle.revision && idle.idle
+          && !sameProjectDraft(saved, idle.saved) && sameProjectDraft(draftSnapshotRef.current, idle.saved)
+          && document.activeElement !== inputRef.current) {
+        idle.adopt(projectChat.data.draft.revision, saved);
+        draftSnapshotRef.current = saved;
+        setDraft(saved.text);
+        setQueue(saved.queue);
+        saved.queue.forEach(item => pausedQueuedIdsRef.current.add(item.id));
+        setPausedQueueHeadId(saved.queue[0]?.id ?? null);
+        return;
+      }
       draftPersistenceRef.current?.observe(projectChat.data.draft.revision, saved, draftSnapshotRef.current);
       return;
     }
@@ -491,11 +503,35 @@ function AvailableAgentChatPanel({
     const persistence = draftPersistenceRef.current;
     if (!projectId || !persistence) return;
     const snapshot = draftSnapshotRef.current;
-    const queuePayload = snapshot.queue.map((item) => ({ id: item.id, text: item.text, session_id: item.sessionId, attachments: item.attachments }));
+    const toWire = (rows: QueuedMessage[]) => rows.map((item) => ({ id: item.id, text: item.text, session_id: item.sessionId, attachments: item.attachments }));
     try {
-      await persistence.save(snapshot, async (expectedRevision) => {
-        const result = await saveDraft.mutateAsync({ expectedRevision, text: snapshot.text, queuedMessages: queuePayload });
-        return result.draft.revision;
+      await persistence.save(snapshot, async (firstRevision) => {
+        let expectedRevision = firstRevision;
+        let queue = snapshot.queue;
+        for (let attempt = 0; ; attempt++) {
+          try {
+            const result = await saveDraft.mutateAsync({ expectedRevision, text: snapshot.text, queuedMessages: toWire(queue) });
+            return { revision: result.draft.revision, snapshot: { text: snapshot.text, queue } };
+          } catch (error) {
+            if (!isDraftConflict(error) || attempt >= 3) throw error;
+            // Drafts are last-writer-wins: rebase onto the server's current version and write again. The text on
+            // screen always wins; queued rows are merged by id so none is lost.
+            const current = (await projectChat.refetch()).data;
+            if (!current) throw error;
+            const remote = (current.draft.queued_messages ?? []).map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] }));
+            const base = persistence.saved.queue;
+            queue = mergeQueues(base, remote, queue);
+            const live = draftSnapshotRef.current.queue;
+            const liveMerged = mergeQueues(base, remote, live);
+            if (JSON.stringify(liveMerged) !== JSON.stringify(live)) {
+              const known = new Set(live.map(item => item.id));
+              liveMerged.forEach(item => { if (!known.has(item.id)) pausedQueuedIdsRef.current.add(item.id); });
+              draftSnapshotRef.current = { ...draftSnapshotRef.current, queue: liveMerged };
+              setQueue(liveMerged);
+            }
+            expectedRevision = current.draft.revision;
+          }
+        }
       });
       setDraftSaveError(null);
       const current = unsavedProjectChatDrafts.get(projectId);
@@ -504,7 +540,8 @@ function AvailableAgentChatPanel({
       }
     } catch (error) {
       if (draftPersistenceRef.current !== persistence) return;
-      setDraftSaveError(error instanceof Error ? error.message : String(error));
+      // A draft that fails to save is not worth interrupting anyone: the next edit saves again. A queued message is.
+      if (snapshot.queue.length > 0) setDraftSaveError(error instanceof BridgeRouteError ? (error.detail ?? error.message) : error instanceof Error ? error.message : String(error));
       throw error;
     }
   };
@@ -526,25 +563,6 @@ function AvailableAgentChatPanel({
       void flushDraftRef.current().catch(() => undefined);
     };
   }, []);
-  const restoreSavedDraft = useCallback(async () => {
-    const result = await projectChat.refetch();
-    if (!result.data) return;
-    const saved = { text: result.data.draft.text, queue: (result.data.draft.queued_messages ?? []).map((item) => ({ id: item.id, text: item.text, sessionId: item.session_id, attachments: Array.isArray(item.attachments) ? item.attachments as AgentTurnAttachment[] : [] })) };
-    const persistence = new ProjectChatDraftPersistence(result.data.draft.revision, saved);
-    draftPersistenceRef.current = persistence;
-    draftSnapshotRef.current = saved;
-    setDraft(saved.text);
-    setQueue(saved.queue);
-    unsavedProjectChatDrafts.set(projectId!, { ...saved, dirty: false, scopeKey: result.data.scope_key, persistence });
-    setDraftSaveError(null);
-  }, [projectChat, projectId]);
-  const overwriteSavedDraft = useCallback(async () => {
-    const result = await projectChat.refetch();
-    if (!result.data || !draftPersistenceRef.current) return;
-    draftPersistenceRef.current.revision = result.data.draft.revision;
-    setDraftSaveError(null);
-    await flushDraftRef.current();
-  }, [projectChat]);
   const activeSessionData = startingAgent ? undefined : readAgentSession(activeSession.data);
   const handleSetMainSession = useCallback(async (sessionId: string) => {
     if (!projectChat.data) return;
@@ -651,6 +669,27 @@ function AvailableAgentChatPanel({
   const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   const currentSetupRequest = setupRequest?.sessionId === activeSessionId ? setupRequest : null;
   const showSetupCard = writableChat && (currentSetupRequest !== null || (!activeSessionId && !hasAvailableProjectSession && Boolean(localAgents.data) && !defaultAgentReady));
+  const inputDisabled = agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing;
+  // A prefilled prompt is a draft, never sent. It never overwrites an unsent draft: it goes after it. The cursor
+  // lands at the end, so the user continues the sentence. Focus waits for an enabled composer: focus() on a disabled
+  // textarea does nothing, and a click can arrive while the composer is still locked (starting, no session yet).
+  const composerFocusPendingRef = useRef(false);
+  useEffect(() => {
+    if (pendingComposerPrompt) {
+      setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${pendingComposerPrompt}` : pendingComposerPrompt));
+      clearPendingComposerPrompt?.();
+      composerFocusPendingRef.current = true;
+    }
+    if (!composerFocusPendingRef.current || inputDisabled) return;
+    composerFocusPendingRef.current = false;
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+  }, [clearPendingComposerPrompt, inputDisabled, pendingComposerPrompt]);
   const showSetupOnHost = !writableChat && (agentBroken || isAgentSetupError(turnFailure) || currentSetupRequest !== null);
   useEffect(() => {
     setupErrorScopes.current.forEach((source, error) => {
@@ -1073,10 +1112,10 @@ function AvailableAgentChatPanel({
       setOptimisticMessage(null);
       setSetupRequest(current => current ? { ...current, sessionId } : null);
       setActiveSessionId(sessionId);
-      setIsTasksPaneOpen?.(true);
+      setIsTasksPaneLocked?.(true);
     }
     return sessionId ?? null;
-  }, [createNewSession, projectId, setIsTasksPaneOpen]);
+  }, [createNewSession, projectId, setIsTasksPaneLocked]);
 
   const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string, recoverySessionId?: string, isCurrent?: () => boolean) => {
     const chosen = agent ?? defaultAgent;
@@ -1345,11 +1384,10 @@ function AvailableAgentChatPanel({
         )}
         {draftSaveError && (
           <div role="alert" className="mb-2 rounded-md border border-destructive/40 p-2 text-xs text-destructive">
-            <p>Draft or queued messages could not be saved: {draftSaveError}</p>
-            <div className="mt-1 flex gap-2">
-              <button type="button" className="underline" onClick={() => void overwriteSavedDraft()}>Keep local and overwrite saved draft</button>
-              <button type="button" className="underline" onClick={() => void restoreSavedDraft()}>Load saved draft</button>
-            </div>
+            <p>
+              A queued message could not be saved to Astrid ({draftSaveError}). It is still queued in this window, but reloading or closing it would lose it.{' '}
+              <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
+            </p>
           </div>
         )}
         {startingAgent && !showSetupCard && (
@@ -1471,12 +1509,6 @@ function AvailableAgentChatPanel({
       <div className="border-t border-border/70 px-3 py-3">
         {displayedQueue.length > 0 && (
           <div className="mb-2 flex flex-col gap-2">
-            {draftSaveError && (
-              <p className="text-[11px] text-muted-foreground">
-                Couldn't save the queue.{' '}
-                <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
-              </p>
-            )}
             {displayedQueue.map((item, index) => (
               <div
                 key={item.id}
@@ -1652,7 +1684,7 @@ function AvailableAgentChatPanel({
           }}
           rows={isExpanded ? 8 : 4}
           placeholder={inputPlaceholder}
-          inputDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+          inputDisabled={inputDisabled}
           voice={CHAT_VOICE_ENABLED ? {
             isRecording: voice.isRecording,
             onToggle: () => voice.isRecording ? voice.stopRecording() : voice.startRecording(),

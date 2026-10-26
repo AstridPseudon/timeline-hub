@@ -443,4 +443,75 @@ describe('MediaGalleryItem touch selection', () => {
     expect(onImageClick).toHaveBeenCalledTimes(1);
     expect(onImageClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'vid-1' }), { multiSelect: false });
   });
+
+  it('renders no add-to-timeline control when the item has no timeline handler', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const props = buildProps();
+
+    render(<MediaGalleryItem {...props} />);
+
+    expect(screen.queryByLabelText('Add to timeline')).not.toBeInTheDocument();
+  });
+
+  it('adds the generation from the tile control without selecting or opening the tile', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const onImageClick = vi.fn();
+    const onAddToTimeline = vi.fn();
+    const props = buildProps({
+      features: { enableSingleClick: true },
+      actions: { onImageClick, onAddToTimeline, onOpenLightbox: vi.fn(), onImageLoaded: vi.fn() },
+    });
+
+    const { container } = render(<MediaGalleryItem {...props} />);
+    const root = container.querySelector('[data-gallery-item-id="img-1"]') as HTMLElement;
+    const addButton = screen.getByLabelText('Add to timeline');
+
+    fireEvent.pointerDown(addButton, { pointerType: 'mouse', button: 0, isPrimary: true });
+    fireEvent.pointerUp(addButton, { pointerType: 'mouse', button: 0, isPrimary: true });
+    fireEvent.click(addButton);
+
+    expect(onAddToTimeline).toHaveBeenCalledTimes(1);
+    expect(onAddToTimeline).toHaveBeenCalledWith('img-1');
+    expect(onImageClick).not.toHaveBeenCalled();
+    expect(root).toContainElement(addButton);
+  });
+
+  it('keeps a tap on the tile control from selecting the tile on touch', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const onImageClick = vi.fn();
+    const onAddToTimeline = vi.fn();
+    const props = buildProps({
+      features: { enableSingleClick: true },
+      actions: { onImageClick, onAddToTimeline, onOpenLightbox: vi.fn(), onImageLoaded: vi.fn() },
+    });
+
+    render(<MediaGalleryItem {...props} />);
+    const addButton = screen.getByLabelText('Add to timeline');
+
+    fireEvent.touchStart(addButton, { touches: [{ clientX: 40, clientY: 40 }] });
+    fireEvent.touchEnd(addButton, { changedTouches: [{ clientX: 40, clientY: 40 }] });
+
+    expect(onImageClick).not.toHaveBeenCalled();
+  });
+
+  it('disables the tile control with the mismatch reason and does not add', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const onAddToTimeline = vi.fn();
+    const reason = "This gallery's project is not the selected editor's project";
+    const props = buildProps({
+      actions: {
+        onAddToTimeline,
+        addToTimelineDisabledReason: reason,
+        onOpenLightbox: vi.fn(),
+        onImageLoaded: vi.fn(),
+      },
+    });
+
+    render(<MediaGalleryItem {...props} />);
+    const addButton = screen.getByLabelText('Add to timeline');
+
+    expect(addButton).toBeDisabled();
+    fireEvent.click(addButton);
+    expect(onAddToTimeline).not.toHaveBeenCalled();
+  });
 });

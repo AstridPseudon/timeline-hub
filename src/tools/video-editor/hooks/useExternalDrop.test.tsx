@@ -1531,7 +1531,6 @@ describe('useExternalDrop', () => {
 
   it.each([
     ['file', () => createFileDropEvent([new File(['blocked'], 'blocked.mp4', { type: 'video/mp4' })])],
-    ['text tool', () => createDropEvent({}, ['text-tool'])],
     ['effect layer', () => createDropEvent({}, ['effect-layer'])],
     ['generation', () => createDropEvent(createStoredDragPayload([{
       generationId: 'blocked-generation',
@@ -1555,7 +1554,6 @@ describe('useExternalDrop', () => {
       uploadImageGeneration: vi.fn(),
       uploadVideoGeneration: vi.fn(),
       handleAssetDrop: vi.fn(),
-      handleAddTextAt: vi.fn(),
       onSeekToTime: vi.fn(),
     };
     const coordinator = {
@@ -1597,52 +1595,6 @@ describe('useExternalDrop', () => {
     expect(Object.values(calls).every((spy) => spy.mock.calls.length === 0)).toBe(true);
     expect(pendingOpsRef.current).toBe(0);
     expect(dataRef.current).toEqual(before);
-  });
-
-  it('keeps editable-default text drops available', async () => {
-    const dataRef = { current: makeDropTestData() } as React.MutableRefObject<DropTestData>;
-    const handleAddTextAt = vi.fn();
-    const coordinator = {
-      update: vi.fn(),
-      showSecondaryGhosts: vi.fn(),
-      end: vi.fn(),
-      lastPosition: {
-        time: 12,
-        rowIndex: 0,
-        trackId: 'V1',
-        trackKind: 'visual',
-        trackName: 'V1',
-        isNewTrack: false,
-        isNewTrackTop: false,
-        isReject: false,
-        newTrackKind: null,
-        screenCoords: { rowTop: 0, rowLeft: 0, rowWidth: 0, rowHeight: 0, clipLeft: 0, clipWidth: 0, ghostCenter: 0 },
-      },
-      editAreaRef: { current: null },
-    };
-    const { result } = renderHook(() => useExternalDrop({
-      dataRef,
-      pendingOpsRef: { current: 0 },
-      scale: 1,
-      scaleWidth: 1,
-      selectedTrackId: null,
-      applyEdit: vi.fn(),
-      invalidateAssetRegistry: vi.fn(),
-      resolveAssetUrl: vi.fn(),
-      coordinator,
-      registerGenerationAsset: vi.fn(),
-      uploadImageGeneration: vi.fn(),
-      uploadVideoGeneration: vi.fn(),
-      handleAssetDrop: vi.fn(),
-      handleAddTextAt,
-      finalVideoMap: new Map(),
-    }));
-
-    await act(async () => {
-      await result.current.onTimelineDrop(createDropEvent({}, ['text-tool']));
-    });
-
-    expect(handleAddTextAt).toHaveBeenCalledWith('V1', 12);
   });
 
   describe('panel clip drops', () => {

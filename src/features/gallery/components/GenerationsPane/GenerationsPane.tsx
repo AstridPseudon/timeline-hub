@@ -156,6 +156,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
           }}
           pagination={{
             totalCount: gallery.totalCount,
+            totalIsExact: gallery.totalIsExact,
             perPage: layout.paneLayout.itemsPerPage,
             page: gallery.page,
             onPageChange: gallery.handleServerPageChange,
@@ -167,12 +168,13 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
           containerRef={layout.galleryContainerRef}
           projectAspectRatio={layout.projectAspectRatio}
           layout={{
-            columns: layout.paneLayout.columns,
+            cols: layout.paneLayout.cols,
+            rows: layout.paneLayout.rows,
             itemsPerPage: layout.paneLayout.itemsPerPage,
+            gridWidth: layout.paneLayout.gridWidth,
           }}
           loading={{
             isLoading: gallery.isLoading,
-            expectedItemCount: gallery.expectedItemCount,
           }}
           pagination={{ page: gallery.page, totalCount: gallery.totalCount }}
           error={gallery.error}
@@ -193,7 +195,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             addTargetProjectMismatch: navigation.addTargetProjectMismatch,
             config: gallery.config,
             readOnly: gallery.readOnly,
-            emptyStateMessage: gallery.emptyStateMessage,
+            emptyState: gallery.emptyState,
           }}
         />
       </div>

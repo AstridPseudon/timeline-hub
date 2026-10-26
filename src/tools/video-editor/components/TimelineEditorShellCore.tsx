@@ -27,7 +27,6 @@ import {
   VideoEditorRightPanelDock,
   type VideoEditorRightPanelTab,
 } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
-import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import { TimelineEditor } from '@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx';
 import { CREATE_ANIMATION_PROMPT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx';
 import { TimelineErrorBoundary } from '@/tools/video-editor/components/TimelineEditor/TimelineErrorBoundary.tsx';
@@ -55,6 +54,7 @@ import {
 import { bootDiagnostics, MemoryPressureDetector } from '@/tools/video-editor/lib/perf-diagnostics.ts';
 import { CLIP_ACTION_CLASS, CLIP_SELECTED_ATTR, TRACK_LABEL_ATTR, shellRegionAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
+import { useElementWidth } from '@/shared/hooks/layout/useElementWidth.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
@@ -149,6 +149,12 @@ export interface TimelineEditorRenderActions {
   readonly onOpenElementCreationPrompt: (prompt: string) => void;
   readonly onOpenExtensionManager: () => void;
 }
+
+// The preview row's timeline picker keeps at least 160px before Render drops to its icon:
+// the row's gutters and gap (32px) and the full-screen button with the "Render" label (150px) are the rest.
+const PICKER_MIN_PX = 160;
+const PREVIEW_ROW_CHROME_PX = 32 + 150;
+const RENDER_ICON_ONLY_BELOW_PX = PICKER_MIN_PX + PREVIEW_ROW_CHROME_PX;
 
 /** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
 const TIMELINE_CONFLICT_SENTENCE = 'Keep your changes, or switch to the latest version.';
@@ -260,6 +266,8 @@ function TimelineEditorShellCoreComponent({
 }: TimelineEditorShellCoreProps) {
   const previewControls = previewNavigationControls ?? navigationControls;
   useRenderDiagnostic('TimelineEditorShellCore');
+  const [previewRowRef, previewRowWidth] = useElementWidth<HTMLDivElement>();
+  const renderIconOnly = previewRowWidth !== null && previewRowWidth < RENDER_ICON_ONLY_BELOW_PX;
   const runtime = useVideoEditorRuntime();
   const editorData = useTimelineEditorData();
   const editorOps = useTimelineEditorOps();
@@ -296,19 +304,20 @@ function TimelineEditorShellCoreComponent({
     gridTemplateRows,
   } = useTimelineShellDividerDrag(hasActivityRegion);
   const [condensedRightPanel, setCondensedRightPanel] = useState<VideoEditorRightPanelTab>('video');
-  const [isElementsOpen, setIsElementsOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isExtensionManagerOpen, setIsExtensionManagerOpen] = useState(false);
   const openExtensionManager = useCallback(() => setIsExtensionManagerOpen(true), []);
   const agentChatBridge = useOptionalAgentChatBridge();
   const requestComposerPrompt = agentChatBridge?.requestComposerPrompt;
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  // Opens the chat locked, the same as the lock button: a temporary open would leave the lock icon, layout push and
+  // hover-close out of step with the pane.
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const openElementCreationPrompt = useCallback((prompt: string) => {
     runtime.agentChat?.activateTimeline?.();
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
     requestComposerPrompt?.(prompt);
-    setIsTasksPaneOpen(true);
-  }, [requestComposerPrompt, setIsTasksPaneOpen, runtime.agentChat, runtime.agentSelectionOwner]);
+    setIsTasksPaneLocked(true);
+  }, [requestComposerPrompt, setIsTasksPaneLocked, runtime.agentChat, runtime.agentSelectionOwner]);
   const handleActivityDismiss = useCallback((eventId: string) => {
     setActivityEvents((prev) => prev.filter((e) => e.id !== eventId));
   }, []);
@@ -666,6 +675,7 @@ function TimelineEditorShellCoreComponent({
       )}
       <TimelineRenderControls
         compact={mobileSinglePane}
+        iconOnly={!mobileSinglePane && renderIconOnly}
         previewActionButtonClass={previewActionButtonClass}
         afterRenderControl={!mobileSinglePane && !hasCustomRightPanelSlot && !sidebarVideo ? <VideoEditorPanelDisplayControl visible={hostPaneClosed} className="video-editor-panel-reopen-motion" /> : undefined}
       />
@@ -700,7 +710,6 @@ function TimelineEditorShellCoreComponent({
       onDividerLostPointerCapture={onDividerLostPointerCapture}
       isTimelineMaximized={isTimelineMaximized}
       setIsTimelineMaximized={setIsTimelineMaximized}
-      onOpenElements={() => setIsElementsOpen(true)}
     />
   );
 
@@ -735,6 +744,7 @@ function TimelineEditorShellCoreComponent({
   // document row above it, the readout with the scrubber below it.
   const previewOverlay = mobileSinglePane ? null : (
     <div
+      ref={previewRowRef}
       className={cn(
         'pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-3',
         // Keep Render clear of the app's pane tab in the touch sidebar.
@@ -745,7 +755,7 @@ function TimelineEditorShellCoreComponent({
       <div className="pointer-events-auto flex min-w-0 max-w-[min(75%,32rem)] flex-col items-start gap-1">
         {previewControls && (
           <div
-            className="flex min-w-0 max-w-full flex-wrap items-center gap-2"
+            className="flex min-w-0 max-w-full items-center gap-2"
             data-testid="video-editor-editor-navigation-controls"
           >
             {previewControls}
@@ -756,7 +766,7 @@ function TimelineEditorShellCoreComponent({
           <PlaybackTimecode />
         </span>
       </div>
-      <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
+      <div className="pointer-events-auto flex shrink-0 items-center justify-end gap-1">
         {showExpandVideo && (
           <Button
             type="button"
@@ -1155,13 +1165,6 @@ function TimelineEditorShellCoreComponent({
           <ExtensionManager />
         </DialogContent>
       </Dialog>
-      {isElementsOpen && (
-        <ElementsLibraryPanel
-          open={isElementsOpen}
-          onOpenChange={setIsElementsOpen}
-          onOpenCreationPrompt={() => openElementCreationPrompt("I'd like to create a new Remotion element.")}
-        />
-      )}
 
       {/* Host command palette overlay — only mount when open to avoid
           unnecessary context lookups that break in tests without providers. */}

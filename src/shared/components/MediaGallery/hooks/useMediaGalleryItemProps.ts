@@ -41,6 +41,8 @@ interface UseMediaGalleryItemFeaturesProps {
   onApplySettings?: (metadata: DisplayableMetadata | undefined) => void;
   onImageClick?: (image: GeneratedImageWithMetadata, modifiers?: { multiSelect: boolean }) => void;
   onContextMenu?: (event: MouseEvent, image: GeneratedImageWithMetadata) => void;
+  onAddToTimeline?: (generationId: string) => void;
+  addToTimelineDisabledReason?: string;
   isDeleting?: string | boolean | null;
 }
 
@@ -109,6 +111,8 @@ export function useMediaGalleryItemProps({
   onApplySettings,
   onImageClick,
   onContextMenu,
+  onAddToTimeline,
+  addToTimelineDisabledReason,
   isDeleting,
   selectedShotIdLocal,
   setSelectedShotIdLocal,
@@ -222,8 +226,20 @@ export function useMediaGalleryItemProps({
       onToggleStar,
       onImageClick,
       onContextMenu,
+      onAddToTimeline,
+      addToTimelineDisabledReason,
     }),
-    [onOpenLightbox, onDelete, onApplySettings, onDownloadImage, onToggleStar, onImageClick, onContextMenu],
+    [
+      onOpenLightbox,
+      onDelete,
+      onApplySettings,
+      onDownloadImage,
+      onToggleStar,
+      onImageClick,
+      onContextMenu,
+      onAddToTimeline,
+      addToTimelineDisabledReason,
+    ],
   );
 
   const itemLoading = useMemo<Omit<ItemLoading, 'shouldLoad' | 'isPriority' | 'isGalleryLoading'>>(

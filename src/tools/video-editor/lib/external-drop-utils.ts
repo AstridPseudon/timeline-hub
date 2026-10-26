@@ -142,34 +142,6 @@ export function isVideoFile(file: File): boolean {
     || ['.mp4', '.mov', '.webm', '.m4v', '.avi'].includes(extension);
 }
 
-export function handleTextToolDrop({
-  dataRef,
-  dropPosition,
-  insertAtTop,
-  handleAddTextAt,
-}: {
-  dataRef: MutableRefObject<TimelineData | null>;
-  dropPosition: TimelineDropPosition;
-  insertAtTop: boolean;
-  handleAddTextAt?: (trackId: string, time: number) => void;
-}): boolean {
-  if (!handleAddTextAt || !dataRef.current) {
-    return false;
-  }
-
-  let targetTrackId = dropPosition.isNewTrack ? undefined : dropPosition.trackId;
-  if (!targetTrackId) {
-    targetTrackId = createTrackForDrop(dataRef, 'visual', insertAtTop)?.trackId;
-  }
-
-  if (!targetTrackId) {
-    return true;
-  }
-
-  handleAddTextAt(targetTrackId, dropPosition.time);
-  return true;
-}
-
 /**
  * Places an effect-layer clip on a visual track. Shared by the desktop drop
  * handler and the editor's `onAddEffectLayerAt`, which has no drag position to resolve.

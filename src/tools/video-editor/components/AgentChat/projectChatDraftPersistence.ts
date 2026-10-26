@@ -4,14 +4,42 @@ export function sameProjectDraft<T>(left: ProjectDraftSnapshot<T>, right: Projec
   return left.text === right.text && JSON.stringify(left.queue) === JSON.stringify(right.queue);
 }
 
+/** What a draft write reports: the new revision, optionally with the snapshot actually written (after a rebase). */
+export type DraftWriteResult<T> = number | { revision: number; snapshot: ProjectDraftSnapshot<T> };
+
+/**
+ * Three-way union of queued rows by id. `base` is the last queue this composer knew was saved, `remote` is the
+ * server's current queue, `local` is what this composer holds. A row that was in `base` and is gone from `remote`
+ * was sent or removed elsewhere, so it is dropped (never resurrected into a second send); a row that is new on
+ * either side is kept. Local order wins; rows only the server has follow.
+ */
+export function mergeQueues<R extends { id: string }>(base: R[], remote: R[], local: R[]): R[] {
+  const baseIds = new Set(base.map(row => row.id));
+  const remoteIds = new Set(remote.map(row => row.id));
+  const kept = local.filter(row => remoteIds.has(row.id) || !baseIds.has(row.id));
+  const keptIds = new Set(kept.map(row => row.id));
+  return [...kept, ...remote.filter(row => !keptIds.has(row.id) && !baseIds.has(row.id))];
+}
+
 /** One local composer lifetime, retained while its last save finishes after unmount. */
 export class ProjectChatDraftPersistence<T> {
   mounted = true;
   private chain: Promise<void> = Promise.resolve();
   private requested = 0;
   private acknowledgedThrough = 0;
+  private inflight = 0;
 
   constructor(public revision: number, public saved: ProjectDraftSnapshot<T>) {}
+
+  /** No save is queued or running: the saved base is exactly what this composer last wrote or read. */
+  get idle(): boolean { return this.inflight === 0; }
+
+  /** Take another client's newer draft as this composer's base (the caller has checked the composer is idle). */
+  adopt(revision: number, saved: ProjectDraftSnapshot<T>): void {
+    this.revision = revision;
+    this.saved = saved;
+    this.acknowledgedThrough = this.requested;
+  }
 
   observe(revision: number, saved: ProjectDraftSnapshot<T>, local: ProjectDraftSnapshot<T>): void {
     // Never give divergent unsaved text a newer CAS token. Only an unchanged
@@ -23,18 +51,20 @@ export class ProjectChatDraftPersistence<T> {
     }
   }
 
-  save(snapshot: ProjectDraftSnapshot<T>, write: (revision: number) => Promise<number>): Promise<void> {
+  save(snapshot: ProjectDraftSnapshot<T>, write: (revision: number) => Promise<DraftWriteResult<T>>): Promise<void> {
     const request = ++this.requested;
+    this.inflight++;
     const pending = this.chain.catch(() => undefined).then(async () => {
       // An exact acknowledgement of newer local text supersedes older queued
       // snapshots; they must never overwrite that already durable text.
       if (request <= this.acknowledgedThrough || sameProjectDraft(snapshot, this.saved)) return;
-      const revision = await write(this.revision);
+      const result = await write(this.revision);
+      const revision = typeof result === 'number' ? result : result.revision;
       if (revision >= this.revision) {
         this.revision = revision;
-        this.saved = snapshot;
+        this.saved = typeof result === 'number' ? snapshot : result.snapshot;
       }
-    });
+    }).finally(() => { this.inflight--; });
     this.chain = pending;
     return pending;
   }

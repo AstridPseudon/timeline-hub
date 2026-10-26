@@ -27,9 +27,13 @@ export interface PanesStoreState {
   isGenerationsPaneOpen: boolean;
   isLightboxOpen: boolean;
   setIsGenerationsPaneOpen: (isOpen: boolean) => void;
+  /** Maximum (user-set or default) Generations pane height. */
   generationsPaneHeight: number;
+  /** Height the Generations content reports it needs; null when unknown. */
+  generationsPaneContentHeight: number | null;
   effectiveGenerationsPaneHeight: number;
   setGenerationsPaneHeight: (height: number) => void;
+  setGenerationsPaneContentHeight: (height: number | null) => void;
   isEditorPaneLocked: boolean;
   setIsEditorPaneLocked: (isLocked: boolean) => void;
   isEditorPaneOpen: boolean;
@@ -92,6 +96,23 @@ function getViewportHeight(): number {
   return window.innerHeight;
 }
 
+/**
+ * The Generations pane height to aim for: its cap, shrunk to the content
+ * height when the content reports a smaller one.
+ */
+export function preferredGenerationsHeight(cap: number, content: number | null): number {
+  return content == null ? cap : Math.min(cap, content);
+}
+
+function normalizeContentHeight(height: number | null): number | null {
+  if (height == null || !Number.isFinite(height) || height <= 0) {
+    return null;
+  }
+
+  const rounded = Math.round(height);
+  return rounded > 0 ? rounded : null;
+}
+
 function getEffectivePaneHeights(params: {
   viewportHeight: number;
   idealEditorPaneHeight: number;
@@ -130,6 +151,7 @@ function deriveLayout(params: {
   viewportHeight: number;
   isLightboxOpen?: boolean;
   generationsPaneHeight: number;
+  generationsPaneContentHeight: number | null;
   isGenerationsPaneLocked: boolean;
   isGenerationsPaneOpen: boolean;
   isEditorPaneLocked: boolean;
@@ -137,7 +159,8 @@ function deriveLayout(params: {
 }) {
   const {
     viewportHeight,
-    generationsPaneHeight,
+    generationsPaneHeight: generationsPaneCap,
+    generationsPaneContentHeight,
     isGenerationsPaneLocked,
     isGenerationsPaneOpen,
     isEditorPaneLocked,
@@ -148,6 +171,7 @@ function deriveLayout(params: {
   const editorVisible = isEditorPaneLocked || isEditorPaneOpen;
   const generationsVisible = isGenerationsPaneLocked || isGenerationsPaneOpen;
   const editorPaneHeight = Math.round(viewportHeight * 0.5);
+  const preferred = preferredGenerationsHeight(generationsPaneCap, generationsPaneContentHeight);
 
   // Preserve the preferred gallery height so closing the viewer restores it.
   // Both fixed surfaces use this effective height to meet without overlapping.
@@ -155,7 +179,7 @@ function deriveLayout(params: {
     return {
       editorPaneHeight,
       effectiveEditorPaneHeight: editorPaneHeight,
-      effectiveGenerationsPaneHeight: Math.min(generationsPaneHeight, PANE_CONFIG.dimensions.LIGHTBOX_GALLERY_HEIGHT),
+      effectiveGenerationsPaneHeight: Math.min(preferred, PANE_CONFIG.dimensions.LIGHTBOX_GALLERY_HEIGHT),
     };
   }
 
@@ -165,7 +189,9 @@ function deriveLayout(params: {
     return {
       editorPaneHeight,
       effectiveEditorPaneHeight: editorPaneHeight,
-      effectiveGenerationsPaneHeight: viewportHeight - editorPaneHeight,
+      effectiveGenerationsPaneHeight: generationsPaneContentHeight == null
+        ? viewportHeight - editorPaneHeight
+        : Math.min(viewportHeight - editorPaneHeight, preferred),
     };
   }
 
@@ -173,14 +199,14 @@ function deriveLayout(params: {
     return {
       editorPaneHeight,
       effectiveEditorPaneHeight: editorPaneHeight,
-      effectiveGenerationsPaneHeight: generationsPaneHeight,
+      effectiveGenerationsPaneHeight: preferred,
     };
   }
 
   const { effectiveEditorPaneHeight, effectiveGenerationsPaneHeight } = getEffectivePaneHeights({
     viewportHeight,
     idealEditorPaneHeight: editorPaneHeight,
-    generationsPaneHeight,
+    generationsPaneHeight: preferred,
   });
 
   return {
@@ -193,9 +219,11 @@ function deriveLayout(params: {
 function createInitialSnapshot() {
   const viewportHeight = getViewportHeight();
   const generationsPaneHeight = PANE_CONFIG.dimensions.DEFAULT_HEIGHT;
+  const generationsPaneContentHeight = null;
   const layout = deriveLayout({
     viewportHeight,
     generationsPaneHeight,
+    generationsPaneContentHeight,
     isGenerationsPaneLocked: false,
     isGenerationsPaneOpen: false,
     isLightboxOpen: false,
@@ -209,6 +237,7 @@ function createInitialSnapshot() {
     isGenerationsPaneOpen: false,
     isLightboxOpen: false,
     generationsPaneHeight,
+    generationsPaneContentHeight,
     effectiveGenerationsPaneHeight: layout.effectiveGenerationsPaneHeight,
     isEditorPaneLocked: false,
     isEditorPaneOpen: false,
@@ -261,6 +290,7 @@ function buildBootstrappedState(
   currentState: Pick<
     PanesStoreState,
     | 'generationsPaneHeight'
+    | 'generationsPaneContentHeight'
     | 'shotsPaneWidth'
     | 'tasksPaneWidth'
     | 'activeTaskId'
@@ -271,6 +301,7 @@ function buildBootstrappedState(
     viewportHeight: input.viewportHeight,
     isLightboxOpen: input.isLightboxOpen,
     generationsPaneHeight: currentState.generationsPaneHeight,
+    generationsPaneContentHeight: currentState.generationsPaneContentHeight,
     isGenerationsPaneLocked: input.locks.gens,
     isGenerationsPaneOpen: input.isGenerationsPaneOpen,
     isEditorPaneLocked: input.locks.editor,
@@ -283,6 +314,7 @@ function buildBootstrappedState(
     isGenerationsPaneOpen: input.isGenerationsPaneOpen,
     isLightboxOpen: input.isLightboxOpen ?? false,
     generationsPaneHeight: currentState.generationsPaneHeight,
+    generationsPaneContentHeight: currentState.generationsPaneContentHeight,
     effectiveGenerationsPaneHeight: layout.effectiveGenerationsPaneHeight,
     isEditorPaneLocked: input.locks.editor,
     isEditorPaneOpen: input.isEditorPaneOpen,
@@ -302,6 +334,7 @@ function buildStateWithUpdatedGenerationsHeight(
     PanesStoreState,
     | 'availability'
     | 'generationsPaneHeight'
+    | 'generationsPaneContentHeight'
     | 'shotsPaneWidth'
     | 'tasksPaneWidth'
     | 'activeTaskId'
@@ -315,12 +348,14 @@ function buildStateWithUpdatedGenerationsHeight(
     | 'isTasksPaneOpen'
   >,
   generationsPaneHeight: number,
+  generationsPaneContentHeight: number | null,
 ) {
   const viewportHeight = activeBootstrapSnapshot?.viewportHeight ?? getViewportHeight();
   const layout = deriveLayout({
     viewportHeight,
     isLightboxOpen: state.isLightboxOpen,
     generationsPaneHeight,
+    generationsPaneContentHeight,
     isGenerationsPaneLocked: state.isGenerationsPaneLocked,
     isGenerationsPaneOpen: state.isGenerationsPaneOpen,
     isEditorPaneLocked: state.isEditorPaneLocked,
@@ -332,6 +367,7 @@ function buildStateWithUpdatedGenerationsHeight(
     isGenerationsPaneLocked: state.isGenerationsPaneLocked,
     isGenerationsPaneOpen: state.isGenerationsPaneOpen,
     generationsPaneHeight,
+    generationsPaneContentHeight,
     effectiveGenerationsPaneHeight: layout.effectiveGenerationsPaneHeight,
     isEditorPaneLocked: state.isEditorPaneLocked,
     isEditorPaneOpen: state.isEditorPaneOpen,
@@ -362,7 +398,17 @@ const panesStore = createStore<PanesStoreState>((set) => ({
         return state;
       }
 
-      return buildStateWithUpdatedGenerationsHeight(state, height);
+      return buildStateWithUpdatedGenerationsHeight(state, height, state.generationsPaneContentHeight);
+    });
+  },
+  setGenerationsPaneContentHeight: (height) => {
+    const normalized = normalizeContentHeight(height);
+    set((state) => {
+      if (state.generationsPaneContentHeight === normalized) {
+        return state;
+      }
+
+      return buildStateWithUpdatedGenerationsHeight(state, state.generationsPaneHeight, normalized);
     });
   },
   setIsEditorPaneLocked: (isLocked) => {
