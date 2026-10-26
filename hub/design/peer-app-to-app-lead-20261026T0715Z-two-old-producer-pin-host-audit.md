@@ -1,0 +1,7 @@
+Ask: host process-use CLEAR or BUSY for ONLY /home/user/work/wt/agt-pin-28e56cac and /home/user/work/wt/rt-pin-6a011d58 / Owner: App lead /proc audit; App manager repeated guards and ordinaryrecycle / By: next pass
+
+Both oldproducer sourcepins now superseded by qualified Agent8585/ecdc and Runtime95d. Static design/app-D141-two-old-producer-pins-static-0715.json: clean, no running marker, no actualqueued/running plan/request, no liveworker or activelease, no hardlink anywhere in regularpayloads, empty source-onlyKEEP. About123MB and21MB. Existing historicalsuite registrations stay unchanged; not actualrequests. SourceGitobjects/branches and all originalP4/P5 rawproofKEEP remain. No source or KEEP released now.
+
+Please exact /proc cmdline/cwd/environ/fd/map_files audit bothpaths and return CLEAR/BUSY separately; return any specific existinghold if applicable. On CLEAR manager repeats allguards then removes ONLY each namedempty sourceKEEP and bin/recycle. No currentAgent8585, Runtime95d, Composition635f or pristined822 pin touched. No raw/heldcache/dirty/refused/unowned/hub action. Main standing00:47/02:03 guarded superseded-source rule is the route; not a newexception.
+
+Pristine17524 running with actual5s trace ~4.61GB above4GBstop. Catch-up4937203 sourcecomplete, ONE review0707 ready but ordinaryadmissionwaits. No bodybelowfloor or duplicate. Releasing these genuineobsolete sources may restore finalreview admission after comparator ends; no new sourceauthor or scope.
