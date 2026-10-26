@@ -1,0 +1,244 @@
+{
+  "utc": "2026-10-26T13:48:43.736743+00:00",
+  "scope": "App receiving of genuine Runtime source and independent bounded CAS qualification; no local canonical inventory or historical monitor claim",
+  "publication_sha256": "1fe9f4298ec0f3afe74cc6b42efe7bd27fe8b0985f01a3e586b489de9955c4bc",
+  "independent_status": "PASS_BOUNDED_CAS",
+  "all_published_files_exact": true,
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-report.md",
+      "sha256": "a79ac0168ca166ab11521e08a7ef253d7c322d203e1a8bb9dbed14af7b81ea5f",
+      "bytes": 1366,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-disk-trace.txt",
+      "sha256": "3911407605ba0a133bd6a00abf73ccc40eff11102fcf910fbd69d8c7a50dfea9",
+      "bytes": 182,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-findings.md",
+      "sha256": "0cff2fe7c85e11970f8f5533b0f2b24041f3eaeb53e2093b185f50d5a95fbb6a",
+      "bytes": 1685,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-handoff.md",
+      "sha256": "6903584f0ac869c9425b6b5387225b4a52edd14342247c4ff1a64ce2921be2e5",
+      "bytes": 540,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-review.json",
+      "sha256": "677bd7b95e240fd04be77ac4a2f12269a729d9b18afe6d7fc7239c239fc0cff7",
+      "bytes": 8962,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-sampler-lifecycle.json",
+      "sha256": "d566bebb7e971251d6dc48b3b7d9ff0778a2859c72b98ca04df6438cc9f874d1",
+      "bytes": 196,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-source-manifest.json",
+      "sha256": "752cdfdb9a830c9414e7e818467a6b57951bd5825d35ea5663481b3084101f86",
+      "bytes": 23424,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-review-1252-validation.md",
+      "sha256": "72360a5081b9c5e24f31eec64e521b15798ab6fc4f9e69042dc273f031b60be7",
+      "bytes": 1175,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-P1-P3-note.md",
+      "sha256": "db6be60c62aacc0e978c53e7671544dbf15277378b37745db2a3cbb4137b3ab7",
+      "bytes": 473,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-candidate-README.template.md",
+      "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "bytes": 47478,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-candidate-gate-results.md",
+      "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "bytes": 43666,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-check_notes.py",
+      "sha256": "3b93e0532428009e1c29bc7f360c613507baf8ed18b45ba40314bee448ed2f6c",
+      "bytes": 12288,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-disk-trace.txt",
+      "sha256": "24494fe4e01f2e97fba31f16871e8bbe12693ac7496d71f3870ad8e2f72feadf",
+      "bytes": 1895,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-handoff.md",
+      "sha256": "82f0e255b1b173f64aff7ea840fffcdaa5e8caf06456d30dce4dddc5048a519a",
+      "bytes": 572,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-sampler-lifecycle.json",
+      "sha256": "9ea7f432c0d8c77821771560853d0ca43f5ad7d22cfb12e9218bcd3ac04c75d8",
+      "bytes": 868,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-source-manifest.json",
+      "sha256": "42758970f892634304611981435f21d5d2197857fbd53c9b20697730618df4a1",
+      "bytes": 39347,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-validation.md",
+      "sha256": "e3c6792b5ba096b7908fbbbc74d48ac601d6d7b69d259068b77193797a7242fb",
+      "bytes": 1110,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-1307-report.md",
+      "sha256": "0ba015f75ab79158b853c6111c795fd87fb3125b2517d241c51d24e688b7f67d",
+      "bytes": 1044,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-backups-README.template.md",
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "bytes": 43978,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-backups-gate-results.md",
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "bytes": 39916,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-disk-trace.txt",
+      "sha256": "f1a090451adc125fde8282cb576e929d33e9c27a6de6fca52c9c68697186b380",
+      "bytes": 2559,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-handoff.md",
+      "sha256": "18ea40c33c8d817befde0aa3aeaf99dc30ff1540d6f028d3196f4611fd377cb4",
+      "bytes": 729,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-installation.json",
+      "sha256": "ae0eb0931490268896f9fe1f1ed4c5f5166aca3e93edb8a37930df1ac1a4d53d",
+      "bytes": 78641,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-outside-after.json",
+      "sha256": "15c72550d1f7305a791a5390c5589be83fc22c45833aa738af72ccb215138401",
+      "bytes": 172041,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-outside-before.json",
+      "sha256": "0257be1dec7a6701f437cd84126864159e6c1c0a204a86fba202fe52323c38a2",
+      "bytes": 172033,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-sampler-lifecycle.json",
+      "sha256": "6abb05353305354dbd4e20be7dfb8975c4b2cc183215ef24c8c1f989f48df34f",
+      "bytes": 962,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-source-manifest.json",
+      "sha256": "255a48a8de03e98571d6b6b1a0a481f2d6390c30fd950fdbec00926f1db28f6f",
+      "bytes": 78656,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-validation.md",
+      "sha256": "c3a1983d270e536ba67be0e2cb5e43965c3fdce0c0c9ab17eb2b4e0a6527ea7c",
+      "bytes": 1404,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-install-1252-report.md",
+      "sha256": "a3e7b6d1d7b6414b5fbb9d188e0b49a115d0d1bdcc3b7ee4cf8765703c27a385",
+      "bytes": 1092,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-disk-trace.txt",
+      "sha256": "e2d5f42f69c7e40d050594bd12c4cca2b2c96027f187ecb761cf6886617e1bf0",
+      "bytes": 165,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-findings.md",
+      "sha256": "789b6956d1339880f51c7b6de25118614d2bb141a289ed2c815b47f02c5eb617",
+      "bytes": 2201,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-handoff.md",
+      "sha256": "295544b2cd93cc28ca4047e64520ae8eec0dee7c6752b049efb759c7804e53fe",
+      "bytes": 972,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-review.json",
+      "sha256": "6b2052b9677eaee42c8dea2459903149179e0f615989596379fb0aac8ae5c2ac",
+      "bytes": 9014,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-sampler-lifecycle.json",
+      "sha256": "957fcd8896c6d21ed5f2734140490342a2f7848ac3ab604046b065397c01e45b",
+      "bytes": 1451,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-source-manifest.json",
+      "sha256": "da06efbaa0895a15e06c74da0517348722b5c7d55a7dcdf12dc71d0144bb932d",
+      "bytes": 29410,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-validation.md",
+      "sha256": "dce3f7141797a0f1f3a78239d881c5cdf773822e004813c515ef72266ca78c7e",
+      "bytes": 1178,
+      "exact": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-return-review-1310-report.md",
+      "sha256": "91e485b2a8e65edca2d042e751e0c95d963f876f845209aa5e7cfceb17acb26a",
+      "bytes": 931,
+      "exact": true
+    }
+  ],
+  "missing": [],
+  "canonical_hashes_as_qualified_on_Main": {
+    "README.template.md": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+    "gate-results.md": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb"
+  },
+  "limitations": [
+    "Installer initial inventory guard refused before writes when it counted the two authorized targets; the corrected qualified method excluded those targets and completed one CAS.",
+    "Installer, author-return, and protected-review histories retain initial sampler/first-tool coverage gaps; no historical monitor PASS is inferred.",
+    "No product tests, types, lint, full suite, build, REG0, final pin, service, or ZIP claim was made.",
+    "Independent own monitor is one sample only, not continuous whole-worker coverage.",
+    "Temporal BOARD-HEADER drift was observed and fresh readonly checks still PASS."
+  ],
+  "new_D141jj_base_disclosure": "separately requested in existing Runtime notes lineage; not installed by this historical packet"
+}
