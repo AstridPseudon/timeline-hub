@@ -1,0 +1,177 @@
+{
+  "schema": "d141cc-parent-admitted-1121-controller-receipt-v1",
+  "task": "app-P-D141cc-parent-admitted-1121",
+  "manager_admission": {
+    "accepted_once": true,
+    "free_bytes_at_dispatch": 5765332992,
+    "threshold_bytes": 5200000000,
+    "stop_threshold_bytes": 4000000000
+  },
+  "dispatch_index": 1,
+  "selector": "p2-parent-move",
+  "attempt_scope": "original",
+  "target": "app-pin-82e9e13d",
+  "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "source_tuple": {
+    "app": {
+      "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "observed_head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "observed_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "status": "",
+      "detached": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "receipt_sha256": "1a7112d822795b303def0029303dd74172c9d39e3e87b0cb76e95aa7094343b4",
+      "receipt_text": "exists: /home/user/work/wt/app-pin-82e9e13d at 82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+    },
+    "agent": {
+      "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "observed_head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "observed_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "status": "",
+      "detached": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "receipt_sha256": "f5cfef38f4678594a2032d10e38a385aa39b0781767eab462fce476a8fc8a9df",
+      "receipt_text": "exists: /home/user/work/wt/agt-pin-ecdc242e at ecdc242ed9b673f641759ecf029f95e89a2c6f92"
+    },
+    "runtime": {
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "observed_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "observed_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "status": "",
+      "detached": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-95d98f038320d5d46bd679ac000ab3e15825c935",
+      "receipt_sha256": "9c51862f5c34ea1760de2a48699a65a4b8463494e2feb1a97ed772af48a274e9",
+      "receipt_text": "exists: /home/user/work/wt/rt-pin-95d98f03 at 95d98f038320d5d46bd679ac000ab3e15825c935"
+    },
+    "composition": {
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "observed_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "observed_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "status": "",
+      "detached": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+      "receipt_text": "exists: /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    }
+  },
+  "command_sha256": {
+    "preflight": "becf69527edc1be7c12b457ba0754ac8d63f942a24d1a1b52708d90490963036",
+    "normal": "c77b6a97e0807d43a2590624e3d47590a5e76d5ed5841f7f214f3aa9176c8f04"
+  },
+  "row_sha256": {
+    "preflight": "5b3f746b01dc3c18a84c21737e82841b108d04d637000adfbc901825f432d83f",
+    "normal": "ff98c12644fed8ba786a453ae49fde0ba7648160e8a2c1bf7ab75fc07d3c898d"
+  },
+  "argv": [
+    "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "--max-old-space-size=6144",
+    "--import",
+    "tsx",
+    "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "p2-parent-move",
+    "--submit"
+  ],
+  "cwd": "/home/user/work/app",
+  "normal_recipe": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-parent-move'",
+  "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json",
+  "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stdout.log",
+  "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stderr.log",
+  "native_sessions": {
+    "submit": {
+      "id": 59630,
+      "exit": 0,
+      "reaped": true
+    },
+    "wait_test": {
+      "id": 51172,
+      "exit": 0,
+      "reaped": true
+    }
+  },
+  "custody": {
+    "initial_not_started": {
+      "action": "FIRST_NATIVE_INVOCATION_ONLY",
+      "native_submit_allowed": true
+    },
+    "post_return_bound": {
+      "action": "ADOPT",
+      "status": "running",
+      "normal_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "native_submit_allowed": false
+    },
+    "terminal": {
+      "action": "ADOPT",
+      "status": "pass",
+      "normal_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "native_submit_allowed": false,
+      "body_verdict": "UNVERIFIED"
+    }
+  },
+  "results": {
+    "preflight": {
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+      "status": "pass",
+      "exit": "0",
+      "request_sha256": "8f8a6497cf8cd446e9ecea0e82a686790ffcdfb8eca27c48c97340107b44dd3f",
+      "snap_sha256": "aff5baa24b6acb9fa60e612b746fab4ed154993288489df8f09783ee3f5751ce",
+      "request": {
+        "target": "app-pin-82e9e13d",
+        "repo": "app",
+        "suite": "full-d141-p2-parent-move-82e9e13d-submit-preflight",
+        "files": "",
+        "nocache": "1",
+        "requested": "2026-10-26T11:22:42Z"
+      },
+      "snap": {
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "key": "eef8804e504a717036cb5b0161f149c8",
+        "worktree": "/home/user/work/wt/app-pin-82e9e13d"
+      },
+      "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487/KEEP"
+    },
+    "normal": {
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "status": "pass",
+      "exit": "0",
+      "request_sha256": "ba65fa644e8055986bfb915cb25c3ce213ea23f29babcba55230464e131b2e6e",
+      "snap_sha256": "817a8d487530b0419d2a75cae3788e0d3f459cb6ed38818e175dd69f4b1f426d",
+      "request": {
+        "target": "app-pin-82e9e13d",
+        "repo": "app",
+        "suite": "full-d141-p2-parent-move-82e9e13d-submit",
+        "files": "",
+        "nocache": "1",
+        "requested": "2026-10-26T11:23:12Z"
+      },
+      "snap": {
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "key": "84d08eb3b6a12f6662fb1225ca3d12cd",
+        "worktree": "/home/user/work/wt/app-pin-82e9e13d"
+      },
+      "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601/KEEP"
+    },
+    "normal_summary_sha256": "b9b39414ada69d0a4366e4d0d2c22dfd2d0f3e18a50fbd1050dbfd9bcf4000d6"
+  },
+  "safety": {
+    "one_native_submit": true,
+    "no_request_test_direct": true,
+    "no_second_submit": true,
+    "no_selector_retry": true,
+    "no_stops_invoked": true
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "schema": "d141cc-parent-admitted-1121-progress-v1",
+  "task": "app-P-D141cc-parent-admitted-1121",
+  "selector": "p2-parent-move",
+  "attempt_scope": "original",
+  "target": "app-pin-82e9e13d",
+  "status": "terminal_pass",
+  "native_session": 59630,
+  "native_session_exit": 0,
+  "wait_session": 51172,
+  "wait_session_exit": 0,
+  "sampler_session": 42265,
+  "sampler_reaped": true,
+  "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json",
+  "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/output",
+  "preflight_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+  "normal_id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+  "genuine_ids": [
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+      "status": "pass",
+      "exit": "0",
+      "request_sha256": "8f8a6497cf8cd446e9ecea0e82a686790ffcdfb8eca27c48c97340107b44dd3f",
+      "snap_sha256": "aff5baa24b6acb9fa60e612b746fab4ed154993288489df8f09783ee3f5751ce",
+      "request": {
+        "target": "app-pin-82e9e13d",
+        "repo": "app",
+        "suite": "full-d141-p2-parent-move-82e9e13d-submit-preflight",
+        "files": "",
+        "nocache": "1",
+        "requested": "2026-10-26T11:22:42Z"
+      },
+      "snap": {
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "key": "eef8804e504a717036cb5b0161f149c8",
+        "worktree": "/home/user/work/wt/app-pin-82e9e13d"
+      },
+      "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487/KEEP"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "status": "pass",
+      "exit": "0",
+      "request_sha256": "ba65fa644e8055986bfb915cb25c3ce213ea23f29babcba55230464e131b2e6e",
+      "snap_sha256": "817a8d487530b0419d2a75cae3788e0d3f459cb6ed38818e175dd69f4b1f426d",
+      "request": {
+        "target": "app-pin-82e9e13d",
+        "repo": "app",
+        "suite": "full-d141-p2-parent-move-82e9e13d-submit",
+        "files": "",
+        "nocache": "1",
+        "requested": "2026-10-26T11:23:12Z"
+      },
+      "snap": {
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "key": "84d08eb3b6a12f6662fb1225ca3d12cd",
+        "worktree": "/home/user/work/wt/app-pin-82e9e13d"
+      },
+      "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601/KEEP"
+    }
+  ],
+  "normal_status": "pass",
+  "normal_exit": "0",
+  "normal_duration_seconds": 237,
+  "source_tuple": {
+    "app": {
+      "checkout": "/home/user/work/app",
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+    },
+    "agent": {
+      "checkout": "/home/user/work/agent",
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+    },
+    "runtime": {
+      "checkout": "/home/user/work/runtime",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    },
+    "composition": {
+      "checkout": "/home/user/work/composition",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-82e9e13d",
+    "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+    "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "suite": "full-d141-p2-parent-move-82e9e13d-submit",
+  "native_submit_invocations": 1,
+  "normal_request_recreations": 0,
+  "alternate_selectors_started": []
+}

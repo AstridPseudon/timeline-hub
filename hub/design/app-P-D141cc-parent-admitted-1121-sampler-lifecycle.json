@@ -1,0 +1,17 @@
+{
+  "schema": "d141cc-parent-admitted-1121-sampler-lifecycle-v1",
+  "session_id": 42265,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/disk-trace.txt",
+  "foreground_retained": true,
+  "first_sample_timestamp": "2026-10-26T11:21:41.460949605Z",
+  "last_sample_timestamp": "2026-10-26T11:27:37.407272522Z",
+  "started_before_source_inspection_and_request": true,
+  "stop_signal": "Ctrl-C via retained write_stdin session",
+  "stop_result": "session reaped with exit 1 after SIGINT",
+  "explicitly_stopped": true,
+  "waited": true,
+  "reaped": true,
+  "detached_assumption": false,
+  "native_session_id": 59630,
+  "wait_session_id": 51172
+}

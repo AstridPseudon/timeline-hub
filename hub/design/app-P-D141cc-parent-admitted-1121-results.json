@@ -1,0 +1,55 @@
+{
+  "schema": "d141cc-parent-admitted-1121-results-v1",
+  "selector": "p2-parent-move",
+  "attempt_scope": "original",
+  "target": "app-pin-82e9e13d",
+  "preflight": {
+    "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+    "status": "pass",
+    "exit": "0",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487"
+  },
+  "normal": {
+    "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+    "status": "pass",
+    "exit": "0",
+    "duration_seconds": 237,
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+    "summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601/summary",
+    "summary_sha256": "b9b39414ada69d0a4366e4d0d2c22dfd2d0f3e18a50fbd1050dbfd9bcf4000d6"
+  },
+  "checks": [
+    {
+      "name": "D66 normal launch, native seed, Agent identity and authoritative history",
+      "status": "pass"
+    },
+    {
+      "name": "D28 mounted readiness",
+      "spec": "tests/e2e/local/three-products.mounted-readiness.spec.ts:268",
+      "status": "pass",
+      "duration_seconds": 29.2
+    },
+    {
+      "name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "spec": "tests/e2e/local/three-products.p2-tour.spec.ts:746",
+      "status": "pass",
+      "duration_seconds": 41.5
+    }
+  ],
+  "service_summary": "1 passed readiness; 1 passed parent-move journey",
+  "native_submission": {
+    "invocations": 1,
+    "native_exit": 0,
+    "stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stdout.log",
+    "stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-parent-admitted-1121/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stderr.log"
+  },
+  "raw_keep": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487/KEEP",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601/KEEP"
+  ],
+  "scope_notes": [
+    "No overall P2/platform GO claim.",
+    "No final-build or ZIP claim.",
+    "No other selector dispatched."
+  ]
+}
