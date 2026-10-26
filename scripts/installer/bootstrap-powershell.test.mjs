@@ -218,7 +218,7 @@ async function scenario(fn) {
   const context = await fixture();
   try {
     const harness = await context.powershell();
-    await fn(context, (args = [], env = {}) => context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness, ...args], env));
+    await fn(context, (args = [], env = {}) => context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', harness], { ...env, MOCK_INSTALLER_ARGS: JSON.stringify(args) }));
   } finally { await context.cleanup(); }
 }
 function alive(result) {

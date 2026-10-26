@@ -249,9 +249,11 @@ Copy-Item -LiteralPath $env:MOCK_UV_SOURCE -Destination (Join-Path $env:UV_UNMAN
     }
 }
 if ($env:MOCK_PROCESSOR_ARCHITECTURE) { $env:PROCESSOR_ARCHITECTURE = $env:MOCK_PROCESSOR_ARCHITECTURE }
+$InstallerArgs = @()
+if ($env:MOCK_INSTALLER_ARGS) { $InstallerArgs = @(ConvertFrom-Json -InputObject $env:MOCK_INSTALLER_ARGS) }
 try {
-    if ($args.Count) {
-        & ([scriptblock]::Create([IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT))) @args
+    if ($InstallerArgs.Count) {
+        & ([scriptblock]::Create([IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT))) @InstallerArgs
     } else {
         Invoke-Expression ([IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT))
     }
