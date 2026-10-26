@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-source-manifest.v1",
+  "base_commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+  "changed_paths": [
+    "tests/e2e/local/support/app.ts",
+    "tests/e2e/local/support/d141j-visibility.test.ts"
+  ],
+  "working_tree_blob_hashes": {
+    "tests/e2e/local/support/app.ts": "887c76916b1a549cec7a14ad61cec55820a2de39",
+    "tests/e2e/local/support/d141j-visibility.ts": "ff28bbab3f02b5e0d03b3b3312d124bbeec62edb",
+    "tests/e2e/local/support/d141j-visibility.test.ts": "ad29119e152423401bef4be63e65de977f5d6537"
+  },
+  "popup_spec_changed": false,
+  "native_run": false,
+  "registration": false
+}

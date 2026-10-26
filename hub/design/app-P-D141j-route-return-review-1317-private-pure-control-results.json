@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.app.d141j.private-pure-control-results.v1",
+  "registration": false,
+  "request_executed": false,
+  "body_executed": false,
+  "control_script": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/private-rebuild-route.mjs",
+  "builder": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+  "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+  "control_invocation": {
+    "argv": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/private-rebuild-route.mjs"],
+    "cwd": "/home/user/work/wt/app-P-D141j-route-return-review-1317",
+    "exit": 0
+  },
+  "source_tuple": {
+    "app": {"sha": "3bb09fc656c6b8a81243f8f796115013b56d621f", "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73", "checkout": "/home/user/work/wt/app-pin-3bb09fc6"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "prospective_service": {
+    "target": "app-pin-3bb09fc6",
+    "name": "p2-popup-add",
+    "cwd": "/home/user/work/wt/app-pin-3bb09fc6",
+    "preflight_bytes": 1184,
+    "preflight_sha256": "f00719b9e0f95e31ef66038796c49723dc408fdce85f530607a3a59b0d112365",
+    "normal_bytes": 1172,
+    "normal_sha256": "5cdd8db6eb6b1eac72eae8b37af7cc7efdf8542c425a1f54427eb1066df979e9",
+    "normal_contains": "D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03'",
+    "env": {
+      "D66_APP_SHA": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+      "D66_APP_TREE": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+      "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS": ""
+    },
+    "argv_normal": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "p2-popup-add"],
+    "argv_preflight": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "p2-popup-add", "--preflight"]
+  },
+  "source_blob_hashes_verified": true,
+  "recipe_bytes_hand_edited": false
+}

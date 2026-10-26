@@ -1,0 +1,27 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-control.v1",
+  "scope": "A3/P2 private observational test harness",
+  "env": {
+    "name": "TIMELINE_D141J_VISIBILITY_CAPTURE",
+    "format": "JSON object with a non-empty expectedOccurrenceId string of at most 256 characters",
+    "example": "{\"expectedOccurrenceId\":\"<real occurrence id>\"}",
+    "default": "disabled",
+    "malformed": "fail closed to the ordinary fixture path"
+  },
+  "enabled_lifecycle": [
+    "existing mounted page fixture enters",
+    "browser evaluate dynamically imports /src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+    "existing collector is created and installed before the test body can mount/read",
+    "test body runs against the same page",
+    "snapshot is extracted and attached as d141j-visibility.json",
+    "collector is uninstalled in finally",
+    "existing fixture closes its one page"
+  ],
+  "retention": {
+    "pass": "retained before page close",
+    "fail": "retained before page close",
+    "empty": "preserved as empty events, never promoted to a semantic pass",
+    "capture_failure": "retained as unavailable without preventing cleanup"
+  },
+  "production_behavior": "unchanged when the env is absent or malformed"
+}

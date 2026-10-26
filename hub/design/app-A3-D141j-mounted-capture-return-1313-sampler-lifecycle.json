@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.worker.disk-sampler.v1",
+  "sampler": "foreground df -Pk sampler, three samples at five-second intervals",
+  "output": "evidence/disk-trace.txt",
+  "samples": 3,
+  "interval_seconds": 5,
+  "available_1024_block_samples": [4560108, 4560108, 4560104],
+  "stop_threshold_1024_blocks": 4194304,
+  "status": "completed",
+  "over_threshold": true,
+  "native_or_heavy_work": false
+}

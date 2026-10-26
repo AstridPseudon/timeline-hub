@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.app.d141j.review-sampler-lifecycle.v1",
+  "duration_seconds": 5,
+  "pid": 10,
+  "wait_status": 0,
+  "post_wait_alive": false,
+  "explicit_stop": false,
+  "reaped": true,
+  "available_kb_after": 4395860,
+  "stop_floor_kb": 4194304,
+  "status": "PASS",
+  "limits": {"native_trace_seconds": 5, "poll_seconds_max": 60, "timeout_minutes": 180, "heavy_concurrency": 1}
+}

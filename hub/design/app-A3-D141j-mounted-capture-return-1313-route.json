@@ -1,0 +1,11 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-route.v1",
+  "status": "source-ready-private-candidate",
+  "enable": "TIMELINE_D141J_VISIBILITY_CAPTURE='{\"expectedOccurrenceId\":\"<real occurrence id>\"}' <existing targeted mounted Playwright command>",
+  "extract": "read the attached d141j-visibility.json from the Playwright test result; events are the unchanged browser collector snapshot",
+  "retention": "the shared app page fixture retains and attaches before its existing page.close path on PASS and FAIL",
+  "ordinary_route": "unset TIMELINE_D141J_VISIBILITY_CAPTURE",
+  "malformed_route": "any invalid JSON, missing/non-string/blank/overlong expectedOccurrenceId is inert",
+  "native_run": "NOTRUN by instruction",
+  "semantic_claim": "NONE; an empty or absent event group remains honest and original checker outcomes remain authoritative"
+}

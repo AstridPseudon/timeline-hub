@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-source-map.v1",
+  "coordinates": {
+    "app_fixture_config": "tests/e2e/local/support/app.ts:34-50",
+    "app_fixture_wrapper": "tests/e2e/local/support/app.ts:62-72",
+    "real_shared_fixture_assignment": "tests/e2e/local/support/app.ts:211",
+    "browser_installer_and_snapshot": "tests/e2e/local/support/d141j-visibility.ts:38-60",
+    "artifact_retention_and_finally": "tests/e2e/local/support/d141j-visibility.ts:121-146",
+    "fixture_controls": "tests/e2e/local/support/d141j-visibility.test.ts:145-224",
+    "existing_four_field_controls": [
+      "src/tools/video-editor/adapters/app/useAstridShotsHost.test.tsx",
+      "src/tools/video-editor/hooks/useShotGroups.test.ts",
+      "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx"
+    ]
+  },
+  "ordering_control": [
+    "fixture-enter",
+    "evaluate:install",
+    "test-body",
+    "evaluate:snapshot",
+    "attach",
+    "evaluate:uninstall",
+    "page-close"
+  ],
+  "protected_untouched": [
+    "tests/e2e/local/three-products.p2-popup.spec.ts",
+    "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+    "checker/product emitters",
+    "protocol/schema/package/pins/generated files"
+  ]
+}
