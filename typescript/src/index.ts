@@ -1,11 +1,4 @@
-/**
- * @banodoco/timeline-composition
- *
- * Sprint 5: real composition + theme-api + plugin registry. The Banodoco
- * CLI render path imports `TimelineComposition` from here; Reigh's
- * TimelineRenderer imports the EFFECT_REGISTRY-style dispatch entries
- * via the codegenned `registry.generated.ts`.
- */
+/** Shared timeline rendering, evaluation and theme contracts. */
 
 export const TIMELINE_COMPOSITION_SCAFFOLD = "sprint-5" as const;
 export type TimelineCompositionScaffoldTag = typeof TIMELINE_COMPOSITION_SCAFFOLD;
@@ -24,6 +17,7 @@ export {
   ThemeProvider,
   useTheme,
   DEFAULT_THEME,
+  toRuntimeTheme,
 } from "./ThemeContext";
 export type {
   EffectProps,
@@ -47,13 +41,31 @@ export type { Theme, RuntimeTheme } from "./ThemeContext";
 // Duration helper used by the bundle root for calculateMetadata.
 export { getTimelineDurationInFrames } from "./lib/duration";
 
-// Plugin registry — codegenned from installed `@banodoco/timeline-theme-*`
-// packages (Reigh-side) and from `themes/<id>/effects/` (Banodoco-side).
+// Bundled theme defaults; additional host elements use scoped registry input.
 export {
   THEME_PACKAGE_REGISTRY,
   THEME_PACKAGE_CLIP_TYPES,
-} from "./registry.generated";
+} from "./registry.generated.js";
 export type {
   ThemePackageRegistryEntry,
   ThemePackageClipType,
-} from "./registry.generated";
+} from "./registry.generated.js";
+
+export {MODIFIER_REGISTRY, composeModifiers, declareModifier, ModifierAdmissionError} from './modifiers';
+export type {
+  ClipModifierReference, ModifierBounds, ModifierContext, ModifierDeclaration,
+  ModifierDefinition, ModifierFinding, ModifierProps, ModifierRegistry,
+} from './modifier-types';
+
+export {mediaModifierBounds} from './lib/modifier-bounds';
+
+export {prepareCompositionScene, compileCanonicalTransitions} from './TimelineComposition';
+export {prepareScene, querySceneFrame, queryCompositionSceneFrame, querySceneOcclusion} from './evaluation';
+export type {PreparedScene, SceneFrame, SceneLayer, SceneFinding, SceneTrackInput, SceneOcclusion,
+  ComponentDiagnostics, ComponentFrameSupport, PreparedComponentCapability, ComponentCapabilityContext} from './evaluation';
+
+export type {TimelineClip, TimelineConfig, TrackDefinition, AssetRegistry, AssetRegistryEntry, ClipKeyframe} from './types';
+export {resolveElementRegistries, ElementRegistryProvider, useElementRegistries} from './registries';
+export type {CompositionRegistries, ResolvedCompositionRegistries, AnimationRegistries, TransitionRegistries} from './registries';
+
+export type {CompiledCanonicalTransitions} from './evaluation';

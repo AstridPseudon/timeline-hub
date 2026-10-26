@@ -1,0 +1,94 @@
+// Clip-level look for a single timeline clip: opacity / crop for element clips,
+// and entrance / exit animations for every visual clip. Rendered inside the
+// clip's Sequence, so useCurrentFrame() is clip-local.
+
+import type {CSSProperties, ReactNode} from 'react';
+import type {AnimationRegistries} from './registries';
+import {useElementRegistries} from './RegistryContext';
+import {AbsoluteFill, Freeze, useCurrentFrame} from 'remotion';
+import {composeClipAnimationPhase} from './ClipAnimationPhase';
+import {
+  clipOpacity,
+  clipSpeed,
+  cropClipPath,
+  remappedFrame,
+} from './lib/clip-look';
+import {getClipDurationInFrames} from './lib/duration';
+import {useTheme, type RuntimeTheme} from './ThemeContext';
+import type {TimelineClip} from './types';
+import {MODIFIER_REGISTRY, composeModifiers, hasModifierKeyframes} from './modifiers';
+import type {ModifierBounds, ModifierFinding, ModifierRegistry} from './modifier-types';
+import {spriteKeyframeFrame, timelineKeyframeTime} from './lib/keyframe-origin';
+
+const IDENTITY_CROP_PATH = 'inset(0% 0% 0% 0%)';
+
+export type ClipLookProps = {
+  clip: TimelineClip;
+  fps: number;
+  registries?: AnimationRegistries;
+  kind: 'element' | 'media';
+  children: ReactNode;
+  modifierRegistry?: ModifierRegistry;
+  modifierBounds?: ModifierBounds;
+  globalFrame?: number;
+  onModifierFinding?: (finding: ModifierFinding) => void;
+};
+
+export const composeClipLook = ({clip, fps, kind, children, modifierRegistry = MODIFIER_REGISTRY,
+  modifierBounds = {status: 'unknown', reason: 'Target has no declared bounds evaluator'},
+  globalFrame, onModifierFinding, registries}: ClipLookProps, frame: number, theme: RuntimeTheme) => {
+  const clipFrames = getClipDurationInFrames(clip, fps);
+  const hasModifiers = (clip.modifiers?.length ?? 0) > 0;
+
+  // Media clips already get opacity (with fade) and crop from VisualClip, so
+  // they must not be styled here as well.
+  const style: CSSProperties = {};
+  // Element speed remaps time (see README "Speed"). Decided by speed, not by the
+  // frame, so the tree shape stays the same for the whole clip.
+  const remapElement = kind === 'element' && clipSpeed(clip.speed) !== 1;
+  if (kind === 'element' || hasModifiers) {
+    const opacity = clipOpacity(clip, frame, fps);
+    if (opacity !== 1) {
+      style.opacity = opacity;
+    }
+    const clipPath = kind === 'element' && !hasModifiers ? cropClipPath(clip) : undefined;
+    if (clipPath !== undefined && clipPath !== IDENTITY_CROP_PATH) {
+      style.clipPath = clipPath;
+    }
+  }
+
+  // Spatial crop is already inside VisualClip for media. Move element crop
+  // inside the modifier only on the new path; legacy clip tree stays unchanged.
+  const elementCrop = kind === 'element' && hasModifiers ? cropClipPath(clip) : undefined;
+  const spatialContent = elementCrop && elementCrop !== IDENTITY_CROP_PATH
+    ? <AbsoluteFill style={{clipPath: elementCrop}}>{children}</AbsoluteFill>
+    : children;
+  const targetFrame = remapElement ? remappedFrame(frame, clip.speed) : frame;
+  const modified = hasModifiers || hasModifierKeyframes(clip) ? composeModifiers({
+    instances: clip.modifiers ?? [],
+    registry: modifierRegistry,
+    context: {clip, fps, frame: targetFrame, keyframeFrame: spriteKeyframeFrame(clip, targetFrame, fps),
+      keyframeTime: timelineKeyframeTime(clip, clip.at + targetFrame / fps),
+      globalFrame: globalFrame ?? Math.round(clip.at * fps) + frame, bounds: modifierBounds, theme},
+    content: spatialContent,
+    onFinding: onModifierFinding,
+  }) : spatialContent;
+  const body: ReactNode = remapElement
+    ? <Freeze frame={targetFrame}>{modified}</Freeze>
+    : modified;
+
+  let content: ReactNode = composeClipAnimationPhase({clip, fps, theme, clipFrames, registries, phase: 'entrance', reference: clip.entrance, children: body}, frame);
+  content = composeClipAnimationPhase({clip, fps, theme, clipFrames, registries, phase: 'exit', reference: clip.exit, children: content}, frame);
+
+  return (
+    <AbsoluteFill data-clip-id={clip.id} style={style}>
+      {content}
+    </AbsoluteFill>
+  );
+};
+
+// A single hook adapter: no modifier component starts another clip clock.
+export const ClipLook = (props: ClipLookProps) => {
+  const registries = useElementRegistries();
+  return composeClipLook({...props, registries: props.registries ?? registries}, useCurrentFrame(), useTheme());
+};

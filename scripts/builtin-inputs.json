@@ -1,0 +1,7 @@
+{
+  "effects": ["text-card"],
+  "clipTypeAliases": {"text": "text-card"},
+  "animations": ["fade", "fade-up", "scale-in", "slide-left", "slide-up", "type-on"],
+  "transitions": ["cross-fade", "fade"],
+  "themes": [{"id": "2rp", "version": "0.1.0", "effects": ["art-card", "cta-card", "resource-card", "section-hook"]}]
+}

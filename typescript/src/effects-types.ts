@@ -10,10 +10,12 @@ export type EffectProps<TParams = unknown> = {
   params: TParams;
   theme: RuntimeTheme;
   fps: number;
+  /** The existing composition frame, before clip Sequences/transition freezes. */
+  globalFrame?: number;
   assetEntry?: AssetRegistryEntry;
 };
 
-export type EffectComponent = FC<EffectProps>;
+export type EffectComponent<TParams = unknown> = FC<EffectProps<TParams>>;
 
 export type AnimationPhase = 'entrance' | 'sustain' | 'exit';
 export type AnimationKind = 'wrapper' | 'hook';
@@ -45,6 +47,8 @@ export type AnimationMeta = {
   kind: AnimationKind;
   phase?: AnimationPhase | AnimationPhase[] | 'any';
   defaultDurationFrames?: number;
+  /** Component consumes explicit progress/easing; omitted support refuses authored easing. */
+  supportsEasing?: boolean;
   [key: string]: unknown;
 };
 
@@ -56,6 +60,10 @@ export type BaseAnimationProps<TParams = Record<string, unknown>> = {
   phase: AnimationPhase;
   durationFrames: number;
   elapsedFrames: number;
+  /** Explicit canonical local progress; undefined preserves component legacy curves. */
+  progress?: number;
+  /** Canonical authored curve, for components with their own local timing window. */
+  easing?: AnimationEasing;
   animationId: string;
 };
 
@@ -89,6 +97,8 @@ export type TransitionReferenceObject<TParams = Record<string, unknown>> = {
   type?: string;
   duration?: number;
   durationFrames?: number;
+  align?: import('./lib/transition-spans').Align;
+  incomingPolicy?: import('./lib/transition-spans').IncomingTransitionPolicy;
   params?: TParams;
 };
 

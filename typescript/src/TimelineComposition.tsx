@@ -1,3 +1,4 @@
+import type {SceneCapabilities} from './scene-capabilities';
 // Sprint 5: physically moved + renamed from
 // tools/remotion/src/HypeComposition.tsx → TimelineComposition.tsx.
 //
@@ -6,19 +7,30 @@
 // tools/remotion/src/Root.tsx imports this composition from the package.
 
 import type {ReactElement} from 'react';
-import {AbsoluteFill, Sequence, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Sequence, useCurrentFrame, useVideoConfig} from 'remotion';
 import {AudioTrack} from './AudioTrack';
-import {CLIP_TYPE_ALIASES, EFFECT_REGISTRY, type EffectId} from './effects.generated';
+import {ClipLook} from './ClipLook';
+import {resolveElementRegistries, type CompositionRegistries} from './registries';
+import {ElementRegistryProvider} from './RegistryContext';
+import type {EffectComponent} from './effects-types';
 import {DEFAULT_THEME, ThemeProvider, useTheme} from './ThemeContext';
 import {VisualClip} from './VisualClip';
 import {resolveParams} from './lib/effect-params';
 import {getClipDurationInFrames} from './lib/duration';
+import {assertLoopCoverage, type ResolvedLoop} from './lib/beat-loop';
 import {getAudioTracks, getVisualTracks} from './lib/tracks';
+import {validateCompiledCanonicalTransitions, type CompiledCanonicalTransitions} from './lib/transition-spans';
+import {resolveTransitionReference} from './lib/transitions';
 import {
-  CrossFadeLayer,
-  TransitionSeries,
-  resolveTransitionReference,
-} from './lib/transitions';
+  prepareScene,
+  querySceneFrame,
+  type DrawPlan,
+  type TransitionSpec,
+} from './evaluation';
+import {TransitionLayer} from './TransitionLayer';
+import {mediaModifierBounds} from './lib/modifier-bounds';
+import type {ModifierRegistry, ModifierFinding, ModifierBounds} from './modifier-types';
+import {ModifierAdmissionError, hasModifierKeyframes} from './modifiers';
 import type {
   AssetRegistryEntry,
   HypeCompositionProps,
@@ -26,6 +38,15 @@ import type {
   TimelineCompositionProps,
   TrackDefinition,
 } from './types';
+
+type ModifierHostOptions = {
+  width: number;
+  height: number;
+  registry?: ModifierRegistry;
+  onFinding?: (finding: ModifierFinding) => void;
+  registries?: CompositionRegistries;
+  compiledTransitions?: CompiledCanonicalTransitions;
+};
 
 const sortClipsByAt = (clips: TimelineClip[]): TimelineClip[] => {
   return [...clips].sort((left, right) => left.at - right.at);
@@ -51,141 +72,103 @@ const getAssetEntry = (
   return clip.asset ? assets.assets[clip.asset] : undefined;
 };
 
-const renderVisualClipContent = (
+export const renderVisualClipContent = (
   track: TrackDefinition,
   clip: TimelineClip,
   assets: TimelineCompositionProps['assets'],
   fps: number,
   theme: ReturnType<typeof useTheme>,
+  globalFrame: number,
+  modifiers: ModifierHostOptions,
 ): ReactElement | null => {
   if (clip.clipType === 'effect-layer') {
+    if (clip.modifiers?.length || hasModifierKeyframes(clip)) throw new ModifierAdmissionError('unsupported-host', 'Effect layers are not owning visual clip subtrees');
     return null;
   }
 
-  // Sprint 5 EFFECT_REGISTRY dispatch (the migration target cited at
-  // tools/remotion/src/HypeComposition.tsx:58-64). Same shape; the
-  // registry now lives inside the package.
-  const effectId = (
-    clip.clipType && clip.clipType in EFFECT_REGISTRY
-      ? clip.clipType as EffectId
-      : clip.clipType ? CLIP_TYPE_ALIASES[clip.clipType] : undefined
-  );
-  if (effectId) {
-    const EffectComponent = EFFECT_REGISTRY[effectId];
+  const registries = resolveElementRegistries(theme, modifiers.registries);
+  const id = clip.clipType ?? '';
+  const effectId = Object.prototype.hasOwnProperty.call(registries.effects, id)
+    ? id : registries.clipTypeAliases[id];
+  const effect = effectId && Object.prototype.hasOwnProperty.call(registries.effects, effectId)
+    ? registries.effects[effectId] : undefined;
+  if (effect) {
+    const EffectComponent = effect as EffectComponent;
     const assetEntry = getAssetEntry(clip, assets);
     return (
-      <EffectComponent
-        clip={clip}
-        params={resolveParams(clip)}
-        theme={theme}
-        fps={fps}
-        assetEntry={assetEntry}
-      />
+      <ClipLook registries={registries} clip={clip} fps={fps} kind="element" globalFrame={globalFrame}
+        modifierRegistry={modifiers.registry} onModifierFinding={modifiers.onFinding}>
+        <EffectComponent
+          clip={clip}
+          params={resolveParams(clip)}
+          theme={theme}
+          fps={fps}
+          assetEntry={assetEntry}
+          globalFrame={globalFrame}
+        />
+      </ClipLook>
     );
   }
 
   const assetEntry = getAssetEntry(clip, assets);
+  const modifierBounds: ModifierBounds = mediaModifierBounds(clip, track, assetEntry, modifiers.width, modifiers.height);
+  const lookProps = {registries, clip, fps, globalFrame, modifierBounds, modifierRegistry: modifiers.registry,
+    onModifierFinding: modifiers.onFinding};
   const baseVisual = (
-    <VisualClip clip={clip} track={track} assetEntry={assetEntry} fps={fps} />
+    <VisualClip clip={clip} track={track} assetEntry={assetEntry} fps={fps}
+      applyOpacity={(clip.modifiers?.length ?? 0) === 0} />
   );
 
   if (hasPositionOverride(clip)) {
-    return baseVisual;
+    return <ClipLook {...lookProps} kind="media">{baseVisual}</ClipLook>;
   }
 
   if ((track.scale ?? 1) !== 1) {
     return (
-      <AbsoluteFill
-        style={{
-          transform: `scale(${track.scale})`,
-          transformOrigin: 'center center',
-          overflow: 'hidden',
-          isolation: 'isolate',
-        }}
-      >
-        {baseVisual}
-      </AbsoluteFill>
+      <ClipLook {...lookProps} kind="media">
+        <AbsoluteFill
+          style={{
+            transform: `scale(${track.scale})`,
+            transformOrigin: 'center center',
+            overflow: 'hidden',
+            isolation: 'isolate',
+          }}
+        >
+          {baseVisual}
+        </AbsoluteFill>
+      </ClipLook>
     );
   }
 
-  return baseVisual;
+  return <ClipLook {...lookProps} kind="media">{baseVisual}</ClipLook>;
 };
 
-const renderVisualSequence = (
+export const renderVisualSequence = (
   track: TrackDefinition,
   clip: TimelineClip,
   assets: TimelineCompositionProps['assets'],
   fps: number,
   theme: ReturnType<typeof useTheme>,
+  plan: DrawPlan,
+  globalFrame: number,
+  modifiers: ModifierHostOptions,
 ): ReactElement | null => {
-  const content = renderVisualClipContent(track, clip, assets, fps, theme);
+  if (clip.clipType === 'am-sprite' && clip.params?.loop !== undefined) {
+    assertLoopCoverage(clip.params.loop as ResolvedLoop, plan.drawStart, plan.drawDuration);
+  }
+  const content = renderVisualClipContent(track, clip, assets, fps, theme, globalFrame, modifiers);
   if (!content) {
     return null;
   }
+  // A clip with no transition on either side renders exactly as before.
+  const needsLayer = plan.drawDuration > plan.ownDuration || plan.fadeIn !== null || plan.fadeOut !== null;
   return (
     <Sequence
       key={clip.id}
-      from={Math.round(clip.at * fps)}
-      durationInFrames={getClipDurationInFrames(clip, fps)}
+      from={plan.drawStart}
+      durationInFrames={plan.drawDuration}
     >
-      {content}
-    </Sequence>
-  );
-};
-
-const renderTransitionGroup = (
-  track: TrackDefinition,
-  fromClip: TimelineClip,
-  toClip: TimelineClip,
-  assets: TimelineCompositionProps['assets'],
-  fps: number,
-  theme: ReturnType<typeof useTheme>,
-): ReactElement | null => {
-  const transition = resolveTransitionReference(fromClip.transition as never, theme, fps);
-  if (!transition) {
-    return null;
-  }
-  const fromDuration = getClipDurationInFrames(fromClip, fps);
-  const toDuration = getClipDurationInFrames(toClip, fps);
-  if (transition.durationFrames <= 0 || transition.durationFrames > fromDuration || transition.durationFrames > toDuration) {
-    return null;
-  }
-
-  const fromContent = renderVisualClipContent(track, fromClip, assets, fps, theme);
-  const toContent = renderVisualClipContent(track, toClip, assets, fps, theme);
-  if (!fromContent || !toContent) {
-    return null;
-  }
-
-  const groupFrom = Math.round(fromClip.at * fps);
-  const toOffset = Math.max(0, fromDuration - transition.durationFrames);
-  const groupDuration = toOffset + toDuration;
-  return (
-    <Sequence
-      key={`${fromClip.id}-${toClip.id}-transition`}
-      from={groupFrom}
-      durationInFrames={groupDuration}
-    >
-      <TransitionSeries>
-        <Sequence from={0} durationInFrames={fromDuration}>
-          <CrossFadeLayer
-            role="from"
-            durationFrames={fromDuration}
-            transitionDurationFrames={transition.durationFrames}
-          >
-            {fromContent}
-          </CrossFadeLayer>
-        </Sequence>
-        <Sequence from={toOffset} durationInFrames={toDuration}>
-          <CrossFadeLayer
-            role="to"
-            durationFrames={toDuration}
-            transitionDurationFrames={transition.durationFrames}
-          >
-            {toContent}
-          </CrossFadeLayer>
-        </Sequence>
-      </TransitionSeries>
+      {needsLayer ? <TransitionLayer plan={plan}>{content}</TransitionLayer> : content}
     </Sequence>
   );
 };
@@ -200,32 +183,103 @@ const clipsCanTransition = (fromClip: TimelineClip, toClip: TimelineClip, fps: n
   return toStart >= fromStart && toStart <= fromEnd;
 };
 
+const resolveTransitionSpec = (
+  fromClip: TimelineClip,
+  toClip: TimelineClip,
+  fps: number,
+  theme: ReturnType<typeof useTheme>,
+  registries: CompositionRegistries,
+): TransitionSpec | null => {
+  if (!clipsCanTransition(fromClip, toClip, fps)) {
+    return null;
+  }
+  const resolved = resolveTransitionReference(fromClip.transition as never, theme, fps, registries);
+  if (!resolved) {
+    return null;
+  }
+  return {
+    T: resolved.durationFrames,
+    kind: resolved.id === 'fade' ? 'dip' : 'dissolve',
+    align: resolved.align,
+    ...(resolved.incomingPolicy ? {incomingPolicy: resolved.incomingPolicy} : {}),
+  };
+};
+
+// Convert the admitted canonical projection once. Ownership is a source-layer
+// contract; the result contains resolved declarations, not a caller policy flag.
+export const compileCanonicalTransitions = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[],
+  fps: number, theme: ReturnType<typeof useTheme>, registries: CompositionRegistries = {}): CompiledCanonicalTransitions => {
+  if (!Number.isFinite(fps) || fps <= 0) throw new Error('transition/invalid-duration: Expected a positive finite frame rate');
+  const resolved = resolveElementRegistries(theme, registries);
+  const ids = new Set<string>();
+  return {fps, tracks: tracks.map(({track, clips}) => {
+    if (!track.id || ids.has(track.id)) throw new Error('transition/invalid-owner: Canonical tracks need unique IDs');
+    ids.add(track.id);
+    const sorted = sortClipsByAt(clips);
+    if (new Set(sorted.map(clip => clip.id)).size !== sorted.length || sorted.some(clip => !clip.id || clip.track !== track.id)) {
+      throw new Error('transition/invalid-owner: Canonical clips need unique IDs on their owning track');
+    }
+    return {trackId: track.id, clipIds: sorted.map(clip => clip.id), incomingTransitions: sorted.map(clip => {
+      if (clip.transition === undefined) return null;
+      if (clip.clipType === 'effect-layer') throw new Error('transition/unsupported-implementation: Effect layers cannot own incoming transitions');
+      const transition = resolveTransitionReference(clip.transition as never, theme, fps, resolved, true);
+      return transition ? {T: Math.round(transition.durationFrames)} : null;
+    })};
+  })};
+};
+
+// Both native requested-frame metadata and drawing use this exact preparation boundary.
+export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[],
+  assets: TimelineCompositionProps['assets'], fps: number, theme: ReturnType<typeof useTheme>,
+  width: number, height: number, registry?: ModifierRegistry, roles?: Readonly<Record<string, string>>,
+  capabilities: SceneCapabilities = {}, rendererIdentity = '', fontDigests: Readonly<Record<string, string>> = {},
+  registries: CompositionRegistries = {}, compiledTransitions?: CompiledCanonicalTransitions) => {
+  validateCompiledCanonicalTransitions(compiledTransitions, fps);
+  const resolved = resolveElementRegistries(theme, registries);
+  return prepareScene(tracks.map(({track, clips}) => {
+    const sorted = sortClipsByAt(clips);
+    if (compiledTransitions !== undefined) {
+      const compiled = compiledTransitions.tracks.find(input => input.trackId === track.id);
+      if (!compiled || !Array.isArray(compiled.clipIds) || compiled.clipIds.length !== sorted.length
+          || compiled.clipIds.some((id, index) => id !== sorted[index].id) || !Array.isArray(compiled.incomingTransitions)) {
+        throw new Error('transition/invalid-compilation: Compiled clip identities differ from the prepared track');
+      }
+      return {track, clips: sorted, transitions: [], incomingTransitions: compiled.incomingTransitions};
+    }
+    return {track, clips: sorted, transitions: sorted.slice(0, -1).map((clip, index) =>
+      resolveTransitionSpec(clip, sorted[index + 1], fps, theme, resolved))};
+  }), assets, fps, width, height, {elements: new Set(Object.keys(resolved.effects).concat(
+    Object.keys(resolved.clipTypeAliases).filter(alias => Object.prototype.hasOwnProperty.call(resolved.effects, resolved.clipTypeAliases[alias])))),
+    modifiers: registry, roles, capabilities: {...capabilities, components: {...capabilities.components, ...Object.fromEntries(tracks.flatMap(({clips}) =>
+      clips.flatMap(clip => {
+        const name = clip.clipType ?? '';
+        const id = Object.prototype.hasOwnProperty.call(resolved.effects, name) ? name : resolved.clipTypeAliases[name];
+        const component = Object.prototype.hasOwnProperty.call(resolved.effects, id) ? resolved.effects[id] : undefined;
+        const prepared = component?.prepareSceneCapability?.({clip: {...clip, params: resolveParams(clip) as Record<string, unknown> | undefined},
+          assetEntry: getAssetEntry(clip, assets), fps, width, height, rendererIdentity, fontDigests});
+        return prepared ? [[clip.id, prepared]] : [];
+      })))}}});
+};
+
 const renderVisualTrack = (
   track: TrackDefinition,
   clips: TimelineClip[],
   assets: TimelineCompositionProps['assets'],
   fps: number,
   theme: ReturnType<typeof useTheme>,
+  globalFrame: number,
+  modifiers: ModifierHostOptions,
 ): ReactElement | null => {
   const sortedClips = sortClipsByAt(clips);
   if (sortedClips.length === 0) {
     return null;
   }
 
-  const rendered: Array<ReactElement | null> = [];
-  for (let index = 0; index < sortedClips.length; index += 1) {
-    const clip = sortedClips[index];
-    const nextClip = sortedClips[index + 1];
-    if (nextClip && clipsCanTransition(clip, nextClip, fps)) {
-      const group = renderTransitionGroup(track, clip, nextClip, assets, fps, theme);
-      if (group) {
-        rendered.push(group);
-        index += 1;
-        continue;
-      }
-    }
-    rendered.push(renderVisualSequence(track, clip, assets, fps, theme));
-  }
+  const prepared = prepareCompositionScene([{track, clips: sortedClips}], assets, fps, theme,
+    modifiers.width, modifiers.height, modifiers.registry, undefined, {}, '', {}, modifiers.registries, modifiers.compiledTransitions);
+  const evaluated = querySceneFrame(prepared, globalFrame);
+  const rendered = evaluated.layers.map(layer => renderVisualSequence(track, sortedClips[layer.clipIndex],
+    assets, fps, theme, prepared.tracks[0].prepared.plans[layer.clipIndex], globalFrame, modifiers));
 
   return (
     <AbsoluteFill
@@ -240,13 +294,14 @@ const renderVisualTrack = (
   );
 };
 
-const renderAudioTrack = (
+export const renderAudioTrack = (
   track: TrackDefinition,
   clips: TimelineClip[],
   assets: TimelineCompositionProps['assets'],
   fps: number,
 ): ReactElement[] => {
   return sortClipsByAt(clips).map((clip) => {
+    if (clip.modifiers?.length || hasModifierKeyframes(clip)) throw new ModifierAdmissionError('unsupported-host', 'Audio tracks do not support visual modifiers');
     const assetEntry = getAssetEntry(clip, assets);
     return (
       <Sequence
@@ -263,26 +318,30 @@ const renderAudioTrack = (
 export const TimelineComposition = (props: TimelineCompositionProps): ReactElement => {
   const {timeline, assets} = props;
   const {fps, width, height} = useVideoConfig();
+  validateCompiledCanonicalTransitions(props.compiledTransitions, fps);
   const visualTracks = [...getVisualTracks(timeline)].reverse();
   const audioTracks = getAudioTracks(timeline);
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: props.theme?.visual.color.bg ?? 'black',
+        backgroundColor: props.theme?.visual.color.bg ?? DEFAULT_THEME.visual.color.bg,
         width,
         height,
         overflow: 'hidden',
       }}
     >
       <ThemeProvider value={props.theme ?? DEFAULT_THEME}>
-        <TimelineCompositionBody
-          timeline={timeline}
-          assets={assets}
-          visualTracks={visualTracks}
-          audioTracks={audioTracks}
-          fps={fps}
-        />
+        <ElementRegistryProvider value={resolveElementRegistries(props.theme ?? DEFAULT_THEME, props.registries)}>
+          <TimelineCompositionBody
+            timeline={timeline}
+            assets={assets}
+            visualTracks={visualTracks}
+            audioTracks={audioTracks}
+            fps={fps}
+            modifiers={{width, height, registry: props.modifierRegistry, onFinding: props.onModifierFinding, registries: props.registries, compiledTransitions: props.compiledTransitions}}
+          />
+        </ElementRegistryProvider>
       </ThemeProvider>
     </AbsoluteFill>
   );
@@ -299,20 +358,23 @@ const TimelineCompositionBody = ({
   visualTracks,
   audioTracks,
   fps,
+  modifiers,
 }: {
   timeline: TimelineCompositionProps['timeline'];
   assets: TimelineCompositionProps['assets'];
   visualTracks: TrackDefinition[];
   audioTracks: TrackDefinition[];
   fps: number;
+  modifiers: ModifierHostOptions;
 }): ReactElement => {
   const theme = useTheme();
+  const globalFrame = useCurrentFrame();
   return (
     <>
       <AbsoluteFill style={{position: 'relative', overflow: 'hidden'}}>
         {visualTracks.map((track) => {
           const clips = timeline.clips.filter((clip) => clip.track === track.id);
-          return renderVisualTrack(track, clips, assets, fps, theme);
+          return renderVisualTrack(track, clips, assets, fps, theme, globalFrame, modifiers);
         })}
       </AbsoluteFill>
       {audioTracks.map((track) => {

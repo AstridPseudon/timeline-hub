@@ -7,12 +7,32 @@
 // (smoke fixture asserts allowed-arrays match); the package consumers only
 // need the runtime shape used by the composition.
 
+/** Existing App seconds-key shape; opaque per-key siblings survive projection. */
+export type ClipKeyframe = {
+  time: number;
+  value: number | string | boolean;
+  interpolation: 'linear' | 'hold';
+  easing?: string;
+  [key: string]: unknown;
+};
+
+type OpaqueJsonValue = null | boolean | number | string | OpaqueJsonValue[] | {[key: string]: OpaqueJsonValue};
+type OpaqueMeta = Record<string, {[key: string]: OpaqueJsonValue}>;
+
 export type TimelineClip = {
   id: string;
   at: number;
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
+  /** Key-time zero in seconds relative to clip start; independent of media trim. */
+  keyframeOrigin?: number;
+  keyframes?: Record<string, ClipKeyframe[]>;
+  /** Local renderer mirror; canonical schema/projection remains schema-owned. */
+  modifiers?: readonly import('./modifier-types').ClipModifierReference[];
   track: string;
   asset?: string;
   clipType?: string;
+  elementRef?: {id: string; kind: string; packId?: string};
   clip_order?: number;
   continuous?: unknown;
   cropBottom?: number;
@@ -34,6 +54,8 @@ export type TimelineClip = {
   text?: unknown;
   to?: number;
   transition?: unknown;
+  /** Compiled runtime audio; not an authoring document field. */
+  audio?: {envelope: import('./lib/audio-envelope').AudioEnvelope; render_source?: import('./lib/audio-envelope').EncodedEnvelopeSource};
   volume?: number;
   width?: number;
   x?: number;
@@ -46,6 +68,8 @@ export type TrackDefinition = {
   id: string;
   kind: 'audio' | 'visual';
   label: string;
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   muted?: boolean;
   opacity?: number;
   scale?: number;
@@ -56,12 +80,16 @@ export type TimelineConfig = {
   theme: string;
   tracks?: TrackDefinition[];
   clips: TimelineClip[];
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   output?: unknown;
   pinnedShotGroups?: unknown;
   theme_overrides?: unknown;
 };
 
 export type AssetRegistryEntry = {
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   file?: string;
   type?: string;
   duration?: number;
@@ -82,8 +110,13 @@ export type AssetRegistry = {
 
 export type HypeCompositionProps = {
   timeline: TimelineConfig;
+  /** Resolved output of compileCanonicalTransitions; native inputs omit it. */
+  compiledTransitions?: import('./lib/transition-spans').CompiledCanonicalTransitions;
   assets: AssetRegistry;
   theme?: import('./ThemeContext').Theme;
+  registries?: import('./registries').CompositionRegistries;
+  modifierRegistry?: import('./modifier-types').ModifierRegistry;
+  onModifierFinding?: (finding: import('./modifier-types').ModifierFinding) => void;
 };
 
 // Sprint 5: TimelineCompositionProps is the canonical name going forward.

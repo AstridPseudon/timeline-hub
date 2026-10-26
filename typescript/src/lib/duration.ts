@@ -31,7 +31,8 @@ export const getClipDurationInFrames = (clip: TimelineClip, fps: number): number
   return Math.max(1, secondsToFrames(getClipTimelineDuration(clip), fps));
 };
 
-export const getTimelineDurationInFrames = (timeline: TimelineConfig, fps: number): number => {
+export const getTimelineDurationInFrames = <T extends Pick<TimelineConfig, 'clips'>>(
+  timeline: T, fps: number): number => {
   return Math.max(
     1,
     ...timeline.clips.map((clip) => {

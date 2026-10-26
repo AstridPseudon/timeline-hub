@@ -1,3 +1,6 @@
 node_modules/
-package-lock.json
 typescript/dist/
+typescript/test-dist/
+dist/
+*.tgz
+typescript/src/lib/remotion-primitives.generated.js
