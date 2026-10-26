@@ -26,3 +26,5 @@ These are source qualifications only: no GO, REG0, build or ZIP claim. Still owe
 - Runtime: the targeted-15 and P5 receipts.
 
 App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just before F-final (D141l item 5).
+
+**Update 05:39Z:** the Runtime integration head moved to 95d98f0383 after two REG fixes (857e4c3b, 95d98f03). App and Agent re-pin to it through their normal receiving rows.

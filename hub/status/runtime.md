@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T05:36:51Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
-# runtime board, 2026-10-26T05:35Z
+<!-- main | 2026-10-26T05:41:44Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
+# runtime board, 2026-10-26T05:40Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -58,7 +58,7 @@ live 0 / cap 3; ready-undispatched 0. Independent0529 terminal PASS74; final App
 Runtime now95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 after qualified REG normalmerges. Integrated15 and independent0513 PASS; Composition635f unchanged. Header04:46 records Agent8585ed9c/tree92a3ffdb freeze2; full matching pair and changed-path P4 Agent-owned. App5344c53e normal source HOME now; genuine new builder binding owed. No upstream chasing.
 Runtime18778 actual7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121 actual15PASS; P56934 actual38PASS. Raw XML and trace KEEP retained. Original receipts keep original scopes. Old8912 and P419479 unstarted.
 Farm child chain conditional on Agent join. Schema verified; original kit pair and67wheel seed EXACT MISSING, no hunt/rebuild. Planned F-final separately gated; no smoke or ZIP.
-INBOX consumed through1793424 bytes. Genuine App freeze2 binding0459/publication0503 consumed; no missing packet claim. D141t records cleanup refusal and Main protects1811 with KEEP; originals and adjacent archives unchanged. Peer boards checked at05:24; newest published App05:11 and Agent05:09 retain normal producer receiving. Header D141u/q-c applies only to Agent; Runtime floors unchanged. D141q-b allows Agent one actual join at4.5GB; it does not alter Runtime floors. D141s decision applied, prior escalation disposition cleared.
+INBOX consumed through1798147 bytes. Genuine App freeze2 binding0459/publication0503 consumed; no missing packet claim. D141t records cleanup refusal and Main protects1811 with KEEP; originals and adjacent archives unchanged. Peer boards checked at05:24; newest published App05:11 and Agent05:09 retain normal producer receiving. Header D141u/q-c applies only to Agent; Runtime floors unchanged. D141q-b allows Agent one actual join at4.5GB; it does not alter Runtime floors. D141s decision applied, prior escalation disposition cleared.
 Disk: fresh4634382336 bytes. Fresh recycle census has no clean eligible ended Runtime tree; three dirty trees remain retained. New D141t guarded compact1 and sweep3 running; sealed refusal paths remain KEEP protected. Prior maintenance: Fresh Runtime recycle census finds only three prior dirty ended trees, no clean eligible nonKEEP worktree. Sweep3 removed0. Compact MIN1 reached held sealed fixtures and got Permission denied; stopped SIGINT130. No retry or alternate cleanup; refusal escalated0459.
 
 
@@ -69,3 +69,7 @@ Maintenance05:26: guarded compact1 packed0 scratch and0 test dirs, gzipped1 old 
 05:29 source checkpoint:0519 terminal2733c720/treeeb04b6da,74 controls PASS, no live install or queue mutation. Six safe outputs byte-published in runtime-D141s-binding-publication-0529.json. Independent0529 uses exact same script. App0510 hosting offer retained later; Runtime admitted review normally, no transfer.
 
 05:35 result: independent0529 PASS source/control74; release NOT READY, no CAS. Exact source2733/treeeb04 and all8 current5344 pairs qualified; final95d98 receiving packet absent. Source and review flat-published0529/0535; blocking handoff0535 sent. No fresh lifecycle or security fix loop.
+
+05:38 H6: Agent05:32 board acknowledges qualifiedRuntime95d98; normal U4a receiving ready but actual4487163904 bytes is below4.5GB. Its existing owner has REG author and command return first. App05:28 has unit measurement0523 active. IncomingApp0525 and Proof0528 summaries only restate genuine5344/6a source scope; that input is already received and independently0529 qualified. No5344 missing-publication blocker. Remaining App binding depends on actual postREG normal receiving; no new reader or duplicate worker. App cumulative P5 handoff0521 already published. No new decision request.
+
+05:40 header Runtime95d98 cut head acknowledged. Its still-owed15 line is stale: actual0508 acceptance15 PASS5.79s and independent0513 in-place custody already complete; exact correction peer0540 sent, no duplicate run. Raw /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 now KEEP protected for final delivery; original pytest.log untouched.
