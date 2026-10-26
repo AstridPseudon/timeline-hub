@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-26T10:16:26.961167+00:00",
+  "free_before": 4641984512,
+  "free_after": 6093643776,
+  "baseline_keep_count": 48,
+  "baseline_keep_changes": [],
+  "eligible_recycle": [],
+  "sweep_exit": 0,
+  "sweep_output": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4427M -> 4427M\n",
+  "sweep_broken_pipe_diagnostics": true,
+  "compact_exit": 0,
+  "compact_output": "packed 0 scratch dirs; free 4427M -> 5480M\ngzipped 2 old worker logs; free now 5813M\npacked 0 finished test-run dirs; free now 5813M\n",
+  "compact_stderr": "",
+  "held_targets_untouched": true,
+  "external_disk_change": "Lead10:16 confirms owner-approved one hub-repack, lead executed; manager did no hub operation. Cleanup free change includes that concurrent action, not cleanup-only savings."
+}
