@@ -70,3 +70,7 @@ All three views agree the 110–140 day plan is over-engineered for the stated g
 **Deferred:** markers, signals, proposals, editable views, App panels, sandboxing, element parity, the conformance harness.
 
 **Recommendation:** about 3 weeks, one engineer. Add markers later only if keeping clips on the beat automatically matters.
+
+**Codex Sol confirmation (15:40Z, agent-extensibility-minimal-codex-20261026T1446Z.md):** agrees, 15–25 days. Two refinements adopted:
+- No new registry at all. Commands and views ship as ordinary pack actions (`tasks create --capability <pack>.<action>`, MCP `invoke`), because `show --as` has fixed choices. Overlays are visualize Layers.
+- The one core change: layer discovery and MCP `build_prompts` should use the existing pack discovery instead of scanning source folders.

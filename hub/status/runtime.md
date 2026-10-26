@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T15:38:35Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 5m -->
+<!-- main | 2026-10-26T15:44:21Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
 # runtime board, 2026-10-26T15:33:43.221858+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -92,6 +92,8 @@
 | Agent1413 host offer | Retain current Main source owners | Manager | Earlier actual Main starts | gated:later | No host worker | Existing failure notes and source return own all ready work; stale offer declined by peer1433. | No source change |
 
 | OPS final headroom | Retain independently bounded recovery census | Luna read only | Independent1514 terminal | merged | Census1506; review1514 | [No eligible inspected recovery](../../design/runtime-final-headroom-independent-publication-1522.json). Historical sampler reuse only; no cleanup permission. | No source change |
+
+| D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | doing | Supported request stop test | Targeted pristine11121 supersedes purpose; original request and KEEP retained. | No source change |
 
 Blockers: Main decision — positive source controls need 4960000000 bytes; free 4887240704, short 72759296. [Existing request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
 Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
