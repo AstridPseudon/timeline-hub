@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import importlib.metadata
 from pathlib import Path
 import platform
 import signal
 import socket
 import subprocess
 import sys
+from pathlib import PureWindowsPath
 from types import SimpleNamespace
 
 import pytest
@@ -23,6 +25,7 @@ from runtime_protocol.local_worker_composition import (
     OSProcessInspector,
     _PreparedWorker,
     _listening_socket_owner,
+    _pack_inventory,
     load_local_worker_composition,
 )
 
@@ -33,6 +36,59 @@ def _digest(char: str) -> str:
 
 def _content_digest(value: bytes) -> str:
     return "sha256:" + hashlib.sha256(value).hexdigest()
+
+
+def _simulate_windows_path_semantics(monkeypatch):
+    path_type = type(Path())
+    relative_to = path_type.relative_to
+
+    def windows_relative_to(path, other, *args, **kwargs):
+        relative = relative_to(path, other, *args, **kwargs)
+        return PureWindowsPath(*relative.parts)
+
+    monkeypatch.setattr(path_type, "relative_to", windows_relative_to)
+    monkeypatch.setattr(path_type, "parts", property(lambda path: PureWindowsPath(path.as_posix()).parts))
+    monkeypatch.setattr(
+        path_type,
+        "__lt__",
+        lambda path, other: tuple(part.casefold() for part in path.parts)
+        < tuple(part.casefold() for part in other.parts),
+    )
+
+
+def test_installed_host_root_comparison_resolves_both_sides(tmp_path, monkeypatch):
+    from runtime_protocol import local_worker_composition as composition
+    from runtime_protocol.verified_host_launch import raw_digest
+
+    selected = tmp_path / "site-packages"
+    selected.mkdir()
+    alias = tmp_path / "site-alias"
+    alias.symlink_to(selected, target_is_directory=True)
+    record = "file.py,,\n"
+    distribution = SimpleNamespace(
+        locate_file=lambda _relative: selected,
+        read_text=lambda _name: record,
+    )
+    monkeypatch.setattr(importlib.metadata, "distribution", lambda _package: distribution)
+    records = {name: hashlib.sha256(record.encode()).hexdigest() for name in ("astrid", "astrid-runtime")}
+    profile = SimpleNamespace(release_digest="sha256:" + raw_digest(records))
+
+    assert composition._verify_installed_host_records(profile, {"source_checkout": str(alias)}) == records
+
+
+def test_pack_inventory_uses_portable_nested_keys(tmp_path, monkeypatch):
+    root = tmp_path / "packs"
+    for relative, content in {"Z/effect.py": b"z", "a/x.py": b"x", "a.txt": b"a"}.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+    inventory = _pack_inventory(root)
+    assert list(inventory) == ["Z/effect.py", "a/x.py", "a.txt"]
+    assert all("\\" not in key for key in inventory)
+    _simulate_windows_path_semantics(monkeypatch)
+    inventory = _pack_inventory(root)
+    assert list(inventory) == ["Z/effect.py", "a/x.py", "a.txt"]
+    assert all("\\" not in key for key in inventory)
 
 
 def _profile_document(tmp_path: Path) -> tuple[dict[str, object], Path, Path, Path]:
