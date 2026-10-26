@@ -1,5 +1,4 @@
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { chromium, expect, type Page, type TestInfo } from '@playwright/test';
 import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
@@ -113,14 +112,11 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
     if (forbiddenUrl.test(request.url())) forbiddenRequests.push(request.url());
   });
 
-  // Memory evidence for the Node side: the Playwright worker and its driver parent, every 10 s.
+  // Memory evidence for the Node worker, every 10 s. (No subprocess such as ps: the memory wrapper's psutil sampler cannot read
+  // Apple system binaries and would flag the sample incomplete; the wrapper's owned-tree peak already covers the driver.)
   const rssFile = browserEvidencePath(testInfo, 'timeline-transfer/node-rss.csv');
-  writeFileSync(rssFile, 'time,worker_rss_bytes,driver_rss_bytes\n');
-  const sampleRss = () => {
-    let driver = 0;
-    try { driver = Number(execFileSync('/bin/ps', ['-o', 'rss=', '-p', String(process.ppid)], { encoding: 'utf8' }).trim()) * 1024; } catch { /* sample is best effort */ }
-    appendFileSync(rssFile, `${new Date().toISOString()},${process.memoryUsage().rss},${driver}\n`);
-  };
+  writeFileSync(rssFile, 'time,worker_rss_bytes\n');
+  const sampleRss = () => appendFileSync(rssFile, `${new Date().toISOString()},${process.memoryUsage().rss}\n`);
   sampleRss();
   const rssTimer = setInterval(sampleRss, 10_000);
   cleanups.push(() => clearInterval(rssTimer));
