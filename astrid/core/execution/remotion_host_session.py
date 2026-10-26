@@ -127,7 +127,10 @@ class HostRemotionSession:
             if not attempt.is_dir():
                 raise ValueError("renderer task root is unavailable")
             self._idle_seconds = frame_owner_idle_seconds(environment, requested=requested_idle)
-            lease = _HostLease(self, project, node, cli, dict(environment), attempt)
+            lease_environment = dict(environment)
+            if "HOME" not in lease_environment and "USERPROFILE" in lease_environment:
+                lease_environment["HOME"] = lease_environment["USERPROFILE"]
+            lease = _HostLease(self, project, node, cli, lease_environment, attempt)
             # A new task cancels any pending idle expiry of the warm child.
             lease.hold = self._holds.lease(self, stop=self._expire, lock=self._lock)
             self._leases.add(lease)
