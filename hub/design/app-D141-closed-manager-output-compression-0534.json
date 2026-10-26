@@ -1,0 +1,1029 @@
+{
+  "at": "2026-10-26T05:33:51.570498+00:00",
+  "scope": "lossless compression of named closed unreferenced23-25Oct manager stdout only; operational log maintenance, all source and raw proof data untouched;26Oct witness logs and live stdout excluded",
+  "paths": [
+    {
+      "path": "managers/app/rounds/20261023T0006Z.log",
+      "bytes": 1966978,
+      "sha256": "05a728098e181a3bcb3f2417241a11929220782b0a4858c97f6a22d981f77f62",
+      "mode": 420,
+      "inode": 2810431,
+      "mtime_ns": 1792714031491801442,
+      "compressed_bytes": 540882,
+      "decompressed_sha256": "05a728098e181a3bcb3f2417241a11929220782b0a4858c97f6a22d981f77f62"
+    },
+    {
+      "path": "managers/app/rounds/20261023T0240Z.log",
+      "bytes": 1027968,
+      "sha256": "21fe9984f7064e6b3e65c405d09a409918954f0f2fee564e022669f4e4852090",
+      "mode": 420,
+      "inode": 665567,
+      "mtime_ns": 1792723296825986975,
+      "compressed_bytes": 290642,
+      "decompressed_sha256": "21fe9984f7064e6b3e65c405d09a409918954f0f2fee564e022669f4e4852090"
+    },
+    {
+      "path": "managers/app/rounds/20261023T0409Z.log",
+      "bytes": 1113920,
+      "sha256": "3172abb215b3bf9c9f3ea744f9b18df9dc515dc257bd252f2931a498b5937f6e",
+      "mode": 420,
+      "inode": 2810681,
+      "mtime_ns": 1792728624508668895,
+      "compressed_bytes": 315012,
+      "decompressed_sha256": "3172abb215b3bf9c9f3ea744f9b18df9dc515dc257bd252f2931a498b5937f6e"
+    },
+    {
+      "path": "managers/app/rounds/20261023T0412Z.log",
+      "bytes": 1494181,
+      "sha256": "0aefd69f01f8a0c872dc8952e4c69cf3ee4ab002c8fa2923e63e3b995ee9a2ce",
+      "mode": 420,
+      "inode": 2810687,
+      "mtime_ns": 1792730729960900282,
+      "compressed_bytes": 404822,
+      "decompressed_sha256": "0aefd69f01f8a0c872dc8952e4c69cf3ee4ab002c8fa2923e63e3b995ee9a2ce"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1000Z.log",
+      "bytes": 1186122,
+      "sha256": "789b5d2611c7dee07d18f06d93d9d38c4df42d0dc1858943e8abbe47ad66ff92",
+      "mode": 420,
+      "inode": 2810700,
+      "mtime_ns": 1792751647759360820,
+      "compressed_bytes": 293694,
+      "decompressed_sha256": "789b5d2611c7dee07d18f06d93d9d38c4df42d0dc1858943e8abbe47ad66ff92"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1034Z.log",
+      "bytes": 1098797,
+      "sha256": "2177ca0ccd74260d7a7a6f07d013f967c535e511057bf051ab66f602b5168597",
+      "mode": 420,
+      "inode": 2810703,
+      "mtime_ns": 1792753704907313768,
+      "compressed_bytes": 278286,
+      "decompressed_sha256": "2177ca0ccd74260d7a7a6f07d013f967c535e511057bf051ab66f602b5168597"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1108Z.log",
+      "bytes": 1265474,
+      "sha256": "946be33961b50f0cf121a52e380f50afaadd67872f6c3ea187c04a4d3b611dd3",
+      "mode": 420,
+      "inode": 2810707,
+      "mtime_ns": 1792755739691267228,
+      "compressed_bytes": 301377,
+      "decompressed_sha256": "946be33961b50f0cf121a52e380f50afaadd67872f6c3ea187c04a4d3b611dd3"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1142Z.log",
+      "bytes": 1065756,
+      "sha256": "92453a18703073c70bdd3716f15b540db8a2308cfc2f338726f097823ddd5227",
+      "mode": 420,
+      "inode": 2810028,
+      "mtime_ns": 1792757546367225905,
+      "compressed_bytes": 265543,
+      "decompressed_sha256": "92453a18703073c70bdd3716f15b540db8a2308cfc2f338726f097823ddd5227"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1219Z.log",
+      "bytes": 1134450,
+      "sha256": "1011e837456caa7c06e234e2da2dd2aa9923445675cc73b12ea3835ca2ea44dc",
+      "mode": 420,
+      "inode": 2810723,
+      "mtime_ns": 1792758138531212361,
+      "compressed_bytes": 256845,
+      "decompressed_sha256": "1011e837456caa7c06e234e2da2dd2aa9923445675cc73b12ea3835ca2ea44dc"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1225Z.log",
+      "bytes": 1168079,
+      "sha256": "d02e03e66d8ee697389885b74e3655a42c681d01b1faf9bd2e96a6c8d033ff8f",
+      "mode": 420,
+      "inode": 2810729,
+      "mtime_ns": 1792760258435163874,
+      "compressed_bytes": 270003,
+      "decompressed_sha256": "d02e03e66d8ee697389885b74e3655a42c681d01b1faf9bd2e96a6c8d033ff8f"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1419Z.log",
+      "bytes": 1056766,
+      "sha256": "6efd41b3f58e56ce7dddc0d8206bd9635538a7106c0ecfc99b2af1f1cdbed1a2",
+      "mode": 420,
+      "inode": 2810748,
+      "mtime_ns": 1792765815123036780,
+      "compressed_bytes": 258871,
+      "decompressed_sha256": "6efd41b3f58e56ce7dddc0d8206bd9635538a7106c0ecfc99b2af1f1cdbed1a2"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1521Z.log",
+      "bytes": 1036014,
+      "sha256": "d609da4e08b97cc9e667eafd601c36eaf00f9fce84ab829e9ae405a3516d9bfd",
+      "mode": 420,
+      "inode": 2810767,
+      "mtime_ns": 1792769502786952434,
+      "compressed_bytes": 252832,
+      "decompressed_sha256": "d609da4e08b97cc9e667eafd601c36eaf00f9fce84ab829e9ae405a3516d9bfd"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1544Z.log",
+      "bytes": 1784796,
+      "sha256": "5abed6a59aa0f536699a84f93cde5455b8d06ae82829c8b68e7b6a3dec33dc1e",
+      "mode": 420,
+      "inode": 2810773,
+      "mtime_ns": 1792772365406886959,
+      "compressed_bytes": 448288,
+      "decompressed_sha256": "5abed6a59aa0f536699a84f93cde5455b8d06ae82829c8b68e7b6a3dec33dc1e"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1619Z.log",
+      "bytes": 1099549,
+      "sha256": "e199cb3c06c2d9f3f39cd9060f503c1ad4449dd401d22bf1ce3b5841c0822056",
+      "mode": 420,
+      "inode": 2810775,
+      "mtime_ns": 1792774432098839689,
+      "compressed_bytes": 286235,
+      "decompressed_sha256": "e199cb3c06c2d9f3f39cd9060f503c1ad4449dd401d22bf1ce3b5841c0822056"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1654Z.log",
+      "bytes": 1231581,
+      "sha256": "00e4c91f33432a160d0682888d4c3f58f01cdcab6c341bdfbe0409bdf8f70939",
+      "mode": 420,
+      "inode": 2810778,
+      "mtime_ns": 1792776520090791932,
+      "compressed_bytes": 314972,
+      "decompressed_sha256": "00e4c91f33432a160d0682888d4c3f58f01cdcab6c341bdfbe0409bdf8f70939"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1729Z.log",
+      "bytes": 1936762,
+      "sha256": "56ed8ed6f0883651a1db7684d07e8290dba78ba1285761e0c09e86d4201043eb",
+      "mode": 420,
+      "inode": 2810780,
+      "mtime_ns": 1792778630830743654,
+      "compressed_bytes": 388027,
+      "decompressed_sha256": "56ed8ed6f0883651a1db7684d07e8290dba78ba1285761e0c09e86d4201043eb"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1804Z.log",
+      "bytes": 1256069,
+      "sha256": "12813291ebf9462f9a63e487a30291a57fed495feb7a3c1d85fd682e4934af6a",
+      "mode": 420,
+      "inode": 2810782,
+      "mtime_ns": 1792780724302695772,
+      "compressed_bytes": 359710,
+      "decompressed_sha256": "12813291ebf9462f9a63e487a30291a57fed495feb7a3c1d85fd682e4934af6a"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1839Z.log",
+      "bytes": 1379307,
+      "sha256": "41bb1b9354a148c41f84957914f9a0f5e81da3669b99f2e9612ffda0b2449164",
+      "mode": 420,
+      "inode": 2810785,
+      "mtime_ns": 1792782830114647607,
+      "compressed_bytes": 339678,
+      "decompressed_sha256": "41bb1b9354a148c41f84957914f9a0f5e81da3669b99f2e9612ffda0b2449164"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1914Z.log",
+      "bytes": 2343491,
+      "sha256": "8466fc0dd612730efac3276a7937a2aa10b6b746a7f023ef41b8f999aad9a1b8",
+      "mode": 420,
+      "inode": 2810787,
+      "mtime_ns": 1792784951490599086,
+      "compressed_bytes": 580798,
+      "decompressed_sha256": "8466fc0dd612730efac3276a7937a2aa10b6b746a7f023ef41b8f999aad9a1b8"
+    },
+    {
+      "path": "managers/app/rounds/20261023T1949Z.log",
+      "bytes": 2470585,
+      "sha256": "cbe716a53189b43e875be7fe021a8855e7f390ab5856e23bcc0c181798d3f92a",
+      "mode": 420,
+      "inode": 2810789,
+      "mtime_ns": 1792787039822551321,
+      "compressed_bytes": 647602,
+      "decompressed_sha256": "cbe716a53189b43e875be7fe021a8855e7f390ab5856e23bcc0c181798d3f92a"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2025Z.log",
+      "bytes": 1197262,
+      "sha256": "975ac61a7a03cc4dce30e1b626caa83e4209a0d7310d6e7e8e202c448d203c12",
+      "mode": 420,
+      "inode": 2810791,
+      "mtime_ns": 1792789158778502856,
+      "compressed_bytes": 360066,
+      "decompressed_sha256": "975ac61a7a03cc4dce30e1b626caa83e4209a0d7310d6e7e8e202c448d203c12"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2100Z.log",
+      "bytes": 1267985,
+      "sha256": "40c5b73e9667feb093d666d90b3863d408651aff41bb5b0cf998ad80d0cc5fc9",
+      "mode": 420,
+      "inode": 2810793,
+      "mtime_ns": 1792791300998453858,
+      "compressed_bytes": 329204,
+      "decompressed_sha256": "40c5b73e9667feb093d666d90b3863d408651aff41bb5b0cf998ad80d0cc5fc9"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2135Z.log",
+      "bytes": 1408472,
+      "sha256": "e80ed54629631c7c48aae98c199615f5d64bcbc2f37133201d954bea2f08ae6d",
+      "mode": 420,
+      "inode": 2810795,
+      "mtime_ns": 1792793333102407379,
+      "compressed_bytes": 378168,
+      "decompressed_sha256": "e80ed54629631c7c48aae98c199615f5d64bcbc2f37133201d954bea2f08ae6d"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2211Z.log",
+      "bytes": 1466886,
+      "sha256": "0d8c71b6361adcde379ada38cd20b1517e4ff90d64782657368ddca6474f4876",
+      "mode": 420,
+      "inode": 2810797,
+      "mtime_ns": 1792795546106356763,
+      "compressed_bytes": 414061,
+      "decompressed_sha256": "0d8c71b6361adcde379ada38cd20b1517e4ff90d64782657368ddca6474f4876"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2246Z.log",
+      "bytes": 1246494,
+      "sha256": "46b111b54d571b025ecad53f885f61ff719edf45fab8e4f15c81a3ae41ceb8bb",
+      "mode": 420,
+      "inode": 2810799,
+      "mtime_ns": 1792797667458308242,
+      "compressed_bytes": 335020,
+      "decompressed_sha256": "46b111b54d571b025ecad53f885f61ff719edf45fab8e4f15c81a3ae41ceb8bb"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2321Z.log",
+      "bytes": 1050181,
+      "sha256": "7d24482a50d287a6b08ceede95fada5812632c449b746726654b922836ae5464",
+      "mode": 420,
+      "inode": 2810801,
+      "mtime_ns": 1792799785346259801,
+      "compressed_bytes": 302210,
+      "decompressed_sha256": "7d24482a50d287a6b08ceede95fada5812632c449b746726654b922836ae5464"
+    },
+    {
+      "path": "managers/app/rounds/20261023T2357Z.log",
+      "bytes": 1208011,
+      "sha256": "a23d78c776e69c5d418f7f59958226bdbe0d1bc546bfecfd45882e141c153d22",
+      "mode": 420,
+      "inode": 2810803,
+      "mtime_ns": 1792801856304049343,
+      "compressed_bytes": 325945,
+      "decompressed_sha256": "a23d78c776e69c5d418f7f59958226bdbe0d1bc546bfecfd45882e141c153d22"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0032Z.log",
+      "bytes": 2160599,
+      "sha256": "88da6b2cd36d1e27c116060dc6cf5249567d2bee2e355998ef239bcda164e43b",
+      "mode": 420,
+      "inode": 2810805,
+      "mtime_ns": 1792803996654163479,
+      "compressed_bytes": 576322,
+      "decompressed_sha256": "88da6b2cd36d1e27c116060dc6cf5249567d2bee2e355998ef239bcda164e43b"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0107Z.log",
+      "bytes": 1249169,
+      "sha256": "dfee86807b06621281b1b84383c7adb8df907aa4543f8b02fd47b250aa919031",
+      "mode": 420,
+      "inode": 2810807,
+      "mtime_ns": 1792806152514114169,
+      "compressed_bytes": 334803,
+      "decompressed_sha256": "dfee86807b06621281b1b84383c7adb8df907aa4543f8b02fd47b250aa919031"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0143Z.log",
+      "bytes": 1032507,
+      "sha256": "03fd726cb5c6d93810ee1364116a3cb614e6ca4c89756db221e629aaf1190a54",
+      "mode": 420,
+      "inode": 2810809,
+      "mtime_ns": 1792808266931228152,
+      "compressed_bytes": 277044,
+      "decompressed_sha256": "03fd726cb5c6d93810ee1364116a3cb614e6ca4c89756db221e629aaf1190a54"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0253Z.log",
+      "bytes": 1352088,
+      "sha256": "ff8e4de904afa6883ec26aa96eb72b29954d16068ebf4023189881516ff5cce2",
+      "mode": 420,
+      "inode": 2810812,
+      "mtime_ns": 1792812528209968342,
+      "compressed_bytes": 360440,
+      "decompressed_sha256": "ff8e4de904afa6883ec26aa96eb72b29954d16068ebf4023189881516ff5cce2"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0329Z.log",
+      "bytes": 1169765,
+      "sha256": "89ddaef088ace67358ee64a4a4c05867d951b2617b86f7194fe345039cb18aa3",
+      "mode": 420,
+      "inode": 2810814,
+      "mtime_ns": 1792814649441919825,
+      "compressed_bytes": 294131,
+      "decompressed_sha256": "89ddaef088ace67358ee64a4a4c05867d951b2617b86f7194fe345039cb18aa3"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0404Z.log",
+      "bytes": 1319609,
+      "sha256": "7ad0ae7f90cdfbed2753018348754c7785eb9380e0720d5e6bd96dc510513d71",
+      "mode": 420,
+      "inode": 2810816,
+      "mtime_ns": 1792816752518573168,
+      "compressed_bytes": 337902,
+      "decompressed_sha256": "7ad0ae7f90cdfbed2753018348754c7785eb9380e0720d5e6bd96dc510513d71"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0439Z.log",
+      "bytes": 1046634,
+      "sha256": "5c03db655f4fb6c7740aabf1628c15d7ad7a9f7c330d46dac6557aef63574840",
+      "mode": 420,
+      "inode": 2810818,
+      "mtime_ns": 1792818874129823196,
+      "compressed_bytes": 279352,
+      "decompressed_sha256": "5c03db655f4fb6c7740aabf1628c15d7ad7a9f7c330d46dac6557aef63574840"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0515Z.log",
+      "bytes": 1097840,
+      "sha256": "9e4d9fc2e8f8888df2204e38127d156e9e39640e7c15cf179679031d5088be97",
+      "mode": 420,
+      "inode": 2810820,
+      "mtime_ns": 1792820969909011691,
+      "compressed_bytes": 296390,
+      "decompressed_sha256": "9e4d9fc2e8f8888df2204e38127d156e9e39640e7c15cf179679031d5088be97"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0550Z.log",
+      "bytes": 1475566,
+      "sha256": "34ffda5ac57869396dd47f32b416ac2d83dbe6831bc7666bcfd9f5951233c48e",
+      "mode": 420,
+      "inode": 2810822,
+      "mtime_ns": 1792823114033726220,
+      "compressed_bytes": 373467,
+      "decompressed_sha256": "34ffda5ac57869396dd47f32b416ac2d83dbe6831bc7666bcfd9f5951233c48e"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0625Z.log",
+      "bytes": 1313700,
+      "sha256": "a504aafa4267c12bdda3d5081037feed5cd70f7e494096d54516ed6fadf4ace6",
+      "mode": 420,
+      "inode": 2810824,
+      "mtime_ns": 1792825167817679245,
+      "compressed_bytes": 345264,
+      "decompressed_sha256": "a504aafa4267c12bdda3d5081037feed5cd70f7e494096d54516ed6fadf4ace6"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0701Z.log",
+      "bytes": 1025092,
+      "sha256": "4ed8c62f8c0deef1ca050a10ba4421a59031bbdaac9da1633a7202be74f96050",
+      "mode": 420,
+      "inode": 2810826,
+      "mtime_ns": 1792827314525630145,
+      "compressed_bytes": 279574,
+      "decompressed_sha256": "4ed8c62f8c0deef1ca050a10ba4421a59031bbdaac9da1633a7202be74f96050"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0736Z.log",
+      "bytes": 1152959,
+      "sha256": "8fbe8ede8f086c68932680a8341933251890282eeb5f0e55ad3f54b04ef6b86a",
+      "mode": 420,
+      "inode": 2810828,
+      "mtime_ns": 1792829447433581360,
+      "compressed_bytes": 307534,
+      "decompressed_sha256": "8fbe8ede8f086c68932680a8341933251890282eeb5f0e55ad3f54b04ef6b86a"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0811Z.log",
+      "bytes": 1077258,
+      "sha256": "38b70d5820ee3abfadf39cef8de9c8d34523cb449ac333dcc47ff0d2f89ac3d0",
+      "mode": 420,
+      "inode": 2810830,
+      "mtime_ns": 1792831600217532121,
+      "compressed_bytes": 277411,
+      "decompressed_sha256": "38b70d5820ee3abfadf39cef8de9c8d34523cb449ac333dcc47ff0d2f89ac3d0"
+    },
+    {
+      "path": "managers/app/rounds/20261024T0922Z.log",
+      "bytes": 1551800,
+      "sha256": "45b3158104f9601676384833a045f52cfcd56781478f62455b3558869e0ffd60",
+      "mode": 420,
+      "inode": 2810835,
+      "mtime_ns": 1792835831957435331,
+      "compressed_bytes": 325223,
+      "decompressed_sha256": "45b3158104f9601676384833a045f52cfcd56781478f62455b3558869e0ffd60"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1001Z.log",
+      "bytes": 1036041,
+      "sha256": "788b3d9ddaf1c1ef3b0f4a414c6f24556e4958ba5f36409d6720282df8de9f90",
+      "mode": 420,
+      "inode": 2810839,
+      "mtime_ns": 1792838174309381756,
+      "compressed_bytes": 274941,
+      "decompressed_sha256": "788b3d9ddaf1c1ef3b0f4a414c6f24556e4958ba5f36409d6720282df8de9f90"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1036Z.log",
+      "bytes": 2457666,
+      "sha256": "f17000c9144da3223894254a3cb1680601004953c8589cdf2dfccdc3d37dcd51",
+      "mode": 420,
+      "inode": 2810841,
+      "mtime_ns": 1792840281557333559,
+      "compressed_bytes": 425505,
+      "decompressed_sha256": "f17000c9144da3223894254a3cb1680601004953c8589cdf2dfccdc3d37dcd51"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1112Z.log",
+      "bytes": 1007185,
+      "sha256": "2d689ef3be2dd8a774501e18c2827bda139433f48674b84fc796bafa61b02fe3",
+      "mode": 420,
+      "inode": 2810843,
+      "mtime_ns": 1792842411609284840,
+      "compressed_bytes": 263196,
+      "decompressed_sha256": "2d689ef3be2dd8a774501e18c2827bda139433f48674b84fc796bafa61b02fe3"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1147Z.log",
+      "bytes": 1071191,
+      "sha256": "14464d3a7529606a860c3eb3e2e352b196793fb0cc0121d2d608e43ac2560e54",
+      "mode": 420,
+      "inode": 2810845,
+      "mtime_ns": 1792844542965236090,
+      "compressed_bytes": 306260,
+      "decompressed_sha256": "14464d3a7529606a860c3eb3e2e352b196793fb0cc0121d2d608e43ac2560e54"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1222Z.log",
+      "bytes": 1127424,
+      "sha256": "0d773d3811d86fa52cce706167b23b5aa67f58411ed6ab393512f1a15a6b43ef",
+      "mode": 420,
+      "inode": 664250,
+      "mtime_ns": 1792846653489187818,
+      "compressed_bytes": 299386,
+      "decompressed_sha256": "0d773d3811d86fa52cce706167b23b5aa67f58411ed6ab393512f1a15a6b43ef"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1258Z.log",
+      "bytes": 1418795,
+      "sha256": "ed36ca563bc393404eca0f5bd9fc277d317f1a4b92f634a5f6d539c3eb1cdc0c",
+      "mode": 420,
+      "inode": 2810847,
+      "mtime_ns": 1792848717013140620,
+      "compressed_bytes": 354748,
+      "decompressed_sha256": "ed36ca563bc393404eca0f5bd9fc277d317f1a4b92f634a5f6d539c3eb1cdc0c"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1408Z.log",
+      "bytes": 1357680,
+      "sha256": "da80d53053c0a4e6fb6162217456d02f2d412bc6d2470c6ffa5954c5e1221bef",
+      "mode": 420,
+      "inode": 2810851,
+      "mtime_ns": 1792852966069043434,
+      "compressed_bytes": 338572,
+      "decompressed_sha256": "da80d53053c0a4e6fb6162217456d02f2d412bc6d2470c6ffa5954c5e1221bef"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1519Z.log",
+      "bytes": 1022587,
+      "sha256": "d84e18d305ab001b7967dd969846ce4d5b447ff27feab9fa9b10e9f9f924f4af",
+      "mode": 420,
+      "inode": 2810855,
+      "mtime_ns": 1792857238772945708,
+      "compressed_bytes": 257708,
+      "decompressed_sha256": "d84e18d305ab001b7967dd969846ce4d5b447ff27feab9fa9b10e9f9f924f4af"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1554Z.log",
+      "bytes": 1491204,
+      "sha256": "ca99fa2bc2c97b8012b78c61509e13bc23a7862283d1332f169ef32a8747e8b0",
+      "mode": 420,
+      "inode": 2810857,
+      "mtime_ns": 1792859374548896858,
+      "compressed_bytes": 354613,
+      "decompressed_sha256": "ca99fa2bc2c97b8012b78c61509e13bc23a7862283d1332f169ef32a8747e8b0"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1630Z.log",
+      "bytes": 1342023,
+      "sha256": "d1ad9f696ad160e23007d59e97f54aba82e1c49ea5a98152f9e03eeaa141a186",
+      "mode": 420,
+      "inode": 2810859,
+      "mtime_ns": 1792861477656848755,
+      "compressed_bytes": 355090,
+      "decompressed_sha256": "d1ad9f696ad160e23007d59e97f54aba82e1c49ea5a98152f9e03eeaa141a186"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1705Z.log",
+      "bytes": 1229921,
+      "sha256": "4914e54e5ad399668cb303e870292bf9c14422278b304011a4be51359f52320b",
+      "mode": 420,
+      "inode": 2810861,
+      "mtime_ns": 1792863627516799582,
+      "compressed_bytes": 320421,
+      "decompressed_sha256": "4914e54e5ad399668cb303e870292bf9c14422278b304011a4be51359f52320b"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1740Z.log",
+      "bytes": 1099709,
+      "sha256": "f3bf233a33be8de2bf31c2b31bee47c24db31d2cbbed6f2dd6054cfc03cc2c10",
+      "mode": 420,
+      "inode": 2810863,
+      "mtime_ns": 1792865626337984948,
+      "compressed_bytes": 278395,
+      "decompressed_sha256": "f3bf233a33be8de2bf31c2b31bee47c24db31d2cbbed6f2dd6054cfc03cc2c10"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1816Z.log",
+      "bytes": 2195518,
+      "sha256": "cb07c2350d1300467fd332f0726e609dee7bb91974e3f02fe81bcbbd6cd0399b",
+      "mode": 420,
+      "inode": 2810865,
+      "mtime_ns": 1792867855324702882,
+      "compressed_bytes": 538555,
+      "decompressed_sha256": "cb07c2350d1300467fd332f0726e609dee7bb91974e3f02fe81bcbbd6cd0399b"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1851Z.log",
+      "bytes": 1214488,
+      "sha256": "63f52c065e4434198416c77acd659894a921b14ccd53fb3c94905f66ace168ba",
+      "mode": 420,
+      "inode": 2810867,
+      "mtime_ns": 1792869953132654901,
+      "compressed_bytes": 311252,
+      "decompressed_sha256": "63f52c065e4434198416c77acd659894a921b14ccd53fb3c94905f66ace168ba"
+    },
+    {
+      "path": "managers/app/rounds/20261024T1926Z.log",
+      "bytes": 1135945,
+      "sha256": "f48b143711eacdef2497e30e6df297c9cbf6bf605d230c9b3ec6a1c41a76c988",
+      "mode": 420,
+      "inode": 2810869,
+      "mtime_ns": 1792872081920606210,
+      "compressed_bytes": 296451,
+      "decompressed_sha256": "f48b143711eacdef2497e30e6df297c9cbf6bf605d230c9b3ec6a1c41a76c988"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2002Z.log",
+      "bytes": 1858520,
+      "sha256": "392a1f869c73ae49aaa45ef75f81807b8456ff39e8446c9e1b027a887fa993f1",
+      "mode": 420,
+      "inode": 2810871,
+      "mtime_ns": 1792874225112557191,
+      "compressed_bytes": 499836,
+      "decompressed_sha256": "392a1f869c73ae49aaa45ef75f81807b8456ff39e8446c9e1b027a887fa993f1"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2037Z.log",
+      "bytes": 1449919,
+      "sha256": "b603ca447797822557466aa53a366e4bf8a89ba278df0b24e8f491d6df8dd2db",
+      "mode": 420,
+      "inode": 2810873,
+      "mtime_ns": 1792876336988508887,
+      "compressed_bytes": 323232,
+      "decompressed_sha256": "b603ca447797822557466aa53a366e4bf8a89ba278df0b24e8f491d6df8dd2db"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2148Z.log",
+      "bytes": 1195968,
+      "sha256": "c0ed4762abcbd44a3c5f8bc6b3e1fef226eab05ee0f25c0d94d61395aa6ae18c",
+      "mode": 420,
+      "inode": 2810877,
+      "mtime_ns": 1792880542900412688,
+      "compressed_bytes": 319901,
+      "decompressed_sha256": "c0ed4762abcbd44a3c5f8bc6b3e1fef226eab05ee0f25c0d94d61395aa6ae18c"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2223Z.log",
+      "bytes": 1310540,
+      "sha256": "d45800815fc5bf0e83efc3b241bc8eb23986b62d9ec11208d63ffebbd8c1299b",
+      "mode": 420,
+      "inode": 2810879,
+      "mtime_ns": 1792882680930004636,
+      "compressed_bytes": 339682,
+      "decompressed_sha256": "d45800815fc5bf0e83efc3b241bc8eb23986b62d9ec11208d63ffebbd8c1299b"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2258Z.log",
+      "bytes": 1164521,
+      "sha256": "22df58bf0ec685e8c9e9495893b7e5fe01db2b37ebd45decca24e138c48de5fb",
+      "mode": 420,
+      "inode": 2810881,
+      "mtime_ns": 1792884810060315088,
+      "compressed_bytes": 299941,
+      "decompressed_sha256": "22df58bf0ec685e8c9e9495893b7e5fe01db2b37ebd45decca24e138c48de5fb"
+    },
+    {
+      "path": "managers/app/rounds/20261024T2334Z.log",
+      "bytes": 1265238,
+      "sha256": "3e0e7519ed446139b05deb649e859976417acb5ba4d76e435251cd8e8f1cc5c3",
+      "mode": 420,
+      "inode": 2810883,
+      "mtime_ns": 1792886881536267709,
+      "compressed_bytes": 329083,
+      "decompressed_sha256": "3e0e7519ed446139b05deb649e859976417acb5ba4d76e435251cd8e8f1cc5c3"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0009Z.log",
+      "bytes": 1079774,
+      "sha256": "a8daf1e4a6ce10ca41c96cc2587dc5f378c36dc43163dee3ec2a36ade711cb2b",
+      "mode": 420,
+      "inode": 2810885,
+      "mtime_ns": 1792889010992219003,
+      "compressed_bytes": 299125,
+      "decompressed_sha256": "a8daf1e4a6ce10ca41c96cc2587dc5f378c36dc43163dee3ec2a36ade711cb2b"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0044Z.log",
+      "bytes": 1061383,
+      "sha256": "a3a5c168fefdbfd3a4876336725d0c47b8ae0a0d54aeeb690bc4cea6cc1cda6a",
+      "mode": 420,
+      "inode": 2810887,
+      "mtime_ns": 1792891186424169246,
+      "compressed_bytes": 304522,
+      "decompressed_sha256": "a3a5c168fefdbfd3a4876336725d0c47b8ae0a0d54aeeb690bc4cea6cc1cda6a"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0120Z.log",
+      "bytes": 1651249,
+      "sha256": "afdac08a920c6aaace977b4063b2234308531a78b86ae354a4728ba40df0ff32",
+      "mode": 420,
+      "inode": 2810890,
+      "mtime_ns": 1792893275652121460,
+      "compressed_bytes": 433574,
+      "decompressed_sha256": "afdac08a920c6aaace977b4063b2234308531a78b86ae354a4728ba40df0ff32"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0155Z.log",
+      "bytes": 1497147,
+      "sha256": "b082a9dbd6a18e409763ddb598a23a34f9e383f7bdb5e4e10276e03c7a509020",
+      "mode": 420,
+      "inode": 2810892,
+      "mtime_ns": 1792895416044072505,
+      "compressed_bytes": 359602,
+      "decompressed_sha256": "b082a9dbd6a18e409763ddb598a23a34f9e383f7bdb5e4e10276e03c7a509020"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0230Z.log",
+      "bytes": 1371719,
+      "sha256": "b90e990accb634f3df8c04de4c0390f378dbdb1d2b11db017065c87a92140f7a",
+      "mode": 420,
+      "inode": 2810894,
+      "mtime_ns": 1792897517476024440,
+      "compressed_bytes": 364631,
+      "decompressed_sha256": "b90e990accb634f3df8c04de4c0390f378dbdb1d2b11db017065c87a92140f7a"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0306Z.log",
+      "bytes": 1319473,
+      "sha256": "2c46faff663b850ba05ebb58f5d87ac176baa6aa1f438355cd679ebf9546421a",
+      "mode": 420,
+      "inode": 2810896,
+      "mtime_ns": 1792899625595976222,
+      "compressed_bytes": 353303,
+      "decompressed_sha256": "2c46faff663b850ba05ebb58f5d87ac176baa6aa1f438355cd679ebf9546421a"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0341Z.log",
+      "bytes": 1611868,
+      "sha256": "10abd5c1befbfe601cf46307b4991aae43aca6bebb0697a737ad9330e4d0a1d4",
+      "mode": 420,
+      "inode": 2810898,
+      "mtime_ns": 1792901758923927428,
+      "compressed_bytes": 424552,
+      "decompressed_sha256": "10abd5c1befbfe601cf46307b4991aae43aca6bebb0697a737ad9330e4d0a1d4"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0416Z.log",
+      "bytes": 1540676,
+      "sha256": "8535338129d99106b1e1d872f788352fda256f55fb2d5c6e37bd5ff3c9a71718",
+      "mode": 420,
+      "inode": 2810900,
+      "mtime_ns": 1792903859543879382,
+      "compressed_bytes": 376495,
+      "decompressed_sha256": "8535338129d99106b1e1d872f788352fda256f55fb2d5c6e37bd5ff3c9a71718"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0452Z.log",
+      "bytes": 1241598,
+      "sha256": "b14f23b04e335ebee1a1722e19386cebf3f4b01d196b03ce9fdea3cafa18f202",
+      "mode": 420,
+      "inode": 2810902,
+      "mtime_ns": 1792906022695829906,
+      "compressed_bytes": 317317,
+      "decompressed_sha256": "b14f23b04e335ebee1a1722e19386cebf3f4b01d196b03ce9fdea3cafa18f202"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0527Z.log",
+      "bytes": 1336515,
+      "sha256": "45dabb0f6f79405c56a53942f9bcb7756df4d8af951c8aa3a07b7c161116fc01",
+      "mode": 420,
+      "inode": 2810904,
+      "mtime_ns": 1792908102003782347,
+      "compressed_bytes": 345616,
+      "decompressed_sha256": "45dabb0f6f79405c56a53942f9bcb7756df4d8af951c8aa3a07b7c161116fc01"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0602Z.log",
+      "bytes": 1297033,
+      "sha256": "37906fdba018166b3a5766b145885cb708e7be2546564892e2c93ac7418508e4",
+      "mode": 420,
+      "inode": 2810906,
+      "mtime_ns": 1792910221267733875,
+      "compressed_bytes": 347605,
+      "decompressed_sha256": "37906fdba018166b3a5766b145885cb708e7be2546564892e2c93ac7418508e4"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0638Z.log",
+      "bytes": 1359256,
+      "sha256": "d619be18a0d6ccca21bf4f32fe7ff23aa96e594fe56c7584eb7375b8848f570a",
+      "mode": 420,
+      "inode": 2810908,
+      "mtime_ns": 1792912288527686592,
+      "compressed_bytes": 368987,
+      "decompressed_sha256": "d619be18a0d6ccca21bf4f32fe7ff23aa96e594fe56c7584eb7375b8848f570a"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0713Z.log",
+      "bytes": 1790543,
+      "sha256": "2fedbecd219db79ee021e2d14935975a23ed13b5e6adda384649a7b4e4a17c97",
+      "mode": 420,
+      "inode": 2810910,
+      "mtime_ns": 1792914492571636180,
+      "compressed_bytes": 376039,
+      "decompressed_sha256": "2fedbecd219db79ee021e2d14935975a23ed13b5e6adda384649a7b4e4a17c97"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0748Z.log",
+      "bytes": 1849471,
+      "sha256": "f668ae63026931470d01045f5d26721ccedb774e3b6a993a2ce5027301e3db56",
+      "mode": 420,
+      "inode": 2810912,
+      "mtime_ns": 1792916605939587842,
+      "compressed_bytes": 463892,
+      "decompressed_sha256": "f668ae63026931470d01045f5d26721ccedb774e3b6a993a2ce5027301e3db56"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0824Z.log",
+      "bytes": 1179449,
+      "sha256": "fb9532c321176896d2adcd2e57da01a08a9491411e9d7ce31b35b5bdabbcd673",
+      "mode": 420,
+      "inode": 2810914,
+      "mtime_ns": 1792918740099539029,
+      "compressed_bytes": 340252,
+      "decompressed_sha256": "fb9532c321176896d2adcd2e57da01a08a9491411e9d7ce31b35b5bdabbcd673"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0859Z.log",
+      "bytes": 1272581,
+      "sha256": "950df906abb3641ca5b8e0cfea5553366f7a49f020648cd992169216482dbaa7",
+      "mode": 420,
+      "inode": 2810916,
+      "mtime_ns": 1792920863583490460,
+      "compressed_bytes": 323603,
+      "decompressed_sha256": "950df906abb3641ca5b8e0cfea5553366f7a49f020648cd992169216482dbaa7"
+    },
+    {
+      "path": "managers/app/rounds/20261025T0934Z.log",
+      "bytes": 1538831,
+      "sha256": "a8ccc4db423504a23959aa2736901ca4d4631e67a29da3beec6f35404db527b3",
+      "mode": 420,
+      "inode": 2810918,
+      "mtime_ns": 1792922985535441926,
+      "compressed_bytes": 354797,
+      "decompressed_sha256": "a8ccc4db423504a23959aa2736901ca4d4631e67a29da3beec6f35404db527b3"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1010Z.log",
+      "bytes": 1460774,
+      "sha256": "5c84929724ec255ee6c2156d92c06311f1bc01e6eb2ffca5e2766daabe5a5060",
+      "mode": 420,
+      "inode": 2810920,
+      "mtime_ns": 1792925106235393421,
+      "compressed_bytes": 379379,
+      "decompressed_sha256": "5c84929724ec255ee6c2156d92c06311f1bc01e6eb2ffca5e2766daabe5a5060"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1045Z.log",
+      "bytes": 1347518,
+      "sha256": "aa1582afd4772868f9e22b15f44cfce7bd7a76df639de8b53415384b8107075f",
+      "mode": 420,
+      "inode": 2810922,
+      "mtime_ns": 1792927208539345336,
+      "compressed_bytes": 371356,
+      "decompressed_sha256": "aa1582afd4772868f9e22b15f44cfce7bd7a76df639de8b53415384b8107075f"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1120Z.log",
+      "bytes": 2497781,
+      "sha256": "0e9faf5b9f0378727dc9320a929a293e913e1d0332b7151fa0d0b2bafc2573a0",
+      "mode": 420,
+      "inode": 2810924,
+      "mtime_ns": 1792929343299296509,
+      "compressed_bytes": 557234,
+      "decompressed_sha256": "0e9faf5b9f0378727dc9320a929a293e913e1d0332b7151fa0d0b2bafc2573a0"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1156Z.log",
+      "bytes": 1180553,
+      "sha256": "0ae4877c075bae20c4d5079a078976b0fd109acb8c1aaa3dcf3ee9e80fc549e6",
+      "mode": 420,
+      "inode": 2810926,
+      "mtime_ns": 1792931452683248263,
+      "compressed_bytes": 311844,
+      "decompressed_sha256": "0ae4877c075bae20c4d5079a078976b0fd109acb8c1aaa3dcf3ee9e80fc549e6"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1231Z.log",
+      "bytes": 1177169,
+      "sha256": "f9f7505f7b7b827dfd7da97102f3c91a8fd1f69baaaa7f4ea6d8cfaab61f8ea0",
+      "mode": 420,
+      "inode": 2810928,
+      "mtime_ns": 1792933552575200233,
+      "compressed_bytes": 309696,
+      "decompressed_sha256": "f9f7505f7b7b827dfd7da97102f3c91a8fd1f69baaaa7f4ea6d8cfaab61f8ea0"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1306Z.log",
+      "bytes": 1344367,
+      "sha256": "1487f20bd38964ebcdfd270a50318f237b4d850feac0b1eff21bacbf379b16ee",
+      "mode": 420,
+      "inode": 2809995,
+      "mtime_ns": 1792935703579151035,
+      "compressed_bytes": 340268,
+      "decompressed_sha256": "1487f20bd38964ebcdfd270a50318f237b4d850feac0b1eff21bacbf379b16ee"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1342Z.log",
+      "bytes": 1494238,
+      "sha256": "1ba8f7cab99f5996d9ffbf67aa6d3ac080e4c896a758ade756d9512d81ea3299",
+      "mode": 420,
+      "inode": 2810011,
+      "mtime_ns": 1792937782503103485,
+      "compressed_bytes": 426004,
+      "decompressed_sha256": "1ba8f7cab99f5996d9ffbf67aa6d3ac080e4c896a758ade756d9512d81ea3299"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1417Z.log",
+      "bytes": 1175197,
+      "sha256": "626b14d4b816897ad9b75ef3f8ec3036f14b25da569d38c6c68518ad7c2c159a",
+      "mode": 420,
+      "inode": 2810115,
+      "mtime_ns": 1792939933683054283,
+      "compressed_bytes": 295346,
+      "decompressed_sha256": "626b14d4b816897ad9b75ef3f8ec3036f14b25da569d38c6c68518ad7c2c159a"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1452Z.log",
+      "bytes": 1802406,
+      "sha256": "e7c0a139716a23e6c906691de361e597572b21567dbe1b2646e51424113e4459",
+      "mode": 420,
+      "inode": 2810937,
+      "mtime_ns": 1792942038711006136,
+      "compressed_bytes": 427325,
+      "decompressed_sha256": "e7c0a139716a23e6c906691de361e597572b21567dbe1b2646e51424113e4459"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1527Z.log",
+      "bytes": 1732433,
+      "sha256": "57211d45a3ab25549a09395b5c92d9edf1540a075a6836168ce633613fe4a01d",
+      "mode": 420,
+      "inode": 2810940,
+      "mtime_ns": 1792944148166957887,
+      "compressed_bytes": 451319,
+      "decompressed_sha256": "57211d45a3ab25549a09395b5c92d9edf1540a075a6836168ce633613fe4a01d"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1602Z.log",
+      "bytes": 1577660,
+      "sha256": "b033f41fcbc0489b3544312a28deb3aba2a190cded7292ae7affd1c0c156dd22",
+      "mode": 420,
+      "inode": 2810942,
+      "mtime_ns": 1792946269706909363,
+      "compressed_bytes": 420221,
+      "decompressed_sha256": "b033f41fcbc0489b3544312a28deb3aba2a190cded7292ae7affd1c0c156dd22"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1638Z.log",
+      "bytes": 1626317,
+      "sha256": "7e1c4b69841b996475445900affd13da9f28bdb416d914fb76d5fd304680a415",
+      "mode": 420,
+      "inode": 2810385,
+      "mtime_ns": 1792948398654860669,
+      "compressed_bytes": 414182,
+      "decompressed_sha256": "7e1c4b69841b996475445900affd13da9f28bdb416d914fb76d5fd304680a415"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1713Z.log",
+      "bytes": 1312660,
+      "sha256": "0c5d956272de8c31b6937b1b71cbe20e94f9759a83e89baef92992f183028f28",
+      "mode": 420,
+      "inode": 2810948,
+      "mtime_ns": 1792950513846812290,
+      "compressed_bytes": 355329,
+      "decompressed_sha256": "0c5d956272de8c31b6937b1b71cbe20e94f9759a83e89baef92992f183028f28"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1748Z.log",
+      "bytes": 1421948,
+      "sha256": "889a4767a5ecefdda57e96db278187a7164e2fe7861c5754edad79209af8bc85",
+      "mode": 420,
+      "inode": 2810956,
+      "mtime_ns": 1792951588790787703,
+      "compressed_bytes": 365974,
+      "decompressed_sha256": "889a4767a5ecefdda57e96db278187a7164e2fe7861c5754edad79209af8bc85"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1806Z.log",
+      "bytes": 1097022,
+      "sha256": "a6f070baa1bfb1d5fcd67339aef669efb2f794e4e6290d7cd04afab1ef625c08",
+      "mode": 420,
+      "inode": 2810959,
+      "mtime_ns": 1792953635886740881,
+      "compressed_bytes": 287299,
+      "decompressed_sha256": "a6f070baa1bfb1d5fcd67339aef669efb2f794e4e6290d7cd04afab1ef625c08"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1842Z.log",
+      "bytes": 1251432,
+      "sha256": "879b0d94ab48e29150e1b8336ef63a620a2ca34deeabb1749e6b36088cccf9d7",
+      "mode": 420,
+      "inode": 2810962,
+      "mtime_ns": 1792955755350692404,
+      "compressed_bytes": 328085,
+      "decompressed_sha256": "879b0d94ab48e29150e1b8336ef63a620a2ca34deeabb1749e6b36088cccf9d7"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1917Z.log",
+      "bytes": 1310108,
+      "sha256": "1b2f9e5ad46b10b9efac7c104de8f0c2f7056d260eda1ec9998568db91fb6d06",
+      "mode": 420,
+      "inode": 2810964,
+      "mtime_ns": 1792957936714642511,
+      "compressed_bytes": 344434,
+      "decompressed_sha256": "1b2f9e5ad46b10b9efac7c104de8f0c2f7056d260eda1ec9998568db91fb6d06"
+    },
+    {
+      "path": "managers/app/rounds/20261025T1952Z.log",
+      "bytes": 1299813,
+      "sha256": "441c8017a27c7ec080f185ecd9505577a57e488501abbab2cff343b70e4b0342",
+      "mode": 420,
+      "inode": 2809947,
+      "mtime_ns": 1792960053510594095,
+      "compressed_bytes": 324736,
+      "decompressed_sha256": "441c8017a27c7ec080f185ecd9505577a57e488501abbab2cff343b70e4b0342"
+    },
+    {
+      "path": "managers/app/rounds/20261025T2028Z.log",
+      "bytes": 1388028,
+      "sha256": "f7198d26f1b312b917fc4bcdd0932061ba330897b528996a72c5a7989590b195",
+      "mode": 420,
+      "inode": 2810106,
+      "mtime_ns": 1792962169232148297,
+      "compressed_bytes": 387097,
+      "decompressed_sha256": "f7198d26f1b312b917fc4bcdd0932061ba330897b528996a72c5a7989590b195"
+    },
+    {
+      "path": "managers/app/rounds/20261025T2103Z.log",
+      "bytes": 1182054,
+      "sha256": "b7eb3c49074abadd4bd6cbba370f5d522ae4513928813a24286a284ebd4bb424",
+      "mode": 420,
+      "inode": 2810177,
+      "mtime_ns": 1792964297690497021,
+      "compressed_bytes": 311591,
+      "decompressed_sha256": "b7eb3c49074abadd4bd6cbba370f5d522ae4513928813a24286a284ebd4bb424"
+    },
+    {
+      "path": "managers/app/rounds/20261025T2138Z.log",
+      "bytes": 1286123,
+      "sha256": "2be4bd9b039021e60f823b5a0460668c462e7ddbe216fa40d10da469201ad7ed",
+      "mode": 420,
+      "inode": 2810295,
+      "mtime_ns": 1792966391842449123,
+      "compressed_bytes": 353975,
+      "decompressed_sha256": "2be4bd9b039021e60f823b5a0460668c462e7ddbe216fa40d10da469201ad7ed"
+    },
+    {
+      "path": "managers/app/rounds/20261025T2214Z.log",
+      "bytes": 1131504,
+      "sha256": "6a81eec100ee9f7e9fd3878ac0dd480722618bd8ce4e78e86967821e96d1c1fa",
+      "mode": 420,
+      "inode": 2810694,
+      "mtime_ns": 1792968549266399777,
+      "compressed_bytes": 322988,
+      "decompressed_sha256": "6a81eec100ee9f7e9fd3878ac0dd480722618bd8ce4e78e86967821e96d1c1fa"
+    },
+    {
+      "path": "managers/app/rounds/20261025T2324Z.log",
+      "bytes": 1606695,
+      "sha256": "f687d00745212810671f5e42a414f685ea752f7eb448b0cba913bc382acbc106",
+      "mode": 420,
+      "inode": 2810709,
+      "mtime_ns": 1792972741734303886,
+      "compressed_bytes": 411844,
+      "decompressed_sha256": "f687d00745212810671f5e42a414f685ea752f7eb448b0cba913bc382acbc106"
+    }
+  ],
+  "pre_available_bytes": 4596961280,
+  "saved_bytes": 104199115,
+  "post_available_bytes": 4701122560
+}
