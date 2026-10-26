@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-26T06:26:34.295773+00:00",
+  "scope": "Closed unreferenced v1 Agent manager stdout20-21Oct only; no active log, worker/test raw, source or KEEP",
+  "pre_free_bytes": 4499865600,
+  "post_free_bytes": 4499865600,
+  "saved_bytes": 0,
+  "files": []
+}

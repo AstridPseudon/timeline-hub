@@ -1,0 +1,13 @@
+{
+  "time": "2026-10-26T06:28:50.382925+00:00",
+  "scope": "Lossless pack of abandoned v1 manager brief copies; no KEEP, worker/test raw, active source or worktree",
+  "precheck": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141-v1-archived-brief-compression-0629.json",
+  "precheck_sha256": "5e109cc29ca32b5a67b3eda112573d9628aff231469d61067b7e49a6f6b635ab",
+  "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v1/closed-v1-briefs-20261026T0629Z.tar.gz",
+  "archive_sha256": "1a4871f7c78ae87a8244bf99ebbe2d41a5b6601ec28c29e25e4ace91161a9ac1",
+  "archive_bytes": 613529,
+  "files": 726,
+  "verified": "Every original compressed file exact SHA256, name and mode; original decoded hashes in precheck. Only listed unchanged inputs removed after archive validation. Root folder retained.",
+  "pre_free_bytes": 4499345408,
+  "post_free_bytes": 4501700608
+}
