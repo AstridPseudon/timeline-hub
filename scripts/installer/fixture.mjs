@@ -257,6 +257,7 @@ try {
     }
 } catch {
     [Console]::WriteLine('CAUGHT: ' + $_.Exception.Message)
+    if (Test-Path -LiteralPath $env:MOCK_LOG) { [Console]::WriteLine('INSTALL-LOG: ' + [IO.File]::ReadAllText($env:MOCK_LOG)) }
 }
 [Console]::WriteLine('SHELL-ALIVE')
 [Console]::WriteLine('PREFERENCE: ' + $ErrorActionPreference)
