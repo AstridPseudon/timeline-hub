@@ -182,6 +182,7 @@ function createState() {
       id: 'session-1',
       status: 'waiting_user',
       turns: [] as AgentTurn[],
+      assistantDraft: undefined as string | undefined,
       durableAcceptedRequestIds: undefined as string[] | undefined,
       control: undefined as { role: 'writer' | 'follower'; active: boolean; activeRequestId: string | null } | undefined,
     },
@@ -1428,6 +1429,18 @@ describe('AgentChat', () => {
     expect(getQueuedTexts()).toEqual([]);
 
     await act(async () => { finishSend(); });
+  });
+
+  it('shows Adding while an element operation waits for durable acceptance', async () => {
+    const state = createState();
+    state.activeSessionData.status = 'processing';
+    state.activeSessionData.assistantDraft = '<astrid_element_operation>{"name":"timeline.apply_element"}</astrid_element_operation>';
+    mockFromState(state);
+
+    renderAgentChat();
+
+    expect(screen.getByText('Adding…')).toBeInTheDocument();
+    expect(screen.queryByText('Thinking...')).not.toBeInTheDocument();
   });
 
   it('auto-sends the queued head with attachments snapshotted at queue time', async () => {
