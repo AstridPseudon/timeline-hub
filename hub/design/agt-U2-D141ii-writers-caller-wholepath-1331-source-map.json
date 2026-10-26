@@ -1,0 +1,171 @@
+{
+  "schema": "timeline.d141ii.caller-wholepath-source-map.v1",
+  "scope": "read-only Agent CLI, SDK, generated client, Runtime conflict producer, and passing CAS controls",
+  "coordinates": [
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/packs/timeline/cli.py",
+      "lines": "2239-2243",
+      "role": "public commit command delegates to cli_native.commit_document"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/packs/timeline/cli_native.py",
+      "lines": "13-67",
+      "role": "conflict presenter and structured DomainResult error conversion; actor wording is inferred from current revision namespace"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/packs/timeline/cli_native.py",
+      "lines": "145-205",
+      "role": "TimelineSession construction, document commit, WorkspaceClientError catch, and public print_result"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/commit_session.py",
+      "lines": "163-254",
+      "role": "public Timeline.commit conflict/re-evaluation policy"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/sync.py",
+      "lines": "42-55",
+      "role": "authenticated realm/actor extraction and DomainResult response conversion"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/sync.py",
+      "lines": "490-601",
+      "role": "outbox flight, generated commit call, structured conflict capture, and no-write retention"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/remote.py",
+      "lines": "331-445",
+      "role": "RemoteTimelines typed operation dispatch and WorkspaceClientError-to-DomainResult preservation"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/workspace_client.py",
+      "lines": "107-120",
+      "role": "WorkspaceClientError structured fields"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/workspace_client.py",
+      "lines": "218-325",
+      "role": "generated-client invocation and ApiError normalization with details/request ID"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/workspace_client.py",
+      "lines": "485-500",
+      "role": "typed commit_timeline forwarding"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid_runtime_client/generated.py",
+      "lines": "599-604",
+      "role": "generated HTTP error decoder retains code/message/request ID/details"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid_runtime_client/generated.py",
+      "lines": "648-688",
+      "role": "generated transport request/error boundary"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid_runtime_client/generated.py",
+      "lines": "940-965",
+      "role": "generated commit response validation and canonical commit route"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/server.py",
+      "lines": "301-341",
+      "role": "authenticated Runtime commit route; publisher comes from identity actor"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/service.py",
+      "lines": "2468-2580",
+      "role": "Runtime service context binding, provider execution, and public structured failure projection"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_port.py",
+      "lines": "89-103",
+      "role": "provider failure projection to public 409/code/details"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "lines": "96-110",
+      "role": "history metadata authority: publisher is authenticated context, not request data"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "lines": "1823-1829",
+      "role": "Runtime acceptance CAS stale-head check"
+    },
+    {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "lines": "1881-1895",
+      "role": "accepted result publisher and head/revision result construction"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/commit.py",
+      "lines": "1160-1214",
+      "role": "Agent provider creates structured dependency conflicts with base/current/path"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/commit.py",
+      "lines": "1336-1452",
+      "role": "Agent provider rebase/CAS acceptance attempts and bounded head-busy refusal"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/commit.py",
+      "lines": "401-419",
+      "role": "normal Agent accepted revision identity uses authoring-parent-revision namespace"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/sdk/timeline/revisions.py",
+      "lines": "17-62",
+      "role": "revision namespace classification; not authenticated actor metadata"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/astrid/packs/timeline/cli_native.py",
+      "lines": "13-43",
+      "role": "presentation only: editor namespace versus someone fallback and discard-first wording"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/packs/timeline/test_verbs_working_copy.py",
+      "lines": "595-627",
+      "role": "open F5: fabricated SimpleNamespace/Refusal direct private presenter test"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/packs/timeline/test_cli_status_publish.py",
+      "lines": "65-127",
+      "role": "normal_commit fixture; real provider but hand-written RemoteTimelines adapter"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/packs/timeline/test_cli_status_publish.py",
+      "lines": "412-438",
+      "role": "passing genuine CLI/CAS/no-retry selector route; does not assert actor wording"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/packs/timeline/test_cli_document_commit.py",
+      "lines": "19-153",
+      "role": "real RuntimeService/provider fixture, still direct service through hand-written Reader"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/sdk/test_runtime_response_conformance.py",
+      "lines": "220-234",
+      "role": "passing generated-client structured 409 detail/request-ID preservation, no CLI"
+    },
+    {
+      "path": "/home/user/work/runtime/tests/test_timeline_commit_integration.py",
+      "lines": "432-448",
+      "role": "real Runtime authenticated door setup"
+    },
+    {
+      "path": "/home/user/work/runtime/tests/test_timeline_public_s2_mixed_cli_journey.py",
+      "lines": "145-164",
+      "role": "real AstridClient/generated transport and public CLI helper"
+    },
+    {
+      "path": "/home/user/work/runtime/tests/test_timeline_public_s2_mixed_cli_journey.py",
+      "lines": "238-420",
+      "role": "real generated-client/public CLI journey; observes 409 wire details but not actor-specific output"
+    },
+    {
+      "path": "/home/user/work/wt/agt-U2-D141ii-writers-caller-wholepath-1331/tests/fixtures/runtime-responses/publish_conflict_409.json",
+      "lines": "2-22",
+      "role": "structured conflict fixture contains current/base pins but no publisher/actor field"
+    }
+  ]
+}
