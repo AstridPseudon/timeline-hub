@@ -1,0 +1,52 @@
+{
+  "schema": "D141l-normalized-witness-data-v1",
+  "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+  "purpose": "receipt input data for the existing timeline.d89d.measured-floor.v1 validator",
+  "historical_stdout": false,
+  "new_observation": false,
+  "new_consumption_measurement": false,
+  "owner": {"uid": 0, "gid": 0},
+  "normalization_rule": "Serialize each authenticated retained number as exactly UTF-8 bytes Avail LF decimal LF. Preserve the source role and value; do not claim that the source emitted this two-line file.",
+  "inputs": [
+    {
+      "role": "start",
+      "output": "normalized-start.df",
+      "value_bytes": 5433016320,
+      "source": {
+        "absolute_path": "/home/user/timeline-hub/hub/design/app-D141-full-controller-admission-0043.json",
+        "sha256": "79149911f6b4c21fa7a48b64032f6b4c27188d06491273a323c0ba688dbaa5ae",
+        "byte_range": {"start": 104, "end_exclusive": 135},
+        "source_field": "available_bytes",
+        "raw_excerpt": "\"available_bytes\": 5433016320,\n",
+        "observed_at": "2026-10-26T00:42:39.754967+00:00",
+        "observation_role": "same-controller dispatch admission / bracket start",
+        "run_id": "app-full-1026004326-12174",
+        "authority": "managers/app/INBOX.md MAIN GO D141c 00:42Z",
+        "body_present_at_admission": false
+      },
+      "normalized_bytes": "Avail\n5433016320\n",
+      "normalized_sha256": "42ea80dcbc160c2195fd638bc7dc27281ec5b6805fca5a23243edb14c7b67716"
+    },
+    {
+      "role": "stop",
+      "output": "normalized-stop.df",
+      "value_bytes": 4839120896,
+      "source": {
+        "absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/rounds/20261026T0035Z.log",
+        "sha256": "720b56d6f058d8aa5ed7770b1e2e5c54a5703ebb68a6403edccfc7a8f6e4302d",
+        "byte_range": {"start": 1157219, "end_exclusive": 1157291},
+        "source_field": "df -B1 /home/user/work row, Avail column",
+        "raw_excerpt": "/dev/vda       270553174016 36760420352 4839120896  89% /home/user/work\n",
+        "observed_at": "2026-10-26T00:48:37Z",
+        "observation_role": "normal full-run in-body minimum / bracket stop",
+        "run_id": "app-full-1026004326-12174",
+        "source_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+        "source_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+        "body_interval": "2026-10-26T00:43:38Z through retained terminal record 2026-10-26T00:59:35.600673Z"
+      },
+      "normalized_bytes": "Avail\n4839120896\n",
+      "normalized_sha256": "8af93918517a4e48289462a64d52c4f8f0ec20c4f90dfcc84f2f1a141db0f0a3"
+    }
+  ],
+  "value_conservation": "5433016320 - 4839120896 = 593895424; normalization changes representation only."
+}

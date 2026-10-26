@@ -1,0 +1,14 @@
+{
+  "time": "2026-10-26T06:05:48.307758+00:00",
+  "worker": "app-F-D141l-freeze2-unit-controller-0606",
+  "available_bytes": 4814028800,
+  "floor_bytes": 4793895424,
+  "growth_bytes": 593895424,
+  "stop_bytes": 4000000000,
+  "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+  "authority": "MAIN05:20 unit pair D89d; independent0600 PASS; normalized data0549",
+  "witnesses": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalization.json",
+  "one_heavy": true,
+  "unit_scope": "actual4de54 current first, then pristine d822 and actual own Node phases as ordinary admission permits",
+  "own_prep": "D89c checked once at controller dispatch; no direct-run or service floor bypass"
+}

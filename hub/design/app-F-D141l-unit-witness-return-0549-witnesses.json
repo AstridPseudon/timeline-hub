@@ -1,0 +1,28 @@
+{
+  "schema": "D141l-normalized-witness-pair-v1",
+  "historical_original_witnesses": false,
+  "authenticated_witness_count": 0,
+  "normalized_input_pair": true,
+  "format": "Avail\\n<strict decimal integer>\\n",
+  "owner": {"uid": 0, "gid": 0},
+  "witnesses": [
+    {
+      "role": "start",
+      "path": "normalized-start.df",
+      "value_bytes": 5433016320,
+      "sha256": "42ea80dcbc160c2195fd638bc7dc27281ec5b6805fca5a23243edb14c7b67716",
+      "source_mapping": "JSON numeric field available_bytes from the retained same-controller admission; see normalization.json."
+    },
+    {
+      "role": "stop",
+      "path": "normalized-stop.df",
+      "value_bytes": 4839120896,
+      "sha256": "8af93918517a4e48289462a64d52c4f8f0ec20c4f90dfcc84f2f1a141db0f0a3",
+      "source_mapping": "Avail column of the exact retained df -B1 table row at byte offset 1157219; see normalization.json."
+    }
+  ],
+  "growth_bytes": 593895424,
+  "floor_bytes": 4793895424,
+  "no_receipt_attachment": true,
+  "note": "These are derived data-format inputs, not historical trace files; original raw sources remain untouched."
+}

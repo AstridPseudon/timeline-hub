@@ -1,0 +1,35 @@
+{
+  "schema": "D141l-corrected-measured-floor-v1",
+  "status": "SOURCE_QUALIFIED_UNDER_MAIN",
+  "qualified": true,
+  "qualification_kind": "bounded_start_to_in_run_minimum_bracket",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "documentary_host_byte_exact": true
+  },
+  "source_unit": {
+    "app_head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "app_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "normal_retained_run_id": "app-full-1026004326-12174",
+    "pristine_retained_run_id": "app-D141-pristine-receiver-0007-full-1026010029-23581"
+  },
+  "start_bytes": 5433016320,
+  "stop_bytes": 4839120896,
+  "growth_bytes": 593895424,
+  "source_floor_bytes": 4600000000,
+  "stop_line_bytes": 4000000000,
+  "margin_bytes": 200000000,
+  "floor_bytes": 4793895424,
+  "formula": "max(4600000000, 4000000000 + (5433016320 - 4839120896) + 200000000)",
+  "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+  "continuous_peak": false,
+  "unobserved_gaps": [
+    "44 seconds from normal body start 2026-10-26T00:43:38Z to first timestamped sample",
+    "intervals between normal samples and after the 2026-10-26T00:48:37Z minimum",
+    "10m35s from pristine body start to first timestamped comparator sample",
+    "intervals between pristine comparator samples and after its minimum"
+  ],
+  "source_decision": "MAIN05:20 permits the retained same-controller admission plus an in-run minimum as a bracket; it does not assert a continuous peak.",
+  "receipt_note": "The normalized files are derived receipt input data, not original stdout, and no new sample, time, consumption measurement, receipt attachment, or live service job was created."
+}
