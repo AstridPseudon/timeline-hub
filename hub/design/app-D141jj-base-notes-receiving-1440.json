@@ -1,0 +1,248 @@
+{
+  "utc": "2026-10-26T14:38:27.089833+00:00",
+  "source": "read-only normalhub originals; no hub or canonical write",
+  "publication": "/home/user/timeline-hub/hub/design/runtime-D141jj-notes-installed-publication-1428.json",
+  "publication_sha256": "b84e7efa9281dec26dfedd45a536823075ef2e353d378bea6667d1cc7ac23076",
+  "qualification": "PASS_BOUNDED_INSTALLATION_WITH_REVIEW_MONITOR_GAP. Original review FAIL solely mistaken syscall-trace requirement remains immutable. Material canonical/backup/prefix/suffix/568-outside/CAS/render checks PASS. No recovered first-tool history.",
+  "canonical": {
+    "README.template.md": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+    "gate-results.md": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+  },
+  "files": [
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-disk-trace.txt",
+      "present": true,
+      "sha256": "7ca85e8af6cf4640fd9a8c105e0191adc59f270b37e6805a4b83fddd0964be12",
+      "bytes": 595,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-findings.md",
+      "present": true,
+      "sha256": "a8e43a293985fde6c7a4a1cb08ea273aed3167a8031b2855d3d981ae2db4fdc2",
+      "bytes": 2218,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-handoff.md",
+      "present": true,
+      "sha256": "1dac271415d2400a9972ba755c6e66430dd60f10f37b7174154cd194446697a4",
+      "bytes": 865,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-harnessreport.md",
+      "present": true,
+      "sha256": "8de7ed2d11d72886bc64ff0459559abdc6c813007319ae3960c56240b74d3b8e",
+      "bytes": 735,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-report.md",
+      "present": true,
+      "sha256": "7f4b0b1bba558a37d6d0028ec7ee1d1867662ff0e3714e2e3b201ba6dd8cf49e",
+      "bytes": 1345,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-review.json",
+      "present": true,
+      "sha256": "81e12aeed5ec09f9a033dd4baa343d9a804a1dcbd65efadfa8176dee013674e5",
+      "bytes": 5886,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-sampler-lifecycle.json",
+      "present": true,
+      "sha256": "cda1e08326113d8e71437636b1a6554167d02fee489982c4a093c5667be213c2",
+      "bytes": 1101,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-source-manifest.json",
+      "present": true,
+      "sha256": "5c597aa8fbed3e6a312d69a6e25b44260d05001ee9c7dd4e721b9bcb2973da56",
+      "bytes": 3627,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-review-next-validation.md",
+      "present": true,
+      "sha256": "adfc85e9ab17c9f6163a5b9cac0719e4710f26ce80fa56f6887073ad751f4e8c",
+      "bytes": 1742,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-correction.json",
+      "present": true,
+      "sha256": "b2ac53c9c686dbe47fd10c4fba7f4984942cd2bfebaac9b8770454198a703b2c",
+      "bytes": 9161,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-disk-trace.txt",
+      "present": true,
+      "sha256": "4a94757d4c6740a373a87845c8fc60d5b36343aa897b63c6f19b3b8e975cc930",
+      "bytes": 1193,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-findings.md",
+      "present": true,
+      "sha256": "c86a5a8cb538308249754627dd860f5241d41a3793a03fa152e7e845d9ec8686",
+      "bytes": 2526,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-handoff.md",
+      "present": true,
+      "sha256": "f8234fc97a8a93b00496e006a245756df1907e700db84d3aeb92eb27552bfb7f",
+      "bytes": 852,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-harnessreport.md",
+      "present": true,
+      "sha256": "fa130b9e4ffc88864d495e8fc8a2aa228f8bf5ddb09f53da4b6e702ad26576db",
+      "bytes": 742,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-review.json",
+      "present": true,
+      "sha256": "81e12aeed5ec09f9a033dd4baa343d9a804a1dcbd65efadfa8176dee013674e5",
+      "bytes": 5886,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-sampler-lifecycle.json",
+      "present": true,
+      "sha256": "1fd587884eedf082fe98e762f87d7f39179f3869e4bad967746e9105e98731dd",
+      "bytes": 1036,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-source-manifest.json",
+      "present": true,
+      "sha256": "c229db0bf2b4aed598e876250ff85003d992befcbc61b505bb91571148d295aa",
+      "bytes": 7694,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-review-clarification-next-validation.md",
+      "present": true,
+      "sha256": "ca65f95c0d0d26a1f1faae33955832085888bd702c35d8e375345acfb65b2c21",
+      "bytes": 2270,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-backups--README.template.md",
+      "present": true,
+      "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "bytes": 47478,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-backups--gate-results.md",
+      "present": true,
+      "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "bytes": 43666,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-disk-trace.txt",
+      "present": true,
+      "sha256": "c351cd478fb7b17143776a97b705c35e1030679450d919750704d615db4aa849",
+      "bytes": 179,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-handoff.md",
+      "present": true,
+      "sha256": "efbfa95f680ce0c28d1815d9a2a1ce6dfb4c2c419708669534edd981a4cef913",
+      "bytes": 646,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-harnessreport.md",
+      "present": true,
+      "sha256": "db17345f59d04b9aae5f6221cb8013f3487ff559884c4668e1337520fbfb8c54",
+      "bytes": 1228,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-installation.json",
+      "present": true,
+      "sha256": "a5b6b6a9e815d427a8cb31de7e69d945d504e915be8e8172db442dc29fa8b835",
+      "bytes": 77481,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-outside-after.json",
+      "present": true,
+      "sha256": "762c1b1e17a2c14ce6e3ec74405ce823d55e678fdcbb1f4d7f773d6390ee5e80",
+      "bytes": 171975,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-outside-before.json",
+      "present": true,
+      "sha256": "762c1b1e17a2c14ce6e3ec74405ce823d55e678fdcbb1f4d7f773d6390ee5e80",
+      "bytes": 171975,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-sampler-lifecycle.json",
+      "present": true,
+      "sha256": "b7ed9470daf597faa8ef238e2949df9c361737937bd3961ca556bfc4094d20d0",
+      "bytes": 633,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-source-manifest.json",
+      "present": true,
+      "sha256": "ce3c41f43ba2f8c2d37ce89e56dd828d3cedc1f2821a9da55d9e2db676f5e307",
+      "bytes": 1834,
+      "hash_exact": true,
+      "size_exact": true
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/rt-F-D141jj-notes-install-resume-next-validation.md",
+      "present": true,
+      "sha256": "946ca029248cded39556094489e64227268cdd2e0b4e6985504a38c51dd23042",
+      "bytes": 948,
+      "hash_exact": true,
+      "size_exact": true
+    }
+  ],
+  "all_originals_hash_size_exact": true,
+  "original_fail_and_monitor_limits_preserved": true,
+  "receipt_scope": "Runtime independent bounded notes installation qualification received; no semantic rerun, syscall instrumentation requirement, live builder or independent App canonical census."
+}

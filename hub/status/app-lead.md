@@ -1,1 +1,1 @@
-app-lead 13:47Z uptime 4545m: daemons alive; OWNER D141jj option B: App ships on 82e9e13ddf1d against upstream fc24f84994dc; eac97ea5 NOT merged (post-ZIP); no new full pair/journeys; D141v pin pass waits Agent REG0; popup known gap; no refusals/blocked rows; ~/.codex unchanged.
+app-lead 14:45Z uptime 4603m: daemons alive; FINAL App HOME abac6c809da25f4c6cc7cce61a7d5ea2ac067067 (D141v pin pass merged; Agent ec0a9f5b, Runtime 95d98f03); proofs on 82e9 stand; popup known gap; eac97ea5 unmerged (post-ZIP); no refusals/blocked rows; ~/.codex unchanged.
