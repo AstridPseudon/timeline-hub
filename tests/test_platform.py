@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import ctypes
 import os
 from pathlib import Path
@@ -49,6 +50,63 @@ def test_spawn_tree_preserves_explicit_stdin(monkeypatch, stdin):
     monkeypatch.setattr(platform.subprocess, "Popen", popen)
     platform.spawn_tree(["child"], stdin=stdin)
     assert calls[0]["stdin"] == stdin
+
+
+@pytest.mark.parametrize("stdin", ["omitted", None, subprocess.PIPE])
+def test_spawn_tree_windows_dispatch_applies_or_preserves_stdin(monkeypatch, stdin):
+    calls = []
+    process = object()
+
+    def spawn(_argv, **kwargs):
+        calls.append(kwargs)
+        return process
+
+    monkeypatch.setattr(platform.sys, "platform", "win32")
+    monkeypatch.setattr(platform, "_spawn_windows_tree", spawn)
+    kwargs = {} if stdin == "omitted" else {"stdin": stdin}
+    assert platform.spawn_tree(["child"], **kwargs) is process
+    expected = subprocess.DEVNULL if stdin in ("omitted", None) else stdin
+    assert calls[0]["stdin"] == expected
+
+
+def test_spawn_tree_preserves_explicit_stdin_file_and_descriptor(monkeypatch, tmp_path):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    path = tmp_path / "stdin.txt"
+    path.write_text("input")
+    with path.open("rb") as stream:
+        platform.spawn_tree(["child"], stdin=stream)
+        assert calls[-1]["stdin"] is stream
+        platform.spawn_tree(["child"], stdin=stream.fileno())
+        assert calls[-1]["stdin"] == stream.fileno()
+
+
+def test_runtime_direct_subprocess_runs_do_not_inherit_stdin():
+    from pathlib import Path
+
+    root = Path(__file__).parents[1] / "runtime_protocol"
+    unsafe = []
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "run" and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "subprocess"):
+                continue
+            keywords = {item.arg: item.value for item in node.keywords if item.arg is not None}
+            if "input" in keywords:
+                continue
+            stdin = keywords.get("stdin")
+            is_none = isinstance(stdin, ast.Constant) and stdin.value is None
+            if stdin is None or is_none:
+                unsafe.append(f"{path.relative_to(root)}:{node.lineno}")
+    assert unsafe == []
 
 
 def test_windows_durable_replace_retries_only_transient_sharing_failures(monkeypatch):
