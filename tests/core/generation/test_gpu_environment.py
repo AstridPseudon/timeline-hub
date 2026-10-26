@@ -284,3 +284,4 @@ def test_solver_version_must_match_before_environment_creation(tmp_path, monkeyp
     with pytest.raises(gpu.GPUEnvironmentError, match="requires uv"):
         gpu.provision_environment(plan)
     assert not Path(plan["root"]).exists()
+

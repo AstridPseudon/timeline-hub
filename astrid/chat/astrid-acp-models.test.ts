@@ -305,3 +305,4 @@ test('catalog levels belong only to the model that advertised them and stale sup
   expect(state.catalogs.get('codex')?.availableModels[1]?.thoughtLevel?.configId).toBe('reasoning_effort');
   expect(state.catalogs.has('hermes')).toBe(false);
 });
+

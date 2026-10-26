@@ -173,3 +173,4 @@ def test_live_runtime_drains_through_down_without_signaling_foreground(tmp_path,
 
     assert calls == ["runtime-down", "wait-manager"]
     signal.assert_not_called()
+

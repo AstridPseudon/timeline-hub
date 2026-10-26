@@ -28,6 +28,62 @@ __all__ = ["duplicate_timeline", "id_map", "copy_content"]
 _SOURCE_BOUND_PAYLOAD_KEYS = ("text_bindings", "internal_timeline_revision_id")
 
 
+class _CopyOutcomeUnknown(TimelineEditError):
+    """The durable copy flight must be reconciled before destination cleanup."""
+
+
+def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, label: str,
+                   client: Any, idempotency_key: str) -> dict[str, Any]:
+    """Submit the authenticated copy through the normal durable command session."""
+    from astrid.sdk.timeline import open as open_timeline
+
+    session = open_timeline(project, timeline, client=client)
+    with session.session.outbox.locked():
+        state = session.session._state()
+    try:
+        if state["pending"] or state["flight"] is not None:
+            result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+        else:
+            result = session.session.submit(
+                [copy.deepcopy(desired["_duplicate_command"])], label=label, merge="atomic", reads=[],
+                steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
+                        "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
+                expected_state=state, idempotency_key=idempotency_key)
+            session._accepted(result)
+    except Exception as exc:
+        with session.session.outbox.locked():
+            pending = session.session._state()
+        if pending["flight"] is not None and not pending.get("conflict"):
+            raise _CopyOutcomeUnknown(
+                f"copy outcome is unknown for timeline {timeline!r}; destination and pending request "
+                "retained; reopen with timeline.open(...).session.flush() to retry the exact request") from exc
+        raise
+    return {"old_head": result["data"].get("previous_revision_id"),
+            "new_head": result["data"].get("accepted_revision_id"),
+            "receipt": result.get("receipt")}
+
+
+def _source_reference(client: Any, project: str, source: str, content: Mapping[str, Any]) -> dict[str, Any]:
+    """Select an exact accepted publication; the private port verifies authority."""
+    source_revision = content["base_parent"]["revision_id"]
+    cursor, seen = None, set()
+    while True:
+        history = client.timelines.history(project, source, cursor=cursor, limit=200)
+        if not history.ok:
+            raise TimelineEditError(f"could not authenticate duplicate source publication: {history.error}")
+        entry = next((item for item in history.data["items"] if item["revision_id"] == source_revision), None)
+        if entry is not None:
+            source_publication = entry["publication_id"]
+            break
+        cursor = history.data.get("next_cursor")
+        if cursor is None or cursor in seen:
+            raise TimelineEditError("the exact source publication is unavailable")
+        seen.add(cursor)
+    return {"project_id": content["project_id"], "timeline_id": content["timeline_id"],
+            "revision_id": source_revision, "publication_id": source_publication,
+            "content_digest": content["base_parent"]["content_digest"]}
+
+
 def _common_prefix(values: list[str]) -> str:
     if not values:
         return ""
@@ -187,7 +243,7 @@ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, na
 def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
                revision_id: str | None) -> dict[str, Any]:
     src = Checkout.open(project, source, revision_id=revision_id, client=client)
-    report = src.check()  # all or nothing: refuse an invalid head BEFORE creating anything
+    report = src._check_core()  # all or nothing: refuse an invalid head BEFORE creating anything
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
@@ -209,21 +265,34 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         dst = Checkout.open(project, new_id, client=client)
         # A chapter film is read flat (ONE shot; its stored form is kept under structure_base). Copy the stored
         # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
-        content = src.bundle.get(STRUCTURE_KEY) or src.bundle
+        from astrid.sdk.timeline.native_timeline_duplicate import physical_content
+
+        content = physical_content(src.bundle.get(STRUCTURE_KEY) or src.bundle)
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
         dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
         # What publish will store for the copy must have as many distinct shots as what the SOURCE stores. The source
         # side is read independently of `content`, so copying the wrong form of the source is caught here.
         copy_shots = {str(r["shot_id"]) for r in dst.stored_document()["placements"]}
-        source_shots = {str(r["shot_id"]) for r in src.stored_document()["placements"]}
+        stored_source = src.stored_document()
+        origins = stored_source["source_mapping"]["shots"]
+        source_shots = {str(origins.get(r["shot_id"], {}).get("shot_id", r["shot_id"]))
+                        for r in stored_source["placements"]}
         if len(copy_shots) != len(source_shots):
             raise TimelineEditError(f"the copy would be stored with {len(copy_shots)} distinct shots, its source stores {len(source_shots)}")
-        report = dst.check()
+        report = dst._check_core()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
-        receipt = dst.publish(f"duplicate of {source}", client=client,
-                              idempotency_key=f"dup-{uuid.uuid4().hex}")
+        from astrid.sdk.timeline.native_timeline_duplicate import copy_command
+
+        bundle["_duplicate_command"] = copy_command(
+            _source_reference(client, project, source, content),
+            id_map(list(dict.fromkeys(str(row["shot_id"]) for row in content["placements"])), slug or new_id),
+            id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
+        receipt = _commit_bundle(project, new_id, bundle, label=f"duplicate of {source}",
+                                 client=client, idempotency_key=f"dup-{uuid.uuid4().hex}")
+    except _CopyOutcomeUnknown:
+        raise
     except Exception as exc:
         archived = client.timelines.archive(project, new_id)  # all or nothing: the empty timeline goes too
         if getattr(archived, "ok", False):

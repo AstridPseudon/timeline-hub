@@ -9,8 +9,10 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -19,11 +21,24 @@ from tests.helpers.remotion_runtime import remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env
 
 ROOT = Path(__file__).resolve().parents[2]
-# The pinned timeline-schema dependency is installed with the dev extras; its install root is the schema root.
-SCHEMA_ROOT = Path(importlib.util.find_spec("banodoco_timeline_schema").origin).resolve().parent.parent
+# The canonical schema is vendored from the exact Runtime source pin.
+SCHEMA_ROOT = ROOT / "astrid/core/timeline/schema/timeline-config.schema.json"
 REMOTION = ROOT / "remotion"
 
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
+from astrid.core.execution.generic_host import (  # noqa: E402
+    GenericPackHost,
+    HostError,
+    RuntimeProtocolClient,
+)
+from astrid.core.theme import builtin_theme  # noqa: E402
+from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (  # noqa: E402
+    _prepared_remotion_root,
+)
+from astrid.packs.rendering.shared.rendering_backend import (  # noqa: E402
+    _resolved_theme_for_render,
+)
+from astrid.sdk.client import AstridClient  # noqa: E402
+from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
@@ -157,6 +172,9 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION.resolve()))
     with _execution_env():
+        from tests.helpers.remotion_validation import issue_remotion_launch_validation
+
+        issue_remotion_launch_validation(tmp_path, monkeypatch)
         yield REMOTION
 
 
@@ -300,5 +318,233 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
         for path in (output, provenance):
             digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
             assert generated.get_object(digest).data == path.read_bytes()
+    finally:
+        daemon.stop()
+
+
+def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
+) -> None:
+    """Prove SDK admission through named materialization into Root props.
+
+    This is intentionally a prefix proof: it does not execute or settle a
+    final render, and therefore claims no completed task, MP4, browser, or
+    parity result.
+    """
+    import astrid.sdk as sdk
+
+    workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
+        tmp_path, monkeypatch
+    )
+    # The ordinary file caller cannot authorize assets named inside a registry.
+    # Use the media-free title film from test_remotion_backend's real-render
+    # fixture, without authored overrides that would mask the theme controls.
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "theme": "banodoco-default",
+                "tracks": [{"id": "v1", "kind": "visual", "label": "Title"}],
+                "clips": [
+                    {
+                        "id": "title",
+                        "at": 0.0,
+                        "track": "v1",
+                        "clipType": "text",
+                        "hold": 0.5,
+                        "text": {
+                            "content": "Remotion ANGLE",
+                            "fontSize": 64,
+                            "color": "#ffffff",
+                        },
+                        "params": {"weight": 700},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assets_path.write_text(json.dumps({"assets": {}}), encoding="utf-8")
+    daemon = real_runtime()
+    try:
+        generated = WorkspaceClient(daemon.endpoint, daemon.token)
+        generated.handshake(
+            "generic-remotion-theme-proof",
+            "0.1.0",
+            [
+                "projects:read",
+                "projects:write",
+                "objects:read",
+                "objects:write",
+                "tasks:read",
+                "tasks:write",
+            ],
+        )
+        project = generated.create_project(
+            "Generic Remotion theme proof",
+            slug="generic-remotion-theme-proof",
+            idempotency_key="generic-remotion-theme-project",
+        )
+        project_id = str(project["project_id"])
+
+        owner = AstridClient.open(
+            endpoint=daemon.endpoint,
+            credential=daemon.credential_path,
+            realm_id=daemon.service.realm["id"],
+            actor_id="owner",
+            client_name="generic-remotion-theme-proof-owner",
+            client_version="test",
+            protocol_version="workspace.v1",
+        )
+        explicit_theme = json.loads(json.dumps(builtin_theme()))
+        explicit_theme["id"] = "imported-explicit-theme"
+        explicit_theme["visual"]["color"] = {
+            "fg": "#e8f1ff",
+            "bg": "#26113d",
+            "accent": "#ff8a3d",
+        }
+        theme_source = workspace / "media" / "explicit-theme.json"
+        theme_source.write_text(json.dumps(explicit_theme), encoding="utf-8")
+        timeline_import = owner.media.import_file(
+            project=project_id,
+            path=timeline_path,
+            idempotency_key="generic-remotion-theme-timeline",
+        )
+        assert timeline_import.ok
+        registry_import = owner.media.import_file(
+            project=project_id,
+            path=assets_path,
+            idempotency_key="generic-remotion-theme-assets",
+        )
+        assert registry_import.ok
+        imported = owner.media.import_file(
+            project=project_id,
+            path=theme_source,
+            idempotency_key="generic-remotion-explicit-theme",
+        )
+        assert imported.ok
+        descriptor = imported.data
+
+        host = GenericPackHost(
+            pack_roots=[workspace / "astrid" / "packs"],
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id=PACK_HOST_ACTOR,
+            attempt_root=tmp_path / "attempt",
+        )
+        record = next(item for item in host.discover() if item.id == "rendering.render")
+        assert "theme" in {port.name for port in record.definition.inputs}
+        host.preflight(record.id)
+        assert host.capabilities[record.id].ready is True
+        registration = host.register()
+        assert registration["registration"].executor_id == PACK_HOST_ACTOR
+
+        admissions = []
+        create_task = owner.tasks.create
+
+        def capture_admission(**request):
+            response = create_task(**request)
+            admissions.append((request, response))
+            return response
+
+        monkeypatch.setattr(owner.tasks, "create", capture_admission)
+        # The private pack tree is a host-launch fixture input.  Leaving it in
+        # the caller environment makes SDK discovery combine it with the
+        # checkout's implicit source tree, duplicating h3_av.transform.
+        with monkeypatch.context() as invoke_env:
+            invoke_env.delenv("ASTRID_PACKS_PATH", raising=False)
+            result = sdk.invoke(
+                "rendering.render",
+                kind="executor",
+                project=project_id,
+                inputs={
+                    "timeline": {
+                        "object_id": timeline_import.data["object_id"],
+                        "digest": timeline_import.data["digest"],
+                        "filename": "hype.timeline.json",
+                    },
+                    "assets_registry": {
+                        "object_id": registry_import.data["object_id"],
+                        "digest": registry_import.data["digest"],
+                        "filename": "hype.assets.json",
+                    },
+                    "theme": {
+                        "object_id": descriptor["object_id"],
+                        "digest": descriptor["digest"],
+                        "filename": "theme.json",
+                    },
+                    "selector": "rendering.remotion",
+                },
+                client=owner,
+            )
+        assert result.ok, result.to_dict()
+        assert len(admissions) == 1
+        request, response = admissions[0]
+        assert response.ok
+        task = generated.get_task(result.kernel_task_id)
+        assert task.input_object_ids == request["input_manifest"]
+        admitted_inputs = task.spec["spec"]["inputs"]
+        assert admitted_inputs == request["spec"]["inputs"]
+        print(
+            json.dumps(
+                {
+                    "sdk_admission": request,
+                    "admission_result": response.data,
+                    "sdk_result": result.to_dict(),
+                },
+                default=str,
+            )
+        )
+        attempt = tmp_path / "materialized-attempt"
+        values = host._materialize_inputs(
+            task.spec,
+            attempt,
+            authorized_input_object_ids=task.input_object_ids,
+            file_input_names=frozenset(
+                port.name for port in record.definition.inputs if port.type == "file"
+            ),
+        )
+        materialized_theme = Path(values["theme"])
+        assert materialized_theme == Path(values["materialized_objects"]["theme"])
+        assert materialized_theme.name == "theme.json"
+        assert materialized_theme.is_relative_to(attempt / "managed-objects")
+        assert json.loads(materialized_theme.read_text(encoding="utf-8")) == explicit_theme
+
+        # Root preparation is the endpoint here; the staged video is only the
+        # required output placeholder for this pre-render props inspection.
+        staged_video = tmp_path / "prepared" / "unused.mp4"
+        with _prepared_remotion_root(
+            Path(values["timeline"]),
+            Path(values["assets_registry"]),
+            staged_video,
+            provenance_out_path=staged_video,
+            project_dir=remotion,
+            composition_id="TimelineComposition",
+            theme_path=materialized_theme,
+            min_free_gb=None,
+            materialized_root=Path(values["materialized_root"]),
+            materialized_objects=values["materialized_objects"],
+            staging_parent=tmp_path / "prepared",
+            frame_numbers=(0,),
+            frame_output_dir=tmp_path / "frames",
+        ) as prepared:
+            props = prepared[0]
+            assert props["theme"]["id"] == explicit_theme["id"]
+            assert props["theme"]["visual"]["color"] == explicit_theme["visual"]["color"]
+
+        omitted = _resolved_theme_for_render(Path(values["timeline"]), None)
+        builtin = builtin_theme()
+        assert omitted == {"id": builtin["id"], "visual": builtin["visual"]}
+        assert omitted["id"] != explicit_theme["id"]
+
+        forged = tmp_path / "forged-theme.json"
+        forged.write_text(json.dumps(explicit_theme), encoding="utf-8")
+        forged_spec = {"spec": {"inputs": {**admitted_inputs, "theme": str(forged)}}}
+        with pytest.raises(HostError, match="requires a managed Runtime object"):
+            host._materialize_inputs(
+                {**forged_spec, "input_object_ids": task.input_object_ids},
+                tmp_path / "forged-attempt",
+                file_input_names=frozenset(
+                    port.name for port in record.definition.inputs if port.type == "file"
+                ),
+            )
     finally:
         daemon.stop()

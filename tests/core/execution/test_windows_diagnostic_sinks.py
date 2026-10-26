@@ -69,3 +69,4 @@ def test_windows_startup_diagnostic_requires_private_handle_and_fixed_fields(mon
         assert row["phase"] == "preflight_begin" and row["process_id"] == 123
     else:
         assert rows == []
+

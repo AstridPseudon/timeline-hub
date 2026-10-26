@@ -100,3 +100,4 @@ def test_current_record_cannot_point_outside_managed_versions(tmp_path):
 
     with pytest.raises(ValueError, match="points outside the managed directory"):
         current(root)
+

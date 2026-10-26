@@ -80,11 +80,12 @@ class TimelineProductParserAliasTest(unittest.TestCase):
         from astrid.packs.timeline.cli import COMMANDS
 
         # ``save`` (whole-document CAS) was retired with the legacy timeline
-        # document routes; ``publish`` is the SDK merge/CAS boundary.
+        # document routes; ``commit`` is the SDK merge/CAS boundary.
         self.assertEqual(
             tuple(spec.name for spec in COMMANDS),
             (
                 "checkout",
+                "commit",
                 "edit",
                 "assets",
                 "find",
@@ -93,7 +94,6 @@ class TimelineProductParserAliasTest(unittest.TestCase):
                 "redo",
                 "check",
                 "status",
-                "publish",
                 "discard",
                 "duplicate",
                 "rename",
@@ -131,6 +131,7 @@ class TimelineProductParserAliasTest(unittest.TestCase):
             self._choices(),
             {
                 "checkout",
+                "commit",
                 "edit",
                 "assets",
                 "find",
@@ -139,7 +140,6 @@ class TimelineProductParserAliasTest(unittest.TestCase):
                 "redo",
                 "check",
                 "status",
-                "publish",
                 "discard",
                 "duplicate",
                 "rename",

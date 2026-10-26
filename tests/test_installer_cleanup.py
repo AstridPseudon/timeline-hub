@@ -306,3 +306,4 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo
     assert lines == []
     assert (root / "install.json").is_file()
     assert (data / "sentinel").read_text() == "keep"
+

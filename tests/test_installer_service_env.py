@@ -176,3 +176,4 @@ def test_doctor_returns_a_new_bundle_for_an_unhealthy_runtime(tmp_path, monkeypa
     assert backend.doctor(version, tmp_path / "data", bundle) == bundle
     assert calls[0][1]["ASTRID_RUNTIME_DATA_ROOT"] == str(tmp_path / "data")
     reveal.assert_called_once_with(bundle)
+

@@ -24,3 +24,4 @@ export function bridgeTestClient(bridge: AstridAcpBridge, token: string) {
     return new Response(output, { status: response.statusCode, headers });
   };
 }
+

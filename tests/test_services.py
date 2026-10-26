@@ -59,3 +59,4 @@ def test_declaration_retains_the_existing_chat_store_and_profile(tmp_path, monke
     assert chat["ASTRID_ACP_PROFILE"] == "existing-profile"
     assert chat["ASTRID_ACP_COMMAND"] == str(tmp_path / "installed astrid")
     assert "ASTRID_ACP_BRIDGE_TOKEN" not in chat
+

@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
-from astrid.core.timeline.shot_composition import MissingDependencyError
+from astrid.core.timeline.shot_composition import MissingDependencyError, validate_shot_composition
 from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
     _track_merge,
     project_shot_composition,
 )
+from astrid.core.timeline.validators.meta import MetaValidationError
 from astrid.sdk.timeline_editing import _clip_duration
-
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot_composition.json"
 ORDER_FIXTURE = FIXTURE.with_name("shot_track_order.json")
@@ -72,6 +72,16 @@ def test_projection_reports_missing_dependency_before_downstream_reads() -> None
     source = graph()
     source["shot_revisions"][1]["dependencies"] = [{"shot_id": "missing", "revision_id": "rev-x", "required": True}]
     with pytest.raises(MissingDependencyError):
+        project_shot_composition(source)
+
+
+def test_shot_payload_meta_is_validated_by_canonical_and_projection_entrypoints() -> None:
+    source = graph()
+    source["shot_revisions"][0]["payload"] = {"meta": {"org.example.notes": None}}
+
+    with pytest.raises(MetaValidationError, match=r"shot_revisions\[0\].payload.meta"):
+        validate_shot_composition(source)
+    with pytest.raises(MetaValidationError, match=r"shot_revisions\[0\].payload.meta"):
         project_shot_composition(source)
 
 

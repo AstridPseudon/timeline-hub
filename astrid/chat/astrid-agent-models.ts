@@ -81,3 +81,4 @@ function modelCatalog(output: string): AcpModelCatalog {
 export async function getAstridAgentModelCatalog(options: AstridModelOptions): Promise<AcpModelCatalog> {
   return modelCatalog(await runAstrid(options, ['models']));
 }
+

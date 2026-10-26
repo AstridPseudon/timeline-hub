@@ -305,3 +305,4 @@ def write_bundle(destination: Path, report: dict, support_root: Path | None) -> 
         except OSError:
             pass
     return destination
+

@@ -11,3 +11,4 @@ opencv-python-headless==5.0.0.93
 # Build tools for the exact admitted VibeComfy source (--no-build-isolation).
 setuptools==80.9.0
 wheel==0.46.3
+

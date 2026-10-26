@@ -67,3 +67,4 @@ def test_owned_omp_protocols_and_generated_readme_pin_utf8():
                 assert isinstance(errors, ast.Constant) and errors.value == "replace", (
                     f"{path}:{node.lineno} foreign tool output needs replacement decoding"
                 )
+

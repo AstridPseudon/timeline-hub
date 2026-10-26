@@ -535,3 +535,4 @@ export class AcpProcessHost {
     if (!this.disposed) this.callbacks.onDisconnect?.(error);
   }
 }
+

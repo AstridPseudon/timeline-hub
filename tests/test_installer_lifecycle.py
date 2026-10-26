@@ -727,3 +727,4 @@ def test_cli_rejects_removed_repair_flag():
         parser().parse_args(["--repair"])
 
     assert failure.value.code == 2
+

@@ -138,6 +138,7 @@ def test_windows_task_settings_and_no_console_executable():
     xml = service.render('win32', version, data, log)
     assert xml.startswith('<Task ')
     assert '<?xml' not in xml
+    assert 'Hidden' not in service.render('win32', version, data, log)
     assert 'Hidden' not in xml
 
 
@@ -305,8 +306,17 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
         monkeypatch.delenv('ASTRID_RUNTIME_DOOR_PORT', raising=False)
     def source(name, _sha, destination):
         if name == 'agent':
+            root = Path(__file__).parents[1]
+            for relative in (
+                Path('astrid/core/timeline/schema/timeline-config.schema.json'),
+                Path('runtime.lock.json'),
+                Path('remotion/package.json'),
+                Path('remotion/package-lock.json'),
+            ):
+                target = destination / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((root / relative).read_bytes())
             (destination / 'remotion/node_modules').mkdir(parents=True)
-            (destination / 'remotion/package-lock.json').write_text('{}\n')
         return destination
     monkeypatch.setattr('astrid.installer.backend.source', source)
     monkeypatch.setattr('astrid.installer.backend.install_tools', lambda *_args: {
@@ -714,3 +724,4 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp
     monkeypatch.setattr(backend, 'workspace', lambda *_args: {'realm_id': 'selected', 'realm_root': str(data / 'realm')})
     backend.register(version, data)
     assert read_json(backend.service.selection)['chat_settings']['ASTRID_ACP_CWD'] == str(data / 'chat')
+

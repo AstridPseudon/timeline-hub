@@ -64,6 +64,7 @@ def test_one_root_lock_covers_all_known_runtime_paths() -> None:
         "astrid_runtime_client/__init__.py",
         "astrid_runtime_client/contract_metadata.py",
         "astrid_runtime_client/generated.py",
+        "astrid_runtime_client/timeline_commit_types.py",
         "astrid/core/timeline/schema/timeline-config.schema.json",
         "tests/fixtures/visual-boundary-v1.json",
         *[f"tests/fixtures/runtime-responses/{name}.json" for name in (
@@ -73,7 +74,7 @@ def test_one_root_lock_covers_all_known_runtime_paths() -> None:
     }
     bundle = json.loads(LOCK.read_text())
     assert set(bundle["files"]) == expected
-    assert len(bundle["files"]) == 14
+    assert len(bundle["files"]) == 15
     assert re.fullmatch(r"[0-9a-f]{40}", bundle["source_commit"])
     assert not any((ROOT / path).exists() for path in (
         "astrid_runtime_client/vendor.lock.json", "astrid/core/timeline/schema/vendor.lock.json",

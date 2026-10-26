@@ -10,24 +10,30 @@ import shutil
 import subprocess
 import textwrap
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
-
-from astrid.core.timeline.astrid_ns import read_app
+from typing import Any
 from urllib.parse import quote
 
+from astrid.core.timeline.astrid_ns import read_app
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
+from ._filmstrip_cache import _contact_overlay_for_layers, attach_frame_addresses
 from .audio_analysis import (
     AudioAnalysisError,
     analyze_audio,
     audio_analysis_identity,
     project_waveform,
 )
-from .inspection_contract import canonical_clip_identity, compact_render_receipt, project_input_window
+from .inspection_contract import (
+    canonical_clip_identity,
+    compact_render_receipt,
+    project_input_window,
+)
 from .inspector_navigation import build_inspector_navigation
+from .provenance import snapshot_label
 
 
 def _q(value):
@@ -757,7 +763,9 @@ def picture_cut_frames(snapshot: Mapping, fps: Fraction, total: int) -> list[dic
     return rows
 
 
-def plan_filmstrip(snapshot: dict, options: dict) -> dict:
+def plan_filmstrip(
+    snapshot: dict, options: dict, *, revision_label: Mapping[str, Any] | None = None,
+) -> dict:
     """Plan integer presentation frames; all time windows are half-open."""
     # Resolve friendly shot aliases once against the frozen snapshot.  Exact
     # ids/names remain unchanged; ``first`` and one-based ordinals become the
@@ -1019,8 +1027,10 @@ def plan_filmstrip(snapshot: dict, options: dict) -> dict:
         motion_info = {key: motion_cut.get(key) for key in ('index', 'start', 'end', 'duration', 'clip_id', 'shot', 'occurrence_id', 'deliberate_hold')}
         motion_info.update({'preset': motion_window['preset'], 'window': [motion_window['start'], motion_window['end']],
                             'cuts_in': motion_window['cuts_in'], 'labels': {str(k): v for k, v in window_labels.items()}})
+    provenance = {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')}
+    provenance['revision'] = revision_label if revision_label is not None else snapshot_label(snapshot)
     return {'navigation': navigation, 'schema': 'astrid.filmstrip.v1', 'view': options.get('view') or 'filmstrip', 'contact': contact_info, 'motion': motion_info,
-            'provenance': {k: snapshot.get(k) for k in ('project_slug', 'timeline_id', 'timeline_name', 'render_run_id', 'video_digest', 'fps_rational', 'duration_frames', 'metadata')},
+            'provenance': provenance,
             'audio': snapshot.get('audio') if isinstance(snapshot.get('audio'), dict) else navigation['audio'],
             'boundary_index': boundary_index,
             'coverage': coverage,
@@ -1519,7 +1529,11 @@ def _png_card_metrics(draw, card, name_font, timestamp_font, script_font, audio=
     }
 
 
-def _static_png(cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection, audio=None, *, show_text=True, show_output=True, detail=False):
+def _static_png(
+    cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection,
+    audio=None, *, show_text=True, show_output=True, detail=False,
+    revision_label: Mapping[str, Any] | None = None,
+):
     from PIL import Image, ImageDraw
     measure_image = Image.new('RGB', (1, 1))
     measure_draw = ImageDraw.Draw(measure_image)
@@ -1544,10 +1558,17 @@ def _static_png(cards, out_root, columns, page_size, timeline_name, render_run_i
         width = columns * _PNG_PAGE_WIDTH_STRIDE + 24
         page_title_font, chrome_font = _png_font(20), _png_font(12)
         chrome_width = width - 32
-        title_lines = _png_chrome_lines(measure_draw, f'{timeline_name} · page {page} · rendered frames', page_title_font, chrome_width, 2)
+        revision_text = revision_label.get('label') if isinstance(revision_label, Mapping) else None
+        title = f'{timeline_name} · page {page} · rendered frames'
+        if revision_text:
+            title += f' · {revision_text}'
+        title_lines = _png_chrome_lines(measure_draw, title, page_title_font, chrome_width, 2)
         from .contact_sheet import selection_gloss
-        provenance_lines = _png_chrome_lines(measure_draw, f'Render {render_run_id} · selection: {render_selection} '
-                                             f'({selection_gloss(render_selection)})', chrome_font, chrome_width, 2)
+        provenance = (f'Render {render_run_id} · selection: {render_selection} '
+                      f'({selection_gloss(render_selection)})')
+        if revision_text:
+            provenance += f' · revision: {revision_text}'
+        provenance_lines = _png_chrome_lines(measure_draw, provenance, chrome_font, chrome_width, 2)
         disclaimer_lines = _png_chrome_lines(measure_draw, 'Timed speech uses frozen intervals; shot scripts are shown once per occurrence. Missing timed text does not imply silence.', chrome_font, chrome_width, 2)
         chrome_bottom = 10 + 22 * len(title_lines) + 4 + 16 * len(provenance_lines) + 4 + 16 * len(disclaimer_lines)
         card_origin = max(96, chrome_bottom + 8)
@@ -1627,9 +1648,17 @@ def _static_png(cards, out_root, columns, page_size, timeline_name, render_run_i
     return paths
 
 
-def _static(cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection, audio=None, *, components=None, detail=False):
+def _static(
+    cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection,
+    audio=None, *, components=None, detail=False,
+    revision_label: Mapping[str, Any] | None = None,
+):
     components = set(components or ('output', 'text', 'audio'))
-    png_paths = _static_png(cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection, audio if 'audio' in components else None, show_text='text' in components, show_output='output' in components, detail=detail)
+    png_paths = _static_png(
+        cards, out_root, columns, page_size, timeline_name, render_run_id, render_selection,
+        audio if 'audio' in components else None, show_text='text' in components,
+        show_output='output' in components, detail=detail, revision_label=revision_label,
+    )
     return {'png': png_paths}
 
 
@@ -1647,52 +1676,11 @@ def _audio_envelope(snapshot: Mapping, asset_files: Mapping[str, str] | None, st
         return None
 
 
-def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list) -> dict:
-    """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
-
-    ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
-    from .overlays.labels import addresses_at, canvas_of
-
-    config = snapshot.get("config") or {}
-    fps = float(Fraction(*snapshot["fps_rational"]))
-    canvas = canvas_of(config)
-    for row, card in zip(receipt.get("cards") or [], cards):
-        row["addresses"] = addresses_at(config, int(card["frame"]), fps, canvas)
-    return receipt
-
-
-
-def _contact_overlay_for_layers(snapshot: Mapping, layer_names: Sequence[str], fps: float, highlight: str | None = None):
-    """Compose the selected bounds and address overlays for contact tiles."""
-    selected = set(layer_names or ())
-    if not selected.intersection({"bounds", "labels"}):
-        return None
-
-    contact_elements = None
-    if "bounds" in selected:
-        from .motion.sheet import snapshot_elements
-
-        _occurrences, contact_elements = snapshot_elements(snapshot)
-    config = snapshot.get("config") if isinstance(snapshot.get("config"), Mapping) else None
-
-    def overlay(image, seconds):
-        result = image
-        if contact_elements is not None:
-            from .layers.builtin import overlay_bounds
-
-            result = overlay_bounds(result, contact_elements, seconds, fps, labels=False, highlight=highlight)
-        if "labels" in selected and config is not None:
-            from .overlays.labels import overlay_labels_at
-
-            result = overlay_labels_at(result, config, seconds, fps)
-        return result
-
-    return overlay
-
-
 def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snapshot: dict, options: dict, frame_provider=None,
-                         asset_files: Mapping[str, str] | None = None) -> dict:
-    index = plan_filmstrip(snapshot, options)
+                         asset_files: Mapping[str, str] | None = None,
+                         revision_label: Mapping[str, Any] | None = None) -> dict:
+    revision_label = revision_label if revision_label is not None else snapshot_label(snapshot)
+    index = plan_filmstrip(snapshot, options, revision_label=revision_label)
     # Keep the resolved component contract in the frame index itself; the
     # The static surface must not infer visibility from whether optional lanes happen to
     # be present in a legacy snapshot.
@@ -1812,7 +1800,8 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         window = resolve_window(snapshot, options, fps_value, int(snapshot['duration_frames']))
         cut = window['cut']
         context = build_context(snapshot, cut, frames, fps=fps_value, frame_size=size,
-                                beats=options.get('beats'), layer_names=options.get('layers') or ())
+                                beats=options.get('beats'), layer_names=options.get('layers') or (),
+                                frame_provider=frame_provider)
         context.shared['window'] = window
         context.shared['frame_labels'] = {int(k): v for k, v in (motion_meta.get('labels') or {}).items()}
         from .motion.window import preset_settings
@@ -1837,7 +1826,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         duration = float(Fraction(int(snapshot['duration_frames']), 1) / Fraction(*snapshot['fps_rational']))
         components = set(options.get('components') or ('output', 'text', 'audio'))
         contact_fps = float(Fraction(*snapshot['fps_rational']))
-        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'))
+        overlay = _contact_overlay_for_layers(snapshot, options.get('layers') or (), contact_fps, options.get('highlight'), frame_provider=frame_provider)
         from .contact_sheet import contact_band_width, contact_silence_findings
         audio = _audio_envelope(snapshot, asset_files, 0.0, duration, contact_band_width(columns))
         paths = {'png': static_contact_png(
@@ -1846,11 +1835,16 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
             occurrences=[o for o in snapshot.get('occurrences') or [] if isinstance(o, Mapping)],
             duration_seconds=duration, show_output='output' in components,
             thinned_from=(index.get('contact') or {}).get('thinned_from'), overlay=overlay, audio=audio,
+            revision_label=revision_label,
         )}
         if audio is not None:
             index['motion_findings'] = contact_silence_findings(audio)
     else:
-        paths = _static(display_cards, out_root, columns, page_size, timeline_label, snapshot['render_run_id'], render_selection, display_audio, components=options.get('components'), detail=bool(options.get('detail')))
+        paths = _static(
+            display_cards, out_root, columns, page_size, timeline_label, snapshot['render_run_id'],
+            render_selection, display_audio, components=options.get('components'),
+            detail=bool(options.get('detail')), revision_label=revision_label,
+        )
     for name, filename in [('json', 'frame-index.json'), ('markdown', 'filmstrip.md')]:
         paths[name] = str(out_root / filename)
     index['request'] = {
@@ -1904,14 +1898,20 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
     # Keep rich navigation in memory for the paired compositor, but persist a
     # bounded receipt so agents never need to ingest the full timeline graph.
     receipt = compact_render_receipt(index, snapshot, out_root)
-    attach_frame_addresses(receipt, snapshot, index['cards'])
+    attach_frame_addresses(receipt, snapshot, index['cards'], frame_provider=frame_provider)
     Path(paths['json']).write_text(
         json.dumps(receipt, ensure_ascii=True, separators=(',', ':')),
         encoding='utf-8')
-    md = ['# Rendered filmstrip', '', f"Render: `{snapshot['render_run_id']}`", '', 'Scripts are segment-level, not word-aligned. “No script” does not assert acoustic silence.', '']
+    revision_text = revision_label.get('label', 'revision unavailable')
+    md = [
+        f'# Rendered filmstrip · {revision_text}', '',
+        f'Revision: `{revision_text}`', f"Render: `{snapshot['render_run_id']}`", '',
+        'Scripts are segment-level, not word-aligned. “No script” does not assert acoustic silence.', '',
+    ]
     for card in cards:
         md += [f"## {card['id']}", '', f"![{card['time_label']}]({card['image']})", ''] + [html.escape(line) + '  ' for line in _lines(card)] + ['', '```sh', card['actions']['focus_command'], '```', '']
     Path(paths['markdown']).write_text('\n'.join(md), encoding='utf-8')
     return {'frame_index': index, 'cards': cards, 'paths': paths,
+            'snapshot_label': revision_label,
             'findings': (index.get('motion_findings') or []) + list((capture_info or {}).get('notes') or []),
             'capture_window': (capture_started_at, capture_ended_at)}

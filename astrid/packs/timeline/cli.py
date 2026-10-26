@@ -62,7 +62,6 @@ import json
 import re
 import shlex
 import sys
-import uuid
 from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
@@ -938,6 +937,12 @@ def _cmd_show(parsed: argparse.Namespace) -> int:
     document is a mutable storage projection and cannot be presented as the
     current editor state when the native Runtime inspection route is absent.
     """
+    from astrid.packs.timeline.cli_native import show_native
+
+    native_result = show_native(parsed)
+    if native_result is not NotImplemented:
+        return native_result
+
     from astrid.packs.timeline.cli_history import show_ref
 
     refused = show_ref(parsed)  # TL@prev: the revision before the head
@@ -1195,32 +1200,33 @@ def _timeline_editing_resources() -> dict[str, Any]:
     return {
         "guide": str(guide),
         "script": str(script),
-        "workflow": ["checkout", "edit", "check", "publish"],
+        "workflow": ["checkout", "edit", "check", "commit"],
         "scope": "complete parent/shot/internal-timeline composition",
         "checkout_revision": "current Runtime head at checkout; historical revisions remain read-only",
     }
 
 
+def _document_edit_commands(file_path: str) -> dict[str, str]:
+    argv = ["python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document"]
+    return {
+        "check": shlex.join([*argv, "check", "--file", file_path]),
+        "commit": shlex.join([*argv, "commit", "--file", file_path,
+                              "--idempotency-key", "timeline-edit-1"]),
+    }
+
+
 def _editing_navigation(
-    *, project: str | None, timeline: str | None,
+    *, project: str | None, timeline: str | None, file_path: str = "/tmp/timeline-edit.json",
 ) -> dict[str, Any]:
     """Return one small, copyable entry point for detached JSON editing."""
     resources = _timeline_editing_resources()
-    file_path = "/tmp/timeline-edit.json"
     checkout = shlex.join([
         "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
         "--file", file_path,
     ])
-    check = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
-        "check", "--file", file_path,
-    ])
-    publish = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
-        "publish", "--file", file_path, "--idempotency-key", "<edit-key>",
-    ])
-    resources["commands"] = {"checkout": checkout, "check": check, "publish": publish}
+    resources["commands"] = {"checkout": checkout, **_document_edit_commands(file_path)}
+    resources["retry"] = "Use a fresh idempotency key for new intent; reuse the same file and key for a retry. The file pins the project, timeline and exact base."
     return resources
 
 
@@ -2230,6 +2236,13 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_commit(parsed: argparse.Namespace) -> int:
+    """Commit one detached document through the existing Runtime commit door."""
+    from astrid.packs.timeline.cli_native import commit_document
+
+    return commit_document(parsed)
+
+
 def _render_video_handle(result: Any, project: Any) -> dict[str, str]:
     """The film's handle and its export command (users guessed run:R/output#0; the port is video)."""
     run_id = getattr(result, "kernel_run_id", None) or getattr(result, "run_id", None)
@@ -2291,9 +2304,13 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_show(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument("--native", action="store_true",
+                           help="With --as sheet: retain a pinned editable sheet in the scoped outbox. "
+                                "Supports starts, parent labels, source trim/hold, explicit asset/transition clears "
+                                "and built-in literal params in canvas units; replaces the previous export.")
     subparser.epilog = (
         "Next: use `timelines visualize` for composed pixels. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
         "Use `timelines visualize --help` for the visual controls."
     )
     _add_project_arg(subparser, required=False)
@@ -2472,7 +2489,7 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     subparser.epilog = (
         "Next: use `timelines show` for authored rows and timing. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
         "Use this help page for component, sampling, frame, and resolution controls."
     )
     _add_project_arg(subparser, required=False)
@@ -2746,7 +2763,7 @@ def _checkout_change_units(checkout: Any) -> tuple[bool, list[list[str]]]:
 
     ``Checkout.edits()`` is a clip/cut/placement diff. Fresh checkout safety
     and status also need parent config, shot payload, tracks, and registries,
-    using the same whole-unit model as ``store.three_way(..., whole=True)``.
+    using the local draft whole-unit change model.
     An incomplete old draft base is unknown, so callers must not overwrite it.
     """
     from astrid.core.timeline.astrid_ns import normalized
@@ -2923,96 +2940,6 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
             }
         )
     return print_result(DomainResult.success(data), as_json=parsed.json)
-
-
-def _cmd_publish(parsed: argparse.Namespace) -> int:
-    """Publish the named existing draft once through the SDK merge/CAS boundary."""
-    from astrid.sdk.timeline_checkout import Checkout, find_draft
-
-    path = find_draft(
-        parsed.project, parsed.ref, parsed.draft, client=parsed.client
-    )
-    if path is None:
-        from astrid.sdk.contracts import ErrorObject
-
-        return print_result(
-            DomainResult.failure(
-                ErrorObject(
-                    "not_found",
-                    "no working copy exists to publish; run timelines checkout first",
-                    {"timeline": parsed.ref, "draft": parsed.draft},
-                ),
-                idempotency_key=parsed.idempotency_key or "",
-            ),
-            as_json=parsed.json,
-        )
-    checkout = Checkout.load(path)
-    key = parsed.idempotency_key or f"timeline-publish-{uuid.uuid4().hex}"
-    if callable(getattr(checkout, "document", None)):
-        base_known, changed_units = _checkout_change_units(checkout)
-        if base_known and not changed_units and not checkout.narration_changes():
-            # A clean working copy has nothing to publish; publishing it would only mint an empty revision.
-            return print_result(
-                DomainResult.success(
-                    {
-                        "published": False,
-                        "reason": "the working copy has no changes against the head it was checked out from",
-                        "message": parsed.message,
-                    },
-                    idempotency_key=key,
-                ),
-                as_json=parsed.json,
-            )
-    counts = None if parsed.json else _publish_counts(checkout)  # publish resets the base, so count first
-    receipt = checkout.publish(
-        parsed.message,
-        idempotency_key=key,
-        client=parsed.client,
-        force=parsed.force,
-    )
-    if receipt.get("narration_error"):
-        from astrid.sdk.contracts import ErrorObject
-
-        return print_result(
-            DomainResult.failure(
-                ErrorObject(
-                    "partial_publication",
-                    "timeline structure was published, but narration binding is pending",
-                    {"receipt": receipt},
-                ),
-                idempotency_key=key,
-            ),
-            as_json=parsed.json,
-        )
-    return print_result(
-        DomainResult.success(receipt, idempotency_key=key), as_json=parsed.json,
-        human_renderer=lambda shown: _publish_summary(shown.data, parsed, counts),
-    )
-
-
-def _publish_counts(checkout: Any) -> tuple[int, int]:
-    """The clips and cuts this working copy changes against its base."""
-    return len((checkout.edits() or {}).get("changes") or []), len(checkout.changed_cut_ids())
-
-
-def _publish_summary(receipt: Mapping[str, Any], parsed: argparse.Namespace, counts: tuple[int, int] | None) -> str:
-    """Human publish output: the head move, the message, what changed, and the next verbs (the envelope is --json)."""
-    def head(rev: Any) -> str:
-        from astrid.sdk.timeline.revisions import short_revision
-
-        return short_revision(rev) if rev else "-"
-
-    clips, cuts = counts or (0, 0)
-    project = parsed.project or "<project>"
-    lines = [
-        f"published {head(receipt.get('old_head'))} → {head(receipt.get('new_head'))}: {parsed.message}",
-        f"changed: {clips} clip{'s' if clips != 1 else ''} in {cuts} cut{'s' if cuts != 1 else ''}",
-    ]
-    if receipt.get("merged"):
-        lines.append(str(receipt["merged"]))
-    lines.append(f"next: timelines edit {parsed.ref} --project {project} to start the next change   ·   "
-                 f"timelines show {parsed.ref} --project {project} to read the new head")
-    return "\n".join(lines)
 
 
 def _edit_duration(value: str) -> float:
@@ -3249,6 +3176,15 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if parsed.extend is not None and parsed.for_seconds is not None:
         raise _VerbError("--for/--duration and --extend both set a length; pick one", 2)
 
+    from astrid.packs.timeline.cli_native import dispatch_ordinary_edit
+
+    result = dispatch_ordinary_edit(parsed)
+    if result is not NotImplemented:
+        return result
+    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
+                         "other edit families still use the detached working copy", 2)
+
     if parsed.file:
         tl, target = Checkout.load(parsed.file), parsed.file
     else:
@@ -3267,7 +3203,7 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if not changed:
         print("no change (the working copy already matches)")
         return 3
-    report = tl.check()
+    report = tl._check_core()
     changes = _describe_edit(before, tl.document(), tl)
     cuts = _edit_cuts(before, tl)
     if voice_ops:
@@ -3298,11 +3234,24 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
                         or film_end_requested(parsed)),
             touched_cuts=len(touched_cuts(before, tl)),
         )
-        print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --range "
-              f"{_edit_range(before, tl.document())} (your change)   ·   "
-              f'timelines publish {parsed.ref} --project {parsed.project or "<project>"} -m "..."')
-    else:
-        print(f'next: timelines check {target}   ·   timelines publish {target} -m "..."')
+        show = shlex.join(["python3", "-m", "astrid", "timelines", "show", parsed.ref,
+                           "--project", parsed.project or "<project>", "--range",
+                           _edit_range(before, tl.document())])
+        print(f"next: {show} (your change)")
+    source = str(target or tl.path)
+    candidate = source + ".commit.json"
+    prepare = shlex.join([
+        "python3", "-c",
+        'import json, sys; from pathlib import Path; from astrid.sdk.timeline_checkout import Checkout; '
+        'Path(sys.argv[2]).write_text(json.dumps(Checkout.load(sys.argv[1]).document()) + "\\n", encoding="utf-8")',
+        source, candidate,
+    ])
+    print("next: export the complete JSON candidate (project, timeline and base stay pinned): " + prepare)
+    for command in _document_edit_commands(candidate).values():
+        print("next: " + command)
+    print("Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.")
+    if target is not None:
+        print(f"next: timelines check {target}")
     return sweep_status or verify_status
 
 
@@ -3559,10 +3508,19 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_apply(parsed: argparse.Namespace) -> int:
-    from astrid.sdk.timeline_sheet import apply_sheet
+    from astrid.sdk.timeline_sheet import apply_sheet, parse_sheet
+
+    text = Path(parsed.sheet_file).read_text(encoding="utf-8")
+    sheet = parse_sheet(text)
+    if parsed.client is not None and ("clips" in sheet or "tracks" in sheet):
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, sheet=True)
+    if parsed.dry_run or parsed.idempotency_key or parsed.json:
+        raise _VerbError("commit apply options require a connected timeline session", 2)
     tl = _edit_checkout(parsed)
     before = tl.document()
-    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
+    changes = apply_sheet(tl, text, client=parsed.client)
     if changes or before != tl.document():
         tl.save(quiet=True)
         print("applied sheet")
@@ -3572,12 +3530,24 @@ def _cmd_apply(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_undo(parsed: argparse.Namespace) -> int:
+    if parsed.commit or parsed.dry_run or parsed.idempotency_key:
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, inverse=True)
     tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+    if parsed.json:
+        return print_result(DomainResult.success({"undone": labels}), as_json=True)
     print("undid "+"; ".join(labels)); return 0
 
 
 def _cmd_redo(parsed: argparse.Namespace) -> int:
+    if parsed.commit or parsed.dry_run or parsed.idempotency_key:
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, inverse=True)
     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
+    if parsed.json:
+        return print_result(DomainResult.success({"redone": labels}), as_json=True)
     print("redid "+"; ".join(labels)); return 0
 
 
@@ -3585,7 +3555,10 @@ def _with_steps(handler):
     """``undo TL 3`` and ``undo TL --steps 3`` both mean three edits (default one)."""
     @wraps(handler)
     def run(parsed):
-        parsed.steps = parsed.steps_option or parsed.steps or 1
+        if not parsed.commit:
+            if isinstance(parsed.steps_option, dict):
+                raise _VerbError("step IDs require --commit RECEIPT_ID", 2)
+            parsed.steps = parsed.steps_option or parsed.steps or 1
         return handler(parsed)
     return run
 
@@ -3620,6 +3593,21 @@ def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_checkout)))
 
 
+def _configure_commit(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug named by the detached document.")
+    subparser.add_argument("--file", type=Path, required=True,
+                           help="Detached timeline JSON from the existing timeline document checkout.")
+    subparser.add_argument("-m", "--message", required=True,
+                           help="Nonempty commit label recorded in Runtime history.")
+    subparser.add_argument("--idempotency-key", required=True,
+                           help="Stable key to retry this exact document commit.")
+    subparser.add_argument("--dry-run", action="store_true",
+                           help="Preview the commit without accepting a Runtime publication.")
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_commit))
+
+
 def _configure_status(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug to inspect.")
@@ -3633,18 +3621,8 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_status)))
 
 
-def _configure_publish(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser, required=False)
-    subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
-    subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
-    subparser.add_argument("-m", "--message", dest="message", required=True, help="What changed (the revision message).")
-    _add_idempotency_key(subparser)
-    subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
-    _add_json_flag(subparser, default=False)
-    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_publish)))
-
-
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:
+    from astrid.packs.timeline.cli_native import configure_edit_options
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", nargs="?", default=None,
                            help="Timeline id or slug with a saved working copy (or use --file).")
@@ -3752,6 +3730,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--remove", action="store_true")
     from astrid.packs.timeline.cli_sweep import add_edit_sweep_flags
     add_edit_sweep_flags(subparser)
+    configure_edit_options(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_cmd_edit))
 
 
@@ -3831,6 +3810,8 @@ def _configure_apply(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("ref", help="Timeline id or slug with a saved working copy.")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("sheet_file", type=Path, help="Path to the edited cut sheet.")
+    from astrid.packs.timeline.cli_native import configure_apply_options
+    configure_apply_options(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_apply)))
 
 
@@ -3839,21 +3820,25 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
-    subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
+    from astrid.packs.timeline.cli_native import configure_history_options, history_steps
+
+    subparser.add_argument("--steps", dest="steps_option", type=history_steps, default=None,
+                           help="Local edit count, or with --commit a JSON map of receipt IDs to step-ID lists.")
+    configure_history_options(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
-    CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
+    CommandSpec("commit", help="Commit a detached timeline document through Runtime.", configure=_configure_commit),
+    CommandSpec("edit", help="Commit a clip move or trim, or edit a legacy detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
-    CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
-    CommandSpec("redo", help="Redo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
+    CommandSpec("undo", help="Undo local edits, or an accepted Runtime commit with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
+    CommandSpec("redo", help="Redo local edits, or reverse an accepted undo with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
-    CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
     CommandSpec("rename", help="Set a timeline's display name.", configure=_configure_working_verb("rename")),

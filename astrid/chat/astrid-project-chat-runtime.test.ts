@@ -127,3 +127,4 @@ test('chat store retains the explicit endpoint and token-file fallback', async (
     rmSync(directory, { recursive: true, force: true });
   }
 });
+

@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/tmp/astrid-runtime-pin-venv/bin/python",
+    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/tl-merge-agent/.venv/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,22 +12,22 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2170,
+  "finding_count": 2130,
   "code_counts": {
-    "F401": 142,
-    "I001": 203,
-    "BLE001": 209,
-    "E701": 463,
-    "E702": 227,
-    "E731": 11,
-    "F821": 13,
+    "F401": 140,
+    "I001": 194,
+    "BLE001": 211,
+    "E701": 443,
+    "E702": 219,
+    "E731": 10,
+    "F821": 12,
     "E402": 824,
     "F402": 2,
     "F841": 61,
     "F822": 6,
     "F541": 3,
     "F601": 1,
-    "E741": 4,
-    "E401": 1
+    "E401": 1,
+    "E741": 3
   }
 }

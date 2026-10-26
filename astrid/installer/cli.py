@@ -209,3 +209,4 @@ def main(argv: list[str] | None = None) -> int:
             print(failure.safe_message)
         print(f"Details: {log}")
         return 1
+
