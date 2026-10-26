@@ -9,7 +9,7 @@ import { test as base } from './support/app.ts';
 // An ephemeral (incognito-style) browser context caps OPFS writes near 0.5 GiB, far below the 2.2 GB large archive. A
 // persistent profile gets the real quota, so this case drives its own persistent Chrome instead of the shared fixture context.
 const test = base.extend({
-  page: async ({ harness }, use, testInfo) => {
+  page: async ({ harness }, use) => {
     const userDataDir = mkdtempSync(path.join(process.env.TMPDIR ?? '/private/tmp', 'n4-profile-'));
     const downloads = process.env.PLAYWRIGHT_DOWNLOADS_PATH;
     if (downloads) mkdirSync(downloads, { recursive: true, mode: 0o700 });
@@ -17,11 +17,8 @@ const test = base.extend({
       channel: 'chrome', args: harness.chromiumArgs, permissions: ['local-network-access'], acceptDownloads: true,
       ...(downloads ? { downloadsPath: downloads } : {}),
     });
-    await context.tracing.start({ screenshots: true, snapshots: true });
     const page = context.pages()[0] ?? await context.newPage();
     try { await use(page); } finally {
-      const failed = testInfo.status !== testInfo.expectedStatus;
-      await context.tracing.stop(failed ? { path: testInfo.outputPath('trace.zip') } : {}).catch(() => undefined);
       await context.close().catch(() => undefined);
       rmSync(userDataDir, { recursive: true, force: true });
     }
