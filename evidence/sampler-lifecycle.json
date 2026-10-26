@@ -1,0 +1,19 @@
+{
+  "schema": "d141cc-review-sampler-lifecycle-v1",
+  "session_id": "10000",
+  "command": "while true; do date -u '+%Y-%m-%dT%H:%M:%SZ'; df -B1 /tmp \"$PWD\"; sleep 5; done >> evidence/disk-trace.txt",
+  "foreground": true,
+  "started_utc": "2026-10-26T11:22:17Z",
+  "stopped_utc": "2026-10-26T11:22:29Z",
+  "stop_method": "write_stdin Ctrl-C",
+  "exit_observed": 1,
+  "reaped": true,
+  "sample_count": 3,
+  "first_available_bytes": 5765230592,
+  "last_available_bytes": 5765226496,
+  "minimum_available_bytes": 5765226496,
+  "standing_stop_bytes": 4000000000,
+  "standing_stop_reached": false,
+  "first_tool_requirement": "NOT_MET: read-only review inspection preceded this sampler",
+  "interpretation": "reviewer-only trace; not body coverage and no historical backfill"
+}

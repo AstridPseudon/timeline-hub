@@ -1,0 +1,71 @@
+{
+  "schema": "d141cc-popup-custody-review-v1",
+  "verdict": "PASS_CUSTODY_TEST_FAIL",
+  "scope": "read-only independent custody and finite D141j visibility review",
+  "base": {
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "controller_worktree": "/home/user/work/wt/app-P-D141cc-popup-controller-next",
+    "controller_worktree_clean": true
+  },
+  "outcome": {
+    "selector": "p2-popup-add",
+    "attempt_scope": "popup-retry-1",
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight-1026111237-26455",
+    "preflight_status": "pass",
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026",
+    "normal_status": "fail",
+    "normal_exit": 1,
+    "normal_duration_seconds": 207,
+    "counts": {"readiness_passed": 1, "popup_failed": 1},
+    "failure": {
+      "source": "tests/e2e/local/three-products.p2-popup.spec.ts:941",
+      "assertion": "shared occurrence shot group",
+      "locator": "[data-shot-group-key^=\"f2-occurrence-copy:\"]",
+      "observed": "element not found within 5000ms",
+      "diagnostic": "not run"
+    }
+  },
+  "custody": {
+    "native_tool_session": "86698",
+    "wait_session": "92916",
+    "native_invocation_count": 1,
+    "new_preflight_directories": 1,
+    "new_normal_directories": 1,
+    "second_submit": false,
+    "direct_request_test": false,
+    "manual_request_recreation": false,
+    "same_normal_id_waited": true,
+    "old_ids_13234_20413_retargeted": false
+  },
+  "trace": {
+    "native_body_samples": 44,
+    "native_body_first_utc": "2026-10-26T11:13:20.959Z",
+    "native_body_last_utc": "2026-10-26T11:16:46.596Z",
+    "native_body_min_available_bytes": 5471948800,
+    "native_body_max_gap_seconds": 5.006,
+    "native_body_standing_stop_bytes": 4000000000,
+    "native_body_standing_stop_reached": false,
+    "controller_sampler_session": "51345",
+    "controller_sampler_first_tool_supported_by_log": true,
+    "author_first_tool_sampler_claim": false,
+    "author_sampler_limit": "author log starts with pwd/PLAN before the supervised sampler; initial detached attempt has no observed sample or verified reap",
+    "reviewer_sampler_limit": "reviewer sampler was foreground and reaped, but was started after read-only inspection rather than as this reviewer's first tool"
+  },
+  "visibility": {
+    "d141j_fields": [
+      "accepted read-head continuity",
+      "occurrence presence in that read",
+      "activeCanonicalOccurrences immediately before useShotGroups",
+      "useShotGroups input/result presence before ShotGroupOverlay"
+    ],
+    "all_four_proven_by_27026": false,
+    "cause": "UNKNOWN",
+    "diagnostic_authorized": false
+  },
+  "tests": {
+    "product_tests": "NOTRUN by explicit scope",
+    "source_and_artifact_checks": "PASS",
+    "browser_result": "immutable retained result; not repeated"
+  }
+}
