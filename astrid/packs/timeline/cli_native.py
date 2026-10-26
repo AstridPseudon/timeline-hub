@@ -276,6 +276,8 @@ def ordinary_move_requested(parsed):
 
 def dispatch_ordinary_edit(parsed):
     """Dispatch the supported ordinary native edit, or leave legacy edits alone."""
+    if parsed.client is not None and not parsed.file and not parsed.draft and parsed.add_layer == 'media':
+        return commit_edit(parsed, edit=commit_add_media)
     if ordinary_move_requested(parsed):
         result = commit_edit(parsed, edit=commit_move)
         if result is not NotImplemented:
@@ -286,6 +288,42 @@ def dispatch_ordinary_edit(parsed):
         if result is not NotImplemented:
             return result
     return NotImplemented
+
+
+def commit_add_media(session, parsed, options):
+    from astrid.packs.timeline.cli import _parse_set
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline import store
+
+    accepted = {'project', 'ref', 'add_layer', 'layer_asset', 'on', 'for_seconds', 'until',
+                'track', 'clip_id', 'layer', 'set_values', 'dry_run', 'idempotency_key', 'json', 'no_sweep'}
+    unsupported = [name for name, default in parsed.native_trim_defaults.items()
+                   if name != 'help' and name not in accepted and getattr(parsed, name) != default]
+    if unsupported:
+        raise TimelineEditError('media add does not support ' + ', '.join('--' + name.replace('_', '-')
+                                for name in unsupported) + '; add the clip first, then edit it')
+    if store.find_draft(parsed.project, parsed.ref, client=parsed.client) is not None:
+        raise TimelineEditError('a detached working copy is pending; commit it first, or run '
+                                f'astrid timelines discard {parsed.ref} --project {parsed.project}')
+    if not parsed.layer_asset:
+        raise TimelineEditError('--add-layer media needs --layer-asset FILE|HANDLE|KEY')
+    try:
+        on = float(parsed.on)
+        duration = (float(parsed.until) - on if parsed.until is not None else parsed.for_seconds)
+    except (TypeError, ValueError) as exc:
+        raise TimelineEditError('media add needs literal seconds; for example: '
+                                '--on 0 --for 3 --track V1') from exc
+    if duration is None or parsed.until is not None and parsed.for_seconds is not None:
+        raise TimelineEditError('media add needs one of --for SECONDS or --until SECONDS; '
+                                'for example: --on 0 --for 3 --track V1')
+    values = _parse_set(parsed.set_values)
+    reserved = {'id', 'clipType', 'track', 'asset', 'at', 'hold', 'from', 'to', 'speed'}
+    if reserved.intersection(values):
+        raise TimelineEditError('set media identity and timing with --id, --track, --on and --for')
+    if parsed.layer:
+        values['label'] = parsed.layer
+    return session.add_media(parsed.layer_asset, on=on, duration=duration, track=parsed.track or 'V1',
+                             clip_id=parsed.clip_id, values=values, **options)
 
 
 def show_native(parsed):
@@ -354,12 +392,11 @@ def commit_trim(session, parsed, options):
         return NotImplemented
     if not state['pending']:
         try:
-            command = capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
+            capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
         except CommandError:
             if parsed.clip == select:  # Explicit native identities report native errors.
                 raise
             return NotImplemented
-        return session.commit(command, **options)
     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
 
 
@@ -504,15 +541,15 @@ def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
                 "astrid", "timelines", "history", parsed.ref, "--project", parsed.project, "--json",
             ]))
             error = ErrorObject(error.code, error.message, details)
-        shown = DomainResult.failure(error, idempotency_key=(parsed.idempotency_key or "") if inverse else "")
+        shown = DomainResult.failure(error, idempotency_key=parsed.idempotency_key or "")
     return print_result(shown, as_json=parsed.json,
                         human_renderer=lambda value: _render_commit_result(value, dry_run=parsed.dry_run))
 def configure_edit_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.description = ("Literal clip moves and trims commit through the durable timeline session. "
+    subparser.description = ("Media layer adds, literal clip moves and trims commit through the durable timeline session. "
                              "Other flags edit a legacy detached working copy.")
-    subparser.add_argument("--dry-run", action="store_true", help="Preview a native trim without accepting a publication.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview a media add, move or trim without accepting a publication.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
     subparser.set_defaults(native_trim_defaults={action.dest: action.default for action in subparser._actions})

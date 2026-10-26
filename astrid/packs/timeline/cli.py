@@ -3185,8 +3185,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if result is not NotImplemented:
         return result
     if parsed.dry_run or parsed.idempotency_key or parsed.json:
-        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
-                         "other edit families still use the detached working copy", 2)
+        raise _VerbError("these commit options require a media layer add, literal move or trim; "
+                         "other edits use a detached working copy. For a first clip: "
+                         "timelines edit TL --project P --add-layer media --layer-asset image.png "
+                         "--on 0 --for 3 --track V1 --idempotency-key KEY --json", 2)
 
     if parsed.file:
         tl, target = Checkout.load(parsed.file), parsed.file
@@ -3638,7 +3640,9 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                            help="Add an audio media clip; audio tracks stay independent of picture cuts "
                                 "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
     subparser.add_argument("--add-layer", dest="add_layer", default=None, metavar="ELEMENT",
-                           help="Add a layer (type, sprite, snap-plate ...) to the cut on screen at --on MOMENT "
+                           help="Add media directly through the commit door, including the first clip "
+                                "(--layer-asset FILE|HANDLE|KEY --on SECONDS --for SECONDS --track V1). "
+                                "Other layers (type, sprite, snap-plate ...) edit the cut on screen at --on MOMENT "
                                 "(--layer NAME, --layer-asset ASSET, --for/--until, --set k=v, --track optional).")
     subparser.add_argument("--layer", default=None, metavar="NAME", help="Layer name for --add-layer (default: its asset or element name).")
     subparser.add_argument("--layer-asset", dest="layer_asset", default=None, metavar="ASSET",

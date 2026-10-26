@@ -253,13 +253,30 @@ Python. Read the exact selector from `show` first:
 ```bash
 python3 -m astrid timelines show <timeline> --project <project> --json
 python3 -m astrid timelines edit <timeline> --project <project> \
+  --add-layer media --layer-asset /path/to/image.png --on 0 --for 3 --track V1 \
+  --idempotency-key first-image-42 --json
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
 python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --trim-in 0.5 --trim-out 3.0 \
   --idempotency-key trim-42 --json
 ```
 
-Literal numeric moves and source trims with these forms capture original
+The media add works before any shot or clip exists. It imports local image/video
+files through Runtime's managed catalog and commits a parent clip, matching the
+editor's empty drop. Existing timeline asset keys and unambiguous managed media
+handles are accepted too. A new visual track and the clip share one commit.
+`--on` and `--for` (or `--until`) use literal seconds; no checkout is needed.
+The receipt records `source.via: cli`. Commit or discard an existing detached
+working copy before using this direct write. `--add-media` remains the separate
+legacy audio draft verb.
+
+Source trim requires a media registry duration. Still images have no source
+window, and the native add recipe currently omits registry duration for imported
+video too. Adding and moving these clips works; source trimming newly added
+media remains a separate gap.
+
+Media adds, literal numeric moves and source trims with these forms capture original
 guards and use a caller key for a new intent. Repeating the same command with
 the same key retries the persisted request; it does not recapture against a
 newer head. `--dry-run` validates without accepting a publication. Symbolic

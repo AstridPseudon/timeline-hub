@@ -55,7 +55,7 @@ class Generated:
     def commit_timeline(self, project, timeline, body, *, idempotency_key):
         raw = request_bytes(body)
         durable = json.loads(self.path.read_bytes())
-        flight = durable["flight"]
+        flight = durable["flight"] or durable.get('acknowledged', {}).get(idempotency_key)
         assert flight["body"].encode() == raw
         assert flight["key"] == idempotency_key
         assert flight["path"] == "/v1/projects/p/timelines/t/commit"
@@ -800,3 +800,23 @@ def test_present_unknown_flight_kind_refuses_reload_without_post_or_mutation(con
 
     assert path.read_bytes() == frozen
     assert generated.calls == calls
+
+
+def test_accepted_batch_key_retries_original_bytes_and_refuses_changed_metadata(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    command = {'schema_version': 1, 'op': 'clip.move', 'version': '1',
+               'select': 'parent/clip:a', 'args': {'on': 5}}
+    accepted = session.commit_many([command], label='Opening', idempotency_key='batch-key')
+    original = generated.calls[-1]
+    session.move('parent/clip:b', 7, idempotency_key='later')
+    before = path.read_bytes()
+    retried = open_session(connected).commit_many(
+        [command], label='Opening', idempotency_key='batch-key')
+    assert retried['receipt'] == accepted['receipt']
+    assert generated.calls[-1] == original
+    assert path.read_bytes() == before
+    calls = len(generated.calls)
+    with pytest.raises(TimelineEditError, match='fresh key'):
+        session.commit_many([command], label='Changed', idempotency_key='batch-key')
+    assert len(generated.calls) == calls and path.read_bytes() == before

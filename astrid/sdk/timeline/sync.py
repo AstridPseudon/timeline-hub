@@ -345,6 +345,17 @@ class TimelineSession:
         options = {"label": label, "steps": steps, "merge": merge}
         if reads is not None:
             options["reads"] = copy.deepcopy(reads)
+        retried = self.retry(
+            idempotency_key,
+            matches=lambda body: len(body['commands']) == len(commands) and all(
+                all(equal(saved.get(key), value) for key, value in command.items())
+                for saved, command in zip(body['commands'], commands)) and (
+                    not metadata_requested or all(equal(body.get(key), value)
+                                                  for key, value in options.items())),
+            dry_run=dry_run, via=via,
+        )
+        if retried is not None:
+            return retried
         runtime_capture = any(command['op'] == 'occurrence.place-shared'
                               and 'source_ref' in command['args'] for command in commands)
         # Foreign child authority is available only inside Runtime's request port.
@@ -404,6 +415,13 @@ class TimelineSession:
         # recaptures guards from a possibly changed head after a lost ACK.
         from astrid.sdk.timeline.capture import capture_move
 
+        retried = self.retry(idempotency_key, matches=lambda body: len(body['commands']) == 1
+                             and body['commands'][0]['op'] == 'clip.move'
+                             and body['commands'][0]['select'] == select
+                             and body['commands'][0]['args'] == {'on': on},
+                             dry_run=dry_run, via=via)
+        if retried is not None:
+            return retried
         self._queue(lambda state: capture_move(self._capture_bundle(state), select, on),
                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.move"
                     and pending[0]["select"] == select and pending[0]["args"] == {"on": on})
@@ -413,11 +431,52 @@ class TimelineSession:
         """Capture a literal source trim once, retrying its original flight."""
         from astrid.sdk.timeline._trim_commands import capture_clip_trim
 
+        retried = self.retry(idempotency_key, matches=lambda body: len(body['commands']) == 1
+                             and body['commands'][0]['op'] == 'clip.trim'
+                             and body['commands'][0]['select'] == select
+                             and body['commands'][0]['args'] == {'in_s': in_s, 'out_s': out_s},
+                             dry_run=dry_run, via=via)
+        if retried is not None:
+            return retried
         self._queue(lambda state: capture_clip_trim(self._capture_bundle(state), select, in_s=in_s, out_s=out_s),
                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
                     and pending[0]["select"] == select
                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
+    def add_media(self, source, *, on, duration, track='V1', clip_id=None, values=None,
+                  idempotency_key=None, dry_run=False, via='python'):
+        """Add an image/video through the same parent-media recipe as an editor drop."""
+        from .media_add import add_media
+
+        return add_media(self, source, on=on, duration=duration, track=track, clip_id=clip_id,
+                         values=values, idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
+    def retry(self, key, *, matches, dry_run=False, via='python'):
+        """Resend a previously acknowledged explicit key, without advancing the local base.
+
+        Retain only original request bytes; Runtime remains the receipt authority.
+        This also permits a retry after later edits have advanced the timeline.
+        """
+        if key is None:
+            return None
+        if not isinstance(key, str) or not key.strip():
+            raise TimelineEditError('idempotency key must be nonempty')
+        with self.outbox.locked():
+            state = self._state()
+            flight = copy.deepcopy(state.get('acknowledged', {}).get(key))
+        if flight is None:
+            return None
+        body = json.loads(flight['body'])
+        if (flight['path'] != self.path or flight['key'] != key
+                or body['project_id'] != self.project_id or body['timeline_id'] != self.timeline_id
+                or body.get('dry_run', False) != dry_run or body['source'] != {'via': via}
+                or not matches(body)):
+            raise TimelineEditError('idempotency key belongs to another edit; use a fresh key for new intent')
+        result = _response(self.client.timelines.commit(
+            self.project_id, self.timeline_id, body, idempotency_key=key))
+        data, receipt = _ack(result, body, flight, self.identity)
+        return self._present(result, data, receipt)
 
     def undo(self, publications, *, steps=None, idempotency_key=None, dry_run=False, via="python"):
         publications = list(publications)
@@ -544,7 +603,10 @@ class TimelineSession:
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
-                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex,
+                          "explicit_key": idempotency_key is not None}
+                if 'media_input' in state:
+                    flight['media_input'] = copy.deepcopy(state['media_input'])
                 state["flight"] = flight
                 self.outbox.write(state)
             body = self._flight_body(state, flight, idempotency_key, dry_run)
@@ -578,10 +640,13 @@ class TimelineSession:
                 if dry_run:
                     state["preview_key"] = flight["key"]
                 else:
+                    if flight.get('explicit_key', idempotency_key is not None):
+                        state.setdefault('acknowledged', {})[flight['key']] = copy.deepcopy(flight)
                     state["base"] = _pin({"revision_id": data["accepted_revision_id"],
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
                     state.pop('rationale', None)
+                    state.pop('media_input', None)
                 if "commit_options" in state:
                     if dry_run:
                         del state["pending"][:flight["count"]]
@@ -590,9 +655,12 @@ class TimelineSession:
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)
+        return self._present(result, data, receipt)
+
+    def _present(self, result, data, receipt):
         result = copy.deepcopy(result)
         result["data"] = copy.deepcopy(data)
-        if not dry_run:
+        if receipt is not None:
             result["data"]["accepted_publication_id"] = receipt["receipt_id"]
             result["data"]["show_command"] = shlex.join([
                 "astrid", "timelines", "show", self.timeline_id, "--project", self.project_id,
