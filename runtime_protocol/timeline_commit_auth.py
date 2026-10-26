@@ -1287,7 +1287,7 @@ def _inverse_stage_history(records, history):
         require(isinstance(selected, dict) and set(selected) == set(publications),
                 "inverse stage selection does not cover its history targets")
 
-    expected = []
+    selected_stages = []
     for publication in reversed(publications):
         entry = history.get(publication)
         require(isinstance(entry, dict) and entry.get("publication_id") == publication
@@ -1325,21 +1325,38 @@ def _inverse_stage_history(records, history):
                     and all(type(ordinal) is int and 0 <= ordinal < len(commands) for ordinal in ordinals),
                     "inverse stage source step command boundary is malformed")
             source_commands = [commands[ordinal] for ordinal in ordinals]
-            inherited = _inverse_stage_inherited(source_step, source_commands, source_records, publication)
-            if inherited is not None:
-                expected.extend({"publication_id": publication, "step_id": source_step["id"],
-                                 "command_ordinals": ordinals, **partition} for partition in inherited)
-                continue
-            shared = _inverse_stage_shared_source(entry, source_step, commands)
-            native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
-                            for write in reversed([*command.get("writes", []),
-                                *(write for write in command.get("derived_writes", [])
-                                  if write.get("ref", "").startswith("parent/clip:")
-                                  and write.get("path") in (["at"], ["hold"]))])]
-            expected.append({"publication_id": publication, "step_id": source_step["id"],
-                             "command_ordinals": ordinals,
-                             "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
-                                              if shared is not None else native_sites), "shared": shared})
+            selected_stages.append((publication, entry, source_step, source_commands))
+
+    # Only whole-clip reversals promote literal timing caches to native writes.
+    # Leaf anchor edits restore/recompute timing separately as derived writes.
+    clip_roots = {write["ref"] for _, _, _, commands in selected_stages
+                  for command in commands for write in command.get("writes", [])
+                  if write["ref"].startswith("parent/clip:") and not write["path"]}
+    timing_sites = {(write["ref"], tuple(write["path"])) for _, _, _, commands in selected_stages
+                    for command in commands for write in command.get("derived_writes", [])
+                    if write["ref"].startswith("parent/clip:") and write["path"] in (["at"], ["hold"])}
+    expected = []
+    for publication, entry, source_step, source_commands in selected_stages:
+        source_records = entry["records"]
+        commands = source_records["commands"]
+        ordinals = source_step["command_ordinals"]
+        inherited = _inverse_stage_inherited(source_step, source_commands, source_records, publication)
+        if inherited is not None:
+            expected.extend({"publication_id": publication, "step_id": source_step["id"],
+                             "command_ordinals": ordinals, **partition} for partition in inherited)
+            continue
+        shared = _inverse_stage_shared_source(entry, source_step, commands)
+        native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
+                        for write in reversed([*command.get("writes", []),
+                            *(write for write in command.get("derived_writes", [])
+                              if write.get("ref") in clip_roots
+                              and write.get("path") in (["at"], ["hold"]))])]
+        expected.append({"publication_id": publication, "step_id": source_step["id"],
+                         "command_ordinals": ordinals,
+                         "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
+                                          if shared is not None else native_sites), "shared": shared})
+    for stage in expected:
+        stage["timing_sites"] = timing_sites
     return expected
 
 
@@ -1438,6 +1455,47 @@ def _inverse_stage_ranges(step, records, history=None):
             and previous_effect_end == len(step["patch"]),
             "inverse stage ranges do not cover the authenticated inverse")
     return result
+
+
+def _inverse_stage_timing(native_image, stage_before, stage_after, stage, source_step, source_commands):
+    """Authenticate compiler timing separately from authored inverse captures."""
+    if source_step is None:
+        return
+    sources = {}
+    for ordinal in source_step["command_ordinals"]:
+        for write in source_commands[ordinal].get("derived_writes", []):
+            if write["ref"].startswith("parent/clip:") and write["path"] in (["at"], ["hold"]):
+                sources.setdefault((write["ref"], tuple(write["path"])), write)
+    timing_sites = stage.get("source_stage", {}).get("timing_sites", set(sources))
+    require(all((write["ref"], tuple(write["path"])) in timing_sites
+                for write in stage["record"].get("derived_writes", [])
+                if write["ref"].startswith("parent/clip:") and write["path"] in (["at"], ["hold"])),
+            "inverse stage timing is outside its authenticated source history")
+    for (clip, cache_path), source in sources.items():
+        ref, path = _inverse_stage_write_site(native_image, source)
+        observed = _inverse_stage_state(native_image, ref, path)
+        after = _inverse_stage_state(stage_after, ref, path)
+        if after == {"state": "absent"} and value_equal(observed, after):
+            continue
+        anchor_ref, anchor_path = native_site(stage_after, clip, ["app", "astrid", "word_anchors"])
+        if not _inverse_stage_state(stage_after, anchor_ref, anchor_path).get("value"):
+            # With no remaining anchor there is nothing to recompute: recover
+            # the exact literal cache authenticated by the source publication.
+            require(value_equal(after, source["before"]),
+                    "inverse stage timing differs from its authenticated literal cache")
+        captures = [write for write in stage["record"].get("derived_writes", [])
+                    if write["ref"] == clip and write["path"] == list(cache_path)]
+        require((not captures and value_equal(observed, after))
+                or len(captures) == 1 and value_equal(captures[0]["before"],
+                _inverse_stage_state(stage_before, ref, path))
+                and value_equal(captures[0]["after"], after),
+                "inverse stage timing differs from its derived capture")
+        payload = native_image[ref]["payload"]
+        native_image[ref]["payload"] = project_observation(
+            payload, stored_path(payload, ref, path), after)
+        projected = native_image[ref]["payload"]
+        if "clips" in projected and "clips" in projected.get("config", {}):
+            projected["clips"] = copy.deepcopy(projected["config"]["clips"])
 
 
 def _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history=None):
@@ -1791,6 +1849,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
             # endpoints. Align only complete equal payloads with the same owner.
             _align_materialized_images(native_image, stage_after)
 
+        _inverse_stage_timing(native_image, stage_before, stage_after, stage, source_step, source_commands)
         require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
                             {ref: image["payload"] for ref, image in stage_after.items()}),
                 "inverse stage native writes do not cover its authenticated effect image")
