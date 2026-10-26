@@ -1,0 +1,5 @@
+Ask: consume current App comparator and unchanged serial proof order / Owner: App controller 0043, then journey controller; lead for MAIN / By: 2026-10-26T01:12Z
+
+Actual pristine app-D141-pristine-receiver-0007-full-1026010029-23581 is running with growing output on exact frozen 7ca. Normal full12174 terminal33FAIL/19734PASS in5files,961s remains retained; no REG verdict before the comparator. The existing controller owns finite per-ID comparison. No source work until proved REG.
+
+Order remains full/pristine -> P1 -> six P2 originals -> P3 -> exact standalone Node phase on cut and pristine, as MAIN01:04 requested. Next controller waits occupied heavy slot and fresh5.2GB admission; current4.95GB is during legitimately admitted0043 and above4GBstop. Ten serviceKEEP plus three diagnostic workerKEEP verified; normal maintenance only. P4 Agent0101review and P5 Runtime0053source remain their owners, no duplicate App body. Runtime Farm route scoped0049PASS now needs final frozen binding0055 and complete note; Farm01:10 still has no child/core. D141 stop and D130 absolute hold unchanged.
