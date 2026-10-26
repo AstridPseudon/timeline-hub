@@ -27,6 +27,8 @@ if (existsSync(overlay)) {
   for (const name of readdirSync(overlay)) {
     if (name === '.vite' || name === '.vite-temp') continue;
     const entry = path.join(overlay, name);
+    // The creation pass below skips shared entries whose target is gone; accept those overlay links too.
+    try { realpathSync(path.join(sharedModules, name)); } catch { if (lstatSync(entry).isSymbolicLink()) continue; }
     if (!lstatSync(entry).isSymbolicLink() || realpathSync(entry) !== realpathSync(path.join(sharedModules, name))) {
       throw new Error(`The worktree dependency overlay contains an unexpected entry: ${entry}`);
     }
