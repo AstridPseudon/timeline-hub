@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T06:06:57Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
-# agent board, 2026-10-26T06:06:16.305545+00:00
+<!-- agent | 2026-10-26T06:11:21Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 0m -->
+# agent board, 2026-10-26T06:11:02.314241+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -17,7 +17,7 @@
 | D141 notes | Retain qualified failure notes template | Luna | Independent0217 PASS | merged | Author0213 and reviewer0217 | Historical370 IDs and52 roots conserved; media48 nested. Actual joined notes0455 now under review. | Evidence only |
 | D141i cut | Retain genuine freeze1 measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 | 9561 outcomes:9388 IDs plus173 unnamed PASS;204 FAIL196 ERROR. Original custody finding unchanged. | 28e / 6a |
 | D141k join | Retain reviewed early comparison | Luna | Independent0507 PASS EVIDENCE | merged | Join0455 and reviewer0507 | Exact17 early candidates,15 root043 ENV and2 root007 timeline. Freeze2 pair remains definitive. | Evidence only |
-| D141 REG author | Fix two reproduced timeline cases | Luna | Actual0510 cut2FAIL pristine2PASS | doing | agt-F-D141k-REG-timeline-fix-next | Started06:05 on8585; manager4503293952 bytes. Classify Agent versus Runtime and setup versus product before edits; D71 and D141r protected. | Pending |
+| D141 REG author | Fix two reproduced timeline cases | Luna and protected Luna | Actual0510 cut2FAIL pristine2PASS | review | Author fix-next; independent0610 | Author2 PASS; two case-local capture method renames only. Independent0610 admitted4501422080 bytes; cause and predicate conservation under review. | 2473301cc351 |
 | D141l U2 | Preserve custody and installer source | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408; reviewer0432 | Whole54path union,906 own/26 upstream blobs and both test families conserved. e1c installer ancestor. | 5d202569f3 |
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
 | D141l proof source | Fix full pair command findings | Luna | Independent0508 FAIL | ready | Prepared agt-F-D141l-proof-return-0515 | Nine findings; first return ready; D141q-c single-worker4.5GB admission after REG author. No row, kit or body installed. | Evidence only |
@@ -59,4 +59,6 @@ Blockers: Agent lead transport — hosted U4a00ec needs ordinary host remote req
 Blockers: SWAP safety — Runtime1537 classifier refusal retains absolute hold; existing escalation, no retry, transfer or alternate route.
 Next ready: Independent protected review when REG author ends; command return0515 after author and genuine source admission; U4a home merge after ordinary metadata arrives. live1 / cap1 while below4.6GB; ready-undispatched1 disk-held. No heavy body.
 
-Inbox consumed through2119797 bytes. Hosted U4a0553 accepted and normal merge attempted immediately; finite transport prerequisite reported. Manager writes only board, briefs, peers/escalations, KEEP metadata and byte-exact SAFE publications. No product/test/generated/pin edit, Git internals write, hub write, upstream push, credential or M5 action. Source0432 historic tracegap retained; no backfill. Final build/ZIP not claimed.
+Inbox consumed through2120925 bytes. MAIN06:08 ordinary remote request now filed at source; U4a home waits genuine hub-sync metadata. Hosted U4a0553 accepted and normal merge attempted immediately; finite transport prerequisite reported. Manager writes only board, briefs, peers/escalations, KEEP metadata and byte-exact SAFE publications. No product/test/generated/pin edit, Git internals write, hub write, upstream push, credential or M5 action. Source0432 historic tracegap retained; no backfill. Final build/ZIP not claimed.
+
+06:10 source pass: author2473301cc351 finished with exactly two test-only method-name changes, targeted2PASS, Ruff and AST input/assertion audit PASS. Independent0610 starts4501422080 bytes after lossless archived manager INBOX copies saved1847296 bytes; active INBOX untouched. Author disk-trace.txt is historical0510, not current author custody. Separate manager trace began late at06:07; gap explicitly retained in reviewer brief. Full pair remains definitive. [Archive compression](../../design/agent-D141-archived-inbox-compression-0610.json). No KEEP, test raw, product or hub change.

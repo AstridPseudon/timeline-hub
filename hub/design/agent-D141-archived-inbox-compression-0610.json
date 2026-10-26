@@ -1,0 +1,29 @@
+{
+  "time": "2026-10-26T06:10:38.006947+00:00",
+  "scope": "Closed archived manager INBOX copies only; active INBOX byte offsets unchanged, no source/worker/test raw or KEEP path",
+  "pre_free_bytes": 4499578880,
+  "post_free_bytes": 4501426176,
+  "files": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v1/INBOX.md",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v1/INBOX.md.gz",
+      "sha256_uncompressed": "c71529f151c8141ca2238b1560a66ccdd31323129172ea04e2fb77ff480e53ae",
+      "bytes_before": 1016560,
+      "bytes_after": 300345
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v2/INBOX-20261023T0439Z.md",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v2/INBOX-20261023T0439Z.md.gz",
+      "sha256_uncompressed": "216b30f552e8667cf62ef93e01ae4bcc17c112053903d44af2f2fe703b1db75b",
+      "bytes_before": 1055008,
+      "bytes_after": 322529
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v2/INBOX-20261024T0449Z.md",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v2/INBOX-20261024T0449Z.md.gz",
+      "sha256_uncompressed": "8850abb2fc1cfceb3a1e26a94014f5f6163c9d88ff85e061f631140e366c41f6",
+      "bytes_before": 607136,
+      "bytes_after": 210456
+    }
+  ]
+}
