@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T12:00:00Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# runtime board, 2026-10-26T12:00:06.586867+00:00
+<!-- main | 2026-10-26T12:05:31Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-26T12:03:52.808174+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -82,13 +82,15 @@
 
 | F D141ff popup note | Retain qualified installed popup gap | Luna and independent Luna | Independent1150 PASS | merged | CAS1147; install review1150 | [Receipt](../../design/runtime-D141ff-popup-notes-installed-publication-1157.json). Exact599d/6175; actual568 inventories/backups/CAS/render PASS. Initial-only monitor limit retained. | No product change |
 
-| F D141gg parent note | Install accepted PASS and trace gap | Luna and protected Luna | Independent1152 and1150 PASS | doing | rt-F-D141gg-parent-notes-install-1157 | Exact90f8/ddebb source protectedPASS; guarded CAS queued. Original parentcustodyFAIL and MainacceptedPASS remain distinct. Prior568 inventories qualified. | No product change |
+| F D141gg parent note | Qualify installed PASS and trace gap | Luna and protected Luna | Protected1152 PASS; CAS1157 terminal | review | rt-F-D141gg-parent-install-review-1203 | Exact90f8/ddebb installed; author568 inventories/renderPASS. Independent actualCAS and chronology check queued. Original parentcustodyFAIL remains distinct. | No product change |
+
+| F D141hh single note | Disclose accepted PASS and two gaps | Luna existing notes lineage | Actual terminal and custody originals | blocked:app | Existing final-notes owner; input peer1204 | Main accepts24271PASS; late rawKEEP and future-output relocation must stay visible. Actual SAFE packet not yet received; no duplicate proof worker. | No product change |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. Lead repack complete; no manager hub operation. All open raw KEEP and refused smoke retained.
 Blockers: Final activation — Main source receiving1030 PASS. Durable final placement and canonical rows await actual source/gate tuples and D141v; existing final-install-next owns this step.
-Blockers: Final proofs — Agent inverse38 and installer2 scope decisions with Main; writers15 scope review active. REG0 and pins gated. App single,asset,P1,P3 serial; bulk27060 PASS. Parent-note CAS1157 active; P4 GO retained.
-Next ready: Parent-note CAS1157 terminal then bounded installation check. Agent scope maps and App remaining selectors; then D141v, final install and heavy F-final after gates.
-live 1 / cap 6; ready-undispatched 0 locally. Parent-note CAS1157 queued at5591793664bytes after source1152 and preceding install1150 PASS. Final activation and build remain gated. Final activation and build remain gated.
+Blockers: Final proofs — Agent inverse38 and installer2 scope decisions with Main; writers15 scope review active. REG0 and pins gated. App single,asset,P1,P3 serial; bulk27060 PASS. Parent-note install review1203 active; P4 GO retained.
+Next ready: Independent parent-note install1203 terminal. Agent scope maps and App remaining selectors; then D141v, final install and heavy F-final after gates.
+live 1 / cap 6; ready-undispatched 0 locally. Parent-note install check1203 queued at5612421120bytes. Final activation and build remain gated. Final activation and build remain gated.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s and independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Successor applicability0513/0637 stays separate. Raw originals KEEP;8912/19479 stay held unstarted.
 
@@ -120,3 +122,7 @@ Parent protected1155: sole1152 terminal0 PASS; exact8review originals published 
 Popup installation1157: independent1150 terminal0 PASS proves actual599d/6175 exact, all568outside immediate maps individually currenthash/bytes/mode equal, exactbackups, durablebeforemap/backups beforemutation and guardedatomicCAS/fsync/readback/render. Exact19author/review originals published runtime-D141ff-popup-notes-installed-publication-1157.json. Historical author/reviewer gaps and installer initialwindow sample remainexplicit. ParentCAS1157 dispatched immediately after preceding verdict at5591793664bytes, same approved method and exact90f8/ddebb; no readyworker waiting.
 
 H6 11:59: no new mail after1882840bytes; Header remains11:39drift/upstreammergesCLOSED. App11:48 reports bulk27060PASS0/220s and independentPASS_CUSTODY_TEST_PASS, parentMainacceptedPASS16601 tracegap retained, new single1145 admitted afterbulk. Agent11:49 source14cc/test55restoration unchanged: inverse38 and installer2 exactscope lists withMain, writerfirstreturn1143 and finalreview1148 sourceonly; no REG0/pinpass. Agent manager XML coordinate correction1146 confirms both raw files retained in reviewer evidence, superseding earlier temporary-path-only loss claim; no Runtime rawloss claim adopted. Current qualified popupnotes599d/6175 preserve historicallimits. ParentCAS1157 stillactive; no further canonicalwriter,build or admission.
+
+ParentCAS12:03: actual1157 terminal0 reports oneguardedCAS to90f8/ddebb, durably serialized568before/after and exact599d/6175 backups, render/function/sourcechecksPASS. Post-CAS false expectation corrected readonly; no secondCAS claimed. Four actual disk samples/min5584371712 retained; chronology and two samplerwindows explicitly assigned to sole independent1203 rather than inferred. Source1152 protectedPASS unchanged. Independent1203 queued immediately at5612421120bytes; no productmerge/body or furthercanonicalwrite.
+
+D141hh12:04: new Main12:00 acceptance consumed. Explicit existing-lineage single notesrow added, missing actual SAFE terminal/custody coordinates requested by peer1204; normalhub currently has historical no-body and preparation packets only. No fabricated tuple, lostcustodyclaim, newproofworker or diagnostic. Actual packet arrival makes private suffix source ready immediately; current protected90f8/ddebb immutablebases available. Parentinstall review1203 active; no other canonicalwriter.
