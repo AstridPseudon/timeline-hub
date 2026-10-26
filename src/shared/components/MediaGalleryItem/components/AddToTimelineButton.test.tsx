@@ -5,16 +5,16 @@ import { describe, expect, it, vi } from 'vitest';
 import { AddToTimelineButton } from './AddToTimelineButton';
 
 describe('AddToTimelineButton', () => {
-  it('shows on tile hover and keyboard focus, and on touch only when the tile is selected', () => {
+  it('is hidden except on coarse pointers, where it shows only on the selected tile', () => {
     const { rerender } = render(
       <AddToTimelineButton generationId="gen-1" onAddToTimeline={vi.fn()} isSelected={false} />,
     );
     const button = screen.getByLabelText('Add to timeline');
 
-    expect(button.className).toContain('opacity-0');
-    expect(button.className).toContain('group-hover:opacity-100');
-    expect(button.className).toContain('group-focus-within:opacity-100');
-    expect(button.className).not.toContain('[@media(pointer:coarse)]:opacity-100');
+    expect(button.className).toContain('hidden');
+    expect(button.className).toContain('[@media(pointer:coarse)]:flex');
+    expect(button.className).toContain('[@media(pointer:coarse)]:opacity-0');
+    expect(button.className).not.toContain('group-hover:opacity-100');
 
     rerender(<AddToTimelineButton generationId="gen-1" onAddToTimeline={vi.fn()} isSelected />);
     expect(screen.getByLabelText('Add to timeline').className).toContain('[@media(pointer:coarse)]:opacity-100');

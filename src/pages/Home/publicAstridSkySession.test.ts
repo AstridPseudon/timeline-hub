@@ -7,6 +7,7 @@ import {
   DEFAULT_PUBLIC_ASTRID_SKY_SETTINGS,
   derivePublicAstridSkyScene,
 } from './publicAstridSkySession';
+import { skyDarknessAt, themeForDarkness } from './publicAstridSkyRender';
 import { usePublicAstridSkySession } from './usePublicAstridSkySession';
 
 const environment = { visible: true, reducedMotion: false, phone: false };
@@ -70,6 +71,46 @@ describe('public Astrid sky session', () => {
     expect(session.getSnapshot().replay).toBeNull();
     expect(session.getSnapshot().hours).toBe(12);
     session.destroy();
+  });
+
+  it('washes the page into its new palette when the sky\'s own clock crosses mid-twilight', () => {
+    vi.useFakeTimers();
+    // The minute before the evening switch, wherever the test runs.
+    const themeAt = (ms: number) => themeForDarkness(skyDarknessAt(new Date(ms)));
+    let start = Date.UTC(2026, 9, 26, 0);
+    while (!(themeAt(start) === 'light' && themeAt(start + 60_000) === 'dark')) start += 60_000;
+    const crossing = (reducedMotion: boolean) => {
+      let clock = start;
+      const updates: Array<() => void> = [];
+      const startViewTransition = vi.fn((update: () => void) => { updates.push(update); return { finished: new Promise<void>(() => {}) }; });
+      Object.assign(document, { startViewTransition });
+      const session = createPublicAstridSkySession({ environment: { ...environment, reducedMotion }, now: () => clock, performanceNow: () => 0 });
+      const page = document.createElement('main');
+      session.registerPaletteTarget(page, 'home');
+      session.mount();
+      expect(page.dataset.theme).toBe('light');
+      clock += 60_000;
+      vi.advanceTimersByTime(60_000);
+      return { session, page, updates, startViewTransition };
+    };
+    try {
+      const washed = crossing(false);
+      expect(washed.startViewTransition).toHaveBeenCalledTimes(1);
+      // The old image is taken from the old palette; the transition's update writes the new one.
+      expect(washed.page.dataset.theme).toBe('light');
+      washed.updates[0]();
+      expect(washed.page.dataset.theme).toBe('dark');
+      expect(washed.page.style.getPropertyValue('--astrid-paper')).toBe(washed.session.getSnapshot().palette.paper);
+      washed.session.destroy();
+
+      const instant = crossing(true);
+      expect(instant.startViewTransition).not.toHaveBeenCalled();
+      expect(instant.page.dataset.theme).toBe('dark');
+      instant.session.destroy();
+    } finally {
+      delete (document as { startViewTransition?: unknown }).startViewTransition;
+      vi.useRealTimers();
+    }
   });
 
   it('pauses visual scheduling when the environment is hidden or reduced-motion', () => {

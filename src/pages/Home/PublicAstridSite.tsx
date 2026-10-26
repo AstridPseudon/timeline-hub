@@ -7,6 +7,8 @@ import { usePublicAstridEnvironment } from './publicAstridLifecycle';
 import { readPublicAstridExperience, usePublicAstridNavigation, writePublicAstridExperience } from './publicAstridNavigation';
 import type { PublicAstridExperience } from './publicAstridMotion';
 import { usePublicAstridSkySession } from './usePublicAstridSkySession';
+import { PublicAstridSkyPreview } from './PublicAstridSkyPreview.tsx';
+import { parsePublicAstridSkyPreview } from './publicAstridSkyPreviewParam';
 import './PublicAstridSite.css';
 
 type PublicAstridPage = 'home' | 'vision';
@@ -29,6 +31,7 @@ export function PublicAstridSite() {
   const [experience, setExperience] = useState(readPublicAstridExperience);
   const environment = usePublicAstridEnvironment();
   const skySession = usePublicAstridSkySession(undefined, environment);
+  const [skyPreview] = useState(() => parsePublicAstridSkyPreview(window.location.search));
   const { run, invalidate } = usePublicAstridNavigation(environment);
   const pageRef = useRef(page);
   const pendingBackRef = useRef(false);
@@ -123,6 +126,7 @@ export function PublicAstridSite() {
         </div>
       )}
       {page === 'vision' && <PublicAstridVision onGoHome={goHome} environment={environment} skySession={skySession} />}
+      {skyPreview && <PublicAstridSkyPreview session={skySession} request={skyPreview} />}
     </>
   );
 }

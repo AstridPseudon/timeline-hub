@@ -12,6 +12,8 @@ export const UI_Z_LAYERS = {
   TASKS_PANE_CONTENT: 100016,
   // Astrid's "stopped" / "restarted" card is the one thing to act on, so it stays clickable over the Tasks pane it overlaps at the bottom right.
   RUNTIME_RECOVERY_CARD: 100017,
+  // Desktop gallery hover peek (the eye): floats above the pane it was opened from.
+  GALLERY_PEEK: 100018,
   // The editor tour's input shield and card cover everything, panes included, so the Tasks pane chat is dimmed and blocked too.
   EDITOR_TOUR_SHIELD: 100020,
   EDITOR_TOUR_CARD: 100021,
