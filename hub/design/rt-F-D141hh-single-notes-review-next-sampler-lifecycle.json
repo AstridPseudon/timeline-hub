@@ -1,0 +1,22 @@
+{
+  "ended_at": "2026-10-26T12:19:43.943268+00:00",
+  "exit_code": 0,
+  "first_available_bytes": 5589835776,
+  "first_tool_gap": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+    "reason": "Author first-tool trace target was a pre-existing regular file.",
+    "status": "FAIL"
+  },
+  "gap_disclosure": "This independent review sampler does not substitute for author first-tool coverage or claim a whole-worker trace.",
+  "interval_seconds": 5.0,
+  "last_available_bytes": 5589827584,
+  "max_gap_seconds": 5.000267,
+  "pid": 5,
+  "reaped": true,
+  "samples": 2,
+  "schema": "d141hh-protected-review-sampler-v1",
+  "started_at": "2026-10-26T12:19:38.906500+00:00",
+  "status": "completed",
+  "stop_free_bytes": 4000000000,
+  "waited": true
+}

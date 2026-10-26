@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-26T12:23:02.546962+00:00",
+  "worker": "rt-F-D141hh-single-notes-review-next",
+  "verdict": "PASS",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-report.md",
+      "sha256": "21214350cb937ae5d3a8fa1f2700e10fe1172155b9ece8d2d999cd21cb77ef75",
+      "bytes": 1239
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-review.json",
+      "sha256": "4f3571e6123bc8747207d87a166f742545b10197f85802804c9879c8d251493d",
+      "bytes": 16945
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-findings.md",
+      "sha256": "b332eead1634ed2cf16bb55a27ad25efdd6d8aa41be67a17f64a5f2dedcf57ba",
+      "bytes": 1714
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-source-manifest.json",
+      "sha256": "3469e29c59257e9c75b74b0c99bd50dc68bb7cb2b558d552077e48600e30253b",
+      "bytes": 3987
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-validation.md",
+      "sha256": "25505d2a6c0cd44c6a82c00309433feac7de049b55293902f7f6012e329c583b",
+      "bytes": 848
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-handoff.md",
+      "sha256": "a1108cb2fe289dd3c565135bf48ed60dafd83d613600fdcf0641a3f0d36ebab6",
+      "bytes": 401
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-disk-trace.txt",
+      "sha256": "7e218b451c25261bea191b6328c38a226b9d8e9beab70e40a1bf37f69c189fc5",
+      "bytes": 224
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-review-next-sampler-lifecycle.json",
+      "sha256": "37cb3e9ff8731aadc2e1330d6186c41df73a888813832a7844d14b49514c372e",
+      "bytes": 839
+    }
+  ],
+  "scope": "Protected documentary source only. Original single custody FAIL and both procedural gaps retained; source and review samples limited, not whole lifecycle."
+}

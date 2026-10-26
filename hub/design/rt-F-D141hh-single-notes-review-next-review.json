@@ -1,0 +1,390 @@
+{
+  "author": {
+    "checker": {
+      "bytes": 22317,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+      "sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658"
+    },
+    "checker_command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+    "checker_result": "PASS_PRIVATE_D141HH_CANDIDATES",
+    "manifest": {
+      "bytes": 21221,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/source-manifest.json",
+      "sha256": "da565c32ca4e485147aef5d13362751d5e72d9c67db8257e0188ebb29ee92606"
+    },
+    "manifest_command": "python3 -m json.tool /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/source-manifest.json",
+    "manifest_json_tool": "PASS",
+    "worker": "rt-F-D141hh-single-notes-next"
+  },
+  "author_run": {
+    "body_verdict": "PASS",
+    "full_ids": {
+      "normal": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+      "preflight": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320"
+    },
+    "native_exit": 0,
+    "native_invocations": 1,
+    "normal_exit": 0,
+    "normal_seconds": 257,
+    "normal_status": "PASS",
+    "normal_tests": [
+      "D28 mounted readiness",
+      "P2 mounted transition None single"
+    ],
+    "preflight_exit": 0,
+    "preflight_status": "PASS",
+    "same_id_only_wait": true,
+    "tuple": {
+      "agent": {
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      "app": {
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      },
+      "composition": {
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "runtime": {
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      }
+    }
+  },
+  "base_context": {
+    "composition_base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_context_only": true,
+    "gate_results": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+    "readme": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+  },
+  "candidates": {
+    "candidate-README.template.md": {
+      "base": {
+        "bytes": 41963,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-README.template.md",
+        "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+      },
+      "candidate": {
+        "bytes": 43978,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md",
+        "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+      },
+      "full_input_prefix": true,
+      "suffix_bytes": 2015,
+      "suffix_once": true
+    },
+    "candidate-gate-results.md": {
+      "base": {
+        "bytes": 37956,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-gate-results.md",
+        "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+      },
+      "candidate": {
+        "bytes": 39916,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md",
+        "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+      },
+      "full_input_prefix": true,
+      "suffix_bytes": 1960,
+      "suffix_once": true
+    }
+  },
+  "custody": {
+    "late_raw_keep": {
+      "added_at": "2026-10-26T11:49:29.082850+00:00",
+      "normal_preexisting": false,
+      "preflight_preexisting": false,
+      "retroactive_claim": false
+    },
+    "original_no_body_1135": "NOTRUN and distinct; no retarget or reproof",
+    "original_preserved": true,
+    "recipe_path_relocation_only": true,
+    "retry_or_resubmit": false,
+    "test_keep": "future submits only; no historical backfill",
+    "verdict": "FAIL_CUSTODY"
+  },
+  "findings": [
+    "PASS: exact source publication, candidate hashes, immutable-prefix conservation, 16 manager originals, tuple/full IDs, predicates, Main acceptance, custody FAIL preservation, and renderer checks all match.",
+    "DISCLOSED GAP: author first-tool trace target was a pre-existing regular file; later author sampling was only two durable samples and is not a whole-worker trace.",
+    "DISCLOSED GAP: original custody review remains FAIL_CUSTODY for late raw KEEP and future-output-only relocation; Main accepts only the bounded service PASS and does not rewrite that verdict.",
+    "HISTORICAL LIMIT: first single no-body attempt from 1135 remains NOTRUN; D141hh-a TEST_KEEP is future-only."
+  ],
+  "main": {
+    "accepted_result": "normal 24271 PASS/exit 0/257s and preflight 9320 PASS; both procedural gaps disclosed",
+    "board_header": {
+      "bytes": 245986,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+      "sha256": "77c4e04105a7f2b787be44f554934301f0fd7e436bf8706cafefdb5c1f411c40"
+    },
+    "markers_present": [
+      "- D141hh (12:00Z): **SINGLE 24271 PASS ACCEPTED**",
+      "the raw KEEP was added after the request, and only the future output paths were relocated",
+      "- D141hh-a (12:05Z): root fix in the kit. bin/request-test now honours TEST_KEEP=<reason>",
+      "BEFORE the request is queued"
+    ],
+    "no_reproof_or_repair": true
+  },
+  "predicate": {
+    "guarded_undo": true,
+    "history": true,
+    "legacy_writes": 0,
+    "opaque_fields_preserved": true,
+    "order_preserved": true,
+    "raw_transition_absence": true,
+    "reload": true,
+    "test_source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "v2_request": true
+  },
+  "prohibited_work_not_done": true,
+  "publications": {
+    "app-D141gg-single-custody-publication-1159.json": {
+      "original_count": 8,
+      "originals": [
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-report.md",
+          "bytes": 2192,
+          "sha256": "c164fdcf5177b8485ef7347d208b86e13b5918b9c38a99c3b2d6150a5e1bf477"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-review.json",
+          "bytes": 3682,
+          "sha256": "b2e5c131d931dc6909aa54048b20323733424dcc9ed46f9b2eef88e6581486a5"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-findings.md",
+          "bytes": 2176,
+          "sha256": "7b4fcf0f34b1b005f17c54d72bf7bc934332c2201de24d1eaabbb3f5fce975be"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-source-manifest.json",
+          "bytes": 3089,
+          "sha256": "00ef84d35783e46c4ee27d71cf60ebc636eaefa5a21f84ec92cc73dcea55929f"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-validation.md",
+          "bytes": 2026,
+          "sha256": "408dadc6d4c9c6021f6462e822648038e16b27466f1e9e232d65dc72a13451c8"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-handoff.md",
+          "bytes": 1100,
+          "sha256": "477b58c9dd2be30b328e5e353b0959420b83618d0c09c02944cb39dca26ce237"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-disk-trace.txt",
+          "bytes": 900,
+          "sha256": "fa88cd0ea6e954aa60b0c31c34de02778437568c38cddd307d66536efddbc221"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-sampler-lifecycle.json",
+          "bytes": 1629,
+          "sha256": "1a2505d4a7b2f8280b23c7c7430524cb748406cf45230a5b8ed434a2793631c7"
+        }
+      ],
+      "publication": {
+        "bytes": 3871,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141gg-single-custody-publication-1159.json",
+        "sha256": "c67e717facfc968a584a489e86b1e24b49840a1dc10f029c62187568255ff928"
+      }
+    },
+    "app-D141gg-single-terminal-publication-1157.json": {
+      "original_count": 8,
+      "originals": [
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+          "bytes": 7250,
+          "sha256": "225aa85c7175eccba945c169ff7769e292485510bc74624c442aa937f758e778"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-results.json",
+          "bytes": 6608,
+          "sha256": "2d992bb92a092d52b822d98927e8e1c890c3e3c6afd7307d75deeaef3082e288"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+          "bytes": 25056,
+          "sha256": "8c6042b7c8e669b463a89c7db876cfb683a30aba9f8d206e161623e5c908acaf"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+          "bytes": 2367,
+          "sha256": "fd1a9fc05fb2ca0956dfca2239fcb0167407863caf5d346445e140407265657d"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+          "bytes": 822,
+          "sha256": "4fc5d69add87cab4fa230b062357b7d382482336e7ef8bdf8e52d222a21d7da0"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-progress.json",
+          "bytes": 4915,
+          "sha256": "165f5a5c1662cb45c563a91a880293afa6d8226948bd322f0639c6e7c7fde7d8"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-validation.md",
+          "bytes": 2719,
+          "sha256": "d9c9a4e46858ed5f39d1a98d32e4ddede52c88f70e0b75ffdbef9ad900572f88"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-handoff.md",
+          "bytes": 1349,
+          "sha256": "4e7d30788e62a7ca24d2045218b0644a92e86ae517d668c7166e75298e9d74e3"
+        }
+      ],
+      "publication": {
+        "bytes": 4246,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141gg-single-terminal-publication-1157.json",
+        "sha256": "08d6573b2d1c00223ac306b8caf9caaaa8e047803d51f202e4e97a330515af97"
+      }
+    }
+  },
+  "renderer": {
+    "balanced_fences": true,
+    "caller": {
+      "bytes": 31889,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+      "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+    },
+    "controlled_records": 4,
+    "fallback_placeholder_behavior": true,
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "rendered_sha256": "9cbafbe61a4332f7998d831d577497d5ea3b11020be0722270ecc3b24bf4aaf6"
+  },
+  "sampling": {
+    "author_gap_retained": true,
+    "author_lifecycle": {
+      "exit_code": 0,
+      "first_tool_gap": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+        "reason": "The first-tool trace target could not be created because the pre-existing tmpdir path was a regular file.",
+        "status": "FAIL"
+      },
+      "gap_disclosure": "This later private sampler is not substituted for first-tool coverage; the first-tool path error is disclosed.",
+      "interval_seconds": 5,
+      "last_available_bytes": 5591433216,
+      "last_sample_at": "2026-10-26T12:17:43.900087+00:00",
+      "pid": 3,
+      "reaped": true,
+      "samples": 2,
+      "schema": "d141hh-private-sampler-v1",
+      "started_at": "2026-10-26T12:17:38.874562+00:00",
+      "status": "completed",
+      "stop_free_bytes": 4000000000,
+      "waited": true,
+      "worker_first_tool_trace": false
+    },
+    "author_trace_rows": 2,
+    "review_lifecycle": {
+      "ended_at": "2026-10-26T12:19:43.943268+00:00",
+      "exit_code": 0,
+      "first_available_bytes": 5589835776,
+      "first_tool_gap": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+        "reason": "Author first-tool trace target was a pre-existing regular file.",
+        "status": "FAIL"
+      },
+      "gap_disclosure": "This independent review sampler does not substitute for author first-tool coverage or claim a whole-worker trace.",
+      "interval_seconds": 5.0,
+      "last_available_bytes": 5589827584,
+      "max_gap_seconds": 5.000267,
+      "pid": 5,
+      "reaped": true,
+      "samples": 2,
+      "schema": "d141hh-protected-review-sampler-v1",
+      "started_at": "2026-10-26T12:19:38.906500+00:00",
+      "status": "completed",
+      "stop_free_bytes": 4000000000,
+      "waited": true
+    },
+    "review_trace_rows": 2,
+    "whole_trace_claim": false
+  },
+  "scope": "One independent protected documentary review of exact D141hh single-note successors; source only, no canonical write or product merge.",
+  "source_publication": {
+    "all_bindings_exact": true,
+    "bindings": [
+      {
+        "basename": "rt-F-D141hh-single-notes-next-report.md",
+        "bytes": 1073,
+        "sha256": "ee2aad3c9d26099fbfed621560ce8fc5e79e6f90b2e5338395215c09fb3374b0"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-candidate-README.template.md",
+        "bytes": 43978,
+        "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-candidate-gate-results.md",
+        "bytes": 39916,
+        "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-single-note.md",
+        "bytes": 730,
+        "sha256": "391a0e39638fd3de3c79727d0c2354fc0482d7e6daebb0a33056e958be6eaf2c"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-check_notes.py",
+        "bytes": 22317,
+        "sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-source-manifest.json",
+        "bytes": 21221,
+        "sha256": "da565c32ca4e485147aef5d13362751d5e72d9c67db8257e0188ebb29ee92606"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-validation.md",
+        "bytes": 1295,
+        "sha256": "2c19244845bdcd9b670bec83ceb5c0c531da8a271c4e8bbf83556cd75dc5e6b5"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-handoff.md",
+        "bytes": 462,
+        "sha256": "f7c6450f0853237fdf1013f6d1c20383b965c984714e3fb6391560a8d757f21f"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-disk-trace.txt",
+        "bytes": 224,
+        "sha256": "1e0b6909a735ac8ef957e046d32fbb6d6d169f6377727e8d8ab534dd90186b28"
+      },
+      {
+        "basename": "rt-F-D141hh-single-notes-next-sampler-lifecycle.json",
+        "bytes": 839,
+        "sha256": "846b4633ad3b10b07d5fccc764bcb38e38742fc07eba7fd931c87c675f5db9e9"
+      }
+    ],
+    "declared_file_count": 10,
+    "manager_receiving": {
+      "dispatch_available_bytes": 5596450816,
+      "files": [
+        {
+          "bytes": 4246,
+          "originals": 8,
+          "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-terminal-publication-1157.json",
+          "sha256": "08d6573b2d1c00223ac306b8caf9caaaa8e047803d51f202e4e97a330515af97"
+        },
+        {
+          "bytes": 3871,
+          "originals": 8,
+          "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-custody-publication-1159.json",
+          "sha256": "c67e717facfc968a584a489e86b1e24b49840a1dc10f029c62187568255ff928"
+        }
+      ],
+      "scope": "Documentary source only; accepted24271 PASS separate from original custody FAIL, both procedural gaps retained. No canonical write/body/build.",
+      "status": "RECEIVED_16_ORIGINALS_EXACT",
+      "utc": "2026-10-26T12:14:09.795451+00:00",
+      "worker": "rt-F-D141hh-single-notes-next"
+    },
+    "publication": {
+      "bytes": 4771,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-single-notes-source-publication-next.json",
+      "sha256": "affa8f9ec74aadb068bdcfcd4fbce49b98bf29ee58185ce174bd2d476aa485c3"
+    }
+  },
+  "verdict": "PASS"
+}

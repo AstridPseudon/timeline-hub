@@ -1,0 +1,92 @@
+{
+  "author_checker_sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658",
+  "author_first_tool_gap_retained": true,
+  "author_manifest_sha256": "da565c32ca4e485147aef5d13362751d5e72d9c67db8257e0188ebb29ee92606",
+  "candidate_hashes": {
+    "candidate-README.template.md": {
+      "base_bytes": 41963,
+      "base_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "candidate_bytes": 43978,
+      "candidate_sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "suffix_bytes": 2015
+    },
+    "candidate-gate-results.md": {
+      "base_bytes": 37956,
+      "base_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "candidate_bytes": 39916,
+      "candidate_sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "suffix_bytes": 1960
+    }
+  },
+  "custody_verdict": "FAIL_CUSTODY",
+  "full_ids": {
+    "normal": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+    "preflight": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320"
+  },
+  "main_markers_present": true,
+  "manager_received_originals": 16,
+  "predicate": {
+    "guarded_undo": true,
+    "history": true,
+    "legacy_writes": 0,
+    "opaque_fields_preserved": true,
+    "order_preserved": true,
+    "raw_transition_absence": true,
+    "reload": true,
+    "test_source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "v2_request": true
+  },
+  "publication_hashes": {
+    "app-D141gg-single-custody-publication-1159.json": "c67e717facfc968a584a489e86b1e24b49840a1dc10f029c62187568255ff928",
+    "app-D141gg-single-terminal-publication-1157.json": "08d6573b2d1c00223ac306b8caf9caaaa8e047803d51f202e4e97a330515af97"
+  },
+  "renderer_function_only": true,
+  "renderer_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+  "review_sampler": {
+    "ended_at": "2026-10-26T12:19:43.943268+00:00",
+    "exit_code": 0,
+    "first_available_bytes": 5589835776,
+    "first_tool_gap": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+      "reason": "Author first-tool trace target was a pre-existing regular file.",
+      "status": "FAIL"
+    },
+    "gap_disclosure": "This independent review sampler does not substitute for author first-tool coverage or claim a whole-worker trace.",
+    "interval_seconds": 5.0,
+    "last_available_bytes": 5589827584,
+    "max_gap_seconds": 5.000267,
+    "pid": 5,
+    "reaped": true,
+    "samples": 2,
+    "schema": "d141hh-protected-review-sampler-v1",
+    "started_at": "2026-10-26T12:19:38.906500+00:00",
+    "status": "completed",
+    "stop_free_bytes": 4000000000,
+    "waited": true
+  },
+  "review_worker": "rt-F-D141hh-single-notes-review-next",
+  "scope": "source-only documentary review; no canonical/product/build/ZIP/service write.",
+  "source_publication_bytes": 4771,
+  "source_publication_files": 10,
+  "source_publication_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-single-notes-source-publication-next.json",
+  "source_publication_sha256": "affa8f9ec74aadb068bdcfcd4fbce49b98bf29ee58185ce174bd2d476aa485c3",
+  "tuple": {
+    "agent": {
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+    },
+    "app": {
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "verdict": "PASS"
+}
