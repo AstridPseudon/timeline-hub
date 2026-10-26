@@ -250,8 +250,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       stdio: 'inherit',
     });
     hostChild = spawnGroup(astridPython, ['-m', 'astrid.core.execution.generic_host', 'run',
-      '--pack-root', path.join(astridCheckout, 'astrid', 'packs', 'timeline'),
-      '--pack-root', path.join(astridCheckout, 'astrid', 'packs', 'rendering'),
+      '--pack-root', path.join(astridCheckout, 'astrid', 'packs'), // the whole first-party root, so the capability-approval matrix applies as in production
       '--runtime-endpoint', endpoint, '--credential-file', workerCredentialFile,
       '--executor-id', 'astrid-pack-host', '--runtime-discovery-file', discoveryFile,
       '--source-checkout', astridCheckout, '--support-root', supportRoot, '--boot-manifest-path', bootManifestPath,
