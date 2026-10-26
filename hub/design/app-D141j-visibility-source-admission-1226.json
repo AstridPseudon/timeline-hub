@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-26T12:26:44.797056+00:00",
+  "available_bytes": 5067362304,
+  "worker": "app-A3-D141j-visibility-source-1226",
+  "source_only": true,
+  "all_six_actual_terminal": true,
+  "P3_custody_owner": "app-P-D141hh-p3-custody-review-1226",
+  "diagnostic_body_admitted": false,
+  "scope": "Four-field source-level visibility proof only; opt-in private instrumentation unmerged"
+}
