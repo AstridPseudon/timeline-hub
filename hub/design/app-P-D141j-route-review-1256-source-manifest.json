@@ -1,0 +1,54 @@
+{
+  "schema": "timeline.app.d141j.route-review-source-manifest.v1",
+  "verdict": "FAIL",
+  "original_proof_tuple": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "prospective_private_tuple": {
+    "app": {"sha": "3bb09fc656c6b8a81243f8f796115013b56d621f", "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73", "materialized": false},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "candidate_git_object": {
+    "repo": "/home/user/banodoco/reigh-app",
+    "commit": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+    "review_worktree": "unmaterialized/recycled; git object inspected read-only"
+  },
+  "verified_files": [
+    {"path": "scripts/testing/d66-plain-stack.mjs", "size": 49914, "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f", "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "size": 54668, "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6"},
+    {"path": "public/install-manifest.json", "size": 4765, "sha256": "47e89fbe576a1c118b074a9fb5ef7d8b5eb788405d5537a9808d1b8279f28e41", "git_blob": "b571570007cdef157f30054f90e9d58b6428ee12"},
+    {"path": "vendor/astrid-build-inputs/manifest.json", "size": 18726, "sha256": "5cedfb8b544b73dc0db769e45ba19740de61b5296aca107fbb550185f58ee2df", "git_blob": "8670e756cb09732ac2898225344d10954a0ad41d"},
+    {"path": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts", "size": 6308, "sha256": "504088ca11b9522f39e38328cfcd636f621768387c4dc2b5c461a76ab9856e56", "git_blob": "4601e49db2fc344d8ef8859ff57b7f0a3a5dcdcb"},
+    {"path": "scripts/testing/check-d141j-visibility.mjs", "size": 5985, "sha256": "bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27", "git_blob": "9f99bf3de96a5885fd419324e7709061bf98b692"},
+    {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx", "size": 28085, "sha256": "4f9ed3c617ecbd4619b233960053e0e571ad00e6dea7a108226d9aab584e4a07", "git_blob": "728c5e5b26cebc6323a32da5c86729e91a2f079b"},
+    {"path": "tests/helpers/p2_commit_phase_capture.py", "size": 67914, "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d", "checkout": "/home/user/work/wt/rt-pin-95d98f03"}
+  ],
+  "unchanged_base_comparisons": {
+    "base": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "candidate": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "equal_files": [
+      "scripts/testing/d66-plain-stack.mjs",
+      "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "public/install-manifest.json",
+      "vendor/astrid-build-inputs/manifest.json"
+    ]
+  },
+  "coordinates": {
+    "accepted_read": "useAstridShotsHost.ts:210-216",
+    "active_occurrences": "useShotGroups.ts:188",
+    "useShot_groups_input_result": "useShotGroups.ts:273,336",
+    "overlay": "TimelineEditorCore.tsx:931",
+    "collector": "d141jVisibilityObservation.ts:44,52-70,73-78",
+    "actual_test_control": "TimelineEditorCore.test.tsx:254-294,296-371",
+    "checker": "check-d141j-visibility.mjs:20-109",
+    "builder": "d66-plain-stack.mjs:361-405",
+    "manifest_writes": "d66-plain-stack.mjs:734-738,768-777,899-903"
+  },
+  "known_packet_coordinate_error": "source-map.json names absent TimelineEditor.test.tsx instead of TimelineEditorCore.test.tsx"
+}

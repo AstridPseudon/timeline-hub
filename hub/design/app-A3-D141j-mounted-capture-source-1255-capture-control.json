@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-control.v1",
+  "status": "PASS_SOURCE_ONLY",
+  "candidate_private_unmerged": true,
+  "native_diagnostic_run": false,
+  "production_changed": false,
+  "artifact_fields": ["schema", "expectedOccurrenceId", "events", "retention"],
+  "collector_module": "/src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+  "controls": {
+    "module_import_and_snapshot": "PASS; actual create/install collector module used behind finite page.evaluate double",
+    "empty_event_retention": "PASS; expected occurrence retained with events=[] and capture=captured",
+    "failure_retention": "PASS; failed body retained before cleanup and attachment remained durable",
+    "finally_cleanup": "PASS; uninstall executed after retention on success and failure"
+  },
+  "native_semantics": "NOT_PROVEN; source controls do not synthesize mounted emitter values",
+  "cause": "UNKNOWN"
+}

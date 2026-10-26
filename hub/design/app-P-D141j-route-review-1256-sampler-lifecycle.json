@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.app.d141j.route-review-sampler-lifecycle.v1",
+  "initial_command": "mkdir -p absolute evidence and workerKEEP; foreground timeout 5s df sampler wrote evidence/disk-trace.txt in the same tool call",
+  "sampler_exit": 0,
+  "sampler_reaped": true,
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-review-1256/evidence/disk-trace.txt",
+  "observed_free_space": "4.4G",
+  "future_admission_threshold": "5.2GB",
+  "future_stop_floor": "4GB",
+  "native_sampler": "NOTRUN",
+  "body_or_service_started": false
+}

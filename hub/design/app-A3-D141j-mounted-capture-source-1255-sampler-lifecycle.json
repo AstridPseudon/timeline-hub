@@ -1,0 +1,9 @@
+{
+  "schema": "timeline.app.d141j.worker-sampler-lifecycle.v1",
+  "setup": {"evidence_directory_created": true, "worker_tmpdir": "pre-existing regular-file sentinel", "sampler_started_after_nonmutating_check": true},
+  "sampler": {"duration_seconds": 5, "foreground": true, "output": "disk-trace.txt", "paths": ["/tmp", "/home/user/work"]},
+  "free_bytes_observed_after_work": 4699103232,
+  "future_admission_threshold_bytes": 5200000000,
+  "future_stop_floor_bytes": 4000000000,
+  "future_native_run": "NOTRUN"
+}

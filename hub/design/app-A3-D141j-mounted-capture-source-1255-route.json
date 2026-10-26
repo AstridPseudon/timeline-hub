@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-route.v1",
+  "status": "PRIVATE_CANDIDATE_READY_NOTRUN",
+  "registration": false,
+  "request_executed": false,
+  "body_executed": false,
+  "selector": {
+    "future_existing_spec": "tests/e2e/local/three-products.p2-popup.spec.ts",
+    "future_existing_fixture": "tests/e2e/local/support/app.ts page fixture",
+    "future_enable": "withMountedD141jVisibilityCollector(page, testInfo, expectedOccurrenceId, run)",
+    "future_extract": "page.evaluate browser module action snapshot -> collector.snapshot()",
+    "future_retention": "testInfo.outputPath('d141j-visibility.json'), write JSON mode 0600, testInfo.attach JSON",
+    "future_cleanup": "snapshot and retain in finally, then uninstall collector; existing page fixture closes the sole page",
+    "future_checker": "scripts/testing/check-d141j-visibility.mjs <normal-result-dir>/d66/d141j-visibility.json"
+  },
+  "bounded_files": [
+    "tests/e2e/local/support/d141j-visibility.ts",
+    "tests/e2e/local/support/d141j-visibility.test.ts"
+  ],
+  "finite_gap": "No browser/service/body was authorized or run. The future module import requires the mounted devserver and the future normal result directory must be supplied by the existing diagnostic route.",
+  "ordinary_production": "inert; no production caller, values, controlflow, selection, condition, wire, or checker changed"
+}
