@@ -12,6 +12,12 @@ if [ "$1" = --withdraw ]; then shift; [ -n "$*" ] || { echo "withdraw needs a re
   for c in $O/tests/cache/*; do [ -f "$c" ] && [ "$(cat $c)" = "$ID" ] && rm -f "$c"; done
   for t in $O/tests/*/cached_from; do [ "$(cat $t 2>/dev/null)" = "$ID" ] && echo "  note: $(basename $(dirname $t)) reused this result from cache; treat it as withdrawn too"; done
   echo "withdrew test $ID (was $(cat $D/orig-status)); cache entries removed"; exit 0; fi
+# 07:00Z 26 Oct (D141x): a QUEUED request that never started is withdrawn from the queue without deleting anything. Its pending item
+# moves to queue/superseded/, so the dispatcher never admits it, and status becomes "cancelled" with the reason. Request files stay.
+if [ ! -f $D/running ] && [ "$(cat $D/status 2>/dev/null)" = queued ] && [ -f $O/queue/pending/test-$ID ]; then
+  mkdir -p $O/queue/superseded; mv $O/queue/pending/test-$ID $O/queue/superseded/test-$ID && rm -f $O/queue/pending/.test-$ID.why
+  echo "$(date -u +%FT%TZ) cancelled while queued (never started): $*" > $D/CANCELLED; cp -p $D/status $D/orig-status; echo cancelled > $D/status
+  echo "cancelled queued test $ID: pending item moved to queue/superseded/test-$ID; nothing deleted"; exit 0; fi
 [ -f $D/running ] || { echo "test $ID is not running"; exit 0; }; R=$(cat $D/running); kill -0 $R 2>/dev/null || { echo "runner $R gone"; exit 0; }
 echo "$(date -u +%FT%TZ) cancelled by request: $*" > $D/CANCELLED
 P=$(ps -o pid= -g $R | tr -d ' ' | grep -vx "$R"); [ -n "$P" ] && kill -TERM $P 2>/dev/null; sleep 5; P=$(ps -o pid= -g $R | tr -d ' ' | grep -vx "$R"); [ -n "$P" ] && kill -KILL $P 2>/dev/null

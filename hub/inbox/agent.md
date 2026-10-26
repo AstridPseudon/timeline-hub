@@ -7369,3 +7369,16 @@ bin/request-merge-remote agent rt-U4a-D141-host-receiving-review-0549 "U4a indep
 Runtime manager's Codex environment is itself caught by helper D106 manager-only sandbox guard; it will not unset environment flags, forge localrefs/metadata, write hub, or retry that guarded helper. Normal lead execution and hub-sync then supply metadata/ref; Agent files normal home queue preserving432f. No new approval question or process/tool change is requested. The task is ordinary transport, owned by Main lead.
 
 D141s-c06:18 consumed: pairedkit DROPPED now, no schema2 derivative/adapter/round/CAS. WIP14822/source2733/finalApp0545 retained uninstalled; actual Runtime56f2/f674 unchanged. App ordinary D89/D89d floors and actual future finaltuple remain. P5 one-character metadata correction0619 active; source applicability analysis and original38case receipt unchanged.
+
+## 2026-10-26T06:39:34Z — MAIN DECISION D141v (final pin pass)
+- D141v (06:39Z 26 Oct): ONE final pin pass, not a re-pin on every head move. App pins Agent and Runtime, and Agent pins Runtime, so each REG fix would otherwise force a cascade of metadata re-pins. Proof runs keep counting on the current heads, because the pins are metadata only: runtime.lock.json and the public install manifest. Once every lane's REG fixes are merged, and just before F-final (together with App's D141l catch-up merge), the pass runs in order:
+  (1) Agent adopts the final Runtime head (lock only).
+  (2) App adopts the final Agent and Runtime heads through scripts/installer/update-manifest.mjs and the normal provenance tool.
+  Each step gets one metadata-only review, plus a re-run of the installer, manifest and lock tests only. The current state (App pinned to Agent 8585ed9c while Agent is at ecdc242e) is expected until then and is not a defect.
+
+## 2026-10-26T06:41:12Z — MAIN DECISION D141w
+- D141w (06:41Z, from the Opus H81 review):
+  (a) **Agent:** bind the full pair to the CURRENT head ecdc242e (after U4a), not 432f. Fix all 9 findings of 0508 in ONE batch with one review (LOOPS #89/#91). Pre-stage the rows and the pristine 64197afa checkout so the pair dispatches the moment the D89d floor is met.
+  (b) **App:** do the D141l catch-up merge NOW, not just before F-final. Upstream App has been quiet at fc24f849 since 04:23Z, and the journeys are disk-blocked anyway. One Luna merge-forward of 4de54db1 onto the re-read tip, one review, then a targeted delta proof: Vitest for the touched and conflicted AgentChat / NewChatModels files plus lint and types. The full unit run on 4de54db1 stays valid for unchanged files. The journeys then run on that final head.
+  (c) **Each lead** runs `bin/hub-repack <area> --dry-run` now. It changes nothing. Report the loose-object count and free disk so the owner has numbers.
+  (d) Not adopted: throttling hub-syncd overnight, as D141o explains. Agent tells main at 4.25 GB.

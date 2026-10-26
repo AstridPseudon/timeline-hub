@@ -13,11 +13,15 @@ case "$AREA" in runtime|app|agent|farm) ;; *) echo "usage: hub-repack runtime|ap
 MIN_FREE=${HUB_REPACK_MIN_FREE:-4300000000}; BATCH=${HUB_REPACK_BATCH:-3000}
 avail() { df -B1 --output=avail /home/user | tail -1 | tr -d ' '; }
 cd $R || exit 2
-exec 8>$ORCH/.hub-sync.lock; flock -w 600 8 || { echo "hub-repack: hub-sync lock busy; nothing done" >&2; exit 3; }
-for s in $ORCH/tests/*/status; do [ "$(cat $s 2>/dev/null)" = running ] && { echo "hub-repack: test run $(basename $(dirname $s)) is running; nothing done" >&2; exit 4; }; done
+# 06:55Z 26 Oct: a test run counts as live only if its runner pid is alive, or its status says running and was written in the last 6 h
+# (App's dry run was refused by a 28 h stale marker). A dry run always reports and never waits.
+live_runs() { for s in $ORCH/tests/*/status; do [ "$(cat $s 2>/dev/null)" = running ] || continue; d=$(dirname $s)
+  { [ -f $d/running ] && kill -0 "$(cat $d/running 2>/dev/null)" 2>/dev/null; } || [ $(stat -c %Y $s) -gt $(date -d '-6 hour' +%s) ] && basename $d; done; }
 before=$(avail); loose0=$(find .git/objects/?? -type f 2>/dev/null | wc -l)
 echo "hub-repack $AREA: free $before B, loose objects $loose0"; git count-objects -vH
-[ $DRY = 1 ] && { echo "dry run: would pack in batches of $BATCH while free >= $MIN_FREE B. Nothing done."; exit 0; }
+if [ $DRY = 1 ]; then l=$(live_runs); echo "dry run: would pack in batches of $BATCH while free >= $MIN_FREE B.${l:+ A real run would now wait for live test runs: $l.} Nothing done."; exit 0; fi
+exec 8>$ORCH/.hub-sync.lock; flock -w 600 8 || { echo "hub-repack: hub-sync lock busy; nothing done" >&2; exit 3; }
+l=$(live_runs); [ -z "$l" ] || { echo "hub-repack: live test run(s) $l; nothing done" >&2; exit 4; }
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT; b=0
 while :; do
   [ $(avail) -ge $MIN_FREE ] || { echo "stop: free $(avail) B below $MIN_FREE B"; break; }

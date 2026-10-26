@@ -7218,3 +7218,19 @@ Ask: retain D141s-c drop and exact old18617 hold; no further paired binding or C
 Main D141s-c06:18 consumed. App final0545 schema3 packet and Runtime WIP retained uninstalled; no format conversion, new author/review round,0545 registration or paired body. Final P1/P2six/P3 including popup on actual4de54 now wait normal floors; D141f has no journey-kind measured X. Owner hub-repack approval absent. No App hub operation.
 
 Admitted unit controller0606 continues unchanged. Actual app-full-1026060654-8638 RUNNING on4de54/tree84c3, normal npm test -- --maxWorkers=3, trace every5s with KEEP and available about4.51GB above4GBstop. Terminal receipt will be sent as directed. Pristine d822 and each own Node phase still owed; no speculative pin prep while body runs. Runtime original18617 remains queued/unstarted and unmodified; existing0519 private exact-ID hold PASS stays retained, live installation not claimed. Please existing owner retain that queue hold after paired drop, no cancellation/reissue/retarget or queue edit.
+
+## 2026-10-26T06:39:34Z — MAIN DECISION D141v (final pin pass)
+- D141v (06:39Z 26 Oct): ONE final pin pass, not a re-pin on every head move. App pins Agent and Runtime, and Agent pins Runtime, so each REG fix would otherwise force a cascade of metadata re-pins. Proof runs keep counting on the current heads, because the pins are metadata only: runtime.lock.json and the public install manifest. Once every lane's REG fixes are merged, and just before F-final (together with App's D141l catch-up merge), the pass runs in order:
+  (1) Agent adopts the final Runtime head (lock only).
+  (2) App adopts the final Agent and Runtime heads through scripts/installer/update-manifest.mjs and the normal provenance tool.
+  Each step gets one metadata-only review, plus a re-run of the installer, manifest and lock tests only. The current state (App pinned to Agent 8585ed9c while Agent is at ecdc242e) is expected until then and is not a defect.
+
+## 2026-10-26T06:41:12Z — MAIN DECISION D141w
+- D141w (06:41Z, from the Opus H81 review):
+  (a) **Agent:** bind the full pair to the CURRENT head ecdc242e (after U4a), not 432f. Fix all 9 findings of 0508 in ONE batch with one review (LOOPS #89/#91). Pre-stage the rows and the pristine 64197afa checkout so the pair dispatches the moment the D89d floor is met.
+  (b) **App:** do the D141l catch-up merge NOW, not just before F-final. Upstream App has been quiet at fc24f849 since 04:23Z, and the journeys are disk-blocked anyway. One Luna merge-forward of 4de54db1 onto the re-read tip, one review, then a targeted delta proof: Vitest for the touched and conflicted AgentChat / NewChatModels files plus lint and types. The full unit run on 4de54db1 stays valid for unchanged files. The journeys then run on that final head.
+  (c) **Each lead** runs `bin/hub-repack <area> --dry-run` now. It changes nothing. Report the loose-object count and free disk so the owner has numbers.
+  (d) Not adopted: throttling hub-syncd overnight, as D141o explains. Agent tells main at 4.25 GB.
+
+## 2026-10-26T06:42:19Z — MAIN DECISION D141x
+- D141x (06:42Z): OPTION A. The obsolete queued request app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617 is on the old 867 head, and no body ever ran. The OWNING App lead cancels exactly that one request through the supported bin/request-stop-test. The original request, registry, raw files and KEEP data are all preserved, nothing is deleted, and the cancel is noted on the board with its reason: superseded by freeze-2 head 4de54db1. That replaces the earlier 'keep queued' instruction, which existed only while 867 was still a live head. The other held IDs (8912, P4 19479) stay as they are.

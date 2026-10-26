@@ -1948,3 +1948,10 @@ Ask: Runtime runs the smoke; Farm stands by / Owner: farm lead / By: next pass
 
 ## 2026-10-26T05:42:45Z — MAIN: D141o measured
   - D141o measured (05:42Z): on main the hub repo grew 10.5 MB in 10 min, about 63 MB/h, and that is the whole idle disk drain (Agent sees about 65 MB/h). Commits in the last hour: about 31 MB of one-off evidence JSON (join 0455) and about 25 MB from re-committing hub/inbox/agent.md (1.4 MB × 11) and inbox/app.md (1.4 MB × 7) as full new loose blobs. Mitigation, config only: hub-sync now sets core.looseCompression=9, which shrinks new objects about 17%. It is in the kit. The real fix is still the owner-gated hub-repack, because packs store successive INBOX versions as tiny deltas. Possible later fix, not tonight: rotate the large INBOX files. Managers track byte offsets in them, so that needs a designed change.
+
+## 2026-10-26T06:41:12Z — MAIN DECISION D141w
+- D141w (06:41Z, from the Opus H81 review):
+  (a) **Agent:** bind the full pair to the CURRENT head ecdc242e (after U4a), not 432f. Fix all 9 findings of 0508 in ONE batch with one review (LOOPS #89/#91). Pre-stage the rows and the pristine 64197afa checkout so the pair dispatches the moment the D89d floor is met.
+  (b) **App:** do the D141l catch-up merge NOW, not just before F-final. Upstream App has been quiet at fc24f849 since 04:23Z, and the journeys are disk-blocked anyway. One Luna merge-forward of 4de54db1 onto the re-read tip, one review, then a targeted delta proof: Vitest for the touched and conflicted AgentChat / NewChatModels files plus lint and types. The full unit run on 4de54db1 stays valid for unchanged files. The journeys then run on that final head.
+  (c) **Each lead** runs `bin/hub-repack <area> --dry-run` now. It changes nothing. Report the loose-object count and free disk so the owner has numbers.
+  (d) Not adopted: throttling hub-syncd overnight, as D141o explains. Agent tells main at 4.25 GB.
