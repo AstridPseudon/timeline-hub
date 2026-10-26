@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T08:06:47Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
+<!-- app | 2026-10-26T08:12:35Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
 # app board, 2026-10-26T08:06:45.417952+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
@@ -11,7 +11,8 @@
 | D141 full history | Retain original cut full comparison | Luna and service | Actual immutable receipts | review | 0043;0126;wholepath0126 | 12174:19734 PASS33 FAIL plus collection error;23581:17856 PASS18 FAIL. Both Node NOTRUN. | 867cb and7ca |
 | D141 REG history | Retain proved read count correction | HARD Sol and Luna | Independent0203 PASS | merged | 0149;0203 | Exact upstream loads=2; interface support only.32 own failures and collection error visible unchanged. | 5fe3e4debec5 |
 | D141 placement | Retain exact intended history oracle | Luna and protected Luna | Main D141d;0243 PASS | merged | 0235;0243 | Only placement expected records:2 objects22 paths. Helpers, all other gestures and predicates exact. | 520d7e4fc12a |
-| D141 hosted whole path | Resolve Agent controller ordering | Luna | Runtime0752 transfer | doing | app-F-D141l-runtime-wholepath-0752 | Queued at4.951GB, source only. Exact supplied brief, no request or body. Agent0735 retains repair. | Evidence only |
+| D141 hosted custody | Review interrupted Runtime rehearsal | Luna | Runtime0756 transfer | review | app-F-D141yb-custody-review-0756 | Ten SAFE artifacts hash exact; actual command exit and reaping UNKNOWN. Read only; no replay. | Evidence only |
+| D141 hosted whole path | Deliver Agent controller ordering facts | Luna | Runtime0752 transfer | merged | app-F-D141l-runtime-wholepath-0752 | Source investigation returned all six findings; local registry and late trace limits explicit. Agent0735 retains repair. | Evidence only |
 | D141 final unit notes | Receive final App unit disclosure | Runtime existing notes owner | Independent App0736 PASS | blocked:runtime | Peer0804; existing Runtime notes route | Actual32 own failures and collection error remain visible; both Node failures nonREG. Exact counts and bounded scope sent, no global GO. | Evidence only |
 | D141 notes | Retain reviewed installed notes | Runtime Luna and Luna | 0203;0243 and Runtime reviews | merged | 0215;0225;0254;0258 | Exact upstream mock and placement lines installed;568 outside files and gap paragraphs exact; render PASS. | Evidence only |
 | U4p postREG | Adopt actual Runtime95d producer | Luna | Qualified Runtime0515 handoff | merged | Author0535; independent0540 PASS | HOME4de54 tree equals reviewedfdea. Only Runtime source lock and installer SHA changed;6 tests/all14mappings/verifier PASS. | 4de54db14bdc |
@@ -78,6 +79,6 @@ live 1 / cap 3; ready-undispatched 0. Sole Runtime0752 hosted read-only continua
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through 2825370 bytes; board rewritten 2026-10-26T08:06:45.417952+00:00.
+INBOX consumed through 2831995 bytes; board rewritten 2026-10-26T08:06:45.417952+00:00.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.

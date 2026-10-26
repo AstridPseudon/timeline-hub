@@ -1,0 +1,69 @@
+{
+  "task": "F D141l Runtime whole-path continuation",
+  "reviewed": {
+    "composition_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "composition_base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "review_packet": {
+      "findings": "430afdfe612d4a50e24f19279687c65b65ed7d5ae17f8b7de4184b2fea281386",
+      "review": "d5b71f159632348c5f87c0cda65cf90f581b8d10d700670a46cb4a5aa99e4b3e",
+      "source_manifest": "be21267904ce8ee164b0bb1ba5633b66e22a154169c7ea498cf59007e5570071",
+      "validation": "218ec848ec31b803a74e1c934bd5ee1994e5385e07d3762dd47edecd0d4e33ac",
+      "handoff": "1c248242957a68a706027eb6bf7fb2f71732ccb0ed5b7322298378ef6c037ae5"
+    }
+  },
+  "source_tuples": {
+    "current_binding": {
+      "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+      "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+      "app": {"sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"},
+      "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "pristine": {
+      "agent": {"sha": "64197afa297f86f1e738238d5e80aff6d33e303a"},
+      "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2"}
+    },
+    "later_app_catchup_not_substituted": {
+      "sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "parents": ["4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "4937203f545a77fa3ca7597493e009c84eebeffa"]
+    }
+  },
+  "frozen_r4_refs": {
+    "agent": {"ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk", "sha": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"},
+    "runtime": {"ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime", "sha": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"},
+    "app": {"ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified", "sha": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"},
+    "composition": {"ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition", "sha": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"}
+  },
+  "routes": {
+    "request_test": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+    "test_run": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+    "wait_test": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+    "suite_config": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "current_agent_rows": ["full", "targeted", "conformance"],
+    "current_agent_core_full_row": null,
+    "historical_0309_row": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/service-row.txt",
+    "historical_0249_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json",
+    "row_cas_source": "/home/user/work/agent:tools/install_p4_launcher.py"
+  },
+  "admission": {
+    "source_only": true,
+    "request_test_called": false,
+    "test_run_called": false,
+    "wait_test_called": false,
+    "rows_installed": false,
+    "body_started": false,
+    "dispatch_floor_bytes": 4714564096,
+    "core_heavy_floor_bytes": 4700000000,
+    "default_light_floor_bytes": 5000000000,
+    "continuous_stop_bytes": 4000000000,
+    "old_0249_service": "agent-agent-core-full-1026025151-24049",
+    "old_0321_service": "agent-agent-core-full-1026032321-26496"
+  },
+  "missing_original_bytes": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/command.sh",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/service-row.txt"
+  ]
+}

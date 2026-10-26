@@ -1,0 +1,37 @@
+{
+  "interval_seconds": 5,
+  "pid": 3,
+  "samples": [
+    {
+      "available_bytes": 4945092608,
+      "state": "OK",
+      "stop_bytes": 4000000000,
+      "utc": "2026-10-26T08:08:28.179Z"
+    },
+    {
+      "available_bytes": 4945063936,
+      "state": "OK",
+      "stop_bytes": 4000000000,
+      "utc": "2026-10-26T08:08:33.179Z"
+    },
+    {
+      "available_bytes": 4945063936,
+      "state": "OK",
+      "stop_bytes": 4000000000,
+      "utc": "2026-10-26T08:08:38.181Z"
+    },
+    {
+      "available_bytes": 4945063936,
+      "state": "OK",
+      "stop_bytes": 4000000000,
+      "utc": "2026-10-26T08:08:43.182Z"
+    }
+  ],
+  "started_utc": "2026-10-26T08:08:28.179Z",
+  "stop_bytes": 4000000000,
+  "terminal": {
+    "reaped": true,
+    "reason": "TERM",
+    "utc": "2026-10-26T08:08:43.183Z"
+  }
+}

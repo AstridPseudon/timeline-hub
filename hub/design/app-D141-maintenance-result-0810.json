@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-26T08:06:17.418767+00:00",
+  "available_before": 4949975040,
+  "KEEP_before": 35,
+  "sweep3": {
+    "exit": 0,
+    "output": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4721M -> 4716M\n",
+    "stderr_tail": ""
+  },
+  "compact1": {
+    "exit": 0,
+    "output": "packed 0 scratch dirs; free 4716M -> 4716M\ngzipped 1 old worker logs; free now 4717M\npacked 0 finished test-run dirs; free now 4717M\n",
+    "stderr_tail": ""
+  },
+  "KEEP_findings": [],
+  "available_after": 4945387520,
+  "hub_operations": false
+}

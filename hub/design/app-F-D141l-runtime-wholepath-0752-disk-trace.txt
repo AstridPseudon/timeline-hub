@@ -1,0 +1,4 @@
+2026-10-26T08:08:28.179Z	available_bytes=4945092608	stop_bytes=4000000000	state=OK	phase=wholepath
+2026-10-26T08:08:33.179Z	available_bytes=4945063936	stop_bytes=4000000000	state=OK	phase=wholepath
+2026-10-26T08:08:38.181Z	available_bytes=4945063936	stop_bytes=4000000000	state=OK	phase=wholepath
+2026-10-26T08:08:43.182Z	available_bytes=4945063936	stop_bytes=4000000000	state=OK	phase=wholepath

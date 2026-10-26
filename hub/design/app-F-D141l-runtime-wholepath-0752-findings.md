@@ -1,0 +1,37 @@
+# F D141l Runtime whole-path continuation findings
+
+Disposition: source-only investigation complete; no current pair admission.
+
+Reviewed the six published `agt-F-D141l-binding-review-0731` findings and peer0735 against Composition commit `6a2d1c22ec800229812f4d756d7198aece8111ed`, its base `635f4de06fda22a85fc2e4cfc764d0153a4c9f40`, the frozen tuples, the prior 0309/0318/0249/0321 route evidence, and the actual orchestration scripts.
+
+## Concrete defects
+
+1. **Packet delivery/path binding remains wrong in the reviewed source.** The 0718 controller hardcodes the absent author evidence root at `evidence/controller-continuation.sh:7-9`; its command and checker scripts likewise retain author-worktree or fixed historical paths. The packet was committed under Composition `evidence/`, while the required worker evidence root was separate. No source repair was made here.
+
+2. **There is no production binding producer.** `controller-continuation.sh:4-6,16-20,32-43` explicitly consumes a caller-supplied `BINDING.json`, never invokes `request-test`, `test-run`, or `wait-test`, and only writes private `MATERIALIZED_NOT_INSTALLED` rows. The reviewed `binding-source.py` is a consumer, not a producer. This is the genuine missing producer/consumer seam; absence of a live row during source-only preparation is expected and is not itself a defect.
+
+3. **The consumer is not a complete authenticated ordering check.** `binding-source.py:91-105` checks ordinary file hashes and only substring-matches `request_id` in request bytes. Lines 111-123 trust receipt `service_id`, witness, and admission fields as JSON claims. It does not establish request → native row → test-run result → receipt/brief association, nor complete service-request identity. The consumer must bind the existing service artifacts; it must not impose C0 v2 commit validation on the distinct test-service request.
+
+4. **The reviewed source is stale relative to the live orchestration config.** The historical 0718 manifest records the 0309 row and old 0030-era pristine row. Current `orch/tests/suites.conf` has only the generic Agent rows `full`, `targeted`, and `conformance` (plus unrelated remotion rows); it has no current `agent-core-full` or pristine comparator row. This is expected source-only non-installation, but it means a future controller must first use the existing owned row-CAS path to establish the exact row before calling `request-test`; no request was made here.
+
+5. **The source checker can pass while real admission is absent.** The reviewed checker reports 10 admission cases through fixture-enabled consumer calls and retains `admitted_dispatch` as an unconditional waiting seam (`check-source.py:149-153`). Its PASS proves source/control fixtures only, not a current request/service/receipt binding. The prior 0318 PASS_COMMAND has the same scope: it qualifies the command and controls, not a body or pair.
+
+6. **The reviewed packet's trace was historical.** The published 0731 trace is post-start sampling only; the retained 0638 trace is explicitly historical. This continuation recorded a fresh independent trace at `disk-trace.txt`, four samples at 5-second cadence, all above the 4,000,000,000-byte stop, with explicit TERM and child reap in `sampler-lifecycle.json`. It does not backfill or upgrade the historical packet.
+
+## Route facts
+
+- `request-test:2-16` accepts the service request shape `target/repo/suite/files/nocache/requested`, validates the suite row, creates the result directory and request file, then atomically queues `pending/test-ID`. It does not create a C0 v2 commit body.
+- `test-run:11-18,30-59` reads that request, resolves the registered suite command, snapshots the target, computes the run key, enforces one heavy run, validates any measured-floor receipt, applies the existing floors, and starts the body. `agent-core-full` is classified heavy and uses the inclusive 4,700,000,000-byte floor; ordinary light rows retain 5,000,000,000 bytes; continuous body sampling remains 4,000,000,000 bytes.
+- The prior 0249 record is genuine but terminal refusal (`service_id=agent-agent-core-full-1026025151-24049`, body count 0, exit 78). The prior 0321 route produced genuine service `agent-agent-core-full-1026032321-26496` and a body, but it is historical and must not be silently reused as current admission.
+- Existing row-CAS evidence is `tools/install_p4_launcher.py` in Agent `ecdc242ed9b673f641759ecf029f95e89a2c6f92`: it locks the registry, verifies the expected preimage, writes only owned rows through a temp file plus `os.replace`, fsyncs, and verifies outside-row byte conservation. This is the supported row producer; no replacement was run.
+
+## Minimal supported future ordering
+
+1. Freeze the exact current source tuple, pristine Agent/Runtime tuple, command bytes, command manifest, and distinct source-manifest bytes. Keep historical App `4de54db...` binding facts separate from later App `82e9e13...`; do not retarget the old controller record.
+2. Under the existing row-CAS lock, reread the live registry and install the exact current `agent-core-full` row for the cut command, retaining the before/after/outside-row hashes. Hold the row unchanged through request creation and test-run's registration resolution; otherwise request-test can pass one row and test-run can execute another.
+3. At the one genuine controller dispatch, check free bytes against `4,714,564,096` once, write an immutable brief and dispatch witness, then call the unchanged `/tmp/.../bin/request-test integration:agent agent-core-full --no-cache`. Capture the returned ID and request bytes immediately. The request ID is produced by `request-test`; it is never prefilled in a binding or used to derive a hash.
+4. Follow the returned ID through the existing `test-run`/`wait-test` path. Capture the native result directory, registered row bytes/hash, request hash, service/result status, receipt/brief hashes, source tuple, command hash, command-manifest hash, and source-manifest hash from that same invocation. No hash may be defined from a service ID that is itself derived from that hash; no undefined `BINDING.json` producer is allowed.
+5. After the cut reaches a terminal state and all body/sampler processes are reaped, use the same row-CAS sequence to replace only the owned row with the pristine comparator command and repeat steps 3–4 serially. Preserve the same 4,714,564,096 paired dispatch floor and the existing 5-GB default-light/4.7-GB core-heavy service floors; do not lower them or add an authorization schema/interface.
+6. Only then may a narrow consumer verify the concrete native artifacts and materialize private rows. Source preparation itself must remain non-mutating and must not request, install, queue, admit, or run a body.
+
+Missing original bytes are not substituted: exact absent paths include `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh`, `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json`, `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md`, and `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/{command.sh,service-row.txt}`.

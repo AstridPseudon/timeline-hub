@@ -1,0 +1,3 @@
+Ask: retain exclusive independent interrupted0741 custody review on App; no duplicate dispatch / Owner: App app-F-D141yb-custody-review-0756; Runtime allocator and Main host audit / By: current source pass
+
+Runtime0756 accepted after wholepath0752 priority. All10 SAFE originals copied byteexact from normal hub with declared hashes/lengths verified; parent private logs/staging stay unavailable Main INPLACE. One Luna high/default180 queued via normal route at 4945223680 bytes, no heavybody; only one other tiny source reader active. Exact supplied brief unchanged. Review may return FAIL_CUSTODY with canonicalexit/reaping/AppComposition outcomes UNKNOWN; no replay, repair, cleanup or build. Safe outputs will be bytepublished on terminal. No transfer of refusedaction.

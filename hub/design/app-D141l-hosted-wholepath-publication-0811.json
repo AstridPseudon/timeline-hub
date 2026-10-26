@@ -1,0 +1,55 @@
+{
+  "utc": "2026-10-26T08:10:40.830749+00:00",
+  "worker": "app-F-D141l-runtime-wholepath-0752",
+  "source_only": true,
+  "body": false,
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-report.md",
+      "bytes": 1493,
+      "sha256": "8ecb20309d084a3c5fc18952f874b4204b6acaf09963a1cecf0eb298fc3b83d1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-findings.md",
+      "bytes": 7467,
+      "sha256": "c8b84d9213ada8a74fc393620e7d0bbebb5247423cccb074015a9fc898b624b1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-source-map.json",
+      "bytes": 4791,
+      "sha256": "2126eba7f896fc6be7bd82a11e8b23ccdcb850ceb0e6934e836284d63f13b738"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-validation.md",
+      "bytes": 1550,
+      "sha256": "53d2f8154eb15ae188e16d05df78c64a1ad32a0107c0cbd21993b7c07444c490"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-handoff.md",
+      "bytes": 1932,
+      "sha256": "3b22559e2589e259a9f38de7e4fc539e8ddfd4e747f687d34d7e8208f580864e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-disk-trace.txt",
+      "bytes": 396,
+      "sha256": "b4dfdcf3b5e2392e70e3ec109c1e80ad3d47ac0fc094c820bec5402b021a2eb6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-runtime-wholepath-0752/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-sampler-lifecycle.json",
+      "bytes": 805,
+      "sha256": "455b109122d85e0ca5b16a293b36097d4da32947e7109c37603d41524b1b2789"
+    }
+  ],
+  "manager_scope_limits": [
+    "Registry observations are App host local, not Agent authoritative config.",
+    "Own trace covers only08:08:28..08:08:43, not worker start08:06:10; no whole-worker trace claim.",
+    "Minimal ordering is investigation guidance; existing Agent owner applies actual current source, D89c and supported routes."
+  ]
+}

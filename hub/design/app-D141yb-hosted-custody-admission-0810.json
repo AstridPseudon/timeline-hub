@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-26T08:08:50.829141+00:00",
+  "worker": "app-F-D141yb-custody-review-0756",
+  "available_bytes": 4945223680,
+  "live_before": [
+    "app-F-D141l-runtime-wholepath-0752"
+  ],
+  "floor": 4600000000,
+  "heavy": false,
+  "safe_transport_files_verified": 10,
+  "hub_reads_only": true
+}
