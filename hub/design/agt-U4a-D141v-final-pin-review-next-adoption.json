@@ -1,0 +1,15 @@
+{
+  "task": "U4a D141v",
+  "status": "complete_no_change",
+  "consumer_checkout": "/home/user/work/wt/agt-U4a-D141v-final-pin-review-next",
+  "consumer_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+  "consumer_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+  "producer_checkout": "/home/user/work/runtime",
+  "producer_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "producer_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+  "lock_source_commit_exact": true,
+  "normal_refresh_result": "genuine no-change: existing Runtime provenance already selected",
+  "changed_paths": [],
+  "product_commit": null,
+  "worktree_status": "clean"
+}
