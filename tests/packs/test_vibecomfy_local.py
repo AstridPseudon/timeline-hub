@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import http.client
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -224,6 +225,58 @@ def test_scan_discovers_pinokio_running_comfyui_and_python(
     assert found["python"] == str(env_python)
     assert found["pinokio_apps"] == ["comfy.git"]
     assert result["errors"] == []
+
+
+def test_scan_continues_pinokio_discovery_after_incomplete_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    broken, broken_thread = _server(tmp_path / "broken")
+    available, available_thread = _server(tmp_path / "available")
+    pinokio_home = tmp_path / "pinokio"
+    pinokio, pinokio_thread = _pinokio_server({
+        "home": str(pinokio_home),
+        "scripts": [
+            {
+                "app": "broken.git",
+                "local": {"url": f"http://localhost:{broken.server_address[1]}"},
+            },
+            {
+                "app": "available.git",
+                "local": {"url": f"http://localhost:{available.server_address[1]}"},
+            },
+        ],
+    })
+    original_get_json = local_scan._get_json
+
+    def get_json(url: str, timeout: float = 2) -> object:
+        if url.endswith(f"{broken.server_address[1]}/system_stats"):
+            raise http.client.IncompleteRead(b"", 1)
+        return original_get_json(url, timeout=timeout)
+
+    monkeypatch.setattr(local_scan, "_get_json", get_json)
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    try:
+        result = scan([])
+    finally:
+        broken.shutdown()
+        broken.server_close()
+        broken_thread.join(timeout=2)
+        available.shutdown()
+        available.server_close()
+        available_thread.join(timeout=2)
+        pinokio.shutdown()
+        pinokio.server_close()
+        pinokio_thread.join(timeout=2)
+
+    assert result["pinokio"] == {"available": True, "home": str(pinokio_home)}
+    assert [server["url"] for server in result["servers"]] == [
+        f"http://127.0.0.1:{available.server_address[1]}"
+    ]
+    assert result["servers"][0]["pinokio_apps"] == ["available.git"]
 
 
 def test_scan_reports_pinokio_when_no_script_is_running(

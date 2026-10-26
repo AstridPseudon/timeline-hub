@@ -185,7 +185,7 @@ def _probe_server(
 
     try:
         stats = get_json("/system_stats")
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         if not require_comfyui_shape:
             errors.append(_error(port, "/system_stats", exc))
         return None, errors
@@ -225,12 +225,12 @@ def _probe_server(
         server["output_dir"] = _output_directory(argv, base_dir)
         server["manager_present"] = _manager_present(base_dir)
         server["python"] = _python_guess(base_dir, embedded)
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         errors.append(_error(port, "/internal/folder_paths", exc))
     try:
         query = urllib.parse.urlencode({"dir": "workflows"})
         workflows = get_json("/userdata?" + query)
-    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+    except (OSError, urllib.error.URLError, http.client.HTTPException, TimeoutError, ValueError) as exc:
         errors.append(_error(port, "/userdata?dir=workflows", exc))
     else:
         if isinstance(workflows, list):
