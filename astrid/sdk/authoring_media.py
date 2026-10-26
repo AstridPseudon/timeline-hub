@@ -357,7 +357,7 @@ def plan_authoring_media(
         return by_path[path]
 
     def clean(entry: dict[str, Any], row: Mapping[str, Any]) -> None:
-        had_existing_binding = bool(entry)
+        had_catalog_binding = bool(entry.get("generationId") and entry.get("variantId"))
         for field in (*_PATH_FIELDS, *_ID_FIELDS):
             entry.pop(field, None)
         # Source locators are a projection of the former selected object, not
@@ -365,14 +365,22 @@ def plan_authoring_media(
         entry.pop("source", None)
         entry["media_id"] = row["digest"]
         entry["type"] = row["media_type"].split("/", 1)[0]
-        # Same-alias rebinds change managed identity while retaining authored
-        # labels and opaque fields. New aliases still receive import metadata.
-        if not had_existing_binding:
+        # Catalog-bound rebinds retain authored labels and opaque fields.
+        # Unmarked aliases receive the imported media metadata.
+        if not had_catalog_binding:
             entry["media_type"] = row["media_type"]
             entry["filename"] = row["filename"]
+            width, height = row.get("width"), row.get("height")
+            if width is not None and height is not None:
+                entry["resolution"] = f"{width}x{height}"
+            else:
+                entry.pop("resolution", None)
+            if "duration_seconds" in row:
+                entry["duration"] = row["duration_seconds"]
+            else:
+                entry.pop("duration", None)
             for field in ("width", "height", "duration_seconds"):
-                if field in row:
-                    entry[field] = row[field]
+                entry.pop(field, None)
 
     def rewrite_registry(
         node: dict[str, Any], base: Mapping[str, Any], *, explicit_only: bool = False

@@ -30,7 +30,10 @@ def test_remotion_dependencies_follow_lockfile_marker(tmp_path):
     backend.install_remotion_dependencies(agent, env, npm)
     lockfile.write_text('{"lockfileVersion":3,"changed":true}\n')
     backend.install_remotion_dependencies(agent, env, npm)
-    assert calls == [(["/pinned/node", npm, "ci", "--no-audit", "--no-fund"], remotion, env)] * 2
+    ci = (["/pinned/node", npm, "ci", "--no-audit", "--no-fund"], remotion, env)
+    browser = (["/pinned/node", remotion / "scripts" / "fetch-shared-browser.mjs"], remotion, env)
+    # The browser is fetched (or found) on every install, so renders never download it.
+    assert calls == [ci, browser, browser, ci, browser]
     marker = remotion / "node_modules" / ".astrid-package-lock.sha256"
     assert marker.read_text() == hashlib.sha256(lockfile.read_bytes()).hexdigest() + "\n"
 
@@ -46,3 +49,28 @@ def test_remotion_failed_install_never_publishes_marker(tmp_path):
         backend.install_remotion_dependencies(agent, {"ASTRID_NODE_EXECUTABLE": "node"}, Path("npm-cli.js"))
     assert not (remotion / "node_modules/.astrid-package-lock.sha256").exists()
 
+
+def test_update_writes_the_latest_process_control_setting(tmp_path):
+    from runtime_protocol import process_control
+
+    data = tmp_path / "data"
+    support = data / "runtime"
+    support.mkdir(parents=True)
+    process_control.write_setting(support, "sandbox")
+    backend = Backend.__new__(Backend)
+    backend.process_control = "strict"
+    backend.runtime = Mock()
+
+    backend.upgrade(None, data)
+
+    assert process_control.read_setting(support) == "strict"
+
+
+@pytest.mark.node
+def test_shared_browser_reinstall_skips_second_download():
+    result = subprocess.run(
+        ["node", "--test", "remotion/tests/shared-browser.test.cjs"],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

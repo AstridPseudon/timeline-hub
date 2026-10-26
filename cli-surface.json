@@ -3319,6 +3319,7 @@
   "operational_commands": [
     "backup",
     "dev",
-    "doctor"
+    "doctor",
+    "skills"
   ]
 }
