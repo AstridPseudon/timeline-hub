@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T18:59:49Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# runtime board, 2026-10-26T18:59:19.852213+00:00
+<!-- main | 2026-10-26T19:05:20Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# runtime board, 2026-10-26T19:05:23.413788+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,7 +96,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Safety — D130 and protected targets remain held. Historical refusals remain recorded; owner approval is again required for deletion. No active ZIP blocker.
 Next ready: None. Runtime assigned scopes are complete. Main owns the proposed kit hardening round; no new Runtime assignment is recorded.
-live 0 / cap 6; ready-undispatched 0. Free 5820493824 bytes. No new dispatch or cleanup.
+live 0 / cap 6; ready-undispatched 0. Free 5812903936 bytes. No new dispatch or cleanup.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -107,4 +107,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: PLAN and MANAGER-COMMON read first. INBOX 1939692 and HEADER 264292 unchanged; no new assignment. Complete worker census exit 0, 2717 rows; zero Runtime running markers. App, Agent and Farm published owner boards checked; no ready Runtime dependency. All 20 original and published evidence checks passed; archive, sidecar and publication hash match. Main F-FINAL DELIVERED remains controlling. No duplicate review, build, cleanup, product edit, Git mutation or upstream action. [Pass evidence](rounds/20261026T185919Z-pass.json).
+Current pass: PLAN and MANAGER-COMMON read first. INBOX 1939692 and HEADER 264292 unchanged; no new assignment. Complete worker census exit 0, 2717 rows; zero Runtime running markers. App, Agent and Farm published boards checked; no ready Runtime dependency. All 20 original and published evidence checks passed; archive, sidecar and publication hash match. Main F-FINAL DELIVERED remains controlling. Restored deletion rule and protected-target holds retained. No duplicate review, build, cleanup, product edit, Git mutation or upstream action. [Pass evidence](rounds/20261026T190523Z-pass.json).
