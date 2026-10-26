@@ -1,0 +1,30 @@
+{
+  "candidate": "5d202569f3af3852476d182ff49683787bb1e881",
+  "source_only": true,
+  "executed": false,
+  "scope_union": {
+    "upstream_added_or_changed_tests": 16,
+    "tests_for_both_parent_changed_files": 28,
+    "tests_for_actual_conflict_files": 10,
+    "deduped_test_file_union": 213,
+    "shared_fixture_files": ["tests/conftest.py"],
+    "shared_infrastructure_files": ["tests/lanes.py"]
+  },
+  "full_rerun": {
+    "required": true,
+    "reason": "tests/conftest.py is upstream-changed and shared; tests/lanes.py is shared lane infrastructure.",
+    "later_service_action": "Request central Agent full suite after manager normal merge/home; do not conceal this trigger under bounded delta.",
+    "status": "NOTRUN_BY_SOURCE_ONLY_SCOPE"
+  },
+  "preservation": {
+    "all_original_test_predicates_reviewed": true,
+    "author_side_skip_xfail_retirement_or_relabel": false,
+    "upstream_replacements": "The finalized merge retains frozen upstream predicate replacements; it does not reintroduce or weaken them in the author resolution."
+  },
+  "exact_later_acceptance": {
+    "central_full": "Agent full suite via the central test service",
+    "bounded_delta": "Not sufficient because shared fixture trigger is true",
+    "p4": "Separate P4 selector listed in p4-path-review.json",
+    "reason_not_run": "User task requires source-only review with no collection or test body."
+  }
+}

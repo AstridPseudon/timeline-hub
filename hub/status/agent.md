@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T04:38:20Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 2m -->
-# agent board, 2026-10-26T04:35Z
+<!-- agent | 2026-10-26T04:42:28Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-26T04:41Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | Luna and Sol | Freeze1 source review0015 | merged | Final2355 and source0015 | Freeze1 source custody PASS; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP; Bun200 PASS. Current REG verdict pending join. | 28e56cacb4 |
@@ -18,9 +18,9 @@
 | D141i cut | Retain one genuine cut measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 terminal | Declared9561:9388 concrete plus173 unnamed PASS;204 FAIL196 ERROR. Clean sources, monitor0. Original custody finding retained. | Frozen28e / 6a |
 | D141k join | Compare cut and pristine per ID | Luna | D141p Sol first; D141q disk | ready | Prepared join0349 | Wait behind reviewer below4.6GB. Exact candidates by cluster and env_sensitive_undecidable y/n plus reason required. | Pending |
 | D141 REG author | Fix only a proved regression | Luna; Sol after failure | Actual D141k candidate | gated:D141k-candidates | Reserved agt-F-D141k-REG-fix-next | No speculative author. Dispatch only when actual join identifies finite candidate. | None |
-| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | MAIN D141p D141q D141r | review | Sol0408 done; reviewer0432 prepared | Harness committed both parents at04:26Z. Independent source review0432 dispatched under MAIN one reviewer allowance. | 5d202569f3 |
+| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | Independent0432 PASS SOURCE | merging | Sol0408 done; reviewer0432 prepared | Harness committed both parents at04:26Z. Independent source review0432 dispatched under MAIN one reviewer allowance. | 5d202569f3 |
 | D141m media | Preserve both alias metadata behaviors | HARD Sol | MAIN D141r recorded | review | Sol0408 and independent0432 | Existing generationId plus variantId pair only; unmarked aliases use upstream conversion. No new authority input; both assertions retained. | Draft source ready |
-| D141l review | Review complete freeze2 source union | Luna | MAIN04:31 one reviewer allowance | doing | Reviewer0432 queued | Candidate5d202/tree92a3. Whole source and both test families; e1c installer; canonical15; diagnostics and proof triggers. | 5d202569f3 |
+| D141l review | Review complete freeze2 source union | Luna | MAIN04:31 one reviewer allowance | merged | Reviewer0432 terminal PASS SOURCE | PASS SOURCE: whole union and both test families; e1c installer; canonical15 and baseline diagnostics. Full and P4 triggers confirmed. | 5d202569f3 |
 | D141m proof | Compare new source with matching pristine | Luna and service | Reviewed U2 and actual D141k join | gated:D141m-U2 | Sol0408 scope; future proof owner | Author maps213 test files. Sharedconftest touched: full condition true. D89d wrapper qualification owed; no Farm fallback. | Pending |
 | App U4p input | Supply qualified freeze2 producer | Agent source owner | Reviewed normal Agent home | blocked:agent | Sol0408 done; reviewer0432 queued | App8f278 sole finding is Agent installer e1c dependency. Send actual head/tree/ref/parents/receipts to App and lead together. | Pending |
 | D139 Farm | Resolve only undecidable candidates | Runtime and Farm | D141k per ID join | gated:D141k-candidates | Runtime GroupA0300 | Zero undecidable env candidates skips child. Original kit pair and67wheel seed remain EXACT MISSING; no hunt or rebuild. | Agent28e / Runtime6a |
@@ -56,6 +56,8 @@ Later receiving: actualqualified freeze2 App receiving packet owed by Agent revi
 
 Blockers: Agent disk — join0349 keeps normal4.6GB floor; reviewer0432 alone under recorded4.5GB allowance. No eligible ended nonKEEP cleanup target.
 Blockers: SWAP safety — Runtime1537 automatic classifier refusal holds recovery, qualification and rollback; no alternative route.
-Next ready: Reviewer0432 PASS -> normalmerge -> simultaneous App/lead receipt. Join0349 follows on admitted disk. live1 / cap1; ready-undispatched1 join disk held. No heavy body.
+Next ready: Reviewer0432 PASS; normal merge queued -> simultaneous App/lead receipt. Join0349 follows on admitted disk. live0 / cap0; ready-undispatched1 join disk held. No heavy body.
 
 Inbox consumed through2076472 bytes. Manager writes only board, briefs, peers/decisions and exactSAFE bytepublications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push orM5.
+
+Current04:41: Independent0432 terminal exit0 PASS_SOURCE; normal request-merge Sol0408 queued. Source packets byte-published flatdesign; originals unchanged/KEEP. Initial reviewer trace has a gap04:32:45 to04:38:23, disclosed; later5s trace and manager samples stayed above4GB. No behavioral credit.

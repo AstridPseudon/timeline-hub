@@ -1,0 +1,42 @@
+{
+  "source_only": true,
+  "map_inputs": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P4-D141-postREG-path-custody-0219-source-map.json": {
+      "sha256": "d58ea4bfe8923d83540512640b1b28d2f802146ad7f51a11882df56ea526bf55"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P4-D141-path-independent-0226-source-map.json": {
+      "sha256": "2561c1c7e4213ec6af6d091b59969e7da7a84ee4b2db358b11a20327ecac96b1"
+    }
+  },
+  "recorded_agent_nodes": [
+    "tests/editing_conformance/test_native_batch_ingress.py",
+    "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+    "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py",
+    "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+    "tests/helpers/runtime.py",
+    "tools/p4-d73-pinned-launch.sh"
+  ],
+  "explicit_recorded_node_intersection": [],
+  "actual_direct_path_intersection": [
+    "astrid/packs/timeline/cli.py"
+  ],
+  "citations": [
+    {
+      "file": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+      "line": 17,
+      "source": "from astrid.packs.timeline.cli import build_parser"
+    },
+    {
+      "file": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+      "line": 87,
+      "source": "build_parser(client).parse_args([apply, film, str(sheet_path), ...])"
+    },
+    {
+      "file": "astrid/packs/timeline/cli.py",
+      "line": 3812,
+      "source": "sheet_file type=Path plus native configure_apply_options"
+    }
+  ],
+  "conclusion": "P4 rerun condition TRUE: actual recorded P4 CLI selector directly imports changed timeline CLI and invokes changed apply parser. Recorded maps summarize selectors, not exhaustive transitive modules; direct import is concrete actual path evidence. Shared tests/conftest.py also changed. Historical actual10086 remains on original tuple; never retarget receipt19479.",
+  "body_or_receipt_action": false
+}

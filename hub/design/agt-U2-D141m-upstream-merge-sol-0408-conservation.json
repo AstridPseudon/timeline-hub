@@ -1,0 +1,487 @@
+{
+  "status": "SOURCE_COMPLETE_MANAGER_INDEX_FINALIZATION_PENDING",
+  "clean_inherited_merges": [
+    {
+      "path": "astrid/core/cli/domain_product.py",
+      "stage0_sha": "abeca688045d7a09cf616a853e2961558b2dbdcb",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/core/execution/task_scope.py",
+      "stage0_sha": "9f2c2d01bdb11bcdf5c12589ca25ea228334f765",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/core/gateway/__init__.py",
+      "stage0_sha": "a09e658bb4ace0661eba3dec869ce5d1ca8d630a",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/core/generation/gpu_environment.py",
+      "stage0_sha": "1f172ff6f00c6d21e610fce9749d551a1ef82b99",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/core/structure.py",
+      "stage0_sha": "7e51a78300db46b466e45f83533361256b9e13cb",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/installer/backend.py",
+      "stage0_sha": "f3cab4ed0165e82f227660208f8dffcd155755ba",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/installer/cli.py",
+      "stage0_sha": "928b7a14396f1f7dccbdc9d0b72f0d8be18d889b",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/installer/service.py",
+      "stage0_sha": "26292dc0cafc1922afd7cbccd22740fc8bd28951",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/installer/tools.py",
+      "stage0_sha": "b122cb5c35efa487a54331df3b32a3de1658d43c",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/mcp_server.py",
+      "stage0_sha": "ed62365ffca403ebb7f13e877e191048b123f780",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/omp_invoke.py",
+      "stage0_sha": "9d84de3312c6cd79f69bf07488ab0c49b22c9fa3",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/packs/rendering/actions/render/managed_timeline.py",
+      "stage0_sha": "b661fb59092622349c3e546b87d57ea9f6ecc27e",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/packs/rendering/docs/references/document-checkout.md",
+      "stage0_sha": "41d58903a34744ed0758a9c7518353dedeed2924",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/packs/runpod/worker_process.py",
+      "stage0_sha": "be129cb6eb873f2c9fb611e3942d6fb7787622b7",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/packs/shots/cli.py",
+      "stage0_sha": "99b1feaae58a303f1cd9740f7af62ce1fc80cddc",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "astrid/services.py",
+      "stage0_sha": "f8cc361114efb3bfa8a4aac465ba7503ed5dcedb",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "cli-surface.json",
+      "stage0_sha": "a03c3357a65185aecbcf97267982b9be29f74e7e",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "docs/README.md",
+      "stage0_sha": "87dbd0cc3aacf857612637c52a6bbc750bd27193",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "docs/architecture/top-level-inventory.json",
+      "stage0_sha": "5384efdd727d86a83ed4b42c400065840f179e40",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "docs/guides/mcp.md",
+      "stage0_sha": "999a54dd7a644d950bc21513247d2147434ab5fd",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "docs/setup/openshell-sandbox.md",
+      "stage0_sha": "6ca3f8484c065a5be17c296733118287e14a7df2",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "remotion/scripts/fetch-shared-browser.mjs",
+      "stage0_sha": "75a27f89c9e0581050779ee93c1f46d80fc587fc",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "remotion/shared-browser.mjs",
+      "stage0_sha": "9e5b19cc4aee681ba3b9ccae67cc9423fa3282be",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "remotion/tests/shared-browser.test.cjs",
+      "stage0_sha": "0461346121ac9e227ebfe1f7dc08932d7d3e9498",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/gen_cli_surface.py",
+      "stage0_sha": "c49b274cfcc4d82d337742ae7943d64f789ad491",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/openshell/astrid-openshell.sh",
+      "stage0_sha": "0ed7ada0692bdf97ec514820d46daca8073b4c2e",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/openshell/catalog.json",
+      "stage0_sha": "12e26f1e3bc56a3d473afe2de6d5fd3241dcdd9b",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/openshell/compose_policy.py",
+      "stage0_sha": "daef199f45d9df61782d94e56132ece7fb403eae",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/openshell/install-openshell.sh",
+      "stage0_sha": "df97535a96d4183bdfd55876b9f53989bc89f0a7",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "scripts/openshell/sandbox/comfyui-relay.py",
+      "stage0_sha": "4b7bd2526886ce355a0d728a0a22d44a645b807c",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/conftest.py",
+      "stage0_sha": "50efd19184cdf1eee76d84ae631bf5264272d80b",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/core/generation/test_gpu_environment.py",
+      "stage0_sha": "bc3a712cb0290c3860ce6e6fd780b45bb52bec74",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/lanes.py",
+      "stage0_sha": "f9c3e303ad209010c1e82b4c72629defe0a529be",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/packs/rendering/test_render_registry_editor_metadata.py",
+      "stage0_sha": "d00dcc026bd8ad026511cf71248015d54920ef70",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/packs/runpod/test_worker_process.py",
+      "stage0_sha": "5e9c8090ba9475923392eba7152990357fa52bbd",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_installer_asset_checksums.py",
+      "stage0_sha": "aaec11bb9aa8a1c3312691db205bd2d3597a384b",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_installer_lifecycle.py",
+      "stage0_sha": "128570b1c5690cd196887e7610a8350eb96663a2",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_installer_omp_source.py",
+      "stage0_sha": "faf8dd717811d633ca229ee2eff373be68a2669e",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_installer_sources.py",
+      "stage0_sha": "2b8a5baa5f90b5dd358488a6cc1194f0f579bf95",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_installer_tools.py",
+      "stage0_sha": "fb261ca6fc72b5f6cab2d132d0b9d4b411e02c13",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_mcp_server.py",
+      "stage0_sha": "701664c19ca0cd9554f42be74ca010e25169396e",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_openshell_compose_policy.py",
+      "stage0_sha": "059a33b11a7aa6016081e244c751585549be7929",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/test_windows_gpu_availability.py",
+      "stage0_sha": "b69bc182f265fe0bd39efa0092a1bf4e9313843f",
+      "unchanged_from_sanctioned_merge": true
+    },
+    {
+      "path": "tests/timeline/test_authoring_media.py",
+      "stage0_sha": "079c6c43b1db2853fddc04b301542561381ee292",
+      "unchanged_from_sanctioned_merge": true
+    }
+  ],
+  "only_authored_paths": [
+    "artifacts.json",
+    "astrid/core/execution/custody_broker.py",
+    "astrid/core/execution/generic_host.py",
+    "astrid/core/execution/platform_helpers.py",
+    "astrid/packs/timeline/cli.py",
+    "astrid/sdk/authoring_media.py",
+    "docs/giant-file-rationale.md",
+    "tests/core/execution/test_pidfd_callers.py",
+    "tests/core/execution/test_platform_helpers.py",
+    "tests/test_installer_remotion.py"
+  ],
+  "accepted_and_upstream_added_test_nodes": [
+    {
+      "path": "tests/core/execution/test_pidfd_callers.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 8,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/core/execution/test_platform_helpers.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 8,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/core/generation/test_gpu_environment.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 1,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/packs/rendering/test_render_registry_editor_metadata.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 1,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/packs/runpod/test_worker_process.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 1,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_installer_asset_checksums.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 0,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_installer_lifecycle.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 1,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_installer_omp_source.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 0,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_installer_remotion.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 2,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_installer_sources.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 0,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": false
+    },
+    {
+      "path": "tests/test_installer_tools.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 1,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_mcp_server.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 33,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_openshell_compose_policy.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 4,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/test_windows_gpu_availability.py",
+      "accepted_added_top_level_nodes": 0,
+      "accepted_added_exact_retained": 0,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 0,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": true
+    },
+    {
+      "path": "tests/timeline/test_authoring_media.py",
+      "accepted_added_top_level_nodes": 7,
+      "accepted_added_exact_retained": 7,
+      "accepted_added_differences": [],
+      "upstream_added_top_level_nodes": 0,
+      "upstream_added_differences": [],
+      "whole_ast_exact_upstream": false
+    }
+  ],
+  "protected_native_nodes_ast_exact": {
+    "astrid/core/execution/custody_broker.py:retained_incarnation_exited": true,
+    "astrid/core/execution/custody_broker.py:_retained_pidfd_exit_proven": true,
+    "astrid/core/execution/generic_host.py:_RuntimeSourceCustody": true,
+    "astrid/core/execution/generic_host.py:_consume_runtime_external_sources": true,
+    "astrid/core/execution/generic_host.py:_captured_worker_argv": true
+  },
+  "runtime_source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+  "canonical15_and_lock": {
+    "runtime.lock.json": {
+      "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+      "exact_accepted_bytes": true
+    },
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "exact_accepted_bytes": true
+    },
+    "astrid_runtime_client/__init__.py": {
+      "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "exact_accepted_bytes": true
+    },
+    "astrid_runtime_client/contract_metadata.py": {
+      "sha256": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+      "exact_accepted_bytes": true
+    },
+    "astrid_runtime_client/generated.py": {
+      "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+      "exact_accepted_bytes": true
+    },
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/events_page_1_200.json": {
+      "sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/events_page_2_200.json": {
+      "sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+      "sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+      "sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/not_found_404.json": {
+      "sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+      "sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/task_admission_201.json": {
+      "sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/task_read_200.json": {
+      "sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/runtime-responses/validation_error_422.json": {
+      "sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "exact_accepted_bytes": true
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "sha256": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+      "exact_accepted_bytes": true
+    }
+  },
+  "no_test_body_or_collection": true,
+  "source_monitor_free": 4424343552,
+  "authored_test_assertion_changes": 0,
+  "upstream_authored_existing_test_changes": "Conserved via normal merge; no author rewrites. Upstream replaces unavailable-callable probe test with live signalling-probe test and extends parametrization/fixtures; conflict files are entire AST exact upstream.",
+  "media_ruling": {
+    "authority": "MAIN D141r INBOX04:18:21",
+    "discriminator": "bool(entry.get(\"generationId\") and entry.get(\"variantId\"))",
+    "input_citation": "astrid/sdk/authoring_media.py:360; clean() receives public detached alias directly",
+    "producer_citation": "astrid/sdk/authoring_media.py:659-660; import_authoring_media verifies Runtime completed managed catalog pair before copying these two fields",
+    "consumer_citation": "astrid/sdk/timeline/native_media_admission.py:37-41; timeline_document.py:57-58 consumes existing pair; unchanged Runtime/native capture authenticates selections",
+    "native_fixture_citation": "tests/timeline/test_authoring_media.py:997-1000; genuine old_media catalog receipt supplies both keys before checkout/planning",
+    "upstream_legacy_citation": "tests/timeline/test_authoring_media.py:117-149; existing alias lacks catalog pair; resolution assertion unchanged",
+    "unmarked_metadata_branch_ast_exact_upstream": true,
+    "accepted_import_function_ast_exact": true,
+    "new_authentication_or_authority_claim": false,
+    "test_body_run": false
+  },
+  "final_ruff_counts": {
+    "current": 2143,
+    "baseline": 2143,
+    "exit": 0
+  },
+  "final_mypy_counts": {
+    "current": 1902,
+    "baseline": 1902,
+    "exit": 0
+  },
+  "unmerged_index_paths_at_exit": [
+    "artifacts.json",
+    "astrid/core/execution/custody_broker.py",
+    "astrid/core/execution/generic_host.py",
+    "astrid/core/execution/platform_helpers.py",
+    "astrid/packs/timeline/cli.py",
+    "astrid/sdk/authoring_media.py",
+    "docs/giant-file-rationale.md",
+    "tests/core/execution/test_pidfd_callers.py",
+    "tests/core/execution/test_platform_helpers.py",
+    "tests/test_installer_remotion.py"
+  ]
+}

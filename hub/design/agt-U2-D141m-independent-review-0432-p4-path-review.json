@@ -1,0 +1,28 @@
+{
+  "source_only": true,
+  "candidate": "5d202569f3af3852476d182ff49683787bb1e881",
+  "maps": {
+    "original_0219": "app-P4-D141-postREG-path-custody-0219-source-map.json",
+    "independent_0226": "app-P4-D141-path-independent-0226-source-map.json"
+  },
+  "actual_direct_path_intersection": {
+    "count": 1,
+    "paths": ["astrid/packs/timeline/cli.py"],
+    "reason": "The selected P4 CLI test imports build_parser from this path and exercises it; the changed path is directly in candidate source."
+  },
+  "recorded_agent_node_intersection": {
+    "count": 0,
+    "note": "No recorded Agent node name was directly identical; the transitive source import is the controlling intersection."
+  },
+  "rerun": {
+    "required": true,
+    "scope": "Only the P4 CLI selector intersecting astrid/packs/timeline/cli.py; retain exact design-map command and environment.",
+    "status": "NOTRUN_BY_SOURCE_ONLY_SCOPE",
+    "reason": "No P4 collection or body is permitted in this review."
+  },
+  "receipts": {
+    "historical_10086": "Preserve original source tuple; do not retarget.",
+    "queued_19479": "Untouched; no new receipt or REG verdict.",
+    "D141k": "Separate pending join."
+  }
+}
