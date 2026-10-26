@@ -1,0 +1,27 @@
+{
+  "schema": "d141cc-p3-sampler-lifecycle-v1",
+  "first_tool": {
+    "requested": true,
+    "started": true,
+    "foreground": true,
+    "interval_seconds": 5,
+    "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/disk-trace.txt"
+  },
+  "session": {
+    "stopped_after_native_terminal": true,
+    "stop_signal": "SIGINT",
+    "reaped_exit_code": 130
+  },
+  "coverage": {
+    "sample_count": 67,
+    "first_sample": {
+      "at": "2026-10-26T12:17:36Z",
+      "available_bytes": 5209513984
+    },
+    "last_sample": {
+      "at": "2026-10-26T12:23:06Z",
+      "available_bytes": 5058048000
+    },
+    "first_error": null
+  }
+}

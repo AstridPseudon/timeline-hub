@@ -1,0 +1,56 @@
+{
+  "schema": "d141hh-p3-source-manifest-v1",
+  "dispatch_recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "dispatch_index": 6,
+    "selector": "p3",
+    "attempt_scope": "original"
+  },
+  "pins": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "unchanged_at_app_pin_and_service_snapshot": true
+  },
+  "argv": [
+    "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "--max-old-space-size=6144",
+    "--import", "tsx",
+    "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "p3", "--submit"
+  ],
+  "cwd": "/home/user/work/app",
+  "environment_unset": [
+    "D66_SUITE_REGISTRY", "D66_CHECKOUT_ROOT", "D66_NORMAL_AGENT_HOME", "D66_NORMAL_RUNTIME_HOME",
+    "D66_NORMAL_COMPOSITION_HOME", "D66_P2_COMMIT_PHASE_CAPTURE_HELPER", "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+    "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER", "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256", "D66_ELEMENT_VERIFICATION_ONLY"
+  ],
+  "operational_environment": {"GIT_OPTIONAL_LOCKS": "0"},
+  "authorized_inherited_environment": {"TEST_KEEP": "D141hh p3"},
+  "test_blobs": {
+    "tests/e2e/local/three-products.spec.ts": {
+      "before_sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "after_sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "diff": "empty"
+    },
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": {
+      "before_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "after_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "diff": "empty"
+    }
+  },
+  "source_service_snapshot": {
+    "head": "7b70ca03e919b0bc8fd7477a0915a00d3d71c841",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "sole_parent": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "dirty": false
+  },
+  "source_clean": true
+}

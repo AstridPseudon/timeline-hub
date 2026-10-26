@@ -1,0 +1,322 @@
+{
+  "schema": "d141cc-p3-results-v1",
+  "selector": "p3",
+  "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "native_submit": {
+    "exit_code": 0,
+    "status": "pass",
+    "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/native-submit.stdout.log",
+    "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/native-submit.stderr.log",
+    "stdout_sha256": "d587cfbd5b735522503945940003f179f6c0add034584c663e038f98aee51f62",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "preflight": {
+    "id": "app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473",
+    "status": "pass",
+    "request": {
+      "target": "app-pin-82e9e13d",
+      "repo": "app",
+      "suite": "full-d141-p3-82e9e13d-submit-preflight",
+      "files": "''",
+      "nocache": "1",
+      "requested": "2026-10-26T12:18:59Z"
+    },
+    "keep_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473/KEEP",
+    "keep_content": "2026-10-26T12:18:59Z KEEP at creation: D141hh p3\n",
+    "keep_mtime": "2026-10-26T12:18:59.900Z",
+    "service_manifest": {
+      "suite": "p3",
+      "mode": "--preflight",
+      "repo_heads": {
+        "app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "repo_trees": {
+        "app": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "agent": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "runtime": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "source_checkouts": {
+        "app": {
+          "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+          "normal_home": "/home/user/work/wt/.test-app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473",
+          "state": {
+            "root": "/home/user/work/wt/app-pin-82e9e13d",
+            "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+            "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+            "parents": [
+              "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+              "4937203f545a77fa3ca7597493e009c84eebeffa"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "agent": {
+          "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+          "normal_home": "/home/user/work/agent",
+          "state": {
+            "root": "/home/user/work/wt/agt-pin-ecdc242e",
+            "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+            "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+            "parents": [
+              "432f9dcbc66fb80b539d9ef709a63ef8065dbc92",
+              "00ec0f2f841401b69dad26fb1b23d31cce11efab"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "runtime": {
+          "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+          "normal_home": "/home/user/work/runtime",
+          "state": {
+            "root": "/home/user/work/wt/rt-pin-95d98f03",
+            "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+            "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+            "parents": [
+              "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
+              "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "composition": {
+          "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+          "normal_home": "/home/user/work/composition",
+          "state": {
+            "root": "/home/user/work/wt/vw-pin-635f4de0",
+            "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+            "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+            "parents": [
+              "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+              "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        }
+      },
+      "service_source": {
+        "root": "/home/user/work/wt/.test-app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-preflight-1026121859-29473",
+        "head": "88be85595136f9ea235f921a732323d3a9ce82e5",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "parents": [
+          "82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+        ],
+        "branch": null,
+        "dirty": false
+      },
+      "service_target": "app-pin-82e9e13d",
+      "diagnostic_helper": null
+    }
+  },
+  "normal": {
+    "id": "app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447",
+    "status": "pass",
+    "request": {
+      "target": "app-pin-82e9e13d",
+      "repo": "app",
+      "suite": "full-d141-p3-82e9e13d-submit",
+      "files": "''",
+      "nocache": "1",
+      "requested": "2026-10-26T12:19:29Z"
+    },
+    "keep_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447/KEEP",
+    "keep_content": "2026-10-26T12:19:29Z KEEP at creation: D141hh p3\n",
+    "keep_mtime": "2026-10-26T12:19:29.958Z",
+    "service_manifest": {
+      "suite": "p3",
+      "started_at": "2026-10-26T12:19:37.911Z",
+      "repo_heads": {
+        "app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+      },
+      "repo_trees": {
+        "app": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "agent": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "runtime": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "source_checkouts": {
+        "app": {
+          "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+          "normal_home": "/home/user/work/wt/.test-app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447",
+          "state": {
+            "root": "/home/user/work/wt/app-pin-82e9e13d",
+            "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+            "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+            "parents": [
+              "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+              "4937203f545a77fa3ca7597493e009c84eebeffa"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "agent": {
+          "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+          "normal_home": "/home/user/work/agent",
+          "state": {
+            "root": "/home/user/work/wt/agt-pin-ecdc242e",
+            "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+            "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+            "parents": [
+              "432f9dcbc66fb80b539d9ef709a63ef8065dbc92",
+              "00ec0f2f841401b69dad26fb1b23d31cce11efab"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "runtime": {
+          "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+          "normal_home": "/home/user/work/runtime",
+          "state": {
+            "root": "/home/user/work/wt/rt-pin-95d98f03",
+            "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+            "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+            "parents": [
+              "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
+              "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        },
+        "composition": {
+          "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+          "normal_home": "/home/user/work/composition",
+          "state": {
+            "root": "/home/user/work/wt/vw-pin-635f4de0",
+            "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+            "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+            "parents": [
+              "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+              "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+            ],
+            "branch": null,
+            "dirty": false
+          }
+        }
+      },
+      "service_source": {
+        "root": "/home/user/work/wt/.test-app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447",
+        "head": "7b70ca03e919b0bc8fd7477a0915a00d3d71c841",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "parents": [
+          "82e9e13ddf1d7ec6c736521b2eb091dca9877598"
+        ],
+        "branch": null,
+        "dirty": false
+      },
+      "service_target": "app-pin-82e9e13d",
+      "diagnostic_helper": null,
+      "test_sha256_before": {
+        "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+        "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+      },
+      "service_versions": {
+        "imports": {
+          "runtime": {
+            "astrid": {
+              "file": "/home/user/work/wt/agt-pin-ecdc242e/astrid/__init__.py",
+              "version": "0.1.0"
+            },
+            "astrid_runtime": {
+              "file": "/home/user/work/wt/rt-pin-95d98f03/astrid_runtime/__init__.py",
+              "version": "0.1.0"
+            },
+            "astrid_runtime_client": {
+              "file": "/home/user/work/wt/agt-pin-ecdc242e/astrid_runtime_client/__init__.py",
+              "version": null
+            },
+            "runtime_protocol": {
+              "file": "/home/user/work/wt/rt-pin-95d98f03/runtime_protocol/__init__.py",
+              "version": null
+            }
+          },
+          "agent": {
+            "astrid": {
+              "file": "/home/user/work/wt/agt-pin-ecdc242e/astrid/__init__.py",
+              "version": "0.1.0"
+            },
+            "astrid_runtime": {
+              "file": "/home/user/work/wt/rt-pin-95d98f03/astrid_runtime/__init__.py",
+              "version": "0.1.0"
+            },
+            "astrid_runtime_client": {
+              "file": "/home/user/work/wt/agt-pin-ecdc242e/astrid_runtime_client/__init__.py",
+              "version": null
+            },
+            "runtime_protocol": {
+              "file": "/home/user/work/wt/rt-pin-95d98f03/runtime_protocol/__init__.py",
+              "version": null
+            }
+          }
+        },
+        "node": "v20.19.4",
+        "npm": "10.8.2",
+        "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+        "protocol": "workspace.v1",
+        "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+        "agent_head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "agent_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+        "provider": "astrid-v1",
+        "compiler": "authoring-bundle-1"
+      },
+      "junit": {
+        "readiness": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447/d66/readiness.xml",
+        "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p3-82e9e13d-submit-1026121929-6447/d66/p3.xml"
+      },
+      "readiness_exit": 0,
+      "original_exit": 0,
+      "test_sha256_after": {
+        "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+        "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+      },
+      "finished_at": "2026-10-26T12:22:57.369Z"
+    },
+    "wait_test": {
+      "status": "pass",
+      "exit_code": 0,
+      "duration_seconds": 206,
+      "command_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test"
+    },
+    "journey": {
+      "readiness_passed": 1,
+      "gate5_passed": 1,
+      "gate5_failed": 0
+    }
+  },
+  "qualification": {
+    "body_claim": "P3 journey service PASS only",
+    "global_go": false,
+    "reg0": false,
+    "build_or_zip_claim": false
+  }
+}

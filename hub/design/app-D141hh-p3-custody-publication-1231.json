@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-26T12:31:39.868795+00:00",
+  "worker": "app-P-D141hh-p3-custody-review-1226",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "scope": "Original Gate5 P3 actual6447 PASS0/206s, no repeat. Native43/min4732690432; author67/min4736208896. Observer pre-native error and independent sampler path typo/5s-only corrected trace retained; no historical coverage manufactured. Report exists at worker root rather than evidence; actual source coordinate recorded.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-report.md",
+      "sha256": "3648506851d658a3d674c509291a6e9c77da320501380a479cd958c3511b9eb6",
+      "bytes": 885
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-review.json",
+      "sha256": "32b9119c89cf56a8c7d0e0ca040949f7220ca5c098eba88b9a74ea3e26306b8f",
+      "bytes": 4653
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-findings.md",
+      "sha256": "ab2cdb2aea709bb3f51176b8687609e35c48a449a47fb8ce0c78ecc380d44b4b",
+      "bytes": 2012
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-source-manifest.json",
+      "sha256": "1a860af9b978f29b1cdc33c6415a5637560317cdb306e4a27b7b799c2132d35a",
+      "bytes": 2997
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-validation.md",
+      "sha256": "fe7de94c852af823c16b0e89426b24eaaf8a318ab4a50ad9b5cbcdba90d5e187",
+      "bytes": 2960
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-handoff.md",
+      "sha256": "c56e69c5e5c83ac9855d003de8336c826fd9575357f5c9eea19bfed0239afbf2",
+      "bytes": 1191
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-disk-trace.txt",
+      "sha256": "7a2437c33ef0ba8017620151d35293d23cdf5390090bfc23cde72a458d9baf30",
+      "bytes": 2158
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141hh-p3-custody-review-1226/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141hh-p3-custody-review-1226-sampler-lifecycle.json",
+      "sha256": "52f51619c2379f6f72f26592f96b28249e1970d7c3680c02193998101000c029",
+      "bytes": 2324
+    }
+  ]
+}

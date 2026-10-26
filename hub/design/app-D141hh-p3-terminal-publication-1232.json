@@ -1,0 +1,58 @@
+{
+  "utc": "2026-10-26T12:30:07.524464+00:00",
+  "worker": "app-P-D141cc-p3-controller-next",
+  "actual_worker_exit": 0,
+  "normal_result": "6447 PASS0/206s pending independent1226",
+  "preflight": "29473 PASS",
+  "scope": "Original Gate5 tail; one native invocation. First observer parse error before native spawn remains disclosed. No REG0 or build claim.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/controller-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-controller-receipt.json",
+      "sha256": "36950602b2cdc5c0854951977fa989d462132265837f95b0fc75ba5bb3ee275a",
+      "bytes": 8017
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-results.json",
+      "sha256": "4d90ef208f0fbe4658c69199ae204c3b341c30900c56a6a44292c72d38474fcd",
+      "bytes": 14055
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-source-manifest.json",
+      "sha256": "5af0cecd3025e7bbbaaf79c2871d5af374b8ec259256520626a0f22d8dd1bce0",
+      "bytes": 14141
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/trace-measurement.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-trace-measurement.json",
+      "sha256": "41c2fd24276ad02e99fc938a2eec059a491e8dc23d6c1e2f67e06f15c80fe105",
+      "bytes": 6444
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-sampler-lifecycle.json",
+      "sha256": "ce63b984f87b89cff1ab5db5c3ecb8a09fd97314f04a193f59927486e1812392",
+      "bytes": 725
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-validation.md",
+      "sha256": "257636bdffffb7bc1fe9bfd3343b80bd3c24691e925adee56c652b35315315cc",
+      "bytes": 2345
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-handoff.md",
+      "sha256": "096c7ae569c6e89c0ceb12a33f551b81b86af783bf974e1508f86ca6f1268182",
+      "bytes": 974
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-p3-controller-next-disk-trace.txt",
+      "sha256": "dd9f0821d34991124dd9c2aa8759218055a22c65251ca899cfa3922e38df55c8",
+      "bytes": 13065
+    }
+  ]
+}

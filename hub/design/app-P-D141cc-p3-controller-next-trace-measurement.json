@@ -1,0 +1,289 @@
+{
+  "schema": "d141cc-p3-trace-measurement-v1",
+  "sampler": {
+    "first_tool": true,
+    "interval_seconds": 5,
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p3-controller-next/evidence/disk-trace.txt",
+    "stopped_after_native_terminal": true,
+    "stop_signal": "SIGINT",
+    "reaped_exit_code": 130
+  },
+  "samples": [
+    {
+      "at": "2026-10-26T12:17:36Z",
+      "available_bytes": 5209513984
+    },
+    {
+      "at": "2026-10-26T12:17:41Z",
+      "available_bytes": 5206179840
+    },
+    {
+      "at": "2026-10-26T12:17:46Z",
+      "available_bytes": 5206093824
+    },
+    {
+      "at": "2026-10-26T12:17:51Z",
+      "available_bytes": 5205954560
+    },
+    {
+      "at": "2026-10-26T12:17:56Z",
+      "available_bytes": 5205790720
+    },
+    {
+      "at": "2026-10-26T12:18:01Z",
+      "available_bytes": 5205745664
+    },
+    {
+      "at": "2026-10-26T12:18:06Z",
+      "available_bytes": 5205651456
+    },
+    {
+      "at": "2026-10-26T12:18:11Z",
+      "available_bytes": 5205585920
+    },
+    {
+      "at": "2026-10-26T12:18:16Z",
+      "available_bytes": 5205581824
+    },
+    {
+      "at": "2026-10-26T12:18:21Z",
+      "available_bytes": 5205569536
+    },
+    {
+      "at": "2026-10-26T12:18:26Z",
+      "available_bytes": 5205549056
+    },
+    {
+      "at": "2026-10-26T12:18:31Z",
+      "available_bytes": 5205532672
+    },
+    {
+      "at": "2026-10-26T12:18:36Z",
+      "available_bytes": 5205495808
+    },
+    {
+      "at": "2026-10-26T12:18:41Z",
+      "available_bytes": 5205487616
+    },
+    {
+      "at": "2026-10-26T12:18:46Z",
+      "available_bytes": 5205483520
+    },
+    {
+      "at": "2026-10-26T12:18:51Z",
+      "available_bytes": 5205467136
+    },
+    {
+      "at": "2026-10-26T12:18:56Z",
+      "available_bytes": 5205454848
+    },
+    {
+      "at": "2026-10-26T12:19:01Z",
+      "available_bytes": 5205237760
+    },
+    {
+      "at": "2026-10-26T12:19:06Z",
+      "available_bytes": 5171232768
+    },
+    {
+      "at": "2026-10-26T12:19:11Z",
+      "available_bytes": 5205000192
+    },
+    {
+      "at": "2026-10-26T12:19:16Z",
+      "available_bytes": 5204946944
+    },
+    {
+      "at": "2026-10-26T12:19:21Z",
+      "available_bytes": 5204938752
+    },
+    {
+      "at": "2026-10-26T12:19:26Z",
+      "available_bytes": 5204934656
+    },
+    {
+      "at": "2026-10-26T12:19:31Z",
+      "available_bytes": 5205020672
+    },
+    {
+      "at": "2026-10-26T12:19:36Z",
+      "available_bytes": 5038415872
+    },
+    {
+      "at": "2026-10-26T12:19:41Z",
+      "available_bytes": 5035143168
+    },
+    {
+      "at": "2026-10-26T12:19:46Z",
+      "available_bytes": 5035085824
+    },
+    {
+      "at": "2026-10-26T12:19:51Z",
+      "available_bytes": 5035073536
+    },
+    {
+      "at": "2026-10-26T12:19:56Z",
+      "available_bytes": 5035069440
+    },
+    {
+      "at": "2026-10-26T12:20:01Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:06Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:11Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:16Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:21Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:26Z",
+      "available_bytes": 5035065344
+    },
+    {
+      "at": "2026-10-26T12:20:31Z",
+      "available_bytes": 4953677824
+    },
+    {
+      "at": "2026-10-26T12:20:36Z",
+      "available_bytes": 4945260544
+    },
+    {
+      "at": "2026-10-26T12:20:41Z",
+      "available_bytes": 4943613952
+    },
+    {
+      "at": "2026-10-26T12:20:46Z",
+      "available_bytes": 4953661440
+    },
+    {
+      "at": "2026-10-26T12:20:51Z",
+      "available_bytes": 4896436224
+    },
+    {
+      "at": "2026-10-26T12:20:56Z",
+      "available_bytes": 4895469568
+    },
+    {
+      "at": "2026-10-26T12:21:01Z",
+      "available_bytes": 4832174080
+    },
+    {
+      "at": "2026-10-26T12:21:06Z",
+      "available_bytes": 4829638656
+    },
+    {
+      "at": "2026-10-26T12:21:11Z",
+      "available_bytes": 4896468992
+    },
+    {
+      "at": "2026-10-26T12:21:16Z",
+      "available_bytes": 4895514624
+    },
+    {
+      "at": "2026-10-26T12:21:21Z",
+      "available_bytes": 4821639168
+    },
+    {
+      "at": "2026-10-26T12:21:26Z",
+      "available_bytes": 4768718848
+    },
+    {
+      "at": "2026-10-26T12:21:31Z",
+      "available_bytes": 4772360192
+    },
+    {
+      "at": "2026-10-26T12:21:36Z",
+      "available_bytes": 4896333824
+    },
+    {
+      "at": "2026-10-26T12:21:41Z",
+      "available_bytes": 4895375360
+    },
+    {
+      "at": "2026-10-26T12:21:46Z",
+      "available_bytes": 4821852160
+    },
+    {
+      "at": "2026-10-26T12:21:51Z",
+      "available_bytes": 4819677184
+    },
+    {
+      "at": "2026-10-26T12:21:56Z",
+      "available_bytes": 4816588800
+    },
+    {
+      "at": "2026-10-26T12:22:01Z",
+      "available_bytes": 4764237824
+    },
+    {
+      "at": "2026-10-26T12:22:06Z",
+      "available_bytes": 4779507712
+    },
+    {
+      "at": "2026-10-26T12:22:11Z",
+      "available_bytes": 4754812928
+    },
+    {
+      "at": "2026-10-26T12:22:16Z",
+      "available_bytes": 4768415744
+    },
+    {
+      "at": "2026-10-26T12:22:21Z",
+      "available_bytes": 4766392320
+    },
+    {
+      "at": "2026-10-26T12:22:26Z",
+      "available_bytes": 4737597440
+    },
+    {
+      "at": "2026-10-26T12:22:31Z",
+      "available_bytes": 4759625728
+    },
+    {
+      "at": "2026-10-26T12:22:36Z",
+      "available_bytes": 4736208896
+    },
+    {
+      "at": "2026-10-26T12:22:41Z",
+      "available_bytes": 4749369344
+    },
+    {
+      "at": "2026-10-26T12:22:46Z",
+      "available_bytes": 4751372288
+    },
+    {
+      "at": "2026-10-26T12:22:51Z",
+      "available_bytes": 4751577088
+    },
+    {
+      "at": "2026-10-26T12:22:56Z",
+      "available_bytes": 4788240384
+    },
+    {
+      "at": "2026-10-26T12:23:01Z",
+      "available_bytes": 5060771840
+    },
+    {
+      "at": "2026-10-26T12:23:06Z",
+      "available_bytes": 5058048000
+    }
+  ],
+  "count": 67,
+  "min_available_bytes": 4736208896,
+  "max_available_bytes": 5209513984,
+  "last_available_bytes": 5058048000,
+  "stop_floor_bytes": 4000000000,
+  "admission_floor_bytes": 5200000000,
+  "below_stop_floor": false,
+  "note": "Manager admission floor was accepted once; no second admission gate was applied by this controller."
+}
