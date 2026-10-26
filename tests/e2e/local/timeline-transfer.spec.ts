@@ -190,7 +190,10 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   expect(diskFreeAfterImport, 'sandbox must retain at least 2 GiB free after UI import').toBeGreaterThanOrEqual(2 * 1024 ** 3);
 
   await picker.click();
-  await expect(timelineOptions).toHaveCount(1);
+  // A fresh project already carries its default "Main" timeline; the import adds exactly one more, which is the selected one.
+  await expect(timelineOptions.and(page.locator('[aria-selected="true"]'))).toHaveCount(1);
+  await expect(timelineOptions).toHaveCount(2);
+  await expect(timelineOptions.and(page.locator(':not([aria-selected="true"])'))).toHaveText(/^Main\b/);
   const roundTripPickerEvidence = browserEvidencePath(testInfo, 'timeline-transfer/ui-round-trip-picker.png');
   await page.screenshot({ path: roundTripPickerEvidence, fullPage: true });
   await page.keyboard.press('Escape');
