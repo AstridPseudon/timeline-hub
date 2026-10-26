@@ -252,6 +252,62 @@ def test_import_rejects_reused_shot_and_incomplete_internal_closure(tmp_path):
         service.import_timeline(project, incomplete, idempotency_key="incomplete-children")
 
 
+@pytest.mark.parametrize("case", [
+    "internal_revision_id", "occurrence_shot_id", "shot_internal_revision_id",
+    "binding_shot_id", "binding_kind", "empty_shot_id",
+    "manifest_shot_id", "manifest_shot_revision_id", "manifest_shot_internal_id",
+    "manifest_shot_digest", "manifest_internal_timeline_id", "manifest_internal_revision_id",
+    "manifest_internal_digest", "duplicate_media",
+])
+def test_import_rejects_malformed_hashable_identities_without_mutation(tmp_path, case):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, text=case in {"binding_shot_id", "binding_kind", "duplicate_media"},
+                         timeline="invalid-" + case)
+    publication = prepared["publication"]
+    if case == "internal_revision_id":
+        publication["internal_timeline_revisions"][0]["revision_id"] = []
+    elif case == "occurrence_shot_id":
+        publication["parent_composition"]["occurrences"][0]["shot_id"] = {}
+    elif case == "shot_internal_revision_id":
+        publication["shot_revisions"][0]["internal_timeline_revision_id"] = []
+    elif case == "binding_shot_id":
+        prepared["text_bindings"][0]["shot_id"] = []
+    elif case == "binding_kind":
+        prepared["text_bindings"][0]["kind"] = {}
+    elif case == "empty_shot_id":
+        publication["shot_revisions"][0]["shot_id"] = ""
+    elif case.startswith("manifest_shot_"):
+        field = {
+            "manifest_shot_id": "shot_id",
+            "manifest_shot_revision_id": "revision_id",
+            "manifest_shot_internal_id": "internal_timeline_revision_id",
+            "manifest_shot_digest": "content_digest",
+        }[case]
+        publication["dependency_manifest"]["shots"][0][field] = []
+    elif case.startswith("manifest_internal_"):
+        field = {
+            "manifest_internal_timeline_id": "timeline_id",
+            "manifest_internal_revision_id": "revision_id",
+            "manifest_internal_digest": "content_digest",
+        }[case]
+        publication["dependency_manifest"]["internal_timelines"][0][field] = {}
+    elif case == "duplicate_media":
+        media = publication["dependency_manifest"]["media"]
+        media.append(copy.deepcopy(media[0]))
+
+    original = copy.deepcopy(prepared)
+    with pytest.raises(ValidationError):
+        service.import_timeline(project, prepared, idempotency_key="invalid-" + case)
+
+    assert prepared == original
+    assert service.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (prepared["timeline_id"],)).fetchone() is None
+    assert service.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (prepared["timeline_id"] + "-shot",)).fetchone() is None
+    assert service.store.conn.execute(
+        "SELECT 1 FROM command_idempotency WHERE command_kind='timeline.import' AND idempotency_key=?",
+        ("invalid-" + case,),
+    ).fetchone() is None
+
+
 def test_import_fault_after_normal_publication_rolls_back_all_import_metadata(tmp_path, monkeypatch):
     service, project = _service(tmp_path)
     prepared = _prepared(service, project, text=True, transcript=True, timeline="publish-rollback")

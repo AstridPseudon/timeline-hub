@@ -2032,7 +2032,8 @@ class RuntimeService:
         parent = publication.get("parent_composition")
         if not isinstance(internal, list) or not isinstance(shots, list) or not isinstance(parent, dict):
             raise ValidationError("publication requires internal_timeline_revisions, shot_revisions, and parent_composition")
-        if any(not isinstance(item, dict) or item.get("timeline_id") != timeline_id for item in internal):
+        if any(not isinstance(item, dict) or not isinstance(item.get("timeline_id"), str)
+               or item.get("timeline_id") != timeline_id for item in internal):
             raise ValidationError("all imported internal timeline revisions must belong to the new timeline")
         occurrences = parent.get("occurrences")
         if not isinstance(occurrences, list):
@@ -2040,7 +2041,12 @@ class RuntimeService:
         shot_by_id = {}
         shot_revision_ids = set()
         for item in shots:
-            if not isinstance(item, dict) or not isinstance(item.get("shot_id"), str) or not isinstance(item.get("revision_id"), str):
+            if (not isinstance(item, dict)
+                    or not isinstance(item.get("shot_id"), str) or not item.get("shot_id")
+                    or not isinstance(item.get("revision_id"), str) or not item.get("revision_id")
+                    or not isinstance(item.get("internal_timeline_revision_id"), str)
+                    or not item.get("internal_timeline_revision_id")
+                    or not isinstance(item.get("content_digest"), str) or not item.get("content_digest")):
                 raise ValidationError("every imported shot revision needs shot_id and revision_id")
             if item["shot_id"] in shot_by_id:
                 raise ValidationError("import contains duplicate shot revisions for one fresh shot")
@@ -2052,14 +2058,24 @@ class RuntimeService:
                 raise ConflictError("imported shot identity is already in use", details={"shot_id": item["shot_id"]})
             if self.store.conn.execute("SELECT 1 FROM shot_revisions WHERE id=?", (item["revision_id"],)).fetchone():
                 raise ConflictError("imported shot revision identity is already in use", details={"revision_id": item["revision_id"]})
-        internal_by_id = {item.get("revision_id"): item for item in internal if isinstance(item, dict)}
-        if (len(internal_by_id) != len(internal)
-                or any(not isinstance(item.get("revision_id"), str) or not item.get("revision_id") for item in internal)):
+        if any(not isinstance(item, dict) for item in internal):
+            raise ValidationError("every imported internal revision needs a unique revision_id")
+        if any(not isinstance(item.get("revision_id"), str) or not item.get("revision_id") for item in internal):
+            raise ValidationError("every imported internal revision needs a unique revision_id")
+        if any(not isinstance(item.get("content_digest"), str) or not item.get("content_digest") for item in internal):
+            raise ValidationError("every imported internal revision needs a non-empty content_digest")
+        internal_by_id = {item["revision_id"]: item for item in internal}
+        if len(internal_by_id) != len(internal):
             raise ValidationError("every imported internal revision needs a unique revision_id")
         referenced_shots = set()
         occurrence_ids = set()
         for occurrence in occurrences:
-            if not isinstance(occurrence, dict) or occurrence.get("shot_id") not in shot_by_id:
+            if not isinstance(occurrence, dict):
+                raise ValidationError("every imported occurrence must reference a copied shot revision")
+            occurrence_shot_id = occurrence.get("shot_id")
+            if not isinstance(occurrence_shot_id, str) or not occurrence_shot_id:
+                raise ValidationError("import occurrence shot_id must be a non-empty identity")
+            if occurrence_shot_id not in shot_by_id:
                 raise ValidationError("every imported occurrence must reference a copied shot revision")
             occurrence_id = occurrence.get("occurrence_id")
             if not isinstance(occurrence_id, str) or not occurrence_id or occurrence_id in occurrence_ids:
@@ -2067,7 +2083,10 @@ class RuntimeService:
             occurrence_ids.add(occurrence_id)
             shot_id = occurrence["shot_id"]
             shot = shot_by_id[shot_id]
-            if occurrence.get("shot_revision_id") != shot["revision_id"]:
+            occurrence_revision_id = occurrence.get("shot_revision_id")
+            if not isinstance(occurrence_revision_id, str) or not occurrence_revision_id:
+                raise ValidationError("import occurrence shot_revision_id must be a non-empty identity")
+            if occurrence_revision_id != shot["revision_id"]:
                 raise ValidationError("import occurrence shot revision does not match its copied shot")
             if shot.get("internal_timeline_revision_id") not in internal_by_id:
                 raise ValidationError("every imported shot must include its copied internal timeline revision")
@@ -2114,6 +2133,8 @@ class RuntimeService:
         if not isinstance(manifest, dict) or not isinstance(manifest.get("media"), list):
             raise ValidationError("publication dependency_manifest.media must be a list")
         checked_media = self._validate_media_dependencies(project["id"], {"media": manifest["media"]})
+        if len(checked_media) != len(manifest["media"]):
+            raise ValidationError("publication media manifest contains duplicate media identities")
         supplied_media = {item["media_id"] for item in checked_media}
         if len(supplied_media) != len(checked_media) or supplied_media != expected_media:
             raise ValidationError("publication media manifest does not match the copied payload closure", details={"missing": sorted(expected_media - supplied_media), "extra": sorted(supplied_media - expected_media)})
@@ -2122,9 +2143,17 @@ class RuntimeService:
         manifest_internal = manifest.get("internal_timelines")
         if not isinstance(manifest_shots, list) or not isinstance(manifest_internal, list):
             raise ValidationError("publication dependency manifest requires shots and internal_timelines lists")
-        supplied_shot_manifest = {(item.get("shot_id"), item.get("revision_id"), item.get("internal_timeline_revision_id"), item.get("content_digest")) for item in manifest_shots if isinstance(item, dict)}
+        shot_manifest_fields = ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")
+        if any(not isinstance(item, dict) or any(not isinstance(item.get(field), str) or not item[field] for field in shot_manifest_fields)
+               for item in manifest_shots):
+            raise ValidationError("publication dependency manifest shot identities must be non-empty strings")
+        supplied_shot_manifest = {tuple(item[field] for field in shot_manifest_fields) for item in manifest_shots}
         expected_internal_manifest = {(item["timeline_id"], item["revision_id"], item.get("content_digest")) for item in internal}
-        supplied_internal_manifest = {(item.get("timeline_id"), item.get("revision_id"), item.get("content_digest")) for item in manifest_internal if isinstance(item, dict)}
+        internal_manifest_fields = ("timeline_id", "revision_id", "content_digest")
+        if any(not isinstance(item, dict) or any(not isinstance(item.get(field), str) or not item[field] for field in internal_manifest_fields)
+               for item in manifest_internal):
+            raise ValidationError("publication dependency manifest internal timeline identities must be non-empty strings")
+        supplied_internal_manifest = {tuple(item[field] for field in internal_manifest_fields) for item in manifest_internal}
         if (len(supplied_shot_manifest) != len(manifest_shots) or len(supplied_internal_manifest) != len(manifest_internal)
                 or supplied_shot_manifest != expected_shot_manifest or supplied_internal_manifest != expected_internal_manifest):
             raise ValidationError("publication dependency manifest does not match the copied child revisions")
@@ -2134,6 +2163,10 @@ class RuntimeService:
         for item in text_bindings:
             if not isinstance(item, dict) or set(item) - {"shot_id", "kind", "slot", "media_id"} or not {"shot_id", "kind", "media_id"}.issubset(item):
                 raise ValidationError("text bindings require shot_id, kind, and media_id")
+            if not isinstance(item["shot_id"], str) or not item["shot_id"]:
+                raise ValidationError("text binding shot_id must be a non-empty identity")
+            if not isinstance(item["kind"], str) or not item["kind"]:
+                raise ValidationError("text binding kind must be a non-empty identity")
             if item["shot_id"] not in shot_by_id or item["kind"] not in TEXT_BINDING_KINDS:
                 raise ValidationError("text binding must target an imported shot and supported kind")
             if item.get("slot") is not None and (not isinstance(item["slot"], str) or not item["slot"]):
@@ -2157,7 +2190,8 @@ class RuntimeService:
             for descriptor in payload.get("text_bindings", []):
                 if not isinstance(descriptor, dict):
                     raise ValidationError("copied text binding descriptor must be an object", details={"shot_id": shot_id})
-                if (descriptor.get("kind") not in TEXT_BINDING_KINDS
+                if (not isinstance(descriptor.get("kind"), str) or not descriptor.get("kind")
+                        or descriptor.get("kind") not in TEXT_BINDING_KINDS
                         or (descriptor.get("slot") is not None and (not isinstance(descriptor.get("slot"), str) or not descriptor.get("slot")))
                         or not isinstance(descriptor.get("media_id"), str)
                         or not re.fullmatch(r"sha256:[0-9a-f]{64}", descriptor["media_id"])):
