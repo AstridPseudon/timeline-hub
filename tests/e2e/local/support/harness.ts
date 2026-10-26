@@ -1352,18 +1352,11 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
     return this.threeProductsSeed;
   }
 
-  /** Create a second, untouched Runtime timeline in the throwaway project for an empty-bootstrap browser journey. */
-  async createEmptyTimeline(name = 'Empty drop'): Promise<{ timelineId: string; headRevisionId: string; publicationId: string }> {
-    const timelineId = randomUUID();
-    const created = await this.runtimeJson('POST', `/v1/projects/${this.seed.projectId}/timelines`, { timeline_id: timelineId, name });
-    if (created.status !== 201) throw new Error(`create empty timeline: ${created.status} ${JSON.stringify(created.body)}`);
-    const timeline = await this.runtimeJson('GET', `/v1/projects/${this.seed.projectId}/timelines/${timelineId}`);
-    if (timeline.status !== 200) throw new Error(`read empty timeline head: ${timeline.status} ${JSON.stringify(timeline.body)}`);
-    const { head_revision_id: headRevisionId, head_publication_id: publicationId } = timeline.body;
-    if (typeof headRevisionId !== 'string' || !headRevisionId || typeof publicationId !== 'string' || !publicationId) {
-      throw new Error(`new empty timeline has no Runtime head pair: ${JSON.stringify(timeline.body)}`);
-    }
-    return { timelineId, headRevisionId, publicationId };
+  /** Fresh project for the editor's first-timeline browser journey. */
+  async createFreshProject(name = 'First timeline drop'): Promise<{ projectId: string; name: string }> {
+    const created = await this.runtimeJson('POST', '/v1/projects', { name });
+    if (created.status !== 201) throw new Error(`create fresh project: ${created.status} ${JSON.stringify(created.body)}`);
+    return { projectId: created.body.data.project_id, name };
   }
 
   /**

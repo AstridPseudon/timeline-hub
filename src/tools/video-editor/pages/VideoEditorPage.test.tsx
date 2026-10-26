@@ -63,6 +63,8 @@ import {
   registerEditorTourOverlay,
 } from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
 
+import { runtimeFixture } from "@/test/fakeWorkspaceRuntime.ts";
+
 const browserStorage = new Map<string, string>();
 const localStorageFixture: Storage = {
   get length() {
@@ -1519,6 +1521,30 @@ describe("VideoEditorPage", () => {
     expect(state.runtimeCtor).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: "project-canonical-id" }),
     );
+  });
+
+  it("creates the first timeline from a fresh project when legacy writes return 410", async () => {
+    const fixture = runtimeFixture({ projectId: "project-canonical-id", timelineExists: false });
+    const client = new AstridRuntimeClient({ baseUrl: "http://runtime.test", transport: fixture.transport });
+    const actual = await vi.importActual<typeof import("@/integrations/runtime/createDefaultTimeline.ts")>(
+      "@/integrations/runtime/createDefaultTimeline.ts");
+    state.discovery.projects = [{ slug: "fresh-project", name: "Fresh project", project_id: "project-canonical-id" }];
+    state.discovery.timelines = [];
+    state.ensureProjectHasTimeline.mockRejectedValueOnce(new Error("temporary connection failure")).mockImplementation(async () => {
+      const timelineId = await actual.ensureProjectHasTimeline("project-canonical-id", client);
+      state.discovery.timelines = [{ timeline_id: timelineId, name: "Main" }];
+      return timelineId;
+    });
+    // First automatic setup can be retried using the same visible action.
+    renderPage("/tools/video-editor?project=project-canonical-id");
+    await waitFor(() => expect(state.ensureProjectHasTimeline).toHaveBeenCalledTimes(1));
+    await userEvent.click(await screen.findByRole("button", { name: "Create first timeline" }));
+    const provider = await screen.findByTestId("video-editor-provider");
+    const created = fixture.requests.find((request) => request.method === "POST" && request.path.endsWith("/timelines"));
+    expect(provider).toHaveAttribute("data-timeline-id", (created?.body as { timeline_id: string }).timeline_id);
+    expect(fixture.read().parentComposition.clips).toEqual([]);
+    expect(fixture.read().parentComposition.config.tracks).toEqual([]);
+    expect(fixture.requests.filter(({ method, path }) => method === "POST" && path.endsWith("/composition-revisions"))).toEqual([]);
   });
 
   it("does not retry failed automatic Main timeline creation on every render", async () => {

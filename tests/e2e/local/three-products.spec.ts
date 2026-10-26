@@ -3452,30 +3452,51 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   await sniff.expectClean(page);
 });
 
-test('empty bootstrap: dropping an image records one App-source commit and a canonical clip', async ({ page, harness }) => {
-  const empty = await harness.createEmptyTimeline();
-  const base = timelineBase(harness, { timelineId: empty.timelineId });
+test('empty bootstrap: creating the first timeline in a fresh project then dropping an image records one App-source commit', async ({ page, harness }) => {
+  const fresh = await harness.createFreshProject();
+  const catalogPath = `/v1/projects/${fresh.projectId}/timelines`;
+  const before = await harness.runtimeJson<any>('GET', `${catalogPath}?limit=50`);
+  expect(before.status, JSON.stringify(before.body)).toBe(200);
+  expect(before.body.items).toEqual([]);
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  // Automatic setup uses the same action. Refuse its first attempt before it
+  // reaches Runtime, leaving a fresh project for the visible retry button.
+  let automaticAttempt = true;
+  await page.route(`**/api/runtime${catalogPath}`, async (route) => {
+    if (route.request().method() === 'POST' && automaticAttempt) {
+      automaticAttempt = false;
+      await route.fulfill({ status: 503, contentType: 'application/json',
+        body: JSON.stringify({ code: 'unavailable', message: 'Transient setup failure', request_id: 'fx4' }) });
+    } else await route.continue();
+  });
+  const retiredWrites: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes(catalogPath) && request.url().endsWith('/composition-revisions')) retiredWrites.push(request.url());
+  });
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?project=${fresh.projectId}`);
+  const createFirst = page.getByRole('button', { name: 'Create first timeline' });
+  await expect.poll(() => automaticAttempt).toBe(false);
+  await expect(createFirst).toBeEnabled();
+  expect((await harness.runtimeJson<any>('GET', `${catalogPath}?limit=50`)).body.items).toEqual([]);
+  await createFirst.click();
+  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toContainText('Main');
+  await expect(createFirst).toHaveCount(0);
+  expect(retiredWrites).toEqual([]);
+  const catalog = await harness.runtimeJson<any>('GET', `${catalogPath}?limit=50`);
+  expect(catalog.body.items).toHaveLength(1);
+  const empty = catalog.body.items[0];
+  const base = `${catalogPath}/${empty.timeline_id}`;
   const initial = await harness.runtimeJson<HistoryPage>('GET', `${base}/commits?limit=50`);
   expect(initial.status, JSON.stringify(initial.body)).toBe(200);
   expect(initial.body.items).toHaveLength(1);
   expect(initial.body.items[0].intent).toBe('bootstrap');
-  const initialRevision = await harness.runtimeJson<any>('GET', `${base}/composition-revisions/${empty.headRevisionId}`);
+  const initialRevision = await harness.runtimeJson<any>('GET', `${base}/composition-revisions/${initial.body.head.revision_id}`);
   expect(initialRevision.status, JSON.stringify(initialRevision.body)).toBe(200);
   const initialPayload = initialRevision.body.payload;
-  const initialClips = initialPayload.clips ?? initialPayload.config?.clips;
-  const initialTracks = initialPayload.tracks ?? initialPayload.config?.tracks;
-  expect(Array.isArray(initialClips), 'empty bootstrap exposes canonical clips').toBe(true);
-  expect(Array.isArray(initialTracks), 'empty bootstrap exposes canonical tracks').toBe(true);
-  expect(initialClips).toEqual([]);
-  expect(initialTracks).toEqual([]);
-
-  await openApp(page, harness);
-  await expectConnected(page);
-  await openSeededTimeline(page, harness);
-  const timelinePicker = page.getByRole('combobox', { name: 'Select timeline' });
-  await timelinePicker.click();
-  await page.getByRole('option', { name: /Empty drop/ }).click();
-  await expect(timelinePicker).toContainText('Empty drop');
+  expect(initialPayload.clips ?? initialPayload.config?.clips).toEqual([]);
+  expect(initialPayload.tracks ?? initialPayload.config?.tracks).toEqual([]);
   await expect(page.getByRole('textbox', { name: 'Track name' })).toHaveCount(0);
   await expect(page.locator('.timeline-wrapper')).toBeVisible();
 
