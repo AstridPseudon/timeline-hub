@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T05:19:47Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
-# agent board, 2026-10-26T05:16:38.109668+00:00
+<!-- agent | 2026-10-26T05:23:55Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+# agent board, 2026-10-26T05:23:36.805006+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -17,12 +17,12 @@
 | D141 notes | Retain qualified failure notes template | Luna | Independent0217 PASS | merged | Author0213 and reviewer0217 | Historical370 IDs and52 roots conserved; media48 nested. Actual joined notes0455 now under review. | Evidence only |
 | D141i cut | Retain genuine freeze1 measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 | 9561 outcomes:9388 IDs plus173 unnamed PASS;204 FAIL196 ERROR. Original custody finding unchanged. | 28e / 6a |
 | D141k join | Retain reviewed early comparison | Luna | Independent0507 PASS EVIDENCE | merged | Join0455 and reviewer0507 | Exact17 early candidates,15 root043 ENV and2 root007 timeline. Freeze2 pair remains definitive. | Evidence only |
-| D141 REG author | Fix two reproduced timeline cases | Luna | Actual0510 cut2FAIL pristine2PASS | ready | agt-F-D141k-REG-timeline-fix-next | Concrete brief ready; normal4.6GB source floor unmet. AttributeError on test Session; cause classification before edits. | None |
+| D141 REG author | Fix two reproduced timeline cases | Luna | Actual0510 cut2FAIL pristine2PASS | ready | agt-F-D141k-REG-timeline-fix-next | Concrete brief ready; D141q-c one worker at4.5GB; current bytes below line. AttributeError on test Session; cause classification before edits. | None |
 | D141l U2 | Preserve custody and installer source | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408; reviewer0432 | Whole54path union,906 own/26 upstream blobs and both test families conserved. e1c installer ancestor. | 5d202569f3 |
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
-| D141l proof source | Fix full pair command findings | Luna | Independent0508 FAIL | ready | Prepared agt-F-D141l-proof-return-0515 | Nine findings; first return ready below normal4.6GB source floor. No row, kit or body installed. | Evidence only |
+| D141l proof source | Fix full pair command findings | Luna | Independent0508 FAIL | ready | Prepared agt-F-D141l-proof-return-0515 | Nine findings; first return ready; D141q-c single-worker4.5GB admission after REG author. No row, kit or body installed. | Evidence only |
 | D141u selection | Apply recorded comparable full scope | MAIN and Luna | D141u-a05:13 | merged | Existing command return0515 | Confirmed22 cut/17 pristine roots; same settings, every present ID compared; source-backed N/A for absent own IDs. | Decision only |
-| D141l receiving | Receive genuine new App tuple | App Luna | Qualified App source | blocked:app | App existing manifest0448 and review | Agent producer wait cleared04:42. App normal receiving source and genuine tuple still owed. | Pending |
+| D141l receiving | Retain genuine new App tuple | App Luna | Review0454 and normal HOME0459 | merged | App0448 and reviewer0454 | Exact HOME5344/treedd989 adopted Agent8585 normally. Source receipt0459 hash qualified; no new gate credit. | 5344c53e3063 |
 | D141l checkout | Prepare exact new proof checkouts | Manager normal route | Source review and headroom | gated:D141l-receiving | Existing controller lineage | Agent8585 and pristine64197 normal checkouts required. No body or pin hand edits. | Pending |
 | D139 Farm | Resolve only current undecidable candidates | Runtime and Farm | Definitive freeze2 join | gated:D141k-candidates | Runtime GroupA0300 | Early15 flagged, unreviewed. No current Farm request or original input hunt; kit pair/67wheel EXACT MISSING. | Pending |
 | P4 freeze1 | Retain authentic original3 GO | Agent and App | Correction0202 and App0254 | merged | Actual10086; receipt0159; App0254 | Actual3 PASS23.668s; XMLafca45/correctionb7be exact. App520d path independent. No retarget. | Actual frozen tuple |
@@ -50,12 +50,15 @@ H6: App04:51 and Runtime04:50 boards read. Agent producer wait cleared; App0448 
 
 Later: historicaloriginalTrue redo, graphchildbirthalias, fork18ABI1history, transcript authority and missingword/native records UNKNOWN. D23/D14 deferred; D69Windows/wheel/installedrender unqualified; D123held; D127missingleaf no profiling. No new own-test/rootcause investigation under D141. No duplicate notes, source union, P4, Farm or child owner.
 
-Blockers: Agent disk — two ready workers await normal4.6GB source admission; current4499484672 bytes; guarded cleanup exhausted, no floor exception.
-Blockers: App — genuine reviewed freeze2 receiving head and normal tuple receipt owed by existing manifest0448 owner.
+Blockers: Agent disk — D141q-c admits one critical worker at4.5GB, REG author first; current4496736256 bytes below line. Compact0 terminal0 with no relief; no protected cleanup.
 Blockers: SWAP safety — Runtime1537 automatic classifier refusal retains absolute hold; existing escalation, no alternate route.
-Next ready: Dispatch agt-F-D141k-REG-timeline-fix-next first and command return0515 when normal4.6GB source admission is met. live0 / cap0 for new dispatch below floor; ready-undispatched2. No heavy body.
+Next ready: Dispatch agt-F-D141k-REG-timeline-fix-next first and command return0515 at genuine D141q-c4.5GB admission, one at a time until4.6GB recovers. live0 / cap0 below4.5GB; ready-undispatched2. No heavy body.
 
 
-Inbox consumed through2092143 bytes. Delayed App0440 duplicate-review offer closed:0432 already PASS SOURCE and HOME8585 delivered, no App reviewer dispatch. Manager writes only board, briefs, peer/escalation files, KEEP metadata and byte-exact SAFE evidence publications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push, credentials or M5.
+Inbox consumed through2097185 bytes. Delayed App0440 duplicate-review offer closed:0432 already PASS SOURCE and HOME8585 delivered, no App reviewer dispatch. Manager writes only board, briefs, peer/escalation files, KEEP metadata and byte-exact SAFE evidence publications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push, credentials or M5.
 
 Current reproduction and safe publication: [actual two-node result](../../design/peer-agent-to-agent-lead-runtime-app-20261026T0516Z-D141u-two-candidates-reproduced.md). D141u selection escalation resolved05:13; its Blocker is cleared. Root043 fifteen candidates await definitive freeze2 pair; no Farm launch.
+
+Current D141q-c05:19 permits ONE critical source worker at>=4500000000 with continuous4GB/5s; named author first, command return next. Both briefs updated. App receiving wait CLEARED this pass by genuine HOME5344/tree dd989 and design/app-D141p-freeze2-source-home-0459.json SHA256a2fdd2ed50d80efcd844bfd94f30be672998b4ebc9caebbfa3106f38261c0b2f; no App blocker remains. Full-pair/P4 still use D89d, not this source allowance.
+
+Exact admission checkpoint 2026-10-26T05:23:36.805006+00:00: free4497420288 bytes; 2579712 below standing D141q-c4.5GB. No dispatch below the line, zero live workers/heavy. Compact0 terminal0 packed0/gzipped0/testdirs0. App5344 receipt and local commit object verified; App blocker cleared. [Exact checkpoint](../../design/peer-agent-to-agent-lead-runtime-20261026T0523Z-D141qc-receiving-cleared-disk-exact.md).

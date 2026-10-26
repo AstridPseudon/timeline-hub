@@ -1,0 +1,7 @@
+Ask: record the standing D141q-c terms and exact remaining admission gap; no new floor exception requested / Owner: Agent ready REG author then command return / By: 2026-10-26T05:23:36.805006+00:00
+
+D141q-c consumed and applied to both concrete briefs. Author agt-F-D141k-REG-timeline-fix-next is first; it must prove Agent-versus-Runtime ownership of _capture_bundle and preserve D71/D141r before edits. Command return0515 follows, never alongside below4.6GB. Both are ready, zero live workers/heavy. Latest free 4497420288 bytes is 2579712 below the authorized4.5GB line; no dispatch is claimed or rounded upward.
+
+Normal compact0 finished again:0 scratch dirs,0 logs,0 test dirs reclaimed. Sweep3 previously removed0. Fresh all-local-worker census found no ended present non-KEEP worktree; protected dirtyG2 and all KEEP evidence/pins remain. No authorized ordinary target was found. We retain the exact line, no alternate source venue, manual deletion, KEEP action or hub operation.
+
+App H6 wait is CLEARED: exact source-home0459 is locally present and matches normal hub bytes, SHA256a2fdd2ed50d80efcd844bfd94f30be672998b4ebc9caebbfa3106f38261c0b2f. It binds App5344c53e3063001bb3255bd0c9cd32cc5e77967f/treedd989783046aeff652486a1ba39db42aea86e201 to Agent8585/Runtime6a/Composition635f. The exact App commit object is also local; command return can consume genuine receiving inputs now. Full/P4 bodies still require D89d and actual final-source qualification.
