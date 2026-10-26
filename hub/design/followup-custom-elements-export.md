@@ -1,3 +1,5 @@
+> **Superseded (26 Oct, 20:00 UTC).** The current, self-contained version is in `../followups/` (start at `followups/README.md`). This file is kept as a source only.
+
 # Follow-up: custom Remotion elements that export
 
 Source: chat-33 assessment (chat33-issues-assessment-20261026.md), traced against the shipped tuple.

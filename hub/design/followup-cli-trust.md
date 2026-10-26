@@ -1,3 +1,5 @@
+> **Superseded (26 Oct, 20:00 UTC).** The current, self-contained version is in `../followups/` (start at `followups/README.md`). This file is kept as a source only.
+
 # Follow-up: editing-tool trust fixes
 
 Source: chat-33 assessment.

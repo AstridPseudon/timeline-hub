@@ -1,3 +1,5 @@
+> **Superseded (26 Oct, 20:00 UTC).** The current, self-contained version is in `../followups/` (start at `followups/README.md`). This file is kept as a source only.
+
 # Follow-up projects (after the 26 Oct ZIP)
 
 One line per project. Each has its own `followup-*.md` with scope, evidence and the next step. Keep this list current: update the status when a project starts or finishes.

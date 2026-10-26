@@ -1,3 +1,5 @@
+> **Superseded (26 Oct, 20:00 UTC).** The current, self-contained version is in `../followups/` (start at `followups/README.md`). This file is kept as a source only.
+
 # Follow-up: kit hardening (root causes from 26 Oct)
 
 Lessons #109–#112 in LOOPS.md plus the Opus 18:45Z second opinion. No new features.

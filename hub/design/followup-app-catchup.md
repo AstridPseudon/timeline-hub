@@ -1,3 +1,5 @@
+> **Superseded (26 Oct, 20:00 UTC).** The current, self-contained version is in `../followups/` (start at `followups/README.md`). This file is kept as a source only.
+
 # Follow-up: App catch-up onto the latest upstream
 
 - **Why:** the ZIP's App targets upstream fc24f849 (owner option B, D141jj). Upstream has moved on (00a014e2 at 13:33Z, 4e667aa5 by 18:48Z).
