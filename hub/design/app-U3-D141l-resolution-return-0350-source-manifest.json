@@ -1,0 +1,96 @@
+{
+  "task": "U3 D141l resolution return 0350",
+  "repository": "app",
+  "base": {
+    "commit": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65"
+  },
+  "upstream": {
+    "commit": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "ls_remote_and_object_present": true,
+    "sequence": [
+      {
+        "commit": "d0853acbc5ddd0f1a80fb6e2d99eb66bd93df10e",
+        "subject": "Calm the preview player controls",
+        "parent": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+        "files": [
+          "src/pages/Home/PublicAstridShell.css",
+          "src/shared/components/RuntimeConnection/EmptyEditorShell.tsx",
+          "src/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx",
+          "src/tools/video-editor/components/PreviewPanel/PreviewTransport.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+          "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.test.ts",
+          "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.ts",
+          "src/tools/video-editor/lib/themeTokens.ts"
+        ]
+      },
+      {
+        "commit": "61062e5556829be54139408c6e039861557c6621",
+        "subject": "Pin the installer User-Agent fix (merge agent fix/installer-user-agent to main first)",
+        "parent": "d0853acbc5ddd0f1a80fb6e2d99eb66bd93df10e",
+        "files": ["public/install-manifest.json"]
+      },
+      {
+        "commit": "7796159ce89408aa307988ec4cfc29bc99783a25",
+        "subject": "Add whole chat Markdown download",
+        "parent": "61062e5556829be54139408c6e039861557c6621",
+        "files": [
+          "src/shared/components/conversation/actionGroupLogs.ts",
+          "src/shared/components/conversation/conversationExport.test.ts",
+          "src/shared/components/conversation/conversationExport.ts",
+          "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+          "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+        ]
+      },
+      {
+        "commit": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+        "subject": "fix(agent-chat): hide sent requests from queue",
+        "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+        "files": [
+          "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+          "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+          "src/tools/video-editor/components/AgentChat/AgentChatComposer.tsx"
+        ]
+      }
+    ]
+  },
+  "upstream_changed_test_blobs": {
+    "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx": "7d69c42bf828a136a609de29fe3f9d763e5ac0eb",
+    "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.test.ts": "08b837ddf519649493e217d3d49ca21db4c92276",
+    "src/shared/components/conversation/conversationExport.test.ts": "0130849fe0677da506b70a0d9c4d9fa6330d74b1",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": "1cb0812fe66e3e6fb00a26ad5f3d2bc8044e554b"
+  },
+  "source_behaviors": {
+    "queue_filtering": "AgentChat displayedQueue excludes sent/active/optimistic request rows while retaining saved pending rows",
+    "whole_chat_export": "AgentChat downloads complete Markdown transcript including presented editor actions, optimistic input, and assistant draft",
+    "calmer_preview": "upstream PreviewTransport/preview preferences retained; loop control and Player loop prop remain removed",
+    "local_foundation": "voice, runtime door, existing AgentChat menu, outbox, semantic/doc.patch/undo/freshness behavior retained",
+    "tour_gate": "upstream transcript anchor restored on the production AgentChat scroll container"
+  },
+  "producer_identities": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "checkout": "/home/user/work/wt/agt-pin-28e56cac"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "checkout": "/home/user/work/wt/rt-pin-6a011d58"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "manifest_result": {
+    "agent_sha": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime_sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "preserved_local_key": "vibecomfy.sha=31f90bb03d330283b76e7dbdda51197be787090d",
+    "generated_by": "scripts/installer/update-manifest.mjs --write"
+  }
+}

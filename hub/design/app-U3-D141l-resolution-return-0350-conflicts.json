@@ -1,0 +1,36 @@
+{
+  "merge_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+  "actual_conflict_paths": [
+    {
+      "path": "public/install-manifest.json",
+      "base_blob": "d0af31f156911e4f68f583d469ae5fff89c35020",
+      "ours_blob": "a7365eb2b6b91fc8f28b1e5a362925c158bdb253",
+      "theirs_blob": "03d1e1167cb0bc5e9d5427af06b3a935604101ca",
+      "resolution": "kept qualified Agent/Runtime identities and local vibecomfy key, then regenerated release-coupled Agent/Runtime/schema fields with normal installer tooling"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "base_blob": "a0191cfb9f7e646f9644aaebbf2596e29a5b4c2d",
+      "ours_blob": "78e0fd9f4334aa623cbfa148af27833f188581e0",
+      "theirs_blob": "1cb0812fe66e3e6fb00a26ad5f3d2bc8044e554b",
+      "resolution": "preserved both voice-input and Stop assertions, all original inputs/titles/mocks, and upstream sent-request queue expectations"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "base_blob": "4baf501f0b94d8cdc7e697ebbdd7792066a60842",
+      "ours_blob": "df74e43d62c7b42bc0e4ebbb793b433626ffed14",
+      "theirs_blob": "fbc1c8d3acf1ce6427cd90539dab15d8a29131e6",
+      "resolution": "kept upstream NewChatMenu/download/filtering/Markdown presentation and Tour anchor; gave NewChatMenu its own ref while retaining existing AgentChatMenu and voice/runtime behavior"
+    },
+    {
+      "path": "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+      "base_blob": "1e93d4c00c675c12eb6193774b23cf5ef1e2b9e6",
+      "ours_blob": "7966ab2330da0a16f3f2544978a6c4276098bbe6",
+      "theirs_blob": "3e7dfd53d42b0f83edea8b287ac8e66afe5fb2b5",
+      "resolution": "preserved local previewRevision delivery/provenance fields while accepting upstream calmer transport semantics and no-loop Player contract"
+    }
+  ],
+  "remaining_conflict_markers_in_actual_paths": 0,
+  "index_stage_entries_remaining": 12,
+  "index_note": "left unstaged per explicit no-worker-Git-writes rule; harness owns staging/commit"
+}

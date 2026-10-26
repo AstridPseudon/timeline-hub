@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-26T03:57:02.552481+00:00",
+  "worker": "app-D141-pristine-receiver-0007",
+  "worktree": "/home/user/work/wt/app-D141-pristine-receiver-0007",
+  "reason": "D141l replaces ship comparator with freeze2 d822. Old Node/environment phases remain NOTRUN/UNKNOWN historical, superseded for shipping by actual new-head/new-pristine unit comparison. Raw23581 and Git objects retained.",
+  "keep_sha256": "aefb5e49ef5e9c65ba3d82e65f7375ab75556b6122a0fe4f9fa443fe4e660227",
+  "running_marker": false,
+  "ended": "2026-10-26T00:08:32Z",
+  "git_clean": true,
+  "source_identity": [
+    "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "974de7cd08900872eeb0bd6f6004d44323e01fab"
+  ],
+  "queued_requests": [],
+  "active_test_pids": [],
+  "leases": [],
+  "nlink_gt1": [],
+  "release_performed": false,
+  "static_eligible": true
+}

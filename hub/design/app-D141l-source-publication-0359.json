@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-26T03:58:01.905601+00:00",
+  "worker": "app-U3-D141l-resolution-return-0350",
+  "head": "8f278b91accec5852e39bb84822e99124fccb81d",
+  "tree": "99d79cb47496c0ca682b0cd42aa911177761bb31",
+  "parents": [
+    "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "d822d2f5d2bd05187b4ff5b6071c3e13945d4747"
+  ],
+  "source_author_terminal": true,
+  "independent_review": "app-U3-D141l-independent-review-0358",
+  "independent_verdict": "pending",
+  "publications": [
+    {
+      "name": "app-U3-D141l-resolution-return-0350-conflicts.json",
+      "sha256": "5f186b14641f0768e14e04c94278e8d99138ceef62050856f35e0161310ec7f6",
+      "bytes": 2077
+    },
+    {
+      "name": "app-U3-D141l-resolution-return-0350-findings.json",
+      "sha256": "1648ed47d4f94620a0ae0642fadef35cdbfe462ced1ed4bfa3466c0976d2bbe7",
+      "bytes": 1647
+    },
+    {
+      "name": "app-U3-D141l-resolution-return-0350-handoff.md",
+      "sha256": "06466286fe70b1c923fd420592d4a4b3af1755fb8e326eecd8cd06efa54b7c45",
+      "bytes": 974
+    },
+    {
+      "name": "app-U3-D141l-resolution-return-0350-predicate-map.json",
+      "sha256": "5a7d8d03620e148acd190cd74cd35267092a927227f78ff229f59c79be495810",
+      "bytes": 2243
+    },
+    {
+      "name": "app-U3-D141l-resolution-return-0350-source-manifest.json",
+      "sha256": "23e8643dab61f4999ad6006aa7c5c802476771dee7f43e52feeaa5dae88cfa66",
+      "bytes": 4906
+    },
+    {
+      "name": "app-U3-D141l-resolution-return-0350-validation.md",
+      "sha256": "aaf100baaaec38f95d308b4ffbb9333ea11c4526ec4eacc96f9f7330e42c61a3",
+      "bytes": 3450
+    }
+  ]
+}

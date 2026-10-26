@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-26T04:01:11.364368+00:00",
+  "worker": "app-D141-pristine-receiver-0007",
+  "host_receipt": "app-pin-host-process-use-0358.md",
+  "host_sha256": "ec3caa86645ba70e4f6aa98ea88537edccbd280ab565585bc557546fbdb75b48",
+  "before_available": 4620075008,
+  "fresh_guards": "PASS",
+  "released_source_keep_content": "Current D141 exact frozen pristine comparator and pending Node/environment receipts; retain source until these open rows close.\n",
+  "released_source_keep_sha256": "aefb5e49ef5e9c65ba3d82e65f7375ab75556b6122a0fe4f9fa443fe4e660227",
+  "raw_keep_released": false,
+  "recycle": {
+    "exit": 0,
+    "stdout": "recycled app-D141-pristine-receiver-0007\n",
+    "stderr": ""
+  },
+  "status": "RECYCLED",
+  "after_available": 4777181184,
+  "other_keep_count": 24,
+  "other_keep_hashes_exact": true
+}

@@ -1,0 +1,34 @@
+{
+  "requirements": [
+    {
+      "predicate": "upstream queue and sent-request filtering",
+      "paths": ["src/tools/video-editor/components/AgentChat/AgentChat.tsx", "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx"],
+      "checks": ["displayedQueue", "active foreign request test", "optimistic send test"]
+    },
+    {
+      "predicate": "whole-chat Markdown export",
+      "paths": ["src/shared/components/conversation/conversationExport.ts", "src/shared/components/conversation/conversationExport.test.ts", "src/tools/video-editor/components/AgentChat/AgentChat.tsx"],
+      "checks": ["complete active chat transcript test", "conversation export unit tests", "Download this chat production button"]
+    },
+    {
+      "predicate": "calmer preview controls",
+      "paths": ["src/tools/video-editor/components/PreviewPanel/PreviewTransport.tsx", "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx", "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx", "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.ts"],
+      "checks": ["no loop control", "compact controls", "hover reveal", "volume/speed/fullscreen tests"]
+    },
+    {
+      "predicate": "Tour early gate and mounted chat surface",
+      "paths": ["src/tools/video-editor/components/AgentChat/AgentChat.tsx", "src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx"],
+      "checks": ["chatTranscript anchor", "13 TourChatPanel tests"]
+    },
+    {
+      "predicate": "local voice, runtime door/menu, outbox, semantic/doc.patch/undo/freshness foundation",
+      "paths": ["src/tools/video-editor/components/AgentChat/AgentChat.tsx", "src/tools/video-editor/components/AgentChat/AgentChatComposer.tsx", "src/integrations/runtime", "src/tools/video-editor/commands"],
+      "checks": ["voice input remains in composer", "Stop remains beside Send", "existing Runtime/outbox callers remain present", "both TypeScript projects pass"]
+    },
+    {
+      "predicate": "release-coupled generated manifest",
+      "paths": ["public/install-manifest.json", "runtime.lock.json"],
+      "checks": ["update-manifest write", "vendor-lock check", "installer manifest/update tests"]
+    }
+  ]
+}
