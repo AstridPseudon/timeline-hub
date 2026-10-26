@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T04:30:00Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# agent board, 2026-10-26T04:29Z
+<!-- agent | 2026-10-26T04:34:04Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-26T04:32Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | Luna and Sol | Freeze1 source review0015 | merged | Final2355 and source0015 | Freeze1 source custody PASS; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP; Bun200 PASS. Current REG verdict pending join. | 28e56cacb4 |
@@ -18,11 +18,11 @@
 | D141i cut | Retain one genuine cut measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 terminal | Declared9561:9388 concrete plus173 unnamed PASS;204 FAIL196 ERROR. Clean sources, monitor0. Original custody finding retained. | Frozen28e / 6a |
 | D141k join | Compare cut and pristine per ID | Luna | D141p Sol first; D141q disk | ready | Prepared join0349 | Wait behind Sol below4.6GB. Exact candidates by cluster and env_sensitive_undecidable y/n plus reason required. | Pending |
 | D141 REG author | Fix only a proved regression | Luna; Sol after failure | Actual D141k candidate | gated:D141k-candidates | Reserved agt-F-D141k-REG-fix-next | No speculative author. Dispatch only when actual join identifies finite candidate. | None |
-| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | MAIN D141p D141q D141r | review | Sol0408 done; reviewer0432 prepared | Harness committed both parents at04:26Z. Source checks complete; independent source review waits normal floor. | 5d202569f3 |
+| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | MAIN D141p D141q D141r | review | Sol0408 done; reviewer0432 prepared | Harness committed both parents at04:26Z. Independent source review0432 dispatched under MAIN one reviewer allowance. | 5d202569f3 |
 | D141m media | Preserve both alias metadata behaviors | HARD Sol | MAIN D141r recorded | review | Same Sol0408; independent review next | Existing generationId plus variantId pair only; unmarked aliases use upstream conversion. No new authority input; both assertions retained. | Draft source ready |
-| D141l review | Review complete freeze2 source union | Luna | Normal source floor | ready | Reviewer0432 prepared | Candidate5d202/tree92a3. Whole source and both test families; e1c installer; canonical15; diagnostics and proof triggers. | 5d202569f3 |
+| D141l review | Review complete freeze2 source union | Luna | MAIN04:31 one reviewer allowance | doing | Reviewer0432 queued | Candidate5d202/tree92a3. Whole source and both test families; e1c installer; canonical15; diagnostics and proof triggers. | 5d202569f3 |
 | D141m proof | Compare new source with matching pristine | Luna and service | Reviewed U2 and actual D141k join | gated:D141m-U2 | Sol0408 scope; future proof owner | Author maps213 test files. Sharedconftest touched: full condition true. D89d wrapper qualification owed; no Farm fallback. | Pending |
-| App U4p input | Supply qualified freeze2 producer | Agent source owner | Reviewed normal Agent home | blocked:agent | Sol0408 and later independent reviewer | App8f278 sole finding is Agent installer e1c dependency. Send actual head/tree/ref/parents/receipts to App and lead together. | Pending |
+| App U4p input | Supply qualified freeze2 producer | Agent source owner | Reviewed normal Agent home | blocked:agent | Sol0408 done; reviewer0432 queued | App8f278 sole finding is Agent installer e1c dependency. Send actual head/tree/ref/parents/receipts to App and lead together. | Pending |
 | D139 Farm | Resolve only undecidable candidates | Runtime and Farm | D141k per ID join | gated:D141k-candidates | Runtime GroupA0300 | Zero undecidable env candidates skips child. Original kit pair and67wheel seed remain EXACT MISSING; no hunt or rebuild. | Agent28e / Runtime6a |
 | P4 freeze1 | Retain authentic original three leg GO | Agent and App | Correction0202 and App0254 | merged | Actual10086; receipt0159; App0254 | Actual3 PASS23.668s; XMLafca45 and correctionb7be exact. App final520d path independent. No original receipt retarget. | Frozen four way tuple |
 | P4 freeze2 | Reprove only on changed recorded path | Existing controller | Reviewed new Agent and App tuple | gated:D141l-review | Existing P4 controller reserved | Sol0408 finds changed timelineCLI on recorded path; independent confirmation next. No body now;19479 remains held. | Pending |
@@ -53,17 +53,22 @@ H6 receiving04:18: App8f278/d822 has only qualifiedAgentproducer finding; sameSo
 
 Later receiving: App peer0351/0404 requests exact qualified freeze2 Agent head/tree, normalref/parents/tool inputs and receipts; Sol0408 plus one independent reviewer own simultaneous App and lead handback after normalhome. No guessed futurepin, manual manifest or extra producer author. Historical originalTrue redo, graphchildbirth alias, fork18 ABI1 history, transcript authority and missing word/native records remain UNKNOWN; D23/D14 deferred. D69 cut/Windows/wheel/installedrender unqualified; D123 held; D127 missing leaf no profiling. No new investigation under D141.
 
-Blockers: Agent disk — free4562857984 bytes below4.6GB review floor. Sol ended. Cleanup active; no eligible ended nonKEEP tree.
+Blockers: Agent disk — free4561211392 bytes below4.6GB source floor. Compact recovered2 scratch dirs and1gzip; sweep removed0. No eligible ended nonKEEP tree.
 Blockers: SWAP safety — existing Runtime1537 automatic classifier refusal holds recovery, qualification and rollback; no alternate route.
 
-Next ready: Independent source review0432 then normal merge and simultaneous App/lead receipt. Join0349 on admitted disk. live0 / cap0; ready-undispatched2 disk held. No heavy body.
+Next ready: Independent source review0432 then normal merge and simultaneous App/lead receipt. Join0349 on admitted disk. live1 / cap1; ready-undispatched1 join disk held. No heavy body.
 
 Disk: compact0 completed0 scratchdirs/0testdirs/0logs; sweep3 removed0. Fresh whole worktree static census found no ended clean nonKEEP candidate. Prior0309/0253 KEEP refusals concern already absent worktrees; evidence markers untouched, no retry. DirtyG2, KEEP0816, currentcutpins, d22/f1012, child3e163 and all rawcustody remain protected. No hand deletion, Store operation or hubrepack. Sol5s trace continuously above4GB.
 
-Inbox consumed through2072137 bytes. Manager writes only board, briefs, peer decisions and exact SAFE byte publications. No product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+Inbox consumed through2076472 bytes. Manager writes only board, briefs, peer decisions and exact SAFE byte publications. No product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Current04:22: D141r media decision received and applied, blocker CLEARED. Sourceauthor04:21:41 finalchecks complete incl finalmypy1902 baseline; allpackets/commit-msg ready. Only operational finalizationwait: dispatchedharness already gitaddA/commits afterworkerexit, managersneverstage. [Mechanics clarification](../../design/peer-agent-to-agent-lead-20261026T042319Z-D141m-harness-finalize-now.md). Source traceabove4GB, freshfree4418883584 bytes.
 
 Finalization clarification04:25 delivered to actual workerbrief and matchingmanagerbrief, preserving original text plus timestamped mechanicnote. PostharnessUempty check cannot be satisfied beforeworkerexit; currentmarkerfreechecks complete. Worker mustcreateDONE/finalreport; existingdispatch stages/commits. Lead04:24 has no liveworkerchannel; ifhungpastthreshold, exactPID2348 goesleadbefore anykill. No stop or kill issued.
 
 Current 04:29Z: Harness finalization settled: actual5d202569f3/tree92a3 has both recorded parents; author staging BLOCKED is historical. Reviewer0432 exact brief prepared. Fresh all Agent/App static census has no ended nonKEEP worktree. compact0 and sweep3 active; no safety refusal or new body.
+
+
+Peer boards read: Runtime04:18 and App04:15 retain D130 and D141 stop holds; no completed peer dependency opens another body. Both source waits remain assigned to reviewer0432 and the actual home receipt. No heavy body.
+
+Current04:32: MAIN04:31 extension received and applied: ONE reviewer0432 source-only at4.5GB; dispatch4561MB, continuous4GB stop/5s trace, no body. Prior admission decision blocker CLEARED. Join remains4.6GB and no parallel worker below4.6GB.
