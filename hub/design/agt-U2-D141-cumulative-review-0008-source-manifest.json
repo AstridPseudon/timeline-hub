@@ -1,0 +1,411 @@
+{
+  "schema": "timeline.agent.u2.u4a.d141.cumulative-review.source-manifest.v1",
+  "qualification": "PASS_SOURCE",
+  "candidate": {
+    "commit": "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "parent": [
+      "15ce1a267a3b1541be2562d701e65373217cf0ad"
+    ],
+    "base_candidate": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "base_tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "current_ancestor": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "current_tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "frozen_upstream": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+    "frozen_upstream_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+    "upstream_ancestor_verified": true,
+    "current_ancestor_verified": true
+  },
+  "cumulative_scope": {
+    "allowed_files": [
+      "artifacts.json",
+      "runtime.lock.json"
+    ],
+    "actual_files": [
+      "artifacts.json",
+      "runtime.lock.json"
+    ],
+    "outside_artifacts_lock_blob_mismatches": 0,
+    "outside_artifacts_lock_blob_mismatches_detail": [],
+    "source_exact_vs_base_excluding_generated": true
+  },
+  "prior_merge_conservation_reused_after_outside_gate": {
+    "prior_candidate": {
+      "commit": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+      "tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+      "parents": {
+        "current": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+        "frozen_upstream": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+      },
+      "merge_base": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+    },
+    "prior_source_conservation": {
+      "schema": "timeline.agent.u2.d141.final-review.source-conservation.v1",
+      "merge_tree": {
+        "automatic_tree": "69baf50f92444ce001b217240611c0b27ce26099",
+        "exit": 1,
+        "conflict_paths": [
+          "astrid/chat/service.mjs",
+          "runtime.lock.json"
+        ],
+        "candidate_vs_automatic_nonconflict_mismatches": 0
+      },
+      "parent_delta_conservation": {
+        "upstream_only": {
+          "count": 19,
+          "mismatches": 0,
+          "mapping_sha256": "e30be16338102f6bae4dababe0f53745c9c1ac7223f1f90e6e043e7ca5983b04",
+          "paths": [
+            "astrid/chat/astrid-acp-empty-session-recovery.test.ts",
+            "astrid/core/execution/guards.py",
+            "astrid/core/rendering/storage.py",
+            "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+            "astrid/packs/vibecomfy/actions/run/run.py",
+            "astrid/packs/vibecomfy/invocation_preflight.py",
+            "astrid/packs/vibecomfy/local_server_engine.py",
+            "astrid/packs/vibecomfy/production_engine.py",
+            "docs/development/journeys.md",
+            "docs/development/render-storage.md",
+            "remotion/tests/am-footage-cover.test.cjs",
+            "tests/core/execution/test_generic_host_actions_v3.py",
+            "tests/core/execution/test_render_storage.py",
+            "tests/core/rendering/test_storage.py",
+            "tests/packs/rendering/test_render_registry_editor_metadata.py",
+            "tests/packs/vibecomfy/test_local_server_run.py",
+            "tests/test_installer_runtime_error.py",
+            "tests/test_vibecomfy_invocation_preflight.py",
+            "tests/test_vibecomfy_production_engine.py"
+          ]
+        },
+        "current_only_later_source": {
+          "count": 922,
+          "mismatches": 0,
+          "mapping_sha256": "cacd2460f6681ba3831f5c192cd6a85910838f1a622d3be4e765658a7e7af67e"
+        },
+        "both_parents_changed": 12
+      },
+      "silent_reverts": false,
+      "semantic_conflicts": []
+    },
+    "valid_for_current_candidate": true,
+    "upstream_only_count": 19,
+    "upstream_only_mismatches": 0,
+    "current_only_later_count": 922,
+    "current_only_later_mismatches": 0,
+    "both_parents_changed": 12,
+    "semantic_conflicts": []
+  },
+  "protected_d100a": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "expected_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "actual_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "blob_exact": true,
+      "sha256": "sha256:018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "expected_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "actual_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "blob_exact": true,
+      "sha256": "sha256:fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    }
+  },
+  "runtime_receipt": {
+    "checkout": "/home/user/work/wt/rt-pin-6a011d58",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true,
+    "queue_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "upstream_ancestor": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "producer_manifest": "/home/user/work/wt/rt-pin-6a011d58/contract/artifacts.json",
+    "producer_manifest_committed_bytes_exact": true
+  },
+  "runtime_lock": {
+    "consumer_file_count": 15,
+    "canonical15": [
+      {
+        "consumer": "astrid/core/timeline/schema/timeline-config.schema.json",
+        "from": "contract/schemas/timeline-config.schema.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+        "consumer_sha256_expected": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+        "producer_manifest_sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "astrid_runtime_client/__init__.py",
+        "from": "packages/python/astrid_runtime_client/__init__.py",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+        "consumer_sha256_expected": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+        "producer_manifest_sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "astrid_runtime_client/contract_metadata.py",
+        "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+        "consumer_sha256_expected": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+        "producer_manifest_sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "astrid_runtime_client/generated.py",
+        "from": "packages/python/astrid_runtime_client/generated.py",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+        "consumer_sha256_expected": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+        "producer_manifest_sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "astrid_runtime_client/timeline_commit_types.py",
+        "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+        "consumer_sha256_expected": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+        "producer_manifest_sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/events_page_1_200.json",
+        "from": "conformance/responses/events_page_1_200.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+        "consumer_sha256_expected": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+        "producer_manifest_sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/events_page_2_200.json",
+        "from": "conformance/responses/events_page_2_200.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+        "consumer_sha256_expected": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+        "producer_manifest_sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/invalid_cursor_400.json",
+        "from": "conformance/responses/invalid_cursor_400.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+        "consumer_sha256_expected": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+        "producer_manifest_sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/managed_outputs_200.json",
+        "from": "conformance/responses/managed_outputs_200.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+        "consumer_sha256_expected": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+        "producer_manifest_sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/not_found_404.json",
+        "from": "conformance/responses/not_found_404.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+        "consumer_sha256_expected": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+        "producer_manifest_sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/publish_conflict_409.json",
+        "from": "conformance/responses/commit_conflict_409.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+        "consumer_sha256_expected": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+        "producer_manifest_sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/task_admission_201.json",
+        "from": "conformance/responses/task_admission_201.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+        "consumer_sha256_expected": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+        "producer_manifest_sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/task_read_200.json",
+        "from": "conformance/responses/task_read_200.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+        "consumer_sha256_expected": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+        "producer_manifest_sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/runtime-responses/validation_error_422.json",
+        "from": "conformance/responses/validation_error_422.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+        "consumer_sha256_expected": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+        "producer_manifest_sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      },
+      {
+        "consumer": "tests/fixtures/visual-boundary-v1.json",
+        "from": "conformance/fixtures/visual-boundary-v1.json",
+        "mapping_matches_c585": true,
+        "mapping_matches_base": true,
+        "consumer_sha256_lock": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+        "consumer_sha256_expected": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+        "consumer_bytes_matches_lock": true,
+        "consumer_bytes_matches_c585": true,
+        "consumer_mode": "100644",
+        "c585_mode": "100644",
+        "consumer_mode_matches_c585": true,
+        "producer_sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+        "producer_manifest_sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+        "producer_bytes_matches_lock": true,
+        "producer_manifest_matches_lock": true
+      }
+    ],
+    "all15_mapping_matches_c585": true,
+    "all15_mapping_matches_base": true,
+    "all15_hashes_match_lock": true,
+    "all15_consumer_bytes_match_c585": true,
+    "all15_modes_match_c585": true,
+    "all15_producer_bytes_match": true,
+    "all15_producer_manifest_entries_match": true,
+    "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "producer_identity": "astrid-runtime",
+    "producer_version_matches_manifest": true,
+    "source_commit_matches_producer_head": true
+  },
+  "artifacts": {
+    "generated_entry_changes": [
+      {
+        "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+        "before": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+        "after": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+      }
+    ],
+    "only_approved_am_footage_entry_changed": true,
+    "component_sha256": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+    "component_manifest_sha256": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+    "component_matches_manifest": true,
+    "manifest_version": "sha256:a6de31757f8f9678064a47579ddab839f786699f863494eb2c3f4440318991f3"
+  },
+  "clean_index": true,
+  "diff_check": true,
+  "conflict_markers": false
+}

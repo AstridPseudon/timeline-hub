@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.agent.u2.u4a.d141.cumulative-review.source-conservation.v1",
+  "status": "PASS",
+  "candidate": {
+    "commit": "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+  },
+  "base_candidate": {
+    "commit": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127"
+  },
+  "outside_artifacts_lock": {
+    "compared_path_count": 3586,
+    "mismatches": 0,
+    "all_blobs_identical_to_aa5a91": true
+  },
+  "true_merge_ancestry": {
+    "upstream_8b6ed_ancestor": true,
+    "current_c585_ancestor": true,
+    "protected_d100a_exact": true
+  },
+  "reused_merge_forward_proof": {
+    "prior_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141-final-review-2357/evidence",
+    "prior_status": "source conservation PASS",
+    "upstream_only_count": 19,
+    "upstream_only_mismatches": 0,
+    "current_only_later_count": 922,
+    "current_only_later_mismatches": 0,
+    "both_test_families_preserved": true,
+    "semantic_conflicts": []
+  },
+  "canonical15": {
+    "count": 15,
+    "mappings_exact_c585": true,
+    "hashes_exact_c585": true,
+    "modes_exact_c585": true,
+    "consumer_bytes_match_producer": true,
+    "producer_manifest_matches": true
+  },
+  "cumulative_changes": {
+    "artifacts_json": [
+      {
+        "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+        "before": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+        "after": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+      }
+    ],
+    "runtime_lock_source_commit": {
+      "before": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "after": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d"
+    },
+    "runtime_lock_producer_version": {
+      "before": "sha256:91b02f4abc0554005bf3b5e7df8643b403136867f86227c5aa6b2280930fd683",
+      "after": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+    },
+    "no_manual_pin_or_source_update": true
+  }
+}

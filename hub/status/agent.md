@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T00:18:07Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
+<!-- agent | 2026-10-26T00:21:54Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 3m -->
 # agent board, 2026-10-26T00:04Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -142,7 +142,7 @@ Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/impo
 Blockers: Agent comparator — D141b scope cleared; plain17-root command2358 must receive one independent review and U2 freeze before body. No D73 controls required.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: normal final Runtime provenance0005 and comparator review0003 active; cumulative final source review follows immediately. live3 / cap3; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
+Next ready: normal final Runtime provenance0005 and comparator review0003 active; cumulative final source review follows immediately. live4 / cap6; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -159,3 +159,5 @@ Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime fina
 Pass00:10Z: P4 reservation added per MAIN00:43, future body held for explicit GO and actual App2346 recipe. Existing controller lineage will be continued, no duplicate. Runtime6a011 exact normal receiving and all15 canonicalbytes verified by author0005; final cumulative0008 source/tests active. Comparator firstreturn0008 active after command0003 FAIL; no heavy body.
 
 Pass00:16Z: product composition2357 SOURCE PASS retained; normalgenerated/provenancefixes nowPASS0005. Cumulative0008 Bun200PASS but Pythonstillrunning with failures/errors. Bounded receiving0015 independentlyreviews ONLYtwofilefix/fulloutsidepreservation so sourcefreeze can bind App/Farm while proof continues. No inferred nonREG/shipcredit or test cancellation. Finalcommand0014 active. P4recipe still absent; explicitGO pending.
+
+Pass00:19Z: comparator secondreview0014 FAIL residual custody/earlytrap/witnesswrite/monitorordering. HARD Sol0019 and independent wholepathLuna0019 dispatched immediately in parallel, no body. Freshguardedrecycle of superseded App04be/245/5fcb freed headroom from4947931136 to5573177344 bytes; no refusal,branches/rawKEEP retained. Source0015 and Python0008 remain active; no sourcefreeze before receivingPASS.

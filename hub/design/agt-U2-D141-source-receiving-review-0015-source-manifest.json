@@ -1,0 +1,65 @@
+{
+  "schema": "timeline.agent.u2.u4a.d141.source-manifest.v1",
+  "repo": "agent",
+  "candidate": {
+    "head": "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "merge": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "merge_tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "parents": {
+      "current": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "frozen_upstream": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+    },
+    "current_parent_ancestor": true,
+    "frozen_upstream_ancestor": true,
+    "worktree_clean": true
+  },
+  "cumulative_scope": {
+    "base": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "files": ["artifacts.json", "runtime.lock.json"],
+    "outside_allowed_files": [],
+    "hidden_product_test_schema_fixture_delta": false,
+    "unreviewed_ancestry": false
+  },
+  "source_conservation": {
+    "merge_base": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "upstream_only_paths": 19,
+    "upstream_only_mismatches": 0,
+    "current_only_paths": 922,
+    "current_only_mismatches": 0
+  },
+  "d100a": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "matches_current_parent": true
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "matches_current_parent": true
+    }
+  },
+  "generated": {
+    "chat_path": "astrid/chat/service.mjs",
+    "chat_blob": "f6857b23b065bfe0925ebbeb94cef9d55db9bdf1",
+    "chat_sha256": "821ff6b1c2e96dab49a0f4dfa73a6e0d8f731930438b0cf2ce4ba421ca5ad6da",
+    "chat_author_hash_match": true,
+    "artifact_manifest_approved_change": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx"
+  },
+  "runtime_producer": {
+    "checkout": "/home/user/work/wt/rt-pin-6a011d58",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true,
+    "canonical_file_count": 15,
+    "canonical_mappings_match_c585": true,
+    "canonical_bytes_match_c585": true,
+    "canonical_modes_match_c585": true,
+    "canonical_mappings_match_producer": true,
+    "canonical_bytes_match_producer": true,
+    "canonical_modes_match_producer": true,
+    "producer_manifest_hashes_match": true
+  },
+  "qualification": "PASS_SOURCE_QUALIFICATION_ONLY"
+}

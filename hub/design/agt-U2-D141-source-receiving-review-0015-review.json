@@ -1,0 +1,63 @@
+{
+  "schema": "timeline.agent.u2.u4a.d141.source-receiving-review.v1",
+  "status": "PASS_SOURCE_QUALIFICATION",
+  "qualification": "source_intake_only",
+  "candidate": {
+    "head": "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "reviewed_candidate_merge": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "reviewed_candidate_tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "parents": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+    ],
+    "ancestry_verified": true,
+    "worktree_clean": true
+  },
+  "scope": {
+    "cumulative_files_after_aa5": ["artifacts.json", "runtime.lock.json"],
+    "outside_two_file_delta": [],
+    "product_test_schema_fixture_delta": [],
+    "unreviewed_ancestry": false,
+    "source_conservation": {
+      "upstream_only_paths": 19,
+      "upstream_only_mismatches": 0,
+      "current_only_paths": 922,
+      "current_only_mismatches": 0
+    },
+    "d100a_exact": true,
+    "generated_chat": {
+      "path": "astrid/chat/service.mjs",
+      "sha256": "821ff6b1c2e96dab49a0f4dfa73a6e0d8f731930438b0cf2ce4ba421ca5ad6da",
+      "author_hash_match": true
+    }
+  },
+  "normal_tools": {
+    "artifact_manifest_check": "PASS",
+    "vendor_lock_local_check": "PASS",
+    "vendor_lock_producer_check": "PASS",
+    "json_parse": "PASS",
+    "diff_check": "PASS"
+  },
+  "runtime_producer": {
+    "checkout": "/home/user/work/wt/rt-pin-6a011d58",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true,
+    "canonical_file_count": 15,
+    "canonical_mappings_bytes_modes_match_c585": true,
+    "canonical_mappings_bytes_modes_match_producer": true,
+    "producer_manifest_hashes_match": true
+  },
+  "findings": [],
+  "pending": [
+    "full REG and ship proof remain owed",
+    "Python 0008 completion remains visible and unclassified",
+    "final Farm/App normal-vendor proof must bind the real frozen head",
+    "this result is not behavior PASS, REG0, or ship credit"
+  ],
+  "prior_records": {
+    "initial_2357_failure": "retained and not reclassified",
+    "behavior_or_full_suite_run": false
+  }
+}
