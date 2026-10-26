@@ -364,6 +364,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
 
     return async () => {
       const errors: unknown[] = [];
+      if (localAppChild) writeFileSync(path.join(outputRoot, 'vite-local.log'), `--- stdout\n${localAppChild.stdout}\n--- stderr\n${localAppChild.stderr}\n`, { mode: 0o600 });
       for (const child of [localAppChild, hostChild, runtimeChild]) {
         if (child) await stopOwnedChild(child).catch((error) => errors.push(error));
       }
