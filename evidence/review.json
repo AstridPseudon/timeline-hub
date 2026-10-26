@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.ops.d141h.independent-final-review.v1",
+  "task": "rt-OPS-D141-cancel-final-verify-0418",
+  "verdict": "PASS",
+  "scope": "Finite independent acceptance of the immutable OPS D141h cancellation candidate; source/control review only.",
+  "candidate": {
+    "repo": "composition",
+    "branch": "tl/rt-OPS-D141-cancel-final-verify-0418",
+    "terminal_ref": "tl/rt-OPS-D141-cancel-finalize-sol-0410",
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+    "parent_commit": "f0ef96c415ff299b1456ed71b695000afd2165b9",
+    "parent_tree": "2e12d3f102ee067b24068aa169d840d38ed77fa7"
+  },
+  "author_control": {
+    "command": "TMPDIR=/tmp/w-621ef7b92a/d141h-controls PYTHONDONTWRITEBYTECODE=1 python3 -I privateops-d141-measured-floor/controls/real-controls.py",
+    "result": "PASS",
+    "checks": 49,
+    "coverage": [
+      "all 44 retained purposes",
+      "targeted15 and exact P5 6934 positive admission/terminal paths",
+      "default floors, cache/source/snapshot/lease/one-heavy/4GB stop controls",
+      "direct cancellation, mounted stop-test caller, bounded stopped-sampler reaping",
+      "seven trace custody attacks",
+      "held IDs, invalid receipts, App paired-kit refusal"
+    ],
+    "exit_code": 0
+  },
+  "findings": {
+    "D141H-SEC-001": "PASS: all seven descriptor/inode/parent custody attacks refused boundedly with no redirected write",
+    "D141H-VERIFY-001": "PASS: cancellation finalized and reaped the sampler with trace validation",
+    "D141H-CANCEL-001": "PASS: startup traps/readiness and pending cancellation preserved terminal finalization",
+    "D141H-CANCEL-002": "PASS: actual mounted stop-test caller was exercised in isolation; runner was excluded and sampler reaped",
+    "D141H-CANCEL-REAP-001": "PASS: 80 x 0.1-second sampler probes, KILL fallback, df/validator timeouts",
+    "D141H-CANCEL-EXIT-001": "PASS: frozen-sampler failure was bounded and did not emit the old unset-variable diagnostic"
+  },
+  "limitations": [
+    "No live installation, CAS, service request, product body, queue, full suite, gate, receipt attachment, ZIP, or release qualification.",
+    "The controls use isolated temporary roots and synthetic control bodies only; they do not call --run or edit the live dispatcher tree.",
+    "No DTO or product source was changed."
+  ],
+  "decisions": [
+    "The assigned worker tmpdir was a regular file, so the identical command shape used the private harness-cleaned /tmp/w-621ef7b92a area.",
+    "The manifest's 0be17b preimage was checked against the exact live ORCH/bin/test-run path; the repository parent copy is a separate historical fixture."
+  ]
+}
