@@ -1,0 +1,36 @@
+{
+  "task": "U3/U4p D141 final qualified Agent vendor and installer manifest",
+  "result": "PASS_TOOL_ONLY_ADOPTION",
+  "app_base": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+  "app_tree": "6594cb861575456f3548f868abfa46958dbbf514",
+  "reviewed_app_source": "db8cc7655e5ca81a9c0989a5104645b069571e98",
+  "qualified_agent": {
+    "checkout": "/home/user/work/agent",
+    "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58",
+    "clean": true,
+    "authority": "recorded MAIN01:03Z lead relay, review0015PASS"
+  },
+  "qualified_runtime": {
+    "checkout": "/home/user/work/runtime",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true
+  },
+  "vendor": {
+    "generated_file_count": 160,
+    "private_destination": "/tmp/app-U4p-D141-final-vendor-private",
+    "private_normal_file_sets_equal": true,
+    "private_normal_payload_bytes_equal": true,
+    "provenance_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "provenance_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+  },
+  "manifest": {
+    "agent_sha": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime_sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "allowed_app_paths": ["public/install-manifest.json", "vendor/astrid-browser/provenance.json"],
+  "outside_vendor_manifest_equals_reviewed_db8": true,
+  "full_suite": "NOT_RUN_BY_TASK_SCOPE"
+}

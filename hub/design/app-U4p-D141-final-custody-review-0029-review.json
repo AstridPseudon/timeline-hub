@@ -1,0 +1,82 @@
+{
+  "task": "U4p/U3 D141 final generated metadata/provenance custody review",
+  "verdict": "PASS",
+  "verdict_scope": "FULL FINAL APP SOURCE CUSTODY for the D141 metadata/provenance cut; not a full-suite, gate, REG0, browser, build, ZIP, or MAIN GO claim",
+  "candidate": {
+    "commit": "9ada0d906a2efc5cf98b18b112d2d4e9d0657098",
+    "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "parent": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+    "worktree_clean": true,
+    "frozen_upstream_7ca_ancestor": true
+  },
+  "base": {
+    "commit": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+    "tree": "6594cb861575456f3548f868abfa46958dbbf514",
+    "parents": [
+      "5696769dfca056676cde1ab46d8bc94354b3a44a",
+      "db8cc7655e5ca81a9c0989a5104645b069571e98"
+    ],
+    "reviewed_source": "db8cc7655e5ca81a9c0989a5104645b069571e98"
+  },
+  "allowed_delta": {
+    "paths": [
+      "public/install-manifest.json",
+      "vendor/astrid-browser/provenance.json"
+    ],
+    "outside_paths": [],
+    "manifest_pins_exact": true,
+    "manifest_other_keys_conserved": true
+  },
+  "qualified_inputs": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58",
+      "checkout": "/home/user/work/agent",
+      "head_exact": true,
+      "clean": true,
+      "authority": "recorded lead relay; detailed peer receiving-inputs note was not available in synchronized ORCH/design paths"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "checkout": "/home/user/work/runtime",
+      "head_exact": true,
+      "clean": true,
+      "mapped_lock_files": 14,
+      "canonical_set": 15,
+      "protected_set": 8,
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "source_receipt": "independent rt-U1-D141-final-review-2350 PASS; 119/119 durable receipt reused as directed"
+    }
+  },
+  "vendor_custody": {
+    "provenance_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "provenance_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58",
+    "vendor_file_count": 160,
+    "direct_git_blob_files": 159,
+    "derived_file": "astrid/packs/rendering/elements/public-catalog.ts",
+    "source_hash_mismatches": 0,
+    "verifier": "PASS: 65 closure files, 160 vendor files, 11 declared public imports",
+    "author_tool_reproduction": "PASS: private/default generated file sets and payload bytes equal, per durable author log"
+  },
+  "author_evidence": {
+    "author_worker": "app-U4p-D141-Agent-final-vendor-0022",
+    "source_custody": "PASS",
+    "installer_schema_tests": "6/6 PASS",
+    "runtime_manifest_vendor_tests": "17/17 PASS",
+    "vendor_lock": "PASS",
+    "scoped_lint": "PASS",
+    "detailed_peer_note": "unavailable; disclosed rather than invented"
+  },
+  "reviewer_commands": {
+    "vendor_lock": "PASS",
+    "full_source_verifier": "PASS",
+    "updater_plan_idempotent": "PASS",
+    "direct_git_blob_and_conservation": "PASS"
+  },
+  "safety_disclosure": "A private regeneration rerun was denied by the sandbox with EPERM while the Node generator attempted to spawn git against the read-only Agent checkout. No workaround was used. The author durable generator receipt plus independent provenance/file-set/hash/verifier checks supply the reproducibility evidence.",
+  "not_run": [
+    "full/pristine/P1-P5/browser/socket/child/build/ZIP/body/MAIN GO suites",
+    "unchanged 89-file App behavior suite and Runtime 119-test body reruns"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "verdict": "PASS",
+  "findings": [],
+  "nonblocking_notes": [
+    "Detailed peer receiving-inputs note named by dispatch was not synchronized; exact lead relay and checkout guards supplied authority.",
+    "The supplied worker tmpdir was a regular file; private generator output used a unique /tmp destination.",
+    "No vendor source payload changed, so app/node tsc was not required by the acceptance condition."
+  ],
+  "no_manual_pins_or_hashes": true,
+  "no_producer_or_runtime_lock_changes": true,
+  "no_full_or_browser_claim": true
+}

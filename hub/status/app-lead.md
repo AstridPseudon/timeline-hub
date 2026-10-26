@@ -1,1 +1,1 @@
-app-lead 00:05Z: daemons alive, disk ~5.0G, host audit CLEAR for 3 stopped pins, D141 final App U3 Sol2358 resolving; waiting Agent/Runtime heads + MAIN GO; D130 hold.
+app-lead 00:42Z uptime 3761m: daemons alive, live 0/cap 6, disk 5.2G, wt 10 dirs/3 pins; D141 FINAL FROZEN App head 867cb2737af1 reported to MAIN, all 3 heads supplied, cut reruns held for MAIN GO; D130 hold; no refusals/blocked rows; ~/.codex unchanged.

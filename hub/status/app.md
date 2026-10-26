@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:32:35Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 2m -->
-# app board, 2026-10-26T00:30Z
+<!-- app | 2026-10-26T00:37:27Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 4m -->
+# app board, 2026-10-26T00:33Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Prior final289 and later affected127 plus warmup2, types and lint PASS. Final D141 source and cut proof separate. | d24ed69; 2f36246a32 |
@@ -9,7 +9,7 @@
 | A4 | Retire reachable legacy executor | Luna and independent Luna | Historical P1 GO | merged | Caller census and source reviews | Zero reachable legacy writers; behavioral tests preserved. Historical source scope only. | Current home |
 | U3 D141 | Preserve frozen source join and tour REG | Luna and independent Luna | Independent0017 SOURCEPASS | merged | Source0014; review0017; normal receipt | Home tree equals reviewed db8 exactly. Independent89/types/lint PASS. Frozen7ca ancestor; final generated adoption still separate. | 263b728f0140 |
 | U4p D141 Runtime | Adopt exact frozen Runtime through tools | Luna and independent Luna | Independent0017 PASS | merged | Adopter0011; review0017; normal home | Tool vendor17/schema2/lint PASS; locksource only. Independent canonical15/mapped14/schema custody PASS on exact home tree. | 263b728f0140 |
-| U4p D141 Agent | Qualify final vendor and manifest metadata | Luna and independent Luna | Author0022 completed tools | review | app-U4p-D141-final-custody-review-0029 | Only manifest/provenance changed;160 payloadfiles exact. Author vendor17, installer/schema6, lint/toolPASS. Final review pure checks PASS so far. | 9ada0d906a2e |
+| U4p D141 Agent | Bind accurate final source identities | Luna and independent Luna | Final source custody0029 PASS | doing | app-U4p-D141-identity-correction-0033 | Actual code/provenance correct. Author/reviewer JSON tree39 typo; worker writes corrected immutable receipt, no code or semantic review repeat. | Exact9ada held briefly |
 | D141 notes | Install reviewed SWAP and Element paragraphs | Luna and independent Luna | Runtime existing notes owner | blocked:runtime | Notes2354; reviewer0003 PASS; peer0006 | Exact two paragraphs independently qualified and byte published. Runtime installs; no GO or ZIP claim. | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full2354; reviewer0003 PASS | All exact artifacts and hashes qualified. Prepared only; final tuple and MAIN GO still required. | Evidence only |
 | D141 journeys prep | Prepare P1 P2 six and P3 recipes | Luna and independent Luna | None | merged | Journey2346; reviewer0003 PASS | Exact selectors and D66/D73 routes qualified; source hashes exact. P4/P5 peer0006 sent. No browser proof. | Evidence only |
@@ -35,12 +35,12 @@ Integration: App263b728f014040afc9c6b3fdfb54963b93b757eb/tree6594cb861575456f354
 
 D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required ship proof P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures unchanged, visible and listed. Final source needs one independent product review, notes one review; unchanged reruns need receipts only. Bodies wait allthreeheads and recorded MAIN GO.
 
-Blockers: Final generated custody — Agent28e/tree2ebe full detailedpeer0023 now received and actual source verified. Tool author0022 PASS two metadatafiles, no vendorpayloadchange; independent final0029 active. No source-input wait remains.
+Blockers: Final identity receipt — Finalsource0029 PASS; actualmanifest/provenance fullids correct. Managerfound truncated39char tree in evidenceJSON. Sole read-only0033 corrects derivative fromactualGit beforefinalmerge, no newsourcegate.
 Blockers: Final cut GO — Main owns recorded allthreeheads and GO. App final source2358 active; no full/comparator/journey body before recorded release.
 Blockers: Farm core — Runtime owns complete receiving recipe and Farm owns child/import/preflight/core. Latest Farm23:54 has no body. No App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal1537 still holds recovery and related qualification. Existing Runtime escalation owns disposition; D141 does not authorize a retry.
-Next ready: Final review0029 terminal PASS -> normalmerge/FREEZE and fullApphead to MAIN. All source bodies complete. Exact pristine and journey recipes ready. Full/pristine/journeys still allheads/GO-held; unchanged reruns need receipts only.
-live 1 / cap 6; ready-undispatched 0. Luna0029 final metadata/source custody review active. Candidate9ada; only two metadatafiles changed, all160 vendorpayloads exact. Source inputs qualified. No heavy body or early full/journey before GO.
+Next ready: Identity0033 terminal -> verify actual40char ids, normalmerge0022/FREEZE and fullApphead to MAIN. Source/allfunctionalchecks already PASS. All full/pristine/journeys remain allheads/GO-held; no additional semanticreview.
+live 1 / cap 6; ready-undispatched 0. Luna0033 finite identity correction active; unchanged9ada source already finalindependentPASS0029. All source and tools qualified. No heavy body; all proof bodies held allheads/GO.
 INBOX consumed through 2579378 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
 
 Safety: Manager writes only ORCH boards/briefs/peers and byte-publishes authored SAFE evidence. No manager product/test/generated/pin edits, direct Git writes, upstream push, M5 or credentials. Dirty U3/orphan guards and refused targets untouched. Prior D130 hold absolute.

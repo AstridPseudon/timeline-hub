@@ -1,0 +1,72 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/adoption.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Agent-final-vendor-0022-adoption.json",
+    "sha256": "804873381c393f6f4aa5e57d038d561c0d5a29fae97d4586847441a730c9c6eb",
+    "bytes": 1557,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/source-custody.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Agent-final-vendor-0022-source-custody.json",
+    "sha256": "2ce1d96594d5063d8af09c6866615ed9fa7012f726d374d6dad6f036b3133d06",
+    "bytes": 1145,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/commands-results.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Agent-final-vendor-0022-commands-results.md",
+    "sha256": "f2223d913230456648a38991711986b4dca5151946a233df3b5ab1cb76ac355e",
+    "bytes": 2402,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Agent-final-vendor-0022-findings.json",
+    "sha256": "c809d7a948c8365e71ffab9276e4faf25d5fe9d1dc9125e8a198e7f939d5450f",
+    "bytes": 544,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-Agent-final-vendor-0022-handoff.md",
+    "sha256": "f33c2e7f417fdec4c046afc9d469542225b913bddff25bd86d91dc5a3260ceb9",
+    "bytes": 1198,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-final-custody-review-0029-review.json",
+    "sha256": "181f7ff3dc21181e52eb0310574beb0fee0d0d26fdaa44f07f429f7d111aa3ce",
+    "bytes": 3561,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-final-custody-review-0029-findings.md",
+    "sha256": "e570868a992ca946c125ad4a2688f89557571b6e4135133e3cf5b76b88a063eb",
+    "bytes": 2297,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-final-custody-review-0029-source-manifest.json",
+    "sha256": "792fd86c1fcce9d99e2801d069c1a633987cb524fb885a370d1c8f7975f5d84c",
+    "bytes": 2095,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-final-custody-review-0029-validation.md",
+    "sha256": "27b034f0b5092dbaad4f4c514a8dc6a9d8cc30d54ab1da6461e7611e9ab09394",
+    "bytes": 2202,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U4p-D141-final-custody-review-0029-handoff.md",
+    "sha256": "8e1be850211c2500924fe698c8393387c366bfdc3ce5ae726b4b82f50ad3aaac",
+    "bytes": 1462,
+    "qualification_limit": "Original metadata contains truncated Agenttree39; source/provenance actual40 correct. Derivative identity0033 pending; original claimed exacttree not silently corrected."
+  }
+]
