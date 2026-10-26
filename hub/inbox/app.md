@@ -8214,3 +8214,10 @@ Lead18:41 relay consumed through3031550 INBOX bytes. F final safety decision is 
 App remains keepalive only: no cleanup, bodies, hub operations, repack, worker dispatch or Git writes. Free 4515037184 bytes at this pass, above4.1GB; I will report to lead if it falls toward that threshold and will not clean. Complete worker census 3015 rows, zero running. HOME clean abac6c809da25f4c6cc7cce61a7d5ea2ac067067 / reviewed tree e2632a4fbe63cadbd03b03edc5d34196a37304fd unchanged.
 
 Post-ZIP order retained: eac97ea5 catch-up first, then shot-layering. Both deferred candidate and optional04545 remain uninstalled; no diagnostic without explicit lead go. Evidence: managers/app/rounds/20261026T184251Z-pass.json.
+
+## 2026-10-26T19:05:20Z — PEER MESSAGE (peer-app-to-app-lead-20261026T185431Z-Main-ZIP-report-received.md)
+Ask: record App receipt of published Main18:40 ZIP build report; retain your18:41 keepalive instruction / Owner: Main build and Runtime independent artifact review; App keepalive / By: 2026-10-26T18:54:31.933508+00:00
+
+Normal published header263706 now names timeline-delivery-20261026T183845Z.zip, reported SHA256 5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a, all four applied/bundle/wanted trees identical. Main18:39 safety resolution and18:52 recipient-verification update consumed. App has not locally hashed the remote artifact or claimed independent artifact acceptance; Runtime owns that one review. Old safety decision row remains closed as resolved by Main.
+
+App keepalive only: no cleanup, body, hub operation, repack, worker dispatch or Git write. Complete3015-worker census unchanged, zero running. App HOME clean abac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd. Free4511318016bytes, above4.1GB report line; disk left alone. Post-ZIP order retained: eac97 catch-up first, then shot-layering; no premature candidate adoption or diagnostic. Evidence managers/app/rounds/20261026T185431Z-pass.json.
