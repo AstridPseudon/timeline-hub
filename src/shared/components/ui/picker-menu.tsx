@@ -1,5 +1,5 @@
 import { forwardRef, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithoutRef, type ReactNode } from 'react';
-import { Check, ChevronDown, Download, Pencil, Star, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, FileOutput, Pencil, Star, type LucideIcon } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -230,9 +230,9 @@ export function PickerRow({
             </button>
           )}
           {canExport && (
-            <button type="button" aria-label={exportLabel ?? 'Export timeline'} title={exportLabel ?? 'Export timeline'} className={cn(ROW_BUTTON, REVEAL)}
+            <button type="button" aria-label={exportLabel ?? 'Export timeline'} title="Export as .astrid file" className={cn(ROW_BUTTON, REVEAL)}
               onClick={(event) => { event.preventDefault(); event.stopPropagation(); onExport(); }}>
-              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              <FileOutput className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
         </span>

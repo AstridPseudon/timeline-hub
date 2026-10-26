@@ -109,12 +109,16 @@ function TimelineTransferSaveBridge({ target }: { target: MutableRefObject<(() =
   return null;
 }
 
+// Progress toasts stay until the transfer finishes (duration 0); results use the app's usual lengths.
 function transferToast() {
+  const fail = (message: string, id?: unknown, description?: string) =>
+    toast.error(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 8_000 });
   return {
-    loading: (message: string) => toast.info(message, { duration: 60_000 }),
-    update: (id: unknown, message: string) => { if (typeof id === 'string') toast.info(message, { id, duration: 60_000 }); },
-    success: (message: string, id?: unknown) => toast.success(message, { ...(typeof id === 'string' ? { id } : {}), duration: 5_000 }),
-    error: (message: string, id?: unknown) => toast.error(message, { ...(typeof id === 'string' ? { id } : {}), duration: 5_000 }),
+    loading: (message: string) => toast(message, { duration: 0 }),
+    update: (id: unknown, message: string) => { if (typeof id === 'string') toast(message, { id, duration: 0 }); },
+    success: (message: string, id?: unknown, description?: string) => toast.success(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 5_000 }),
+    warning: (message: string, id?: unknown, description?: string) => toast.warning(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 0 }),
+    error: fail,
   };
 }
 
@@ -788,16 +792,22 @@ export default function VideoEditorPage() {
     },
     onImportTimeline: (file: File) => {
       if (!projectId || tourHeader?.disabled) return;
-      const transferToasts = transferToast();
+      const startedOn = { ...timelineSelectionRef.current };
       void importTimelineArchive(file, projectId, {
-        toast: transferToasts,
-      }).then(async (receipt) => {
-        const importedId = typeof receipt.timeline_id === "string" ? receipt.timeline_id : null;
-        await runtimeDiscovery.timelinesQuery.refetch();
-        if (importedId) setSearchParams((current) => {
-          if (current.get("project") !== projectId) return current;
-          const next = new URLSearchParams(current); next.set("timeline", importedId); return next;
-        });
+        toast: transferToast(),
+        existingNames: (runtimeDiscovery.timelinesQuery.data ?? []).filter((t) => !t.is_shot).flatMap((t) => (t.name ? [t.name] : [])),
+        // Open the imported timeline only if the user is still where they started
+        // and the same save guard as a manual switch allows it.
+        onImported: async (importedId) => {
+          try { await runtimeDiscovery.timelinesQuery.refetch(); } catch { return false; }
+          const current = timelineSelectionRef.current;
+          if (current.projectId !== startedOn.projectId || current.timelineId !== startedOn.timelineId || !confirmRemountRef.current()) return false;
+          setSearchParams((search) => {
+            if (search.get("project") !== projectId) return search;
+            const next = new URLSearchParams(search); next.set("timeline", importedId); return next;
+          });
+          return true;
+        },
       }).catch(() => undefined);
     },
     onCreateTimeline: timelines?.some(t => !t.is_shot) ? handleCreateAdditionalTimeline : handleCreateFirstTimeline,

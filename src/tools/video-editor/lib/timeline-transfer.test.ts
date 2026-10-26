@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { classifyPairedRoute } from '../../../../config/vite/pairedRoutePolicy.ts';
 import { readStoredZip, writeStoredZip } from './timeline-transfer-zip.ts';
-import { exportTimelineArchive, importTimelineArchive } from './timeline-transfer.ts';
+import { exportTimelineArchive, importTimelineArchive, uniqueTimelineName } from './timeline-transfer.ts';
 
 const mediaSha = 'b'.repeat(64);
 const artifactDigest = 'sha256:' + 'a'.repeat(64);
@@ -151,7 +151,7 @@ describe('timeline transfer workflows', () => {
         ? new Response(mediaBytes)
         : new Response(JSON.stringify(plan), { status: 200 });
     }) as typeof fetch;
-    await exportTimelineArchive({ projectId: 'p', timelineId: 't', timelineName: 'Timeline', flushPendingSave: async () => { order.push('flush'); } }, { client: client as never, fetchImpl, toast: { loading: () => 'x', update: () => undefined, success: () => undefined, error: (message) => errors.push(message) } });
+    await exportTimelineArchive({ projectId: 'p', timelineId: 't', timelineName: 'Timeline', flushPendingSave: async () => { order.push('flush'); } }, { client: client as never, fetchImpl, toast: { loading: () => 'x', update: () => undefined, success: () => undefined, warning: () => undefined, error: (message, _id, description) => errors.push(`${message}: ${description}`) } });
     expect(order).toEqual(['picker', 'flush', 'admit']);
     expect(errors).toEqual([]);
     expect(writes.length).toBeGreaterThan(0);
@@ -186,9 +186,9 @@ describe('timeline transfer workflows', () => {
       ? new Response(mediaBody)
       : new Response(JSON.stringify(plan))) as typeof fetch;
     await exportTimelineArchive({ projectId: 'p', timelineId: 't', timelineName: 'T', flushPendingSave: async () => undefined }, {
-      client: client as never, fetchImpl, toast: { loading: () => 'toast', update: () => undefined, success: () => undefined, error: (message) => errors.push(message) },
+      client: client as never, fetchImpl, toast: { loading: () => 'toast', update: () => undefined, success: () => undefined, warning: () => undefined, error: (message, _id, description) => errors.push(`${message}: ${description}`) },
     });
-    expect(errors).toContain('disk full');
+    expect(errors).toContain("Couldn't export T: disk full");
     expect(cancelled).toBe(true);
     expect(pulls).toBeLessThanOrEqual(3);
   });
@@ -210,8 +210,8 @@ describe('timeline transfer workflows', () => {
       ingestProjectObject: vi.fn(), getProjectObjectLocation: vi.fn(), importProjectMedia: vi.fn(), importTimeline: vi.fn(),
     };
     const errors: string[] = [];
-    await exportTimelineArchive({ projectId: 'p', timelineId: 't', timelineName: 'Large', flushPendingSave: async () => undefined }, { client: largeClient as never, fetchImpl: actionFetch(largePlan), toast: { loading: () => 'x', update: () => undefined, success: () => undefined, error: (message) => errors.push(message) } });
-    expect(errors.join(' ')).toContain('Use Chrome');
+    await exportTimelineArchive({ projectId: 'p', timelineId: 't', timelineName: 'Large', flushPendingSave: async () => undefined }, { client: largeClient as never, fetchImpl: actionFetch(largePlan), toast: { loading: () => 'x', update: () => undefined, success: () => undefined, warning: () => undefined, error: (message, _id, description) => errors.push(`${message}: ${description}`) } });
+    expect(errors.join(' ')).toContain('Use Chrome, or run: astrid timelines export');
   });
 
   it('preflights before uploads, sends expected digests, and commits the prepared artifact', async () => {
@@ -242,6 +242,32 @@ describe('timeline transfer workflows', () => {
     commitKeys.forEach((key) => expect(key).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/));
     expect(imported.timeline_id).toBe('new-timeline');
     expect((client.ingestProjectObject as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
+  });
+
+  it('numbers a taken timeline name like "Timeline N"', () => {
+    expect(uniqueTimelineName('Cut', ['Other'])).toBe('Cut');
+    expect(uniqueTimelineName('Cut', ['cut'])).toBe('Cut 2');
+    expect(uniqueTimelineName('Cut', ['Cut', 'Cut 2'])).toBe('Cut 3');
+  });
+
+  it('names a duplicate import and, when the user moved away, says where to open it', async () => {
+    const { client, admissions, uploads } = fakeClient();
+    const fetchImpl = actionFetch({ format: 'astrid.timeline/1', elements: [] });
+    let actionIndex = 0;
+    fetchImpl.mockImplementation(async () => {
+      actionIndex += 1;
+      const body = JSON.stringify(actionIndex === 1 ? { check_only: true, name: 'Imported Cut', missing_effects: [], different_effects: [] } : preparedJson());
+      return new Response(body, { status: 200, headers: { 'Content-Length': String(new TextEncoder().encode(body).length) } });
+    });
+    const results: string[] = [];
+    const onImported = vi.fn(async () => false);
+    await importTimelineArchive(new File([await archiveBlob()], 'Cut.astrid'), 'target-project', {
+      client: client as never, fetchImpl, xhrFactory: xhrFactory(uploads), existingNames: ['Cut'], onImported,
+      toast: { loading: () => 'toast', update: () => undefined, success: (m, _id, d) => results.push(`success ${m} ${d ?? ''}`), warning: (m, _id, d) => results.push(`warning ${m} ${d ?? ''}`), error: () => undefined },
+    });
+    expect((admissions[1]!.spec as { inputs: Record<string, unknown> }).inputs.name).toBe('Cut 2');
+    expect(onImported).toHaveBeenCalledWith('new-timeline');
+    expect(results.join('\n')).toContain('Open it from the Timeline menu.');
   });
 
   it('stops on a failed manifest preflight before media upload', async () => {

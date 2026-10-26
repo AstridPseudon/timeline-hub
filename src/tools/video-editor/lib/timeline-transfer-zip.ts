@@ -339,12 +339,12 @@ function assertSafeEntryName(name: string): void {
 
 async function readDirectory(file: Blob): Promise<{ records: CentralRecord[]; directoryOffset: number; directorySize: number }> {
   if (!Number.isSafeInteger(file.size)) throw new Error("ZIP file size exceeds the supported safe integer range");
-  if (file.size < 22) throw new Error("Not a ZIP archive");
+  if (file.size < 22) throw new Error("This file isn't an Astrid timeline, or it's damaged.");
   const tailLength = Math.min(file.size, 22 + U16_MAX);
   const tailStart = file.size - tailLength;
   const tail = await readRange(file, tailStart, tailLength, "ZIP end records");
   const eocdAt = findSignature(tail, 0x06054b50, tail.length - 22, Math.max(0, tail.length - 22 - U16_MAX));
-  if (eocdAt < 0) throw new Error("ZIP end record was not found");
+  if (eocdAt < 0) throw new Error("This file isn't an Astrid timeline, or it's damaged.");
   const eocd = new DataView(tail.buffer, tail.byteOffset + eocdAt, tail.length - eocdAt);
   const commentLength = get16(eocd, 20);
   if (eocdAt + 22 + commentLength !== tail.length) throw new Error("Malformed ZIP end comment bounds");

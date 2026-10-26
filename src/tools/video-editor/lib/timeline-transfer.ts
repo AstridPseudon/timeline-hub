@@ -16,8 +16,18 @@ type TaskClient = Pick<AstridRuntimeClient,
   | 'listProjectObjects' | 'importTimeline'> & Partial<Pick<AstridRuntimeClient, 'listCapabilities'>>;
 
 export type TransferProgress = { phase: string; loaded: number; total: number };
-export type TransferToast = { loading(message: string): unknown; update(id: unknown, message: string): void; success(message: string, id?: unknown): void; error(message: string, id?: unknown): void };
-type TransferOptions = { client?: TaskClient; fetchImpl?: typeof fetch; xhrFactory?: () => XMLHttpRequest; onProgress?: (progress: TransferProgress) => void; toast?: TransferToast };
+export type TransferToast = { loading(message: string): unknown; update(id: unknown, message: string): void; success(message: string, id?: unknown, description?: string): void; warning(message: string, id?: unknown, description?: string): void; error(message: string, id?: unknown, description?: string): void };
+type TransferOptions = { client?: TaskClient; fetchImpl?: typeof fetch; xhrFactory?: () => XMLHttpRequest; onProgress?: (progress: TransferProgress) => void; toast?: TransferToast; existingNames?: readonly string[]; onImported?: (timelineId: string) => Promise<boolean> };
+
+/** "Name" if free, else "Name 2", "Name 3", … (same numbering as "Timeline N"). */
+export function uniqueTimelineName(name: string, existing: readonly string[]): string {
+  const taken = new Set(existing.map((item) => item.trim().toLowerCase()));
+  if (!taken.has(name.trim().toLowerCase())) return name;
+  for (let n = 2; ; n += 1) {
+    const candidate = `${name} ${n}`;
+    if (!taken.has(candidate.toLowerCase())) return candidate;
+  }
+}
 
 function randomKey(prefix: string): string {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -211,7 +221,7 @@ export async function exportTimelineArchive(input: { projectId: string; timeline
     const pickerApi = !!handle;
     const zipOverhead = entries.reduce((sum, entry) => sum + 160 + encoder.encode(entry.name).byteLength, 98);
     if (!pickerApi && total + Math.max(1024 * 1024, Math.ceil(total * 0.03), zipOverhead) > MAX_FALLBACK_ARCHIVE) {
-      throw new Error('This archive is too large for this browser. Use Chrome with the save dialog, or run `astrid timelines export`.');
+      throw new Error('This timeline is too large to export in this browser. Use Chrome, or run: astrid timelines export');
     }
     const sources = entries.map((entry) => ({
       name: entry.name,
@@ -220,7 +230,7 @@ export async function exportTimelineArchive(input: { projectId: string; timeline
     }));
     const progress: StoredZipProgress = (p) => {
       options.onProgress?.({ phase: p.entry, loaded: p.totalBytes, total: p.totalSize });
-      options.toast?.update(toastId, `Exporting ${p.entry}: ${Math.round(p.totalBytes / Math.max(1, p.totalSize) * 100)}%`);
+      options.toast?.update(toastId, `Exporting ${input.timelineName}… ${Math.round(p.totalBytes / Math.max(1, p.totalSize) * 100)}%`);
     };
     if (handle) {
       const writable = await handle.createWritable();
@@ -233,7 +243,7 @@ export async function exportTimelineArchive(input: { projectId: string; timeline
     }
     options.toast?.success(`Exported ${input.timelineName}`, toastId);
   } catch (error) {
-    if ((error as { name?: string }).name !== 'AbortError') options.toast?.error(error instanceof Error ? error.message : String(error), toastId);
+    if ((error as { name?: string }).name !== 'AbortError') options.toast?.error(`Couldn't export ${input.timelineName}`, toastId, error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -431,7 +441,11 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     const entries = await readStoredZip(file);
     const manifest = await jsonEntry(entries, 'manifest.json');
-    if (manifest.format !== 'astrid.timeline/1') throw new Error('This timeline was made with a newer Astrid format. Update Astrid to open it.');
+    if (manifest.format !== 'astrid.timeline/1') {
+      const version = /^astrid\.timeline\/(\d+)$/.exec(String(manifest.format))?.[1];
+      if (version && Number(version) > 1) throw new Error('This timeline was made with a newer Astrid format. Update Astrid to open it.');
+      throw new Error("This file isn't an Astrid timeline, or it's damaged.");
+    }
     const { media, transcriptNames } = validateArchiveEntries(entries, manifest);
     const manifestEntry = entries.find((item) => item.name === 'manifest.json')!;
     const timelineEntry = entries.find((item) => item.name === 'timeline.json')!;
@@ -464,7 +478,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const check = await getActionJson(client, projectId, 'rendering.timeline_prepare_import', checkInputs, 'result', fetchImpl, options.client !== undefined);
     const missingEffects = effectNames(Array.isArray(check.value.missing_effects) ? check.value.missing_effects : []);
     const differentEffects = effectNames(Array.isArray(check.value.different_effects) ? check.value.different_effects : []);
-    options.toast?.update(toastId, 'Checking existing media…');
+    options.toast?.update(toastId, 'Checking media…');
     const managedDigests = new Set<string>();
     let objectsCursor: string | undefined;
     do {
@@ -476,7 +490,8 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     } while (objectsCursor);
     let missing: Array<{ digest: string; size: number; filename: string; mediaType: string; blob: Blob }> = [];
     let totalUpload = 0;
-    for (const item of media) {
+    for (const [index, item] of media.entries()) {
+      options.toast?.update(toastId, `Checking media ${index + 1} of ${media.length}…`);
       const digest = mediaDigest(item.sha256);
       const size = item.size as number;
       const entry = entries.find((candidate) => candidate.name === `media/${digest.slice(7)}`);
@@ -493,7 +508,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
       await xhrUpload(projectId, item.digest, item.filename, item.mediaType, item.blob, options, uploadedBytes, totalUpload, toastId);
       uploadedBytes += item.size;
     }
-    const actionInputs: Record<string, unknown> = { project: projectId, name: manifest.name ?? file.name.replace(/\.astrid$/i, '') };
+    const actionInputs: Record<string, unknown> = { project: projectId, name: uniqueTimelineName(String(manifest.name ?? file.name.replace(/\.astrid$/i, '')), options.existingNames ?? []) };
     if (manifestBytes.byteLength <= INLINE_MANIFEST_LIMIT) actionInputs.manifest = JSON.parse(manifestText);
     else {
       const manifestObject = await uploadJson(client, projectId, new Blob([manifestBytes], { type: 'application/json' }), 'manifest.json');
@@ -515,17 +530,23 @@ export async function importTimelineArchive(file: File, projectId: string, optio
       receipt = await client.importTimeline(projectId, { prepared_object_id: preparedObject }, randomKey('timeline-import'));
     }
     const timelineId = typeof receipt.timeline_id === 'string' ? receipt.timeline_id : undefined;
-    const missingLabel = missingEffects.length ? ` Update Astrid to get ${missingEffects.join(', ')}.` : '';
-    const differentLabel = differentEffects.length ? ` Using this machine’s versions of ${differentEffects.join(', ')}.` : '';
+    const mediaNames = new Map(media.map((item) => [String(item.sha256 ?? '').toLowerCase(), String(item.original_name ?? '')]));
+    const mediaLabel = (id: unknown) => mediaNames.get(String(id ?? '').replace(/^sha256:/, '').toLowerCase()) || 'a media file';
     const conflicts = Array.isArray(receipt.transcript_conflicts) ? receipt.transcript_conflicts as Array<Record<string, unknown>> : [];
-    const conflictLabel = conflicts.length
-      ? ` Transcript conflict${conflicts.length === 1 ? '' : 's'}: ${conflicts.map((conflict) => `${String(conflict.media_id ?? 'unknown media')} / ${String(conflict.source_id ?? 'unknown source')} kept the project version`).join('; ')}.`
-      : '';
-    options.toast?.success(`Imported ${String(receipt.name ?? manifest.name ?? 'timeline')}${missingLabel}${differentLabel}${conflictLabel}`, toastId);
+    const details = [
+      ...missingEffects.map((effect) => `${effect} isn't installed here.`),
+      ...(differentEffects.length ? [`Using this machine’s versions of ${differentEffects.join(', ')}.`] : []),
+      ...conflicts.map((conflict) => `Transcript conflict for ${mediaLabel(conflict.media_id)}: kept the project version.`),
+    ];
+    const title = `Imported ${String(receipt.name ?? manifest.name ?? 'timeline')}`;
+    const opened = timelineId && options.onImported ? await options.onImported(timelineId).catch(() => false) : true;
+    const note = opened ? [] : ['Open it from the Timeline menu.'];
+    if (details.length) options.toast?.warning(title, toastId, [...details, ...note].join(' '));
+    else options.toast?.success(title, toastId, note.join(' ') || undefined);
     return { ...receipt, uploaded_media_count: missing.length, uploaded_media_bytes: uploadedBytes, ...(timelineId ? { timeline_id: timelineId } : {}) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    options.toast?.error(message, toastId);
+    options.toast?.error(`Couldn't import ${file.name}`, toastId, message);
     throw error;
   }
 }
