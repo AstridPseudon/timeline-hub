@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "full": {
+    "same_kind": true,
+    "route": "request-test -> dispatcher/test-run",
+    "suite": "full",
+    "command": "npm test -- --maxWorkers=3",
+    "request_settings": {"nocache": true, "files": "", "maxWorkers": 3, "config": "config/testing/vitest.config.ts"},
+    "vitest": "v4.1.5",
+    "dependency_kind_same": true,
+    "dependency_closure_identical": false,
+    "selection": "same full app route/config; source inventories differ; chained Node NOTRUN in both",
+    "current": "8638 FAIL: 19745 passed, 32 failed, 4 failed files, separate collection error",
+    "pristine": "17524 FAIL: 17866 passed, 18 failed, 3 failed files"
+  },
+  "standalone_node": {
+    "same_kind": true,
+    "suite": "full-d141-node-phase",
+    "command": "npm run test:node",
+    "node_version": "v22.22.0",
+    "script_bytes": {"current": 1709, "pristine": 1666},
+    "selection_identical": false,
+    "selection_note": "The scripts differ by source; compare only exact failures with identical blobs/callsites.",
+    "exact_failures": [
+      {"file": "scripts/quality/capture-extension-external-evidence.test.mjs", "callsite": 133, "blob": "56150e5b4c3421e01b971e6a80631dcc60390804", "error": "spawnSync ssh-keygen ENOENT"},
+      {"file": "scripts/quality/check-extension-ship-evidence.test.mjs", "callsite": 70, "blob": "ad87267276e738afed37e076832bc3674c78e379", "error": "spawnSync ssh-keygen ENOENT"}
+    ],
+    "classification": "NONREG_PROVED_SAME_ENVIRONMENT_KIND"
+  },
+  "bounded_result": {
+    "current_exact_upstream_failure_ids": 0,
+    "current_n_a_or_own": 32,
+    "pristine_ids_preserved": 18,
+    "bounded_no_regression_for_current_failure_set": true,
+    "global_REG0_or_GO": false,
+    "remaining_undecidable_candidates": []
+  }
+}

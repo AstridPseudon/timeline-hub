@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "current_raw": {
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "parents": [
+      "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "fdea805191f466fa67dc0f2ea118da31bf86028f"
+    ],
+    "raw_not_retargeted": true
+  },
+  "current_final": {
+    "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "reviewed_candidate": "4937203f545a77fa3ca7597493e009c84eebeffa",
+    "candidate_parents": [
+      "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "fc24f84994dc36cfae9349112782ab4d91dbc73b"
+    ],
+    "candidate_delta_paths": 21,
+    "delta_equals_upstream": true,
+    "outside_sensitive_paths_equal_base": true
+  },
+  "pristine": {
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25"
+  },
+  "source_blobs": {
+    "current_package": "70a005c2c3a4f1c59373ef1c4a404de4b225c37c",
+    "pristine_package": "5bdc5b0aaab190884feea72120b3d9d12ab926f4",
+    "current_test_node_script_bytes": 1709,
+    "pristine_test_node_script_bytes": 1666,
+    "current_test_node_script_sha256": "74e219373befd25b92f85eb21e84d685c4bf767b0ab969a1e464097766d5363a",
+    "pristine_test_node_script_sha256": "cfe43a224171922de49fe96c4b7647554c63263a090477137430ad4596099455",
+    "node_failure_blobs": [
+      "56150e5b4c3421e01b971e6a80631dcc60390804",
+      "ad87267276e738afed37e076832bc3674c78e379"
+    ],
+    "current_useTimelineSave": "5ec79a429784e2492882965f3ca360c8d54869b3",
+    "pristine_useTimelineSave": "691c67745b750f06571e40530acd9005f2cc0b3b",
+    "collection_error_blob": "f4d3b68d0ae01ee2fdecbc3bb4c88ba9526cc2ca"
+  },
+  "raw_hashes": {
+    "current_full": ["493f0eac73dd31fd2ac0a49e9fd009c54a4bedd335d93e946d3ed8a371a30ec9", "922e01ddd09c4f1f2c1a623f477b6d32749fcb45736514b8340b6d03c6ea60a5", "47c65edf369198e6a094dbac95ddc21fc431fca694a971b1f8343fa7d3c7334e", "50c49dcc58d59e30bd02c349a5cc18b2c977e8f72bfc24d58c873384143f5f77", "9b6338962ff0d2ca76ddb84f5d9644547efe8675ed340b4dfdcaeceef703fdc0", "dbe17516eec37decf3d6f9b1e40470053ad654e285bda978b5607953693d9823"],
+    "current_node": ["a4b7491f3e153a8541c877d8f6954a4211f793e3efc6b7a5cdd9f84b59133877","8a3aa9c0e7eb14c080bae37ba2d8000919cb15ae5b826cb26980402235e031b2","cb2f6cbae49d74547da72370f9bea03128cb0cac7faff0c5d20edc92c2f251b1","ad43b74b1536b557a4b943fb8a8e3183707c86ff521fbb44ba589970dd8ffa4e","b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b","bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8"],
+    "pristine_full": ["26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321", "fd854582a7994be1e5238560c938b824ea55d064cf85d95d68c9bb957cf078ab", "d363b2833e4ebcf39d6c18b620db088205a887cac8a71143a2748bda1ed4514c", "ed73e69244ec4345c6fd2197297cc88990e25333c05efe006502b820e151a80b", "719e51c288ed38d204dc1662934485ab7d2cdd914f7d48cb40ddd5c66d6d3a3d", "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc"],
+    "pristine_node": ["7f0e9942b561dc5db0d41df2f5e2ceceb74fab22f1729c79921856073973279d", "e683b9f9353d1db70d1d1c598205efe3e08cff10eeb0ef878b6cf9947fead7d8", "f0557a00138a0b1cdbec2bd227b62678cef8c2af76a0acd84aa1bae42e2ec203", "86e0f277c2397a713337fdc327d442bfb795da63d31ec3ab00ac47f34513e6a0", "6224f257c2072eab6e15a470570ec706ec42c7025c829c46c782ca326c9bebb2", "d0616b60bcbf6e622f812fabd765d5c4d3d0e3c208165adff7e19959d5500172"],
+    "hash_order": ["request", "snap", "summary", "log.txt", "trace", "receipt"]
+  },
+  "contract_audit": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections": ["request", "doc.patch", "conflicts", "replies", "undo", "meta", "history"],
+    "wire_change": false,
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args", "created"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "merge_values": ["fields", "atomic"],
+    "reply_groups": {
+      "accepted_merged": ["data", "receipt", "canonical_document", "document_digest", "provider_version", "compiler_version", "normalized_commands", "id_map", "base", "previous", "accepted_revision", "accepted_publication", "rebased_onto", "merge_mode", "steps", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "publisher", "annotations"],
+      "conflict": ["reason", "head"],
+      "invalid": ["code", "path", "hint", "suggested_command"],
+      "preview": ["would_status", "null_receipt"]
+    }
+  }
+}
