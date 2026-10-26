@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "task": "app-D141-packets-final-review-0003",
+  "decision": "PASS_PER_PACKET_WITH_GATES",
+  "base_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "base_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+  "scope": "independent read-only review; no source execution or repository edits",
+  "packets": [
+    {
+      "id": "app-D141-known-gap-notes-return-2354",
+      "verdict": "PASS_DELIVERY_ONLY",
+      "findings": [
+        {
+          "id": "D141-KG-1",
+          "status": "pass",
+          "finding": "All six required absolute artifacts are present: known-gaps.md, recipe.json, source-manifest.json, validation.md, findings.json, and handoff.md."
+        },
+        {
+          "id": "D141-KG-2",
+          "status": "pass",
+          "finding": "All seven source-manifest paths exist and their SHA-256 values and byte counts match. The repaired S3 facts file exists and is the exact source for the 3250 SWAP claim."
+        },
+        {
+          "id": "D141-KG-3",
+          "status": "pass",
+          "finding": "The two paragraphs stay within D141 known-gap scope: SWAP is NO-GO with public 409/history_unavailable and an unqualified D130 classifier refusal; Element 32016/15200 are unchanged five-second applied-status failures with Runtime HTTP-200 boundary and App/provider/caller outcomes UNKNOWN. No cause, fix, ETA, GO, full-P2, ship, core, or ZIP claim is made."
+        },
+        {
+          "id": "D141-KG-4",
+          "status": "pass",
+          "finding": "Runtime source supports the precise SWAP public result: timeline_commit_baseline.py raises reason history_unavailable; timeline_commit_store.reject and timeline_commit_port.refused default to HTTP 409; service.py preserves the history diagnostic boundary."
+        }
+      ],
+      "gate": "Manager may publish the safe originals; existing Runtime final-notes owner installs them. Installation and GO remain outside this packet."
+    },
+    {
+      "id": "app-D141-full-pristine-return-2354",
+      "verdict": "PASS_READY_BUT_GATED",
+      "findings": [
+        {
+          "id": "D141-FP-1",
+          "status": "pass",
+          "finding": "All five absolute artifacts are present and valid JSON artifacts parse with jq. The return branch tree is exactly the base tree with no base-relative repository paths."
+        },
+        {
+          "id": "D141-FP-2",
+          "status": "pass",
+          "finding": "The existing App full registration is suites.conf:69, npm test -- --maxWorkers=3. request-test accepts only integration:<repo> or an existing worker metadata target; the packet does not claim request-test integration:app is a pristine receiver."
+        },
+        {
+          "id": "D141-FP-3",
+          "status": "pass",
+          "finding": "Frozen comparator commit 7ca61bb3280beca21d98a854af266a382f7ce5df resolves to tree 974de7cd08900872eeb0bd6f6004d44323e01fab. Base and frozen package.json, package-lock.json, and runtime.lock.json SHA-256 values match the manifest via Git blobs."
+        },
+        {
+          "id": "D141-FP-4",
+          "status": "pass",
+          "finding": "Actual supported Node tooling is available: /opt/node20/bin/node v20.20.0 and npm 10.8.2; the D66 pinned toolchain path also exists at Node v20.19.4. Private result, snapshot, temp, npm/Vite/Vitest, Playwright-output, and browser-install paths are specified."
+        },
+        {
+          "id": "D141-FP-5",
+          "status": "hold",
+          "finding": "Final U3 App head, all cut heads, recorded MAIN GO, D141 normal receipt, and pristine receipt remain pending. The live /home/user/banodoco/reigh-app checkout is clean but is not the frozen comparator pin; no route is treated as executable until guards and Farm/Main admission exist."
+        },
+        {
+          "id": "D141-FP-6",
+          "status": "note",
+          "finding": "The three prior worker package/lock source paths in source-manifest.json are absent now; their claimed bytes are independently verified from the base Git blobs, so this is not treated as a hash failure or execution receipt."
+        }
+      ],
+      "gate": "Do not dispatch normal or pristine bodies until final U3/all-head tuple and MAIN GO are recorded."
+    },
+    {
+      "id": "app-D141-journey-prep-2346",
+      "verdict": "PASS_PREPARED_NOT_DISPATCHABLE",
+      "findings": [
+        {
+          "id": "D141-J-1",
+          "status": "pass",
+          "finding": "D66 source contains exact existing p1 and p3 selectors plus exactly the six included P2 originals: p2-automatic-child-placement, p2-popup-add, p2-parent-move, p2-transition-none-single, p2-transition-none-bulk, and p2-register-asset."
+        },
+        {
+          "id": "D141-J-2",
+          "status": "pass",
+          "finding": "All journey source SHA-256 values match the current App base. Original grep predicates, history/reload/guarded-inverse/zero-legacy semantics, and C0 v2 request/reply guard lists are preserved."
+        },
+        {
+          "id": "D141-J-3",
+          "status": "pass",
+          "finding": "SWAP and Element are explicit morning-cut exclusions, not skipped predicates; the packet does not claim broad P2 qualification. D66/D73 uses existing named rows, pure preflight first, then normal only after preflight PASS, through request-test/wait-test."
+        },
+        {
+          "id": "D141-J-4",
+          "status": "pass_with_hold",
+          "finding": "The recipe records fresh >=5,000,000,000-byte admission, 4,000,000,000-byte stop, and one heavy body through the central service/browser lock. Preserve D89c's authoritative once-at-controller-dispatch/no-retrigger semantics at dispatch; the packet has no execution credit."
+        },
+        {
+          "id": "D141-J-5",
+          "status": "hold",
+          "finding": "Final App/Agent/Runtime/Composition heads, clean receipts, MAIN GO, service-generated D141 rows, and any required AST hashes are explicitly absent/pending; historical tuples and rows are correctly marked evidence-only and cannot be substituted."
+        },
+        {
+          "id": "D141-J-6",
+          "status": "pass",
+          "finding": "P4 is handed to Agent, P5 to Runtime, and App retains journey verdict ownership without adding duplicate controllers."
+        }
+      ],
+      "gate": "No body or proof credit until all four final heads/trees and MAIN GO are recorded."
+    }
+  ],
+  "production_contract_guard": {
+    "request": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands[schema_version,op,version,select,args,created]",
+      "label", "steps[id,label,intent,tags,command_ordinals,patch,optional reads]",
+      "merge fields|atomic", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
+    ],
+    "replies": [
+      "accepted", "merged data+receipt", "canonical", "digest", "normalized commands", "id map",
+      "base", "previous", "accepted", "landing", "rebased_onto", "merge_mode", "records", "bindings",
+      "effects", "dependencies", "history", "undo_steps", "conflict reason/head",
+      "invalid code/path/hint/suggested command", "preview would_status/null receipt"
+    ],
+    "production_caller_changed": false,
+    "contract_behavior_changed": false
+  },
+  "execution": {
+    "tests": "not_run",
+    "imports": "not_run",
+    "source_execution": "not_run",
+    "browser_live_socket_full_pristine": "not_run",
+    "reason": "D141 brief limits this worker to read-only packet qualification."
+  }
+}

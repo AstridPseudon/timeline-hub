@@ -1,0 +1,99 @@
+{
+  "schema_version": 2,
+  "task": "D141",
+  "packet": "app-D141-full-pristine-return-2354",
+  "sources": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "claim": "settled lane scope and no product changes for this evidence-only return"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-cut-tuple.md",
+      "sha256": "612c12a391af576cb57e7c329acbd69dd3ff402241c9ddcde47a4f12def46996",
+      "claim": "frozen App upstream commit/tree; final integration heads pending"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-morning-cut.md",
+      "sha256": "9291c9a81b102dc93a10181f6bca83c47f90b5b8a7cc307630e154d32c143c82",
+      "claim": "D141 admission and cut policy"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "sha256": "c3fb9a7a24a8e3ae755dc1d5ab0709b8cf152d32c7093e735f8364bb0989900b",
+      "claim": "line 69 registers app full as npm test -- --maxWorkers=3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+      "claim": "only worker metadata and integration:<repo> receiving routes"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+      "claim": "snapshot, D66, result paths and heavy-suite admission rules"
+    },
+    {
+      "path": "/home/user/work/wt/app-D141-full-pristine-return-2354/package.json",
+      "sha256": "0f66d33d1fdbcf4ff2fe4c3bde81e6d5125831971d3fe492798116bc0f3b5d77",
+      "claim": "base App package scripts and Node/npm contract"
+    },
+    {
+      "path": "/home/user/work/wt/app-D141-full-pristine-return-2354/package-lock.json",
+      "sha256": "59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba",
+      "claim": "base App dependency lock"
+    },
+    {
+      "path": "/home/user/work/wt/app-D141-full-pristine-return-2354/runtime.lock.json",
+      "sha256": "cb6c9b01d5c06cecf4257dece098bf477da9c11b5967a8b0c7e9e00783b57cee",
+      "claim": "base App runtime lock"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-prep-evidence-review-2350/evidence/review.json",
+      "claim": "independent FAIL_PER_PACKET findings and preserved useful facts"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-prep-evidence-review-2350/evidence/validation.md",
+      "claim": "prior read-only validation; no execution"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-final-merge-2353/evidence/source-manifest.json",
+      "claim": "final U3 route attempted frozen merge but final head remained pending"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-final-merge-2353/evidence/conflicts.json",
+      "claim": "six unresolved paths and linked-worktree metadata permission failure"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-final-merge-2353/report.md",
+      "claim": "no resolution or product change; tests not run"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/briefs/app-D141-full-pristine-return-2354.md",
+      "claim": "return instructions and C0 production contract boundary"
+    }
+  ],
+  "observed_hashes": {
+    "base_head": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "base_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "frozen_upstream_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "frozen_upstream_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "frozen_package_json": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "frozen_package_lock": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+    "frozen_runtime_lock": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6",
+    "base_package_json": "0f66d33d1fdbcf4ff2fe4c3bde81e6d5125831971d3fe492798116bc0f3b5d77",
+    "base_package_lock": "59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba",
+    "base_runtime_lock": "cb6c9b01d5c06cecf4257dece098bf477da9c11b5967a8b0c7e9e00783b57cee"
+  },
+  "unverified_or_pending": [
+    "final U3 integration App head",
+    "recorded MAIN GO",
+    "normal full receipt",
+    "pristine comparator receipt",
+    "Vitest and test:node counts for D141",
+    "private cache/output bindings at actual dispatch"
+  ],
+  "repo_outside_conservation": {
+    "required": "git diff from base must have zero paths after deleting the two stray evidence files",
+    "result": "verified in validation.md"
+  }
+}

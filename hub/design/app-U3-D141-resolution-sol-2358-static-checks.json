@@ -1,0 +1,35 @@
+[
+  {
+    "name": "manifest-plan",
+    "argv": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "scripts/installer/update-manifest.mjs",
+      "--runtime-checkout",
+      "/home/user/work/runtime",
+      "--agent-checkout",
+      "/home/user/work/agent",
+      "--plan"
+    ],
+    "exit_code": 1,
+    "output": "manifest update refused: Runtime checkout HEAD 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d does not match App runtime.lock.json source_commit ab1e4f6141987706132916e2da16477f5a019464\n"
+  },
+  {
+    "name": "vendor-verifier",
+    "argv": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "scripts/build/verify-astrid-vendor-sources.mjs"
+    ],
+    "exit_code": 1,
+    "output": "Verified 65 pinned Astrid source files.\nfile:///home/user/work/wt/app-U3-D141-resolution-sol-2358/scripts/build/verify-astrid-vendor-sources.mjs:59\n  if (actual !== expected) throw new Error(`vendor/astrid-browser hash mismatch for ${relative}: ${actual}`);\n                                 ^\n\nError: vendor/astrid-browser hash mismatch for astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx: bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec\n    at file:///home/user/work/wt/app-U3-D141-resolution-sol-2358/scripts/build/verify-astrid-vendor-sources.mjs:59:34\n\nNode.js v20.19.4\n"
+  },
+  {
+    "name": "diff-check",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "output": ""
+  }
+]

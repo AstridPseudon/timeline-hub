@@ -1,0 +1,50 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-source-manifest.json",
+    "sha256": "45cc7f3bd6586d96815b49ba759976f0ed187ee9713ea3b4a95f9185b259fa4d",
+    "bytes": 10500
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-findings.json",
+    "sha256": "6fddfb4675e591855b96202cb48ce748f92d21e1b2294d2da430568f0c6a0a37",
+    "bytes": 4144
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/predicate-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-predicate-map.json",
+    "sha256": "32a1478997d97d1c52d7e4ef8280b7e7a84933a5c140928d32b2702d64f04e1e",
+    "bytes": 245224
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-validation.md",
+    "sha256": "475a3ecfac90920b14683981e14bdb72fb32f0a90e373158351cb47ca602ee7c",
+    "bytes": 6484
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-handoff.md",
+    "sha256": "ad9628e8b9a4a6e431f007f2aeb8851dcd6b8bcf04e7a4576c41f224770da0cd",
+    "bytes": 2192
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/checks.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-checks.json",
+    "sha256": "3cac8c6ccea57dc2f252d31306ace0ff6fd289cdeeb3c0580115deb53cc1b59a",
+    "bytes": 4645
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/static-checks.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-static-checks.json",
+    "sha256": "266a56db9bff315d1b774ee721cd40a788e8d0a39a40eec8f9ec560c252494b1",
+    "bytes": 1606
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-resolution-sol-2358/evidence/affected-tests.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-resolution-sol-2358-affected-tests.json",
+    "sha256": "22a38fd17000379d531161f48b1542c88b62fd9f89af2b65c0080b181cfa8929",
+    "bytes": 1066
+  }
+]

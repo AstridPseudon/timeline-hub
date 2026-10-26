@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task": "app-D141-known-gap-notes-return-2354",
+  "decision": "PASS_REPAIR_DELIVERY_ONLY",
+  "base_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "base_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+  "findings": [
+    {
+      "id": "D141-N1",
+      "status": "resolved",
+      "summary": "All required notes-packet artifacts are present at the absolute output root.",
+      "artifacts": [
+        "known-gaps.md",
+        "recipe.json",
+        "source-manifest.json",
+        "validation.md",
+        "findings.json",
+        "handoff.md"
+      ]
+    },
+    {
+      "id": "D141-N2",
+      "status": "resolved",
+      "summary": "The claim package uses seven existing source files with recomputed SHA-256 hashes and an explicit paragraph-to-citation map.",
+      "correction": "The actual app-D127-full-P2-3250-terminal-1421-facts.json is cited with its recomputed hash and absolute path."
+    }
+  ],
+  "scope": {
+    "repo_change": "none relative to base after deleting the two stray evidence files",
+    "production": "unchanged",
+    "tests": "unchanged",
+    "pins_schema_generated_config_kit": "unchanged",
+    "delivery_templates": "not edited",
+    "runtime_final_notes_owner": "installation remains owner work"
+  },
+  "owner_boundary": "D141 approves documented known gaps only; this packet does not authorize GO, full P2, ship, core, or ZIP-built claims.",
+  "private_payloads_exported": false
+}

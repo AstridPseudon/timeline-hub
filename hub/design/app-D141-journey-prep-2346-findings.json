@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "findings": [
+    {
+      "id": "D141-F1",
+      "severity": "blocking",
+      "finding": "The available control material does not contain the D141 final four-way commit/tree tuple or recorded MAIN GO.",
+      "impact": "No body can be dispatched or credited.",
+      "action": "Wait for the immutable cut record; fill the null final pins only from that record."
+    },
+    {
+      "id": "D141-F2",
+      "severity": "ready-with-gate",
+      "finding": "Existing D66 selectors support P1, P3, and the six requested P2 gestures without a new harness.",
+      "impact": "A bounded recipe can be handed to the central service after the hard gate clears.",
+      "action": "Use the named selectors and exact original grep predicates in recipe.json."
+    },
+    {
+      "id": "D141-F3",
+      "severity": "scope",
+      "finding": "P2 SWAP and Element are explicit owner-morning-cut exclusions.",
+      "impact": "The packet cannot claim broad P2 qualification or weaken predicates for the six included routes.",
+      "action": "Keep the exclusions out of the D141 body and retain their known gaps."
+    },
+    {
+      "id": "D141-F4",
+      "severity": "missing-input",
+      "finding": "AST hashes were not recorded in the retained qualified evidence for P1, the six P2 selectors, or P3.",
+      "impact": "If the D141 cut requires AST hashes, admission remains incomplete.",
+      "action": "Obtain them from the cut record or existing provenance; do not compute them by collecting or changing sources."
+    },
+    {
+      "id": "D141-F5",
+      "severity": "handoff",
+      "finding": "P4 and P5 remain Agent/Runtime-owned lanes.",
+      "impact": "App must not add duplicate P4/P5 controllers.",
+      "action": "Hand off the final tuple, MAIN GO, and normal-route pointers only."
+    }
+  ],
+  "decision_log": [
+    "Historical qualified tuples are retained as evidence pointers, not reused as final pins.",
+    "The existing individual D66 selector routes are used; no generic harness or fixture rewrite is introduced.",
+    "No execution was requested because D141 explicitly stops before all three heads are final and MAIN GO is recorded."
+  ]
+}

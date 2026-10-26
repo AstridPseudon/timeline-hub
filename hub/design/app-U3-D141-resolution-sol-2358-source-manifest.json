@@ -1,0 +1,241 @@
+{
+  "task": "U3/D141",
+  "worker": "app-U3-D141-resolution-sol-2358",
+  "status": "BLOCKED_NOT_QUALIFIED",
+  "timestamp_utc": "2026-10-26T00:05:41.319875+00:00",
+  "worktree": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+  "head": "4572bccbedc20b6f39bc486a86d3c088dc32cc69",
+  "parents": [
+    "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "7ca61bb3280beca21d98a854af266a382f7ce5df"
+  ],
+  "frozen_upstream": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "ancestry_checks": {
+    "5696769dfca056676cde1ab46d8bc94354b3a44a": true,
+    "7ca61bb3280beca21d98a854af266a382f7ce5df": true
+  },
+  "git_operations": "read-only only; no merge helper, commit, checkout, fetch, reset, rebase or Git metadata writes",
+  "changed_paths": [
+    "public/install-manifest.json",
+    "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+    "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+    "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "outside_conflict_paths_changed": [],
+  "files": [
+    {
+      "path": "public/install-manifest.json",
+      "sha256": "65797edb57e9a03b91ac6bb39f021b8b67601a68bc33148e7433476dd47d2617",
+      "git_blob": "828dc69abc2e486103adcbe22257808e82096027"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx",
+      "sha256": "50d80962315f98225433bc37bf649b9683f71c0856e09b98cdda48379f99941b",
+      "git_blob": "ac75688c9a8e68daecfec56daf4aa45de93343a6"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "sha256": "6d1e62f3ff501d0a4892dc7a15c18823756b47bc776006b4f80c4b1cdbb8d9e9",
+      "git_blob": "590b8b2d50e24dedcd11f22a70ec6cad830de78b"
+    },
+    {
+      "path": "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+      "sha256": "dd96ec0a0b2bfd39fdb84edc2de65fa23dc37698358d9c21439d7fe00c4f183d",
+      "git_blob": "7966ab2330da0a16f3f2544978a6c4276098bbe6"
+    },
+    {
+      "path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts",
+      "sha256": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
+      "git_blob": "c04f7d160dfd2b2d19cf12e087fcef1bcd2d7313"
+    },
+    {
+      "path": "vendor/astrid-browser/provenance.json",
+      "sha256": "db55e727b462eb5fed1418dcd4a96a254c3e6f6ead01a7684317a989f8751c1a",
+      "git_blob": "aae36a7dd5f5a16417b4d830c2939dcde310b50a"
+    }
+  ],
+  "unmodified_wip_paths": "Every tracked path outside the five listed changed files is byte-identical to WIP4572, including all tests and the 42-path automatic upstream merge.",
+  "observed_producer_heads": {
+    "agent": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "81999820a81432c06ef7aefc4519dc84e71f56f7"
+    ],
+    "runtime": [
+      "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "ac5b862744bece65b2e30565db1777bacd60da28"
+    ]
+  },
+  "producer_qualification": "Observed heads are not assumed to be qualified final inputs; local D141 cut tuple still records pending producers.",
+  "runtime_lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "vendor_historical_source": {
+    "commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+    "tree": "c13d368666e710bb911ff448b86251b516867c03",
+    "generator_reproduced_bytes": true,
+    "file_count": 160,
+    "merged_vendor_mismatches": [
+      {
+        "path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+        "expected_historical_sha256": "6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+        "actual_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+      },
+      {
+        "path": "vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts",
+        "expected_historical_sha256": "fc53e754326cd9fc9bc3e5233026fbc70ac6a4c5fd81a9d0b2c857665f13c661",
+        "actual_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92"
+      }
+    ]
+  },
+  "node": {
+    "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "version": "v20.19.4"
+  },
+  "disk_admission": {
+    "required_free_bytes": 5000000000,
+    "stop_free_bytes": 4000000000,
+    "checks": [
+      {
+        "name": "targeted",
+        "argv": [
+          "npm",
+          "run",
+          "test:app",
+          "--",
+          "--no-cache",
+          "--configLoader=runner",
+          "--maxWorkers=1",
+          "src/shared/components/PaneControlTab.test.tsx",
+          "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+          "src/shared/state/editorTourStore.test.ts",
+          "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+          "src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.test.ts",
+          "src/tools/video-editor/components/TimelineEditorShellCore.test.tsx",
+          "src/tools/video-editor/hooks/useKeyboardShortcuts.test.tsx",
+          "src/tools/video-editor/runtime/commandRegistry.test.ts",
+          "src/tools/video-editor/tour/runner/cardPlacement.test.ts",
+          "src/tools/video-editor/tour/runner/editorTourTargets.test.ts",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx"
+        ],
+        "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "cwd": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+        "free_bytes_before": 4976873472,
+        "heavy_statuses": [],
+        "status": "NOT RUN",
+        "reason": "fresh admission requires >=5000000000 bytes and no heavy suite",
+        "free_bytes_after": 4976873472
+      },
+      {
+        "name": "lint",
+        "argv": [
+          "node",
+          "node_modules/eslint/bin/eslint.js",
+          "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+          "src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx",
+          "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+          "--report-unused-disable-directives",
+          "--max-warnings",
+          "0"
+        ],
+        "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "cwd": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+        "free_bytes_before": 4976869376,
+        "heavy_statuses": [],
+        "status": "NOT RUN",
+        "reason": "fresh admission requires >=5000000000 bytes and no heavy suite",
+        "free_bytes_after": 4976869376
+      },
+      {
+        "name": "tsc-app",
+        "argv": [
+          "flock",
+          "-w",
+          "600",
+          "/home/user/work/.app-tsc.lock",
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.app.json",
+          "--pretty",
+          "false"
+        ],
+        "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "cwd": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+        "free_bytes_before": 4976869376,
+        "heavy_statuses": [],
+        "status": "NOT RUN",
+        "reason": "fresh admission requires >=5000000000 bytes and no heavy suite",
+        "free_bytes_after": 4976869376
+      },
+      {
+        "name": "tsc-node",
+        "argv": [
+          "flock",
+          "-w",
+          "600",
+          "/home/user/work/.app-tsc.lock",
+          "node",
+          "node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "-p",
+          "tsconfig.node.json",
+          "--pretty",
+          "false"
+        ],
+        "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "cwd": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+        "free_bytes_before": 4976869376,
+        "heavy_statuses": [],
+        "status": "NOT RUN",
+        "reason": "fresh admission requires >=5000000000 bytes and no heavy suite",
+        "free_bytes_after": 4976869376
+      },
+      {
+        "name": "installer-tests",
+        "argv": [
+          "node",
+          "--import",
+          "tsx",
+          "--test",
+          "--test-concurrency=1",
+          "--test-reporter=spec",
+          "--test-reporter-destination=stdout",
+          "--test-reporter=./scripts/quality/node-skip-guard-reporter.mjs",
+          "--test-reporter-destination=stdout",
+          "scripts/installer/manifest.test.mjs",
+          "scripts/installer/update-manifest.test.mjs"
+        ],
+        "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "cwd": "/home/user/work/wt/app-U3-D141-resolution-sol-2358",
+        "free_bytes_before": 4976869376,
+        "heavy_statuses": [],
+        "status": "NOT RUN",
+        "reason": "fresh admission requires >=5000000000 bytes and no heavy suite",
+        "free_bytes_after": 4976869376
+      }
+    ],
+    "latest_free_bytes": 5309628416
+  },
+  "predicates": {
+    "affected_files": 15,
+    "test_declarations_static": 428,
+    "assertion_statements_static": 1495,
+    "tests_executed": 0,
+    "current_parent_assertions_not_exactly_present_in_wip": 11,
+    "upstream_assertions_not_exactly_present_in_wip": 11,
+    "upstream_test_titles_not_exactly_present_in_wip": {
+      "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": [
+        "does not auto-create when unengaged (pane unlocked, no markEngaged)",
+        "opens the new-chat menu on the chat's agent models from \"Change model for new chats\"",
+        "reports the header overlay open while the chat menu, the model line or the new-chat picker is open",
+        "starts a new chat with the open chat's agent from the + button",
+        "starts the default agent from + with no model, so the service repeats its remembered model"
+      ]
+    }
+  },
+  "full_suite_browser_zip_build_child_runs": false
+}

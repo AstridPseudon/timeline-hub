@@ -1,0 +1,71 @@
+{
+  "status": "BLOCKED_NOT_QUALIFIED",
+  "findings": [
+    {
+      "id": "D141-PRODUCER-MANIFEST",
+      "severity": "blocking",
+      "owner": "Runtime/Agent final cut producers; App integration manager",
+      "field": [
+        "public/install-manifest.json:agent.sha",
+        "public/install-manifest.json:runtime.sha",
+        "public/install-manifest.json:runtime.schema_digest",
+        "runtime.lock.json:source_commit"
+      ],
+      "evidence": "manifest-plan.log",
+      "details": "Updater rejects observed Runtime HEAD 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d versus existing lock ab1e4f6141987706132916e2da16477f5a019464. No final qualified Agent head received. Exact default tool failure retained; no source lock/client expansion made without qualified input."
+    },
+    {
+      "id": "D141-PRODUCER-VENDOR",
+      "severity": "blocking",
+      "owner": "Agent final cut source owner; App integration manager",
+      "field": [
+        "vendor/astrid-browser/provenance.json:astrid_commit",
+        "vendor/astrid-browser/provenance.json:astrid_tree",
+        "vendor/astrid-browser/provenance.json:files"
+      ],
+      "details": "Historical producer provenance is reproducible, but does not qualify the automatically merged vendor bytes. Need final Agent source commit containing the preserved vendor union, then existing refresh-vendor tool.",
+      "mismatches": [
+        {
+          "path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+          "expected_historical_sha256": "6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+          "actual_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+        },
+        {
+          "path": "vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts",
+          "expected_historical_sha256": "fc53e754326cd9fc9bc3e5233026fbc70ac6a4c5fd81a9d0b2c857665f13c661",
+          "actual_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92"
+        }
+      ]
+    },
+    {
+      "id": "D141-DISK-VALIDATION",
+      "severity": "blocking",
+      "owner": "manager/test admission",
+      "details": "Own checks did not start because fresh disk free bytes were below 5000000000. Normal targeted service has the same light floor; no knowingly inadmissible request submitted. Full/browser/build/ZIP/child not run.",
+      "first_free_bytes": 4976873472,
+      "command_records": "checks.json"
+    },
+    {
+      "id": "D141-PREDICATE-REVIEW",
+      "severity": "unqualified_preexisting_difference",
+      "owner": "independent product/protected reviewer; App manager",
+      "details": "No worker test edits; all parent test paths retained in WIP. Static exact-token assertion census finds 11 current-parent and 11 upstream assertion statements absent in WIP, including five upstream AgentChat test titles. This predates this resolution. Some current-parent differences correspond to upstream responsive-layout changes; no behavioral equivalence or REG status claimed without execution/review. Outside-conflict WIP source was preserved exactly as instructed.",
+      "missing_upstream_titles": {
+        "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": [
+          "does not auto-create when unengaged (pane unlocked, no markEngaged)",
+          "opens the new-chat menu on the chat's agent models from \"Change model for new chats\"",
+          "reports the header overlay open while the chat menu, the model line or the new-chat picker is open",
+          "starts a new chat with the open chat's agent from the + button",
+          "starts the default agent from + with no model, so the service repeats its remembered model"
+        ]
+      },
+      "evidence": "predicate-map.json"
+    },
+    {
+      "id": "D141-FINAL-REVIEW",
+      "severity": "pending",
+      "owner": "manager independent product/protected review and normal merge queue",
+      "details": "Independent review, final harness commit ancestry check, manager normal merge, freeze, full cut proofs and MAIN GO remain pending. No pass or final cut tuple claimed."
+    }
+  ]
+}

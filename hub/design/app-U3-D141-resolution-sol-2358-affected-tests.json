@@ -1,0 +1,17 @@
+[
+  "src/shared/components/PaneControlTab.test.tsx",
+  "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx",
+  "src/shared/state/editorTourStore.test.ts",
+  "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+  "src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx",
+  "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx",
+  "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.test.ts",
+  "src/tools/video-editor/components/TimelineEditorShellCore.test.tsx",
+  "src/tools/video-editor/hooks/useKeyboardShortcuts.test.tsx",
+  "src/tools/video-editor/runtime/commandRegistry.test.ts",
+  "src/tools/video-editor/tour/runner/cardPlacement.test.ts",
+  "src/tools/video-editor/tour/runner/editorTourTargets.test.ts",
+  "src/tools/video-editor/components/PreviewPanel/RemotionPreview.test.tsx",
+  "src/tools/video-editor/components/PreviewPanel/RemotionPreview.mailbox.test.tsx",
+  "src/tools/video-editor/components/PreviewPanel/RemotionPreview.audioFailure.test.tsx"
+]

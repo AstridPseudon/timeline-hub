@@ -1,0 +1,5 @@
+# D141 documented known gaps
+
+**SWAP.** The independent D125 terminal packet `3250` is overall **NO-GO**: five original tails passed, two failed, and one was serially not run; the SWAP predicate expected accepted HTTP 200 but received the public `history_unavailable` result. The separate D130-held SWAP/WAL worker `1537` ended in an automatic classifier refusal, not a product assertion failure, and no retry or alternate qualification was attempted. SWAP is therefore a documented known gap; future proof is owed.
+
+**Element.** Independent actual requests `32016` and `15200` both failed unchanged at the five-second `applied` status predicate. Their Runtime-bound lifecycles completed internally with HTTP 200 (32016: 21.740631 s handler / 13.780929 s provider; 15200: 19.557721 s handler / 12.290285 s provider), while App/provider/caller/browser outcomes remain **UNKNOWN**. The D112 waiter path is conditionally reachable, but its occurrence, duration, and causal attribution are unproved; no cause, fix, profile, or ETA is claimed. Element is therefore a documented known gap; future proof is owed.

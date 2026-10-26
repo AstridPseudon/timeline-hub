@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "decision": "READY_BUT_GATED",
+  "findings": [
+    {
+      "id": "D141-P1",
+      "status": "repaired",
+      "detail": "Complete absolute handoff packet is present; no execution is claimed."
+    },
+    {
+      "id": "D141-P2",
+      "status": "ready_but_gated",
+      "detail": "Existing app full route and worker metadata route are concrete; final U3 head and MAIN GO remain pending."
+    },
+    {
+      "id": "D141-P3",
+      "status": "ready_but_gated",
+      "detail": "Frozen comparator commit/tree, source guards, Node20 argv, private path bindings, and per-ID reconciliation are concrete; no prior pristine receipt or outcome is claimed."
+    }
+  ],
+  "repo_conservation": {
+    "base_commit": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "base_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "after_repair_diff_paths": [],
+    "product_test_pin_schema_generated_config_changes": false
+  },
+  "execution": {
+    "normal_full": "not_run",
+    "pristine": "not_run",
+    "reason": "Explicit D141 gate and task scope."
+  },
+  "blocked_inputs": [
+    "final U3 worker clean qualified head",
+    "recorded MAIN GO",
+    "Farm/Main admission and actual private path bindings"
+  ],
+  "historical_counts_are_not_d141_results": true
+}

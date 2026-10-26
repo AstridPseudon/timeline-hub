@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "repo": "app",
+  "worktree": "/home/user/work/wt/app-D141-journey-prep-2346",
+  "base": {
+    "commit": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "status": "clean_at_inspection"
+  },
+  "control_inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+      "use": "settled plan; no execution or source changes authorized"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "sha256": "c3fb9a7a24a8e3ae755dc1d5ab0709b8cf152d32c7093e735f8364bb0989900b",
+      "use": "existing central request-test suite allow-list"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+      "use": "existing request-test route; not invoked"
+    }
+  ],
+  "app_sources": [
+    {"path": "scripts/testing/d66-plain-stack.mjs", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f"},
+    {"path": "scripts/testing/d66-plain-stack.test.mjs", "sha256": "78e73d8716d47ef5a4a02da2bef0dd92dc6be642e5c9348bbea9fade80ab654d"},
+    {"path": "tests/e2e/local/three-products.p1-chain.spec.ts", "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17"},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"},
+    {"path": "tests/e2e/local/three-products.p2-tour.spec.ts", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4"},
+    {"path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"},
+    {"path": "tests/e2e/local/three-products.spec.ts", "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b"},
+    {"path": "tests/e2e/local/three-products.mounted-readiness.spec.ts", "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"}
+  ],
+  "frozen_r4_reference_refs": [
+    {"repo": "agent", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk", "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610", "role": "historical reference only"},
+    {"repo": "runtime", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime", "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b", "role": "historical reference only"},
+    {"repo": "app", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified", "commit": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178d", "role": "historical reference only"},
+    {"repo": "composition", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition", "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864", "role": "historical reference only"}
+  ],
+  "final_tuple_status": "missing_from_available_d141_control_docs",
+  "prohibited_inference": "The frozen refs, current App base, and historically qualified tuples are not the final D141 tuple and must not be substituted for it."
+}

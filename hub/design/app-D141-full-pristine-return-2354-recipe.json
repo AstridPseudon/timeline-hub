@@ -1,0 +1,222 @@
+{
+  "schema_version": 2,
+  "task": "D141",
+  "packet": "app-D141-full-pristine-return-2354",
+  "status": "READY_BUT_GATED",
+  "execution": {
+    "normal_full": "not_run",
+    "pristine_comparator": "not_run",
+    "proof_credit": false,
+    "reason": "D141 requires all cut heads and recorded MAIN GO before dispatch; final U3 App head and MAIN GO are pending."
+  },
+  "source_scope": {
+    "base_app_commit": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "base_app_tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "repo_change_after_repair": "none",
+    "product_or_test_changes": false
+  },
+  "cut_gate": {
+    "tuple_document": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-cut-tuple.md",
+    "tuple_document_sha256": "612c12a391af576cb57e7c329acbd69dd3ff402241c9ddcde47a4f12def46996",
+    "frozen_app_commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "frozen_app_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "final_app_head": null,
+    "main_go": "pending",
+    "all_cut_heads": "pending",
+    "admission": "do_not_dispatch_until_final_app_head_and_MAIN_GO_are_recorded"
+  },
+  "normal_full_route": {
+    "registration": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:69",
+    "suite": "app full",
+    "registered_argv": [
+      "npm",
+      "test",
+      "--",
+      "--maxWorkers=3"
+    ],
+    "ordinary_request_checkout": "/home/user/work/app",
+    "ordinary_request_argv": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "integration:app",
+      "full"
+    ],
+    "worker_receipt_meta_route": {
+      "target": "final U3 worker metadata target, once its clean qualified head is recorded",
+      "argv_template": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+        "<final-u3-worker-name>",
+        "full"
+      ],
+      "metadata_requirements": [
+        "repo=app",
+        "worktree=<ordinary worker checkout>",
+        "clean qualified head",
+        "recorded source and tree"
+      ]
+    },
+    "wait_argv_template": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+      "<returned-result-id>"
+    ],
+    "receiving_route_constraint": "Use only request-test's existing integration:<repo> or worker metadata route; create no new request rows or framework."
+  },
+  "normal_full_environment": {
+    "node_path": "/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+    "node_requirement": ">=20.19.0",
+    "npm_version_requirement": "10.8.2",
+    "private_paths_required_at_dispatch": {
+      "result_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>",
+      "snapshot": "/home/user/work/wt/.test-<result-id>",
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/log.txt",
+      "summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/summary",
+      "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/status",
+      "exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/exit",
+      "d66_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/d66",
+      "tmpdir": "/tmp/app-d141-<result-id>",
+      "npm_cache": "/tmp/app-d141-<result-id>/npm-cache",
+      "xdg_cache": "/tmp/app-d141-<result-id>/xdg-cache",
+      "vite_cache": "/tmp/app-d141-<result-id>/vite-cache",
+      "vitest_cache": "/tmp/app-d141-<result-id>/vitest-cache",
+      "playwright_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<result-id>/playwright-output",
+      "playwright_browsers": "/opt/pw-browsers"
+    },
+    "wrapper_observation": "The registered test-run wrapper binds D66_OUTPUT_DIR to the durable d66 path and the snapshot/result paths above. Farm/Main must bind the remaining private cache/temp/browser-output paths in its existing receiving environment; do not mutate shared node_modules, browser installs, or caches."
+  },
+  "pristine_comparator": {
+    "suite_family": "app full",
+    "checkout": "/home/user/banodoco/reigh-app",
+    "guarded_source": {
+      "commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "clean": "git status --porcelain must be empty"
+    },
+    "argv_template": [
+      "cd",
+      "/home/user/banodoco/reigh-app",
+      "&&",
+      "test",
+      "$(git rev-parse HEAD)",
+      "=",
+      "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "&&",
+      "test",
+      "$(git rev-parse HEAD^{tree})",
+      "=",
+      "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "&&",
+      "test",
+      "-z",
+      "$(git status --porcelain)",
+      "&&",
+      "env",
+      "-u",
+      "ASTRID_PUBLIC_CHECKOUT",
+      "-u",
+      "ASTRID_APP_DIRECT_DIST",
+      "-u",
+      "NODE_PATH",
+      "PATH=/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+      "TMPDIR=/tmp/app-d141-pristine-<run-id>",
+      "XDG_CACHE_HOME=/tmp/app-d141-pristine-<run-id>/xdg-cache",
+      "npm_config_cache=/tmp/app-d141-pristine-<run-id>/npm-cache",
+      "VITE_CACHE_DIR=/tmp/app-d141-pristine-<run-id>/vite-cache",
+      "VITEST_CACHE_DIR=/tmp/app-d141-pristine-<run-id>/vitest-cache",
+      "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers",
+      "PLAYWRIGHT_OUTPUT_DIR=/tmp/app-d141-pristine-<run-id>/playwright-output",
+      "npm",
+      "test",
+      "--",
+      "--maxWorkers=3"
+    ],
+    "receiving_route": "Farm/Main-owned direct execution from the existing frozen checkout, or an already-registered worker metadata route pinned to the same commit/tree; request-test integration:app is not the pristine checkout.",
+    "result_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/<pristine-result-id>",
+    "result_files": [
+      "request",
+      "status",
+      "exit",
+      "summary",
+      "log.txt",
+      "d66"
+    ],
+    "status": "not_run",
+    "prior_pristine_receipt": null
+  },
+  "reconciliation": {
+    "parse_separately": {
+      "vitest": [
+        "Test Files",
+        "Tests"
+      ],
+      "node": [
+        "test:node reporter output in log.txt"
+      ],
+      "runner": [
+        "exit",
+        "status",
+        "summary",
+        "source/guard postflight"
+      ]
+    },
+    "do_not_add_vitest_and_node_counts": true,
+    "compare_per_id": [
+      "report files",
+      "tests",
+      "authorized expected failures",
+      "unexpected failures",
+      "exit code",
+      "postflight/source guards"
+    ],
+    "historical_normal_reference_only": {
+      "receipt": "app-m4-agentchat-fixed-current-one-full-r36-app-full-published014-agentchat-fixed-r36-07d86990c-1021075701-20810",
+      "vitest": "1520 test files passed; 19454 passed; 3 authorized expected failures",
+      "postflight": "source/graph snapshots matched; 9 IPC/graph checks passed",
+      "D141_credit": false
+    }
+  },
+  "production_contract_preservation": {
+    "request_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps",
+      "merge",
+      "reads",
+      "Idempotency-Key",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "reply_families": [
+      "accepted",
+      "merged",
+      "conflict",
+      "invalid",
+      "preview"
+    ],
+    "merged_receipt_fields": [
+      "canonical closure",
+      "digest",
+      "normalized commands",
+      "id map",
+      "base",
+      "landing",
+      "merge",
+      "records",
+      "bindings",
+      "effects",
+      "dependencies",
+      "history",
+      "undo_steps"
+    ],
+    "unchanged_refusals": [
+      "conflict/head",
+      "invalid code/path/hint/suggested command",
+      "preview would-status/null-receipt"
+    ]
+  }
+}

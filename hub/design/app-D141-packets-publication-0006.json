@@ -1,0 +1,128 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/known-gaps.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-known-gaps.md",
+    "sha256": "63a1d0fb28f9799767782df1dcc68b54d6680754283059821ac7b6e975e26404",
+    "bytes": 1106
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/recipe.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-recipe.json",
+    "sha256": "5287cb196d33babdc9b09ae78d8d989c7ee93dca824addb14712fe89fa73a664",
+    "bytes": 3750
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-source-manifest.json",
+    "sha256": "e70a10199ad718c2bdba897b15c9c648a30d5ebaf11f169714a1b54c5362becd",
+    "bytes": 2846
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-validation.md",
+    "sha256": "a14641687b0a3242799757196dca0002ed89970103f3f78f9119536ea397aab2",
+    "bytes": 1237
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-findings.json",
+    "sha256": "dd3451ec5a64cdf4436f7bac3d8d19fec10c9dc30bdb5d11ea0def0fd93e64c5",
+    "bytes": 1442
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-known-gap-notes-return-2354-handoff.md",
+    "sha256": "24e1cbd4f7d01493cf3243390ed4186d84b723e1e35acb5415936a0cbabb3ce3",
+    "bytes": 1027
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-full-pristine-return-2354/evidence/recipe.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-recipe.json",
+    "sha256": "7c87b32802ef0084941bf9e1ef060cd6f9b6f95f823513c9f1f129826d6cfed6",
+    "bytes": 8158
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-full-pristine-return-2354/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-source-manifest.json",
+    "sha256": "436cc2efcc47613f742e7441057c70c2d21798f4b4842b090a9fdcc49328165f",
+    "bytes": 5250
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-full-pristine-return-2354/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-validation.md",
+    "sha256": "e5a04b1cccda4d5c22d867daae43204b82f672f9d553df315f6a7d115a3fa400",
+    "bytes": 1692
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-full-pristine-return-2354/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-findings.json",
+    "sha256": "b843219305f846c6ba2d7aad1ac7fd1a848b7a4cadd4fb718097f4c2707054d9",
+    "bytes": 1289
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-full-pristine-return-2354/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-full-pristine-return-2354-handoff.md",
+    "sha256": "0283ce179697e17c948efed40caf2abdda63495f5baf40504521d4ac8c069861",
+    "bytes": 4218
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/recipe.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-recipe.json",
+    "sha256": "4d7d89eea571542715f0386532bde64de796c30524b8579c9f8203b06c793818",
+    "bytes": 15460
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-source-manifest.json",
+    "sha256": "1802e71dc7b45243dc726d4f084584d43f925dd2249cac838f7715493a660608",
+    "bytes": 3525
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-validation.md",
+    "sha256": "883cd45806be352d48300c2369372fc32e644cc36265655ac73df00d368a632f",
+    "bytes": 1334
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-findings.json",
+    "sha256": "89f5d5ae8934fd8c354693913be3aea2fc12d7ca1a6897c3a9b8fa3cee168f2c",
+    "bytes": 2195
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-handoff.md",
+    "sha256": "6f67ced810e93bfa2684fee4286bbfc21b9992bc488da80e198fee9c878c02cf",
+    "bytes": 2158
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-journey-prep-2346/evidence/known-gaps.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-known-gaps.md",
+    "sha256": "d12e366737a680e877b57f9099cc7dfc715fe46658edcfc271bc35785b39bb19",
+    "bytes": 1011
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-packets-final-review-0003/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-review.json",
+    "sha256": "06403daaf46bbd9a87e0de12f5e806bfd56e0219ae7156c2b81b4659c21155cd",
+    "bytes": 7508
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-packets-final-review-0003/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-findings.md",
+    "sha256": "5bbce1aad66dd84a80b5bb355d924a9c96fc06ccf4c48bc3c5ea9c56336f235b",
+    "bytes": 3968
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-packets-final-review-0003/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-validation.md",
+    "sha256": "0dc71e01749dadbbe66fc5068c9f0d623e1ee7807c0723e38385690494968609",
+    "bytes": 2333
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-packets-final-review-0003/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-handoff.md",
+    "sha256": "598206f5e1ad4878d1818b3ec426b16fd8dee47e1de4692b56307ddbe48a6f84",
+    "bytes": 1224
+  }
+]

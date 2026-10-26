@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "status": "PREPARED_NOT_DISPATCHABLE",
+  "execution": "none",
+  "scope": ["U3", "A2", "A3", "A4", "P1", "P2", "P3", "F", "C0 sections 1-5 and 7"],
+  "admission": {
+    "required_before_any_body": [
+      "recorded D141 final App/Agent/Runtime/Composition commit and tree tuple",
+      "all four source identities resolve to clean service checkouts and exact receipts",
+      "recorded MAIN GO",
+      "central service has registered the exact normal and pure-preflight rows"
+    ],
+    "current_result": "blocked_pending_final_tuple_and_main_go",
+    "readiness_is_not_credit": true
+  },
+  "historical_qualified_tuples": {
+    "p1_p3": {
+      "app": {"commit": "f7201e02dc53ca7b1e70e38894284528fc78aa70", "tree": "cdc1809f3ec82fa1f360092041eb2a8597fc62e5"},
+      "agent": {"commit": "d6294843286c18e57af3c1874cf1996be42212d2", "tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6"},
+      "runtime": {"commit": "c91626f5e905f9336b51aae0486a071d83f0bac7", "tree": "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+      "role": "qualified historical evidence only; not a D141 binding"
+    },
+    "p2_six": {
+      "app": {"commit": "34d4644589970274a5252c0f7c68b6288eb0b0b4", "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe"},
+      "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+      "runtime": {"commit": "7070f1378d1917fcce69857ebd33cd2b3015568b", "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+      "role": "qualified historical evidence for the six included routes only; not a D141 binding"
+    }
+  },
+  "historical_service_rows": {
+    "p1": {
+      "preflight": "d108-p1-current-0648-preflight",
+      "normal": "d108-p1-current-0648",
+      "qualified_normal_result": "15075",
+      "qualified_preflight_result": "13611"
+    },
+    "p3": {
+      "preflight": "d108-p3-current-0655-preflight",
+      "normal": "d108-p3-current-0655",
+      "qualified_normal_result": "31792"
+    },
+    "p2_broad_reference": {
+      "preflight": "d73-p2-34d46445-submit-preflight",
+      "normal": "d73-p2-34d46445-submit",
+      "use": "historical broad reference only; not the six-selector D141 body"
+    },
+    "p2_register_asset_isolated": {
+      "preflight": "d73-p2-register-asset-34d46445-submit-preflight",
+      "normal": "d73-p2-register-asset-34d46445-submit",
+      "qualified_normal_result": "8974",
+      "qualified_preflight_result": "5383"
+    },
+    "d141_policy": "The central service must register D141-specific paired rows for each named selector from the final D66 serviceRecipe; do not hand-edit or substitute a broad p2 row."
+  },
+  "qualified_evidence_pointers": {
+    "p1": "workers/app-D108-P1-P3-current-0648/submission/p1/p1-submit-plan.json and design/app-D108-P1-15075-GO-review-0657.md",
+    "p3": "design/app-D108-P3-31792-GO-review-0706.md",
+    "p2_six": "workers/app-D120-P2-11251-pass-review-1202/notes/partial-GO.json",
+    "p2_register_asset": "workers/app-D120-asset8974-GO-review-1226/notes/verdict.json",
+    "scope_note": "These are read-only historical pointers; final D141 credit requires the final tuple and MAIN GO."
+  },
+  "selectors": [
+    {
+      "journey": "P1 originalchain",
+      "selector": "p1",
+      "service_route": "d66-plain-stack selector p1; existing suites.conf row must be registered by the service",
+      "source_files": ["tests/e2e/local/three-products.p1-chain.spec.ts"],
+      "source_sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "original_selector_or_grep": "p1",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["exact original cases", "full history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 placement",
+      "selector": "p2-automatic-child-placement",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "original_selector_or_grep": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$",
+      "source_lines": "1018-1036,1205-1295",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["real import/auth selection", "occurrence.add-media", "canonical closure", "history", "reload", "dialog-gone before guarded Undo", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 popupADD",
+      "selector": "p2-popup-add",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-popup.spec.ts"],
+      "source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "original_selector_or_grep": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$",
+      "source_lines": "920-947,423-578,854-918",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["exact C0 v2 request", "occurrence fork/add-media", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 parent",
+      "selector": "p2-parent-move",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted parent move: exact doc.patch fields and guarded Undo$",
+      "source_lines": "338-744,746-776",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["exact doc.patch field guards", "fields merge", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 singleclear",
+      "selector": "p2-transition-none-single",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted single transition clear: exact remove and guarded Undo$",
+      "source_lines": "477-531,680-744,778-796",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["remove before present/value", "raw absence", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 bulkclear",
+      "selector": "p2-transition-none-bulk",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted bulk transition clear: exact ordered removes and guarded Undo$",
+      "source_lines": "477-531,680-744,798-817",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "preserve": ["ordered two removes", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P2 registerAsset",
+      "selector": "p2-register-asset",
+      "service_route": "d66-plain-stack named selector",
+      "source_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "original_selector_or_grep": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$",
+      "source_lines": "1133-1203",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "historical_isolated_route": "app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974",
+      "preserve": ["real file drop", "exact media/registry fields", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "journey": "P3 Gate5 original",
+      "selector": "p3",
+      "service_route": "d66-plain-stack selector p3; existing suites.conf row must be registered by the service",
+      "source_files": ["tests/e2e/local/three-products.spec.ts"],
+      "source_sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "original_selector_or_grep": "M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$",
+      "ast_sha256": null,
+      "ast_status": "not_recorded_in_retained_qualified_evidence",
+      "readiness_source_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "qualified_observation": "5 observed / 3 forwarded",
+      "preserve": ["recovery mount", "C0 v2 envelope", "command/step/read/merge", "strict metadata", "canonical history", "restart", "guarded undo", "zero legacy traffic"]
+    }
+  ],
+  "p2_cut": {
+    "included": ["placement", "popupADD", "parent", "singleclear", "bulkclear", "registerAsset"],
+    "excluded_by_owner_morning_cut": ["SWAP", "Element"],
+    "exclusion_semantics": "explicit owner exclusion; not a skipped or weakened predicate for the six included routes",
+    "broad_p2_status": "not a claim of full P2 qualification"
+  },
+  "pins_and_provenance": {
+    "final_app_commit": null,
+    "final_app_tree": null,
+    "final_agent_commit": null,
+    "final_agent_tree": null,
+    "final_runtime_commit": null,
+    "final_runtime_tree": null,
+    "final_composition_commit": null,
+    "final_composition_tree": null,
+    "bind_rule": "fill only from the recorded D141 cut tuple; every pin must match checkout HEAD, tree, receipt, clean status, and service target"
+  },
+  "pure_preflight": {
+    "purpose": "read-only source/hash/argv/schema/citation checks; no proof credit",
+    "command_template": "env -u NODE_PATH -u ASTRID_PUBLIC_CHECKOUT -u ASTRID_APP_DIRECT_DIST -u APP_DIRECT_DIST D66_APP_SHA=APP_COMMIT D66_APP_TREE=APP_TREE D66_APP_CHECKOUT=APP_CHECKOUT D66_AGENT_SHA=AGENT_COMMIT D66_AGENT_TREE=AGENT_TREE D66_AGENT_CHECKOUT=AGENT_CHECKOUT D66_RUNTIME_SHA=RUNTIME_COMMIT D66_RUNTIME_TREE=RUNTIME_TREE D66_RUNTIME_CHECKOUT=RUNTIME_CHECKOUT D66_COMPOSITION_SHA=COMPOSITION_COMMIT D66_COMPOSITION_TREE=COMPOSITION_TREE D66_COMPOSITION_CHECKOUT=COMPOSITION_CHECKOUT ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=WATCHDOG_SECONDS /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs SELECTOR --preflight",
+    "watchdog_seconds": {"p1": null, "p2_six": 20, "p3": null},
+    "prohibited": ["direct local test invocation", "browser collection", "imports/build/child execution", "new harness", "overlay or NODE_PATH contamination"]
+  },
+  "acceptance": {
+    "central_route": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test WORKER SUITE --no-cache, then wait-test on the returned id",
+    "submission_route": "Use the existing D66 --submit/D73 plan path only after the final tuple and MAIN GO are recorded; it registers the preflight and normal rows atomically, runs preflight first, and queues normal only after preflight PASS.",
+    "normal_command_template": "env -u NODE_PATH -u ASTRID_PUBLIC_CHECKOUT -u ASTRID_APP_DIRECT_DIST -u APP_DIRECT_DIST <same pinned D66 environment> /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs SELECTOR",
+    "serialized": "one heavy body at a time through the central service/browser lock; no local run"
+  },
+  "module_tool_guards": {
+    "node": "v20.19.4 at the absolute path in the command templates",
+    "npm": "10.8.2",
+    "python": "3.13.16",
+    "runtime_identity": "AstridRuntime/0.1 Python/3.13.16",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "normal_child_runtime": "use the genuine normal child/runtime roots selected by D66 and the service tuple; no direct dist, local root, or ad hoc overlay",
+    "source_guards": ["pin SHA/tree equality", "clean checkout", "receipt resolves to exact checkout", "stable app target app-pin-APP_SHA8", "source hashes unchanged before/after", "no old route writes"],
+    "optional_helpers": "only if the final existing normal row explicitly requires one and records its exact hash; none is invented here"
+  },
+  "inputs_and_disk": {
+    "current_app_base": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "historical_readiness_bytes": 4851326976,
+    "historical_readiness_use": "observation only, not D141 admission",
+    "admission": "fresh available >= 5000000000 bytes including preparation; no concurrent heavy work",
+    "reserve_stop": "reserve before body; stop admission at 4000000000 available bytes",
+    "heavy_serialization": "central test service and browser lock, one body at a time",
+    "scratch": "no fixture, cache, build, or dependency writes were made"
+  },
+  "c0_v2_contract_guard": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args,created]", "label", "steps[id,label,intent,tags,command_ordinals,patch,optionalreads]", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "reply_fields": ["accepted", "merged[data,receipt]", "canonicalclosure", "digest", "normalizedcommands", "idmap", "base", "landing", "merge", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict[reason,head]", "invalid[code,path,hint,suggestedcommand]", "previewwould_status", "previewreceipt"],
+    "guard_change": false
+  },
+  "handoffs": {
+    "p4": "Agent owner; consume the final D141 tuple and existing Agent normal route for the publish/transport lane. No App P4 controller is added here.",
+    "p5": "Runtime owner; consume the final D141 tuple and existing Runtime normal child/runtime route for renderer-off save, authorization, crash/retry, changed-payload same-key behavior. No App P5 controller is added here.",
+    "peer_handoff_inputs": ["final four-way tuple and trees", "recorded MAIN GO", "D66 serviceRecipe output and named suite rows", "this packet's six-selector mapping and exclusion semantics"]
+  },
+  "missing_cut_inputs": [
+    "D141 final App/Agent/Runtime/Composition commit and tree tuple",
+    "recorded MAIN GO",
+    "D141-specific normal/preflight suite row names or the service-generated D73 plan",
+    "AST hashes for p1, the six P2 selectors, and p3 if required by the cut record",
+    "final receipt paths and exact service checkout paths",
+    "any final-row-specific child/runtime/helper provenance not present in retained evidence"
+  ]
+}

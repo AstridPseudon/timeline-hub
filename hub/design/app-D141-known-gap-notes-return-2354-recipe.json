@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "task": "app-D141-known-gap-notes-return-2354",
+  "source_task": "app-D141-known-gap-notes-2346",
+  "base_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "repo_tree_after_repair": "0748df404125114a0f68b701fa76f43abd3fc79a",
+  "output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence",
+  "output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-known-gap-notes-return-2354/evidence/known-gaps.md",
+  "paragraphs": ["SWAP", "Element"],
+  "delivery_owner": "existing Runtime final-notes owner",
+  "installation": "not performed; manager publishes safe originals",
+  "claim_map": {
+    "SWAP": [
+      {
+        "citation": "S1",
+        "claim": "D141 morning cut defines SWAP as a documented known gap and does not make it a gate for the six passing gestures."
+      },
+      {
+        "citation": "S2",
+        "claim": "Independent D125 verdict is NO-GO overall: terminal 3250 had five original passes, two failures, and one serially not-run case; SWAP received the public history_unavailable response instead of accepted HTTP 200."
+      },
+      {
+        "citation": "S3",
+        "claim": "The actual admitted 3250 packet records one body, terminal FAIL, and SWAP's first unmet accepted-HTTP-200 predicate with safe reason history_unavailable."
+      },
+      {
+        "citation": "S4",
+        "claim": "The D130-held SWAP/WAL worker 1537 ended in an automatic classifier refusal; no retry, alternate qualification, or product assertion failure is inferred."
+      }
+    ],
+    "Element": [
+      {
+        "citation": "S1",
+        "claim": "D141 morning cut defines Element as a documented known gap and requires future proof rather than a new fix or qualification round."
+      },
+      {
+        "citation": "S5",
+        "claim": "Actual independent 32016 failed unchanged at the five-second applied-status predicate; the Runtime-bound lifecycle completed internally with HTTP 200, handler 21740.631 ms and provider 13780.929 ms, while App/provider/caller outcomes remained UNKNOWN."
+      },
+      {
+        "citation": "S6",
+        "claim": "Actual independent 15200 likewise failed unchanged at the five-second applied-status predicate; Runtime completed its bound with HTTP 200, while provider/App/caller/browser outcomes remained UNKNOWN."
+      },
+      {
+        "citation": "S7",
+        "claim": "The D112 waiter path is conditionally reachable and a source-ranked suspicion only; occurrence, duration, and causal attribution for 32016/15200 are unproved."
+      }
+    ]
+  },
+  "c0_full_v2_scope_preserved": {
+    "request": [
+      "base",
+      "commands",
+      "label",
+      "steps",
+      "reads",
+      "merge",
+      "idempotency",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "replies": [
+      "accepted",
+      "merged",
+      "canonical",
+      "receipt",
+      "records",
+      "bindings",
+      "history",
+      "undo",
+      "conflict/head",
+      "invalid code/path/hint",
+      "preview"
+    ],
+    "status": "scope recorded only; no production caller or contract behavior changed"
+  },
+  "negative_claims_preserved": [
+    "no GO",
+    "no full P2 qualification",
+    "no ship authorization",
+    "no core qualification",
+    "no built ZIP claim",
+    "no cause",
+    "no fix",
+    "no ETA"
+  ],
+  "historical_tuples": {
+    "D125_3250": "actual independent D125 terminal 3250 packet",
+    "Element_32016": "actual independent request 32016",
+    "Element_15200": "actual independent request 15200",
+    "D130_1537": "actual automatic refusal record"
+  },
+  "private_payloads_exported": false
+}

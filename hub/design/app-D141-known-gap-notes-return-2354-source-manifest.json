@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "task": "app-D141-known-gap-notes-return-2354",
+  "source_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design",
+  "source_mode": "read-only safe published evidence",
+  "sources": [
+    {
+      "id": "S1",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-morning-cut.md",
+      "sha256": "9291c9a81b102dc93a10181f6bca83c47f90b5b8a7cc307630e154d32c143c82",
+      "bytes": 2410,
+      "supports": ["SWAP", "Element", "owner_boundary"]
+    },
+    {
+      "id": "S2",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D125-P2-Proof-GO-review-verdict.md",
+      "sha256": "844f8e8364b79f42d7931ddcfb9d8890c71406f50bd27078fc0d56e57bca9143",
+      "bytes": 2593,
+      "supports": ["D125_3250", "SWAP"]
+    },
+    {
+      "id": "S3",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127-full-P2-3250-terminal-1421-facts.json",
+      "sha256": "eebbb3ea7f130d8c4c498c1dc883b525195e87da261836647e950d608cac0b45",
+      "bytes": 2321,
+      "supports": ["D125_3250", "SWAP"]
+    },
+    {
+      "id": "S4",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-app-20261025T1553Z-D127-safety-hold.md",
+      "sha256": "d9953288d4d8589257a9944ff7f1e3338558aa697a2546e1f5468eba67a4c562",
+      "bytes": 1939,
+      "supports": ["D130_1537", "SWAP"]
+    },
+    {
+      "id": "S5",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-app-to-runtime-20261025T1850Z-element32016-independent-D128.md",
+      "sha256": "ec0f0b078054d88364e34bb99e474ebf57b4c91649d0b827b2613888182ba499",
+      "bytes": 1889,
+      "supports": ["Element_32016"]
+    },
+    {
+      "id": "S6",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-app-to-runtime-app-lead-20261025T2119Z-element15200-independent-no-go.md",
+      "sha256": "bce2ca14db9db2a637cb82aca47578ab86defcc50ffb05acca679971746de3f4",
+      "bytes": 1896,
+      "supports": ["Element_15200"]
+    },
+    {
+      "id": "S7",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D127e-waiter-review-2202-findings.md",
+      "sha256": "56f1e45f227789a2bc849b7985d5d480730b902259b616304e6a87d2a7ef33a4",
+      "bytes": 5720,
+      "supports": ["Element", "D112_waiter_boundary"]
+    }
+  ],
+  "unresolved": [
+    "D112 waiter occurrence, duration, and causal attribution remain unproved",
+    "App/provider/caller/browser outcome for Element remains UNKNOWN"
+  ],
+  "invented_pins": false,
+  "private_payloads_exported": false
+}

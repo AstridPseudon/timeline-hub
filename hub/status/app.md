@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:04:17Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
-# app board, 2026-10-26T00:03Z
+<!-- app | 2026-10-26T00:08:56Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
+# app board, 2026-10-26T00:08Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Prior final289 and later affected127 plus warmup2, types and lint PASS. Final D141 source and cut proof separate. | d24ed69; 2f36246a32 |
@@ -7,13 +7,13 @@
 | A2 | Production dependent save funnel | HARD Sol and Luna | C0 and U3 | merged | Authors and independent reviews | Mounted outbox, authoritative replies, refusal handling and dependent edits integrated. Cut P1 still owed. | Current home |
 | A3 | Popup placement element and asset saves | Luna and HARD Sol | A2 | merged | Authors and independent reviews | Six original tails historically qualified. SWAP and Element remain known gaps. Final six cut proofs owed. | Current home |
 | A4 | Retire reachable legacy executor | Luna and independent Luna | Historical P1 GO | merged | Caller census and source reviews | Zero reachable legacy writers; behavioral tests preserved. Historical source scope only. | Current home |
-| U3 D141 | Resolve frozen final upstream join | HARD Sol | WIP true merge with frozen tip | doing | app-U3-D141-resolution-sol-2358 | Six conflicts being resolved. Tests not admitted at latest4.98GB. Independent review follows completed source. | WIP4572; upstream7ca61bb3 |
-| U4p D141 | Re-vendor qualified final producers | Luna | Final Agent and Runtime heads | blocked:runtime | Existing peer2354; source worker next | Exact final heads, trees and receiving inputs requested from both owners. Normal tools only; no hand pins. | Pending |
-| D141 notes | Document SWAP and Element gaps | Luna and independent Luna | Final packet review0003 | review | Notes2354; reviewer0003 | Two actual paragraphs and source citations present. Earlier2350 delivery FAIL preserved; independent final check active. | Evidence only |
-| D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | Final packet review0003 | review | Full2354; reviewer0003 | Actual normal route and frozen comparator packet present; precise venue and argv checked. No suite body. | Evidence only |
-| D141 journeys prep | Prepare P1 P2 six and P3 recipes | Luna and independent Luna | Final packet review0003 | review | Journey2346; reviewer0003 | Existing selectors and normal D66/D73 routes prepared; no source changes or browser body. | Evidence only |
+| U3 D141 | Review frozen final upstream join | HARD Sol and Luna | Source2358 complete | review | app-U3-D141-source-review-0009 | Six source conflicts resolved; no markers. Actual targeted15/types/lint and both-family preservation review active. Generated inputs separate. | 0af0ddb59a16 |
+| U4p D141 | Re-vendor qualified final producers | Luna | Final Agent head and source | blocked:agent | Peer2354 and0009; source worker next | Runtime frozen6a011 and reviewed treeac5b HOME; runtime wait cleared. Agent finalU2 source2355 pending. Normal tools only. | Runtime6a011 ready |
+| D141 notes | Install reviewed SWAP and Element paragraphs | Luna and independent Luna | Runtime existing notes owner | blocked:runtime | Notes2354; reviewer0003 PASS; peer0006 | Exact two paragraphs independently qualified and byte published. Runtime installs; no GO or ZIP claim. | Evidence only |
+| D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full2354; reviewer0003 PASS | All exact artifacts and hashes qualified. Prepared only; final tuple and MAIN GO still required. | Evidence only |
+| D141 journeys prep | Prepare P1 P2 six and P3 recipes | Luna and independent Luna | None | merged | Journey2346; reviewer0003 PASS | Exact selectors and D66/D73 routes qualified; source hashes exact. P4/P5 peer0006 sent. No browser proof. | Evidence only |
 | D141 full | Run cut App full suite | Luna and test service | All cut heads and MAIN GO | gated:D141-GO | Existing full route; controller next | NOTRUN. Heavy admission5.2GB, one body at a time. Unchanged rerun requires receipt, no added review. | Cut pending |
-| D141 pristine | Run frozen upstream comparator | Luna and test service | Qualified venue, cut heads and GO | gated:D141-GO | Existing comparator prep2354 | NOTRUN. Frozen full7ca61bb3280beca21d98a854af266a382f7ce5df; compare per ID, no subset assumed. | Frozen upstream |
+| D141 pristine | Prepare exact frozen suite target | Luna | Exact frozen upstream | doing | app-D141-pristine-receiver-0007 | Ordinary harness source receipt only, no tests. Future existing request-test worker full route; all body gates remain. | Frozen7ca61bb3 |
 | D141 P1 | Qualify original dependent chain | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe2346 | NOTRUN on cut. Historical original chain GO remains scoped to recorded old tuples. | Cut pending |
 | D141 P2 six | Qualify six original passing gestures | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe2346 | NOTRUN on cut. Placement, ADD, parent, single clear, bulk clear and asset only. No full eight claim. | Cut pending |
 | D141 P3 | Qualify original Gate5 journey | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe2346 | NOTRUN on cut. Original full tail preserved. Historical GO separate. | Cut pending |
@@ -25,7 +25,7 @@
 | D136 B022 | Retain original nine visible failure | Luna and independent Luna | D141 stop | gated:D141-stop | Actual2330; independent2335; source2339 | Nine setupERROR39.34s; source/privacy/custody PASS. Safe values absent from retained XML. No reporting fix or next body. | Agentd133; Runtime777f |
 | D118 own tests | Retain unchanged nonREG failures | Existing source owners | D141 stop | gated:D141-stop | Existing qualified packets | No new investigations. Visible own failures grouped in delivery notes; fixes gate only on proved REG versus frozen pristine. | Historical sources |
 | D77 render | Retain documented deferred render | Farm and Runtime | D141 cut | gated:D141-stop | Existing Farm owner | No installed render or platform GO claimed. D77 known gap belongs existing final notes owner. | Evidence retained |
-| D74 stopped pins | Release idle stopped-proof checkouts | Manager and lead | Host process audit | blocked:app-lead | Peer0004; static receipt0004 | Three clean pins requested for host CLEAR. KEEP unchanged pending host and fresh static guards. Raw data and all branches kept. | No source edits |
+| D74 stopped pins | Release idle stopped-proof checkouts | Manager and lead | Host0005 and fresh guards | merged | Guarded recycle0005 | Three normal recycles PASS, no refusal. Only obsolete42aad,5e9ad,d133 source pins released. Raw and all branches retained. | No source edits |
 | D74 old graph | Preserve refused orphan graph | Lead kit | Guarded route disposition | gated:disk-emergency | Existing lead disposition | Exact1.107GB graph retained; no raw cleanup, invented metadata or denied-route retry. | No source edits |
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer1944 | Prior archive qualified; recycle DIRTY refusal retained. Targets untouched. | No source edits |
 | F final | Final delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final gate, F-final or ZIP claim. Upstream tips fixed; no upstream chasing. | Cut pending |
@@ -34,13 +34,12 @@ Integration: App5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f6
 
 D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required ship proof P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures unchanged, visible and listed. Final source needs one independent product review, notes one review; unchanged reruns need receipts only. Bodies wait allthreeheads and recorded MAIN GO.
 
-Blockers: Final producer inputs — Runtime and Agent exact final qualified heads, trees and receiving sources requested peer2354. Existing U1 review2350 and U2 source2355 were active on latest owner boards. Clear on actual handoff, dispatch normal tools immediately.
+Blockers: Agent final producer input — Runtime frozen6a011/treeac5b actual HOME and independent2350PASS; runtime wait cleared. Existing Agent finalU2 worker2355 pending exact fullhead/tree/receiving source. Normal tools dispatch on receipt.
 Blockers: Final cut GO — Main owns recorded allthreeheads and GO. App final source2358 active; no full/comparator/journey body before recorded release.
 Blockers: Farm core — Runtime owns complete receiving recipe and Farm owns child/import/preflight/core. Latest Farm23:54 has no body. No App duplicate.
-Blockers: App lead disk audit — peer0004 requests host CLEAR/BUSY for three clean obsolete stopped-proof pins. Manager rechecks all static guards before normal recycle. No raw/KEEP cleanup.
 Blockers: SWAP safety — D130 automatic classifier refusal1537 still holds recovery and related qualification. Existing Runtime escalation owns disposition; D141 does not authorize a retry.
-Next ready: Source2358 terminal -> independent U3 review. Packet reviewer0003 terminal -> exact notes handoff and qualified proof recipes. Final producer arrival -> normal re-vendor worker. No ready proof body before GO.
-live 2 / cap 3; ready-undispatched 0. Sol2358 and Luna0003 active. Source admission4.6GB for up to3; latest available about4.98GB. Own-node checks5GB and heavy5.2GB held normally; stop4GB.
+Next ready: Independent source review0009 actual checks underway. Final Agent producer arrival -> normal re-vendor worker. Pristine source0007 receipt underway. Runtime notes/P5 and Agent P4 handoff0006 sent. No ready proof body before GO.
+live 2 / cap 6; ready-undispatched 0. Luna0009 independent product review and Luna0007 pristine source receipt active. Fresh5.33GB before review prep; no heavy body. Generated author waits Agent input; all proof bodies wait GO.
 INBOX consumed through 2555779 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
 
 Safety: Manager writes only ORCH boards/briefs/peers and byte-publishes authored SAFE evidence. No manager product/test/generated/pin edits, direct Git writes, upstream push, M5 or credentials. Dirty U3/orphan guards and refused targets untouched. Prior D130 hold absolute.
@@ -57,3 +56,5 @@ Retained raw inputs: all complete directories, bytes/private modes and KEEP stay
 - app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856
 
 Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/files0600 unchanged; XML SHA4cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88. Manager KEEP on source2331/result2330 and worker historical2136 retained. No service rerun or second body.
+
+Pass 2026-10-26T00:06Z: independent0003 PASS per three prep packets. Exact21 SAFE artifacts byte published; receipt design/app-D141-packets-publication-0006.json. Existing Runtime final-notes/P5 and Agent P4 asked via peer0006. Pristine source0007 now ordinary exact7ca receiving target, no body before allheads/GO. Host0005 CLEAR plus fresh clean/current/liveworker/lease/actualplan guards allowed only42aad,5e9ad,d133 source pins to recycle. Zero refusal; raw allKEEP unchanged. Normalreviewer0003 auto recycled; disk5309829120 bytes before source0007. No new source author outside cut.
