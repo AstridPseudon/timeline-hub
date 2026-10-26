@@ -48,6 +48,7 @@ import type { TimelineActionResizeStart, TimelineClipEdgeResizeEnd } from '@/too
 import type { ResolvedTimelineClip, TimelinePostprocessShaderMetadata, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 import type { PositionedShotGroup } from '@/tools/video-editor/components/TimelineEditor/ShotGroupOverlay.tsx';
+import { observeD141jBeforeShotGroupOverlay } from '@/tools/video-editor/diagnostics/d141jVisibilityObservation.ts';
 
 const EMPTY_ASSET_GENERATION_MAP: Record<string, string> = {};
 const EMPTY_CLIP_IDS = new Set<string>();
@@ -926,6 +927,8 @@ function TimelineEditorCoreComponent({
       </div>
     );
   }
+
+  observeD141jBeforeShotGroupOverlay(canonicalOccurrences, shotGroups);
 
   return (
     <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card/95">

@@ -5,6 +5,10 @@ import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts'
 import type { CanonicalShotOccurrence, ShotPlacement } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { shotNameForOccurrence } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import { isActiveTimelineClip } from '@/tools/video-editor/data/shotCompositionTiming.ts';
+import {
+  observeD141jActiveOccurrencesBeforeUseShotGroups,
+  observeD141jUseShotGroupsInputAndResult,
+} from '@/tools/video-editor/diagnostics/d141jVisibilityObservation.ts';
 
 const SHOT_COLORS = ['#a855f7', '#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#14b8a6', '#ec4899', '#84cc16'];
 const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
@@ -181,10 +185,11 @@ export function useShotGroups(
   pendingOccurrences: readonly ShotPlacement[] = EMPTY_PENDING_OCCURRENCES,
 ): ShotGroup[] {
   return useMemo(() => {
+    observeD141jActiveOccurrencesBeforeUseShotGroups(canonicalOccurrences);
     const isPending = canonicalOccurrences.length === 0 && pendingOccurrences.length > 0;
     const visibleOccurrences = isPending ? pendingOccurrences : canonicalOccurrences;
     if (visibleOccurrences.length > 0) {
-      return visibleOccurrences.map((occurrence) => {
+      const result = visibleOccurrences.map((occurrence) => {
         // The committed occurrence interval is the geometry authority. Child
         // content extent and adjacent occurrences do not rewrite its window.
         const effectiveOccurrence = occurrence;
@@ -265,6 +270,8 @@ export function useShotGroups(
             : { canonicalIdentity: effectiveOccurrence as CanonicalShotOccurrence }),
         } satisfies ShotGroup;
       });
+      observeD141jUseShotGroupsInputAndResult(canonicalOccurrences, result);
+      return result;
     }
 
     const rowIndexById = new Map(rows.map((row, rowIndex) => [row.id, rowIndex]));
@@ -326,6 +333,7 @@ export function useShotGroups(
         ...(group.derivedFrom ? { derivedFrom: group.derivedFrom } : {}),
       });
     }
+    observeD141jUseShotGroupsInputAndResult(canonicalOccurrences, result);
     return result;
   }, [canonicalOccurrences, documentGroups, legacyShellClipIds, pendingOccurrences, rows, sourceFrameThumbnailUrls]);
 }

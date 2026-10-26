@@ -9,6 +9,7 @@ import {
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { isProviderUnavailableError } from '@/tools/video-editor/data/DataProvider.ts';
 import { selectCanonicalShotViewModels } from '@/tools/video-editor/data/canonicalShotViewModel.ts';
+import { observeD141jAcceptedCanonicalRead } from '@/tools/video-editor/diagnostics/d141jVisibilityObservation.ts';
 
 const EMPTY_PENDING_OCCURRENCES: readonly ShotPlacement[] = [];
 
@@ -206,6 +207,13 @@ export function useAstridShotsHost(
       }
       hasPreparedCompositionRef.current = true;
       setPendingOccurrences(null);
+      observeD141jAcceptedCanonicalRead({
+        projectId: composition.projectId,
+        parentDocumentId: composition.parentDocumentId,
+        acceptedReadHeadRevisionId: composition.headRevisionId,
+        previousAcceptedReadHeadRevisionId: currentHead ?? null,
+        occurrenceIds: composition.occurrences.map((occurrence) => occurrence.occurrenceId),
+      });
       // Advance the pinned server snapshot independently of the draft
       // projection. `canonicalOccurrences` continues to prefer the draft,
       // while retry now reports the exact current Runtime head underneath it.

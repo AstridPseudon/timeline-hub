@@ -1,8 +1,18 @@
 // @vitest-environment jsdom
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import path from 'node:path';
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore';
+import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
+import { useAstridShotsHost } from '@/tools/video-editor/adapters/app/useAstridShotsHost';
+import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups';
+import {
+  createD141jVisibilityCollector,
+  installD141jVisibilityCollector,
+} from '@/tools/video-editor/diagnostics/d141jVisibilityObservation';
 import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { useTimelineMultiSelect } from '@/shared/state/selectionStore';
 import {
@@ -239,6 +249,48 @@ describe('TimelineEditorCore', () => {
   afterEach(() => {
     __resetSelectionStoreForTests();
     vi.clearAllMocks();
+  });
+
+  it('retains the four-field visibility chain through the mounted caller seams', async () => {
+    const expectedOccurrenceId = 'occ-5';
+    const collector = createD141jVisibilityCollector(expectedOccurrenceId);
+    const uninstallCollector = installD141jVisibilityCollector(collector);
+    const contract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+    const shotCompositionPort = {
+      load: vi.fn(async () => contract),
+    };
+
+    try {
+      const host = renderHook(() => useAstridShotsHost(
+        'project-001',
+        'document-primary',
+        shotCompositionPort,
+      ));
+      await waitFor(() => expect(host.result.current.canonicalOccurrences).toHaveLength(5));
+
+      const occurrences = host.result.current.canonicalOccurrences;
+      const groups = renderHook(() => useShotGroups([], [], occurrences)).result.current;
+      renderWithStore(
+        <TimelineEditorCore canonicalOccurrences={occurrences} shotGroups={groups} />,
+      );
+
+      const artifact = collector.snapshot();
+      const artifactPath = process.env.D141J_VISIBILITY_ARTIFACT_PATH;
+      if (artifactPath) {
+        writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
+        const checkerPath = path.resolve(process.cwd(), 'scripts/testing/check-d141j-visibility.mjs');
+        const checkerOutput = execFileSync(process.execPath, [checkerPath, artifactPath], { encoding: 'utf8' });
+        expect(checkerOutput).toContain('"status":"PASS"');
+      }
+      expect(artifact.events.map(({ kind }) => kind)).toEqual([
+        'accepted-canonical-read',
+        'active-occurrences-before-useShotGroups',
+        'useShotGroups-input-and-result',
+        'before-shot-group-overlay',
+      ]);
+    } finally {
+      uninstallCollector();
+    }
   });
 
   function SharedPopupSelection({ owner, testId }: { owner: TimelineClipDataOwner; testId: string }) {
