@@ -1920,8 +1920,13 @@ def _renderer_selection(record: "CapabilityRecord", task_data: Mapping[str, Any]
     else:
         selector, chosen_by = requested, "task"
     if selector == REMOTION_RENDERER_ID and not remotion_ok:
+        from astrid.core.rendering.failure_message import render_failure_message
+
         raise HostError(
-            f"{record.id}: this task renders with {REMOTION_RENDERER_ID}, which this host cannot run: {reason}"
+            render_failure_message(
+                f"{record.id}: this task renders with {REMOTION_RENDERER_ID}, which this host cannot run: {reason}",
+                remotion_reason=reason,
+            )
         )
     return {"selector": selector, "chosen_by": chosen_by, "remotion_ok": remotion_ok, "remotion_reason": reason}
 
@@ -9660,11 +9665,21 @@ class GenericPackHost:
 
         def fail_admission(error: Exception) -> None:
             """Fence deterministic admission failures as terminal attempts."""
+            message = str(error) + recovery_suffix(error)
+            if (record.adapter.family == "render" or record.adapter.remotion != "never") and "\nDetail: " not in message:
+                from astrid.core.rendering.failure_message import render_failure_message
+
+                check = record.preflight.get("remotion", {})
+                remotion_reason = (str(check["reason"]) if isinstance(check, Mapping)
+                                   and check.get("ok") is False and not check.get("gates")
+                                   and check.get("reason") and str(check["reason"]) in message else None)
+                message = render_failure_message(message, remotion_reason=remotion_reason,
+                                                 unavailable=True, recovery=getattr(error, "recovery_command", ""))
             try:
                 self._handoff_settlement_call(self.client.fail,
                     task_id,
                     lease_token,
-                    str(error) + recovery_suffix(error),
+                    message,
                     retryable=False,
                     attempt_id=attempt_id,
                     fence=fence,
@@ -10760,6 +10775,7 @@ class GenericPackHost:
             if isinstance(original_error, StorageEnvelopeError):
                 storage_failure_receipt = dict(original_error.diagnostic)
             failure_message = str(exc)
+            remotion_reason = None
             if (render_child_pending and renderer_selection is not None
                     and renderer_selection["chosen_by"] == "host" and not renderer_selection["remotion_ok"]):
                 # The host chose ffmpeg only because Remotion was unavailable, so
@@ -10768,10 +10784,18 @@ class GenericPackHost:
                     f"; {record.id} chose {renderer_selection['selector']} because rendering.remotion "
                     f"is unavailable on this host: {renderer_selection['remotion_reason']}"
                 )
+                remotion_reason = renderer_selection["remotion_reason"]
             gpu = record.preflight.get("gpu")
             if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
                 failure_message += " " + str(gpu.get("warning") or gpu["reason"])
             failure_message += recovery_suffix(original_error or exc)
+            if record.adapter.family == "render" or record.adapter.remotion != "never":
+                from astrid.core.rendering.failure_message import render_failure_message
+
+                failure_message = render_failure_message(
+                    failure_message, remotion_reason=remotion_reason,
+                    recovery=getattr(original_error or exc, "recovery_command", ""),
+                )
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,

@@ -2853,7 +2853,8 @@ def test_unavailable_reason_reports_the_gpu_gate_not_the_task_gated_remotion_che
 REMOTION_FAULT = "fixture Remotion install is broken"
 
 
-def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit: int = 0, stderr: str = "") -> SimpleNamespace:
+def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit: int = 0, stderr: str = "",
+                          remotion_reason: str = REMOTION_FAULT) -> SimpleNamespace:
     """A leased ``remotion == 'selected'`` render fake whose child records its argv."""
     from astrid.core.rendering import remotion_runtime
 
@@ -2881,7 +2882,7 @@ def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit
 
     def status(*, require_explicit_project=False):
         return remotion_runtime.RemotionRuntimeStatus(
-            remotion_ok, tmp_path, reason=None if remotion_ok else REMOTION_FAULT)
+            remotion_ok, tmp_path, reason=None if remotion_ok else remotion_reason)
 
     monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", status)
     runtime = FakeRuntime()
@@ -2968,6 +2969,50 @@ def test_a_timeline_ffmpeg_refuses_still_fails_with_both_reasons_when_the_host_c
     assert refusal in error
     assert "chose rendering.ffmpeg because rendering.remotion is unavailable on this host: " + REMOTION_FAULT in error
     assert not world.runtime.settlements
+
+
+@pytest.mark.parametrize("install_kind", ["source", "installer", "pinokio"])
+def test_missing_remotion_is_the_headline_and_recovery_matches_the_install(tmp_path, monkeypatch, install_kind):
+    from astrid.core.rendering import node_pin, remotion_runtime
+
+    project = tmp_path / "checkout with spaces" / "remotion"
+    project.mkdir(parents=True)
+    (project / "package.json").write_text('{"engines":{"node":"=20.19.4"}}')
+    node = tmp_path / "tools" / "node-v20.19.4" / "bin" / "node"
+    monkeypatch.setattr(node_pin, "resolve_pinned_node", lambda *a, **kw: SimpleNamespace(path=node))
+    monkeypatch.setattr(remotion_runtime, "REPO_ROOT", project.parent)
+    monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
+    monkeypatch.delenv("ASTRID_INSTALL_PROGRAM_ROOT", raising=False)
+    monkeypatch.delenv("ASTRID_INSTALL_MANAGED_BY", raising=False)
+    if install_kind != "source":
+        monkeypatch.setenv("ASTRID_INSTALL_PROGRAM_ROOT", str(tmp_path / "program"))
+    if install_kind == "pinokio":
+        monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "pinokio")
+    fault = ("ASTRID_REMOTION_PROJECT_DIR must point to the server-owned Remotion project; "
+             f"Remotion node_modules is missing: {project / 'node_modules'}; "
+             f"run `npm ci` in {project} with Node v20.19.4 on PATH")
+    refusal = ("rendering.ffmpeg does not support this render request reason: "
+               "Clip 'clip-0' has unsupported clip kind 'hold' reason: "
+               "rendering.ffmpeg requires exactly one visual track carrying media clips")
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=False, argv_exit=1,
+                                 stderr=refusal, remotion_reason=fault)
+
+    with pytest.raises(HostError):
+        world.run()
+
+    message = world.runtime.failures[0][2]
+    headline, rest = message.split("\nDetail: ", 1)
+    detail, fix = rest.split("\nFix: ", 1)
+    assert headline == "Headline: Remotion isn't installed on this machine"
+    assert refusal in detail and "Remotion node_modules is missing" in detail
+    if install_kind == "source":
+        assert "npm ci" in fix and str(node.parent) in fix and str(project) in fix
+        assert "v20.19.4" in fix
+    else:
+        assert "https://astrid.haus/install" in fix and str(tmp_path / "program") in fix
+        assert "npm ci" not in message
+        if install_kind == "pinokio":
+            assert "Stop Astrid in Pinokio" in fix and "--managed-by pinokio" in fix and "choose Start" in fix
 
 
 @pytest.mark.parametrize(("remotion_ok", "selector"), [(True, None), (False, "rendering.ffmpeg")])
