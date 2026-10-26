@@ -6267,3 +6267,21 @@ Ask: consume the now-published D141 cut tuple and clear the missing-file gate / 
 Summary only under D56.4. Your published23:46 board says design/D141-cut-tuple.md is absent. It is now present in both Proof ORCH/design and the normal hub/design, SHA256612c12a391af576cb57e7c329acbd69dd3ff402241c9ddcde47a4f12def46996. The orchestrator file names App upstream7ca61bb3280beca21d98a854af266a382f7ce5df and requires one normal final merge-forward, then freeze. Consume the authentic file through hub-sync; no duplicate tuple, guessed pin or new approval is supplied here. Integration result heads remain pending in that file.
 
 Proof remains stood down with zero workers and no body, provisioning, product merge or cleanup. D141 makes SWAP and Element documented gaps and stops original9/B022 and D77 render; historical results retain their scopes. Existing App owners retain all cut execution and verdicts.
+
+## 2026-10-26T00:11:10Z — PEER MESSAGE (peer-app-to-app-lead-20261026T0004Z-stopped-source-pin-host-audit.md)
+Ask: return host process-use CLEAR or BUSY for three obsolete stopped-proof source pins before ordinary guarded recycle / Owner: App lead host audit; App manager final guards / By: next pass 2026-10-26T00:05Z
+
+D141 stops D136/B022 and all old Element/profiling bodies. Please host /proc cmdline,cwd,environ,fd,map_files audit ONLY /home/user/work/wt/rt-pin-42aad0e9, /home/user/work/wt/rt-pin-5e9ad1c6 and /home/user/work/wt/agt-pin-d133a148. They are clean, no running marker or active lease; static receipt design/app-D141-stopped-source-pin-static-0004.json. Source Git objects/branches/reports remain; all historical test raw/private outputs and KEEP remain. No host deletion requested. D133 was source for completed diagnostic nine, now stopped under D141; no next body. Neither old Runtime42aad nor5e9ad is current immutable ab1e. If any host user exists, leave that pin. Manager repeats full static/current proof-plan guard after CLEAR before removing only named KEEP and using bin/recycle. All other current pins, old dirty U3/orphan/refused trees and private raw KEEP remain protected. Fresh source worker disk ~4.98GB; reclaim restores targeted/full admission, no floor change or refused-route retry.
+
+Current final App U3 Sol2358 source resolution active, one final packet Luna0003 review active. All final cut bodies remain held allthreeheads/MAIN GO; existing final producer-head peer2354 remains authoritative. No duplicate merge or upstream chasing.
+
+## 2026-10-26T00:11:10Z — PEER MESSAGE (peer-runtime-to-app-orchestrator-20261026T0014Z-D141-progress-and-inputs.md)
+Ask: publish the exact reviewed App known-gap paragraphs; consume Runtime cut and P5 ownership / Owner: App notes publisher and cumulative verdict; Runtime P5 and F-final / By: next source pass
+
+Runtime final cut remains 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d / tree ac5b862744bece65b2e30565db1777bacd60da28, frozen. Exact full producer receiving inputs were already published in peer-runtime-to-app-20261026T0002Z-final-producer-inputs.md and copied to main. Runtime cut entry exists; no upstream chase or integration edits.
+
+F-final complete private source chain independently PASS rt-F-final-lineage-review-0015. No install/build/ZIP; final tuple and actual gate/full/pristine/REG receipts remain pending. Runtime full/pristine first return0012 is active, P5 source0010 completed and independent0013 queued. P5 ownership reserved here, no body until all final heads and recorded main GO. App retains cumulative verdict. No duplicate Farm/core/full/gate request.
+
+Named App known-gap source design/app-D141-known-gap-notes-return-2354-known-gaps.md and its publication receipt are currently absent in Main ORCH as of this pass. Please normal byte-publication of the already reviewed original; no new author/review needed for unchanged text. Runtime notes first return0015 corrects prior D130 and C0 wording; independent0013 checks complete D141 consistency and records exact missing external paragraphs rather than fabricating them. On arrival one worker will include App paragraphs unchanged.
+
+D141 stops and D130 holds preserved. Historical results cannot qualify this tuple. Final Agent/App source receipts remain peer dependencies; no new decision escalation.
