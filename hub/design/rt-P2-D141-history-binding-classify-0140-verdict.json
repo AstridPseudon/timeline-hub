@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.d141.history-binding-classification.v1",
+  "task": "rt-P2-D141-history-binding-classify-0140",
+  "classification": "INTENDED_CONTRACT",
+  "classification_scope": "source-bounded; Main owns the gate",
+  "confidence": "high for source intent, not a raw-run replay",
+  "basis": [
+    "C0 §2 requires resolved physical bindings, revision/content identity, evaluation boundaries, and verified edge paths in authenticated command/step records.",
+    "Agent _commit_patch.materializations emits provider-owned successor/edge bindings for an occurrence's shot and internal revision turnover; Agent inverse emits inverse.stage and the effect projection emits commit.effect bindings.",
+    "Runtime validates physical binding boundaries and image identity, then stores canonical_json(records) verbatim in timeline_commit_history and returns it from history_entry.",
+    "The App nativeUndoExpected oracle models collection-owner, inverse.stage, and commit.effect bindings but does not model commit.materialization bindings for a mounted child revision turnover. Its exact-object comparison therefore can reject an authoritative extra binding without proving a product regression."
+  ],
+  "source_derived_binding_names": {
+    "additional_family": "commit.materialization",
+    "fields": [
+      "key",
+      "ref",
+      "physical_ref",
+      "revision_id",
+      "content_digest",
+      "boundary",
+      "owners",
+      "policy",
+      "dependencies",
+      "successor",
+      "owner",
+      "edge_before",
+      "edge_after",
+      "step_id"
+    ],
+    "placement_applicability": "For each unchanged occurrence whose shot_revision_id and/or internal_timeline_revision_id changes between inverse step endpoints, unless the occurrence root itself is authored. The mounted automatic child placement path changes child media/revision roots without writing the occurrence root, so this predicate is applicable."
+  },
+  "other_authenticated_families_in_same_boundary": {
+    "inverse.stage": "Agent inverse.py records publication/step/command ordinals and native write range; effect_range is added during effect projection.",
+    "commit.effect": "Agent _commit_patch.py records before/after physical effect images, effect ordinal, path, and effect phase boundary.",
+    "collection.owner:*": "The App oracle already emits these for scoped collection selections."
+  },
+  "introducing_commits": [
+    {
+      "commit": "8a66b1ac88b88ee437e42ba4b7d14ad67930d360",
+      "parent": "a086cc6db7928dc4a3516d304dd9a472b050f1cf",
+      "subject": "feat(timeline): implement R1 guarded document patches",
+      "introduced": "The original _commit_patch.py implementation, including commit.effect and commit.materialization binding construction; materializations() is at lines 700-718 in the current source."
+    },
+    {
+      "commit": "b5b8110667cb96723061dabb16fe81d74ac432d8",
+      "parent": "a086cc6db7928dc4a3516d304dd9a472b050f1cf",
+      "subject": "feat(timeline): stage R2 guarded per-step inverses",
+      "introduced": "Authenticated inverse.stage recording in inverse.py; the provider-integrated merge is 61ceebce84bd6ae0b162477a343e9e184ea77a19."
+    },
+    {
+      "commit": "61ceebce84bd6ae0b162477a343e9e184ea77a19",
+      "parents": [
+        "28b9b966206d7f19c8fc2212d662797e7024ea1c",
+        "b5b8110667cb96723061dabb16fe81d74ac432d8"
+      ],
+      "subject": "fix(timeline): integrate R2 guarded step undo in the provider",
+      "introduced": "Provider integration that projects inverse stages/effects and invokes materialization capture for inverse endpoints."
+    }
+  ],
+  "suspect_commit_disposition": {
+    "D100a_9486cbb06e2ab53402086772e6c2bc18bc4849fc": "Changes _command_state.py physical item-birth/source mapping and adds custody tests; it does not add history binding serialization.",
+    "D100_test_42040a9c05ae7105cf88459cad5f0b8b9bf56fd1": "Test-only custody assertions; no product history writer change.",
+    "D136a_20dbfdef45f71fa28a63f5382c154f5cca50b83a": "Changes typed FPS validation and its tests; no history binding writer change.",
+    "D139_d133a14838a4e607947893408bc34ba2742a19c6": "Joins D100/D136a source deltas in _command_state.py/validation.py and tests; no new records serializer or binding family.",
+    "D100a_bbeea9ddf750b1d67d08e848c20262d748e6ff03": "Carries the same item-birth delta; not the source of commit.materialization fields."
+  },
+  "missing_inputs": [
+    "The raw run3118 assertion diff and actual history JSON are not in the authorized ORCH/design or normal hub paths. The exact fields observed by App cannot be independently enumerated from the run itself.",
+    "No safe published pre-cut placement receipt, immutable publication tuple, or test blob was found in the authorized ORCH/design or normal hub paths. The only published status is placement3118 running, plus the task's report of the guarded Undo mismatch.",
+    "Consequently, the source-derived commit.materialization field list above must not be reported as a raw run3118 payload. Main/App must bind the raw field diff and prior passing receipt before using them as run-level evidence."
+  ],
+  "gate_recommendation": "Treat the mismatch as INTENDED_CONTRACT / stale expected shape for source classification. Do not change product, guards, request/reply shapes, or tests in this worker. Main should require the missing raw field diff and safe prior-pass receipt for final run-level attribution; absent those, keep the placement gate evidence-bounded rather than call it UNINTENDED."
+}

@@ -1,0 +1,941 @@
+{
+  "schema": "timeline.f.d141.cut-failure-census.v1",
+  "scope": "one retained Runtime cut result; exact bad testcase identities only",
+  "read_only": true,
+  "cut_run": {
+    "request_id": "runtime-full-d141-cut-1026005231-18778",
+    "status": "fail",
+    "runner_exit": 1,
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-full-d141-cut-1026005231-18778",
+    "xml_sha256": "227a6efa2e4886b0d1ae3d657e703174ef6a7ccb5f4aaa558875d3887dde31f0"
+  },
+  "counts": {
+    "xml_suite": {
+      "tests": 7392,
+      "failures": 35,
+      "errors": 18,
+      "skipped": 39
+    },
+    "xml_testcase_elements": 7392,
+    "xml_status_counts": {
+      "PASS": 7300,
+      "FAILURE": 35,
+      "ERROR": 18,
+      "SKIPPED": 39
+    },
+    "service_summary": {
+      "passed": 7300,
+      "failed": 35,
+      "errors": 18,
+      "skipped": 26,
+      "xfailed": 13,
+      "warnings": 12
+    },
+    "reconciliation": "7392 = 7300 + 35 + 18 + 26 + 13; XML skipped 39 = service skipped 26 + xfailed 13"
+  },
+  "bad_records": [
+    {
+      "node_id": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance[event_hash-0000000000000000000000000000000000000000000000000000000000000000]",
+      "classname": "tests.test_timeline_commit_acceptance",
+      "name": "test_original_retry_ignores_corrupt_later_acceptance[event_hash-0000000000000000000000000000000000000000000000000000000000000000]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.227",
+      "parameter_selector": "[event_hash-0000000000000000000000000000000000000000000000000000000000000000]",
+      "parameter_selector_conserved": true,
+      "error_class": "DatabaseError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_acceptance.py",
+        "line": 783
+      },
+      "raw_record_sha256": "bf781c61d790b785b21ee0776e9c6bdc9b3ef17df3b5546677b651f2bbce00c2",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance[payload_json-{\"corrupt\":true}]",
+      "classname": "tests.test_timeline_commit_acceptance",
+      "name": "test_original_retry_ignores_corrupt_later_acceptance[payload_json-{\"corrupt\":true}]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.195",
+      "parameter_selector": "[payload_json-{\"corrupt\":true}]",
+      "parameter_selector_conserved": true,
+      "error_class": "DatabaseError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_acceptance.py",
+        "line": 783
+      },
+      "raw_record_sha256": "3da410704a3ef8a290ef561353f4c24f9a06d1518f297c31cf1d73a2d55607aa",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "current_status": "FAILURE",
+      "time_seconds": "9.017",
+      "parameter_selector": "[False]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 130
+      },
+      "raw_record_sha256": "5b0c1a5dad37e216b79b9ec82cfbdf284f8a14a3fc28035b3599a8a8edc5a1d5",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "current_status": "FAILURE",
+      "time_seconds": "2.276",
+      "parameter_selector": "[True]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 130
+      },
+      "raw_record_sha256": "26dce4b0efc399fa4dd056ffc457e362f6c87548b8f9e8c0342a929491f1c352",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_repairs_missing_historical_object_indexes",
+      "current_status": "FAILURE",
+      "time_seconds": "3.821",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 534
+      },
+      "raw_record_sha256": "8113b94a25e4af52bf82f1ddfd47c7c9b0d56c03a059c8a2c1f40cbdc83b5acf",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "current_status": "FAILURE",
+      "time_seconds": "7.672",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 638
+      },
+      "raw_record_sha256": "d97c26c9f5d8125d038e24cdc35e6e912791b118326804653181ce942952adc3",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_archives_wal_before_activation",
+      "current_status": "FAILURE",
+      "time_seconds": "7.180",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 686
+      },
+      "raw_record_sha256": "5601940a461d7228093a24f15e1f2ade7a13498e364ed65c84386c2dd5050615",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "current_status": "FAILURE",
+      "time_seconds": "4.356",
+      "parameter_selector": "[None-checkpoint]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "850da9dadfdace35d46ea7cbe525884d6ceaf4b073751f48a658aad25ae171c6",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "current_status": "FAILURE",
+      "time_seconds": "5.493",
+      "parameter_selector": "[None-publication_flush]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "339430342afc260d86380045913622fdde3a7c26e2aae0834a70e66191327ff7",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "current_status": "FAILURE",
+      "time_seconds": "1.871",
+      "parameter_selector": "[before_publication-checkpoint]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "39e5aa388a3c8dcd62688d4d1ce7e8d0a164bbe970bd16e437a916b2c2fe601e",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.581",
+      "parameter_selector": "[before_publication-publication_flush]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "69d34de11260b15513de059994b871338444553d98733f095c677f69b14ba1be",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.517",
+      "parameter_selector": "[after_publication-checkpoint]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "33e866c7f298f093268a09f2ceadfbebf44e249f46fdb58f5ca26f478f36ba4c",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.550",
+      "parameter_selector": "[after_publication-publication_flush]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 757
+      },
+      "raw_record_sha256": "798d8ba874ec3132934a9a3cb184311d55b346fbf6397ea916b43bbff4c59c0b",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.710",
+      "parameter_selector": "[upgrade]",
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 795
+      },
+      "raw_record_sha256": "30d5ce68a422968cf8eeb0c9cf7a0caf9282a5074071d53b65f95ee8beb6c948",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "classname": "tests.test_runtime_upgrade",
+      "name": "test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "current_status": "FAILURE",
+      "time_seconds": "0.600",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_runtime_upgrade.py",
+        "line": 830
+      },
+      "raw_record_sha256": "ed4d3cff7b1329add979957a4168f21ba227cccdbd57d6eb74ce9084d29065c0",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-False]",
+      "classname": "tests.test_timeline_commit_restore_port",
+      "name": "test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-False]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.268",
+      "parameter_selector": "[media-False]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_restore_port.py",
+        "line": 217
+      },
+      "raw_record_sha256": "5fd6024dfe6c0a783ab7960e360ae8bc2129167535d07b0992756b188ee6cb92",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-True]",
+      "classname": "tests.test_timeline_commit_restore_port",
+      "name": "test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-True]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.268",
+      "parameter_selector": "[media-True]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_restore_port.py",
+        "line": 217
+      },
+      "raw_record_sha256": "376235e888ffcf06439f23eb8a5ee07dd3e18eb7603d954775ac4c72b67ccc78",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-False]",
+      "classname": "tests.test_timeline_commit_restore_port",
+      "name": "test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-False]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.274",
+      "parameter_selector": "[missing_media-False]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_restore_port.py",
+        "line": 217
+      },
+      "raw_record_sha256": "0b66c488bc7dd411a52e51df4c65898992ff5f79780de8c908006597237a779a",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-True]",
+      "classname": "tests.test_timeline_commit_restore_port",
+      "name": "test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-True]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.160",
+      "parameter_selector": "[missing_media-True]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_restore_port.py",
+        "line": 217
+      },
+      "raw_record_sha256": "4f48e92b04eb24de1a58f583cfa6621a06ccd5b22cec026b872f0724c5b4a963",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_moved_history_replays_authenticated_original_and_landing",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_moved_history_replays_authenticated_original_and_landing",
+      "current_status": "FAILURE",
+      "time_seconds": "0.005",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AttributeError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 304
+      },
+      "raw_record_sha256": "14a61a69da506412b334fec4fafbf18e66d72818fa2a086e183b1a6f6351402a",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_seed_preserves_full_raw_assertions_and_history",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_seed_preserves_full_raw_assertions_and_history",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "4d082bbad0e6a2347cf9c982f4c8ff9966fe96c96166df40af625fdf0f37a668",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[missing_batch]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[missing_batch]",
+      "current_status": "ERROR",
+      "time_seconds": "0.002",
+      "parameter_selector": "[missing_batch]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "1ee1c6a5d0c07c11e5a7c9aa9f75098dd90f631dcff634a4e7b990f0980281b1",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[missing_step]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[missing_step]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[missing_step]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "0bc641ad74a321a0bddf30c35ca70f547af3f8832f29784a8b55a180b1e48175",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[wrong_ordinal]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[wrong_ordinal]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[wrong_ordinal]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "01c2e37db26c487fc48bba4a8f726e6da8cdd8343c72d690ec35d0f2d36f3ef1",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[foreign]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[foreign]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[foreign]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "a03e8ffa8ac0faf1aa725aedd6f845dc5d7eb96a7544048369ea2e9bbedeac68",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[outside]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[outside]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[outside]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "d2c9e0ebc453180a014d2bcddc066a805a5f9fb66e787b037c506e82151ea780",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[duplicate]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[duplicate]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[duplicate]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "058881147021af5c2ff9ebcd6d8250d26eebb8527161bc309543502dfb8aef22",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[ambiguous]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[ambiguous]",
+      "current_status": "ERROR",
+      "time_seconds": "0.003",
+      "parameter_selector": "[ambiguous]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "c5aa220b7fb12e1fe65afb2fc0c7d44b71a38aea2cc40d0031c6917863e4f579",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[tampered_source]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[tampered_source]",
+      "current_status": "ERROR",
+      "time_seconds": "0.002",
+      "parameter_selector": "[tampered_source]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "568e6a71326a888e57c1c5e82ff847eee0cf8f06f26b4e8a9b2d285574d52b53",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[wrong_phase]",
+      "classname": "tests.test_timeline_commit_sequential_verifier",
+      "name": "test_public_three_products_scope_forgery_refuses_without_write[wrong_phase]",
+      "current_status": "ERROR",
+      "time_seconds": "0.002",
+      "parameter_selector": "[wrong_phase]",
+      "parameter_selector_conserved": true,
+      "error_class": "ModuleNotFoundError",
+      "fileline": {
+        "file": "tests/test_timeline_commit_sequential_verifier.py",
+        "line": 505
+      },
+      "raw_record_sha256": "97a7fbc4542f85984b8bc9fe9819d85cbded7b91eecc6d762df6eb3d5696e009",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[shot]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[shot]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.015",
+      "parameter_selector": "[shot]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "4fcfc7c140a46095220f75ff856aab01681281fa68211cad54998136d6ec81fc",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[pin]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[pin]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.009",
+      "parameter_selector": "[pin]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "11fd846944bc31fb730a5d2af7570505d0b5ce366607d3520dd274a73d56bc97",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[payload]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[payload]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.008",
+      "parameter_selector": "[payload]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "200382d200321478babb311d0bebf279c828044f55c857fe471a539e8f6bcc66",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[unknown]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[unknown]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.008",
+      "parameter_selector": "[unknown]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "732016f3fea0653da9720fc0884eb4705d5a6cd6f1ad56086bde3deff1d102b6",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[malformed]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[malformed]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.011",
+      "parameter_selector": "[malformed]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "df9cfd7308200788d4d359c3198ad1da7bbcaa57ad1116d812bcdc2ee573e587",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[absent]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[absent]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.011",
+      "parameter_selector": "[absent]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "dc67c93fffdef7a159bbae9e6d01446a481aa014075ceb8bf8538260f7a804a6",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[duplicate]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[duplicate]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.047",
+      "parameter_selector": "[duplicate]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "f8669e730008d153617f5319d9a7dcaf150eb60a693c49bcd19421efb451eea3",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[missing]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[missing]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.022",
+      "parameter_selector": "[missing]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "2ce9db481c3e80e4fd156ccf5c5c2564f8bc7e05985eaf618fbd675fc7770ac4",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[foreign]",
+      "classname": "tests.test_timeline_inverse_stage_authentication",
+      "name": "test_retained_occurrence_order_forgeries_refuse_losslessly[foreign]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.019",
+      "parameter_selector": "[foreign]",
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_inverse_stage_authentication.py",
+        "line": 971
+      },
+      "raw_record_sha256": "0dec4e4e0e90e94909d759f851dc965a73543462fd93d0ba9f9223bb37d312f6",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_supported_genuine_legacy_acceptance_remains_replayable_after_restart",
+      "classname": "tests.test_timeline_recorder_abi_authority",
+      "name": "test_supported_genuine_legacy_acceptance_remains_replayable_after_restart",
+      "current_status": "FAILURE",
+      "time_seconds": "0.240",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_recorder_abi_authority.py",
+        "line": 216
+      },
+      "raw_record_sha256": "9341b29815aba1bdbbd7908ed5003d1b5c3adea6c16f3349f0218b81f0037311",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_legacy_history_cannot_acquire_injected_mode_two",
+      "classname": "tests.test_timeline_recorder_abi_authority",
+      "name": "test_legacy_history_cannot_acquire_injected_mode_two",
+      "current_status": "FAILURE",
+      "time_seconds": "0.268",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_timeline_recorder_abi_authority.py",
+        "line": 233
+      },
+      "raw_record_sha256": "a6208557ac845733a217545b3f54d77fbcabe1454ae064961a5923da092c8dd0",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_genuine_fork_recorder_authority_history_and_exact_retry[1]",
+      "classname": "tests.test_timeline_recorder_abi_authority",
+      "name": "test_genuine_fork_recorder_authority_history_and_exact_retry[1]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.478",
+      "parameter_selector": "[1]",
+      "parameter_selector_conserved": true,
+      "error_class": "RuntimeError",
+      "fileline": {
+        "file": "tests/test_timeline_recorder_abi_authority.py",
+        "line": 77
+      },
+      "raw_record_sha256": "bed22212cc8f3a5c60d6e8fd16dc99133621675d430b167f6b58d34ab4c6a35f",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[fresh-update_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_timeline_reference_writers_refuse_without_writes[fresh-update_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.203",
+      "parameter_selector": "[fresh-update_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "cb488818820d2008df44f361cbdf0e43be893c077a316d19ac1d8f53ca09b46a",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[fresh-link_references]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_reference_writers_preserve_auth_without_writes[fresh-link_references]",
+      "current_status": "ERROR",
+      "time_seconds": "0.179",
+      "parameter_selector": "[fresh-link_references]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "d6dee450faefac345f72052c28a093eef1640f481ac72087d8a5b821f510a77a",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[unused-archive_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_timeline_reference_writers_refuse_without_writes[unused-archive_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.199",
+      "parameter_selector": "[unused-archive_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "f24cec4d89df9d669387b44a4850bc894f1074d1d384154dc776f68161aea185",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-create_project_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_reference_writers_preserve_auth_without_writes[unused-create_project_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.172",
+      "parameter_selector": "[unused-create_project_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "7991cb36838f2670691529d8d317e05c5f10333a1841caf428c5324bf274534f",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[existing-recover_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_timeline_reference_writers_refuse_without_writes[existing-recover_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.174",
+      "parameter_selector": "[existing-recover_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "63f43dd7f044091a0a3123dac79d4489972a2067c98ae4dea5ffd18212737c39",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-set_primary_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_reference_writers_preserve_auth_without_writes[unused-set_primary_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.172",
+      "parameter_selector": "[unused-set_primary_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "46d8a8bba2b5905b6196babd0cee1fa8fe619adb4a06506282a347c53aa55e2e",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-recover_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_reference_writers_preserve_auth_without_writes[unused-recover_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.197",
+      "parameter_selector": "[unused-recover_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "32efabbd2f2013e8cf41b3c9d9e1ae843bccd7cf127f4f04600a1ca3ba177063",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_project_catalog_keep_crud_and_exact_retry[existing-associate_reference]",
+      "classname": "tests.test_timeline_reference_authority",
+      "name": "test_http_project_catalog_keep_crud_and_exact_retry[existing-associate_reference]",
+      "current_status": "ERROR",
+      "time_seconds": "0.271",
+      "parameter_selector": "[existing-associate_reference]",
+      "parameter_selector_conserved": true,
+      "error_class": "ProtocolError",
+      "fileline": {
+        "file": "tests/test_timeline_reference_authority.py",
+        "line": 89
+      },
+      "raw_record_sha256": "bcbdf23fd25bb0fc37322d02f3e4969506306c88d9a8351c78b80e22ab25c306",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_timeline_text_legacy_custody.py::test_legacy_reuse_refuses_without_any_writes[corrupt_bytes]",
+      "classname": "tests.test_timeline_text_legacy_custody",
+      "name": "test_legacy_reuse_refuses_without_any_writes[corrupt_bytes]",
+      "current_status": "FAILURE",
+      "time_seconds": "0.177",
+      "parameter_selector": "[corrupt_bytes]",
+      "parameter_selector_conserved": true,
+      "error_class": "ConflictError",
+      "fileline": {
+        "file": "tests/test_timeline_text_legacy_custody.py",
+        "line": 137
+      },
+      "raw_record_sha256": "c2496bd14db17fc758922555c57dc65718b8a2b96f96d677531b14699b8b80df",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+      "classname": "tests.test_typescript_generator",
+      "name": "test_typescript_conformance_generator_is_byte_stable",
+      "current_status": "FAILURE",
+      "time_seconds": "0.231",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_typescript_generator.py",
+        "line": 34
+      },
+      "raw_record_sha256": "6ec0ea11a7dcd99f93f3365bed64a19cb308d60a505bc2ed9d3d71a26312a673",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    },
+    {
+      "node_id": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation",
+      "classname": "tests.test_typescript_generator",
+      "name": "test_typescript_generator_check_rejects_client_and_manifest_mutation",
+      "current_status": "FAILURE",
+      "time_seconds": "0.133",
+      "parameter_selector": null,
+      "parameter_selector_conserved": true,
+      "error_class": "AssertionError",
+      "fileline": {
+        "file": "tests/test_typescript_generator.py",
+        "line": 50
+      },
+      "raw_record_sha256": "950b9462a750178e74a9c0c53fc1933b9f5cf66c35597a70baef8b4cfe7177fa",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE"
+    }
+  ],
+  "classification_policy": "No REG, preexisting, product-fault, or zero-REG conclusion before an actual same-environment Runtime pristine comparator."
+}
+

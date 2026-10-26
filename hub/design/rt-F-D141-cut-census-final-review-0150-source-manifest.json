@@ -1,0 +1,135 @@
+{
+  "schema": "timeline.f.d141.cut-census-final-review.source-manifest.v1",
+  "task": "rt-F-D141-cut-census-final-review-0150",
+  "read_only_derivative": true,
+  "original_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/source-manifest.json",
+    "sha256": "fb5b68699f0996a9eaa3a031b0a981f40e060ade1cfe6dc925d8a5f9b4ce6b72",
+    "historical_unchanged": true
+  },
+  "source_packet": {
+    "cut_failures": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/cut-failures.json",
+      "sha256": "d55a06058e1ca062944d2f4c6fef2747f7e7faa764dd6f6f03513e46edca4c78",
+      "byte_exact_reference": true
+    },
+    "selector_map": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/selector-map.json",
+      "sha256": "f784157f51cf21f08a9d871dc2e4efc28804204bd8b40d911e9dd33b9bdea87f",
+      "byte_exact_reference": true
+    },
+    "cut_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-full-d141-cut-1026005231-18778/d66/runtime-full.xml",
+      "sha256": "227a6efa2e4886b0d1ae3d657e703174ef6a7ccb5f4aaa558875d3887dde31f0",
+      "historical_reference_unchanged": true
+    },
+    "cut_run_id": "runtime-full-d141-cut-1026005231-18778",
+    "cut_run_status": "fail",
+    "cut_run_exit": 1,
+    "retained_artifact_hashes_reference": {
+      "request": "95847a3a54c849d4b133346c18bbc0945ceff68040a8960bc221cdc13e9c2458",
+      "snap": "fa94040b782eab4c6e39a336305384a434558410549087af670b6219d5b9733b",
+      "summary": "4fca52206f6792f0058a8272274f8517878417474728596d3f441459c76830cd",
+      "log": "b5f17a71f59e5516aa9e709d22a638235058682a067d7e5e73b81a8de639c0c5",
+      "disk_start": "05e055a9dabfd8e8fe8fc12057dc344fc8232f63bd8c914afafd1b28d3a9e9f8",
+      "disk_stop": "642489fbb3dd00dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "runner_exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "keep": "9d61a64b3de40715623107500d8a4dc01ea60a0ea07ecdf8faec249724cb88fb",
+      "status": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "ext": "fcb06840afc777672d9c9dd10548f6d38820faa8d8d0228840c49eda2aee5647"
+    }
+  },
+  "immutable_git_sources": {
+    "composition": {
+      "root": "/home/user/work/wt/rt-F-D141-cut-census-final-review-0150",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "clean": true,
+      "branch": "tl/rt-F-D141-cut-census-final-review-0150",
+      "origin_or_upstream": "not configured"
+    },
+    "runtime_cut": {
+      "root": "/home/user/work/runtime",
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "clean": true,
+      "branch": "tl/integration",
+      "origin_or_upstream": "not configured"
+    },
+    "runtime_pristine": {
+      "root": "/home/user/work/wt/rt-pin-fa9cd546",
+      "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "clean": true,
+      "branch": "detached",
+      "origin_or_upstream": "not configured"
+    },
+    "agent_cut": {
+      "root": "/home/user/work/wt/agt-pin-28e56cac",
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "clean": true,
+      "branch": "detached",
+      "origin_or_upstream": "not configured"
+    },
+    "agent_pristine": {
+      "root": "/home/user/work/wt/agt-pin-8b6ed211",
+      "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "clean": true,
+      "branch": "detached",
+      "origin_or_upstream": "not configured"
+    }
+  },
+  "git_resolution": {
+    "method": "git rev-parse <commit>^{tree}; git cat-file -t <commit>; git cat-file -t <tree>",
+    "all_commit_tree_pairs_match": true,
+    "all_git_objects_present": true,
+    "placeholders_remaining": []
+  },
+  "pristine_queue": {
+    "request_id": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+    "status": "queued",
+    "outcome": "UNKNOWN_NO_COMPARATOR",
+    "admission_classification": "ordinary_low_disk_admission",
+    "safety_or_permission_denial": false,
+    "control_hashes": {
+      "request": "263aaa491b4277ced265efde1d904123bf1571dad99270a76f9d4c947af8942c",
+      "snap": "fe0ca645c7b62603b41f2c1e1e5266726daea3a4b4462bdc4d461b024e67eeed",
+      "status": "baa7ebe58d73e08bf90110a60df9e53255e2f9729df140bc64cb8f71d56a0800",
+      "KEEP": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "why_current_as_of_0150": "bd4e7df129271887473d0d8a5d6f48de5df39ed6d17e2abb2008f7d2e9c5061e"
+    },
+    "why_history": [
+      {
+        "source": "0132 original manifest claim",
+        "sha256": "186892ceda5ead968acf6748cc708ab4bea1cb7aa6be2770f2dcf32727da2905",
+        "timestamp": null,
+        "immutable_packet_claim": true
+      },
+      {
+        "source": "0137 reviewer observation",
+        "sha256": "9bbf7539757ca42cce991a9ca3b16b33f5adc92cc3eb139dbb1839a8ac37d971",
+        "timestamp": null,
+        "immutable_packet_claim": false
+      },
+      {
+        "source": "0143 derivative observation",
+        "sha256": "c40e7d0abdc1f974fcf152b67deed2536ae558f68bd3899f8a870e36bf8b2327",
+        "timestamp": "2026-10-26T01:45:20Z",
+        "immutable_packet_claim": false
+      },
+      {
+        "source": "0150 current-as-of observation",
+        "sha256": "bd4e7df129271887473d0d8a5d6f48de5df39ed6d17e2abb2008f7d2e9c5061e",
+        "timestamp": "2026-10-26T01:51:20Z",
+        "immutable_packet_claim": false
+      }
+    ],
+    "why_is_mutable_diagnostic_not_test_proof": true,
+    "future_hash_changes_expected": true,
+    "pristine_xml_summary_exit_comparator_body": "missing_by_queued_status"
+  },
+  "no_source_or_product_edits": true
+}

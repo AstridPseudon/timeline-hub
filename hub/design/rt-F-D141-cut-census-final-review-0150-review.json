@@ -1,0 +1,126 @@
+{
+  "schema": "timeline.f.d141.cut-census-final-review.v1",
+  "task": "rt-F-D141-cut-census-final-review-0150",
+  "scope": "finite preparation metadata only; independent final check of the two 0137 custody findings",
+  "generated_at_utc": "2026-10-26T01:52:00Z",
+  "overall": "PASS",
+  "behavioral_verdict": "UNKNOWN_NO_SAME_ENV_COMPARATOR",
+  "findings": [
+    {
+      "id": "D141-CENSUS-0137-1",
+      "subject": "pristine_queue_why_hash_drift",
+      "status": "PASS_CLOSED_BY_EXPLICIT_HISTORY",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/why",
+      "queue_status": "queued",
+      "queue_outcome": "UNKNOWN_NO_COMPARATOR",
+      "why_kind": "mutable_queue_admission_diagnostic",
+      "why_history": [
+        {
+          "source": "0132 original manifest claim",
+          "sha256": "186892ceda5ead968acf6748cc708ab4bea1cb7aa6be2770f2dcf32727da2905",
+          "timestamp": null,
+          "immutable_packet_claim": true
+        },
+        {
+          "source": "0137 reviewer observation",
+          "sha256": "9bbf7539757ca42cce991a9ca3b16b33f5adc92cc3eb139dbb1839a8ac37d971",
+          "timestamp": null,
+          "immutable_packet_claim": false
+        },
+        {
+          "source": "0143 derivative observation",
+          "sha256": "c40e7d0abdc1f974fcf152b67deed2536ae558f68bd3899f8a870e36bf8b2327",
+          "timestamp": "2026-10-26T01:45:20Z",
+          "immutable_packet_claim": false
+        },
+        {
+          "source": "0150 current-as-of observation",
+          "sha256": "bd4e7df129271887473d0d8a5d6f48de5df39ed6d17e2abb2008f7d2e9c5061e",
+          "size_bytes": 136,
+          "timestamp": "2026-10-26T01:51:20Z",
+          "immutable_packet_claim": false
+        }
+      ],
+      "distinct_hashes_are_not_false_equality": true,
+      "historical_bytes_claimed_retained": false,
+      "refresh_or_comparator_claim": false,
+      "immutable_test_proof": false,
+      "behavioral_proof": false,
+      "admission_classification": "ordinary_low_disk_admission",
+      "safety_or_permission_denial": false,
+      "prior_0137_safety_denial_phrase": "textual_mislabel_only; not evidence of an actual safety denial",
+      "future_why_changes": "expected mutable queue diagnostics and not a new failure"
+    },
+    {
+      "id": "D141-CENSUS-0137-2",
+      "subject": "unresolved_tree_placeholders",
+      "status": "PASS_CLOSED_BY_IMMUTABLE_GIT_OBJECTS",
+      "resolution": "all derivative tree fields use actual git rev-parse <commit>^{tree} results",
+      "placeholder_count_remaining": 0,
+      "pairs": [
+        {
+          "name": "composition",
+          "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+          "git_object_validation": "PASS",
+          "worktree_clean": true
+        },
+        {
+          "name": "runtime_cut",
+          "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+          "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+          "git_object_validation": "PASS",
+          "worktree_clean": true
+        },
+        {
+          "name": "runtime_pristine",
+          "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+          "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+          "git_object_validation": "PASS",
+          "worktree_clean": true
+        },
+        {
+          "name": "agent_cut",
+          "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+          "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+          "git_object_validation": "PASS",
+          "worktree_clean": true
+        },
+        {
+          "name": "agent_pristine",
+          "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+          "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+          "git_object_validation": "PASS",
+          "worktree_clean": true
+        }
+      ],
+      "origin_claims": "No upstream/origin claim is asserted where no upstream is configured; immutable commit/tree identities and clean-state claims are independently recorded."
+    }
+  ],
+  "remaining_real_defects": {
+    "status": "PASS",
+    "scope": "finite preparation only",
+    "reused_0137_checks": {
+      "xml_cases": 7392,
+      "bad_ids": 53,
+      "exactmapped_pristine_eligible": 15,
+      "new_ours": 38,
+      "privacy": "PASS",
+      "exact_source_custody": "PASS"
+    },
+    "behavior": "all 53 original bad records remain UNCLASSIFIED_NO_SAME_ENV_COMPARATOR / NONE until an actual same-environment comparator",
+    "no_product_change_required": true
+  },
+  "preservation": {
+    "original_0132_cut_failures_sha256": "d55a06058e1ca062944d2f4c6fef2747f7e7faa764dd6f6f03513e46edca4c78",
+    "original_0132_selector_map_sha256": "f784157f51cf21f08a9d871dc2e4efc28804204bd8b40d911e9dd33b9bdea87f",
+    "original_0132_source_manifest_sha256": "fb5b68699f0996a9eaa3a031b0a981f40e060ade1cfe6dc925d8a5f9b4ce6b72",
+    "retained_cut_xml_sha256": "227a6efa2e4886b0d1ae3d657e703174ef6a7ccb5f4aaa558875d3887dde31f0",
+    "raw_records_and_hash_references_edited": false
+  },
+  "limits": [
+    "No tests, imports, collection, lint, typecheck, provider, body/capture, source, or product execution.",
+    "No reclassification of the 53 records and no behavior or REG verdict.",
+    "No source, fixture, guard, pin, registry, custody-framework, or Git-ref mutation."
+  ]
+}

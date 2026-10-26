@@ -1,0 +1,30 @@
+{
+  "schema": "timeline.d141.history-binding-classification.v2",
+  "task": "rt-P2-D141-history-binding-return-0149",
+  "classification": "UNKNOWN_CAUSAL_ATTRIBUTION",
+  "source_intent": "INTENDED_CONTRACT",
+  "classification_scope": "one bounded source pass; Main owns the gate",
+  "confidence": {
+    "source_intent": "high",
+    "run_level_cause": "unknown"
+  },
+  "candidate_activation": {
+    "commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "parent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "subject": "fix(timeline): reconcile D124 producer and inverse custody",
+    "predicate": "For v2 inverse stages, a new complete_stage branch calls materializations() only when there is one stage, its before/after documents equal the step endpoints, and every proposed turnover is exclusive, single-owner, and preserves shot ownership.",
+    "effect": "This is a newly reachable producer emission path for the source-derived commit.materialization binding family. It was absent from the passing Agent commit's v2 inverse branch.",
+    "actual_run_binding": "not proved: the safe 3118 field/index packet was not available"
+  },
+  "d100_command_state": {
+    "commit": "bbeea9ddf750b1d67d08e848c20262d748e6ff03",
+    "effect": "Changes shared-placement physical item/image mapping and permits physical item membership changes without alias extension; it is not a history serializer.",
+    "causal_status": "possible input-image contributor, not statically sufficient to prove complete_stage for 3118"
+  },
+  "runtime_status": "Runtime pass-to-cut changes validate/project/store authenticated bindings and history; no Runtime-only writer change was found that emits the additional binding.",
+  "missing_facts": [
+    "Safe App-owned actual-vs-expected records projection for run 3118, including binding index and field names/array position",
+    "A safe immutable passing placement receipt/test blob bound to the final four-product tuple"
+  ],
+  "decision_boundary": "Do not call REG, GO, stale expectation, or actual commit.materialization presence from source-derived names. No product/test/expectation change is authorized by this packet."
+}

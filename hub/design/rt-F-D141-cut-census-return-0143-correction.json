@@ -1,0 +1,78 @@
+{
+  "schema": "timeline.f.d141.cut-census-correction.v1",
+  "task": "rt-F-D141-cut-census-return-0143",
+  "base_task": "rt-F-D141-cut-failure-census-0132",
+  "review_task": "rt-F-D141-cut-census-review-0137",
+  "mode": "evidence_only_derivative",
+  "generated_at_utc": "2026-10-26T01:43:51Z",
+  "overall": "PASS_AFTER_MINIMUM_CORRECTIONS",
+  "behavioral_verdict": "UNKNOWN_NO_SAME_ENV_COMPARATOR",
+  "preservation": {
+    "cut_failures": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/cut-failures.json",
+      "sha256": "d55a06058e1ca062944d2f4c6fef2747f7e7faa764dd6f6f03513e46edca4c78",
+      "byte_exact_reference": true
+    },
+    "selector_map": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/selector-map.json",
+      "sha256": "f784157f51cf21f08a9d871dc2e4efc28804204bd8b40d911e9dd33b9bdea87f",
+      "byte_exact_reference": true
+    },
+    "original_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-failure-census-0132/evidence/source-manifest.json",
+      "sha256": "fb5b68699f0996a9eaa3a031b0a981f40e060ade1cfe6dc925d8a5f9b4ce6b72",
+      "preserved": true
+    },
+    "review_history": {
+      "report_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-census-review-0137/report.md",
+      "report_sha256": "36f62c829bbfe235ca13c980422427c2a5eb6333d9bb402d6c502af57af4f846",
+      "findings_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-cut-census-review-0137/evidence/findings.md",
+      "findings_sha256": "01b4646ed3b05ebb5538ac0dc1a436230b16d6ba6d0cff70d6131ddb4d6b2c63",
+      "preserved": true
+    }
+  },
+  "findings": [
+    {
+      "id": "D141-CENSUS-0137-1",
+      "subject": "pristine_queue_why_hash_drift",
+      "status": "corrected_by_disclosure",
+      "original_claimed_sha256": "186892ceda5ead968acf6748cc708ab4bea1cb7aa6be2770f2dcf32727da2905",
+      "review_0137_observed_sha256": "9bbf7539757ca42cce991a9ca3b16b33f5adc92cc3eb139dbb1839a8ac37d971",
+      "current_observed_sha256": "c40e7d0abdc1f974fcf152b67deed2536ae558f68bd3899f8a870e36bf8b2327",
+      "current_observed_size_bytes": 136,
+      "current_observed_at_utc": "2026-10-26T01:45:20Z",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/why",
+      "diagnostic_kind": "mutable_queue_admission_diagnostic",
+      "as_of_observation_only": true,
+      "immutable_testproof": false,
+      "behavioral_proof": false,
+      "pristine_status": "queued",
+      "pristine_outcome": "UNKNOWN_NO_COMPARATOR",
+      "interpretation": "The retained why file is mutable queue-diagnostic text. Its differing hashes are disclosed as observations at separate times; they do not represent changed immutable test proof, a refreshed packet, or a comparator result.",
+      "raw_packet_unchanged": true
+    },
+    {
+      "id": "D141-CENSUS-0137-2",
+      "subject": "unresolved_tree_placeholders",
+      "status": "corrected_from_immutable_git_objects",
+      "placeholders_removed": [
+        "literal unresolved tree token"
+      ],
+      "resolved_trees": {
+        "composition_635f4de06fda22a85fc2e4cfc764d0153a4c9f40": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "runtime_cut_6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d": "ac5b862744bece65b2e30565db1777bacd60da28",
+        "runtime_pristine_fa9cd5464a8b37b02f971de375e56be846cd69e2": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+        "agent_cut_28e56cacb42d3da85b02e5b3543895b44f3d0f70": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+        "agent_pristine_8b6ed2116fd1803d24b2be5bc08bd9490407fe4a": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+      },
+      "resolution_method": "git rev-parse <immutable-commit>^{tree}; exact commit/tree pairs retained in source-manifest.json",
+      "source_unchanged": true
+    }
+  ],
+  "limits": [
+    "No imports, collection, tests, providers, lint, typechecks, or product execution.",
+    "No reclassification of the 53 cases; cut-failures.json remains the original byte-exact reference.",
+    "The pristine request remains queued and has no REG, preexisting, or zero-REG verdict.",
+    "Contract C0, production callers, source, tests, and retained raw cut artifacts are unchanged."
+  ]
+}

@@ -1,0 +1,974 @@
+{
+  "schema": "timeline.f.d141.selector-map.v1",
+  "scope": "all 53 cut bad IDs; frozen Runtime source only",
+  "read_only": true,
+  "sources": {
+    "cut_runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "root": "/home/user/work/runtime"
+    },
+    "pristine_runtime": {
+      "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "root": "/home/user/work/wt/rt-pin-fa9cd546"
+    }
+  },
+  "counts": {
+    "bad_ids": 53,
+    "exactmappedPRISTINE_ELIGIBLE": 15,
+    "NEW_OURS": 38,
+    "parameterized_bad_ids": 43
+  },
+  "mapping_policy": "Exact source file/function presence yields exactmappedPRISTINE_ELIGIBLE. Missing selectors receive exactly one bounded function-name/body-text check. NEW_OURS describes selector provenance only, not behavior or REG status.",
+  "mappings": [
+    {
+      "node_id": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance[event_hash-0000000000000000000000000000000000000000000000000000000000000000]",
+      "current_source_selector": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "ca71fb38a5b1b5150eb7bf867dd623f4c8cdd21192357595ed6e23c53b2fb08c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "ca71fb38a5b1b5150eb7bf867dd623f4c8cdd21192357595ed6e23c53b2fb08c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance[payload_json-{\"corrupt\":true}]",
+      "current_source_selector": "tests/test_timeline_commit_acceptance.py::test_original_retry_ignores_corrupt_later_acceptance",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "ca71fb38a5b1b5150eb7bf867dd623f4c8cdd21192357595ed6e23c53b2fb08c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "ca71fb38a5b1b5150eb7bf867dd623f4c8cdd21192357595ed6e23c53b2fb08c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4e",
+      "function_body_sha256_pristine": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4e",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4e",
+      "function_body_sha256_pristine": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4e",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "c8007f60a795445d7ef87019b08e845733324e6163a69ca64d1977f9d81c5d74",
+      "function_body_sha256_pristine": "c8007f60a795445d7ef87019b08e845733324e6163a69ca64d1977f9d81c5d74",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "9399fe219d47757f00ca349ef11cab15f4d87d2f3216bf1f9e042df722fee580",
+      "function_body_sha256_pristine": "9399fe219d47757f00ca349ef11cab15f4d87d2f3216bf1f9e042df722fee580",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "9361627cccfd2da7dbd4a91e6bc2b537a7006a2342249a3d2ca7e80d49aeff2d",
+      "function_body_sha256_pristine": "9361627cccfd2da7dbd4a91e6bc2b537a7006a2342249a3d2ca7e80d49aeff2d",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "function_body_sha256_pristine": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "9107c12d33b2d5329c65fa2a726155b78bd89a69d634f93ece02c5f30c3a0ada",
+      "function_body_sha256_pristine": "9107c12d33b2d5329c65fa2a726155b78bd89a69d634f93ece02c5f30c3a0ada",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "current_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "a847338f646757b5b656df02814d47b90687ce0dff3d234b00c0be8ef272201f",
+      "function_body_sha256_pristine": "a847338f646757b5b656df02814d47b90687ce0dff3d234b00c0be8ef272201f",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-False]",
+      "current_source_selector": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[media-True]",
+      "current_source_selector": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-False]",
+      "current_source_selector": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes[missing_media-True]",
+      "current_source_selector": "tests/test_timeline_commit_restore_port.py::test_restore_rejects_damaged_exact_source_before_provider_or_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "a4e49b135a73adaab65575fb097ce2283e85f68835e09f14a52b12257af85ff3",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_moved_history_replays_authenticated_original_and_landing",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_moved_history_replays_authenticated_original_and_landing",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "4f5e85a61b1b8d00fe35591e961450892e6fee078d07e21550f47eebaceb4cd5",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "4f5e85a61b1b8d00fe35591e961450892e6fee078d07e21550f47eebaceb4cd5",
+        "candidate_selectors": []
+      },
+      "uncertainty": "source selector absent; bounded rename check found no candidate",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_seed_preserves_full_raw_assertions_and_history",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_seed_preserves_full_raw_assertions_and_history",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "08bdc392dadef62968fa1d39de55738626632d7c82da2c3c5d64ae480142b9f0",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "08bdc392dadef62968fa1d39de55738626632d7c82da2c3c5d64ae480142b9f0",
+        "candidate_selectors": []
+      },
+      "uncertainty": "source selector absent; bounded rename check found no candidate",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[missing_batch]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[missing_step]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[wrong_ordinal]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[foreign]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[outside]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[duplicate]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[ambiguous]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[tampered_source]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write[wrong_phase]",
+      "current_source_selector": "tests/test_timeline_commit_sequential_verifier.py::test_public_three_products_scope_forgery_refuses_without_write",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "e375387ab21f46ed2268040a18bf83198e13f63beb45b4389ae1541dae9f0d39",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[shot]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[pin]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[payload]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[unknown]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[malformed]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[absent]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[duplicate]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[missing]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly[foreign]",
+      "current_source_selector": "tests/test_timeline_inverse_stage_authentication.py::test_retained_occurrence_order_forgeries_refuse_losslessly",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "6874bc92510b2934dc55282c615622676c2c1d137db849a37b15b75ee40ae427",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_supported_genuine_legacy_acceptance_remains_replayable_after_restart",
+      "current_source_selector": "tests/test_timeline_recorder_abi_authority.py::test_supported_genuine_legacy_acceptance_remains_replayable_after_restart",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "7531d429a2397e4b81c32445d5b4aada41283bff0aab152d7ec52cd8cb3b5669",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "7531d429a2397e4b81c32445d5b4aada41283bff0aab152d7ec52cd8cb3b5669",
+        "candidate_selectors": []
+      },
+      "uncertainty": "source selector absent; bounded rename check found no candidate",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_legacy_history_cannot_acquire_injected_mode_two",
+      "current_source_selector": "tests/test_timeline_recorder_abi_authority.py::test_legacy_history_cannot_acquire_injected_mode_two",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "cbea049baff632882458f7fe2a0084a53b4e301c88985716a1cc6058f724540c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "cbea049baff632882458f7fe2a0084a53b4e301c88985716a1cc6058f724540c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "source selector absent; bounded rename check found no candidate",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_recorder_abi_authority.py::test_genuine_fork_recorder_authority_history_and_exact_retry[1]",
+      "current_source_selector": "tests/test_timeline_recorder_abi_authority.py::test_genuine_fork_recorder_authority_history_and_exact_retry",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "edf93fa093cf5fb2c5a3ba4ac897e00b08f0c50150cc006099e8042e2294eb87",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "edf93fa093cf5fb2c5a3ba4ac897e00b08f0c50150cc006099e8042e2294eb87",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[fresh-update_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[fresh-link_references]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[unused-archive_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-create_project_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes[existing-recover_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_timeline_reference_writers_refuse_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "98a58ba05f2bc3b9031a5d239bb4e2d0d8cfa400839d9dae6e5cf284e0246a5c",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-set_primary_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes[unused-recover_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_reference_writers_preserve_auth_without_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "d21d5200b1c66e8ceaf73347dbf43bdfd88565002d7988a34fd185144f99c1a8",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_reference_authority.py::test_http_project_catalog_keep_crud_and_exact_retry[existing-associate_reference]",
+      "current_source_selector": "tests/test_timeline_reference_authority.py::test_http_project_catalog_keep_crud_and_exact_retry",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "152603a9592aff4f592abdca0f4f05db774152096027b6f6f4e66461439b5d6a",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "152603a9592aff4f592abdca0f4f05db774152096027b6f6f4e66461439b5d6a",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_timeline_text_legacy_custody.py::test_legacy_reuse_refuses_without_any_writes[corrupt_bytes]",
+      "current_source_selector": "tests/test_timeline_text_legacy_custody.py::test_legacy_reuse_refuses_without_any_writes",
+      "mapping_status": "NEW_OURS",
+      "pristine_source_selector": null,
+      "pristine_source_file_present": false,
+      "function_body_sha256_cut": "5ed943985e8d16298229a7dae6a33b8756bac084e16790637162d33d9f6cb226",
+      "function_body_sha256_pristine": null,
+      "rename_check": {
+        "performed": true,
+        "method": "one bounded function-name/body-text check over frozen pristine Runtime tests",
+        "function_name_matches": 0,
+        "body_text_matches": 0,
+        "body_text_sha256": "5ed943985e8d16298229a7dae6a33b8756bac084e16790637162d33d9f6cb226",
+        "candidate_selectors": []
+      },
+      "uncertainty": "dynamic parameter selector; source mapping is static and collection/outcome was not rerun",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+      "current_source_selector": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "e173341d03c20fa3d14cbe7968140a7460ddaf8a02c933c4851525d2853506e3",
+      "function_body_sha256_pristine": "e173341d03c20fa3d14cbe7968140a7460ddaf8a02c933c4851525d2853506e3",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    },
+    {
+      "node_id": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation",
+      "current_source_selector": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation",
+      "mapping_status": "exactmappedPRISTINE_ELIGIBLE",
+      "pristine_source_selector": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation",
+      "pristine_source_file_present": true,
+      "function_body_sha256_cut": "09bb60ceaa1ea272940a24f0c0c33f524a771d6529819f3e025ee76330aad7bd",
+      "function_body_sha256_pristine": "09bb60ceaa1ea272940a24f0c0c33f524a771d6529819f3e025ee76330aad7bd",
+      "rename_check": {
+        "performed": false,
+        "reason": "exact same pristine file/function selector exists"
+      },
+      "uncertainty": "none at selector level",
+      "behavior_verdict": "NONE_PENDING_RUNTIME_PRISTINE_COMPARATOR"
+    }
+  ]
+}
+

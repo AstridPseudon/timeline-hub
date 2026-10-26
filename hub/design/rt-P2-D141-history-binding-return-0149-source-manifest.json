@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.d141.history-binding-source-manifest.v2",
+  "source_only": true,
+  "passing_tuple": {
+    "app": {"commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "cut_tuple": {
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "agent_source": {
+    "commit_patch_passing_blob": "f8e3bd950fef4af21030b05dd10d4c64ede79c89",
+    "commit_patch_cut_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+    "command_state_passing_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+    "command_state_cut_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "commit_d124": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "commit_d100a": "bbeea9ddf750b1d67d08e848c20262d748e6ff03"
+  },
+  "runtime_source": {
+    "timeline_commit_auth_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+    "timeline_commit_store_blob": "3388fa923c7aae2980a8981280146eaa30cbc7",
+    "timeline_commit_execution_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+    "timeline_commit_port_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+    "sha256": {
+      "runtime_protocol/timeline_commit_auth.py": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598",
+      "runtime_protocol/timeline_commit_store.py": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99",
+      "runtime_protocol/timeline_commit_execution.py": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"
+    }
+  },
+  "ancestry": {
+    "runtime_pass_is_ancestor_of_cut": true,
+    "agent_pass_is_ancestor_of_cut": true,
+    "composition_unchanged": true
+  },
+  "missing": [
+    "safe run3118 actual-vs-expected records projection",
+    "safe immutable passing placement receipt/test blob bound to the cut tuple"
+  ]
+}
