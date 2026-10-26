@@ -107,8 +107,10 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   }, { localOrigin: appOrigin!, tourKey: `astrid-editor-tour-v${EDITOR_TOUR_VERSION}` });
   const query = new URLSearchParams({ project: descriptor!.projectId, timeline: descriptor!.timelineId });
   await page.goto(`${appOrigin}/tools/video-editor?${query}`);
-  await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected', { timeout: 180_000 }); // a cold Vite dev server transforms the module graph on first load
-  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible();
+  // The connection pill is only mounted for the hosted editor; the local Vite editor reaches the Runtime through its dev proxy,
+  // and the timeline picker below (which needs the Runtime's data) is its connected signal. A cold dev server needs time for its first load.
+  if (appMode === 'hosted') await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
+  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible({ timeout: 180_000 });
   const picker = page.getByRole('combobox', { name: 'Select timeline' });
   // The timeline picker's suggestions listbox; page-wide options also match the playback-speed select.
   const timelineOptions = page.getByRole('listbox', { name: 'Suggestions' }).getByRole('option');
