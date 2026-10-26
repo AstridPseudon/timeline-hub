@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:55:55Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
-# app board, 2026-10-26T00:43Z
+<!-- app | 2026-10-26T01:00:16Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# app board, 2026-10-26T00:57Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Historical source proofs; cut source below | 263b728f0140 |
@@ -61,10 +61,12 @@ Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/fil
 
 Pass 2026-10-26T00:37Z: Resumed from prior status. Actual 0033 is running with progress, not dead. Read only source identity correction remains sole ready source item. Approved sweep 3 and compact scratch terminal: removed 0 temporary dirs, packed 0 scratch or test dirs, gzipped 0 logs; all raw KEEP unchanged. No eligible merged non KEEP App worktree found for recycle. Final source and functional checks are qualified; final merge 0022 normal HOME/FROZEN867cb reported by peers0039. Manager controller briefs prepared but undispatched until MAIN GO. No proof body started.
 
-INBOX consumed through 2606045 bytes.
+INBOX consumed through 2608164 bytes.
 
 Current pass 2026-10-26T00:43Z: MAIN GO D141c consumed. Controller 0043 queued with exact final head and admission 5433016320 bytes; D89c checked once. REG comparison must rerun any pristine environment failure in the same environment kind before classification. No full-suite result yet.
 
 Capacity pass 00:45Z: Asked host audit ONLY superseded Agent070dfc and Runtimeab1e source pins; both static clean/noncurrent/no live plans or lease. Historical registrations disclosed. No source KEEP release or recycle before CLEAR and repeated guards. Current full body admitted at5.433GB; D89c no prep recheck.
 
 Capacity 00:49Z: Host0047 CLEAR plus repeated clean/noncurrent/liveplan/lease/source guards PASS. ONLY old Agent070dfc and Runtimeab1e KEEP released; normal recycle both PASS. Receipt design/app-D141-superseded-pin-release-0049.json. Current full output KEEP protected while open REG comparison names it.
+
+Pass 2026-10-26T00:57Z: Actual App full app-full-1026004326-12174 remains running with growing log, no exit/terminal summary. Controller0043 progresses and is not stalled. Pristine next in same controller under D89c admission. Final journey binding0047 terminal, five authored files byte published0052 with exact8selector/fulltuple guard PASS; futurecontroller must supply unique D66_SUBMIT_PLAN_PATH and output paths. Final journey controller brief prepared, waiting occupied heavy slot and next actual5.2GB admission. All protected raw KEEP retained. No source change or further review gate.
