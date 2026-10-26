@@ -1,0 +1,26 @@
+{
+  "recorded_at_utc": "2026-10-26T15:17:46.864230+00:00",
+  "kind": "manager recorded maintenance results",
+  "compact": {
+    "session": 28543,
+    "exit": 0,
+    "scratch_dirs_packed": 0,
+    "old_worker_logs_gzipped": 0,
+    "test_dirs_packed": 0
+  },
+  "sweep": {
+    "session": 42346,
+    "exit": 0,
+    "dirs_removed": 0,
+    "diagnostics": "Repeated ls broken pipe diagnostics from the existing script; terminal success, no refusal."
+  },
+  "initial_detached_launches": {
+    "files_prefix": "managers/agent/rounds/20261026T150559Z-maintenance-",
+    "completion": "No authenticated terminal receipt; not counted as completed relief. Direct tracked runs above supply actual completion."
+  },
+  "worktree_census": "managers/agent/rounds/20261026T150559Z-workers-census.json",
+  "eligible_ended_non_KEEP_trees": 0,
+  "protected": "All KEEP and protected checkouts retained. No recycle target dispatched. No hub or Store operation.",
+  "free_bytes_now": 5811650560,
+  "relief_claim_bytes": 0
+}
