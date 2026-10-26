@@ -20,6 +20,7 @@ import shutil
 import sqlite3
 import stat
 import tempfile
+import threading
 import time
 import uuid
 from contextlib import contextmanager
@@ -1236,9 +1237,10 @@ def _validate_candidate(target: sqlite3.Connection, root: Path, timeout: float) 
         raise ValidationError("staged database failed foreign-key validation")
     inspector = object.__new__(RealmStore)
     inspector.root = root
+    inspector.db_path = root / "realm.sqlite3"
     inspector.cas_root = root / "cas" / "sha256"
     inspector.conn = target
-    inspector._mutex = None
+    inspector._mutex = threading.RLock()
     report = inspector._integrity_report(deadline=time.monotonic() + timeout)
     if not report.get("ok"):
         raise ValidationError("staged database failed canonical validation", details=report)
