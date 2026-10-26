@@ -1,0 +1,69 @@
+{
+  "utc": "2026-10-26T10:37:24.009983+00:00",
+  "purpose": "Exact historical worker originals requested by App peer1024; qualified successor already in publication1030",
+  "source_authorship": "Original Codex workers; manager transport only",
+  "current_registry_readback": {
+    "sha256": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df",
+    "mode": "0o600",
+    "mutated": false
+  },
+  "qualified_successor": "design/runtime-D141z-main-qualified-publication-1030.json",
+  "files": [
+    {
+      "source": "workers/rt-F-final-lineage-return-0000/evidence/candidate/install-final-services.py",
+      "published": "design/rt-F-final-lineage-return-0000-candidate-install-final-services.py",
+      "sha256": "00314c401fb556c40d32037929c5baf77c5ae821ddcf606a272ba551f8ff5339",
+      "bytes": 11720,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-lineage-return-0000/evidence/candidate/runtime-final-service-rows.txt",
+      "published": "design/rt-F-final-lineage-return-0000-candidate-runtime-final-service-rows.txt",
+      "sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+      "bytes": 5513,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/evidence/installation.json",
+      "published": "design/rt-F-final-cut-install-resume-0129-installation.json",
+      "sha256": "32884b8c36c347ea92d72a929c451baa0d21b621be974c8dc1464244a15e94ca",
+      "bytes": 4111,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/evidence/required-inputs.json",
+      "published": "design/rt-F-final-cut-install-resume-0129-required-inputs.json",
+      "sha256": "68eb6f2fd2ed5f63b71016d5d3d029dd85617d45ea30e4cadbe51f721365674d",
+      "bytes": 2254,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/evidence/source-manifest.json",
+      "published": "design/rt-F-final-cut-install-resume-0129-source-manifest.json",
+      "sha256": "54e490b0bb7e40ff782d039f1b3781064c12f53fb8e4bdd2549eeb47403190fc",
+      "bytes": 2771,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/evidence/validation.md",
+      "published": "design/rt-F-final-cut-install-resume-0129-validation.md",
+      "sha256": "187022a3df90e2d468d2d4ece185ffe1081c5ead83f8e0052edde7ac12ba060d",
+      "bytes": 2964,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/evidence/handoff.md",
+      "published": "design/rt-F-final-cut-install-resume-0129-handoff.md",
+      "sha256": "d98c111cbe9b9fd9ecd94835f6dea9fe66d88cbdf15e65753a42ef001ce51eca",
+      "bytes": 1843,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-final-cut-install-resume-0129/report.md",
+      "published": "design/rt-F-final-cut-install-resume-0129-report.md",
+      "sha256": "a5ec9ede77e12c3c89428304aeb82664ad8e1008889e32f2381411a095752568",
+      "bytes": 1656,
+      "source_mode": "0o644"
+    }
+  ]
+}

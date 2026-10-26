@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.d141.final-cut-install/v1",
+  "task": "rt-F-final-cut-install-resume-0129",
+  "status": "NOT_READY_ACTUAL_GATES",
+  "installation": "NOT_PERFORMED",
+  "source_sync": {
+    "status": "PASS",
+    "receipt": "/home/user/timeline-hub/hub/design/main-D141-local-source-sync-receipt.json",
+    "receipt_sha256": "551b80640b973e1f75bc1d3a901bb527e1adfc910888a6563dea16013a1d2762",
+    "heads_and_trees_match_receipt": true,
+    "all_four_clean": true,
+    "source_identity_guard": "PASS",
+    "ephemeral_validation_tuple_sha256": "f71d6b2c165ef9f34b69a747007553802021aff912e6cfaabacab878234857d9",
+    "ephemeral_only": true,
+    "durable_final_tuple_written": false
+  },
+  "candidate": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-lineage-return-0000/evidence/candidate",
+    "install_sha256": "00314c401fb556c40d32037929c5baf77c5ae821ddcf606a272ba551f8ff5339",
+    "rows_sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+    "core_runner_sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+    "delivery_caller_sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191",
+    "core_inventory_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "wrapper_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+    "builder_backup_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "matrix_files": 41,
+    "runner_python_targets": 101,
+    "typescript_leg": true
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "current_sha256": "0e8e74b787633867a8d5d7cbbc59d2fb0928431419563eaa594693823c839081",
+    "reviewed_predecessor_sha256": "675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+    "scoped_delta": {
+      "status": "PASS",
+      "removed_for_comparison": [
+        "runtime full-d141-cut",
+        "runtime full-d141-pristine",
+        "runtime d141-p5-cut"
+      ],
+      "filtered_sha256": "675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+      "outside_bytes_preserved": true,
+      "lock_and_cas_write_by_this_task": false
+    },
+    "target_row_sha256": {
+      "runtime full-d141-cut": "fcd4ca8f45d683f5af15cacdd8bfc213b43774a9a11f8e503341b6249a44878a",
+      "runtime full-d141-pristine": "c12d0642b9f57ed008cc042b296b5432d5b88c3edccc5bbb63c9281c67b59f99",
+      "runtime d141-p5-cut": "6be05d00fb80c5c9fed24b614a523c5ffaa2afc71f8089736f5ef195ed1e2b27"
+    },
+    "p5_row_owner": "rt-P5-D141-cut-controller-0129"
+  },
+  "live_preflight": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 TMPDIR=/tmp python3 candidate/install-final-services.py --registry /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf --candidate candidate/runtime-final-service-rows.txt --builder /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "result": "REFUSED_BEFORE_WRITE",
+    "error": "predecessor registry hash mismatch: 0e8e74b787633867a8d5d7cbbc59d2fb0928431419563eaa594693823c839081 != 675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+    "meaning": "The unchanged installer accepts only the reconstructed 675 predecessor; it cannot represent the genuine disjoint three-row live delta without an unauthorized guard refresh or code adaptation."
+  },
+  "private_predecessor_check": {
+    "result": "PASS",
+    "detail": "The unchanged installer --check-only path passed against a private byte-exact reconstruction formed by removing only the two full rows and the independently published P5 row; no live registry mutation occurred."
+  },
+  "proof_or_gate_receipts_synthesized": false,
+  "final_capture_performed": false,
+  "builder_or_zip_performed": false,
+  "actual_backup": "not created because final install refused before mutation"
+}

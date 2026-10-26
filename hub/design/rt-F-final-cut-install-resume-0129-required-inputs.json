@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.d141.final-cut-required-inputs/v1",
+  "task": "rt-F-final-cut-install-resume-0129",
+  "status": "NOT_READY",
+  "source_identity": {
+    "status": "CLEARED",
+    "receipt": "/home/user/timeline-hub/hub/design/main-D141-local-source-sync-receipt.json",
+    "guard_result": "PASS",
+    "durable_final_source_tuple": "MISSING; no final mutable-head capture was authorized or performed"
+  },
+  "required_for_actual_install": [
+    {
+      "input": "immutable final source tuple file in the installer’s exact four-entry format",
+      "status": "MISSING",
+      "observed": "Main source-sync receipt exists and was checked ephemerally; candidate final-source-tuple.json remains absent"
+    },
+    {
+      "input": "immutable frozen D141 gate tuple",
+      "status": "MISSING",
+      "observed": "candidate final-gate-tuple.json remains absent; no gate receipt was synthesized"
+    },
+    {
+      "input": "genuine normal P5 GO receipt for d141-p5-cut",
+      "status": "MISSING",
+      "observed": "P5 row is installed by controller0129, but its normal body is still disk-admission waiting and no receipt exists"
+    },
+    {
+      "input": "pristine comparator result and ZERO REG classification",
+      "status": "MISSING",
+      "observed": "full cut is 7300 passed / 35 failed / 18 errors / 26 skipped / 13 xfailed; pristine remains UNKNOWN"
+    }
+  ],
+  "qualified_inputs": {
+    "candidate_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-lineage-return-0000/evidence/candidate",
+    "independent_review": "rt-F-final-lineage-review-0015 PASS",
+    "live_registry_sha256": "0e8e74b787633867a8d5d7cbbc59d2fb0928431419563eaa594693823c839081",
+    "reviewed_predecessor_sha256": "675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+    "scoped_rows": ["runtime full-d141-cut", "runtime full-d141-pristine", "runtime d141-p5-cut"],
+    "outside_bytes_preserved": true,
+    "unchanged_private_check": "PASS"
+  },
+  "not_authorized": [
+    "blind global digest refresh",
+    "installer/code adaptation",
+    "hand copying or pinning",
+    "gate/proof receipt synthesis",
+    "mutable-head capture",
+    "alternate registry route",
+    "build or ZIP"
+  ]
+}
