@@ -1,1 +1,1 @@
-2026-10-26T01:17:08Z procs: hub-syncd dispatcher run-manager up; disk 10G free; D141 CORE GO: Runtime's complete handoff 01:10Z received; kit verified (fd83c9e2/60d2238a/8215f5d9); manager told to dispatch the sole receiving controller, step 1 = --check-only census
+2026-10-26T01:28:41Z procs: hub-syncd dispatcher run-manager up; workers running: tf-core-D141-census-0137 (step 1 census, attempt 2 after a node approval prompt in 0130); disk 10G free; D141 core: waiting for the census packet; note composition 635f4de0 receipt file name has 39 hex chars
