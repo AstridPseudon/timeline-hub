@@ -18,7 +18,7 @@ const test = base.extend({
     const downloads = process.env.PLAYWRIGHT_DOWNLOADS_PATH;
     if (downloads) mkdirSync(downloads, { recursive: true, mode: 0o700 });
     const context = await chromium.launchPersistentContext(userDataDir, {
-      channel: 'chrome', args: harness.chromiumArgs.map((arg) => arg.startsWith('--host-resolver-rules=') ? `${arg}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost` : arg), // the last rule makes every other external host unresolvable permissions: ['local-network-access'], acceptDownloads: true,
+      channel: 'chrome', args: harness.chromiumArgs,
       ...(downloads ? { downloadsPath: downloads } : {}),
     });
     const page = context.pages()[0] ?? await context.newPage();
@@ -102,8 +102,8 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   expect(appOrigin, 'local flow requires N4_LOCAL_APP_ORIGIN').toBeTruthy();
   const allowedOrigins = new Set([appOrigin!, harness.origin, sandboxDoor.origin]);
   // No page.route at all: any route (even a RegExp one) makes Chromium pause every request through the Node worker, including the
-  // multi-hundred-MB media uploads of the large case. Instead the browser itself cannot resolve external hosts (host-resolver rules in
-  // the page fixture), every request is observed, and any request outside the allowed origins or on :17340 / :2222 fails the test at once.
+  // multi-hundred-MB media uploads of the large case. Instead every request is observed (the harness already maps
+  // only the app's own hosts, and the external ones to a dead port), and any request outside the allowed origins or on :17340 / :2222 fails the test at once.
   const forbiddenUrl = new RegExp(`^(?:https?|wss?):\\/\\/[^/?#]*:(?:${[...blockedPorts].join('|')})(?:[/?#]|$)|^(?!(?:${[...allowedOrigins].map((o) => o.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|')})(?:[/?#]|$))(?:https?|wss?):\\/\\/`);
   forbiddenProbe = () => forbiddenRequests;
   let observedCount = 0;
