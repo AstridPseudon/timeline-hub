@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T18:09:56Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
-# runtime board, 2026-10-26T18:07:18.126769+00:00
+<!-- main | 2026-10-26T18:15:27Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+# runtime board, 2026-10-26T18:14:23.190631+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -35,7 +35,7 @@
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
 | D141 REG upgrade | Retain merged13 case upgrade correction | Luna | Independent0458 and0505 PASS | merged | Author fix-next; review0458; identity0505 | Author13 and independent13 PASS; exact source merged95d. Integrated15 actual0508 and independent0513 PASS. | 012889c1 /95d98 |
 | D141 REG TypeScript | Retain regenerated conformance outputs | Luna | Independent0458 PASS | merged | Author fix-next; independent0458 | Exact2pytest, generatorcheck and TS PASS. Normal857e joined95d; integrated15 actual0508 and independent0513 PASS. | 4a66dee1 /857e |
-| F-final and ZIP | Retain failed owner-authorized rerun | Luna | Recorded failure disposition | blocked:orchestrator | rt-F-final-private-tmp-1800 | [Actual 20980 exit 2 after four-repo staging](../../design/runtime-F-final-private-tmp-failure-publication-1800.json). Private tmp accepted; no ZIP. Cause unknown. | Final tuple unchanged |
+| F-final and ZIP | Retain Main stopped build and safety hold | Main | Owner disposition of Main denial | gated:safety | Main watchdog stopped direct build | Agent and Runtime trees PASS; App interrupted at 3.94 GB. No process or ZIP. Cleanup classifier denial retained; owner decision pending. | Final tuple unchanged |
 | D141 other proofs | Retain accepted original App journeys | App and Runtime | Owner D141jj frozen App choice | merged | App original controllers and custody | Seven original journeys qualified with disclosed gaps; popup known gap. No deferred catch-up enters this ZIP. Final metadata successor separate. | App82e / Agentecdc |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
 | D136 original nine | Retain independently qualified failure | App and Runtime | D141 stop | gated:D141-stop | Actual 2330; independent 2335 | Nine setup errors in 39.34 seconds; cause UNKNOWN. No reporting fix, producer investigation or next body. | Captured ab1e delta |
@@ -95,11 +95,11 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: None. Sole authorized rerun failed; artifact review remains gated and all further action awaits recorded disposition.
-live 0 / cap 6; ready-undispatched 0. Owner-required stop after the authorized failure. No repair or second rerun dispatched.
+Next ready: None under the Main safety hold. One independent read-only artifact review waits for an actual named ZIP and recorded Main release.
+live 0 / cap 0; ready-undispatched 0. Available disk is below4GB; Main safety denial retained. No Runtime dispatch, cleanup or alternate route.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
-Blockers: Main and owner — authorized service 20980 failed exit 2 after staging; no ZIP, cause unknown. [Disposition request](../../escalations/runtime-20261026T180045Z-F-final-authorized-rerun-failed.md). No further action dispatched.
+Blockers: Main and owner — Main18:10 build stopped below4GB; no ZIP. Cleanup denied by classifier [Irreversible Local Destruction]. Main requested owner disposition. [Safety hold](../../escalations/runtime-20261026T181250Z-Main-build-safety-hold.md). No retry or alternate route.
 Blockers: Safety — D130 and protected targets stay held. Main16:18 no further cleanup on a floor trip; raw KEEP and held19479 remain.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -163,3 +163,11 @@ Current pass 2026-10-26T17:57:11.481140+00:00: Read PLAN and MANAGER-COMMON; con
 
 
 Current pass 2026-10-26T18:07:18.126769+00:00: PLAN and MANAGER-COMMON read first. INBOX 1937254 and HEADER 261586 unchanged; no recorded disposition after the authorized failure. Full bin/workers rt- census exit 0; no Runtime running markers. All 33 original, published and raw evidence checks PASS, including KEEP. Hub App, Agent and Farm owner boards checked; no dependency or peer task is released. Service 20980 remains exit 2 after four-repo staging, no ZIP, cause UNKNOWN in supplied receipts. Existing 18:00 escalation controls. No retry, repair, configuration change, investigation, artifact review, cleanup or alternate route dispatched. Free 5116981248 bytes. live 0 / cap 6; ready-undispatched 0. Stop retained under owner 17:55 instruction. [Pass evidence](rounds/20261026T180718Z-pass.json).
+
+
+Current pass 2026-10-26T18:10:12.915333+00:00: PLAN and MANAGER-COMMON read first; INBOX 1938126 and HEADER 261925 consumed. New owner disposition Main18:08 supersedes the decision wait: Main owns direct final build and Runtime HOLD. Original 33 evidence hashes and sizes PASS; zero Runtime running markers. Peer owner boards checked; no independent Runtime task released. Existing failure receipts unchanged; Main missing-source-tuple diagnosis is a separate later report. One independent read-only artifact review follows only the ZIP Main names. No dispatch, cleanup or competing builder. Free 3944067072. [Pass evidence](rounds/20261026T181012Z-pass.json).
+
+
+Current pass 2026-10-26T18:12:50.058540+00:00: INBOX 1938506 and HEADER 262518 consumed. Main18:10 and18:11:59 confirm direct-build watchdog stopped whole group below4GB during App verification; no processes remain, no ZIP. Agent and Runtime tree PASS remains bounded. Main cleanup denial [Irreversible Local Destruction] is recorded; Main awaits owner prompt and explicitly says Runtime HOLD, no action needed. Runtime already notified Main of floor measurement18:10:30. No process control, cleanup, repack or retry here. All33 original hashes and sizes exact. Safety hold linked; live0/cap0/ready-undispatched0. Free 3943919616. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T181250Z-pass.json).
+
+Current pass 2026-10-26T18:14:23.190631+00:00: PLAN and MANAGER-COMMON read first; INBOX1938506 and HEADER262518 unchanged. Main18:10 safety hold and18:11:59 instruction remain controlling. Complete worker census exit0,2716 rows, zero nonterminal Runtime workers. All33 original hashes and sizes exact; App, Agent and Farm owner boards checked, no ready Runtime dependency. No named ZIP or recorded release. No dispatch, cleanup, repack, retry, alternate route or artifact review. Free 3943194624 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T181423Z-pass.json).

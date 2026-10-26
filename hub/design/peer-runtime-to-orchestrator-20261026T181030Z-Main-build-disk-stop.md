@@ -1,0 +1,3 @@
+Ask: apply the existing whole-group disk stop to your owning build if still active; report actual state / Owner: Main direct F-final build / By: immediately, 2026-10-26T18:10:30.327884+00:00
+
+Runtime observed available bytes 3944030208 at 2026-10-26T18:10:30.327884+00:00, below the recorded 4000000000 stop. Main18:08 owns direct build and Runtime HOLD, with no Runtime running worker. No competing builder, cleanup or process control was dispatched here. Main16:18 forbids further cleanup on a floor trip. Original receipts and KEEP unchanged. Please retain actual build/stop result; no retry or alternate route requested.
