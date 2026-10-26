@@ -1,0 +1,181 @@
+{
+  "schema": "timeline.d141.farm-artifact-index/v1",
+  "task": "F D141i Farm artifact publication",
+  "base": "tl/rt-F-D141-Farm-input-return-0219",
+  "status": "AUTHENTICATED_GROUP_A_PACKET_WITH_EXTERNAL_GAPS",
+  "farm_ready": false,
+  "farm_ready_reason": "The current physical venue has the exact schema install and canonical census, but no standalone trusted manifest, no current FARM_INSTALLED_KIT_SUMMARY pair, and no original67 wheelhouse.",
+  "design_publication_prefix": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Farm-artifacts-0229-",
+  "artifacts": [
+    {
+      "id": "schema-installed-distribution",
+      "field": "SCHEMA_INSTALLED_DISTRIBUTION",
+      "status": "READY_PHYSICAL_SOURCE_VENUE_ONLY",
+      "owner": "D139a schema owner",
+      "physical": {
+        "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
+        "type": "directory",
+        "bytes": 4096,
+        "mode": "0755",
+        "regular": false,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": null
+      },
+      "source_identity": {
+        "package": "banodoco-timeline-schema",
+        "version": "0.0.2",
+        "url": "https://github.com/banodoco/ArtAgents.git",
+        "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "subdirectory": "packages/timeline-schema/python",
+        "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834"
+      },
+      "components": [
+        {
+          "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+          "bytes": 1593,
+          "mode": "0644",
+          "regular": true,
+          "no_follow": true,
+          "symlink": false,
+          "sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+          "record_rows": 18,
+          "record_hashed_rows": 12,
+          "record_unhashed_rows": 6
+        },
+        {
+          "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/direct_url.json",
+          "bytes": 254,
+          "mode": "0644",
+          "regular": true,
+          "no_follow": true,
+          "symlink": false,
+          "sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+          "content": "private_source_receipt_only"
+        }
+      ],
+      "portable_delivery": "Use the existing --schema-installed-distribution interface and bind this physical dist-info directory together with the exact standalone trusted manifest. Do not repackage the installed files as a source carrier or copy unconstrained files.",
+      "privacy": "The raw direct_url JSON is not reproduced in this packet; its path, size, mode, hash, and safe pinned identity are recorded."
+    },
+    {
+      "id": "schema-trusted-source-manifest",
+      "field": "SCHEMA_SOURCE_MANIFEST",
+      "status": "MISSING_STANDALONE_PHYSICAL_PRODUCER",
+      "owner": "D139a schema owner",
+      "physical": {
+        "path": null,
+        "bytes": null,
+        "mode": null,
+        "regular": null,
+        "no_follow": null,
+        "symlink": null,
+        "sha256": null
+      },
+      "approved_content_not_claimed_as_existing_file": {
+        "url": "https://github.com/banodoco/ArtAgents.git",
+        "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+        "subdirectory": "packages/timeline-schema/python",
+        "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+        "canonical_sha256": "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d"
+      },
+      "portable_delivery": "The owner must publish the exact four-key JSON through the existing schema-manifest route, preserving the approved canonical SHA. This packet embeds the settled identity for comparison only; it does not fabricate or claim a standalone producer file."
+    },
+    {
+      "id": "canonical-census-2149",
+      "field": "CANONICAL_CENSUS",
+      "status": "READY_PHYSICAL_SOURCE_VENUE_ONLY",
+      "owner": "D139 census owner",
+      "physical": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D139-import-input-census-2149-input-census.json",
+        "bytes": 10686270,
+        "mode": "0644",
+        "regular": true,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30"
+      },
+      "embedded_summary": {
+        "schema": "timeline.d139.input-census/v1",
+        "unique_import_requirements": 1146,
+        "reachable_source_modules": 1001,
+        "root_python_files": 431,
+        "root_selectors": 22,
+        "dynamic_records": 983,
+        "exact_missing_count": 17,
+        "parse_error_count": 0
+      },
+      "qualified_review": {
+        "review": "D139 independent 2216 PASS_FINITE_RECONCILED",
+        "review_role": "supporting provenance only; not a replacement census",
+        "ordered_rows_sha256": "44fcbdf4b21078754db377e99edbf4ad42171a541f56b6e70b27ef7f0ec7c54a"
+      },
+      "portable_delivery": "The unchanged 10,686,270-byte regular file is under 50 MB and can travel via the ordinary Farm input venue. Bind the exact file and retain the SHA; do not replace it with the 2216 review."
+    },
+    {
+      "id": "farm-installed-kit-summary-and-installation",
+      "field": "FARM_INSTALLED_KIT_SUMMARY plus FARM_KIT_INSTALLATION",
+      "status": "SUMMARY_MISSING_RECEIPT_SUPPORTING_ONLY",
+      "owner": "D139a installation/kit owner",
+      "physical": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D139a-install-2309-installation.json",
+        "bytes": 3587,
+        "mode": "0644",
+        "regular": true,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": "82bdfab2c3ec483261126b3446aacf7d1ee9df6d38e1c2491b33e3927c60f5a4"
+      },
+      "receipt_identity": {
+        "schema": "timeline.d139a.combined-install/v1",
+        "result": "PASS_INSTALL_COMBINED",
+        "observed_utc": "2026-10-25T23:12:28Z",
+        "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+        "source_tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+        "maker_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+        "maker_bytes": 111171,
+        "maker_mode": "0755"
+      },
+      "excluded": "The current FARM_INSTALLED_KIT_SUMMARY in required timeline.ops.d137.installed-kit/v1 form was not found. The historical D137 installed-kit JSON is not retargeted as D141 evidence, and this receipt is not sufficient by itself for the production parser."
+    },
+    {
+      "id": "dependency-seed-original67",
+      "field": "DEPENDENCY_SEED",
+      "status": "MISSING_ORIGINAL67_WHEELHOUSE",
+      "owner": "Farm distribution/seed owner",
+      "physical": {
+        "path": null,
+        "bytes": null,
+        "mode": null,
+        "regular": null,
+        "no_follow": null,
+        "symlink": null,
+        "sha256": null
+      },
+      "qualified_producer": {
+        "verifier_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+        "verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+        "verifier_bytes": 52731,
+        "verifier_mode": "0755",
+        "wheelhouse": "not present"
+      },
+      "excluded_physical_candidate": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz",
+        "bytes": 3002878,
+        "mode": "0644",
+        "regular": true,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548",
+        "reason": "bootstrap archive is not the original67 wheelhouse and must not be unpacked or promoted"
+      },
+      "portable_delivery": "Only the already-qualified original67 wheelhouse producer may supply this directory. No acquisition, bootstrap extraction, oldvenv fallback, or new dependency producer is permitted."
+    }
+  ],
+  "excluded_candidates": [
+    "venv-agent-child-s2-c13 and venv-agent-child-s2 schema RECORDs (observed SHA 8e4e8da1e8d10897c4096087601dd40eddc382edc60933fe419cc56cd4acf041; not the approved 844b2a2e... closure)",
+    "historical D137 installed-kit summary",
+    "bootstrap wheel archive as DEPENDENCY_SEED",
+    "nearby vendor copies or invented source carrier",
+    "raw direct_url content in public packet"
+  ]
+}

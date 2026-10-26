@@ -1,0 +1,94 @@
+{
+  "schema": "timeline.d141.farm-artifact-publication/v1",
+  "task": "F D141i",
+  "status": "PACKET_PUBLISHED_SOURCE_ONLY_FARM_BINDING_PENDING",
+  "farm_ready": false,
+  "publication_prefix": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Farm-artifacts-0229-",
+  "worker_outputs": [
+    "artifact-index.json",
+    "publication.json",
+    "commands.md",
+    "source-manifest.json",
+    "findings.md",
+    "validation.md",
+    "handoff.md"
+  ],
+  "design_targets": [
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-artifact-index.json",
+      "source": "worker evidence/artifact-index.json",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-publication.json",
+      "source": "worker evidence/publication.json",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-commands.md",
+      "source": "worker evidence/commands.md",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-source-manifest.json",
+      "source": "worker evidence/source-manifest.json",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-findings.md",
+      "source": "worker evidence/findings.md",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-validation.md",
+      "source": "worker evidence/validation.md",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    },
+    {
+      "target": "rt-F-D141-Farm-artifacts-0229-handoff.md",
+      "source": "worker evidence/handoff.md",
+      "action": "manager may place as a byte-exact evidence copy",
+      "written_by_worker": false
+    }
+  ],
+  "byte_exact_source_artifacts": [
+    {
+      "id": "schema-installed-distribution",
+      "source_path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
+      "delivery": "existing installed-distribution interface only",
+      "raw_direct_url": "private; not copied"
+    },
+    {
+      "id": "canonical-census-2149",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D139-import-input-census-2149-input-census.json",
+      "bytes": 10686270,
+      "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+      "delivery": "ordinary Farm input venue; unchanged file"
+    },
+    {
+      "id": "d139a-installation-receipt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D139a-install-2309-installation.json",
+      "bytes": 3587,
+      "sha256": "82bdfab2c3ec483261126b3446aacf7d1ee9df6d38e1c2491b33e3927c60f5a4",
+      "delivery": "supporting receipt only; cannot close missing Farm summary"
+    }
+  ],
+  "not_published": [
+    "No synthetic trusted manifest file",
+    "No synthetic FARM_INSTALLED_KIT_SUMMARY",
+    "No original67 wheelhouse or bootstrap-derived substitute",
+    "No hub write, queue write, or Farm input-root write",
+    "No product or kit edit"
+  ],
+  "large_artifacts": {
+    "over_50mb": false,
+    "census_bytes": 10686270,
+    "route": "ordinary input delivery; no split or git ref required"
+  }
+}

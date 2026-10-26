@@ -1,0 +1,114 @@
+{
+  "schema": "timeline.d141.farm-artifact-source-manifest/v1",
+  "task": "F D141i",
+  "status": "SOURCE_AUTHENTICATED_WITH_UNBOUND_GROUP_A_INPUTS",
+  "base": "tl/rt-F-D141-Farm-input-return-0219",
+  "scope": "Existing physical producer enumeration and safe publication metadata only; no product, kit, route, control, hub, acquisition, or dependency changes.",
+  "source_identity": {
+    "repository": "ArtAgents",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2"
+  },
+  "approved_trusted_manifest": {
+    "content": {
+      "url": "https://github.com/banodoco/ArtAgents.git",
+      "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+      "subdirectory": "packages/timeline-schema/python",
+      "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834"
+    },
+    "canonical_sha256": "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d",
+    "standalone_physical_file": false,
+    "note": "The exact content and canonical hash are carried from the D139a decision and receiver contract for comparison. No new standalone file was authored or claimed as an existing producer."
+  },
+  "physical_sources": {
+    "installed_schema_dist_info": {
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info",
+      "type": "directory",
+      "bytes": 4096,
+      "mode": "0755",
+      "regular": false,
+      "no_follow": true,
+      "symlink": false,
+      "record": {
+        "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+        "bytes": 1593,
+        "mode": "0644",
+        "regular": true,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+        "rows": 18,
+        "hashed_rows": 12,
+        "unhashed_rows": 6
+      },
+      "direct_url": {
+        "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/direct_url.json",
+        "bytes": 254,
+        "mode": "0644",
+        "regular": true,
+        "no_follow": true,
+        "symlink": false,
+        "sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+        "raw_content": "private"
+      },
+      "provenance": "The physical closure is the approved D139a installed distribution. Its direct_url identifies the source identity above; the raw JSON remains private."
+    },
+    "canonical_census": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D139-import-input-census-2149-input-census.json",
+      "bytes": 10686270,
+      "mode": "0644",
+      "regular": true,
+      "no_follow": true,
+      "symlink": false,
+      "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+      "schema": "timeline.d139.input-census/v1",
+      "summary": {
+        "unique_import_requirements": 1146,
+        "reachable_source_modules": 1001,
+        "root_python_files": 431,
+        "root_selectors": 22,
+        "dynamic_records": 983,
+        "exact_missing_count": 17,
+        "parse_error_count": 0
+      },
+      "review_2216": {
+        "status": "PASS_FINITE_RECONCILED",
+        "role": "supporting provenance only",
+        "ordered_rows_sha256": "44fcbdf4b21078754db377e99edbf4ad42171a541f56b6e70b27ef7f0ec7c54a"
+      }
+    },
+    "d139a_installation_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-OPS-D139a-install-2309-installation.json",
+      "bytes": 3587,
+      "mode": "0644",
+      "regular": true,
+      "no_follow": true,
+      "symlink": false,
+      "sha256": "82bdfab2c3ec483261126b3446aacf7d1ee9df6d38e1c2491b33e3927c60f5a4",
+      "schema": "timeline.d139a.combined-install/v1",
+      "result": "PASS_INSTALL_COMBINED",
+      "source_commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+      "source_tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+      "role": "original D139a receipt evidence; not a substitute for the missing current Farm summary/receipt pair"
+    },
+    "dependency_seed": {
+      "original67_wheelhouse": null,
+      "verifier_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "verifier_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "verifier_bytes": 52731,
+      "verifier_mode": "0755",
+      "bootstrap_archive_excluded": true
+    }
+  },
+  "provenance_limits": [
+    "The installed schema is qualified only as an installed-distribution producer; it is not a source-tree carrier.",
+    "The D139a tree tie remains unavailable without a genuine pinned ArtAgents source object; no acquisition was attempted.",
+    "The 2149 census is the canonical file; 2216 is finite review metadata and not a current Farm result.",
+    "The D139a installation receipt is retained as source evidence, but no current FARM_INSTALLED_KIT_SUMMARY was found.",
+    "The original67 wheelhouse was not found; the bootstrap archive is not promoted or unpacked."
+  ]
+}
