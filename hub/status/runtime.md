@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T08:20:53Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-26T08:20:10.810138+00:00
+<!-- main | 2026-10-26T08:26:13Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-26T08:25:37.084577+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -60,18 +60,18 @@
 | F-final App final units | Install bounded App unit and lint disclosure | Luna reserved | App0736 PASS; Main source admission | gated:D89-source | Existing notes0625; reserved0820 | App0804 received. Brief ready:32 own or absent IDs, collection error, inherited2 Node and3 lint. No global GO; prior notes exact. | App4de and82e9 |
 | D141y-b rehearsal | Retain interrupted current tuple rehearsal | Luna | Main07:39 source admission | review | rt-F-D141yb-rehearsal-0741 | Disk 3.93 GB; controller stopped at 07:43:59. Only partial Agent and Runtime checks; command exit and child reaping unknown. Raw KEEP. | App82e9 / Agentecdc / Runtime95d |
 
-| D141y-b custody | Review interrupted actual run | Luna reserved | Ordinary App slot | blocked:app | App host0756 requested | Main D141z audit: no survivors. Original exit and reaping unknown; no replay. SAFE originals0756 retained. | No source change |
+| D141y-b custody | Review interrupted actual run | Luna | App ordinary source admission | review | app-F-D141yb-custody-review-0756 | App board has review row; original exit/reaping unknown. Main later audit no survivors stays separate; no replay. | No source change |
 | D141 App units | Receive definitive non-REG unit join | App and independent Luna | Main gate07:43 | merged | App join and independent0736 | All32 own or absent IDs; collection file absent upstream. Both Node ENOENT failures inherited.82e9 applicability0707 recorded. | App4de /82e9 |
 
-| D141l controller ordering | Resolve finite whole-path continuation | Luna | App ordinary admission | doing | app-F-D141l-runtime-wholepath-0752 | App08:06 board confirms queued at4.951GB. Sole0640 continuation; no body. Agent0735 retains repair. | Agent source6a2d1c22 |
+| D141l controller ordering | Deliver bounded ordering investigation | Luna | Seven published originals hash exact | merged | app-F-D141l-runtime-wholepath-0752 | All6 findings covered; Agent peer0811 receives. Local registry and late trace limits explicit. Source investigation only, no pair admission. | Evidence only |
 
-| D141l binding return | Retain owning Agent six-finding repair | Luna | Agent source recovery07:51 | doing | Agent 0735 queued locally at 07:51; host offer withdrawn | Agent admitted at 4507217920 bytes; local request 0735 at 07:51:57 owns. Runtime and App author offers withdrawn; no duplicate. | Source6a2d1c22 |
+| D141l binding return | Review owning Agent source return | Luna | Agent0735 terminal08:04; App admission | review | Agent0735; existing review offered App0817 | Source packet17 files published. Independent native ordering check owed; trace gap disclosed. No second author or body. | Source6a2d1c22 |
 
 | D141z build stop | Stop whole build process group | Luna reserved | Ordinary App source slot | blocked:app | App host0812 requested | Private source and shared harmless controls only. Six source inputs published. Independent review before install; no rehearsal. | No source change |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
 Blockers: D141z source — Main below 4.5 GB; ordinary App source host requested for process-group stop fix. F-final heavy needs 4.86 GB and independent stop review.
-Next ready: App-host Agent whole-path0752, D141z stop author0812, then custody0756 at ordinary admission. Agent full/P4, App journeys, D141v and heavy headroom still gate F-final.
+Next ready: App-host D141z stop author0812, custody0756 result and owning Agent binding review0817. Main notes0820 await source floor. Agent full/P4, App journeys, D141v and heavy headroom gate F-final.
 live 0 / cap 0; ready-undispatched 0. Main below 4.5 GB. Three source host requests assigned to App at ordinary admission; no local duplicate. Main host audit clear.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Originals retain their original sources. Successor applicability0513 and0637 stays separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
@@ -111,3 +111,7 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 08:17 H6: Authentic App08:06 board now records app-F-D141l-runtime-wholepath-0752 QUEUED at4951MB, sole0640 continuation. Read-only transfer accepted; row doing same pass. App final ordinary recipes independently0756 PASS; its journeys wait actual post-prep5.2GB. Agent0735 owns repair, full/P4 remain Agent. Main4303679488bytes; no local source start. D141z0812 and custody0756 pending normal App acceptance. No new source, body, rehearsal, build or ZIP.
 
 08:20 peerApp0804 consumed from normal design: final unitjoin0736 qualifies finite App REGscope. Existing notes lineage assigned reserved rt-F-D141-final-unit-notes-0820, ready brief with actual current note preimages; later Main sourcefloor>=4.5GB. This clears old missing-results gate; source/custody-only disclosure is independent of Agent/P4/journeys. No manager-authored canonical prose and no duplicate framework. All prior notes and568outsidefiles remain exact until guarded worker install/review.
+
+08:22 inbox through1844252bytes: App0809 explicit normal4951023616byte admission and queued0752 acceptance consumed. App0804 notes source already rowed0820, not duplicate work. Four source heads remain read-only; all current final gates are unchanged. No local source admission or build.
+
+08:25 H6 actual App rows show wholepath0752 terminal and custody0756 review. Read all seven published originals, manager0811 scope limits and exact hashes: transport7of7PASS. Existing Agent receives directApp0811; original six findings apply0718, not automatic verdict on later0735. Agent latest08:12 board records0735 terminal08:04,17 SAFE outputs, independent review offeredApp0817. Updated owner row same pass; no duplicate author/investigator/reviewer. Hosted local registry and late trace cannot become Agent facts or full trace. Current same-suite/D89c rules govern actual owner.
