@@ -35,7 +35,7 @@ def test_manifest_json_and_file_fallback_are_exclusive_and_bounded(tmp_path):
         decode_manifest(json.dumps({"data": "x" * (256 * 1024)}), None)
 
 
-def test_check_only_stages_summary_without_prepared_body_or_target_id(tmp_path):
+def test_check_only_stages_project_scoped_summary_without_prepared_body(tmp_path):
     summary = build_prepare_import_artifacts(
         project="target-project",
         out_dir=tmp_path / "out",
@@ -44,6 +44,7 @@ def test_check_only_stages_summary_without_prepared_body_or_target_id(tmp_path):
     )
     assert summary == {
         "check_only": True,
+        "project": "target-project",
         "name": "Fixture",
         "missing_effects": [],
         "different_effects": [],
@@ -68,21 +69,23 @@ def test_prepare_action_stages_complete_commit_body_and_small_summary(tmp_path):
     prepared = json.loads((root / "prepared.json").read_text(encoding="utf-8"))
     assert prepared["publication"]["project_id"] == "target-project"
     assert prepared["timeline_id"] == summary["timeline_id"]
+    assert summary["project"] == "target-project"
     assert summary["check_only"] is False
     assert summary["shot_count"] >= 1
     outputs = json.loads((root / "manifest.json").read_text(encoding="utf-8"))["outputs"]
     assert [row["name"] for row in outputs] == ["prepared", "result"]
 
 
-def test_export_summary_is_small_and_uses_plan_metadata():
+def test_export_summary_is_small_and_scoped_to_the_requested_timeline():
     summary = _summary({
         "manifest": {"name": "Saved edit"},
         "timeline": {"timeline_id": "target"},
         "media": [{"size": 13}, {"size": 7}],
         "transcripts": {"transcripts/a.json": {}, "transcripts/b.json": {}},
-    })
+    }, project="source-project", timeline="main")
     assert summary == {
-        "name": "Saved edit", "media_count": 2, "media_bytes": 20, "transcript_count": 2,
+        "project": "source-project", "timeline": "main", "name": "Saved edit",
+        "media_count": 2, "media_bytes": 20, "transcript_count": 2,
     }
 
 
@@ -242,6 +245,12 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             )
             assert created.ok, created.error
             project = created.data["project_id"]
+            second_created = client.projects.create(
+                slug="timeline-action-test-second", name="Timeline Action Test Second",
+                idempotency_key="timeline-action-project-second",
+            )
+            assert second_created.ok, second_created.error
+            second_project = second_created.data["project_id"]
             created_timeline = client.timelines.create_empty(
                 project=project, timeline_id="main", config={"tracks": []},
                 idempotency_key="timeline-action-timeline",
@@ -287,14 +296,15 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             payload_digest = imported_payload.data["object_id"]
             manifest = {**_manifest(_empty_source()), "name": "Import fixture"}
 
-            before_objects = service.list_project_objects(project)["items"]
+            before_objects_by_project = {
+                owner_project: service.list_project_objects(owner_project)["items"]
+                for owner_project in (project, second_project)
+            }
             before_head = service.get_project_timeline(project, "main")
             before_relations = service.list_media_relations(project)["items"]
             before_shots = service.list_project_shots(project)["items"]
             before_parent_revisions = service.list_project_parent_composition_revisions(project, "main")["items"]
             before_timelines = service.list_timelines(project)["items"]
-            before_objects_by_digest = {row["digest"]: row for row in before_objects}
-            before_object_digests = set(before_objects_by_digest)
             task_outputs = []
 
             def invoke(capability: str, inputs: dict):
@@ -312,7 +322,7 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                     input_manifest.append(inputs["payload"])
                     spec["input_digests"] = [{"name": "payload", "digest": inputs["payload"]}]
                 pending = client.tasks.create(
-                    project_id=project,
+                    project_id=inputs["project"],
                     capability=capability,
                     capability_digest=registered["definition_digest"],
                     spec=spec,
@@ -342,6 +352,7 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                 task_outputs.append({
                     "task_id": task_id,
                     "run_id": run_id,
+                    "project_id": inputs["project"],
                     "outputs": observed.outputs["managed_outputs"],
                 })
                 return observed
@@ -352,13 +363,32 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             assert plan["manifest"]["name"]
             assert plan["timeline"]["timeline_id"] == "main"
             assert plan["manifest"]["media"]
+            export_summary = json.loads(client.media.read_bytes(exported.output("result")["digest"]))
+            assert export_summary["project"] == project
+            assert export_summary["timeline"] == "main"
 
             checked = invoke("rendering.timeline_prepare_import", {
                 "project": project, "manifest": manifest, "check_only": True,
             })
-            assert json.loads(client.media.read_bytes(checked.output("result")["digest"]))["check_only"] is True
+            assert checked.ok
+            checked_summary = json.loads(client.media.read_bytes(checked.output("result")["digest"]))
+            assert checked_summary["check_only"] is True
+            assert checked_summary["project"] == project
             with pytest.raises(LookupError):
                 checked.output("prepared")
+
+            checked_other_project = invoke("rendering.timeline_prepare_import", {
+                "project": second_project, "manifest": manifest, "check_only": True,
+            })
+            assert checked_other_project.ok
+            other_summary = json.loads(
+                client.media.read_bytes(checked_other_project.output("result")["digest"])
+            )
+            assert other_summary["check_only"] is True
+            assert other_summary["project"] == second_project
+            assert checked.output("result")["digest"] != checked_other_project.output("result")["digest"]
+            with pytest.raises(LookupError):
+                checked_other_project.output("prepared")
 
             prepared = invoke("rendering.timeline_prepare_import", {
                 "project": project, "manifest": manifest, "payload": payload_digest,
@@ -368,27 +398,44 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             assert prepared_body["publication"]["project_id"] == project
             assert prepared_body["publication"]["expected_head"] is None
             summary = json.loads(client.media.read_bytes(prepared.output("result")["digest"]))
+            assert summary["project"] == project
             assert summary["timeline_id"] == prepared_body["timeline_id"]
 
-            after_objects = service.list_project_objects(project)["items"]
-            after_object_digests = {row["digest"] for row in after_objects}
-            added_digests = after_object_digests - before_object_digests
-            assert len(task_outputs) == 3
+            after_objects_by_project = {
+                owner_project: service.list_project_objects(owner_project)["items"]
+                for owner_project in (project, second_project)
+            }
+            assert len(task_outputs) == 4
             declared_outputs = [output for invocation in task_outputs for output in invocation["outputs"]]
             declared_digests = [output["digest"] for output in declared_outputs]
-            assert len(declared_digests) == 5
+            assert len(declared_digests) == 6
             assert len(set(declared_digests)) == len(declared_digests)
-            assert added_digests == set(declared_digests)
-            after_objects_by_digest = {row["digest"]: row for row in after_objects}
-            assert {digest: after_objects_by_digest[digest] for digest in before_object_digests} == before_objects_by_digest
+            after_objects_by_digest_by_project = {}
+            for owner_project in (project, second_project):
+                before_objects = before_objects_by_project[owner_project]
+                before_objects_by_digest = {row["digest"]: row for row in before_objects}
+                before_object_digests = set(before_objects_by_digest)
+                after_objects = after_objects_by_project[owner_project]
+                after_objects_by_digest = {row["digest"]: row for row in after_objects}
+                after_objects_by_digest_by_project[owner_project] = after_objects_by_digest
+                added_digests = set(after_objects_by_digest) - before_object_digests
+                expected_digests = {
+                    output["digest"]
+                    for invocation in task_outputs if invocation["project_id"] == owner_project
+                    for output in invocation["outputs"]
+                }
+                assert added_digests == expected_digests
+                assert {
+                    digest: after_objects_by_digest[digest] for digest in before_object_digests
+                } == before_objects_by_digest
             for invocation in task_outputs:
                 for output in invocation["outputs"]:
                     digest = output["digest"]
-                    assert output["project_id"] == project
+                    assert output["project_id"] == invocation["project_id"]
                     assert output["task_id"] == invocation["task_id"]
                     assert output["run_id"] == invocation["run_id"]
                     assert output["media_type"] == "application/json"
-                    object_row = after_objects_by_digest[digest]
+                    object_row = after_objects_by_digest_by_project[invocation["project_id"]][digest]
                     assert object_row["media_type"] == output["media_type"]
                     assert object_row["size"] == output["size"]
                     assert object_row["filename"] == output["filename"]

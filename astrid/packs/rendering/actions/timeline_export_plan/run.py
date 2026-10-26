@@ -19,13 +19,15 @@ from astrid.packs.rendering.actions.timeline_transfer_common import (
 from astrid.sdk.timeline_transfer import export_plan
 
 
-def _summary(plan: dict[str, Any]) -> dict[str, Any]:
+def _summary(plan: dict[str, Any], *, project: str, timeline: str) -> dict[str, Any]:
     manifest = plan.get("manifest") or {}
-    timeline = plan.get("timeline") or {}
+    plan_timeline = plan.get("timeline") or {}
     media = plan.get("media") or []
     transcripts = plan.get("transcripts") or {}
     return {
-        "name": str(manifest.get("name") or timeline.get("timeline_id") or "Timeline"),
+        "project": project,
+        "timeline": timeline,
+        "name": str(manifest.get("name") or plan_timeline.get("timeline_id") or "Timeline"),
         "media_count": len(media),
         "media_bytes": sum(int(row.get("size") or 0) for row in media if isinstance(row, dict)),
         "transcript_count": len(transcripts),
@@ -35,7 +37,7 @@ def _summary(plan: dict[str, Any]) -> dict[str, Any]:
 def build_export_plan_artifacts(client: Any, project: str, timeline: str, out_dir: str | Path) -> dict[str, Any]:
     root = output_root(str(out_dir))
     plan = export_plan(client, project, timeline)
-    summary = _summary(plan)
+    summary = _summary(plan, project=project, timeline=timeline)
     plan_path, result_path = root / "plan.json", root / "result.json"
     write_artifact(plan_path, plan)
     write_artifact(result_path, summary)

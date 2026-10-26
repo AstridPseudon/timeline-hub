@@ -43,6 +43,7 @@ def build_prepare_import_artifacts(
     if check_only:
         summary = {
             "check_only": True,
+            "project": project,
             "name": name or str(manifest.get("name") or "Imported timeline"),
             "missing_effects": differences["missing_effects"],
             "different_effects": differences["different_effects"],
@@ -67,6 +68,7 @@ def build_prepare_import_artifacts(
         media = dependencies.get("media") or []
         summary = {
             "check_only": False,
+            "project": project,
             "name": prepared["name"],
             "timeline_id": prepared["timeline_id"],
             "shot_count": len(publication.get("shot_revisions") or []),
