@@ -25,6 +25,49 @@ REQUIRED_D66 = (
 )
 
 
+# Static identities from the two frozen Runtime files, including retained fixture params.
+EXPECTED_CASES = {
+    "tests.test_timeline_commit_integration::test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip",
+    "tests.test_timeline_commit_integration::test_real_door_concurrent_disjoint_moves_accept_and_rebase",
+    "tests.test_timeline_commit_integration::test_real_inverse_preserves_newer_disjoint_work_and_original_recorders",
+    "tests.test_timeline_commit_integration::test_real_same_value_publication_is_recorded_and_blocks_older_undo",
+    "tests.test_timeline_commit_integration::test_real_inverse_refuses_when_target_was_overwritten_or_returned[overwritten]",
+    "tests.test_timeline_commit_integration::test_real_inverse_refuses_when_target_was_overwritten_or_returned[returned]",
+    "tests.test_timeline_commit_integration::test_real_inverse_dry_run_and_exact_retry_write_only_the_undo_once",
+    "tests.test_timeline_commit_integration::test_real_track_create_and_inverse_keep_complete_film_closure",
+    "tests.test_timeline_commit_integration::test_real_door_v2_native_and_patch_preview_accept_retry_and_stale_head[fields]",
+    "tests.test_timeline_commit_integration::test_real_door_v2_native_and_patch_preview_accept_retry_and_stale_head[atomic]",
+    "tests.test_timeline_commit_integration::test_real_door_v2_invalid_patch_has_structured_failure_without_writes",
+    "tests.test_timeline_commit_integration::test_real_door_commit_admission_checks_origin_auth_and_project_scope",
+    "tests.test_timeline_commit_integration::test_real_door_lost_ack_restart_exact_retry_never_executes_provider",
+    "tests.test_timeline_commit_integration::test_real_restart_undo_then_recorder_tamper_fails_closed",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[pre-commit]",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[pre-restore]",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[before-commit]",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[before-restore]",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[after-commit]",
+    "tests.test_timeline_commit_crash::test_real_process_death_at_acceptance_boundary[after-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-pre-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-pre-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-before-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-before-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-after-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[transcript-after-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-pre-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-pre-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-before-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-before-restore]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-after-commit]",
+    "tests.test_timeline_commit_crash::test_retained_inputs_process_death[config-after-restore]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[pre-transcript]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[pre-config]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[before-transcript]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[before-config]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[after-transcript]",
+    "tests.test_timeline_commit_crash::test_host_boundary_first_capture_process_death[after-config]",
+}
+
+
 def _regular(path: Path, label: str) -> None:
     _parents(path, label)
     if path.is_symlink() or not path.is_file():
@@ -153,7 +196,9 @@ def _parse_json(path: Path, label: str) -> Any:
         raise ValueError(f"{label} is malformed JSON") from error
 
 
-def _source_witnesses(snap: dict[str, str], summary: str, d66: Path) -> dict[str, Any]:
+def _source_witnesses(snap: dict[str, str], summary: str, d66: Path, config: dict[str, Any]) -> dict[str, Any]:
+    route._validate_config(config)
+    bound_agent = route._derive_agent(config["route"]["agent"])
     worktree = Path(snap.get("worktree", ""))
     runtime = _git_identity(worktree, "Runtime")
     if any(runtime[key] != value for key, value in route.EXPECTED_RUNTIME.items()):
@@ -168,10 +213,11 @@ def _source_witnesses(snap: dict[str, str], summary: str, d66: Path) -> dict[str
         raise ValueError("normal service command has no Agent checkout binding")
     checkout_value = checkouts[0]
     agent = _git_identity(Path(checkout_value), "Agent")
-    config = route.load_config()
     if str(worktree) != config["route"]["runtime"]["checkout"]:
         raise ValueError("Runtime source path is not the bound P5 checkout")
-    bound_agent = {"checkout": checkout_value, "commit": agent["commit"], "tree": agent["tree"]}
+    if checkout_value != bound_agent["checkout"] or any(agent[key] != bound_agent[key] for key in route.EXPECTED_AGENT):
+        raise ValueError("Agent source is not the frozen qualified P5 checkout")
+    route._verify_source_membership(worktree)
     if command_line != route._command_body(config, bound_agent):
         raise ValueError("normal service command disagrees with the bound P5 row")
     if snap.get("tree") != runtime["tree"]:
@@ -221,7 +267,8 @@ def _validate_disk(path: Path) -> None:
         raise ValueError(f"disk witness {path.name} is malformed")
 
 
-def receive(output: Path, receipt: Path) -> None:
+def receive(output: Path, receipt: Path, *, config: dict[str, Any] | None = None, control: bool = False) -> None:
+    config = route.load_config() if config is None else config
     _directory(output, "service output")
     missing = [name for name in REQUIRED_SERVICE if not (output / name).is_file()]
     if missing:
@@ -243,7 +290,7 @@ def receive(output: Path, receipt: Path) -> None:
         raise ValueError("service exit and raw pytest exit disagree")
     suite_names, cases = _xml_cases(d66 / "d141-p5-cut.xml")
     failed = any(case["outcome"] in {"failed", "error"} for case in cases)
-    if (runner_exit == 0 and failed) or (runner_exit == 1 and not failed):
+    if runner_exit not in {0, 1} or failed != (runner_exit == 1):
         raise ValueError("JUnit outcomes and raw pytest exit disagree")
     request = _parse_key_file(output / "request", "normal service request")
     if request.get("repo") != "runtime" or request.get("suite") != "d141-p5-cut":
@@ -251,7 +298,10 @@ def receive(output: Path, receipt: Path) -> None:
     snap = _parse_key_file(output / "snap", "normal service snapshot")
     if not HEX40.fullmatch(snap.get("tree", "")):
         raise ValueError("normal service snapshot has no valid tree")
-    provenance = _source_witnesses(snap, (output / "summary").read_text(encoding="utf-8"), d66)
+    provenance = _source_witnesses(snap, (output / "summary").read_text(encoding="utf-8"), d66, config)
+    expected_cases = {"test_control::test_D141_P5_CONTROL_ONCE"} if control else EXPECTED_CASES
+    if {case["id"] for case in cases} != expected_cases:
+        raise ValueError("JUnit testcase membership is not the exact P5 selection" if not control else "JUnit is not the harmless control")
     _validate_keep(d66 / "KEEP")
     _validate_disk(d66 / "disk-start")
     _validate_disk(d66 / "disk-stop")
@@ -278,8 +328,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("output", type=Path)
     parser.add_argument("receipt", type=Path)
+    parser.add_argument("--config", type=Path, default=route.CONFIG)
+    parser.add_argument("--control", action="store_true", help="receive only the one-case harmless control")
     args = parser.parse_args()
-    receive(args.output, args.receipt)
+    receive(args.output, args.receipt, config=route.load_config(args.config), control=args.control)
     return 0
 
 

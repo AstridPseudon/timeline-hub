@@ -40,6 +40,10 @@ EXPECTED_RUNTIME = {
     "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
     "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
 }
+EXPECTED_AGENT = {
+    "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+}
 EXPECTED_FILES = {
     "tests/test_timeline_commit_integration.py":
     "867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534",
@@ -81,6 +85,8 @@ def _validate_agent(agent: Any) -> None:
     expected = agent.get("expected_commit")
     if expected is not None:
         _hash(expected, "expected Agent commit")
+        if expected != EXPECTED_AGENT["commit"]:
+            raise RouteError("expected Agent tip is not the frozen P5 Agent")
     derived = (
         "commit", "tree", "checkout", "provider_origin", "client_origin",
         "schema_digest", "lock_values",
@@ -149,13 +155,23 @@ def route_status(config: dict[str, Any]) -> tuple[str, list[str]]:
 
 
 def _regular(path: Path, label: str) -> None:
+    _parents(path, label)
     if path.is_symlink() or not path.is_file():
         raise RouteError(f"{label} is not a regular file")
 
 
 def _directory(path: Path, label: str) -> None:
+    _parents(path, label)
     if not path.is_absolute() or path.is_symlink() or not path.is_dir():
         raise RouteError(f"{label} must be an absolute regular directory")
+
+
+def _parents(path: Path, label: str) -> None:
+    if not path.is_absolute() or ".." in path.parts:
+        raise RouteError(f"{label} must be an absolute path without traversal")
+    for parent in path.parents:
+        if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+            raise RouteError(f"{label} has an unsafe parent")
 
 
 def _git(root: Path, *args: str) -> str:
@@ -212,8 +228,11 @@ def _sha256(path: Path) -> str:
 
 
 def _derive_agent(agent: dict[str, Any]) -> dict[str, Any]:
-    checkout, commit = _read_checkout_done(Path(agent["receipt"]), agent.get("expected_commit"))
-    tree = _git(checkout, "rev-parse", "HEAD^{tree}")
+    _validate_agent(agent)
+    if agent["status"] != "qualified":
+        raise RouteError("pending tuple: genuine final Agent cut receipt is pending")
+    checkout, commit = _read_checkout_done(Path(agent["receipt"]), EXPECTED_AGENT["commit"])
+    tree = EXPECTED_AGENT["tree"]
     _verify_checkout(checkout, commit, tree, "Agent")
     root = checkout.resolve()
     keep = Path(agent["receipt"]).parents[2] / "workers" / checkout.name / "KEEP"
@@ -407,7 +426,7 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
         _check_owner_mode(destination, "installer destination", directory=True)
 
 
-def run_control(output: Path, *, poison: bool = False, config: dict[str, Any] | None = None) -> int:
+def run_control(output: Path, *, poison: bool = False, fail: bool = False, config: dict[str, Any] | None = None) -> int:
     """Exercise the actual row with only its product pytest invocation replaced."""
     if poison:
         raise RouteError("poison control refused before subprocess and artifacts")
@@ -419,7 +438,10 @@ def run_control(output: Path, *, poison: bool = False, config: dict[str, Any] | 
     body = row.split(" ", 2)[2]
     scratch = Path(tempfile.mkdtemp(prefix="d141-p5-control-"))
     control = scratch / "test_control.py"
-    control.write_text("def test_D141_P5_CONTROL_ONCE():\n    print('D141_P5_CONTROL_ONCE')\n")
+    control.write_text(
+        "def test_D141_P5_CONTROL_ONCE():\n    print('D141_P5_CONTROL_ONCE')\n"
+        + ("    assert False, 'intentional private failure control'\n" if fail else "")
+    )
     # Pytest itself supplies its normal JUnit suite name, IDs and counters.
     harmless = (
         f"{shlex.quote(config['pytest']['interpreter'])} -m pytest -q -s "
@@ -442,7 +464,7 @@ def run_control(output: Path, *, poison: bool = False, config: dict[str, Any] | 
     tree = _git(Path(config["route"]["runtime"]["checkout"]), "rev-parse", "HEAD^{tree}")
     (output / "snap").write_text(f"tree={tree}\nworktree={config['route']['runtime']['checkout']}\n")
     (output / "summary").write_text(f"cmd: {body}\n")
-    if completed.returncode != 0 or completed.stdout.count("D141_P5_CONTROL_ONCE") != 1:
+    if completed.returncode != int(fail) or completed.stdout.splitlines().count("D141_P5_CONTROL_ONCE") != 1:
         raise RouteError("harmless control did not complete exactly once")
     return completed.returncode
 
@@ -453,6 +475,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("path", nargs="?", type=Path)
     parser.add_argument("--config", type=Path, default=CONFIG)
     parser.add_argument("--poison", action="store_true")
+    parser.add_argument("--fail", action="store_true", help="exercise a real private pytest failure")
     args = parser.parse_args(argv)
     config = load_config(args.config)
     if args.command == "status":
@@ -467,7 +490,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "install":
         install_candidate(config, args.path)
         return 0
-    return run_control(args.path, poison=args.poison, config=config)
+    return run_control(args.path, poison=args.poison, fail=args.fail, config=config)
 
 
 if __name__ == "__main__":

@@ -50,6 +50,13 @@ def _copy_output(base: Path, destination: Path) -> Path:
     return destination
 
 
+def _receiver_cli(output: Path, receipt: Path, *options: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(route.ROOT / "receive.py"), *options, str(output), str(receipt)],
+        capture_output=True, text=True, check=False,
+    )
+
+
 def test_frozen_runtime_and_exact_two_file_selector() -> None:
     config = route.load_config()
     assert config["route"]["runtime"] == {
@@ -66,6 +73,7 @@ def test_frozen_runtime_and_exact_two_file_selector() -> None:
 
 def test_pending_agent_refuses_rows_and_install_without_artifacts(tmp_path: Path) -> None:
     config = route.load_config()
+    config["route"]["agent"] = {"status": "pending"}
     assert route.route_status(config) == ("NOT_READY", ["genuine final Agent cut receipt is pending"])
     with pytest.raises(route.RouteError, match="pending tuple"):
         route.render_rows(config)
@@ -207,7 +215,7 @@ def test_normal_control_and_receiver_validate_durable_artifacts(tmp_path: Path) 
     output = tmp_path / "service"
     assert route.run_control(output, config=_qualified_config(tmp_path)) == 0
     receipt = tmp_path / "receipt.json"
-    receive.receive(output, receipt)
+    receive.receive(output, receipt, control=True)
     data = json.loads(receipt.read_text())
     assert data["suite"] == ["pytest"]
     assert data["runner_exit"] == 0
@@ -216,11 +224,96 @@ def test_normal_control_and_receiver_validate_durable_artifacts(tmp_path: Path) 
     assert data["provenance"]["argv"][-1] == f"--junitxml={output}/d66/d141-p5-cut.xml"
     cli_receipt = tmp_path / "nested/cli-receipt.json"
     completed = subprocess.run(
-        [sys.executable, str(route.ROOT / "receive.py"), str(output), str(cli_receipt)],
+        [sys.executable, str(route.ROOT / "receive.py"), "--control", str(output), str(cli_receipt)],
         capture_output=True, text=True, check=False,
     )
     assert completed.returncode == 0, completed.stderr
     assert json.loads(cli_receipt.read_text()) == data
+
+
+def test_receiver_cli_binds_frozen_agent_and_shared_qualified_config(tmp_path: Path) -> None:
+    config = route.load_config()
+    assert config["route"]["agent"]["status"] == "qualified"
+    bound = route._derive_agent(config["route"]["agent"])
+    assert {key: bound[key] for key in route.EXPECTED_AGENT} == route.EXPECTED_AGENT
+    output = tmp_path / "service"
+    assert route.run_control(output, config=config) == 0
+    qualified = tmp_path / "qualified.json"
+    qualified.write_text(json.dumps(config))
+    receipt = tmp_path / "positive.json"
+    completed = _receiver_cli(output, receipt, "--config", str(qualified), "--control")
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(receipt.read_text())["provenance"]["source"]["agent"]["tree"] == route.EXPECTED_AGENT["tree"]
+    wrong_root = Path("/home/user/work/wt/agt-pin-4c4ee35d")
+    wrong = {
+        "checkout": str(wrong_root),
+        "commit": route._git(wrong_root, "rev-parse", "HEAD"),
+        "tree": route._git(wrong_root, "rev-parse", "HEAD^{tree}"),
+    }
+    assert wrong["commit"] == "4c4ee35d5687c4cd40a0e5395efda53aa56f939d"
+    assert route._git(wrong_root, "status", "--porcelain") == ""
+    attacked = _copy_output(output, tmp_path / "wrong-agent")
+    (attacked / "summary").write_text("cmd: " + route._command_body(config, wrong) + "\n")
+    origins = route._origins(Path(config["route"]["runtime"]["checkout"]), wrong_root)
+    (attacked / "d66/module-origin.json").write_text(json.dumps(origins))
+    (attacked / "d66/source-hashes.json").write_text(json.dumps({value: route._sha256(Path(value)) for value in origins.values()}))
+    absent = tmp_path / "wrong-agent-receipt/receipt.json"
+    before = _inventory(tmp_path)
+    completed = _receiver_cli(attacked, absent, "--config", str(qualified))
+    assert completed.returncode != 0
+    assert "frozen qualified P5 checkout" in completed.stderr
+    assert _inventory(tmp_path) == before
+    # Even omitting expected_commit cannot turn a different genuine done receipt into a qualified binding.
+    config["route"]["agent"] = {
+        "status": "qualified",
+        "receipt": str(AGENT_RECEIPT.with_name("checkout-agent-" + wrong["commit"])),
+    }
+    qualified.write_text(json.dumps(config))
+    before = _inventory(tmp_path)
+    completed = _receiver_cli(attacked, absent, "--config", str(qualified))
+    assert completed.returncode != 0
+    assert "expected Agent tip" in completed.stderr
+    assert _inventory(tmp_path) == before
+    with pytest.raises(route.RouteError, match="expected Agent tip"):
+        route.render_rows(config)
+
+
+def test_receiver_cli_rejects_unclassified_pytest_exits_without_writes(tmp_path: Path) -> None:
+    output = tmp_path / "service"
+    assert route.run_control(output, config=route.load_config()) == 0
+    receipt = tmp_path / "absent/receipt.json"
+    for code in range(2, 256):
+        (output / "exit").write_text(f"{code}\n")
+        (output / "d66/runner-exit").write_text(f"{code}\n")
+        before = _inventory(tmp_path)
+        with pytest.raises(ValueError, match="outcomes and raw pytest exit"):
+            receive.receive(output, receipt, control=True)
+        assert _inventory(tmp_path) == before
+        if code in {2, 3, 4, 5, 127, 137, 255}:
+            completed = _receiver_cli(output, receipt)
+            assert completed.returncode != 0
+            assert "outcomes and raw pytest exit" in completed.stderr
+            assert _inventory(tmp_path) == before
+
+
+def test_normal_receiver_cli_refuses_harmless_membership_and_pending_config(tmp_path: Path) -> None:
+    output = tmp_path / "service"
+    assert route.run_control(output, config=route.load_config()) == 0
+    receipt = tmp_path / "absent/receipt.json"
+    before = _inventory(tmp_path)
+    completed = _receiver_cli(output, receipt)
+    assert completed.returncode != 0
+    assert "exact P5 selection" in completed.stderr
+    assert _inventory(tmp_path) == before
+    config = route.load_config()
+    config["route"]["agent"] = {"status": "pending"}
+    pending = tmp_path / "pending.json"
+    pending.write_text(json.dumps(config))
+    before = _inventory(tmp_path)
+    completed = _receiver_cli(output, receipt, "--control", "--config", str(pending))
+    assert completed.returncode != 0
+    assert "pending tuple" in completed.stderr
+    assert _inventory(tmp_path) == before
 
 
 def test_receiver_rejects_malformed_artifact_and_duplicate_receipt(tmp_path: Path) -> None:
@@ -278,7 +371,7 @@ def test_receiver_rejects_malformed_artifact_and_duplicate_receipt(tmp_path: Pat
         receipt = tmp_path / f"absent-{index}/receipt.json"
         before = _inventory(tmp_path)
         with pytest.raises(ValueError):
-            receive.receive(output, receipt)
+            receive.receive(output, receipt, control=True)
         assert _inventory(tmp_path) == before, (index, name)
     for attack in ("duplicate-id", "contradictory", "exit-outcome", "failed-outcome"):
         output = _copy_output(base, tmp_path / attack)
@@ -301,27 +394,22 @@ def test_receiver_rejects_malformed_artifact_and_duplicate_receipt(tmp_path: Pat
         junit.write_text(ET.tostring(root, encoding="unicode"))
         before = _inventory(tmp_path)
         with pytest.raises(ValueError):
-            receive.receive(output, tmp_path / f"{attack}-receipt.json")
+            receive.receive(output, tmp_path / f"{attack}-receipt.json", control=True)
         assert _inventory(tmp_path) == before
-    # A genuine failed result is retained as a failed result, never made green.
-    failed = _copy_output(base, tmp_path / "failed-result")
-    junit = failed / "d66/d141-p5-cut.xml"
-    root = ET.fromstring(junit.read_text())
-    suite = root.find("testsuite")
-    ET.SubElement(suite.find("testcase"), "failure")
-    suite.set("failures", "1")
-    junit.write_text(ET.tostring(root, encoding="unicode"))
-    (failed / "exit").write_text("1\n")
-    (failed / "d66/runner-exit").write_text("1\n")
+    # Retain an actual private pytest failure without changing its outcomes.
+    failed = tmp_path / "failed-result"
+    assert route.run_control(failed, config=_qualified_config(tmp_path), fail=True) == 1
     failed_receipt = tmp_path / "failed-receipt.json"
-    receive.receive(failed, failed_receipt)
-    assert json.loads(failed_receipt.read_text())["runner_exit"] == 1
+    receive.receive(failed, failed_receipt, control=True)
+    failed_data = json.loads(failed_receipt.read_text())
+    assert failed_data["runner_exit"] == 1
+    assert failed_data["testcases"] == [{"id": "test_control::test_D141_P5_CONTROL_ONCE", "outcome": "failed"}]
     for index, text in enumerate(("existing\n", "")):
         receipt = tmp_path / f"receipt-{index}.json"
         receipt.write_text(text)
         before = _inventory(tmp_path)
         with pytest.raises(ValueError, match="already exists"):
-            receive.receive(base, receipt)
+            receive.receive(base, receipt, control=True)
         assert _inventory(tmp_path) == before
 
 
@@ -336,7 +424,7 @@ def test_receiver_rejects_symlinked_terminal_artifact(tmp_path: Path) -> None:
         artifact.symlink_to(outside)
         before = _inventory(tmp_path)
         with pytest.raises(ValueError, match="regular file"):
-            receive.receive(output, tmp_path / f"receipt-{index}.json")
+            receive.receive(output, tmp_path / f"receipt-{index}.json", control=True)
         assert _inventory(tmp_path) == before, name
     outside = tmp_path / "outside-parent"
     outside.mkdir()
@@ -346,18 +434,18 @@ def test_receiver_rejects_symlinked_terminal_artifact(tmp_path: Path) -> None:
         (outside / "existing").mkdir(exist_ok=True)
         before = _inventory(tmp_path)
         with pytest.raises(ValueError, match="unsafe parent"):
-            receive.receive(base, receipt)
+            receive.receive(base, receipt, control=True)
         assert _inventory(tmp_path) == before
     terminal = tmp_path / "receipt-link"
     terminal.symlink_to(outside / "absent.json")
     before = _inventory(tmp_path)
     with pytest.raises(ValueError, match="already exists"):
-        receive.receive(base, terminal)
+        receive.receive(base, terminal, control=True)
     assert _inventory(tmp_path) == before
     for receipt in (Path("relative.json"), tmp_path / "nested/../receipt.json"):
         before = _inventory(tmp_path)
         with pytest.raises(ValueError, match="absolute path without traversal"):
-            receive.receive(base, receipt)
+            receive.receive(base, receipt, control=True)
         assert _inventory(tmp_path) == before
     # A service artifact directory or any of its ancestors cannot be a link.
     for output in (link / "service", tmp_path / "output-link"):
@@ -365,7 +453,7 @@ def test_receiver_rejects_symlinked_terminal_artifact(tmp_path: Path) -> None:
             output.symlink_to(base, target_is_directory=True)
         before = _inventory(tmp_path)
         with pytest.raises(ValueError):
-            receive.receive(output, tmp_path / "directory-link-receipt.json")
+            receive.receive(output, tmp_path / "directory-link-receipt.json", control=True)
         assert _inventory(tmp_path) == before
 
 
@@ -377,5 +465,5 @@ def test_status_cli_is_json_and_does_not_launch() -> None:
         text=True,
     )
     assert completed.returncode == 0
-    assert json.loads(completed.stdout)["status"] == "NOT_READY"
+    assert json.loads(completed.stdout)["status"] == "READY"
     assert completed.stderr == ""

@@ -10,15 +10,9 @@
       "origin": "https://github.com/banodoco/banodoco-workspace-runtime"
     },
     "agent": {
-      "status": "pending",
-      "commit": null,
-      "tree": null,
-      "checkout": null,
-      "receipt": null,
-      "provider_origin": null,
-      "client_origin": null,
-      "schema_digest": null,
-      "lock_values": null
+      "status": "qualified",
+      "expected_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70"
     }
   },
   "pytest": {
