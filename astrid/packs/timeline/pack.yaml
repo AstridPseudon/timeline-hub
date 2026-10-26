@@ -1,0 +1,171 @@
+schema_version: 3
+id: timeline
+name: Timeline Transfer
+version: "1.0.0"
+status: active
+domain: system
+stability: stable
+support: core
+visibility: visible
+description: Read-only timeline transfer planning and preparation actions.
+keywords:
+  - timeline
+  - export
+  - import
+capabilities:
+  - export_plan
+  - prepare_import
+agent:
+  purpose: Prepare portable timeline transfer data without writing project state.
+  do_not_use_for: Uploading media, publishing timelines, or committing imports.
+  normal_entrypoints:
+    - timeline.export_plan
+    - timeline.prepare_import
+documentation:
+  kind: skill
+  path: docs/SKILL.md
+actions:
+  export_plan:
+    name: Timeline Export Plan
+    version: "1.0.0"
+    short_description: Build a read-only timeline export plan and staged artifact.
+    description: Read a saved timeline and its transcript/media closure from Runtime, then emit the complete plan as a task artifact.
+    invocation:
+      kind: command
+      command:
+        argv:
+          - "{python_exec}"
+          - -m
+          - astrid.packs.timeline.actions.export_plan.run
+          - --project
+          - "{project}"
+          - --timeline
+          - "{timeline}"
+          - --out
+          - "{out}"
+    inputs:
+      - name: project
+        type: string
+        required: true
+        description: Runtime project id or immutable slug.
+      - name: timeline
+        type: string
+        required: true
+        description: Runtime timeline id or immutable slug.
+    outputs:
+      - name: plan
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/plan.json"
+        artifact_type: timeline/export-plan
+        description: Complete export plan JSON, including manifest, saved timeline, transcripts, and media metadata.
+      - name: result
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/result.json"
+        artifact_type: application/json
+        description: Small summary with timeline name and media/transcript counts and bytes.
+    resources:
+      - kind: implementation
+        path: actions/export_plan/run.py
+      - kind: support
+        path: actions/_common.py
+    cache:
+      mode: none
+    isolation:
+      mode: subprocess
+      network: false
+    metadata:
+      runtime_entrypoint: main
+      runtime_file: actions/export_plan/run.py
+      runtime_module: astrid.packs.timeline.actions.export_plan.run
+      output_result_manifest: true
+  prepare_import:
+    name: Prepare Timeline Import
+    version: "1.0.0"
+    short_description: Validate and prepare timeline import data without Runtime writes.
+    description: Preflight element compatibility before upload or compile an uploaded timeline payload into a Runtime commit body artifact.
+    invocation:
+      kind: command
+      command:
+        argv:
+          - "{python_exec}"
+          - -m
+          - astrid.packs.timeline.actions.prepare_import.run
+          - --project
+          - "{project}"
+          - --out
+          - "{out}"
+        input_args:
+          - input: name
+            flag: --name
+            optional: true
+          - input: manifest
+            flag: --manifest
+            optional: true
+          - input: manifest_file
+            flag: --manifest-file
+            optional: true
+          - input: payload
+            flag: --payload
+            optional: true
+          - input: check_only
+            flag: --check-only
+            optional: true
+    inputs:
+      - name: project
+        type: string
+        required: true
+        description: Resolved target Runtime project id.
+      - name: name
+        type: string
+        required: false
+        description: Optional imported timeline name.
+      - name: manifest
+        type: json
+        required: false
+        description: Bounded timeline manifest JSON. Use manifest_file when this exceeds 256 KiB encoded.
+      - name: manifest_file
+        type: file
+        required: false
+        description: Runtime-managed JSON manifest file fallback for large manifests; mutually exclusive with manifest.
+      - name: payload
+        type: file
+        required: false
+        description: Runtime-managed JSON file containing {timeline, transcripts}; required outside check_only mode.
+      - name: check_only
+        type: boolean
+        required: false
+        default: false
+        description: Validate manifest/elements only; do not read payload or generate a target timeline id.
+    outputs:
+      - name: prepared
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/prepared.json"
+        artifact_type: timeline/prepared-import
+        description: Complete Runtime commit body; omitted for check_only.
+      - name: result
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/result.json"
+        artifact_type: application/json
+        description: Small summary with compatibility differences and dependency counts.
+    resources:
+      - kind: implementation
+        path: actions/prepare_import/run.py
+      - kind: support
+        path: actions/_common.py
+    cache:
+      mode: none
+    isolation:
+      mode: subprocess
+      network: false
+    metadata:
+      runtime_entrypoint: main
+      runtime_file: actions/prepare_import/run.py
+      runtime_module: astrid.packs.timeline.actions.prepare_import.run
+      output_result_manifest: true
+resources:
+  - kind: documentation
+    path: docs/SKILL.md

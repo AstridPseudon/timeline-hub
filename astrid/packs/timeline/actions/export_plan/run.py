@@ -1,0 +1,60 @@
+"""Read-only Runtime timeline export planner."""
+from __future__ import annotations
+
+from astrid.core.pack.entrypoint import guard_canonical_entrypoint
+
+guard_canonical_entrypoint("timeline.export_plan")
+
+import argparse
+from pathlib import Path
+from typing import Any
+
+from astrid.packs.timeline.actions._common import output_root, run_cli, write_artifact, write_receipt
+from astrid.sdk.timeline_transfer import export_plan
+
+
+def _summary(plan: dict[str, Any]) -> dict[str, Any]:
+    manifest = plan.get("manifest") or {}
+    timeline = plan.get("timeline") or {}
+    media = plan.get("media") or []
+    transcripts = plan.get("transcripts") or {}
+    return {
+        "name": str(manifest.get("name") or timeline.get("timeline_id") or "Timeline"),
+        "media_count": len(media),
+        "media_bytes": sum(int(row.get("size") or 0) for row in media if isinstance(row, dict)),
+        "transcript_count": len(transcripts),
+    }
+
+
+def build_export_plan_artifacts(client: Any, project: str, timeline: str, out_dir: str | Path) -> dict[str, Any]:
+    root = output_root(str(out_dir))
+    plan = export_plan(client, project, timeline)
+    summary = _summary(plan)
+    plan_path, result_path = root / "plan.json", root / "result.json"
+    write_artifact(plan_path, plan)
+    write_artifact(result_path, summary)
+    write_receipt(root, kind="timeline.export_plan", inputs={"project": project, "timeline": timeline}, outputs=[
+        {"name": "plan", "path": plan_path.name, "role": "result", "is_primary": True, "type": "file"},
+        {"name": "result", "path": result_path.name, "role": "support", "is_primary": False, "type": "file"},
+    ])
+    return summary
+
+
+def main(argv: list[str] | None = None) -> int:
+    def _run() -> int:
+        parser = argparse.ArgumentParser(description="Build a read-only timeline export plan.")
+        parser.add_argument("--project", required=True)
+        parser.add_argument("--timeline", required=True)
+        parser.add_argument("--out", required=True)
+        args = parser.parse_args(argv)
+        from astrid.sdk import AstridClient
+
+        with AstridClient.open_from_launcher(start_pack_host=False) as client:
+            build_export_plan_artifacts(client, args.project, args.timeline, args.out)
+        return 0
+
+    return run_cli("timeline.export_plan", _run, argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

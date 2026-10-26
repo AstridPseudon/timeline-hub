@@ -80,6 +80,8 @@
 | `stream_content.clip_candidates` | Score transcript windows as publishable stream clip candidates. |
 | `stream_content.distill` | Distill a long event stream into segments, extracted blocks, candidates, and a review page. |
 | `stream_content.segment_map` | Fuse OCR, transcript density, and scene cuts into a complete stream timeline. |
+| `timeline.export_plan` | Build a read-only timeline export plan and staged artifact. |
+| `timeline.prepare_import` | Validate and prepare timeline import data without Runtime writes. |
 | `training.dataset_build` | Build a generic reviewed video training dataset from configured sources. |
 | `training.pool_build` | Build the candidate clip pool from triaged source-video scenes. |
 | `training.pool_merge` | Merge multiple candidate clip pools into a unified pool for arrangement. |
