@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T04:48:30.136548+00:00",
+  "pre_available_bytes": 4946587648,
+  "post_available_bytes": 4946407424,
+  "KEEP_count": 27,
+  "KEEP_changed": [],
+  "sweep3": "exit0 removed0; known harmless broken pipe diagnostics",
+  "compact1": "exit0 packed0scratch,0tests,gzipped0logs",
+  "recycle": "No eligible unheld worktree",
+  "hub": "Untouched D141o"
+}
