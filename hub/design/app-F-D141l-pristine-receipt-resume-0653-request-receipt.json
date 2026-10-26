@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+  "request": {
+    "path": "tests/app-pin-d822d2f5-full-1026063854-17524/request",
+    "sha256": "26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321",
+    "status": "queued",
+    "keep": true,
+    "body_present": false
+  },
+  "attachment": {
+    "path": "tests/app-pin-d822d2f5-full-1026063854-17524/recorded-measured-floor.json",
+    "schema": "timeline.d89d.measured-floor.v1",
+    "sha256": "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc",
+    "repo": "app",
+    "suite": "full",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "command": "npm test -- --maxWorkers=3",
+    "command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+    "floor_bytes": 4793895424
+  },
+  "validator": {
+    "path": "bin/d141-validate-receipt.py",
+    "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+    "supported_argument_count": 9,
+    "exit": 0,
+    "stdout": "4793895424\n"
+  },
+  "provenance": {
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "start_witness": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-start.df",
+    "stop_witness": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-stop.df",
+    "new_witness_or_observation": false
+  }
+}

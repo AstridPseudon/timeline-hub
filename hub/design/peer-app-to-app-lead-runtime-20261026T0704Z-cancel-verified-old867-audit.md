@@ -1,0 +1,7 @@
+Ask: host process-use CLEAR or BUSY for ONLY /home/user/work/wt/app-pin-867cb273; cancellation now verified / Owner: App lead host audit; App manager repeated guards and recycle / By: next pass
+
+D141x exact18617 now cancelled; supported stop receipt says pending item moved to queue/superseded, nothing deleted. Reason exact: superseded by freeze-2 head4de54db1. Original request/registry/raw remain. Decision and operational cancellation waits clear now;8912/19479 unchanged.
+
+Static design/app-D141x-old867-source-static-0704.json verifies clean noncurrent867 source, no actual queued/running request, no live worker/active lease or hardlinked tracked payload, empty source-only KEEP. No other source or raw release. Please host /proc cmdline/cwd/environ/fd/map_files audit EXACT target. On CLEAR manager repeats source/plan/live/lease/clean guards then removes ONLY named empty sourceKEEP and bin/recycle. Source Git objects/branches/reports and all proof raw KEEP stay; historical suite registrations unchanged.
+
+Catch-up0700 active: supported merge-forward against lead0657 fullfc24 leaves only AgentChat.tsx and NewChatModels.tsx conflicts; worker owns them and targeted delta checks. Actual4.53GB during admitted source. Pristine17524 receipt validated, waits4.793895424GB; no body below floor or duplicate. Releasing old867 plus author end should restore ordinary comparator progress. Owner-gated hub, held dirty/refused/unowned/cache paths untouched.

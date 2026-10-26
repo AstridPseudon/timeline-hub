@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "task": "D141l",
+  "test_result": "FAIL",
+  "custody_qualification": {
+    "status": "PASS",
+    "scope": "documentary custody and binding qualification only; not a product-test PASS or REG verdict",
+    "basis": "original bindings, hashes, source identity, counts, receipt controls, and corrected trace/skip claims qualify"
+  },
+  "original_derivatives": {
+    "controller_current_result": {
+      "path": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/current-result.json",
+      "sha256": "ba70a35e07289d482a0f0f0e09d912d98407907f895a05f1f05e9d6752a947df"
+    },
+    "controller_receipt": {
+      "path": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/receipt.json",
+      "sha256": "4ba0471cd2172b120a5308b22d5a14484146d7b5284b335c231a92d294eff77e"
+    },
+    "independent_review": {
+      "path": "workers/app-F-D141l-current-result-review-0635/evidence/review.json",
+      "sha256": "17ef856517b03468309838d0dd4420c951df26095375ecfa65f68731badce4e4"
+    }
+  },
+  "current_full": {
+    "result_id": "app-full-1026060654-8638",
+    "route": "integration:app",
+    "status": "fail",
+    "exit": 1,
+    "service_duration_seconds": 1270,
+    "vitest_duration_seconds": 1263.40,
+    "source": {
+      "repo": "app",
+      "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+      "parents": ["5344c53e3063001bb3255bd0c9cd32cc5e77967f", "fdea805191f466fa67dc0f2ea118da31bf86028f"],
+      "worktree": "/home/user/work/app",
+      "clean": true,
+      "computed_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"
+    },
+    "invocation": {
+      "route": "request-test -> dispatcher/test-run",
+      "registered_command": "npm test -- --maxWorkers=3",
+      "registered_command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+      "request_no_cache": true,
+      "node_phase": "NOTRUN",
+      "node_phase_reason": "npm run test:app exited 1 before the unchanged &&-chained npm run test:node phase"
+    },
+    "counts": {
+      "test_files": {"failed": 4, "passed": 1358, "total": 1362},
+      "tests": {"failed": 32, "passed": 19745, "total": 19777},
+      "collection_or_load_failures": 1,
+      "exact_failure_ids": 32,
+      "collection_error_is_separate": true
+    },
+    "raw": {
+      "request": {"path": "tests/app-full-1026060654-8638/request", "sha256": "493f0eac73dd31fd2ac0a49e9fd009c54a4bedd335d93e946d3ed8a371a30ec9"},
+      "snap": {"path": "tests/app-full-1026060654-8638/snap", "sha256": "922e01ddd09c4f1f2c1a623f477b6d32749fcb45736514b8340b6d03c6ea60a5"},
+      "summary": {"path": "tests/app-full-1026060654-8638/summary", "sha256": "47c65edf369198e6a094dbac95ddc21fc431fca694a971b1f8343fa7d3c7334e"},
+      "log": {"path": "tests/app-full-1026060654-8638/log.txt", "sha256": "50c49dcc58d59e30bd02c349a5cc18b2c977e8f72bfc24d58c873384143f5f77", "bytes": 3535795},
+      "trace": {"path": "tests/app-full-1026060654-8638/disk-trace.tsv", "sha256": "9b6338962ff0d2ca76ddb84f5d9644547efe8675ed340b4dfdcaeceef703fdc0", "samples": 256},
+      "receipt": {"path": "tests/app-full-1026060654-8638/recorded-measured-floor.json", "sha256": "dbe17516eec37decf3d6f9b1e40470053ad654e285bda978b5607953693d9823"},
+      "xml": "not emitted by this registered npm full route",
+      "keep": true
+    },
+    "failure_files": [
+      "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+      "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+      "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "src/tools/video-editor/hooks/useTimelineSave.test.tsx"
+    ]
+  },
+  "standalone_node": {
+    "result_id": "app-full-d141-node-phase-1026063009-19156",
+    "status": "FAIL",
+    "corrected_derivative": "evidence/node-results-corrected.json",
+    "raw_trace_derivative": "evidence/trace-measurement-corrected.json",
+    "raw_receipt": {"path": "tests/app-full-d141-node-phase-1026063009-19156/recorded-measured-floor.json", "sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8"}
+  },
+  "receipts": {
+    "schema": "timeline.d89d.measured-floor.v1",
+    "full": {"job_id": "app-full-1026060654-8638", "sha256": "dbe17516eec37decf3d6f9b1e40470053ad654e285bda978b5607953693d9823", "floor_bytes": 4793895424, "growth_bytes": 593895424, "stop_bytes": 4000000000, "margin_bytes": 200000000},
+    "node": {"job_id": "app-full-d141-node-phase-1026063009-19156", "sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a8", "floor_bytes": 4793895424, "growth_bytes": 593895424, "stop_bytes": 4000000000, "margin_bytes": 200000000},
+    "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+    "validator_floor": 4793895424,
+    "validator_exit": 0,
+    "no_lower_floor": true
+  },
+  "trace_correction": {
+    "derivative": "evidence/trace-measurement-corrected.json",
+    "full_raw_max": 4809617408,
+    "full_raw_min": 4494544896,
+    "full_final": 4624244736,
+    "author_full_max_corrected_from": 4643172352,
+    "node_raw_max": 4798197760,
+    "node_raw_min": 4625068032,
+    "node_final": 4625068032
+  },
+  "source_comparison": {
+    "current": {"head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"},
+    "frozen_d822": {"head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747", "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36", "full": "NOTRUN", "node": "NOTRUN"},
+    "id_map": "evidence/id-map-corrected.json",
+    "reg_or_nonreg": "NOTDETERMINED"
+  },
+  "contract_preserved": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args", "created"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "merge_modes": ["fields", "atomic"],
+    "accepted_merged_fields": ["data", "receipt", "canonical_document", "document_digest", "provider_version", "compiler_version", "normalized_commands", "id_map", "base", "previous", "accepted_revision", "accepted_publication", "rebased_onto", "merge_mode", "complete_steps", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "publisher", "annotations"],
+    "conflict_fields": ["reason", "head"],
+    "invalid_fields": ["code", "path", "hint", "suggested_command"],
+    "preview_fields": ["would_status", "null_receipt"],
+    "reply_shapes": ["accepted", "merged", "conflict", "invalid", "preview"]
+  },
+  "pristine_comparison": {
+    "status": "NOTRUN",
+    "reason": "exact pristine source pin exists, but genuine normal checkout/admission and actual full/Node outcomes are absent",
+    "no_reg_or_nonreg_claim": true
+  }
+}

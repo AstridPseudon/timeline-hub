@@ -1,0 +1,48 @@
+{
+  "schema": "D141l-pristine-receipt-resume-source-v1",
+  "decision": "SAME_ID_RECEIPT_COMPLETE_QUEUE_REMAINS_QUEUED",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true
+  },
+  "pristine_source": {
+    "worktree": "/home/user/work/wt/app-pin-d822d2f5",
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+    "clean": true,
+    "checkout_kind": "normal manager checkout"
+  },
+  "existing_request": {
+    "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+    "path": "tests/app-pin-d822d2f5-full-1026063854-17524/request",
+    "sha256": "26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321",
+    "bytes": 94,
+    "status": "queued",
+    "keep": true,
+    "body_present": false
+  },
+  "receipt": {
+    "path": "tests/app-pin-d822d2f5-full-1026063854-17524/recorded-measured-floor.json",
+    "schema": "timeline.d89d.measured-floor.v1",
+    "sha256": "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc",
+    "witness_start": {
+      "path": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-start.df",
+      "sha256": "42ea80dcbc160c2195fd638bc7dc27281ec5b6805fca5a23243edb14c7b67716"
+    },
+    "witness_stop": {
+      "path": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-stop.df",
+      "sha256": "8af93918517a4e48289462a64d52c4f8f0ec20c4f90dfcc84f2f1a141db0f0a3"
+    }
+  },
+  "prohibited_actions": {
+    "new_request": false,
+    "new_job_id": false,
+    "raw_body_read": false,
+    "queue_edit": false,
+    "direct_run": false,
+    "floor_bypass": false,
+    "new_measurement": false
+  }
+}

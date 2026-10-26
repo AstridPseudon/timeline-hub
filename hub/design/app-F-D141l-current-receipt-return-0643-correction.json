@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "derivative": "immutable controlling corrected derivative",
+  "result": "test_result_FAIL",
+  "custody_qualification": "PASS",
+  "scope": "one documentary correction of current full and standalone Node evidence; no source/test/product rerun",
+  "base": {"repo": "composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+  "source": {"head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "pristine_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747", "pristine_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36"},
+  "originals_preserved": true,
+  "original_evidence": [
+    {"worker": "app-F-D141l-freeze2-unit-controller-0606", "file": "evidence/current-result.json", "sha256": "ba70a35e07289d482a0f0f0e09d912d98407907f895a05f1f05e9d6752a947df"},
+    {"worker": "app-F-D141l-freeze2-unit-controller-0606", "file": "evidence/node-results.json", "sha256": "cbfd24d9c3cd2bc9a21246ee49b723d40f9ea448059e1ad0c021101075801fb5"},
+    {"worker": "app-F-D141l-freeze2-unit-controller-0606", "file": "evidence/trace-measurement.json", "sha256": "1a00a2f1936b09a08c9e42d682a346c886632cd1b0e03cc4cb3c3fb13d9f6d81"},
+    {"worker": "app-F-D141l-freeze2-unit-controller-0606", "file": "evidence/receipt.json", "sha256": "4ba0471cd2172b120a5308b22d5a14484146d7b5284b335c231a92d294eff77e"},
+    {"worker": "app-F-D141l-current-result-review-0635", "file": "evidence/review.json", "sha256": "17ef856517b03468309838d0dd4420c951df26095375ecfa65f68731badce4e4"},
+    {"worker": "app-F-D141l-current-result-review-0635", "file": "evidence/source-manifest.json", "sha256": "4fdfa5c2c51ea6904ed07102855eaec0461853db6ae52a97cc0ac6f1321d52ae"},
+    {"worker": "app-F-D141l-current-result-review-0635", "file": "evidence/id-map.json", "sha256": "984303d99a35361f0d719397fddf288e4fee40fe9366880bb11d6d4b33cb1cbc"},
+    {"worker": "app-F-D141l-current-result-review-0635", "file": "evidence/trace-audit.json", "sha256": "863a76d5a3eab48cf16784955f82681c35e8fdf6c8e050b64627f2e9681ced5c"}
+  ],
+  "corrections": [
+    {"field": "trace-measurement-corrected.json full.maximum_available_bytes", "old": 4643172352, "corrected": 4809617408, "raw": "tests/app-full-1026060654-8638/disk-trace.tsv", "reason": "the first sample was omitted from the author MAX aggregation"},
+    {"field": "trace-measurement-corrected.json full.minimum_available_bytes", "old": 4494544896, "corrected": 4494544896, "reason": "preserved raw minimum"},
+    {"field": "node-results-corrected.json current.declared_skip_entries", "old": 27, "corrected": 27, "reason": "27 declared entries remain distinct from actual skipped tests"},
+    {"field": "node-results-corrected.json current.actual_skipped_tests", "old": "not separately named in author derivative", "corrected": 26, "reason": "Node summary/raw counts report 26 actual skipped tests; do not convert the 27 listed entries"},
+    {"field": "id-map-corrected.json useTimelineSave upstream membership", "old": "upstream-present by file existence", "corrected": "N/A; exact title/parameterized case absent in frozen d822", "reason": "file presence is not failed-ID presence"},
+    {"field": "id-map-corrected.json pristine comparison", "old": "not available", "corrected": "pending genuine pristine result", "reason": "exact d822 object/tree exists but no genuine normal pristine outcome is retained"}
+  ],
+  "retained_controls": {
+    "floor_bytes": 4793895424,
+    "growth_bytes": 593895424,
+    "stop_bytes": 4000000000,
+    "margin_bytes": 200000000,
+    "full_trace_validator_samples": 256,
+    "node_trace_validator_samples": 19,
+    "full_body_pid": 32066,
+    "node_body_pid": 18109,
+    "sampler_pids_not_body_pids": {"full": 32072, "node": 18115},
+    "receipt_schema": "timeline.d89d.measured-floor.v1",
+    "receipt_semantics": "start_end_bracket_delta_only_not_continuous_peak",
+    "original_validation_traces": {"full": "PASS", "node": "PASS"}
+  },
+  "outputs": [
+    "evidence/current-result-corrected.json",
+    "evidence/node-results-corrected.json",
+    "evidence/trace-measurement-corrected.json",
+    "evidence/id-map-corrected.json",
+    "evidence/validation.md",
+    "evidence/handoff.md"
+  ],
+  "pristine": {"full": "NOTRUN", "node": "NOTRUN", "reg_or_nonreg": "NOTDETERMINED"}
+}

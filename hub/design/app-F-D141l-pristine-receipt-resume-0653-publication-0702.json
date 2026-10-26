@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T06:59:08.404912+00:00",
+  "byte_equal_originals": [
+    {
+      "source": "workers/app-F-D141l-pristine-receipt-resume-0653/evidence/handoff.md",
+      "destination": "design/app-F-D141l-pristine-receipt-resume-0653-handoff.md",
+      "sha256": "0d82b134fb2bd75afc44afa2bfccd727827bff7c73cca640039430cf989a3d8f",
+      "size": 1039
+    },
+    {
+      "source": "workers/app-F-D141l-pristine-receipt-resume-0653/evidence/progress.json",
+      "destination": "design/app-F-D141l-pristine-receipt-resume-0653-progress.json",
+      "sha256": "3f0c3998065676e596f83fbe803fc06a003901545725d2061f07213308616a81",
+      "size": 1338
+    },
+    {
+      "source": "workers/app-F-D141l-pristine-receipt-resume-0653/evidence/request-receipt.json",
+      "destination": "design/app-F-D141l-pristine-receipt-resume-0653-request-receipt.json",
+      "sha256": "8c10b264581d436327e4060651f2c9dcd6ed55b745d5d885587107e49cdc2913",
+      "size": 1431
+    },
+    {
+      "source": "workers/app-F-D141l-pristine-receipt-resume-0653/evidence/source-manifest.json",
+      "destination": "design/app-F-D141l-pristine-receipt-resume-0653-source-manifest.json",
+      "sha256": "071c84b8dde1868cf1463e8e499d7cae5834d9075f1e9fdca2e8718e0e88766f",
+      "size": 1780
+    },
+    {
+      "source": "workers/app-F-D141l-pristine-receipt-resume-0653/evidence/validation.md",
+      "destination": "design/app-F-D141l-pristine-receipt-resume-0653-validation.md",
+      "sha256": "0bceff6d35d201bdd7464672e04e08f0fbcb17c6afc9fd75915ca28ad60866da",
+      "size": 1769
+    }
+  ],
+  "scope": "documentary custody and normal receipt attachment only; actual tests FAIL; no REG or behavior verdict"
+}

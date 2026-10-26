@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-26T06:59:08.403881+00:00",
+  "byte_equal_originals": [
+    {
+      "source": "workers/app-F-D141l-current-metadata-final-review-0648/evidence/handoff.md",
+      "destination": "design/app-F-D141l-current-metadata-final-review-0648-handoff.md",
+      "sha256": "530ea1c33f9232a196cfd27384e5023e7356bc66058c5cc16bbd33f01d947d70",
+      "size": 1644
+    },
+    {
+      "source": "workers/app-F-D141l-current-metadata-final-review-0648/evidence/report.md",
+      "destination": "design/app-F-D141l-current-metadata-final-review-0648-report.md",
+      "sha256": "0420348056ca40cb992e8f2d05061ddf634a7a44fa65ad2b0d7826c9ef8d5154",
+      "size": 1672
+    },
+    {
+      "source": "workers/app-F-D141l-current-metadata-final-review-0648/evidence/review.json",
+      "destination": "design/app-F-D141l-current-metadata-final-review-0648-review.json",
+      "sha256": "7b4b4620e065eba81863805b313d95e010ae714ab0c3b959e499015002ee1fc8",
+      "size": 8979
+    },
+    {
+      "source": "workers/app-F-D141l-current-metadata-final-review-0648/evidence/validation.md",
+      "destination": "design/app-F-D141l-current-metadata-final-review-0648-validation.md",
+      "sha256": "8a1c2ddb7d9eecb4d9c493e734bd854f3e3ec781714efe27a58961ac37499d6e",
+      "size": 3732
+    }
+  ],
+  "scope": "documentary custody and normal receipt attachment only; actual tests FAIL; no REG or behavior verdict"
+}

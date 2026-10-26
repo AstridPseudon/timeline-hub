@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-26T06:59:58.475883+00:00",
+  "target": "/home/user/work/wt/app-pin-867cb273",
+  "worker": "app-pin-867cb273",
+  "source_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "current_HOME": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+  "clean": true,
+  "running_marker": false,
+  "actual_queued_or_running_test_refs": [],
+  "live_worker_refs": [],
+  "active_lease_refs": [],
+  "hardlinked_tracked_payloads": [],
+  "source_KEEP": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "text": ""
+  },
+  "metadata_files": [
+    "brief.md",
+    "KEEP",
+    "meta"
+  ],
+  "obsolete_request_status": "cancelled",
+  "action": "none; await exact host process-use CLEAR, then repeat guards and ordinary recycle; raw proof KEEP retained"
+}

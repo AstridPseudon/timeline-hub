@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "decision": "PASS_CUSTODY_TESTS_FAIL",
+  "scope": "one final independent documentary review of the corrected current App full and standalone Node evidence; no product or test-body review",
+  "base": {
+    "repo": "composition",
+    "commit": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d",
+    "tree": "5a8b49d46ce66f63ae13e602e6a808c575c59427"
+  },
+  "custody": {
+    "status": "PASS",
+    "qualification": "documentary custody and binding only; not a product-test PASS, REG verdict, or global GO",
+    "controlling_correction": "evidence/correction.json",
+    "recovered_commit": "3ed3b58c695d9e8ce13c8ea545319b8dd66b125d",
+    "recovered_files": {
+      "correction.json": "05a47fb6dcb153dd0e2e6fd07bb79d20a8aedc364bd9668fa0c013374a630bdc",
+      "current-result-corrected.json": "c02fab3adc9e6c864532688ab81d2047dbbd3c7ec41c2f15b44dc248eba409c5",
+      "node-results-corrected.json": "4ddd4f6fcfd3c0feb241cea845caa95feb5defd52b70fe82cddeb0176605ca90",
+      "trace-measurement-corrected.json": "ac2486be7fee5b1900417556a73dd9781bd1de7d4cb2607a5b5f82efbd07b5d6",
+      "id-map-corrected.json": "63dc981d545022234a9449eb903331b8dc82987b4ff0f2216557058089e453a0",
+      "validation.md": "0a16d6137d4ea9405217f1a684b294d64f6a9a63aa4298b0d5483dbc729bb4e5",
+      "handoff.md": "212ec370c09be9fd71df9366659b4b5cfaaef200bef111cd4d09448e97612a00"
+    },
+    "originals_preserved": true,
+    "raw_keep_jobs": [
+      "app-full-1026060654-8638",
+      "app-full-d141-node-phase-1026063009-19156"
+    ]
+  },
+  "source_binding": {
+    "repo": "app",
+    "branch": "tl/integration",
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "parents": [
+      "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "fdea805191f466fa67dc0f2ea118da31bf86028f"
+    ],
+    "clean": true,
+    "frozen_pristine": {
+      "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+      "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+      "normal_outcome": "NOTRUN",
+      "operational_dependency": {
+        "target": "app-pin-d822d2f5",
+        "full_job": "app-pin-d822d2f5-full-1026063854-17524",
+        "status": "QUEUED",
+        "source_preparation_worker": "app-F-D141l-pristine-queue-prep-0639"
+      }
+    }
+  },
+  "current_full": {
+    "job_id": "app-full-1026060654-8638",
+    "status": "FAIL",
+    "exit": 1,
+    "command": "npm test -- --maxWorkers=3",
+    "command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+    "service_duration_seconds": 1270,
+    "vitest_duration_seconds": 1263.40,
+    "counts": {
+      "files_failed": 4,
+      "files_passed": 1358,
+      "files_total": 1362,
+      "tests_failed": 32,
+      "tests_passed": 19745,
+      "tests_total": 19777,
+      "collection_or_load_failures": 1,
+      "collection_error_is_separate": true
+    },
+    "node_phase": "NOTRUN",
+    "raw": {
+      "request_sha256": "493f0eac73dd31fd2ac0a49e9fd009c54a4bedd335d93e946d3ed8a371a30ec9",
+      "snap_sha256": "922e01ddd09c4f1f2c1a623f477b6d32749fcb45736514b8340b6d03c6ea60a5",
+      "summary_sha256": "47c65edf369198e6a094dbac95ddc21fc431fca694a971b1f8343fa7d3c7334e",
+      "log_sha256": "50c49dcc58d59e30bd02c349a5cc18b2c977e8f72bfc24d58c873384143f5f77",
+      "trace_sha256": "9b6338962ff0d2ca76ddb84f5d9644547efe8675ed340b4dfdcaeceef703fdc0",
+      "receipt_sha256": "dbe17516eec37decf3d6f9b1e40470053ad654e285bda978b5607953693d9823",
+      "trace_samples": 256,
+      "xml": "not emitted",
+      "keep": true
+    },
+    "trace_recomputed": {
+      "samples": 256,
+      "maximum_available_bytes": 4809617408,
+      "minimum_available_bytes": 4494544896,
+      "first_available_bytes": 4809617408,
+      "final_available_bytes": 4624244736,
+      "periodic_observations": 253,
+      "periodic_gap_seconds": "4.991440548..5.008102580"
+    }
+  },
+  "standalone_node": {
+    "job_id": "app-full-d141-node-phase-1026063009-19156",
+    "status": "FAIL",
+    "exit": 1,
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "service_duration_seconds": 83,
+    "node_duration_ms": 79907.300109,
+    "counts": {
+      "tests_failed": 2,
+      "tests_passed": 296,
+      "actual_skipped_tests": 26,
+      "declared_skip_entries": 27,
+      "tests_total": 324,
+      "suites_total": 33,
+      "declared_entries_are_distinct_from_actual_skips": true
+    },
+    "raw": {
+      "request_sha256": "a4b7491f3e153a8541c877d8f6954a4211f793e3efc6b7a5cdd9f84b59133877",
+      "snap_sha256": "8a3aa9c0e7eb14c080bae37ba2d8000919cb15ae5b826cb26980402235e031b2",
+      "summary_sha256": "cb2f6cbae49d74547da72370f9bea03128cb0cac7faff0c5d20edc92c2f251b1",
+      "log_sha256": "ad43b74b1536b557a4b943fb8a8e3183707c86ff521fbb44ba589970dd8ffa4e",
+      "trace_sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b",
+      "receipt_sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8",
+      "trace_samples": 19,
+      "xml": "not emitted",
+      "keep": true
+    },
+    "trace_recomputed": {
+      "samples": 19,
+      "maximum_available_bytes": 4798197760,
+      "minimum_available_bytes": 4625068032,
+      "first_available_bytes": 4798197760,
+      "final_available_bytes": 4625068032,
+      "periodic_observations": 16,
+      "periodic_gap_seconds": "4.995830387..5.004783044"
+    }
+  },
+  "findings": [
+    {
+      "id": "CURRENT_FULL_TEST_FAILURE",
+      "severity": "blocking",
+      "status": "FAIL",
+      "detail": "The registered full route failed with 32 failed tests in four files; its chained Node phase did not run. This is a test result, not a metadata-custody failure."
+    },
+    {
+      "id": "CURRENT_FULL_COLLECTION_ERROR",
+      "severity": "blocking",
+      "status": "FAIL",
+      "detail": "commitSession.genericPatch.test.ts failed at module-level schema digest collection; Vitest reported zero tests for that file. It remains separate from the 32 failed test IDs."
+    },
+    {
+      "id": "CURRENT_NODE_EXTERNAL_TOOL_FAILURE",
+      "severity": "blocking",
+      "status": "FAIL",
+      "detail": "capture-extension-external-evidence.test.mjs independently failed at line 133 with spawnSync ssh-keygen ENOENT. The source blob is identical in current and frozen d822; this is not a product-cause inference."
+    },
+    {
+      "id": "CURRENT_NODE_SETUP_FAILURE",
+      "severity": "blocking",
+      "status": "FAIL",
+      "detail": "check-extension-ship-evidence.test.mjs independently failed at line 70 with spawnSync ssh-keygen ENOENT during suite setup. It is not causally collapsed into the first Node failure."
+    },
+    {
+      "id": "FULL_FAILURE_ID_MEMBERSHIP",
+      "severity": "informational",
+      "status": "N_A_PENDING_PRISTINE",
+      "detail": "All 32 exact current full failure IDs were checked by title/parameterized-case membership against frozen d822: five IDs are in files absent from d822 and 27 are in the present useTimelineSave file but have absent exact titles/predicates. No filename-only membership, REG, nonREG, or global inference is made."
+    },
+    {
+      "id": "PRISTINE_COMPARISON",
+      "severity": "blocking",
+      "status": "NOTRUN",
+      "detail": "The exact d822 head/tree is authenticated, and a genuine normal full job is queued, but no actual pristine full or same-kind Node outcome is retained. REG/nonREG remains undetermined."
+    }
+  ],
+  "receipt_controls": {
+    "schema": "timeline.d89d.measured-floor.v1",
+    "floor_bytes": 4793895424,
+    "historical_growth_bytes": 593895424,
+    "stop_bytes": 4000000000,
+    "margin_bytes": 200000000,
+    "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+    "full_validator": "PASS",
+    "node_validator": "PASS",
+    "no_lower_floor": true
+  },
+  "contract_metadata_preserved": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args", "created"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "merge_modes": ["fields", "atomic"],
+    "reply_shapes": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "accepted_merged_fields_preserved": true,
+    "conflict_invalid_preview_fields_preserved": true
+  },
+  "scope_controls": {
+    "source_or_test_changes": false,
+    "fixture_pin_kit_registry_hub_or_gitmetadata_changes": false,
+    "product_body_review_repeated": false,
+    "new_tests_or_selection_changes": false,
+    "environment_or_ssh_repair": false,
+    "raw_payload_or_credential_transfer": false,
+    "duplicate_body_or_collector": false,
+    "D141s_c_followup": "paired DROP; no further kit/adapter/0545 registration/CAS/journey work",
+    "refusal_policy": "preserve refusal and stop action"
+  }
+}

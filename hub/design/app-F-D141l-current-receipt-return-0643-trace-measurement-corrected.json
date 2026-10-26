@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "task": "D141l",
+  "status": "CONTROLLING_CORRECTION",
+  "semantics": {
+    "sampling_seconds": 5,
+    "aggregation_scope": "all retained trace rows, including first and final samples",
+    "continuous_samples": true,
+    "historical_receipt_measurement": "start_end_bracket_delta_only_not_continuous_peak",
+    "peak_claim": "raw observed maximum only; no unobserved peak claimed",
+    "receipt_floor_bytes": 4793895424,
+    "historical_growth_bytes": 593895424,
+    "stop_bytes": 4000000000,
+    "no_lower_floor": true
+  },
+  "original_derivatives": {
+    "controller_trace_measurement": {
+      "path": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/trace-measurement.json",
+      "sha256": "1a00a2f1936b09a08c9e42d682a346c886632cd1b0e03cc4cb3c3fb13d9f6d81"
+    },
+    "independent_trace_audit": {
+      "path": "workers/app-F-D141l-current-result-review-0635/evidence/trace-audit.json",
+      "sha256": "863a76d5a3eab48cf16784955f82681c35e8fdf6c8e050b64627f2e9681ced5c"
+    }
+  },
+  "full": {
+    "job_id": "app-full-1026060654-8638",
+    "path": "tests/app-full-1026060654-8638/disk-trace.tsv",
+    "sha256": "9b6338962ff0d2ca76ddb84f5d9644547efe8675ed340b4dfdcaeceef703fdc0",
+    "body_pid": 32066,
+    "sampler_pid_file_value": 32072,
+    "validator_exit": 0,
+    "sample_counts": {"all": 256, "first": 1, "periodic": 253, "final": 2},
+    "first_timestamp": "2026-10-26T06:07:19.504Z",
+    "last_timestamp": "2026-10-26T06:28:28.673Z",
+    "first_available_bytes": 4809617408,
+    "minimum_available_bytes": 4494544896,
+    "maximum_available_bytes": 4809617408,
+    "final_available_bytes": 4624244736,
+    "periodic_gap_seconds": {"minimum": 4.991440548, "maximum": 5.00810258},
+    "stop_reached": false,
+    "author_reported_max_available_bytes": 4643172352,
+    "correction": "MAX includes the retained first sample; raw minimum remains 4494544896."
+  },
+  "standalone_node": {
+    "job_id": "app-full-d141-node-phase-1026063009-19156",
+    "path": "tests/app-full-d141-node-phase-1026063009-19156/disk-trace.tsv",
+    "sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b",
+    "body_pid": 18109,
+    "sampler_pid_file_value": 18115,
+    "validator_exit": 0,
+    "sample_counts": {"all": 19, "first": 1, "periodic": 16, "final": 2},
+    "first_timestamp": "2026-10-26T06:31:18.182Z",
+    "last_timestamp": "2026-10-26T06:32:39.924Z",
+    "first_available_bytes": 4798197760,
+    "minimum_available_bytes": 4625068032,
+    "maximum_available_bytes": 4798197760,
+    "final_available_bytes": 4625068032,
+    "periodic_gap_seconds": {"minimum": 4.995830387, "maximum": 5.004783044},
+    "stop_reached": false,
+    "correction": "All retained rows are included; no author MAX mismatch was found for this trace."
+  }
+}
