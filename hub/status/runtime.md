@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T23:27:00Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-26T23:26:04.356742+00:00
+<!-- main | 2026-10-26T23:31:13Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-26T23:28:03.844394+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,13 +96,13 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Receive deployed next phase | Main and three Luna leads | Owner GO and DEPLOYED | doing | A B C leads; Main central repair | A and B audits request bounded fixes. C1 merged; C2 UI review active, provider edits coordinated by Main. Central proof gates remain. No Runtime assignment. | Delivered ZIP unchanged |
+| Follow-up agenda | Receive deployed next phase | Main and three Luna leads | Owner GO and DEPLOYED | doing | A B C leads; Main central repair | A and B fixes stay with their leads. C1 and C2 UI merged; provider save/fork proof waits Main. C3 implementation waits owner choice. No Runtime assignment. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
 Blockers: D130 and protected targets remain held; historical refusals stay recorded. Main owns scoped new-phase cleanup and hourly follow-up checks under Runbook section 0c. No active Runtime or ZIP blocker.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 6148239360 bytes. Main owns active new-phase disk diagnosis; no eligible Runtime recycle.
+live 0 / cap 3; ready-undispatched 0. Free 6336348160 bytes. Main owns active new-phase disk diagnosis; no eligible Runtime recycle.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -113,4 +113,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Recheck complete at 2026-10-26T23:26:04.356742+00:00. Ten-minute monitoring interval completed. INBOX and HEADER unchanged; five owner boards unchanged. Revised RUNBOOK read: Main checks hourly; the session loop owns that schedule. Updated A, B and C follow-up statuses read: Main audits left A installed-owner fallback and B source-track parity concerns with their existing leads. C1 merged; C2 UI is in review with provider coordination held. C3 waits owner choice. Central-test repair and milestone acceptance remain Main-owned; no Runtime assignment. Full bin/workers rt- exit 0, 2717 rows; no running row or marker; historical census unchanged. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Delivered ZIP and sidecar match the original hash. No Runtime dispatch, test, product edit, Git mutation, cleanup, hub write or daemon action. [Pass evidence](rounds/20261026T232549Z-pass.json).
+Current pass: Recheck complete at 2026-10-26T23:28:03.844394+00:00. INBOX and HEADER unchanged; all five owner boards unchanged. Full bin/workers rt- exit0,2717rows, no running row; historical census unchanged. All36 Runtime trees remain31KEEP and5dirty, no eligible recycle. C2 UI slice merged86e5; provider overlap and save/fork proof remain Main-owned. C3 central collection failed for missing setuptools; implementation waits owner choice. Deployed leads retain all follow-up ownership and Main checks hourly only. Delivered ZIP and sidecar match the original hash. No Runtime dispatch, test, product edit, Git mutation, cleanup, hub write or daemon action. [Pass evidence](rounds/20261026T232803Z-pass.json).
