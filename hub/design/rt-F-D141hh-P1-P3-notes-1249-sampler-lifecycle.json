@@ -1,0 +1,18 @@
+{
+  "duration_disclosure": "The first tool recorded five one-second samples over a four-second wall span; a full five-second span is not claimed.",
+  "exit_code": 0,
+  "finished_at": "2026-10-26T12:50:20+00:00",
+  "first_tool": true,
+  "minimum_available_bytes": 5564157952,
+  "reaped": true,
+  "sample_count": 5,
+  "sampler_pid": 5,
+  "schema": "d141hh-p1-p3-worker-sampler-v1",
+  "span_seconds": 4.0,
+  "started_at": "2026-10-26T12:50:16+00:00",
+  "stop_bytes": 4000000000,
+  "stop_reached": false,
+  "tmpdir_metadata": "regular file pointer; no mkdir performed",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-notes-1249/evidence/disk-trace.txt",
+  "waited": true
+}

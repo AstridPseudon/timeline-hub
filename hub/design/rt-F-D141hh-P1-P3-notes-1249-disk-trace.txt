@@ -1,0 +1,14 @@
+trace_started_utc=2026-10-26T12:50:16Z
+stop_threshold_bytes=4000000000
+sample_path=/home/user/work/wt/rt-F-D141hh-P1-P3-notes-1249
+sampler_pid=5
+sampler_started_utc=2026-10-26T12:50:16Z
+sample=0 utc=2026-10-26T12:50:16Z available_bytes=5564162048
+sample=1 utc=2026-10-26T12:50:17Z available_bytes=5564157952
+sample=2 utc=2026-10-26T12:50:18Z available_bytes=5564157952
+sample=3 utc=2026-10-26T12:50:19Z available_bytes=5564157952
+sample=4 utc=2026-10-26T12:50:20Z available_bytes=5564157952
+sampler_finished_utc=2026-10-26T12:50:20Z
+wait_status=0
+sampler_reaped=true
+trace_finished_utc=2026-10-26T12:50:20Z
