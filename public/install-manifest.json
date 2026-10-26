@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "agent": {
-    "sha": "8b6d7c335cd96185f75cbf36b184996734162fea"
+    "sha": "710e9c0aae306adf3113cd239b1bb8883093b275"
   },
   "runtime": {
-    "sha": "2158976498d75c119d7f9a923e1c49e8edb36001",
-    "schema_digest": "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47"
+    "sha": "11443b0b5b34bd5b36725504fb083146192a759d",
+    "schema_digest": "sha256:9061d4982c786e04d99e45470b8ea4f3d9c9ff9855c4a2f83d751a93408c205b"
   },
   "tools": {
     "uv": {
