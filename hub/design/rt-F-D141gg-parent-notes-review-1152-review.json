@@ -1,0 +1,93 @@
+{
+  "schema": "d141gg-protected-source-review-v1",
+  "verdict": "PASS",
+  "disposition": "PASS_PROTECTED_SOURCE_ONLY",
+  "scope": "Independent review of the exact D141gg parent-note candidates; no canonical write, product merge, installation, service submission, build, REG0, or ZIP claim.",
+  "candidate_status": "PASS_PRIVATE_D141GG_CANDIDATES",
+  "candidates": {
+    "candidate-README.template.md": {
+      "base_sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "candidate_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "base_bytes": 39689,
+      "candidate_bytes": 41963,
+      "suffix_bytes": 2274,
+      "full_input_prefix": true,
+      "sole_bounded_suffix_once": true
+    },
+    "candidate-gate-results.md": {
+      "base_sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "candidate_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "base_bytes": 36699,
+      "candidate_bytes": 37956,
+      "suffix_bytes": 1257,
+      "full_input_prefix": true,
+      "sole_bounded_suffix_once": true
+    }
+  },
+  "conservation": {
+    "prior_32_ids": true,
+    "ledgers_witnesses_limits": true,
+    "gaps_and_historical_text": true,
+    "placeholders_and_fences": true,
+    "popup_and_prior_text_byteexact": true
+  },
+  "source_bindings": {
+    "terminal_publication_1130": {
+      "sha256": "0825fdad333871a350e65b87fa4b0342d1c3028515e8fe3483a31de548f4c0bb",
+      "status": "SERVICE_PASS_PENDING_CUSTODY",
+      "original_count": 8
+    },
+    "custody_publication_1135": {
+      "sha256": "1b8ac7717542e52a1527a8f42431ea44707b1931a815221fa99db77fca39868b",
+      "status": "FAIL_CUSTODY_NATIVE_TEST_PASS",
+      "original_count": 7
+    },
+    "all_declared_original_bytes_and_hashes_match": true,
+    "all_originals_regular_non_symlink_0644": true
+  },
+  "service": {
+    "tuple": {
+      "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+      "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+      "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "preflight": {"id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487", "status": "pass", "exit": "0"},
+    "normal": {"id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601", "status": "pass", "exit": "0", "duration_seconds": 237},
+    "predicates": ["D66 normal launch, native seed, Agent identity and authoritative history", "D28 mounted readiness", "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo"]
+  },
+  "custody": {
+    "review_verdict": "FAIL_CUSTODY",
+    "finding": "F-001",
+    "first_tool_sampler": "FAIL",
+    "later_samples": 72,
+    "later_trace_scope": "service body only",
+    "first_tool_window_covered": false,
+    "whole_worker_trace": false,
+    "retry_or_reproof": false,
+    "main_disposition": "accept service PASS with gap disclosed; no re-proof"
+  },
+  "c0": {
+    "design_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "runtime_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "byte_identical": true,
+    "sections_checked": ["1", "4"]
+  },
+  "render": {
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "function": "render_readme",
+    "function_only": true,
+    "controlled_repositories": ["agent", "runtime", "app", "composition"],
+    "placeholders_resolved": true,
+    "balanced_fences": true,
+    "disclosure_occurrences": 2,
+    "fallback_missing_gate_notice": true
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "status": "RETAINED_DISCLOSED",
+      "effect": "Does not block this protected candidate PASS; does not establish custodyPASS or whole-worker continuity."
+    }
+  ]
+}

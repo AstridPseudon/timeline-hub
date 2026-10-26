@@ -11,6 +11,8 @@ awk -v r=$R -v s=$S '$1==r && $2==s {f=1} END {exit !f}' $O/tests/suites.conf ||
 [ $S = targeted ] && [ -z "$F" ] && { echo "targeted needs --files"; exit 2; }
 case $S in *-nodes) [ -z "$F" ] && { echo "REFUSED: *-nodes suites need --files (they otherwise run the whole default suite)"; exit 2; };; esac
 ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D
+# 12:07Z 26 Oct (D141hh): TEST_KEEP=<reason> in the environment protects the run dir from the moment it exists (KEEP is written before the request is queued)
+[ -n "${TEST_KEEP:-}" ] && echo "$(date -u +%FT%TZ) KEEP at creation: $TEST_KEEP" > $D/KEEP
 printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
 echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID
 echo "$D/"; echo "wait: $O/bin/wait-test $ID" >&2

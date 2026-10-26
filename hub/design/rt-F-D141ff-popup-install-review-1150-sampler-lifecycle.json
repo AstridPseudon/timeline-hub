@@ -1,0 +1,15 @@
+{
+  "coverage_gap": "Bounded operation only; no continuity before start/after termination and no repair of author/reviewer custody history.",
+  "ended_ns": 1793015549234535846,
+  "exit_code": -15,
+  "final_available_bytes": 5598056448,
+  "floor_bytes": 4000000000,
+  "initial_available_bytes": 5598285824,
+  "interval_seconds": 5,
+  "sampler_pid": 9,
+  "samples": 4,
+  "schema": "timeline.d141ff.popup-install-review-sampler/v1",
+  "signal_sent": "SIGTERM",
+  "started_ns": 1793015544032380382,
+  "wait_reap_observed": true
+}

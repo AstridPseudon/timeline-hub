@@ -1,0 +1,68 @@
+{
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "candidates": {
+    "README.template.md": {
+      "bytes": 39689,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a"
+    },
+    "gate-results.md": {
+      "bytes": 36699,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+    }
+  },
+  "checker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/check_notes.py",
+    "post_cas_result": "REFUSED_OLD_PREIMAGES_AS_EXPECTED",
+    "pre_cas_readonly_result": "PASS_PRIVATE_D141FF_CANDIDATES",
+    "sha256": "67122109344b018f94df3d670e03139779ff9f2e27c0d74eba3560e2bd3e1fee"
+  },
+  "preimages": {
+    "README.template.md": {
+      "backup_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+      "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02"
+    },
+    "gate-results.md": {
+      "backup_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+      "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"
+    }
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "e67dc76171c5b48e903383ca30891e5441e4a501ac25ec073aebaa5854218e18",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "rendered_sha256": "a12030537b6f2300746845088b808175981af6cf1e61e57837329b8a6933e4b9"
+  },
+  "review": {
+    "candidate_hashes": {
+      "candidate-README.template.md": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "candidate-gate-results.md": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+    },
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/review.json",
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141ff-popup-notes-review-publication-1147.json",
+    "publication_verdict": "PASS",
+    "verdict": "PASS"
+  },
+  "schema": "timeline.d141ff.popup-notes-install-source-manifest/v1",
+  "scope": "two named canonical documentary files only; no product/repo/test/assertion/generated/pin/schema/kit/queue/registry/service/hub/Git mutation",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES"
+}

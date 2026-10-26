@@ -1,0 +1,2 @@
+{"available_bytes": 5597822976, "stop_free_bytes": 4000000000, "timestamp": "2026-10-26T11:53:28.985862+00:00"}
+{"available_bytes": 5597810688, "stop_free_bytes": 4000000000, "timestamp": "2026-10-26T11:53:33.986252+00:00"}

@@ -1,0 +1,57 @@
+{
+  "checks": {
+    "before_after_current_equal": true,
+    "cas_method_order": {
+      "after_map_durable": true,
+      "atomic_replace_and_dir_fsync": true,
+      "backups_fsynced_before_mutation": true,
+      "before_map_durable_before_mutation": true,
+      "preimage_inventory_rechecked": true,
+      "readback_after_replace": true,
+      "staged_candidate_rollback_fsynced": true
+    },
+    "checker_expected_refusal": true,
+    "conservation": {
+      "README.template.md": {
+        "balanced_fences": true,
+        "full_preimage_prefix": true,
+        "prior_markers": true,
+        "sole_suffix_once": true
+      },
+      "gate-results.md": {
+        "balanced_fences": true,
+        "full_preimage_prefix": true,
+        "prior_markers": true,
+        "sole_suffix_once": true
+      }
+    },
+    "exact_candidates": true,
+    "exact_old_backups": true,
+    "historical_custody": {
+      "author_first_tool_sampler": false,
+      "author_restarted_exit_code": null,
+      "historical_custody_repaired_by_install": false,
+      "interpretation": "Current equality and this bounded review sampler do not repair author/reviewer historical custody gaps; prior correction1022 and original immediate-pre-CAS loss remain historical."
+    },
+    "outside_568_individual_fullhash_bytes_mode": true,
+    "production_function_only_render": true,
+    "regular_0644_targets": true,
+    "review_publication_exact": true,
+    "sampler": {
+      "all_above_floor": true,
+      "exit_code": -15,
+      "samples": 4,
+      "wait_reap_observed": true
+    }
+  },
+  "findings": [
+    "PASS: exact accepted candidates installed.",
+    "PASS: all 568 outside paths match both immediate maps individually.",
+    "PASS: CAS durability/atomic/fsync/readback ordering established from actual method log.",
+    "LIMIT: historical author/reviewer custody unresolved and not inferred from equality.",
+    "LIMIT: product/build/full-suite scope not run."
+  ],
+  "schema": "timeline.d141ff.popup-install-review/v1",
+  "scope": "one independent bounded post-CAS installation review; no repair or semantic review",
+  "verdict": "PASS"
+}

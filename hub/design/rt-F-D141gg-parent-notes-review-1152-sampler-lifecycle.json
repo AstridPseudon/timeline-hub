@@ -1,0 +1,16 @@
+{
+  "exit_code": 0,
+  "gap_disclosure": "This review sampler ran after source inspection; it is durable disk evidence only and does not backfill the source author 1148 first-tool custody gap or establish whole-worker continuity.",
+  "interval_seconds": 5,
+  "last_available_bytes": 5597810688,
+  "last_sample_at": "2026-10-26T11:53:33.986252+00:00",
+  "pid": 4,
+  "reaped": true,
+  "samples": 2,
+  "schema": "d141gg-review-sampler-v1",
+  "started_at": "2026-10-26T11:53:28.958210+00:00",
+  "status": "completed",
+  "stop_free_bytes": 4000000000,
+  "waited": true,
+  "worker_first_tool": false
+}

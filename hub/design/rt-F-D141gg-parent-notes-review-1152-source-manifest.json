@@ -1,0 +1,196 @@
+{
+  "bases_and_candidates": {
+    "candidate-README.template.md": {
+      "base_bytes": 39689,
+      "base_sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "candidate_bytes": 41963,
+      "candidate_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "full_input_prefix": true,
+      "sole_suffix_once": true,
+      "suffix_bytes": 2274,
+      "suffix_sha256": "784130c80c02b9b86938c820ea2c78fec9c4e6ff61428d19a49c04317af85c20"
+    },
+    "candidate-gate-results.md": {
+      "base_bytes": 36699,
+      "base_sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "candidate_bytes": 37956,
+      "candidate_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "full_input_prefix": true,
+      "sole_suffix_once": true,
+      "suffix_bytes": 1257,
+      "suffix_sha256": "f876996f09df8b9c65a9fc949b8fea99360f0b1bcd6dcecb28648333bc21a114"
+    }
+  },
+  "c0": {
+    "byte_identical": true,
+    "design_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "runtime_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections_checked": [
+      "1",
+      "4"
+    ]
+  },
+  "candidate_status": "PASS_PRIVATE_D141GG_CANDIDATES",
+  "custody": {
+    "finding": "F-001",
+    "first_tool_sampler": "FAIL",
+    "later_trace": "72 samples cover service body only; first-tool window remains uncovered",
+    "publication": "app-D141cc-parent-custody-publication-1135.json",
+    "publication_status": "FAIL_CUSTODY_NATIVE_TEST_PASS",
+    "retry_or_reproof": false,
+    "review_verdict": "FAIL_CUSTODY",
+    "whole_worker_trace": false
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_repositories": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_missing_gate_notice": true,
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true
+  },
+  "schema": "d141gg-protected-source-review-v1",
+  "scope": "Independent source-only review; no canonical write, product merge, installation, service submission, build, REG0, or ZIP claim.",
+  "service": {
+    "normal": {
+      "duration_seconds": 237,
+      "exit": "0",
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-1026112312-16601",
+      "status": "pass"
+    },
+    "predicates": [
+      "D66 normal launch, native seed, Agent identity and authoritative history",
+      "D28 mounted readiness",
+      "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo"
+    ],
+    "preflight": {
+      "exit": "0",
+      "id": "app-pin-82e9e13d-full-d141-p2-parent-move-82e9e13d-submit-preflight-1026112242-25487",
+      "status": "pass"
+    },
+    "tuple": {
+      "agent": {
+        "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      "app": {
+        "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      },
+      "composition": {
+        "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "runtime": {
+        "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      }
+    }
+  },
+  "source_bindings_count": {
+    "custody_1135": 7,
+    "terminal_1130": 8
+  },
+  "source_publications": [
+    {
+      "bytes": 3721,
+      "files": [
+        {
+          "bytes": 9528,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-controller-receipt.json",
+          "sha256": "3bc1bf8b580cbe768366ef741a2497af84f8b6cdf461f7ef21ff15eb5e395f55"
+        },
+        {
+          "bytes": 2840,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-results.json",
+          "sha256": "0c53f0627f9e4de561ea8ce6acd933076a7bfc1dc144e782d647b0964d6eba83"
+        },
+        {
+          "bytes": 6232,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-source-manifest.json",
+          "sha256": "feea73f700a43306e12a511e9c3093b20e348c53f6b8514251648633a0ed7b9d"
+        },
+        {
+          "bytes": 1251,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-trace-measurement.json",
+          "sha256": "79aac0ac0ccb65f11917f2a53d588e867b5e64a0468d4406cb516c81e69ab418"
+        },
+        {
+          "bytes": 744,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-sampler-lifecycle.json",
+          "sha256": "b338c510b4c4304c4c94b0c6b65f229da66ea4c4c6dc4ba98ced305976b7a754"
+        },
+        {
+          "bytes": 1696,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-validation.md",
+          "sha256": "28f043788d166e246f94c44ff200ab9a1f4131b11daa02e88fb8d83e24bd9793"
+        },
+        {
+          "bytes": 1933,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-handoff.md",
+          "sha256": "d02fa6f628b3913ca5956b1075f407bbe0ddf2668831343b4887add5a17cde97"
+        },
+        {
+          "bytes": 4590,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-progress.json",
+          "sha256": "a7b559cb30ceba394f5932774481dfca6f97192b79eeb8c539d88020fe412d4d"
+        }
+      ],
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-parent-terminal-publication-1130.json",
+      "sha256": "0825fdad333871a350e65b87fa4b0342d1c3028515e8fe3483a31de548f4c0bb",
+      "status": "SERVICE_PASS_PENDING_CUSTODY"
+    },
+    {
+      "bytes": 3394,
+      "files": [
+        {
+          "bytes": 1385,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-review.json",
+          "sha256": "68ea90257f65680151defa8712d5c9a99e84557c51c03d2026eb4fdfe3daf92a"
+        },
+        {
+          "bytes": 1586,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-findings.md",
+          "sha256": "85174450e2817a13c7ef2c2a3250d7904f317b4c0733237dc2050018d7b8f9e2"
+        },
+        {
+          "bytes": 2496,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-source-manifest.json",
+          "sha256": "431fe970b9c91365f785123efbdc13189f1ef847eee72ae8e56bc150ad652f08"
+        },
+        {
+          "bytes": 3381,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-validation.md",
+          "sha256": "e77fce840f3ac02bcbcea80f7885d244bebceb316d63001ee7fc3cf7cf2ac321"
+        },
+        {
+          "bytes": 909,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-handoff.md",
+          "sha256": "dc94148df98cd703b5b7d55bb45eeb269599d0ca93d49750335d405b0caa447f"
+        },
+        {
+          "bytes": 1005,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-disk-trace.txt",
+          "sha256": "c3eed661e5591993417ad65469ccf19965f1b2e68f008842564f33ef90464694"
+        },
+        {
+          "bytes": 728,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-sampler-lifecycle.json",
+          "sha256": "4116fed68c5b883887d90167ebea5244f33afd12f9c5727a087bb47705400828"
+        }
+      ],
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-parent-custody-publication-1135.json",
+      "sha256": "1b8ac7717542e52a1527a8f42431ea44707b1931a815221fa99db77fca39868b",
+      "status": "FAIL_CUSTODY_NATIVE_TEST_PASS"
+    }
+  ],
+  "verdict": "PASS"
+}
