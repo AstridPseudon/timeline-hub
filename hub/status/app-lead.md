@@ -1,1 +1,1 @@
-app-lead 14:45Z uptime 4603m: daemons alive; FINAL App HOME abac6c809da25f4c6cc7cce61a7d5ea2ac067067 (D141v pin pass merged; Agent ec0a9f5b, Runtime 95d98f03); proofs on 82e9 stand; popup known gap; eac97ea5 unmerged (post-ZIP); no refusals/blocked rows; ~/.codex unchanged.
+app-lead 15:30Z uptime 4649m: daemons alive, live 0/cap 3 idle; final App HOME abac6c809da2 (D141v pin pass merged); proofs on 82e9 stand; popup known gap; eac97ea5 unmerged post-ZIP; no refusals/blocked rows; ~/.codex unchanged; waiting MAIN next instruction.
