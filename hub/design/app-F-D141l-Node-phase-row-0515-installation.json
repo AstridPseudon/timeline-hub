@@ -1,0 +1,45 @@
+{
+  "task": "D141l",
+  "scope": "full-unit coverage preparation only",
+  "config": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+  "row": "app full-d141-node-phase npm run test:node",
+  "result": "appended exactly once",
+  "mutation": {
+    "lock": "flock -x on suites.conf",
+    "cas": "preimage SHA-256 checked before mutation",
+    "install": "same-filesystem temporary copy plus atomic mv -T",
+    "preserved_mode": "600"
+  },
+  "pre": {
+    "sha256": "5ce57b6ee789de40c6d25874a29af37c4fff3d477b913219617eff8b1d01f072",
+    "bytes": 733149,
+    "mode": "600",
+    "uid_gid": "0:0",
+    "last_byte_hex": "0a"
+  },
+  "post": {
+    "sha256": "e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7",
+    "bytes": 733192,
+    "mode": "600",
+    "uid_gid": "0:0",
+    "last_byte_hex": "0a",
+    "exact_row_count": 1,
+    "row_line": 416
+  },
+  "row_lf": {
+    "bytes": 43,
+    "sha256": "ca72c9edfe37e73855c5165802f8213ab5693628f6778da0791c827579383b47"
+  },
+  "outside_conservation": {
+    "prefix_bytes": 733149,
+    "prefix_sha256": "5ce57b6ee789de40c6d25874a29af37c4fff3d477b913219617eff8b1d01f072",
+    "normal_app_full_row": "app         full              npm test -- --maxWorkers=3",
+    "normal_app_full_row_sha256": "ea65e55ed5233e5bc335fe7ac6f632ad0fcd0d855449176d5ada293fd2c45bb5"
+  },
+  "forbidden_actions": [
+    "no test or full/body execution",
+    "no request-test or wait-test",
+    "no D141g/old-row/queued-request/test-run/kit/source/pin changes",
+    "no repo, hub, Git metadata, or Composition host changes"
+  ]
+}

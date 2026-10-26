@@ -1,0 +1,62 @@
+{
+  "task": "D141l",
+  "registered_suite": {
+    "repo": "app",
+    "name": "full-d141-node-phase",
+    "command": "npm run test:node",
+    "classification": "full/heavy by existing full-name classification",
+    "admission": "normal default strictly above 5.2 GB; no floor exception",
+    "execution_policy": "continuous 5s trace/KEEP and 4 GB stop, as existing service policy"
+  },
+  "source_bound_receiving": {
+    "qualified": {
+      "source_pin": "app-pin-5344c53e",
+      "source_commit": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "source_tree": "dd989783046aeff652486a1ba39db42aea86e201",
+      "sequence": [
+        "normal request-test app-pin-5344c53e full",
+        "if the full result reports Node NOTRUN, request the exact full-d141-node-phase row"
+      ]
+    },
+    "pristine": {
+      "source_pin": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+      "source_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+      "sequence": [
+        "run the exact pristine full pin through the existing normal service",
+        "run that source's own exact test:node phase serially when required"
+      ]
+    },
+    "shared_rules": [
+      "one full/body at a time through existing service",
+      "no-cache execution with raw KEEP evidence",
+      "normal 5.2 GB body wait; no paired-kit dependency",
+      "this preparation establishes neither coverage nor REG0",
+      "package scripts are selected from each source snapshot; never copy one expanded list to the other",
+      "the existing full row remains npm test -- --maxWorkers=3"
+    ]
+  },
+  "package_script_comparison": {
+    "common": [
+      "--import tsx",
+      "--test-concurrency=1",
+      "--test-reporter=spec",
+      "--test-reporter-destination=stdout",
+      "--test-reporter=./scripts/quality/node-skip-guard-reporter.mjs",
+      "second --test-reporter-destination=stdout",
+      "all common selectors in the same order"
+    ],
+    "qualified_only_selector": "scripts/installer/update-manifest.test.mjs",
+    "qualified_insertion": "immediately after scripts/installer/manifest.test.mjs",
+    "pristine_only_selector": null,
+    "qualified_test": "npm run test:app && npm run test:node",
+    "pristine_test": "npm run test:app && npm run test:node",
+    "test_app_both_heads": "npm run check:no-smoke-tests && npm run check:known-failures && npm run check:no-raw-skips && npm run check:skip-registry && vitest run --config config/testing/vitest.config.ts",
+    "no_smoke_known_failure_no_raw_skip_skip_registry": "preserved in test:app and existing full row"
+  },
+  "non_scope": [
+    "no test execution now",
+    "no Node test/tsc/lint/full/body execution now",
+    "no generic runner/framework or altered semantics",
+    "no D141g pair, historical row, queued request, kit, source, or pin registration"
+  ]
+}

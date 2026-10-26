@@ -1,0 +1,37 @@
+{
+  "task": "D141l",
+  "source_repo": "/home/user/banodoco/reigh-app",
+  "qualified_app": {
+    "commit": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "parents": [
+      "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+      "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04"
+    ],
+    "package_path": "package.json",
+    "package_blob": "70a005c2c3a4f1c59373ef1c4a404de4b225c37c",
+    "package_bytes": 18669,
+    "package_json_sha256": "0f66d33d1fdbcf4ff2fe4c3bde81e6d5125831971d3fe492798116bc0f3b5d77",
+    "node_script_bytes": 1709,
+    "node_script_sha256": "74e219373befd25b92f85eb21e84d685c4bf767b0ab969a1e464097766d5363a"
+  },
+  "pristine_upstream": {
+    "commit": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parents": [
+      "7796159ce89408aa307988ec4cfc29bc99783a25"
+    ],
+    "package_path": "package.json",
+    "package_blob": "5bdc5b0aaab190884feea72120b3d9d12ab9264f4",
+    "package_bytes": 16880,
+    "package_json_sha256": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "node_script_bytes": 1666,
+    "node_script_sha256": "cfe43a224171922de49fe96c4b7647554c63263a090477137430ad4596099455"
+  },
+  "documentary_composition_host": {
+    "repo": "/home/user/work/wt/app-F-D141l-Node-phase-row-0515",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "status": "clean; no tracked or untracked repo delta"
+  }
+}
