@@ -1,0 +1,22 @@
+{
+  "worker": "app-F-D141l-Agent-native-path-0828",
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/disk-trace.txt",
+  "interval_seconds": 5,
+  "stop_available_bytes": 4000000000,
+  "persistent_sampler": {
+    "started_utc": "2026-10-26T08:31:03.177Z",
+    "first_sample_utc": "2026-10-26T08:31:03.181Z",
+    "last_sample_utc": "2026-10-26T08:31:03.181Z",
+    "minimum_available_bytes": 4920274944,
+    "term_sent_utc": "2026-10-26T08:31:08.192Z",
+    "wait_rc": 143,
+    "reaped_utc": "2026-10-26T08:31:08.196Z",
+    "threshold_reached": false,
+    "status": "TERM_WAIT_REAP_PASS"
+  },
+  "gaps_disclosed": [
+    "The first tool attempted a background sampler before reads, but the pre-existing worker tmpdir marker was a regular file and that process did not persist after its shell; this startup gap is retained in disk-trace.txt.",
+    "The inherited baseline trace was already present and was not treated as this worker's pre-read continuous trace.",
+    "An earlier PTY sampler was interrupted by Ctrl-C before the explicit TERM/ wait/reap sampler; its samples remain labeled in disk-trace.txt."
+  ]
+}

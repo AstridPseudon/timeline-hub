@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-26T08:34:44.059148+00:00",
+  "worker": "app-F-D141l-Agent-native-path-0828",
+  "source_only": true,
+  "verdict": "FAIL_FINITE",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-report.md",
+      "sha256": "19064dd89b315a85cb12cb59161f1605c18fd34755d58f1592f38da2be693ded",
+      "bytes": 1368
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-findings.md",
+      "sha256": "69fb13b5d1be2afd57896e8ebb263855ca01ff071cdd23df996157b3c647ab5d",
+      "bytes": 7491
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-source-map.json",
+      "sha256": "8e9637a5be29c351e912eaca6d21b7ef7ec53f3d4436df88f32ff689f3c29864",
+      "bytes": 4689
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-validation.md",
+      "sha256": "e3a1799ee16492c8a2a7e994423ce8c57dac2d0283e050aa8a0248ba5a941b80",
+      "bytes": 2055
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-handoff.md",
+      "sha256": "aa2bcf59a1654b212fb23af12bdfae73decd378a6565ef35120920da9d750eb4",
+      "bytes": 1196
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-disk-trace.txt",
+      "sha256": "3bb1aea8772e2cda6a787e4172b3808b5f5122a9a399e8b54a2b5995c1c2ce1a",
+      "bytes": 1271
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-native-path-0828/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-native-path-0828-sampler-lifecycle.json",
+      "sha256": "4b529925e520fbea1db746f4fff61187e48d5fe45debdafb5c8d1ebfe241bcf8",
+      "bytes": 1206
+    }
+  ],
+  "manager_limits": [
+    "First trace lines are inheritedinvalid bytes18806/stop4294967296, not available bytes and not accepted as witness.",
+    "Actual current samples08:30:12..08:30:48 and08:31:03 only; sampler gaps explicit, no whole-worker continuous trace.",
+    "Git6a2d object/tree57f68e1 exists on App; report final statement unavailable cannot negate direct Git readback.",
+    "No new authenticated service receipt protocol or v2 service request validator authorized; apply D66 minimal plain identity/result manifest."
+  ]
+}

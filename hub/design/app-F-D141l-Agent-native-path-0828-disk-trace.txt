@@ -1,0 +1,25 @@
+trace_started_utc=2026-10-26T08:28:13Z
+interval_seconds=5
+stop_bytes=4294967296
+2026-10-26T08:28:13Z bytes=18806
+own_sampler_started_utc=2026-10-26T08:29:43.327Z
+own_sampler_interval_seconds=5
+own_sampler_stop_available_bytes=4000000000
+own_sampler_pty_started_utc=2026-10-26T08:30:12.962Z
+own_sampler_pty_interval_seconds=5
+own_sampler_pty_stop_available_bytes=4000000000
+own_pty_sample_utc=2026-10-26T08:30:12.965Z available_bytes=4920639488
+own_pty_sample_utc=2026-10-26T08:30:17.975Z available_bytes=4920696832
+own_pty_sample_utc=2026-10-26T08:30:22.986Z available_bytes=4920532992
+own_pty_sample_utc=2026-10-26T08:30:27.997Z available_bytes=4920520704
+own_pty_sample_utc=2026-10-26T08:30:33.010Z available_bytes=4920496128
+own_pty_sample_utc=2026-10-26T08:30:38.020Z available_bytes=4920483840
+own_pty_sample_utc=2026-10-26T08:30:43.029Z available_bytes=4920479744
+own_pty_sample_utc=2026-10-26T08:30:48.039Z available_bytes=4920475648
+term_sampler_started_utc=2026-10-26T08:31:03.177Z
+term_sampler_interval_seconds=5
+term_sampler_stop_available_bytes=4000000000
+term_sample_utc=2026-10-26T08:31:03.181Z available_bytes=4920274944
+term_sampler_term_received_utc=2026-10-26T08:31:08.192Z
+term_sampler_wait_reap_rc=143
+term_sampler_reaped_utc=2026-10-26T08:31:08.196Z

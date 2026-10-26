@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T08:29:40Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 6 | status age 1m -->
+<!-- app | 2026-10-26T08:35:43Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 1m -->
 # app board, 2026-10-26T08:25:08.894781+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
@@ -13,9 +13,9 @@
 | D141 placement | Retain exact intended history oracle | Luna and protected Luna | Main D141d;0243 PASS | merged | 0235;0243 | Only placement expected records:2 objects22 paths. Helpers, all other gestures and predicates exact. | 520d7e4fc12a |
 | D141 hosted custody | Review interrupted Runtime rehearsal | Luna | Runtime0756 transfer | merged | app-F-D141yb-custody-review-0756 | FAIL CUSTODY all7 findings; partial Agent Runtime only. Main original exit and reaping UNKNOWN. No replay. | Evidence only |
 | D141z hosted author | Stop final build process group safely | Luna | Runtime0812 and Main D141z | doing | app-F-D141z-build-stop-host-0812 | Private lifecycle candidate and harmless controls only; later independent review. No build or install. | Private source |
-| D141 P4 hosted source | Prepare one changed CLI selector | Luna | Agent0815 transfer | doing | app-P4-D141l-cli-source-host-0825 | Existing0733 source row, original CLI test untouched. Normal manifest and isolated stub controls; no body. | Agent ecdc |
+| D141 P4 hosted source | Review one changed CLI source packet | Luna and Luna | Agent0815 transfer | review | Author0825; review0831 | Author tiny17/1 and poison PASS; production profile state missing on App. Same-checker independent review active. | Agent ecdc |
 | D141 Agent binding review | Return Agent0735 finite FAIL | Luna | Agent0817 transfer | merged | app-F-D141l-Agent-binding-review-0820 | Checker78 due45 absent App inputs; isolated10 and36 PASS. Native path questions remain; actual source not qualified. | Evidence only |
-| D141 Agent native path | Investigate second failure native seams | Luna | Review0820 FAIL | doing | app-F-D141l-Agent-native-path-0828 | Read only daemon concurrency, failed cut continuation, row receipt timing and service floors. No author or body. | Evidence only |
+| D141 Agent native path | Deliver complete second failure facts | Luna | Review0820 FAIL | merged | app-F-D141l-Agent-native-path-0828 | Five native findings returned. Direct test-run races daemon; cut FAIL skips pristine. Scope and trace limits explicit. | Evidence only |
 | D141 hosted whole path | Deliver Agent controller ordering facts | Luna | Runtime0752 transfer | merged | app-F-D141l-runtime-wholepath-0752 | Source investigation returned all six findings; local registry and late trace limits explicit. Agent0735 retains repair. | Evidence only |
 | D141 final unit notes | Receive final App unit disclosure | Runtime existing notes owner | Independent App0736 PASS | blocked:runtime | Peer0804; existing Runtime notes route | Actual32 own failures and collection error remain visible; both Node failures nonREG. Exact counts and bounded scope sent, no global GO. | Evidence only |
 | D141 notes | Retain reviewed installed notes | Runtime Luna and Luna | 0203;0243 and Runtime reviews | merged | 0215;0225;0254;0258 | Exact upstream mock and placement lines installed;568 outside files and gap paragraphs exact; render PASS. | Evidence only |
@@ -75,11 +75,11 @@ Maintenance0735 and0757: Compact1 additionally gzipped4 ended worker logs; packe
 
 
 Blockers: App journeys — Ordinary preflight and body each need available>5200000000 after exact sources. Actual4942610432; short257389569 bytes. No measured journey X or hub approval.
-Blockers: Agent — Author0735 complete; sole independent review now hosted App0820. Definitive full pair and changed CLI P4 still owed on owning Agent service.
+Blockers: Agent — Intrinsic0735 failures and native whole-path findings delivered0835; owning repair and definitive full pair still owed. App hosts CLI source review only.
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Prepared app-P-D141w-final-journeys-controller ONLY when actual post-prep available>5200000000. All4 checkouts and recipes qualify. App finite REG JOIN closed0736; final pins wait Agent and all-lane REG closure. Journeys bind actual82e9 after normal admission; no second heavy body or paired exception. Final pin pass D141v waits all-lane REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol remains undispatched until independently proved new REG.
-live 3 / cap 3; ready-undispatched 0. Both hosted read-only investigations returned; journeys blocked on actual post-prep5.2GB floor. App unit REG JOIN closed; no heavy body. All four unit phases terminal; no heavy body. Normal journey headroom still absent.
+live 2 / cap 3; ready-undispatched 0. Both hosted read-only investigations returned; journeys blocked on actual post-prep5.2GB floor. App unit REG JOIN closed; no heavy body. All four unit phases terminal; no heavy body. Normal journey headroom still absent.
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
