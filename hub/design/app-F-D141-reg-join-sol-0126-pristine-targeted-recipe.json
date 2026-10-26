@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "task": "D141 pristine targeted qualification recipe",
+  "status": "PASS_STATIC_RECIPE_EXECUTION_PENDING",
+  "submitted": false,
+  "installed": false,
+  "frozen_cut_guards": {
+    "app": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "agent": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "source": "ORCH/design/D141-cut-tuple.md (Composition full identity also in existing d141-p1 registered source tuple)",
+    "rule": "No pins or pinned source/package bytes in any repository may change during pristine qualification. No cross-product phase is requested. No main refresh or re-vendoring."
+  },
+  "classification": "18 environment-type-provisional; dependency mismatch demonstrated, causal sufficiency and behavioral outcomes UNKNOWN until same-kind affected-file receipt",
+  "affected_files": [
+    "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+    "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+    "src/tools/video-editor/compositions/TimelineRenderer.test.tsx"
+  ],
+  "counts": {
+    "affected_files": 3,
+    "affected_failed_ids": 18,
+    "full_file_test_scope": 27,
+    "neighbour_passes_in_old_receipt": 9
+  },
+  "rows": [
+    {
+      "id": "pristine-001",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "title": "V009 public host behavior qualification > uses injected host values at typed effect, typed animation, legacy, and sequence helper callsites",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], aggregate root at TimelineRenderer.tsx:1594:25",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18841
+    },
+    {
+      "id": "pristine-002",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "title": "V009 public host behavior qualification > renders canonical defaults and per-clip managed overrides through the installed local owner",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18842
+    },
+    {
+      "id": "pristine-003",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "title": "V009 public host behavior qualification > rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18843
+    },
+    {
+      "id": "pristine-004",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "title": "V009 public host behavior qualification > keeps a public owner mismatch unavailable instead of resolving another text-card owner",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18844
+    },
+    {
+      "id": "pristine-005",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > keeps explicit host B through two nested shot levels instead of switching to context host A",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18845
+    },
+    {
+      "id": "pristine-006",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > retains context host A through nested shots when there is no explicit override",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18846
+    },
+    {
+      "id": "pristine-007",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > renders nested content with explicit host B when the provider context has no host",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18847
+    },
+    {
+      "id": "pristine-008",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > updates the cached nested timeline when the explicit host changes without remounting",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18848
+    },
+    {
+      "id": "pristine-009",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > deduplicates repeated sequential mounts: one load, second mount synchronous",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18849
+    },
+    {
+      "id": "pristine-010",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > deduplicates concurrent mounts sharing one in-flight load",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18850
+    },
+    {
+      "id": "pristine-011",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > no loading placeholder when crossing a primed shot boundary (cached config reused synchronously)",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18851
+    },
+    {
+      "id": "pristine-012",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > sequences premount so the next shot mounts before the boundary",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18852
+    },
+    {
+      "id": "pristine-013",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > keeps nested child content mounted while hidden before a canonical shot boundary",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18853
+    },
+    {
+      "id": "pristine-014",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > invalidates a specific timeline after a save so the next mount reloads fresh data",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18854
+    },
+    {
+      "id": "pristine-015",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "title": "ShotClipSequence referenced-timeline cache > a failed load falls back to the placeholder and retries on a later mount",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.tsx:1594:25; theme.visual is undefined while evaluating color",
+      "evidence": "pristine log failure block [1/18], same aggregate root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18855
+    },
+    {
+      "id": "pristine-016",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "title": "V009 public host behavior qualification > does not interpret another installed owner’s params as local end-spanning card assets",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx:272:14; expect(...).not.toThrow() received TypeError from TimelineRenderer.tsx:1594:25",
+      "evidence": "pristine log failure block [2/18] after the shared renderer root",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18876
+    },
+    {
+      "id": "pristine-017",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+      "title": "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > registry includes the four 2rp clip types",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx:23:23; Array.from(THEME_PACKAGE_CLIP_TYPES) receives undefined",
+      "evidence": "pristine log failure block [3/18]; shared composition registry has no discovered theme package",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18895
+    },
+    {
+      "id": "pristine-018",
+      "fullfile": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+      "title": "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > section-hook entry resolves to a component from @banodoco/timeline-theme-2rp",
+      "upstream_presence": true,
+      "actual_pristine_outcome": "FAIL",
+      "classification": "environment-type-provisional",
+      "concrete_first_frame": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx:32:19; THEME_PACKAGE_REGISTRY['section-hook'] is undefined",
+      "evidence": "pristine log failure block [4/18]; shared composition registry has no discovered theme package",
+      "causal_status": "UNKNOWN_PENDING_SAME_KIND_TARGETED_RECEIPT",
+      "receipt_log_line": 18907
+    }
+  ],
+  "source": {
+    "head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "package_json_sha256": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+    "package_lock_sha256": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+    "runtime_lock_sha256": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6"
+  },
+  "static_dependency_findings": {
+    "service_selection": "bin/test-run:200 takes target worker node_modules if present; otherwise falls back to /home/user/work/app/node_modules, then links the snapshot to realpath of selected install.",
+    "receiver_current_node_modules": "absent (ls reported ENOENT); do not confuse realpath lexical output for existence or readiness",
+    "observed_shared_composition": "0.0.10; realpath /home/user/work/app/node_modules/@banodoco/timeline-composition",
+    "pristine_composition_lock": "file:vendor/timeline-composition; linked package version 0.0.2",
+    "pristine_theme_lock": "file:vendor/timeline-theme-2rp; linked package version 0.1.0",
+    "observed_shared_theme": "absent (stat ENOENT)",
+    "observed_shared_vitest": "4.1.5, also the exact pristine lock version; no Vitest version mismatch is claimed. Full pristine lock determines isolated versions, no hand-selected substitute.",
+    "resolution": "pristine config/testing/vitest.config.ts:18-33,45-79 resolves composition registry/theme API through root node_modules with fallback stubs, and pins runtime aliases. Different install contents can change selected modules. No renderer/body investigation performed.",
+    "proof_limit": "Current shared observations corroborate 0120. Historical result did not emit complete install/environment manifest; present files alone do not prove every historical dependency byte."
+  },
+  "future_normal_worker_owned_route": {
+    "target_choice": "Manager/harness allocates a fresh ordinary App worker at exact pristine source; use that worker metadata route, not this Composition hosting worker or integration:app. Existing receiver may be reused only by its authorized owner; this worker changes neither receiver nor metadata.",
+    "registration": "Existing request-test WORKER targeted --files route reads repo/worktree from workers/WORKER/meta (request-test:9-15; test-run:10). No new suite or test wrapper required for three-file selection.",
+    "isolated_install": "In future authorized dependency-preparation phase, materialize only exact pristine source into a fresh worker-owned App worktree under its allowed scratch budget and install from unchanged package-lock with normal npm ci using pinned Node v20.20.0/npm 10.8.2 and a private npm cache. Preserve frozen postinstall (Remotion patch); do not ignore scripts or replace individual packages. No shared benches, fixtures, installs or source worktrees copied. If exact locked artifacts unavailable or scratch budget exceeded, stop and report finite blocker.",
+    "layout": "Worker node_modules must resolve entirely inside its own private install and exact pristine vendor sources; file links for composition/theme/schema/ops must resolve to that source, never integration or shared installs. Service picks that existing install automatically. Do not replace another worker symlink or mutate shared node_modules. No install executed here.",
+    "source_guards": "Before/after install and dispatch, exact HEAD/tree, clean tracked source, package.json/package-lock.json/runtime.lock.json hashes, vendor bytes and config/test files match pristine. Root postinstall may alter only private dependency bytes. No package/lock repair. Service snapshot tree equals pristine, synthetic parent equals pristine HEAD; synthetic identity recorded separately.",
+    "install_guards": "Record Node executable/version, npm version/settings, private node_modules realpath, complete lock/install resolution and file-link targets before/after. Keep cache/output paths worker-owned. Shared and normal-cut dependencies remain untouched. Source-only service cache omits install identity: --no-cache is necessary for new dependency receipt.",
+    "environment": "Keep Node20 v20.20.0/npm10.8.2; unset ASTRID_PUBLIC_CHECKOUT, ASTRID_APP_DIRECT_DIST and NODE_PATH as original receiver recipe; preserve other established settings, recording actual values. Private TMPDIR, npm_config_cache, XDG_CACHE_HOME, Vite/Vitest cache/output ownership. Generic test-run does not inject these bindings: manager must provide them in actual dispatcher/body environment and receipt, not merely prefix request-test. No install, binding change or registration here."
+  },
+  "targeted_service": {
+    "registered_suite": "tests/suites.conf:70 app targeted npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2",
+    "request_argv_template": [
+      "ORCH/bin/request-test",
+      "WORKER_OWNING_GUARDED_PRISTINE_INSTALL",
+      "targeted",
+      "--files",
+      "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+      "--no-cache"
+    ],
+    "wait_argv_template": [
+      "ORCH/bin/wait-test",
+      "RETURNED_RESULT_ID"
+    ],
+    "semantics": "--files is whitespace-split and appended as file arguments (test-run:14-16). It is file selection, not exact-title filtering: all 27 tests in the three files run; reconcile the exact 18 listed IDs plus nine neighbours. Do not pass titles, flags, or a command through --files. Only this targeted suite is proposed.",
+    "settings_distinction": "Registered targeted uses --maxWorkers=2. Historical full registered npm test -- --maxWorkers=3 forwarded the latter flag to the &&-chained Node script, not directly to Vitest. Do not claim identical scheduler settings or inject flag tokens into files. Record effective targeted settings; no source/config modification and no broader full required.",
+    "scope": "Vitest affected-file phase only; no quality preflight, Node, browser or journeys are included by this route. Same kind means same Vitest/config, frozen source/predicates and lock-derived install with recorded settings.",
+    "acceptance": "All 18 exact IDs have explicit outcomes and source/install/settings receipts. If failures persist unchanged, do not declare environment-only or adapt assertions; retain UNKNOWN or qualify original failure with its finite receipt. No full solely for source HEAD/synthetic snapshot.",
+    "now": "Not submitted; manager schedules after current journeys. Node coverage is a separate authorized phase after journeys."
+  },
+  "no_reg0": true,
+  "held_scope": [
+    "D141 own-test/B022/Element/SWAP/profile investigations STOP",
+    "D130 absolute hold",
+    "no product authoring from this recipe"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-26T01:42:35Z",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/pristine-targeted-recipe.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-pristine-targeted-recipe.json",
+      "sha256": "adcba50b916e80e8e469e07256f22410e0ea85de9c1b067dc8647e23a7b7261d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-validation.md",
+      "sha256": "03b7c0fab8a0636c51d4ae000cac375dd6fd6c2d9302f8a908114bb723784434"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/findings.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-findings.md",
+      "sha256": "e27dd6d419a5aff467837b7e2bf450335be8081e802e461b66b9a502296867b6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-handoff.md",
+      "sha256": "305131c9e2e6ec8113425fbed74d330586f0842221b5212ec64824dde319f5ea"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/shot-group-verdict.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-shot-group-verdict.json",
+      "sha256": "195c6fbef51cb70209f8d7598b1cbf1c270587f4b3ea674a30f116c90070e39a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-reg-join-sol-0126/evidence/join.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-reg-join-sol-0126-join.json",
+      "sha256": "3ec1490032ea94d9760d0f9b2dc6f4f05e077b31d2a083318fdbe30b91a4b1fb"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-D141-shot-load-REG-sol-0130/evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-shot-load-REG-sol-0130-source-manifest.json",
+      "sha256": "497fe651842c98204e16414aeb032e35be9a57f672ad18feb9c5d32be3a78634"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-D141-shot-load-REG-sol-0130/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-shot-load-REG-sol-0130-validation.md",
+      "sha256": "6c9cb46ed4fc9e9f7f8c3a16a8bbf0ac5f7689470ecef42da9869bb2fd6f63c2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-D141-shot-load-REG-sol-0130/evidence/guard-map.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-shot-load-REG-sol-0130-guard-map.json",
+      "sha256": "cda94253981c17bcd0bac4c5f5d0a05c2f13e2d2ac7cc42acc970ddc3ac5ecf2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-D141-shot-load-REG-sol-0130/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-shot-load-REG-sol-0130-handoff.md",
+      "sha256": "58ec38ba76bab086ba32a234dcd53cf8e63bfa575594f1e016969d0bbff33ba7"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A2-D141-shot-load-REG-sol-0130/evidence/affected-proofs.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-shot-load-REG-sol-0130-affected-proofs.json",
+      "sha256": "fd9996e285789ee570afa93355442054af46b928599db58931f8ca45c5bb91b3"
+    }
+  ]
+}

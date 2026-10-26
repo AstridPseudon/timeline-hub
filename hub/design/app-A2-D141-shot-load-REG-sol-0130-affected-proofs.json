@@ -1,0 +1,69 @@
+{
+  "status": "BLOCKED_no_candidate_no_head_move",
+  "base": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "changed_product_files": [],
+  "qualified_affected_id": "normal-033-shot-group-pack",
+  "qualified_parent_receipts": [
+    {
+      "id": "app-full-1026004326-12174",
+      "outcome": "FAIL",
+      "case": "expected 2 got 3",
+      "source": "immutable join/whole-path evidence"
+    },
+    {
+      "id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "outcome": "exact case PASS; full run FAIL elsewhere",
+      "source": "immutable join/whole-path evidence"
+    }
+  ],
+  "local_verification": {
+    "unchanged_targeted_tests": 22,
+    "passed": 21,
+    "failed": 1,
+    "shot_group": {
+      "passed": 5,
+      "failed": 1
+    },
+    "placement_workspace_v1": {
+      "passed": 16,
+      "failed": 0
+    }
+  },
+  "receipts_invalidated_by_this_worker": [],
+  "P1_P2_P3": [
+    {
+      "id": "P1",
+      "requires_reproof_if_save_basis_head_moves": [
+        "real-document doc.patch accepted/merged/refused",
+        "split -> trim new clip -> intervening Agent edit -> lost acknowledgement -> restart",
+        "dependent intent basis and stable IDs; accepted closure adoption"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    },
+    {
+      "id": "P2",
+      "requires_reproof_if_save_basis_head_moves": [
+        "document-native duplicate and placement selected non-default target",
+        "popup add/swap, placement, element, registerAsset through A2 as applicable to changed shared save seam",
+        "zero old-route traffic, intended fields, reload and guarded undo"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    },
+    {
+      "id": "P3",
+      "requires_reproof_if_save_basis_head_moves": [
+        "Gate-5 journey on A2/R2",
+        "lost acknowledgement/restart/recovery and guarded undo on authoritative Runtime history"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    }
+  ],
+  "exact_P1_P2_P3_receipt_ids": "Not supplied by this brief or controlling finite D141 packet; no claim that any existing receipt qualifies a future candidate. Repo lane must join exact current integrated-head receipts before assigning reruns.",
+  "candidate_review": "Independent review still required if a future candidate is authored; none exists here.",
+  "holds": [
+    "D130 absolute hold",
+    "D141 B022/Element/SWAP/profiling/other own failures remain stopped"
+  ],
+  "scope": "No broader duplicate-output corruption claim. No full/core/browser/journey/profile runs requested or performed."
+}

@@ -1,0 +1,56 @@
+{
+  "task": "D141",
+  "status": "PASS_FINITE_CLASSIFICATION",
+  "id": "normal-033-shot-group-pack",
+  "classification": "productREG",
+  "rejected_classifications": {
+    "nonREG-both": "Contradicted by cut FAIL and pristine PASS.",
+    "changed-test-setup-only": "Cut mock commitTimeline calls loadTimelineCommandBasis then subtracts one; net load effect zero. Production creates three counted caller reads before sending.",
+    "UNKNOWN": "Not needed for this finite predicate: immutable source plus exact failing and passing receipts explain the extra caller load. Pristine dependency mismatch is open for renderer IDs, not causal to this mocked provider counter."
+  },
+  "repo": "/home/user/work/app",
+  "cut": {
+    "head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "result": "app-full-1026004326-12174",
+    "receipt": "log.txt:39012-39028; shot-group-pack-commands.test.ts:397:27",
+    "expected": 2,
+    "actual": 3,
+    "outcome": "FAIL",
+    "test_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+    "placement_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99"
+  },
+  "pristine": {
+    "head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "execution_commit": "4bb696aceae83a3843df47ff1ff99c9717a3e0aa",
+    "execution_parent": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "result": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+    "receipt": "log.txt:32: file (6 tests) PASS; no test failures for this file",
+    "outcome": "PASS",
+    "test_blob": "02589a19ca936e7cac35ee6b59c274ecafbe027f",
+    "placement_blob": "49cdf488ec4037e5c069459a9b4266b2003c7c31"
+  },
+  "shared_caller_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+  "source_citations": [
+    {"ref":"cut", "path":"src/tools/video-editor/components/AstridTimelineEditor.tsx", "lines":"348-363", "fact":"Production editor passes selected timelineId, configVersion and locator to duplicateShotGroup, then reloads."},
+    {"ref":"both", "path":"src/tools/video-editor/lib/shot-group-pack-commands.ts", "lines":"379-418", "fact":"Same blob in both trees: version-check load at 388, no final-video task, mutateTimelineDocument at 410."},
+    {"ref":"pristine", "path":"src/shared/lib/placement/placementService.ts", "lines":"78-106,119-138", "fact":"Initial loadTimeline call plus one store.load -> loadTimelineDocument -> loadTimeline; saveTimelineAtHead mock does not load. Total 2."},
+    {"ref":"cut", "path":"src/shared/lib/placement/placementService.ts", "lines":"233-243,247-279,341-369", "fact":"Initial loadTimeline call plus two unconditional loadTimelineCommandBasis calls at 252 and 259. session send calls provider.commitTimeline at 278. Total 3 before send."},
+    {"ref":"cut", "path":"src/tools/video-editor/lib/shot-group-pack-commands.test.ts", "lines":"37-49,68-74,120-125,377-400", "fact":"Both read methods increment same counter; commit mock adds 1 then subtracts 1. Seed resets counter. Exact input/assertions preserved."},
+    {"ref":"pristine", "path":"src/tools/video-editor/lib/shot-group-pack-commands.test.ts", "lines":"36-65,320-343", "fact":"Read increments once; save mock has no read. Same fixture and loads=2 assertion."},
+    {"ref":"cut", "path":"src/integrations/runtime/dataProvider.ts", "lines":"746-767,885-906,996-1015", "fact":"Real commit adapter sends request/key and adopts returned closure without head read. Basis method performs real history read; added basis call is production work, not a mock-only side effect."}
+  ],
+  "preserved_predicates": ["derivedFrom", "ordered pinned shot IDs", "loads=2", "one revision rev-2", "empty task requests", "no relational-surface path"],
+  "normal_later_assertions": "Assertions after loads=2 are preserved in source but not reached in failing execution; no extra pass credit.",
+  "manager_allocation_only": {
+    "smallest_root": "src/shared/lib/placement/placementService.ts:createDocumentStore.load; second basis read at line 259 and its local-staleness guard at 257-263",
+    "affected_ids": ["normal-033-shot-group-pack"],
+    "scope": "Regression of protected caller-load count only. No claim that duplicate output is missing or corrupt. Other shared-store consumers are not newly qualified affected IDs.",
+    "author_assigned": false,
+    "implementation_or_test_change": false,
+    "constraint": "Preserve load assertion and all inputs; manager owns any subsequent product allocation. Do not restore retired writer or remove safety checks on this report alone."
+  },
+  "new_execution": false,
+  "reg0": false
+}

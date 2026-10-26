@@ -1,0 +1,710 @@
+{
+  "schema_version": 1,
+  "task": "D141 corrected finite REG qualification",
+  "normal_result_id": "app-full-1026004326-12174",
+  "pristine_result_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+  "source_heads": {
+    "normal": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "normal_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "pristine": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "pristine_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab"
+  },
+  "counts": {
+    "normal_failed_tests": 33,
+    "normal_failed_files": 5,
+    "normal_files_with_failed_test_ids": 4,
+    "normal_files_with_collection_error": 1,
+    "pristine_failed_tests": 18,
+    "pristine_failed_files": 3,
+    "joined_test_rows": 33,
+    "collection_errors": 1,
+    "row_classifications": {
+      "nonREG-own-test": 32,
+      "nonREG-both": 0,
+      "productREG": 1,
+      "UNKNOWN": 0
+    },
+    "qualification_verdict": "FAIL_ZERO_REG_QUALIFICATION: one proved productREG; no REG0 claim; Node NOTRUN and pristine 18 environment seam remain open"
+  },
+  "outcome_definitions": {
+    "PASS": "Exact title is present upstream and the pristine log records its file as passing.",
+    "FAIL": "Exact title is present upstream and the pristine log records the same exact title as failing.",
+    "absent": "The exact upstream test ID/title is not present; a file-level or family-level resemblance is not substituted.",
+    "NOTRUN": "The phase did not execute. This is not used as a passing result."
+  },
+  "rows": [
+    {
+      "id": "normal-001-a3-accepted",
+      "fullfile": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+      "title": "A3 mounted popup full caller > carries a real mounted shared-child add through the accepted v2 commit transport",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": false,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "Normal source defines status='accepted' in the mounted shared-child add test. It clicks V2, Add media, uploads local0.png, waits for /commit, then asserts the preserved request scope, occurrence.fork plus occurrence.add-media commands, empty step patch, fields merge, receipt and outbox cleanup (source lines 241-300).",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine tree has no ShotTimelinePreview.full-caller.a3.test.tsx; exact title is absent from the pristine log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38822
+      }
+    },
+    {
+      "id": "normal-002-a3-merged",
+      "fullfile": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+      "title": "A3 mounted popup full caller > carries a real mounted shared-child add through the merged v2 commit transport",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": false,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "Same mounted shared-child add input and assertions as normal-001, with status='merged' and the merged rebased_onto assertion retained in authoritativeResponse (source lines 169-205 and 241-300).",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine tree has no ShotTimelinePreview.full-caller.a3.test.tsx; exact title is absent from the pristine log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38823
+      }
+    },
+    {
+      "id": "normal-003-runtime-elements-history",
+      "fullfile": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "title": "routed element save with the class Runtime provider > settles the catalog gesture after the pending history response resolves",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": false,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "Normal source uses hold='history': mounted routed VideoEditorPage, selects AM Burst, clicks Apply, waits for the pending /commits? read, verifies no commit before history resolves, then resolves all deferred responses and checks one atomic doc.patch commit, reads, outbox acceptance and zero unexpected requests (source lines 71-197).",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine tree has no VideoEditorProvider.runtime-elements.test.tsx; exact title is absent from the pristine log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38841
+      }
+    },
+    {
+      "id": "normal-004-runtime-elements-commit",
+      "fullfile": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "title": "routed element save with the class Runtime provider > settles the catalog gesture after the pending commit response resolves",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": false,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "Same mounted element-save predicate and input as normal-003, with hold='commit'; the original source additionally checks the persisted pending request/key and exact body while the commit acknowledgement is deferred.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine tree has no VideoEditorProvider.runtime-elements.test.tsx; exact title is absent from the pristine log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38842
+      }
+    },
+    {
+      "id": "normal-005-runtime-elements-refresh",
+      "fullfile": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "title": "routed element save with the class Runtime provider > settles the catalog gesture after the pending refresh response resolves",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": false,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "Same mounted element-save predicate and input as normal-003, with hold='refresh'; the original source waits for the post-commit inspect refresh and asserts the loaded clip count before final acceptance.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine tree has no VideoEditorProvider.runtime-elements.test.tsx; exact title is absent from the pristine log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38843
+      }
+    },
+    {
+      "id": "normal-006-prepared-video-accepted-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='accepted', children=false. The source seeds old-video selection metadata, prepares local0.mp4, and asserts the durable semantic outbox request, occurrence media command, old-media conservation, accepted canonical closure and no legacy save call (source lines 226-548).",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine useTimelineSave.test.tsx is an older 8-test file; exact generated title and its prepared-video predicate are absent from the pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38864
+      }
+    },
+    {
+      "id": "normal-007-prepared-video-accepted-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='accepted', children=true; same prepared-video request and accepted-closure assertions as normal-006, with the child/adoption branch also checking the provider metadata and captured successor document.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Pristine useTimelineSave.test.tsx is an older 8-test file; exact generated title is absent.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38865
+      }
+    },
+    {
+      "id": "normal-008-prepared-video-merged-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='merged', children=false; preserves the same prepared media input and request assertions while requiring merged status, previous head and rebased_onto in the reply.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38866
+      }
+    },
+    {
+      "id": "normal-009-prepared-video-merged-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='merged', children=true; same merged prepared-media predicate as normal-008 plus the child/adoption branch.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38867
+      }
+    },
+    {
+      "id": "normal-010-prepared-video-conflict-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='conflict', children=false; same prepared video and old-media input, with 409 dependency_changed retained in the pending outbox and visible draft recovery assertions.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38868
+      }
+    },
+    {
+      "id": "normal-011-prepared-video-conflict-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='conflict', children=true; same conflict predicate with the child/adoption branch preserved.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38869
+      }
+    },
+    {
+      "id": "normal-012-prepared-video-retry-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='retry', children=false; same prepared-video request, first acknowledgement loss, retained exact request/key and explicit retry acceptance.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38870
+      }
+    },
+    {
+      "id": "normal-013-prepared-video-retry-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='retry', children=true; same lost-acknowledgement/retry predicate with the child/adoption branch.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38871
+      }
+    },
+    {
+      "id": "normal-014-prepared-video-dependent-conflict-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: dependent conflict (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='dependent conflict', children=false; the first prepared-media intent is followed by a dependent edit, then a 409 dependency_changed response retains the dependent basis and recovery state.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38872
+      }
+    },
+    {
+      "id": "normal-015-prepared-video-missing-old-selection",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old selection (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='missing old selection', children=false; the GET media-selection source lookup returns 404 and the exact old selection is conserved in the retained draft with no commit.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38873
+      }
+    },
+    {
+      "id": "normal-016-prepared-video-mismatched-old-selection",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: mismatched old selection (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='mismatched old selection', children=false; source lookup returns the old object with a changed variant_id and the outbox refuses the save while retaining the source seam.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38874
+      }
+    },
+    {
+      "id": "normal-017-prepared-video-extra-old-selection",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: extra old selection (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='extra old selection', children=false; source lookup returns an extra field and the test preserves the exact-source validation boundary.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38875
+      }
+    },
+    {
+      "id": "normal-018-prepared-video-missing-old-metadata",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old metadata (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='missing old metadata', children=false; the old registry entry loses variantId and the source metadata guard retains the draft without publishing.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38876
+      }
+    },
+    {
+      "id": "normal-019-prepared-video-missing-selector",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selector (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='missing selector', children=false; the Runtime capability omits getProjectMediaSelection and the test requires the exact recoverable source alert and retained intent.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38877
+      }
+    },
+    {
+      "id": "normal-020-prepared-video-existing-asset",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: existing asset (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='existing asset', children=false; registry is preseeded with variant-new, so created IDs omit the asset while the occurrence media command and accepted closure remain checked.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38878
+      }
+    },
+    {
+      "id": "normal-021-prepared-video-rebased",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: rebased (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='rebased', children=false; the synthetic reply is status='rebased'/'merged' with previous and rebased_onto heads while preserving the prepared-media command and closure.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38879
+      }
+    },
+    {
+      "id": "normal-022-prepared-video-invalid-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='invalid', children=false; Runtime returns 422 selection_changed at commands/0/args/old_media with hint and suggested command, and the retained local document stays unchanged.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38880
+      }
+    },
+    {
+      "id": "normal-023-prepared-video-invalid-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='invalid', children=true; same 422 selection_changed code/path/hint/suggested-command predicate with the child/adoption branch.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38881
+      }
+    },
+    {
+      "id": "normal-024-prepared-video-missing-selection-false",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: false)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='missing selection', children=false; capability omits mediaSelection and the test requires an accessible Runtime project media selection alert plus no old queued payload.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact title/predicate absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38900
+      }
+    },
+    {
+      "id": "normal-025-prepared-video-missing-selection-true",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: true)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each input mode='video', outcome='missing selection', children=true; same missing mediaSelection alert/no-publish predicate with the child/adoption input.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated title is absent from pristine source/log. The normal receipt records the exact title verbatim.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38901
+      }
+    },
+    {
+      "id": "normal-026-undo-accepted",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (accepted)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='accepted'. The test reads authoritative history, creates a guarded inverse doc.patch with label 'Undo timeline', merge='atomic', preserved previous values, idempotency key and then checks accepted inverse, reload and redo.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from the older pristine useTimelineSave.test.tsx/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38989
+      }
+    },
+    {
+      "id": "normal-027-undo-merged",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (merged)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='merged'. Same authoritative-history guarded inverse input as normal-026, with merged status and rebased_onto/previous-head reply checks.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38990
+      }
+    },
+    {
+      "id": "normal-028-undo-lost-ack",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (lost acknowledgement)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='lost acknowledgement'. Same guarded atomic inverse; the first inverse acknowledgement is dropped, the exact pending request/key is retained, and recovery is replayed after reload.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38991
+      }
+    },
+    {
+      "id": "normal-029-undo-later-write",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (later_write)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='later_write'. Same guarded atomic inverse input; the refusal carries reason later_write, conflict/head information and retained recovery state.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38992
+      }
+    },
+    {
+      "id": "normal-030-undo-aba-write",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (aba_write)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='aba_write'. Same guarded atomic inverse input; the ABA refusal code/reason is preserved and no unguarded fallback is accepted.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38993
+      }
+    },
+    {
+      "id": "normal-031-undo-history-unavailable",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (history_unavailable)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='history_unavailable'. Same guarded atomic inverse input; unavailable authoritative history refuses the action with reload guidance and leaves the local document unchanged.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38994
+      }
+    },
+    {
+      "id": "normal-032-undo-invalid",
+      "fullfile": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "title": "useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (invalid)",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": false
+      },
+      "original_predicate_input_conservation": "it.each outcome='invalid'. Same guarded atomic inverse input; the refusal preserves invalid code, config/output/file path, hint and suggested command.",
+      "actual_pristine_outcome": "absent",
+      "classification": "nonREG-own-test",
+      "evidence": "Exact generated Undo title is absent from pristine source/log.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 38995
+      }
+    },
+    {
+      "id": "normal-033-shot-group-pack",
+      "fullfile": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+      "title": "shot-group pack commands > duplicates only the explicitly active non-default timeline and never touches relational storage",
+      "source_presence": {
+        "normal": true,
+        "pristine_file": true,
+        "pristine_exact_title": true
+      },
+      "original_predicate_input_conservation": "Exact title, documentFixture seed with videoAssetKey removed, configVersion 7, project demo-project, timelineRef active-non-default, source shot-source/V1, destination shot-copy, wait callback, derivedFrom, ordered shot IDs, loads=2, publishes=[rev-2], empty requests and no relational path assertions are preserved. Cut mock response assembly increments then subtracts one load (net zero). Normal raw failure is 3 versus 2. Later normal assertions after loads are not credited as executed.",
+      "actual_pristine_outcome": "PASS",
+      "classification": "productREG",
+      "evidence": "shot-group-verdict.json: production UI -> duplicateShotGroup -> mutateTimelineDocument -> createDocumentStore.load adds second basis read at cut placementService.ts:259; pristine has one mutation load. Pristine raw log:32 reports 6 tests passing, not 8.",
+      "actual_cut_outcome": "FAIL",
+      "cut_receipt": {
+        "result_id": "app-full-1026004326-12174",
+        "log_line": 39012
+      },
+      "pristine_receipt": {
+        "result_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+        "log_line": 32,
+        "file_tests": 6,
+        "file_failed_tests": 0
+      },
+      "smallest_product_root": "src/shared/lib/placement/placementService.ts:createDocumentStore.load, second loadTimelineCommandBasis(ref) at cut line 259 (guard lines 257-263)",
+      "affected_ids": [
+        "normal-033-shot-group-pack"
+      ]
+    }
+  ],
+  "collection_error": {
+    "id": "normal-collection-001-schema-digest",
+    "kind": "collection_error",
+    "fullfile": "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+    "title": null,
+    "source_presence": {
+      "normal": true,
+      "pristine_file": false,
+      "pristine_exact_title": false
+    },
+    "original_predicate_input_conservation": "The normal file has a module-level assertion before describe: SCHEMA_DIGEST must equal sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2. Its test body would preserve one doc.patch request and exact retry after lost acknowledgement, but no test ID was collected because module collection stopped at the digest assertion.",
+    "normal_receipt": "Suite collection error: expected sha256:4118b1e2...; received sha256:867f3553...; tests=0 for this file.",
+    "actual_pristine_outcome": "absent",
+    "classification": "UNKNOWN",
+    "reason": "This is not a failed test ID and has no upstream counterpart. It remains a collection error, not a passing test and not a REG/nonREG behavior verdict.",
+    "evidence": "Pristine tree has no commitSession.genericPatch.test.ts; no exact title or test receipt exists.",
+    "cut_receipt": {
+      "result_id": "app-full-1026004326-12174",
+      "log_lines": "38802-38814",
+      "executed_test_ids": 0
+    }
+  },
+  "phase_status": {
+    "vitest": "terminal receipts consumed",
+    "node": "NOTRUN in both full runs because npm run test:app exited 1 before the &&-chained node phase",
+    "environment_reruns": "not submitted; exact three-file TARGETED route in pristine-targeted-recipe.json; no full repeat",
+    "reg0": "false: one productREG; no zero-regression qualification"
+  },
+  "status": "PASS_DOCUMENTARY_QUALIFICATION",
+  "input_custody": {
+    "prior_join": "workers/app-F-D141-reg-join-return-0120/evidence/join.json",
+    "prior_join_sha256": "22252b1b23d677d745aff4c4b7b29ece8bfb6f89643048be8628ac80358d18f7",
+    "prior_packet_modified": false,
+    "raw_results_modified": false
+  },
+  "source_custody_note": "0120 source-custody.json and 0043 raw results retained. Pristine synthetic commit 4bb696aceae83a3843df47ff1ff99c9717a3e0aa has exact tree 974de7cd08900872eeb0bd6f6004d44323e01fab and parent 7ca61bb3280beca21d98a854af266a382f7ce5df. No HEAD-only rerun. Normal cut is a merge: both parents 263b728f014040afc9c6b3fdfb54963b93b757eb and 9ada0d906a2efc5cf98b18b112d2d4e9d0657098; 0120 listed only first."
+}

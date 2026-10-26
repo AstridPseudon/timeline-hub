@@ -1,0 +1,72 @@
+{
+  "status": "BLOCKED_preserved_all_source_guards",
+  "local_current_pair": {
+    "source": "placementService.ts:252-263",
+    "guard": "Validate exact full closure, then re-read revision AND publication before owner creation. Throw PlacementDocumentChangedError on mismatch."
+  },
+  "active_editor_head": {
+    "source": "placementService.ts:360-367",
+    "guard": "Compare supplied headRevisionId unless allowVersionRebase."
+  },
+  "bounded_preintent_retry": {
+    "source": "placementService.ts:348-357",
+    "guard": "Only local PlacementDocumentChangedError and allowVersionRebase; max two attempts."
+  },
+  "original_basis_capture": {
+    "source": "placementService.ts:124-135,157-167",
+    "guard": "Source and session document must match original exact verified pair/parent."
+  },
+  "continuation": {
+    "source": "placementService.ts:286-304",
+    "guard": "Recover single owner and flush accepted basis; never continue from stale initial load. Multiple owners refuse."
+  },
+  "accepted_adoption": {
+    "source": "placementService.ts:207-223",
+    "guard": "Canonical assembly must adopt accepted head/scope."
+  },
+  "runtime_authority": {
+    "source": "localSaveSession.ts:128-207; dataProvider.ts:751-767",
+    "guard": "Original request/guards retained; Runtime handles conflicts, continuation and history. No old writer."
+  },
+  "existing_guard_tests": "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts:241-350",
+  "decision": "No product patch. Do not drop the post-validation revision/publication comparison or reconstruct an unverified closure from the display read.",
+  "executed_guard_tests": {
+    "file": "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts",
+    "tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"
+  },
+  "obstruction": {
+    "caller_preflight": {
+      "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+      "lines": "388-418",
+      "fact": "First load checks actual provider-local numeric configVersion and resolves source final video. Existing display read exposes no canonical closure."
+    },
+    "closure_validation": {
+      "path": "src/shared/lib/placement/placementService.ts",
+      "lines": "252-256",
+      "fact": "Full verified basis is loaded then validated before authoring; cannot manufacture child pins or assume empty closure."
+    },
+    "freshness": {
+      "path": "src/shared/lib/placement/placementService.ts",
+      "lines": "259-263",
+      "fact": "After asynchronous closure validation, compare both revision and publication with a newly observed head before durable owner/intent creation."
+    },
+    "interface_gap": {
+      "path": "src/tools/video-editor/data/DataProvider.ts",
+      "lines": "60-65,95-106",
+      "fact": "LoadedTimeline has numeric configVersion/head but no canonicalDocument. TimelineCommandBasis has canonicalDocument and pair but no provider-local numeric configVersion."
+    },
+    "controlling_mock": {
+      "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+      "lines": "33-67",
+      "fact": "Only loadTimelineCommandBasis exposes a full revision/publication pair and verified-shaped closure. loadTimeline has configVersion/revision only; loadAssetRegistry has neither head nor closure. Both timeline/basis loaders increment the immutable counter."
+    },
+    "provider_implementation": {
+      "path": "src/integrations/runtime/dataProvider.ts",
+      "lines": "886-991,996-1016,1442-1522",
+      "fact": "Basis reader assembles a history-pinned immutable closure, without a final live-head observation after validation. Display version is provider-local state; it cannot be inferred from revision IDs/history length or substituted with caller configVersion."
+    }
+  }
+}

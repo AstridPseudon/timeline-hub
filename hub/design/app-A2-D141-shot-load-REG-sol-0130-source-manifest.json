@@ -1,0 +1,72 @@
+{
+  "status": "BLOCKED_no_source_changes",
+  "base": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "parents": [
+    "263b728f014040afc9c6b3fdfb54963b93b757eb",
+    "9ada0d906a2efc5cf98b18b112d2d4e9d0657098"
+  ],
+  "files": {
+    "src/shared/lib/placement/placementService.ts": {
+      "git_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99",
+      "sha256": "aa290545d19630ddbebfe2a0d16346d079bba17fa8c35fb3b8158e395e3c4d30"
+    },
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts": {
+      "git_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+      "sha256": "1fb080850ab5179fc35184134c45ddcb7a434ec44551971ae68e3f04c04d1be3"
+    },
+    "src/tools/video-editor/lib/shot-group-pack-commands.test.ts": {
+      "git_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+      "sha256": "73c55e476ded3c40bedb4176f9e56624b9cce26bf6b3d0e749f151622a079eb2"
+    },
+    "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts": {
+      "git_blob": "7cb03ddb49aaa6a3c236e43373e26e9ef3f0d287",
+      "sha256": "14d1492668ebc9e76b2a25956e4a597c67300be0b3cb084dac0923c560cce8ca"
+    },
+    "src/integrations/runtime/dataProvider.ts": {
+      "git_blob": "5c830fe2b4661c9722ad22960f752c968604acd1",
+      "sha256": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988"
+    },
+    "src/tools/video-editor/commands/localSaveSession.ts": {
+      "git_blob": "ac85445bf42dce0278dc3967023643cab4977510",
+      "sha256": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230"
+    }
+  },
+  "candidate_commit": null,
+  "candidate_tree": null,
+  "after_harness": "Harness must populate final commit/parents/tree; worker cannot write Git metadata.",
+  "changed_blobs": [],
+  "worktree_porcelain": "",
+  "unchanged_files_verified": {
+    "src/shared/lib/placement/placementService.ts": true,
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts": true,
+    "src/tools/video-editor/lib/shot-group-pack-commands.test.ts": true,
+    "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts": true,
+    "src/integrations/runtime/dataProvider.ts": true,
+    "src/tools/video-editor/commands/localSaveSession.ts": true
+  },
+  "immutable_evidence": {
+    "app-F-D141-reg-join-sol-0126/evidence/shot-group-verdict.json": {
+      "sha256": "195c6fbef51cb70209f8d7598b1cbf1c270587f4b3ea674a30f116c90070e39a",
+      "modified_by_worker": false
+    },
+    "app-F-D141-reg-join-sol-0126/evidence/join.json": {
+      "sha256": "3ec1490032ea94d9760d0f9b2dc6f4f05e077b31d2a083318fdbe30b91a4b1fb",
+      "modified_by_worker": false
+    },
+    "app-F-D141-shot-group-wholepath-0126/evidence/verdict.json": {
+      "sha256": "fc27b52fca9260626b228852643eef94ed3f8fdaf16a6c8c4158fdcd858993b3",
+      "modified_by_worker": false
+    },
+    "app-F-D141-shot-group-wholepath-0126/evidence/source-map.json": {
+      "sha256": "0da9947fb76cbefbfde26e6b3c55160f4b7222f30dbfcce77e4af0b2cde9d486",
+      "modified_by_worker": false
+    },
+    "app-F-D141-shot-group-wholepath-0126/evidence/findings.md": {
+      "sha256": "817c83aaa7480a0709dfca4efbfef655529ae29604976cacf5a532bab9a3804c",
+      "modified_by_worker": false
+    }
+  },
+  "dependency_root": "/home/user/work/app/node_modules",
+  "node_version": "v20.20.0"
+}
