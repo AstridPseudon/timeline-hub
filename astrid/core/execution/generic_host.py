@@ -963,7 +963,8 @@ class _ManagedWanChildAdapter:
                     # Darwin. A second ps process creates an avoidable descendant.
                     group_live = any(info.pgid == process.pid for info in snapshot.values())
                 else:
-                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
+                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], stdin=subprocess.DEVNULL,
+                                        capture_output=True, timeout=1, check=False)
                     if ps.returncode != 0:
                         raise HostError("Wan child release census failed")
                     members = [row.split() for row in ps.stdout.decode().splitlines()]
@@ -2132,6 +2133,7 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
     try:
         status = subprocess.run(
             ["git", "-C", str(checkout), "status", "--porcelain=v1"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -2141,6 +2143,7 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
         )
         revision = subprocess.run(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -4322,6 +4325,7 @@ def _vcs_revision(root: Path) -> str:
     try:
         result = subprocess.run(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -13429,7 +13433,7 @@ class _NativeEngineGraph:
             raise HostError("owned engine readiness registry differs from selected launch")
         endpoint = urlsplit(self.profile["engine_endpoint"])
         if _is_posix():
-            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
             if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
                 raise HostError("selected listener socket ownership is uncertain")
         for broker in (self.engine, self.listener):
@@ -13480,7 +13484,7 @@ class _NativeEngineGraph:
         root = Path(self.profile["engine_launch"]["session_root"])
         endpoint = urlsplit(self.profile["engine_endpoint"])
         if _is_posix():
-            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
             if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
                 raise CleanupUncertainError("engine endpoint cleanup is not verified")
         # Registry files are historical evidence only; successful census and

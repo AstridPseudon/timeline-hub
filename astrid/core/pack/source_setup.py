@@ -261,6 +261,7 @@ def _run_git(repository: str, *args: str, cwd: Path | None = None) -> str:
     try:
         result = delegated if delegated is not None else subprocess.run(
             ["git", *args], cwd=str(cwd) if cwd else None,
+            stdin=subprocess.DEVNULL,
             capture_output=True, text=True, check=False, timeout=120,
         )
     except (OSError, subprocess.SubprocessError) as exc:

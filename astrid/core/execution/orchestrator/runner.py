@@ -291,6 +291,7 @@ def _run_python_orchestrator_subprocess(
     try:
         completed = subprocess.run(
             [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.python_runtime_worker", str(request_path)],
+            stdin=subprocess.DEVNULL,
             cwd=str(root),
             env=env,
             capture_output=True,
@@ -370,6 +371,7 @@ def _run_command_orchestrator(
     else:
         completed = subprocess.run(
             list(command),
+            stdin=subprocess.DEVNULL,
             cwd=cwd,
             env=effective_env,
             check=False,

@@ -97,6 +97,7 @@ def _process_snapshot() -> dict[int, _ProcessInfo]:
         try:
             result = subprocess.run(
                 [ps, "-axo", "pid=,ppid=,pgid=,lstart="],
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 check=False,

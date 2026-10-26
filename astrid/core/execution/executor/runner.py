@@ -657,6 +657,7 @@ def _run_explicit_command_executor(
     else:
         completed = subprocess.run(
             list(command),
+            stdin=subprocess.DEVNULL,
             cwd=cwd,
             env=effective_env,
             check=False,

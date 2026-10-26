@@ -248,6 +248,7 @@ def _host_command(pid: Any) -> str:
         try:
             probe = subprocess.run(
                 ["ps", "-p", str(value), "-o", "command="],
+                stdin=subprocess.DEVNULL,
                 capture_output=True, text=True, check=False, timeout=1.0,
             )
             return probe.stdout.strip()
@@ -277,6 +278,7 @@ def _host_executable_matches(observed: str, selected: Path) -> bool:
     try:
         result = subprocess.run(
             [str(selected), "-X", "utf8", "-I", "-S", "-c", probe],
+            stdin=subprocess.DEVNULL,
             capture_output=True, text=True, check=True, timeout=2,
         )
         actual = Path(result.stdout.strip())
@@ -399,7 +401,7 @@ def _host_progress_token(process: Any, log_path: Path, ready_path: Path) -> Any:
         except OSError:
             parts.append(None)
     try:
-        out = subprocess.run(["ps", "-axo", "pgid=,cputime="], capture_output=True,
+        out = subprocess.run(["ps", "-axo", "pgid=,cputime="], stdin=subprocess.DEVNULL, capture_output=True,
                              text=True, check=False, timeout=5.0).stdout
         group = str(getattr(process, "pid", ""))
         parts.append(tuple(sorted(
@@ -594,7 +596,7 @@ def _registered_host_status(state: Mapping[str, Any]) -> str:
 
 def _ps_command(pid: int) -> str:
     try:
-        probe = subprocess.run(["ps", "-ww", "-p", str(pid), "-o", "command="],
+        probe = subprocess.run(["ps", "-ww", "-p", str(pid), "-o", "command="], stdin=subprocess.DEVNULL,
                                capture_output=True, text=True, check=False, timeout=5.0)
     except (OSError, subprocess.SubprocessError):
         return ""
@@ -730,6 +732,7 @@ modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execut
 print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in modules.items()}))
 """
     completed = subprocess.run([python_executable, "-X", "utf8", "-I", "-c", probe],
+                               stdin=subprocess.DEVNULL,
                                cwd=tempfile.gettempdir(), capture_output=True, text=True,
                                timeout=20, check=False,
                                env={key: value for key, value in os.environ.items()
@@ -1082,7 +1085,7 @@ class _ParkedPackHostInspector:
                 raise PackHostBootstrapError("parked host native identity changed or is unavailable")
             uid = info.uid
         else:
-            uid = subprocess.run(["ps", "-p", str(handle.process.pid), "-o", "uid="],
+            uid = subprocess.run(["ps", "-p", str(handle.process.pid), "-o", "uid="], stdin=subprocess.DEVNULL,
                                  capture_output=True, text=True, check=True, timeout=1).stdout.strip()
         if (info is None or info.birth != handle.state["process_birth_id"]
                 or not command or not _host_executable_matches(command[0], reference.executable.path)

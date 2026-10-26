@@ -1581,6 +1581,7 @@ def default_process_identity(pid: int, *, timeout: float = 1.0) -> dict[str, obj
     try:
         result = subprocess.run(
             ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", str(pid)],
+            stdin=subprocess.DEVNULL,
             text=True, capture_output=True, check=False, timeout=timeout,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:

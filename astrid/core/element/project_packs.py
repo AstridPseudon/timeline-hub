@@ -143,7 +143,7 @@ def _verify_build(selection: dict[str,Any], path: Path) -> dict[str,Any]:
     candidate=Path(name)
     try:
         with os.fdopen(fd,'w') as stream:json.dump(selection,stream,indent=2,sort_keys=True);stream.write('\n')
-        try:result=subprocess.run([*command,str(candidate)],capture_output=True,text=True,timeout=60,check=False)
+        try:result=subprocess.run([*command,str(candidate)],stdin=subprocess.DEVNULL,capture_output=True,text=True,timeout=60,check=False)
         except (OSError,subprocess.TimeoutExpired) as exc:raise ValueError(f'Element build verifier could not finish: {exc}') from exc
         if result.returncode!=0:raise ValueError('Element build verification failed: '+(result.stderr or result.stdout)[-4096:])
         try:receipt=json.loads(result.stdout)

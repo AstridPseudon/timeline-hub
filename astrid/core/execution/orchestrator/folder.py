@@ -77,6 +77,7 @@ def _load_folder_orchestrator_definitions(orchestrator_root: str | Path) -> tupl
     )
     completed = subprocess.run(
         [sys.executable, "-X", "utf8", "-c", _EXTRACT_SCRIPT, str(orchestrator_path)],
+        stdin=subprocess.DEVNULL,
         cwd=str(root),
         check=False,
         capture_output=True,

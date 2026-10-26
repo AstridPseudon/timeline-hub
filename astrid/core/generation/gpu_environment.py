@@ -53,6 +53,7 @@ def detect_nvidia() -> dict[str, Any]:
     try:
         result = subprocess.run(
             [executable, "--query-gpu=name", "--format=csv,noheader"],
+            stdin=subprocess.DEVNULL,
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             check=False, timeout=5,
         )

@@ -202,7 +202,7 @@ def spawn(argv: Sequence[str], **popen_kwargs: Any) -> subprocess.Popen:
 
 def _command_of(pid: int) -> str:
     try:
-        out = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], capture_output=True,
+        out = subprocess.run(["ps", "-o", "command=", "-p", str(pid)], stdin=subprocess.DEVNULL, capture_output=True,
                              text=True, timeout=2, check=False).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return "unknown"
