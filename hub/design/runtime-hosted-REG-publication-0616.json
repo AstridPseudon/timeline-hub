@@ -1,0 +1,72 @@
+{
+  "at": "2026-10-26T06:16:07.891897+00:00",
+  "files": [
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-0606/evidence/classification.json",
+      "destination": "design/rt-F-D141u-hosted-REG-0606-classification.json",
+      "bytes": 2541,
+      "sha256": "83c0cf87cee6b10ef9e40162fad00e45958d3c85b722b8b7341a4bbaca6ad5a8"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-0606/evidence/source-manifest.json",
+      "destination": "design/rt-F-D141u-hosted-REG-0606-source-manifest.json",
+      "bytes": 1460,
+      "sha256": "a587c9ce4f31b6932859827d82a6461aba86ea757c80d5c3e131224c94fd3635"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-0606/evidence/outside-conservation.json",
+      "destination": "design/rt-F-D141u-hosted-REG-0606-outside-conservation.json",
+      "bytes": 451,
+      "sha256": "609783607ea4288a3d8c4c52452d2a873210384b4c8c54b84b7371dd2235c9dd"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-0606/evidence/validation.md",
+      "destination": "design/rt-F-D141u-hosted-REG-0606-validation.md",
+      "bytes": 1301,
+      "sha256": "9d8c7333f78d635ae8021d6ad62b07db412de6b6855b913191a4fc4ad2c0cae8"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-0606/evidence/handoff.md",
+      "destination": "design/rt-F-D141u-hosted-REG-0606-handoff.md",
+      "bytes": 1147,
+      "sha256": "e63c2865a5b6fc8f8c6dd3afd57dc55d9f84d92fa7698f8d3b8b4061de6d339b"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/review.json",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-review.json",
+      "bytes": 2653,
+      "sha256": "705d467a96dba25cbd16ccc9198d89a159dd4ade7d5881fffbc62e87a4ce0c9e"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/findings.md",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-findings.md",
+      "bytes": 1732,
+      "sha256": "a21c70975b7dc55219a26edb7eac25b8313705a3b0c919ccae64b89d9b18f44b"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/source-manifest.json",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-source-manifest.json",
+      "bytes": 2584,
+      "sha256": "06e74469e1f13d835a202c910f0d9955822a30c2047b0f5d4f7cf9a5348c2180"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/outside-conservation.json",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-outside-conservation.json",
+      "bytes": 1143,
+      "sha256": "2e5eedcb82635cd2eb523890ef71d04c181d20e23276bf5d4a7138e2964faa2e"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/validation.md",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-validation.md",
+      "bytes": 2085,
+      "sha256": "589bd7e53287ed2f7d124de7c7c60fd68fe646b85edf546ad4b066462458090c"
+    },
+    {
+      "source": "workers/rt-F-D141u-hosted-REG-review-0611/evidence/handoff.md",
+      "destination": "design/rt-F-D141u-hosted-REG-review-0611-handoff.md",
+      "bytes": 663,
+      "sha256": "63d7b7a45114a4d0f1f5dce94f39bdbc89b8c65daa9039256f5a7170dea8cc15"
+    }
+  ],
+  "raw_private_copied": false
+}

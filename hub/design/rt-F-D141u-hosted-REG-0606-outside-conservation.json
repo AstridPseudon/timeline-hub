@@ -1,0 +1,16 @@
+{
+  "changed_paths": [
+    "astrid/packs/rendering/docs/scripts/timeline_document.py"
+  ],
+  "changed_path_count": 1,
+  "tracked_files_checked_outside_changed_path": 3597,
+  "outside_byte_changes": 0,
+  "outside_mode_changes": 0,
+  "test_files_changed": false,
+  "git_diff_check": "pass",
+  "source_mode_after": "644",
+  "test_modes": {
+    "tests/timeline/test_authoring_feedback.py": "644",
+    "tests/timeline/test_authoring_media.py": "644"
+  }
+}

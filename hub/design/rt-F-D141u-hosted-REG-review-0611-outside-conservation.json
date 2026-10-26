@@ -1,0 +1,26 @@
+{
+  "candidate_diff": {
+    "changed_path_count": 1,
+    "changed_paths": ["astrid/packs/rendering/docs/scripts/timeline_document.py"],
+    "insertions": 1,
+    "deletions": 1,
+    "mode_changes": 0,
+    "git_diff_check": "pass"
+  },
+  "outside_changed_path": {
+    "tracked_files_checked": 3597,
+    "outside_byte_changes": 0,
+    "outside_mode_changes": 0
+  },
+  "protected_inputs_and_assertions": {
+    "tests/timeline/test_authoring_feedback.py": {"bytes_unchanged": true, "mode": "644", "sha256": "6ca41e2b58b2a5ffbd2e709959e6dabec6465877daa62c27fbeae8f8586acbdb"},
+    "tests/timeline/test_authoring_media.py": {"bytes_unchanged": true, "mode": "644", "sha256": "264f5c1efc655472321c5b44edf575aba629e462b36a50b85333e5f8e08e8908"},
+    "d141r_public_media_marker_conversion": "unchanged; included in the one-line-only source diff and passing original media selector",
+    "d71_runtime_document_no_leak": "unchanged; _bundle projection remains the existing implementation"
+  },
+  "review_mutation": {
+    "source_test_fixture_input_schema_generated_pin_changes": false,
+    "files_deleted": false,
+    "reviewer_source_edits": false
+  }
+}

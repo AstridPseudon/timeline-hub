@@ -1,0 +1,51 @@
+{
+  "task": "F D141u hosted REG independent review",
+  "verdict": "PASS",
+  "findings": [],
+  "candidate": {
+    "commit": "57b38b5b9ce672f307afe46c61add43df6350fef",
+    "tree": "5439ca22bc7d3cd334dce9a80a4ff0dc6827ccae",
+    "base_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "base_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "diff": {
+      "paths": ["astrid/packs/rendering/docs/scripts/timeline_document.py"],
+      "insertions": 1,
+      "deletions": 1,
+      "change": "session._capture_bundle(session_state) -> session._bundle(session_state)"
+    }
+  },
+  "runtime": {
+    "path": "/home/user/work/runtime",
+    "ref": "tl/integration",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "clean": true,
+    "canonical15": "PASS (15/15 lock mappings match current artifacts manifest and source bytes)",
+    "producer_manifest": "9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+  },
+  "trace": {
+    "caller": "astrid/packs/rendering/docs/scripts/timeline_document.py:275",
+    "provider": "astrid/sdk/timeline/sync.py:193-215",
+    "introducers": ["8a4103dd16bb32306ca6c782dcd9a7a4a908de6d", "8d14d5be1887c6ae43c1c2da83219c4b2197012e"],
+    "authority": "TimelineSession.open validates authenticated realm/actor and exact revision/publication pins; _capture_bundle fetches with both pins; _bundle only removes source_mapping._runtime_document from the public projection.",
+    "no_leak": "PASS; public _bundle strips _runtime_document after private exact-pair hydration.",
+    "native_publication": "PASS; detached document script emits document publication commands and sends them through the existing TimelineSession commit path."
+  },
+  "tests": {
+    "command": "/home/user/work/venv-agent/bin/python -m pytest -q -n3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml=<evidence/private>/two.xml tests/timeline/test_authoring_feedback.py::test_document_publish_stdout_and_durable_receipt_contain_shared_feedback tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+    "result": "PASS: 2 passed in 2.97s; 0 failures, 0 errors, 0 skipped",
+    "test_files_unchanged": true
+  },
+  "static_validation": {
+    "ruff": "PASS",
+    "ast": "PASS",
+    "mypy": "PASS: Success: no issues found in 1 source file",
+    "git_diff_check": "PASS"
+  },
+  "scope": {
+    "source_or_test_edits_by_reviewer": false,
+    "full_suite": "NOT RUN per brief",
+    "broader_suite": "NOT RUN per brief"
+  }
+}

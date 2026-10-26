@@ -1,0 +1,32 @@
+{
+  "agent": {
+    "path": "/home/user/work/wt/rt-F-D141u-hosted-REG-0606",
+    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"
+  },
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-6a011d58",
+    "expected_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "observed": "missing"
+  },
+  "changed_source": {
+    "path": "astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "mode": "644",
+    "sha256_after": "5ec4a3f2b2ef1585e6707c029dc271acb6a4bd7f11f010def18f086d51f28e33",
+    "sha256_before": "798a2d2ecbc1f7b08c180e356e6608dc2d1c8cd386069410f0e0d89c8cf2a9c8",
+    "diff": "one line: _capture_bundle -> _bundle"
+  },
+  "module_origins": {
+    "caller": "/home/user/work/wt/rt-F-D141u-hosted-REG-0606/astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "capture_provider": "/home/user/work/wt/rt-F-D141u-hosted-REG-0606/astrid/sdk/timeline/sync.py",
+    "feedback_test": "/home/user/work/wt/rt-F-D141u-hosted-REG-0606/tests/timeline/test_authoring_feedback.py",
+    "media_test": "/home/user/work/wt/rt-F-D141u-hosted-REG-0606/tests/timeline/test_authoring_media.py"
+  },
+  "tests": {
+    "feedback_sha256": "6ca41e2b58b2a5ffbd2e709959e6dabec6465877daa62c27fbeae8f8586acbdb",
+    "media_sha256": "264f5c1efc655472321c5b44edf575aba629e462b36a50b85333e5f8e08e8908",
+    "match_head_8585": true,
+    "pristine_64197_contains_both_nodes": true,
+    "changed": false
+  }
+}

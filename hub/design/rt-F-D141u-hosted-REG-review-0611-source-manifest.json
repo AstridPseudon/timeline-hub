@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.f.d141u.independent-hosted-reg-review.v1",
+  "candidate": {
+    "path": "/home/user/work/wt/rt-F-D141u-hosted-REG-review-0611",
+    "ref": "tl/rt-F-D141u-hosted-REG-review-0611",
+    "commit": "57b38b5b9ce672f307afe46c61add43df6350fef",
+    "tree": "5439ca22bc7d3cd334dce9a80a4ff0dc6827ccae",
+    "parents": ["8585ed9c0404d0187b2ce70242d25114a32747c2"],
+    "status_porcelain": ""
+  },
+  "base": {
+    "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"
+  },
+  "runtime": {
+    "path": "/home/user/work/runtime",
+    "ref": "tl/integration",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"],
+    "status_porcelain": ""
+  },
+  "changed_source": {
+    "path": "astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "mode": "644",
+    "base_sha256": "798a2d2ecbc1f7b08c180e356e6608dc2d1c8cd386069410f0e0d89c8cf2a9c8",
+    "candidate_sha256": "5ec4a3f2b2ef1585e6707c029dc271acb6a4bd7f11f010def18f086d51f28e33",
+    "diff": "one line: _capture_bundle -> _bundle"
+  },
+  "module_origins": {
+    "astrid": "/home/user/work/wt/rt-F-D141u-hosted-REG-review-0611/astrid/__init__.py",
+    "caller": "/home/user/work/wt/rt-F-D141u-hosted-REG-review-0611/astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "astrid.sdk.timeline.sync": "/home/user/work/wt/rt-F-D141u-hosted-REG-review-0611/astrid/sdk/timeline/sync.py",
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/rt-F-D141u-hosted-REG-review-0611/astrid/sdk/timeline/commit.py",
+    "runtime_protocol": "/home/user/work/runtime/runtime_protocol/__init__.py",
+    "runtime_protocol.service": "/home/user/work/runtime/runtime_protocol/service.py",
+    "runtime_protocol.timeline_commit": "/home/user/work/runtime/runtime_protocol/timeline_commit.py"
+  },
+  "canonical15": {
+    "count": 15,
+    "all_lock_manifest_source_bytes_match": true,
+    "agent_lock_sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "runtime_manifest_sha256": "9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+  },
+  "tests": {
+    "feedback_sha256": "6ca41e2b58b2a5ffbd2e709959e6dabec6465877daa62c27fbeae8f8586acbdb",
+    "media_sha256": "264f5c1efc655472321c5b44edf575aba629e462b36a50b85333e5f8e08e8908",
+    "candidate_matches_base": true
+  }
+}

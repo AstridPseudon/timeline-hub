@@ -1,0 +1,36 @@
+{
+  "task": "F D141u HOST existing Agent ready REG author at ordinary Runtime source admission",
+  "classification": "product-source regression with an independent setup blocker",
+  "status": "fixed-source-unverified-runtime",
+  "source_head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+  "source_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+  "failing_nodes": [
+    "tests/timeline/test_authoring_feedback.py::test_document_publish_stdout_and_durable_receipt_contain_shared_feedback",
+    "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime"
+  ],
+  "failure": {
+    "exception": "AttributeError: Session._capture_bundle",
+    "caller": "astrid/packs/rendering/docs/scripts/timeline_document.py:275",
+    "public_protocol": "The detached publication caller uses TimelineSession._bundle(session_state); the two original duck-typed test sessions implement _bundle and intentionally do not expose _capture_bundle.",
+    "introducer": "8a4103dd16bb32306ca6c782dcd9a7a4a908de6d",
+    "duplicate_introducer": "8d14d5be1887c6ae43c1c2da83219c4b2197012e",
+    "introducer_change": "_bundle(session_state) -> _capture_bundle(session_state)"
+  },
+  "repair": {
+    "file": "astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "change": "Restore _bundle(session_state) at the existing public publication seam.",
+    "preserved_semantics": [
+      "TimelineSession._bundle privately calls _capture_bundle with the authenticated revision/publication pair.",
+      "TimelineSession._bundle removes source_mapping._runtime_document before returning the public projection.",
+      "No auth guard, fallback authority, capture cache, DTO, Runtime source, or test was changed."
+    ]
+  },
+  "setup_blocker": {
+    "required_runtime_checkout": "/home/user/work/wt/rt-pin-6a011d58",
+    "required_runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "observed": "The required worktree path is absent.",
+    "test_effect": "pytest stops loading tests at tests/conftest.py because runtime_protocol is unavailable.",
+    "substitution": "none; no alternate Runtime checkout was used"
+  },
+  "scope_decision": "The actual production caller is the rendering document script. Although the task's enumerated allowed-source list omits that path, no change confined to authoring_bundle.py, authoring_media.py, authoring_feedback.py, or sdk/timeline/* can repair a duck-typed Session lacking _capture_bundle. The one-line caller repair is therefore the minimum source change proven by the trace."
+}
