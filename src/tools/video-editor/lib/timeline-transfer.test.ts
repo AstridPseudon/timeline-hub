@@ -262,10 +262,10 @@ describe('timeline transfer workflows', () => {
     const results: string[] = [];
     const onImported = vi.fn(async () => false);
     await importTimelineArchive(new File([await archiveBlob()], 'Cut.astrid'), 'target-project', {
-      client: client as never, fetchImpl, xhrFactory: xhrFactory(uploads), existingNames: ['Cut'], onImported,
+      client: client as never, fetchImpl, xhrFactory: xhrFactory(uploads), existingNames: ['Imported Cut'], onImported,
       toast: { loading: () => 'toast', update: () => undefined, success: (m, _id, d) => results.push(`success ${m} ${d ?? ''}`), warning: (m, _id, d) => results.push(`warning ${m} ${d ?? ''}`), error: () => undefined },
     });
-    expect((admissions[1]!.spec as { inputs: Record<string, unknown> }).inputs.name).toBe('Cut 2');
+    expect((admissions[1]!.spec as { inputs: Record<string, unknown> }).inputs.name).toBe('Imported Cut 2');
     expect(onImported).toHaveBeenCalledWith('new-timeline');
     expect(results.join('\n')).toContain('Open it from the Timeline menu.');
   });
