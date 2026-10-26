@@ -23,6 +23,19 @@ def test_complete_openapi_document_parses_source_frame_response() -> None:
     assert schema["required"] == ["thumbnail"]
     assert "thumbnail" in schema["properties"]
 
+
+def test_timeline_import_publication_ref_resolves_to_canonical_composition_schema() -> None:
+    transfer = json.loads((ROOT / "contract/schemas/timeline-import.json").read_text())
+    composition = json.loads((ROOT / "contract/schemas/shot-composition.json").read_text())
+    reference = transfer["oneOf"][1]["properties"]["publication"]["$ref"]
+    registry = Registry().with_resources(
+        (schema["$id"], Resource.from_contents(schema))
+        for schema in (transfer, composition)
+    )
+    resolved = registry.resolver(base_uri=transfer["$id"]).lookup(reference).contents
+    assert resolved["$id"] == composition["$id"]
+    assert resolved["required"] == ["project_id", "timeline_id", "expected_head", "parent_composition"]
+
 def _execution_wire_validators() -> tuple[Draft202012Validator, Draft202012Validator]:
     task = json.loads((ROOT / "contract/schemas/task.json").read_text())
     worker = json.loads((ROOT / "contract/schemas/worker.json").read_text())

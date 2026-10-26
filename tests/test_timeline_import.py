@@ -113,6 +113,23 @@ def test_import_pins_fresh_shot_text_and_is_idempotent(tmp_path):
         service.import_timeline(project, changed, idempotency_key="import-one")
 
 
+def test_import_accepts_minimal_prepare_binding_descriptor(tmp_path):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, text=True, timeline="minimal-pin")
+    pin = prepared["publication"]["shot_revisions"][0]["payload"]["text_bindings"][0]
+    for optional in ("project_id", "shot_id", "event_stream_id"):
+        pin.pop(optional)
+    shot = prepared["publication"]["shot_revisions"][0]
+    shot["content_digest"] = service._revision_digest(shot["payload"])
+    prepared["publication"]["dependency_manifest"]["shots"][0]["content_digest"] = shot["content_digest"]
+
+    result = service.import_timeline(project, prepared, idempotency_key="minimal-pin-import")
+
+    assert result["data"]["timeline_id"] == "minimal-pin"
+    stored = json.loads(service.store.conn.execute("SELECT payload_json FROM shot_revisions WHERE id=?", (shot["revision_id"],)).fetchone()[0])
+    assert stored["text_bindings"][0]["binding_id"] == pin["binding_id"]
+
+
 def test_import_transcript_reuse_and_conflict_are_reported_without_overwrite(tmp_path):
     service, project = _service(tmp_path)
     prepared = _prepared(service, project, timeline="transcript-import", transcript=True)
@@ -177,6 +194,47 @@ def test_import_requires_complete_managed_media_and_transcript_references(tmp_pa
         service.import_timeline(project, prepared, idempotency_key="missing-transcript")
 
 
+def test_import_prepared_object_success_and_project_ownership(tmp_path):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, timeline="object-backed")
+    prepared_bytes = canonical_json(prepared).encode("utf-8")
+    object_id = _managed(service, project, prepared_bytes, "application/json", "prepared.json", "prepared-object")
+    body = {"prepared_object_id": object_id}
+
+    result = service.import_timeline(project, body, idempotency_key="object-backed-import")
+    assert result["data"]["timeline_id"] == "object-backed"
+
+    other = service.create_project({"slug": "other", "name": "Other"}, idempotency_key="other-project")["id"]
+    refused = _prepared(service, project, timeline="foreign-object")
+    foreign_bytes = canonical_json(refused).encode("utf-8")
+    foreign_id = _managed(service, project, foreign_bytes, "application/json", "foreign-prepared.json", "foreign-prepared")
+    with pytest.raises(NotFoundError, match="not managed by the target project"):
+        service.import_timeline(other, {"prepared_object_id": foreign_id}, idempotency_key="foreign-object-import")
+    assert service.store.conn.execute("SELECT 1 FROM timelines WHERE id='foreign-object'").fetchone() is None
+
+
+def test_import_tampered_parent_digest_reaches_normal_publisher_unchanged(tmp_path, monkeypatch):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, timeline="tampered-digest")
+    publication = prepared["publication"]
+    tampered = "sha256:" + "f" * 64
+    publication["content_digest"] = tampered
+    original = service.publish_parent_composition
+    seen = {}
+
+    def observe_and_publish(project_id, timeline_id, body, *, idempotency_key):
+        seen["digest"] = body["content_digest"]
+        return original(project_id, timeline_id, body, idempotency_key=idempotency_key)
+
+    monkeypatch.setattr(service, "publish_parent_composition", observe_and_publish)
+    with pytest.raises((ConflictError, ValidationError)):
+        service.import_timeline(project, prepared, idempotency_key="tampered-digest-import")
+
+    assert seen["digest"] == tampered
+    assert publication["content_digest"] == tampered
+    assert service.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (prepared["timeline_id"],)).fetchone() is None
+
+
 def test_import_rejects_reused_shot_and_incomplete_internal_closure(tmp_path):
     service, project = _service(tmp_path)
     first = _prepared(service, project, timeline="first")
@@ -192,6 +250,53 @@ def test_import_rejects_reused_shot_and_incomplete_internal_closure(tmp_path):
     incomplete["publication"]["dependency_manifest"]["internal_timelines"] = []
     with pytest.raises(ValidationError, match="copied internal timeline"):
         service.import_timeline(project, incomplete, idempotency_key="incomplete-children")
+
+
+def test_import_fault_after_normal_publication_rolls_back_all_import_metadata(tmp_path, monkeypatch):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, text=True, transcript=True, timeline="publish-rollback")
+    publish = service.publish_parent_composition
+    def fail_after_publish(*args, **kwargs):
+        publish(*args, **kwargs)
+        raise RuntimeError("fault after completed publication")
+    monkeypatch.setattr(service, "publish_parent_composition", fail_after_publish)
+    key = "publish-rollback-key"
+
+    with pytest.raises(RuntimeError, match="completed publication"):
+        service.import_timeline(project, prepared, idempotency_key=key)
+
+    timeline_id = prepared["timeline_id"]
+    shot_id = timeline_id + "-shot"
+    shot_revision_id = timeline_id + "-shot-rev"
+    internal_revision_id = timeline_id + "-internal-rev"
+    parent_revision_id = timeline_id + "-parent-rev"
+    transcript_id = prepared["transcripts"][0]["document_id"]
+    for table, identity_column, identity in (
+        ("timelines", "id", timeline_id),
+        ("timeline_revisions", "timeline_id", timeline_id),
+        ("project_shots", "id", shot_id),
+        ("shot_revisions", "id", shot_revision_id),
+        ("shot_revision_heads", "shot_id", shot_id),
+        ("internal_timeline_revisions", "id", internal_revision_id),
+        ("parent_composition_revisions", "id", parent_revision_id),
+        ("parent_composition_heads", "timeline_id", timeline_id),
+        ("composition_revision_occurrences", "parent_revision_id", parent_revision_id),
+        ("composition_revision_dependencies", "parent_revision_id", parent_revision_id),
+        ("shot_text_bindings", "shot_id", shot_id),
+        ("shot_text_binding_events", "binding_id", service._text_binding_id(project, shot_id, "voiceover_script", None)),
+        ("project_documents", "id", transcript_id),
+        ("timeline_events", "timeline_id", timeline_id),
+    ):
+        assert service.store.conn.execute(f"SELECT 1 FROM {table} WHERE {identity_column}=?", (identity,)).fetchone() is None, table
+    child_keys = {
+        service._import_key(project + ":" + key, operation, identity)
+        for operation, identity in (
+            ("create", timeline_id), ("binding", shot_id + ":voiceover_script:None"),
+            ("transcript", transcript_id), ("publish", timeline_id),
+        )
+    }
+    assert service.store.conn.execute("SELECT 1 FROM command_idempotency WHERE idempotency_key=?", (key,)).fetchone() is None
+    assert not any(service.store.conn.execute("SELECT 1 FROM command_idempotency WHERE idempotency_key=?", (child_key,)).fetchone() for child_key in child_keys)
 
 
 def test_import_http_route_requires_write_scope_and_forwards_body_and_key():
