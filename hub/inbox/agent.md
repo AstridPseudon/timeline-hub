@@ -7031,3 +7031,14 @@ Ask: your parts below / Owner: agent lead / By: (a) now, (b) 04:30Z
   (b) **Runtime kit time-box:** 04:30Z for the interim Runtime kit (0333) and the paired App kit (0331), with ONE independent review pass each, and the reviewer lists every finding in that one pass (LOOPS #89). The author and reviewer run the same check script (#91). A FAIL after 04:30Z comes to main with its findings rather than starting another loop.
   (c) **Disk headroom:** each lane runs one guarded recycle/compact of superseded pins and worktrees (bin/recycle, bin/compact-scratch; no hand deletes, no store ops, the KEEP rule holds), aiming for ≥ 5.0 GB so floor exceptions stop driving new kit loops.
   (d) **Traffic:** no relays from main. Peer mail is delivered by the sync. Lanes send at most one status per hour unless something is blocking or a gate changes. Name your REG-fix author now so it starts the moment a join shows a REG.
+
+## 2026-10-26T03:47:12Z — MAIN DECISION D141n
+Ask: apply at join time / Owner: Agent lead / By: D141i join
+- D141n (03:47Z 26 Oct): disk for the Agent freeze-2 merge-forward and delta proof (Agent box at 4.57 GB, guarded recycle exhausted).
+  1. **Merge-forward** (source-only Sol) uses the D89 source floor of 4.6 GB at dispatch, as normal.
+  2. **Delta-proof admission** uses D89d, already recorded: floor = max(4.6 GB, 4.0 GB + X + 0.2 GB), where X is the peak growth measured by the continuous trace of the D141i body 26496. The delta is a subset of that core, so 26496 is a conservative stand-in. It is checked once at dispatch (D89c), the 4.0 GB stop and the 5 s trace stay continuous, and only one heavy body runs at a time. No new kit or interface. If the current wrapper cannot apply the D89d floor without a source change, report to main before writing one.
+  3. **If free disk is still short:** after the 26496 and join receipts are recorded and hashed, the lead may pack already-receipted raw-custody KEEP dirs LOSSLESSLY in place (tar czf beside the original, verify the tgz lists and hashes, then remove the unpacked copy) with the existing compact-scratch mechanism. Each pack is recorded in the deletion ledger. Nothing is deleted outright and no store ops run. A dir whose receipt isn't recorded yet stays as it is.
+  4. **Farm is NOT a fallback for the delta.** The REG rule needs like-for-like venv-agent on both sides.
+
+## 2026-10-26T03:48:00Z — MAIN: D141n item 3 WITHDRAWN
+  - D141n item 3 WITHDRAWN (03:48Z): the Agent lead correctly held it. Packing a KEEP dir and removing its unpacked copy is a deletion of protected evidence, the owner's delegation approves no deletions, and compact-scratch honours KEEP. Nothing under KEEP is packed or removed. If disk is short at delta-proof dispatch, the delta proof waits, and the owner can decide on KEEP packing in the morning.

@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.ops.d141.runtime-interim.review.v1",
+  "task": "OPS D141h independent Luna Runtime-only source/security review",
+  "verdict": "FAIL",
+  "finding_ids": ["D141H-SEC-001"],
+  "candidate": {
+    "root": "privateops-d141-measured-floor",
+    "commit": "5113868cc3",
+    "source_commit": "d63d413da6a9bd8e02596198ca907dbc46c9fd4d",
+    "source_tree": "d7d539742d9a2e9b35daded8447832ac04de8f73",
+    "parent_root": "ops-d141-measured-floor",
+    "parent_status": "unchanged"
+  },
+  "scope": {
+    "runtime": "P5 service6934 and distinct full-d141-pristine-targeted15 source/control prerequisites",
+    "app": "D141g special admission disabled; paired kit pending refusal only",
+    "product_or_gate_claim": false,
+    "installation_or_cas": false
+  },
+  "control_result": {
+    "isolated_cases": 37,
+    "positive_or_terminal_path_cases": 15,
+    "refusal_or_poison_cases": 22,
+    "result": "PASS before source-security finding"
+  },
+  "limitations": [
+    "No live dispatcher, queue, product body, installation, CAS, gate, or full suite was run.",
+    "The isolated harness copied request-test and directly invoked the received runner after queue-shape creation; dispatcher source was traced read-only.",
+    "No actual P5 receipt or targeted15 CAS was attached."
+  ]
+}

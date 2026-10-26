@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.ops.d141.runtime-interim.review-controls.v1",
+  "verdict": "CONTROL_PASS_SOURCE_SECURITY_FAIL",
+  "commands": [
+    {"command": "TMPDIR=/tmp/d141h-runtime-review-cases-s3E2Lw python3 -I privateops-d141-measured-floor/controls/real-controls.py", "result": "PASS exit 0", "notes": "isolated temporary roots; installed-bin -> published-bin -> received-bin; no controls sibling; harmless subprocess bodies"},
+    {"command": "bash -n privateops-d141-measured-floor/bin/test-run", "result": "PASS exit 0"},
+    {"command": "python3 -I -c 'AST parse five private Python files'", "result": "PASS exit 0 (AST PASS, 5 files)"},
+    {"command": "ruff check --no-cache privateops-d141-measured-floor/bin/*.py privateops-d141-measured-floor/controls/*.py", "result": "PASS exit 0"},
+    {"command": "python3 -m json.tool privateops-d141-measured-floor/install-manifest.json", "result": "PASS exit 0"},
+    {"command": "git diff --check", "result": "PASS exit 0"}
+  ],
+  "case_counts": {"total": 37, "positive_or_terminal_path": 15, "refusal_or_poison": 22},
+  "runtime_positive": [
+    {"job": "runtime-d141-p5-cut-1026013331-6934", "repo": "runtime", "suite": "d141-p5-cut", "result": "admitted, terminal pass, 4 trace rows"},
+    {"job": "d141h-targeted15", "repo": "runtime", "suite": "full-d141-pristine-targeted15", "result": "admitted, terminal pass, 4 trace rows"},
+    {"route": "request-test generated body-full-d141-pristine-targeted15-* ID -> received test-run", "result": "admitted, terminal pass; request preserved"}
+  ],
+  "runtime_refusals": [
+    "floor below/equality/above (4,599,999,999 refused; 4,600,000,000 and 4,600,000,001 admitted)",
+    "default light/core/heavy floors and global 4.5GB stop",
+    "reciprocal one-heavy occupancy",
+    "malformed disk and duplicate/typed/arithmetic/source/command/trace receipt poison",
+    "held rt-pin-fa9cd546-full-d141-pristine-1026005231-8912 and agent-p4-current-becfe-http-3legs-1026012948-19479 before launch artifacts",
+    "bare 6934, suffixed P5 ID, and wrong-job P5 ID"
+  ],
+  "lifecycle": [
+    "failure body reached fail with final trace validation",
+    "cancel body finalized its trace and reaped sampler",
+    "source/snapshot/cache/lease branches remained in the received runner"
+  ],
+  "app_interim_refusal": {
+    "decision": "D141g-next-app-journey",
+    "validator_exit": 1,
+    "test_run_exit": 3,
+    "message": "D141g App admission refused: paired kit pending",
+    "launch_artifacts": "none"
+  },
+  "known_gap": "The source control smoke did not run a live dispatcher; it traced dispatcher-daemon source read-only and directly invoked the received runner after reproducing request-test queue shape, as required by the no-live-queue scope."
+}
