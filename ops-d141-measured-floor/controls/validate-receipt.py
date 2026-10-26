@@ -119,8 +119,7 @@ def witness_path(root: Path, relative: Any) -> Path:
     path = root.joinpath(*components)
     no_symlink_components(path)
     try:
-        if path.relative_to(root) != path:
-            fail(f"witness escapes trusted manager root: {relative_text}")
+        path.relative_to(root)
     except ValueError:
         fail(f"witness escapes trusted manager root: {relative_text}")
     return path
@@ -138,6 +137,75 @@ def witness_value(raw: bytes, path: Path) -> int:
     if not re.fullmatch(r"(?:0|[1-9][0-9]*)", value):
         fail(f"witness value is not a strict decimal integer: {path}")
     return int(value)
+
+
+def validate_trace_binding(
+    value: Any,
+    manager_root: Path,
+    job_id: str,
+    repo: str,
+    suite: str,
+    source: dict[str, Any],
+) -> None:
+    trace = exact_keys(value, {"path", "sampling_seconds", "format", "keep"}, "trace")
+    expected_path = f"tests/{job_id}/disk-trace.tsv"
+    if trace["path"] != expected_path:
+        fail("trace path is not the fixed per-job path")
+    if trace["sampling_seconds"] != 5:
+        fail("trace sampling interval is not five seconds")
+    if trace["format"] != "timeline.disk-trace.v1" or trace["keep"] is not True:
+        fail("trace format/retention declaration is invalid")
+    if repo not in {"app", "runtime"} or not suite or not source:
+        fail("trace binding has an invalid dispatch scope")
+    trace_path = manager_root.joinpath(*trace["path"].split("/"))
+    no_symlink_components(trace_path.parent)
+    if trace_path.name != "disk-trace.tsv":
+        fail("trace path has an unexpected filename")
+
+
+def validate_recorded_decision(
+    manager_root: Path,
+    job_id: str,
+    repo: str,
+    suite: str,
+    source: dict[str, Any],
+    auth: Any,
+) -> None:
+    authorization = exact_keys(auth, {"decision", "record_path", "record_sha256"}, "authorization")
+    decision = authorization["decision"]
+    if decision not in {
+        "D141g-next-app-journey",
+        "D141h-runtime-pristine-targeted15",
+        "P5-service6934",
+    }:
+        fail("recorded decision is not an authorized D141 decision")
+    expected_record = f"tests/{job_id}/d141-decision.json"
+    if authorization["record_path"] != expected_record:
+        fail("recorded decision path is not the fixed per-job path")
+    record_path = witness_path(manager_root, authorization["record_path"])
+    raw, item = read_regular_nofollow(record_path, os.lstat(manager_root).st_uid)
+    if item.st_gid != os.lstat(manager_root).st_gid or sha256(raw) != authorization["record_sha256"]:
+        fail("recorded decision custody or hash mismatch")
+    try:
+        record = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_pairs, parse_constant=reject_constant)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        fail(f"recorded decision is not strict JSON: {exc}")
+    record = exact_keys(record, {"schema", "decision", "scope", "trace"}, "recorded decision")
+    if record["schema"] != "timeline.d141.recorded-decision.v1" or record["decision"] != decision:
+        fail("recorded decision schema or name mismatch")
+    record_scope = exact_keys(record["scope"], {"job_id", "repo", "suite", "source"}, "recorded decision scope")
+    record_source = exact_keys(record_scope["source"], {"head", "tree", "command_sha256"}, "recorded decision source")
+    if record_scope["job_id"] != job_id or record_scope["repo"] != repo or record_scope["suite"] != suite:
+        fail("recorded decision scope mismatch")
+    if record_source != source:
+        fail("recorded decision source mismatch")
+    validate_trace_binding(record["trace"], manager_root, job_id, repo, suite, source)
+    if decision == "D141g-next-app-journey" and (repo, suite) != ("app", "full-e2e-timeline"):
+        fail("D141g is not bound to the first App journey suite")
+    if decision == "D141h-runtime-pristine-targeted15" and (repo, suite) != ("runtime", "full-d141-pristine-targeted15"):
+        fail("D141h is not bound to the targeted pristine-15 suite")
+    if decision == "P5-service6934" and (job_id, repo, suite) != ("6934", "runtime", "d141-p5-cut"):
+        fail("P5 decision is not bound to service 6934")
 
 
 def sha256(raw: bytes) -> str:
@@ -178,12 +246,31 @@ def validate(
         )
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         fail(f"receipt is not strict JSON: {exc}")
-    root = exact_keys(
-        value,
-        {"schema", "trusted_manager_root", "manager_owner_uid", "scope", "measurement", "witnesses"},
-        "receipt",
-    )
-    if root["schema"] != "timeline.d89d.measured-floor.v1":
+    if type(value) is not dict:
+        fail("receipt must be an object")
+    schema = value.get("schema")
+    if schema == "timeline.d89d.measured-floor.v1":
+        root = exact_keys(
+            value,
+            {"schema", "trusted_manager_root", "manager_owner_uid", "scope", "measurement", "witnesses"},
+            "receipt",
+        )
+    elif schema == "timeline.d141.measured-floor.v1":
+        root = exact_keys(
+            value,
+            {
+                "schema",
+                "trusted_manager_root",
+                "manager_owner_uid",
+                "scope",
+                "measurement",
+                "witnesses",
+                "authorization",
+                "trace",
+            },
+            "receipt",
+        )
+    else:
         fail("unsupported receipt schema")
     if root["trusted_manager_root"] != str(manager_root):
         fail("receipt trusted manager root mismatch")
@@ -200,6 +287,9 @@ def validate(
         fail("receipt source revision/tree mismatch")
     if source["command_sha256"] != sha256(command.encode()):
         fail("receipt suite command mismatch")
+    if root["schema"] == "timeline.d141.measured-floor.v1":
+        validate_trace_binding(root["trace"], manager_root, job_id, repo, suite, source)
+        validate_recorded_decision(manager_root, job_id, repo, suite, source, root["authorization"])
 
     measurement = exact_keys(
         root["measurement"],

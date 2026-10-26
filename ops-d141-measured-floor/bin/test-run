@@ -4,6 +4,7 @@
 # Caps: one heavy ("full*") suite at a time, plus up to 2 other runs. Cache key: repo + tree of the worktree (incl. uncommitted
 # changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
 bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
 alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
@@ -15,10 +16,14 @@ if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled 
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
-HV=light; case $suite in full*|agent-core-full) HV=heavy;; esac
+HV=light; case $suite in full*|agent-core-full|d141-p5-cut) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
+case "$ID" in
+  8912) refuse "held old pristine full job 8912 remains queued and unstarted" ;;
+  19479) refuse "cancelled P4 job 19479 cannot be activated" ;;
+esac
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
   TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
@@ -46,9 +51,49 @@ if [ -z "$RUN" ]; then
   DF_OUTPUT=$(df -B1 --output=avail /home/user 2>/dev/null) || { echo "disk availability unreadable; refusing admission" | tee "$D/why"; exit 3; }
   AVAILABLE_BYTES=$(printf '%s\n' "$DF_OUTPUT" | awk '$1 ~ /^[0-9]+$/ { if (++n == 1) value=$1 } END { if (n != 1) exit 1; print value }') || { echo "disk availability invalid; refusing admission" | tee "$D/why"; exit 3; }
   [ "$AVAILABLE_BYTES" -le 4500000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 4500000000 bytes)" | tee "$D/why"; exit 3; }
-  { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$suite" != agent-core-full ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named agent-core-full inclusive, light inclusive, default heavy strictly above)" | tee "$D/why"; exit 3; }
+  { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$suite" != agent-core-full ] && [ -z "$MEASURED_FLOOR" ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)" | tee "$D/why"; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
-  setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+  setsid nohup "$0" --run "$ID" > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+# Every heavy body owns a durable trace.  The sampler is the child of this
+# exact body and carries both the queued ID and this body's /proc start tick.
+TRACE_PID=; TRACE_FILE=; TRACE_RC=0; TRACE_FINALIZED=0
+stop_trace() {
+  if [ -n "$TRACE_PID" ]; then
+    kill -TERM "$TRACE_PID" 2>/dev/null
+    wait "$TRACE_PID" 2>/dev/null; TRACE_RC=$?
+    TRACE_PID=
+  fi
+  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/../controls/append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user"; then
+    TRACE_RC=125
+  fi
+  if [ "$TRACE_RC" -ne 0 ]; then
+    echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
+    [ "$rc" -eq 0 ] && rc=125
+  fi
+  if [ -n "$TRACE_FILE" ] && ! python3 -I "$SELF_DIR/../controls/validate-trace.py" "$TRACE_FILE" "$ID" "$$" "$(id -u)" > "$D/trace-validation" 2>&1; then
+    TRACE_RC=125
+  fi
+  TRACE_FINALIZED=1
+  return "$TRACE_RC"
+}
+finish_trace() {
+  rc=$?
+  trap - EXIT HUP TERM INT
+  if [ "$TRACE_FINALIZED" -eq 0 ]; then
+    stop_trace
+    [ "$?" -ne 0 ] && [ "$rc" -eq 0 ] && rc=125
+  fi
+  exit "$rc"
+}
+if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
+  TRACE_FILE=$D/disk-trace.tsv
+  BODY_START_TICKS=$(awk '{print $22}' "/proc/$$/stat") || exit 125
+  setsid python3 -I "$SELF_DIR/../controls/disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" > "$D/trace-runner.log" 2>&1 &
+  TRACE_PID=$!
+  echo "$TRACE_PID" > "$D/trace.pid"
+  trap finish_trace EXIT
+  trap 'exit 130' HUP TERM INT
 fi
 # BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
 if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then
@@ -220,6 +265,12 @@ else
 ( cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
 fi
 [ -n "$LEASED" ] && exit "$RC"
+fi
+# Finalize before writing the terminal result so a late parent/session signal
+# cannot leave a passing body without its final sample and custody verdict.
+if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
+  stop_trace
+  [ "$?" -ne 0 ] && [ "$RC" -eq 0 ] && RC=125
 fi
 # BENCH-LEASE-END
 git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
