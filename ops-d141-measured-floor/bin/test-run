@@ -21,8 +21,8 @@ MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
 case "$ID" in
-  8912) refuse "held old pristine full job 8912 remains queued and unstarted" ;;
-  19479) refuse "cancelled P4 job 19479 cannot be activated" ;;
+  rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
+  agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
 esac
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null

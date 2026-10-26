@@ -174,7 +174,7 @@ def main() -> int:
     authorized = [
         ("d141g-app", "app", "full-e2e-timeline", "D141g-next-app-journey"),
         ("d141h-targeted15", "runtime", "full-d141-pristine-targeted15", "D141h-runtime-pristine-targeted15"),
-        ("6934", "runtime", "d141-p5-cut", "P5-service6934"),
+        ("runtime-d141-p5-cut-1026013331-6934", "runtime", "d141-p5-cut", "P5-service6934"),
     ]
     for job, repo, suite, decision in authorized:
         receipt(root, job, repo, suite, worktree, decision)
@@ -330,10 +330,29 @@ def main() -> int:
     write_df(root / "bin/df", "not-a-number")
     case("malformed-disk", run_candidate(script, root, "bad-disk", env), 3)
 
-    # Held jobs remain held even if a receipt is present.
-    for job in ("8912", "19479"):
+    # Held jobs remain held by their exact production IDs, before any launch
+    # artifacts are created.  A bare suffix is not an identity guard.
+    held = {
+        "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912": "held old pristine full job",
+        "agent-p4-current-becfe-http-3legs-1026012948-19479": "cancelled P4 job",
+    }
+    for job, label in held.items():
         request(root, job, "runtime", "full-d141-pristine-targeted15")
         case(f"held-{job}", run_candidate(script, root, job, env), 3)
+        names = sorted(path.name for path in (root / "tests" / job).iterdir())
+        if names != ["request", "why"]:
+            raise AssertionError(f"{label}: launch artifacts were created: {names}")
+
+    # P5 is authorized only for the existing full request ID.  Bare and
+    # suffix-shaped lookalikes, plus a different full job, all fail closed.
+    p5_job = "runtime-d141-p5-cut-1026013331-6934"
+    for job in ("6934", "runtime-d141-p5-cut-1026013331-6934-suffix", "runtime-d141-p5-cut-1026013331-9999"):
+        receipt(root, job, "runtime", "d141-p5-cut", worktree, "P5-service6934")
+        request(root, job, "runtime", "d141-p5-cut")
+        write_df(root / "bin/df", 4_600_000_001)
+        case(f"p5-invalid-{job}", run_candidate(script, root, job, env), 3)
+    if not (root / "tests" / p5_job / "status").exists():
+        raise AssertionError("exact P5 request did not reach terminal status")
 
     print(json.dumps(outcomes, sort_keys=True, indent=2))
     return 0

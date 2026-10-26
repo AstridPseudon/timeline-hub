@@ -204,8 +204,12 @@ def validate_recorded_decision(
         fail("D141g is not bound to the first App journey suite")
     if decision == "D141h-runtime-pristine-targeted15" and (repo, suite) != ("runtime", "full-d141-pristine-targeted15"):
         fail("D141h is not bound to the targeted pristine-15 suite")
-    if decision == "P5-service6934" and (job_id, repo, suite) != ("6934", "runtime", "d141-p5-cut"):
-        fail("P5 decision is not bound to service 6934")
+    if decision == "P5-service6934" and (job_id, repo, suite) != (
+        "runtime-d141-p5-cut-1026013331-6934",
+        "runtime",
+        "d141-p5-cut",
+    ):
+        fail("P5 decision is not bound to the exact service 6934 request")
 
 
 def sha256(raw: bytes) -> str:
