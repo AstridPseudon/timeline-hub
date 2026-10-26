@@ -1,0 +1,142 @@
+{
+  "schema": "timeline.f.d141.actual-reg-join.v1",
+  "read_only": true,
+  "join_scope": "exact retained cut-53 census joined once with the exact pristine targeted-15 result",
+  "cut": {
+    "request_id": "runtime-full-d141-cut-1026005231-18778",
+    "status": "fail",
+    "exit_code": 1,
+    "xml_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-full-d141-cut-1026005231-18778/d66/runtime-full.xml",
+    "xml_sha256": "227a6efa2e4886b0d1ae3d657e703174ef6a7ccb5f4aaa558875d3887dde31f0",
+    "xml_cases": 7392,
+    "service_counts": {"pass": 7300, "failure": 35, "error": 18, "skipped": 26, "xfail": 13},
+    "bad_count": 53
+  },
+  "actual_pristine_targeted15": {
+    "request_id": "rt-pin-fa9cd546-full-d141-pristine-targeted15-1026044256-11121",
+    "request": {"target": "rt-pin-fa9cd546", "repo": "runtime", "suite": "full-d141-pristine-targeted15", "files": "", "nocache": 1, "requested": "2026-10-26T04:42:56Z"},
+    "status": "pass",
+    "exit_code": 0,
+    "xml_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-targeted15-1026044256-11121/d66/runtime-targeted15.xml",
+    "xml_sha256": "0047e2b891a454bfdebf1fac924ebf5a2e16b7e0404d771ef4f9d1700c094888",
+    "xml_cases": 15,
+    "unique_nodeids": 15,
+    "pass": 15,
+    "failure": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "trace_validation": "PASS: 3 actual samples",
+    "nocache": true,
+    "source_tuple": {
+      "runtime_head": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "runtime_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "agent_head": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "agent_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "venv": "/home/user/work/venv-runtime",
+      "settings": ["ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-8b6ed211", "pytest -q -n3", "D66_OUTPUT_DIR absolute and non-symlink"],
+      "runtime_clean": true,
+      "agent_clean": true
+    },
+    "normal_snap": {"key": "d441c4fc3d7567907cc5e2596d2a42eb", "key_is_32_hex": true, "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"},
+    "interpreter": "/home/user/work/venv-runtime/bin/python",
+    "agent_origin": "/home/user/work/wt/agt-pin-8b6ed211",
+    "result_row": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/rt-pin-fa9cd546-full-d141-pristine-targeted15-1026044256-11121",
+    "runner_exit": 0,
+    "retention": {"root_keep": true, "d66_keep": true, "reap": "not performed; retained raw service artifacts"},
+    "trace": {"first": {"available_bytes": 4647428096, "timestamp": "2026-10-26T04:43:08.018Z"}, "terminal": {"available_bytes": 4625362944, "timestamp": "2026-10-26T04:43:11.369Z"}, "sampling_seconds": 5, "validation": "PASS", "floor_bytes": 4600000000, "stop_bytes": 4000000000, "one_heavy_marker": "heavy file empty; no heavy marker claimed"},
+    "admission_and_receipts": {"request_admitted": true, "recorded_decision": "D141h-runtime-pristine-targeted15", "receipt_trace_validators": "PASS", "approved_recorded_receipt": true},
+    "actual_xml_names": [
+      "test_upgrade_repairs_missing_historical_object_indexes",
+      "test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]",
+      "test_upgrade_archives_wal_before_activation",
+      "test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]",
+      "test_upgrade_is_not_repeatable_and_refuses_live_owner",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]",
+      "test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]",
+      "test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]",
+      "test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars",
+      "test_typescript_conformance_generator_is_byte_stable",
+      "test_typescript_generator_check_rejects_client_and_manifest_mutation"
+    ]
+  },
+  "join": {
+    "cut_bad": 53,
+    "exact_pristine_ids": 15,
+    "new_ours_ids": 38,
+    "exact_ids_unique": true,
+    "actual_ids_match_reviewed_census": true,
+    "actual_ids_unique": true,
+    "environment_type_pristine_failures": 0,
+    "unknown_exact_ids": 0,
+    "all_cut_bad_accounted_for": true
+  },
+  "groups": [
+    {
+      "name": "upgrade",
+      "count": 13,
+      "reg_verdict": "REG_PROVED",
+      "fix_owner": "rt-F-D141-REG-upgrade-fix-next",
+      "fix_files": ["runtime_protocol/upgrade.py"],
+      "smallest_disjoint_fix": "At _validate_candidate, set the staged RealmStore inspector db_path to root / 'realm.sqlite3' before TimelineCommitStore integrity inspection.",
+      "retained_failure_frame": {
+        "error_class": "AttributeError",
+        "message": "'RealmStore' object has no attribute 'db_path'",
+        "sourcepath": "runtime_protocol/timeline_commit_store.py:261",
+        "call_chain": ["tests/test_runtime_upgrade.py", "runtime_protocol/upgrade.py:1347 upgrade_realm", "runtime_protocol/upgrade.py:1242 _validate_candidate", "runtime_protocol/store.py:6812 _integrity_report", "runtime_protocol/timeline_commit_store.py:261"]
+      },
+      "matching_env_basis": "Selector-map source function body hashes match the retained cut and pristine source; actual result uses Runtime fa9cd546 plus Agent 8b6ed211 in /home/user/work/venv-runtime, clean worktrees, pytest -q -n3, and no cache.",
+      "ids": [
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:130", "body_sha256": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:130", "body_sha256": "596585ef6582506c3f6744ee62ac573b131f3daa52ef64ead5f48f5ca6e3bf4", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:534", "body_sha256": "c8007f60a795445d7ef87019b08e845733324e6163a69ca64d1977f9d81c5d74", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:638", "body_sha256": "9399fe219d47757f00ca349ef11cab15f4d87d2f3216bf1f9e042df722fee580", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:686", "body_sha256": "9361627cccfd2da7dbd4a91e6bc2b537a7006a2342249a3d2ca7e80d49aeff2d", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:757", "body_sha256": "fa754f55b837d5f38cb9a0c9d35aaacedaecf38767ad4abf469397eb8bb187fc", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:795", "body_sha256": "9107c12d33b2d5329c65fa2a726155b78bd89a69d634f93ece02c5f30c3a0ada", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_runtime_upgrade.py:830", "body_sha256": "a847338f646757b5b656df02814d47b90687ce0dff3d234b00c0be8ef272201f", "verdict": "REG_PROVED"}
+      ]
+    },
+    {
+      "name": "typescript-generator",
+      "count": 2,
+      "reg_verdict": "REG_PROVED",
+      "fix_owner": "rt-F-D141-REG-typescript-fix-next",
+      "fix_files": ["conformance/typescript/contract-metadata.ts", "conformance/typescript/generated.ts"],
+      "smallest_disjoint_fix": "Regenerate the checked-in TypeScript conformance outputs with the existing generator; do not change tests, assertions, or inputs.",
+      "retained_failure_frame": {
+        "error_class": "AssertionError",
+        "message": "stale or mutated generated artifact: /home/user/work/wt/.test-runtime-full-d141-cut-1026005231-18778/conformance/typescript/contract-metadata.ts",
+        "sourcepath": "tests/test_typescript_generator.py",
+        "call_chain": ["tests/test_typescript_generator.py:34 or :50", "generator check subprocess returned 1"]
+      },
+      "matching_env_basis": "Selector-map source function body hashes match the retained cut and pristine source; both exact IDs pass in the actual no-cache targeted-15 run using Runtime fa9cd546, Agent 8b6ed211, and /home/user/work/venv-runtime.",
+      "ids": [
+        {"original_id": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_typescript_generator.py:34", "body_sha256": "e173341d03c20fa3d14cbe7968140a7460ddaf8a02c933c4851525d2853506e3", "verdict": "REG_PROVED"},
+        {"original_id": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation", "cut_status": "FAILURE", "actual_status": "PASS", "sourcepath": "tests/test_typescript_generator.py:50", "body_sha256": "09bb60ceaa1ea272940f0c0c33f524a771d6529819f3e025ee76330aad7bd", "verdict": "REG_PROVED"}
+      ]
+    }
+  ],
+  "new_ours": {
+    "count": 38,
+    "verdict": "NOT_REG_ELIGIBLE_NEW_OURS",
+    "basis": "selector-map mapping_status=NEW_OURS; no product REG verdict assigned"
+  },
+  "contract_review": {
+    "required_request": ["base_revision_id", "base_publication_id", "commands", "label", "steps", "merge=fields|atomic", "declared reads", "Idempotency-Key", "dry_run"],
+    "required_replies": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "closure": "canonical authenticated receipt records bindings, effects, dependencies, history, guarded undo",
+    "conflict": ["reason", "head"],
+    "invalid": ["code", "path", "hint", "suggested command"],
+    "preview": "unchanged: no store/history/idempotency/head mutation"
+  }
+}

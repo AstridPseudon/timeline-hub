@@ -1,0 +1,38 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/reg.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-reg.json",
+    "sha256": "bc9a5a8110acee30f81339557fc7ba55bcb20f496210a242e90a848f513861e8",
+    "size": 13066
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/reg.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-reg.md",
+    "sha256": "2a71a8850a68bc489069d008fde20db003e5eed82d90479b92323d7b8c6ad933",
+    "size": 3704
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/p5-custody.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-p5-custody.json",
+    "sha256": "2d5adb2b41ff2e82e7b562f0c2d1092a8cd702dd6c31964a98032141834e53cd",
+    "size": 10146
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-source-manifest.json",
+    "sha256": "67dc6c9b59be063f5ad638ad4b6ddd26e041c950c0968d350515ab76c51332a3",
+    "size": 3553
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-validation.md",
+    "sha256": "b80b8981c38de5f1eed6bc7f8595b5aab620844b734631ba3d16fc1228dc7d01",
+    "size": 2507
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-REG-join-P5-review-0445/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-REG-join-P5-review-0445-handoff.md",
+    "sha256": "ca8f14e9fedf6e194b17858502c39ebc58feb5cd54f19a34394976686b76d13c",
+    "size": 1866
+  }
+]

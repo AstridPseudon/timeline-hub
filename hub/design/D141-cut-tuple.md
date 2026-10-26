@@ -11,3 +11,18 @@ Each lane: ONE final merge-forward of integration to its tip above, through the 
 - app: 520d7e4fc12a03392afaed3f486aba34a2b5c319 (tree 70ad390c56b0; = 5fe3e4de + D141d placement expectation, review 0243 PASS; FROZEN 02:53Z 26 Oct; supersedes 867cb273/5fe3e4de)
 - composition: 635f4de06fda (upstream 67b8aa3d IS an ancestor, verified by main 2026-10-26T00:41:17Z; no merge needed)
 - runtime: 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d (frozen; upstream fa9cd5464a8b; independent rt-U1-D141-final-review-2350 PASS; author119 PASS)
+
+## Freeze 2 tuple (D141l, recorded 2026-10-26T05:00Z by main)
+| Repo | Upstream base (freeze 2) | Integration head | Tree | Receipt |
+|---|---|---|---|---|
+| agent | 64197afa297f | 8585ed9c0404d0187b2ce70242d25114a32747c2 | 92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c | Sol 0408 merge, independent review 0432 PASS_SOURCE, merges.log 04:41:28Z |
+| app | d822d2f5d2bd | 5344c53e3063001bb3255bd0c9cd32cc5e77967f | dd989783046aeff652486a1ba39db42aea86e201 | merge 8f278b91 plus manifest pin to Agent 8585ed9c, review 0454 PASS zero findings, design/app-D141p-freeze2-source-home-0459.json |
+| runtime | fa9cd5464a8b (unchanged) | 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d | ac5b8627 | freeze 1 |
+| composition | 67b8aa3d (unchanged) | 635f4de06fda | 5ab5191a2969 | freeze 1 |
+
+These are source qualifications only: no GO, REG0, build or ZIP claim. Still owed on freeze 2:
+- Agent: the full rerun pair (merged head and pristine 64197afa) plus P4.
+- App: P1, P2-six and P3, plus the popup ADD (D141j); unit suites on the new head and pristine d822 with real Node coverage.
+- Runtime: the targeted-15 and P5 receipts.
+
+App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just before F-final (D141l item 5).
