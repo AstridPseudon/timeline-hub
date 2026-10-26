@@ -1,0 +1,4 @@
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T10:26:52.476Z	241306036337525	5656698880	rt-F-D141z-main-intake-review-1023	4	first
+2026-10-26T10:26:57.476Z	241311036221426	5656694784	rt-F-D141z-main-intake-review-1023	4	periodic
+2026-10-26T10:26:57.783Z	241311343995739	5656694784	rt-F-D141z-main-intake-review-1023	4	final

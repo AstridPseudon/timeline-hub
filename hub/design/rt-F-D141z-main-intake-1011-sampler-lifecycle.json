@@ -1,0 +1,24 @@
+{
+  "format": "timeline-d141z-main-receiving-sampler-lifecycle-v1",
+  "trace": "evidence/disk-trace.txt",
+  "sampler_script": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-disk-trace.py",
+  "sampler_pid": 10,
+  "body_pid": 9,
+  "ready_line": "ready\t65024\t1845252\t0\t600\t1\t2de59d5d75b2fcc762b51c2404f90b14c95fef437ae8c2fc8101b0a0fe385e15",
+  "term_sent": true,
+  "wait_returncode": 0,
+  "reaped": true,
+  "started_utc": "2026-10-26T10:18:27.005Z",
+  "ended_utc": "2026-10-26T10:18:32.571Z",
+  "elapsed_seconds": 5.566,
+  "sample_count": 3,
+  "sample_kinds": [
+    "first",
+    "periodic",
+    "final"
+  ],
+  "min_available_bytes": 5673127936,
+  "stop_floor_bytes": 4000000000,
+  "all_samples_above_stop_floor": true,
+  "stderr": ""
+}

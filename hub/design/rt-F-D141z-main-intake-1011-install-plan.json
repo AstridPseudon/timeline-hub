@@ -1,0 +1,87 @@
+{
+  "format": "timeline-d141z-main-receiving-install-plan-v1",
+  "status": "candidate-only-no-install",
+  "registry": {
+    "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_sha256": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df",
+    "preimage_mode": "0600",
+    "mutation": "append exactly three runtime rows through the existing guarded temporary-file, fsync, replace, directory-fsync path",
+    "backup": "required explicit hard-link backup supplied by the later --install invocation; absent in this candidate"
+  },
+  "candidate_rows": {
+    "source": "evidence/candidate/runtime-final-service-rows.txt",
+    "sha256": "f49369e9c7ec00d1d4ba6a51251c854a824a10931ddf4a0502b4b159f4398117",
+    "mode": "0644",
+    "destination_mode": "registry logical rows; no standalone row file is installed",
+    "rows": {
+      "runtime delivery-v2-final": "6f8e364dddb86cfd7c2d64e46648eded9c53ca3d00e1ea095dc8421f90c98441",
+      "runtime delivery-v2-dryrun": "36eafdd11637cbe8f5f414fe892d94f124b9607ecafa883e1364d2883e0f5399",
+      "runtime core-v2-final-integration": "9e784c20eb5d13ff9a96b66bd78b0cd0102d54e82e3f3d78db79682e1a09a084"
+    }
+  },
+  "accepted_source_closure": {
+    "caller": {
+      "source": "evidence/candidate/run-final-delivery.py",
+      "destination": "candidate artifact root consumed by the guarded installer and referenced by both delivery rows",
+      "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154",
+      "source_export_mode": "0644",
+      "execution_mode": "0644",
+      "row_binding": "both delivery rows carry the caller hash and exact absolute candidate path"
+    },
+    "lifecycle_helper": {
+      "source": "evidence/candidate/delivery_lifecycle.py",
+      "destination": "same candidate artifact root as caller; imported only beside the exact caller",
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "source_export_mode": "0644",
+      "execution_mode": "0644",
+      "row_binding": "installer verifies helper hash while loading the exact caller; helper alone is not installable"
+    },
+    "installer": {
+      "source": "evidence/candidate/install-final-services.py",
+      "sha256": "8fc66c77a737f621965efde783202d40a4c3be6e151c1a03b2670fb07e4d0475",
+      "mode": "0644",
+      "role": "existing guarded receiving/install mechanism adapted only for current Main preimage, exact caller/helper closure, and explicit preserved rows"
+    }
+  },
+  "predecessor_and_dependencies": {
+    "old_installer_caller_pin": "45a50639 (historical predecessor; retained only in inherited reference rows)",
+    "core_runner": {
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "mode": "0644"
+    },
+    "core_inventory": {
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "mode": "0644"
+    },
+    "D68_wrapper": {
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89d0b0b10825827c94f855257bce6c6779",
+      "mode": "0755"
+    },
+    "builder": {
+      "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "mode": "0755",
+      "predecessor_pin_not_used": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708"
+    }
+  },
+  "outside_row_conservation": {
+    "preserved_runtime_rows": {
+      "full-d141-cut": "fcd4ca8f45d683f5af15cacdd8bfc213b43774a9a11f8e503341b6249a44878",
+      "full-d141-pristine": "c12d0642b9f57ed008cc042b296b5432d5b88c3edccc5bbb63c9281c67b59f99",
+      "d141-p5-cut": "6be05d00fb80c5c9fed24b614a523c5ffaa2afc71f8089736f5ef195ed1e2b27",
+      "full-d141-pristine-targeted15": "c58378a2036cca8d188447fd49abdd1b0b3be5765d9a252485b4f784b865314e"
+    },
+    "all_non_candidate_registry_bytes": "must remain byte-identical",
+    "note": "Main currently has four disjoint Runtime D141 rows, including full-d141-pristine-targeted15; the candidate conserves all four."
+  },
+  "live_gates": {
+    "admission_owner": "normal dispatcher test-run",
+    "prospective_dispatch_floor_bytes": 4860000000,
+    "not_claimed": [
+      "final source tuple and gate tuple",
+      "live F1/dispatcher admission",
+      "real builder/main/rehearsal",
+      "registry write or canonical installation",
+      "final REG0/build/ZIP"
+    ]
+  }
+}

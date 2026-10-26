@@ -1,0 +1,38 @@
+{
+  "format": "timeline-d141z-main-receiving-source-manifest-v1",
+  "repo": "composition",
+  "base_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "publication": {
+    "source_commit": "61f91572495f4a5733058f1310055846730d3b9b",
+    "source_tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+    "publication_sha256": "173d7512cf6a0c0528ab35795a4b5bdeca5ef185f101545bea1764572cf9d9ee",
+    "accepted_check_sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099"
+  },
+  "accepted_source_exports": [
+    {"path": "run-final-delivery.py", "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154", "bytes": 12812, "transport_mode": "0644", "execution_mode": "0644"},
+    {"path": "delivery_lifecycle.py", "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3", "bytes": 23186, "transport_mode": "0644", "execution_mode": "0644"},
+    {"path": "check.sh", "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099", "bytes": 20847, "transport_mode": "0644", "execution_mode": "0755"},
+    {"path": "install-map.json", "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618", "bytes": 3384, "transport_mode": "0644", "execution_mode": "0644"}
+  ],
+  "runtime_receiving_inputs": [
+    {"path": "run-final-services.py", "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7", "bytes": 18055, "mode": "0644"},
+    {"path": "core-inventory.json", "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14", "bytes": 25664, "mode": "0644"},
+    {"path": "delivery_gate_build.py", "sha256": "bae840fad6ea496457a3d6138609ce9d89d0b0b10825827c94f855257bce6c6779", "bytes": 14909, "published_transport_mode": "0644", "required_execution_mode": "0755"},
+    {"path": "delivery-build", "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca", "required_execution_mode": "0755"}
+  ],
+  "candidate_artifacts": [
+    {"path": "candidate/run-final-delivery.py", "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154", "mode": "0644"},
+    {"path": "candidate/delivery_lifecycle.py", "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3", "mode": "0644"},
+    {"path": "candidate/check.sh", "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099", "mode": "0755"},
+    {"path": "candidate/install-final-services.py", "sha256": "8fc66c77a737f621965efde783202d40a4c3be6e151c1a03b2670fb07e4d0475", "mode": "0644"},
+    {"path": "candidate/receiving_controls.py", "sha256": "a5d20f98d80c066179e65e7368735c89e09da136a36da0098737431dc2dff08a", "mode": "0644"},
+    {"path": "candidate/runtime-final-service-rows.txt", "sha256": "f49369e9c7ec00d1d4ba6a51251c854a824a10931ddf4a0502b4b159f4398117", "mode": "0644"}
+  ],
+  "scope": {
+    "product_changes": false,
+    "accepted_blobs_modified": false,
+    "actual_installation": false,
+    "full_suite": false,
+    "ts_typescript": "not applicable"
+  }
+}

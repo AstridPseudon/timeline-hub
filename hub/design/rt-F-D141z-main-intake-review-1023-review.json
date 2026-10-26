@@ -1,0 +1,28 @@
+{
+  "format": "timeline-f-d141z-main-intake-independent-review-v1",
+  "verdict": "PASS",
+  "scope": "Main receiving closure only: installer, three candidate rows, accepted caller/helper, and genuine Runtime delivery dependencies",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "author": "rt-F-D141z-main-intake-1011",
+  "publication": "app-D141z-Sol-independent-publication-0954",
+  "checks": {
+    "accepted_33_purpose_check": "PASS",
+    "receiving_controls_fresh_tmpdir": "PASS",
+    "no_install_installer": "PASS",
+    "private_negative_controls": "PASS",
+    "ast_private_compile_bash_json_ruff": "PASS",
+    "real_registry_mutation": "NOT RUN"
+  },
+  "findings": [
+    {"id": "source-bytes", "verdict": "PASS", "detail": "Accepted caller, adjacent lifecycle helper, check, and map match published exports byte-for-byte; genuine Runtime runner and inventory match published Main dependency bytes."},
+    {"id": "route-closure", "verdict": "PASS", "detail": "Rows bind the exact caller path/hash; installer loads the caller with its sibling helper and checks caller pins for core runner, inventory, D68 wrapper, and builder."},
+    {"id": "guards", "verdict": "PASS", "detail": "Private controls reject source/hash/path/mode/symlink changes, registry preimage and unknown outside-row drift, tuple markers, occupied backup, and injected replace failure."},
+    {"id": "registry-conservation", "verdict": "PASS", "detail": "Real Main registry is 7b1ffdd7... mode 0600; all seven inherited Runtime rows and four disjoint D141 rows, including targeted15, are checked; private replacement preserves all outside bytes."},
+    {"id": "prospective-boundary", "verdict": "PASS", "detail": "No canonical installation, final tuple, live admission, real builder/main/rehearsal, final build, or ZIP is claimed."}
+  ],
+  "limits": [
+    "The candidate rows and caller/helper remain source artifacts under the author evidence root; durable canonical deployment has not occurred.",
+    "The future concrete source/gate tuples and live dispatcher admission remain separately gated.",
+    "No full suite, browser, live socket, service body, or real installation was run."
+  ]
+}

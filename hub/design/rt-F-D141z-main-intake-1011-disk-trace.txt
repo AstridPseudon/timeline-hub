@@ -1,0 +1,4 @@
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T10:18:27.041Z	240800601786789	5673132032	rt-F-D141z-main-intake-1011	9	first
+2026-10-26T10:18:32.041Z	240805601856005	5673127936	rt-F-D141z-main-intake-1011	9	periodic
+2026-10-26T10:18:32.546Z	240806107036570	5673127936	rt-F-D141z-main-intake-1011	9	final

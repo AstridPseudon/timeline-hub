@@ -1,0 +1,24 @@
+{
+  "all_samples_above_stop_floor": true,
+  "body_pid": 4,
+  "elapsed_seconds": 5.838,
+  "ended_utc": "2026-10-26T10:26:57.837Z",
+  "format": "timeline-d141z-main-receiving-review-sampler-lifecycle-v1",
+  "min_available_bytes": 5656694784,
+  "ready_line": "ready\t65024\t1877848\t0\t600\t1\t5e11b0294ab8c3437a7f49a81f34bef19abc7aff721b4be94764ae6042b771eb",
+  "reaped": true,
+  "sample_count": 3,
+  "sample_kinds": [
+    "first",
+    "periodic",
+    "final"
+  ],
+  "sampler_pid": 5,
+  "sampler_script": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-disk-trace.py",
+  "started_utc": "2026-10-26T10:26:52.472Z",
+  "stderr": "",
+  "stop_floor_bytes": 4000000000,
+  "term_sent": true,
+  "trace": "disk-trace.txt",
+  "wait_returncode": 0
+}

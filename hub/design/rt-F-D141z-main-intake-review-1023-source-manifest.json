@@ -1,0 +1,41 @@
+{
+  "format": "timeline-f-d141z-main-intake-independent-source-manifest-v1",
+  "repo": "composition",
+  "base_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "publication": {
+    "source_commit": "61f91572495f4a5733058f1310055846730d3b9b",
+    "source_tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+    "accepted_check_sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099",
+    "publication_sha256": "173d7512cf6a0c0528ab35795a4b5bdeca5ef185f101545bea1764572cf9d9ee"
+  },
+  "accepted_source_exports": [
+    {"path": "run-final-delivery.py", "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154", "bytes": 12812, "mode": "0644"},
+    {"path": "delivery_lifecycle.py", "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3", "bytes": 23186, "mode": "0644"},
+    {"path": "check.sh", "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099", "bytes": 20847, "mode": "0755"},
+    {"path": "install-map.json", "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618", "bytes": 3384, "mode": "0644"}
+  ],
+  "candidate_receiving": [
+    {"path": "install-final-services.py", "sha256": "8fc66c77a737f621965efde783202d40a4c3be6e151c1a03b2670fb07e4d0475", "bytes": 13648, "mode": "0644"},
+    {"path": "receiving_controls.py", "sha256": "a5d20f98d80c066179e65e7368735c89e09da136a36da0098737431dc2dff08a", "bytes": 3696, "mode": "0644"},
+    {"path": "runtime-final-service-rows.txt", "sha256": "f49369e9c7ec00d1d4ba6a51251c854a824a10931ddf4a0502b4b159f4398117", "bytes": 5503, "mode": "0644"}
+  ],
+  "genuine_main_inputs": [
+    {"path": "run-final-services.py", "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7", "bytes": 18055, "mode": "0644"},
+    {"path": "core-inventory.json", "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14", "bytes": 25664, "mode": "0644"},
+    {"path": "delivery_gate_build.py", "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779", "bytes": 14909, "mode": "0755"},
+    {"path": "delivery-build", "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca", "bytes": 31889, "mode": "0755"}
+  ],
+  "registry": {"path": "tests/suites.conf", "sha256": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df", "bytes": 159909, "mode": "0600"},
+  "candidate_rows": {
+    "runtime core-v2-final-integration": "9e784c20eb5d13ff9a96b66bd78b0cd0102d54e82e3f3d78db79682e1a09a084",
+    "runtime delivery-v2-final": "6f8e364dddb86cfd7c2d64e46648eded9c53ca3d00e1ea095dc8421f90c98441",
+    "runtime delivery-v2-dryrun": "36eafdd11637cbe8f5f414fe892d94f124b9607ecafa883e1364d2883e0f5399"
+  },
+  "preserved_d141_rows": {
+    "full-d141-cut": "fcd4ca8f45d683f5af15cacdd8bfc213b43774a9a11f8e503341b6249a44878",
+    "full-d141-pristine": "c12d0642b9f57ed008cc042b296b5432d5b88c3edccc5bbb63c9281c67b59f99",
+    "d141-p5-cut": "6be05d00fb80c5c9fed24b614a523c5ffaa2afc71f8089736f5ef195ed1e2b27",
+    "full-d141-pristine-targeted15": "c58378a2036cca8d188447fd49abdd1b0b3be5765d9a252485b4f784b865314e"
+  },
+  "mode_note": "D68 genuine source is 0755; published transport copy is 0644; caller invokes it through sys.executable."
+}

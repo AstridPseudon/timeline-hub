@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T10:27:35Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
-# runtime board, 2026-10-26T10:27:18.891160+00:00
+<!-- main | 2026-10-26T10:33:11Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-26T10:30:27.017705+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -71,13 +71,13 @@
 
 | D141bb pre-stage | Prepare notes and final install order | Runtime manager | Main09:42 recorded decision | merged | Existing notes-next and final-install-next briefs | Both exact briefs written; final install waits accepted App map, real gates and final pins. No early dispatch or build. | Manager briefs only |
 
-| D141z canonical install | Review exact guarded Main receiving | Luna and independent Luna | Author1011 terminal | review | Intake1011; independent1023 | Author same33 and receiving controls PASS. Actual fourth Runtime row preserved. Sole independent1023 queued; no registry write, canonical activation or build. | Own operational candidate |
+| D141z canonical install | Retain qualified Main receiving chain | Luna and independent Luna | Independent1023 bounded PASS | merged | Intake1011; review1023 | [Source receipt](../../design/runtime-D141z-main-qualified-publication-1030.json). Same33 and receiving/statics PASS; four Runtime rows preserved. No activation or body. | Source candidate1011 |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. Main10:06 confirms lead hub-repack complete; manager ran none. Raw KEEP and refused smoke remain held.
-Blockers: D141z Main receiving — Independent1023 checks actual1011 candidate, accepted caller/helper and all four current Runtime rows. No canonical activation or real admission claim.
+Blockers: Final activation — D141z Main source receiving PASS; canonical rows and durable final placement require actual proof/source/gate tuples and D141v. Existing final-install-next owns that gated step.
 Blockers: Final delivery — Main free 5708988416 bytes. Required Agent definitive pair/CLI, App journeys, D141v pins and reviewed D141z canonical installation remain; no build dispatch.
-Next ready: Main receiving1023 verdict then existing guarded final install at recorded gates. Agent24814 cut body/pristine and CLI, App final journeys, final pins and build remain owned and gated.
-live 1 / cap 6; ready-undispatched 0 locally. Main receiving1023 is the sole Runtime source reviewer. Notes current-content/correction packet qualified; historical custody limits retained.
+Next ready: Agent actual24814/pristine and CLI receipts, App final journeys, then D141v. Main final-install-next is prepared with qualified1030 source and actual notes1027; no early activation or build.
+live 0 / cap 6; ready-undispatched 0 locally. Notes current content and Main receiving chain qualified. All remaining Runtime activation/build steps await actual cross-lane proof and final-pin gates.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Successor applicability0513/0637 remains separate. Originals retain their sources and raw KEEP. Old8912/19479 stay held unstarted.
 
@@ -113,3 +113,5 @@ INBOX consumed through1872370bytes. Current Main source admission remains open a
 Main intake1011 terminal10:22: candidate guarded installer, exact accepted caller/helper/check/map, same33 lifecycle and receiving/poison/no-install/statics PASS. Four real Runtime rows conserved, including targeted15. Actual registry remained7b1ffdd7. Candidate-only; final tuples, source/gate receipts and native admission remain future inputs. Sole independent receiving-review1023 queued immediately with all findings in one pass, exact same checks and no live install/body.
 
 Notes closure 2026-10-26T10:27:18.891160+00:00: Independent1022 terminal PASS_CORRECTION_BOUNDED; all7 recovered originals exactGit, samecomparison exit0. Current accepted notes/backups regular0644 exact;568 current files and authentic earlier0258 aggregate match independently. Immediate pre-CAS map, no-transient claim and original sampler lifecycle NOT_RECOVERABLE; original installation FAIL_CUSTODY_LIMIT unchanged. Published30 exact worker originals with1027 receipt; no reinstall, new canonical prose or proof retarget. Notes current-content installation row closes only at this bounded scope.
+
+Main receiving closure 2026-10-26T10:30:27.017705+00:00: Independent1023 terminal PASS bounded source; same33, receiving controls, real no-install guard, private poison/preimage/path/mode/symlink/backup/rollback and statics PASS. Actual registry remains7b1ffdd7/0600. Current four Runtime rows and unrelated bytes conserved. Canonical activation/durable placement/live admission and final source/gate tuple remain prospective. Published26 exact worker/source originals with1030 receipt; final-install-next now consumes this qualified successor, preserving actual notes48013/506e and historical notes-custody limits. No installation, registry mutation, body, rehearsal, final pin or ZIP.

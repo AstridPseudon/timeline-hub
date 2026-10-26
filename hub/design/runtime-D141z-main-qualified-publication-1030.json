@@ -1,0 +1,196 @@
+{
+  "utc": "2026-10-26T10:30:27.017705+00:00",
+  "result": "PASS_BOUNDED_MAIN_SOURCE_RECEIVING",
+  "author": "rt-F-D141z-main-intake-1011",
+  "independent": "rt-F-D141z-main-intake-review-1023",
+  "accepted_App_source": "61f91572495f4a5733058f1310055846730d3b9b",
+  "canonical_registry_mutated": false,
+  "registry_preimage": "7b1ffdd7225ad9db6a21dd3f2ced1ae7aa3335249ae9994f529aec6d15fd98df",
+  "current_disjoint_Runtime_rows_preserved": 4,
+  "actual_final_source_gate_tuples": "PENDING",
+  "activation_build_and_live_admission": "UNVERIFIED_GATED",
+  "files": [
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/install-plan.json",
+      "published": "design/rt-F-D141z-main-intake-1011-install-plan.json",
+      "sha256": "4ba3b65706b270c016dd6be7e8d1a34a7df7fdb280f84db58144dc5e6b1c010f",
+      "bytes": 4356,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/source-manifest.json",
+      "published": "design/rt-F-D141z-main-intake-1011-source-manifest.json",
+      "sha256": "1d2bdf35f4c01c4f3dc0eeed6365c94a7c89392c8ef8974841ea750ff9b44cc7",
+      "bytes": 3008,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/findings.md",
+      "published": "design/rt-F-D141z-main-intake-1011-findings.md",
+      "sha256": "8a621f9b4a422600a288570d17735753b3ae538cc123c6c34cf2bbb12f6e3d15",
+      "bytes": 2096,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/validation.md",
+      "published": "design/rt-F-D141z-main-intake-1011-validation.md",
+      "sha256": "919ba1a7e2af1a53c0a761c5333932cbc416c735228530979eef1e3da5565398",
+      "bytes": 3741,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/handoff.md",
+      "published": "design/rt-F-D141z-main-intake-1011-handoff.md",
+      "sha256": "05f09a76977cc63ea281b921911cb7a31e57f91bdeaf8a0fbe7d7fb51dfe39d3",
+      "bytes": 1466,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141z-main-intake-1011-disk-trace.txt",
+      "sha256": "ce311b950ac79c2e2f60c0b08f40e3f2db5b6063e4054a421193c080791eaf0b",
+      "bytes": 331,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141z-main-intake-1011-sampler-lifecycle.json",
+      "sha256": "328c337f51c4a363c4f7fa7b9c9a038a9b2c8be06583f1b33d44e4d925153f8e",
+      "bytes": 785,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/report.md",
+      "published": "design/rt-F-D141z-main-intake-1011-report.md",
+      "sha256": "58853fff3407e1b82e8f47ee650ea778dac4a15231a772ed7e4e5b51276918b3",
+      "bytes": 1099,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/review.json",
+      "published": "design/rt-F-D141z-main-intake-review-1023-review.json",
+      "sha256": "a6406977509dc0703fdd2cbf528390d97db4db57e7a2eefdc5d7c3354afb839b",
+      "bytes": 2186,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/findings.md",
+      "published": "design/rt-F-D141z-main-intake-review-1023-findings.md",
+      "sha256": "d8eeba17878eb234a4743e8916ff1e0831e8a44f3d711144db114ddacba4dc53",
+      "bytes": 1890,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/source-manifest.json",
+      "published": "design/rt-F-D141z-main-intake-review-1023-source-manifest.json",
+      "sha256": "e543f296584a3bafbe265ae55d231121333f5a68b3cff9635bb2ae6956a0e7b9",
+      "bytes": 3248,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/validation.md",
+      "published": "design/rt-F-D141z-main-intake-review-1023-validation.md",
+      "sha256": "1aaa41e5490487a49612ff977c07cc0918648cacb14cb0ba770cab973860dea0",
+      "bytes": 2365,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/handoff.md",
+      "published": "design/rt-F-D141z-main-intake-review-1023-handoff.md",
+      "sha256": "771f45ce7e8f901c0b4fd0bee45f6df6f17c0b385414fb6aaf7ec05774b67e63",
+      "bytes": 1177,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141z-main-intake-review-1023-disk-trace.txt",
+      "sha256": "ff6e5f34f6ecebdad5a29dcae7c83042ef9db5c53ce20066f10c56c92c609b11",
+      "bytes": 352,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141z-main-intake-review-1023-sampler-lifecycle.json",
+      "sha256": "5ed29de75ad1960ab47597bd83321302f78a883e55ce8c6f9f282d6876cabf62",
+      "bytes": 782,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-review-1023/report.md",
+      "published": "design/rt-F-D141z-main-intake-review-1023-report.md",
+      "sha256": "33b123eee085c30f1ebc1c3a4aa32cf2e78b2b313a059ed203de309e0c1827d8",
+      "bytes": 1133,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/check.sh",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-check.sh",
+      "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099",
+      "bytes": 20847,
+      "source_mode": "0o755"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/core-inventory.json",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-core-inventory.json",
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "bytes": 25664,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/delivery_lifecycle.py",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-delivery_lifecycle.py",
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "bytes": 23186,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/inherited-runtime-final-service-rows.txt",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-inherited-runtime-final-service-rows.txt",
+      "sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+      "bytes": 5513,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/install-final-services.py",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-install-final-services.py",
+      "sha256": "8fc66c77a737f621965efde783202d40a4c3be6e151c1a03b2670fb07e4d0475",
+      "bytes": 13648,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/install-map.json",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-install-map.json",
+      "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618",
+      "bytes": 3384,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/receiving_controls.py",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-receiving_controls.py",
+      "sha256": "a5d20f98d80c066179e65e7368735c89e09da136a36da0098737431dc2dff08a",
+      "bytes": 3696,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/run-final-delivery.py",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-run-final-delivery.py",
+      "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154",
+      "bytes": 12812,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/run-final-services.py",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-run-final-services.py",
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "bytes": 18055,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-F-D141z-main-intake-1011/evidence/candidate/runtime-final-service-rows.txt",
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-runtime-final-service-rows.txt",
+      "sha256": "f49369e9c7ec00d1d4ba6a51251c854a824a10931ddf4a0502b4b159f4398117",
+      "bytes": 5503,
+      "source_mode": "0o644"
+    }
+  ]
+}
