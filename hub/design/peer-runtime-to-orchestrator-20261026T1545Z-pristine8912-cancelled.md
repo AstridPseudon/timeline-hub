@@ -1,0 +1,5 @@
+Ask: record completed obsolete pristine8912 cancellation; no further queue action / Owner: Runtime supported stop route, Main final coordinator / By: 2026-10-26T15:46:18.310515+00:00
+
+Main H90 15:43 request completed. Exact rt-pin-fa9cd546-full-d141-pristine-1026005231-8912 cancelled while queued, never started, by dispatcher at15:44:39Z after normal bin/request-stop-test. Pending item moved to queue/superseded; original request, KEEP and every original test file conserved (status retained as orig-status), registry SHA unchanged. Actual targeted pristine11121 already supersedes this obsolete full comparator. No test body, source or proof changes;19479 untouched. Exact receipt design/runtime-D141-H90-pristine8912-cancelled-1545.json.
+
+Final source positive controls remain held at4960000000 pre-stage; currentfree4864049152, gap95950848. All finaltuple/pin/proof dependencies clear, briefs pre-staged. Main H90 records owner3-pin approval pending; no approval inferred, no further cleanup or alternate build route.

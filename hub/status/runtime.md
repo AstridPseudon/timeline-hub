@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T15:44:21Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# runtime board, 2026-10-26T15:33:43.221858+00:00
+<!-- main | 2026-10-26T15:50:01Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-26T15:46:18.310515+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -93,16 +93,16 @@
 
 | OPS final headroom | Retain independently bounded recovery census | Luna read only | Independent1514 terminal | merged | Census1506; review1514 | [No eligible inspected recovery](../../design/runtime-final-headroom-independent-publication-1522.json). Historical sampler reuse only; no cleanup permission. | No source change |
 
-| D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | doing | Supported request stop test | Targeted pristine11121 supersedes purpose; original request and KEEP retained. | No source change |
+| D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Blockers: Main decision — positive source controls need 4960000000 bytes; free 4887240704, short 72759296. [Existing request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
+Blockers: Main owner decision — H90 records three-pin approval pending. Source pre-stage needs4960000000; free4864049152, gap95950848. [Existing request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No activation or ZIP.
 Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
 live 0 / cap 3; ready-undispatched 0. Census review complete; unchanged positive source controls held by genuine4960MB guard.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives held. Raw KEEP, refused smoke and8912/19479 unchanged. No repeat hub operation.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
 
-Original Runtime18778=7300PASS35FAIL18ERROR26SKIP13XFAIL, pristine11121 exact15PASS. Fifteen proved REG fixed and integrated0508/independent0513 qualified15PASS5.79s;38 own nonpass stay visible. Original P56934=38PASS31.02s on6a/28e with immutable0619 metadata correction; independent0513/0637 and newec0 applicability1437 source boundaries separate. P4 original10086=3PASS23.668s/XMLafca45b7 corrected0151/independent0202; changedCLI14092=1PASS/XML7ff7ea37. All raw originals KEEP;8912/19479 unstarted.
+Original Runtime18778=7300PASS35FAIL18ERROR26SKIP13XFAIL, pristine11121 exact15PASS. Fifteen proved REG fixed and integrated0508/independent0513 qualified15PASS5.79s;38 own nonpass stay visible. Original P56934=38PASS31.02s on6a/28e with immutable0619 metadata correction; independent0513/0637 and newec0 applicability1437 source boundaries separate. P4 original10086=3PASS23.668s/XMLafca45b7 corrected0151/independent0202; changedCLI14092=1PASS/XML7ff7ea37. All raw originals KEEP;8912 cancelled while queued at15:44 per MainH90;19479 remains held unstarted.
 
 Original Agent fullpair24814/25513 remains on ecdc/95d vs64197/fa9. Final1051 all9798records=9452concrete+346nullaggregates;397bad=378N_A+19FAILS_BOTH. Independent1104 and actual1344 source publication controlling;370historicalIDs/52roots are a different retained context. Current64 source dispositions=9prior passingmoves+38inversePASS+15protectedwriterPASS+2exact ownerretirements. Integratedkept53actual9.403s and independent1403 qualify currentec0aREG0 withoutretargeting oldpair. Agent final metadata nochange and38installer/manifest/lockPASS independent1410; all15payloads/modes exact.
 
@@ -118,3 +118,5 @@ Current pass 2026-10-26T15:19:14.694400+00:00: PLAN and common read first; INBOX
 Pre-stage complete: same-source positive review, final installer, independent installation review, sole build and sole artifact-review briefs exist. No dependent worker is started while the positive source gate is held. Maintenance produced no headroom.
 
 Current pass 2026-10-26T15:33:43.221858+00:00: PLAN/common, new INBOX and HEADER read. INBOX1931716 and HEADER253013 unchanged. App15:13 and Agent15:08 published boards read; final metadata and all cross-lane needs remain clear. All four final clones personally read back clean at recorded heads/trees. Five ended nonKEEP Runtime worktrees DIRTY-refused by supported recycle; no force. Sweep3 and compact terminal0 removed0/packed0/gzipped0; sweep broken-pipe diagnostics preserved. Free4887240704; unchanged positive source guard short72759296. Existing Main1450 decision pending. No new worker, source change, canonical activation, ZIP or repeat hub operation. [Pass receipt](rounds/20261026T1530Z-pass.json). All five final briefs pre-staged; continuing watch interval.
+
+Current pass 2026-10-26T15:46:18.310515+00:00: new INBOX1932362/HEADER253909 H90 consumed. Workers2694terminal rows, no running; historical meta parsing warnings retained. App15:30/Agent15:25 boards read; all cross-lane final needs clear. Main cancellation ask became a row and completed through supported dispatcher in this pass. Every original8912 file/KEEP conserved, status retained asorig-status, registry exact. Five Runtime worktrees DIRTY-refused; sweep3/compact terminal0 removed0/packed0/gzipped0; stderr retained in rounds1540. Free4864049152, gap95950848. Owner three-pin approval pending; no ready-undispatched row or source/activation/build/ZIP.

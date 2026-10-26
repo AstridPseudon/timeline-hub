@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-26T15:46:18.310515+00:00",
+  "test_id": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+  "status": "cancelled",
+  "cancellation": "2026-10-26T15:44:39Z cancelled while queued (never started): Main H90 15:43: superseded by qualified targeted pristine15 11121; preserve originals and KEEP, reserve final build slot",
+  "supported_route": "bin/request-stop-test; dispatcher bin/stop-test",
+  "dispatcher_receipt": "cancelled queued test rt-pin-fa9cd546-full-d141-pristine-1026005231-8912: pending item moved to queue/superseded/test-rt-pin-fa9cd546-full-d141-pristine-1026005231-8912; nothing deleted",
+  "pending_exists": false,
+  "superseded_exists": true,
+  "running_exists": false,
+  "original_conservation": {
+    "request": {
+      "path": "tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/request",
+      "exact": true
+    },
+    "KEEP": {
+      "path": "tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/KEEP",
+      "exact": true
+    },
+    "snap": {
+      "path": "tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/snap",
+      "exact": true
+    },
+    "why": {
+      "path": "tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/why",
+      "exact": true
+    },
+    "status": {
+      "path": "tests/rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/orig-status",
+      "exact": true
+    }
+  },
+  "registry_conserved": true,
+  "keep_exact": true,
+  "no_body_ran": true,
+  "other_held19479": "unchanged; no action requested",
+  "before_receipt": "managers/runtime/rounds/20261026T1544Z-pristine8912-before.json",
+  "free_bytes": 4864049152
+}
