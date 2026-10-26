@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T23:54:59Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
+<!-- app | 2026-10-25T23:59:43Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 1m -->
 # app board, 2026-10-25T23:46Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -121,7 +121,7 @@
 
 | D136c-reporting | Preserve finite reporting seam | Luna read only | D141 stop | gated:D141-stop | app-D136c-reporting-seam-2339 complete | JUnit omits exception details. Finite source handoff retained, no follow-up review/fix/body under D141. | Source unchanged |
 
-| U3-D141 | Merge exact frozen final upstream | Luna then independent Luna | D141 tuple7ca61bb3 recorded | doing | app-U3-D141-final-merge-2353 | Tuplefiles received and fullcommit/tree verified. Normal merge-forward next; no further upstream chasing. | App5696769 base |
+| U3-D141 | Resolve exact frozen final upstream | HARD Sol and independent Luna | WIP4572 propertwo-parentmerge | doing | app-U3-D141-resolution-sol-2358 | Managermerge succeeded. Luna misread ordinaryGit sandbox; resume FILEONLY sixconflicts. No actualsafetyrefusal. | App5696769 base |
 | D141-notes | Write SWAP and Element known gaps | Luna | Independent2350 findings | doing | app-D141-known-gap-notes-return-2354 | First delivery FAIL; repair actual ORCH paragraphs. Two factual worker paragraphs for existing Runtime notes owner; no ZIP or GO claim. | Evidence only |
 | D141-journeys | Prepare P1 P2 six and P3 cut proofs | Luna read only | Recorded D141 relay | doing | app-D141-journey-prep-2346 | Exact existing caller recipes only. Bodies held until all cut heads and MAIN GO. P4/P5 owner handoffs. | No source edits |
 | D141-full | Prepare App full and pristine comparator | Luna | Independent2350 findings | doing | app-D141-full-pristine-return-2354 | First delivery FAIL; repair actual ORCH packet. Actual service route, exact frozen comparator and input census. No body before cut GO. | No source edits |
@@ -168,3 +168,5 @@ D141 2026-10-25T23:47Z: bothauthoritativecutfilesstillabsentlocally/hub; exactfu
 D141 2026-10-25T23:53Z: authoritativefilesarrived normalhub; exact7ca fullid/treeconfirmed. FinalU3 Luna2353 dispatched immediately; no furtherupstreamchasing. Main shipbar P1/P3/P4/P5 plusP2six, REG0versuspristine. OwnnewnonREGfailures remainexact/visible/clusterlisted. Unchangedrerunsneedreceiptsonly, noextrareview.
 
 D141 2026-10-25T23:55Z: ordinarymerge-forward2353 sixactualconflictpaths/exit1, sourceworkerresolves. Exactfinalproducerheads requestedpeer for normalmanifest/vendortools. Independent2350 bothprepdeliveryFAIL; notes/fullsamebranchfirstreturns2354 queued, sourcepreservation and absoluteORCHoutputrequired. No new proofbody.
+
+U3 2026-10-25T23:58Z: source2353 ordinaryGitROFS came fromworker incorrectlyrerunningmanagerhelper. Managerroutealreadyexit1sixconflicts, no classifierdenial. WIP4572 hasbothcorrectparents. SoleHARDSol2358 resumesfileonly, noGitroute retry/hostpermissionask.

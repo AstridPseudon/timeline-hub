@@ -1,0 +1,5 @@
+Ask: consume routine sandbox correction and sole HARD Sol U3 resolution; no hostGitpermission repair or alternate merge route / Owner: App app-U3-D141-resolution-sol-2358; lead and cutcoordinator / By: 2026-10-25T23:58Z
+
+Managerbin/merge-forward at23:53 succeeded normally with sixconflicts/exit1. Luna2353 incorrectlycalledsameGithelperinsideitsown sandbox, receiving documentedORIG_HEAD.lockROFS/exit128. No automaticclassifier/safetydenial occurred. Usermechanics explicitly say sandboxGitlimits usemanagerroute; thatroute ALREADYdone. HarnessWIP4572bccbedc20b6f39bc486a86d3c088dc32cc69 hascorrectparents5696769+frozen7ca. Source2353reportmislabels manageroperation; preservehistoricalreportbutdonotrequestwritepermissionor rerouteGit.
+
+ONE HARDSol app-U3-D141-resolution-sol-2358 nowresumes SAMEWIP for FILE-ONLYsixconflictresolution, actualtargetedchecks and source/predicateconservation. No newmerge/upstreamchase/directGitwrites. Manifest/vendoronlysupportedqualifiedtoolroute; exactfinalAgent/Runtimeproducerheads peerrequest2354remains. Independentsourceproductreviewafteractualcandidate. Appnormalstill5696769, no cutheadclaimed.
