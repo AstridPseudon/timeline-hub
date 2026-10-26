@@ -1,0 +1,280 @@
+{
+  "utc": "2026-10-26T09:17:19.347033+00:00",
+  "free_before_bytes": 4699414528,
+  "keep_markers": {
+    "workers/app-F-D141l-Agent-binding-review-0820/KEEP": {
+      "sha256": "b6672ec043cdf300957c6638fb876d31963b6b5a9c93bb103f546e515076687a",
+      "mode": "0o644"
+    },
+    "workers/app-D136a-typed-output-original9-2136/KEEP": {
+      "sha256": "93d0c6043d39cdf99105e7c4d372f40ce065ea5a50fb698083f8ead7b674592c",
+      "mode": "0o644"
+    },
+    "workers/rt-pin-95d98f03/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-D136c-original9-controller-2331/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-P4-D141l-cli-source-review-0831/KEEP": {
+      "sha256": "a13097a883786f2c795059cdcebb625b4292a75b8a1caa354913f3910da173e9",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-unit-witness-return-0549/KEEP": {
+      "sha256": "80c033d3aa4096a640c160ae876e325644ca045eb3d019bd578c9558f947cb49",
+      "mode": "0o644"
+    },
+    "workers/app-P1-local-OPS-1830/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141-final-unit-notes-review-0909/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141-full-pristine-controller-0043/KEEP": {
+      "sha256": "f0091c0aa617473899e20641e1d3cc908655e01d62f6e11844913a945d07f332",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-Agent-binding-sol-0905/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-P4-D141l-cli-source-host-0825/KEEP": {
+      "sha256": "88b557c04e3d4e073d33d78d19ef555b67018b07dc326a121a950398a69c6609",
+      "mode": "0o644"
+    },
+    "workers/app-P4-D141l-cli-source-return-0838/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-Agent-native-path-0828/KEEP": {
+      "sha256": "c893e5ae53d1d1d7297c1ee755d5c5e1e681f0834c10b0d4a840735267183ad6",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141z-build-stop-host-0812/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-pin-82e9e13d/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-unit-normalization-review-0600/KEEP": {
+      "sha256": "80c033d3aa4096a640c160ae876e325644ca045eb3d019bd578c9558f947cb49",
+      "mode": "0o644"
+    },
+    "workers/vw-pin-635f4de0/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-freeze2-unit-controller-0606/KEEP": {
+      "sha256": "5f18ee9fd794765416402669a6554ac06f4b0650bf8f09f377d2d3929c5ee2ea",
+      "mode": "0o644"
+    },
+    "workers/agt-pin-ecdc242e/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-D136c-original9-resume-2330/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141l-runtime-wholepath-0752/KEEP": {
+      "sha256": "1232a41c7d88445a2f5a4810194737871c1a61390e7d2d859e3a2c6c49727304",
+      "mode": "0o644"
+    },
+    "workers/app-F-D141yb-custody-review-0756/KEEP": {
+      "sha256": "c19dfeb498697c11a0e228a17fbda29aed0ab475d122777fa330b22fc7b233fb",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879/KEEP": {
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644"
+    },
+    "tests/app-full-1026060654-8638/KEEP": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-preflight-1026014551-1988/KEEP": {
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644"
+    },
+    "tests/app-full-d141-node-phase-1026063009-19156/KEEP": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698/KEEP": {
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644"
+    },
+    "tests/app-pin-d822d2f5-full-1026063854-17524/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-D127c-mounted-selection-sol-1935-targeted-1025194027-30318/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-preflight-1026013205-10335/KEEP": {
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644"
+    },
+    "tests/app-U3-D135-upstream-merge-1958-targeted-1025200053-30876/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-pin-d822d2f5-full-d141-node-phase-1026072325-11111/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-1025210853-15200/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-D134-managed16-2033-targeted-1025203534-28015/KEEP": {
+      "sha256": "19b040bf54bf7e373669dfd9fd7072be32c30303f66839e8603c9d38e31e22ac",
+      "mode": "0o644"
+    },
+    "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/KEEP": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644"
+    },
+    "tests/app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-preflight-1025210823-4786/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-preflight-1026013710-14987/KEEP": {
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644"
+    },
+    "tests/app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250/KEEP": {
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644"
+    },
+    "tests/app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856/KEEP": {
+      "sha256": "84c562e67f0bbeacce34a3ea4f0cfa25c78d7e871d5243de13c1663f20e7154c",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/KEEP": {
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p1-867cb273-submit-preflight-1026012027-3972/KEEP": {
+      "sha256": "d62f5e71fd8387757c6a4622f7c0ec9d79357708a2be72cf946277139b3e1373",
+      "mode": "0o600"
+    },
+    "tests/app-full-1026004326-12174/KEEP": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644"
+    },
+    "tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/KEEP": {
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644"
+    },
+    "tests/app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721/KEEP": {
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644"
+    },
+    "tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118/KEEP": {
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644"
+    }
+  },
+  "present_worktrees": [
+    {
+      "worker": "rt-pin-95d98f03",
+      "worktree": "/home/user/work/wt/rt-pin-95d98f03",
+      "running": false,
+      "keep": true,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "app-U3b-recover-r1",
+      "worktree": "/home/user/work/wt/app-U3b-recover-r1",
+      "running": false,
+      "keep": false,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "app-U3b-upstream-editor",
+      "worktree": "/home/user/work/wt/app-U3b-upstream-editor",
+      "running": false,
+      "keep": false,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "app-F-D141-final-unit-notes-review-0909",
+      "worktree": "/home/user/work/wt/app-F-D141-final-unit-notes-review-0909",
+      "running": false,
+      "keep": true,
+      "ended": true,
+      "recycled": false
+    },
+    {
+      "worker": "app-F-D141z-build-stop-final-review-0920",
+      "worktree": "/home/user/work/wt/app-F-D141z-build-stop-final-review-0920",
+      "running": true,
+      "keep": false,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "app-F-D141l-Agent-binding-sol-0905",
+      "worktree": "/home/user/work/wt/app-F-D141l-Agent-binding-sol-0905",
+      "running": false,
+      "keep": true,
+      "ended": true,
+      "recycled": false
+    },
+    {
+      "worker": "app-P4-D141l-cli-source-return-0838",
+      "worktree": "/home/user/work/wt/app-P4-D141l-cli-source-return-0838",
+      "running": false,
+      "keep": true,
+      "ended": true,
+      "recycled": false
+    },
+    {
+      "worker": "app-pin-82e9e13d",
+      "worktree": "/home/user/work/wt/app-pin-82e9e13d",
+      "running": false,
+      "keep": true,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "vw-pin-635f4de0",
+      "worktree": "/home/user/work/wt/vw-pin-635f4de0",
+      "running": false,
+      "keep": true,
+      "ended": false,
+      "recycled": false
+    },
+    {
+      "worker": "app-F-D141l-freeze2-unit-controller-0606",
+      "worktree": "/home/user/work/wt/app-F-D141l-freeze2-unit-controller-0606",
+      "running": false,
+      "keep": true,
+      "ended": true,
+      "recycled": false
+    },
+    {
+      "worker": "agt-pin-ecdc242e",
+      "worktree": "/home/user/work/wt/agt-pin-ecdc242e",
+      "running": false,
+      "keep": true,
+      "ended": false,
+      "recycled": false
+    }
+  ],
+  "eligible_for_normal_recycle": [],
+  "running_markers": [
+    "app-F-D141z-build-stop-final-review-0920"
+  ]
+}
