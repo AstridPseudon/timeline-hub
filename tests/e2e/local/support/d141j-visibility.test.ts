@@ -9,6 +9,7 @@ import {
   withMountedD141jVisibilityCollector,
   type D141jVisibilitySession,
 } from './d141j-visibility.ts';
+import { mountedD141jVisibilityPageFixture } from './app.ts';
 import * as visibilityModule from '../../../../src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts';
 
 type Action = { action: 'install' | 'snapshot' | 'uninstall'; moduleSpecifier: string; expectedOccurrenceId?: string };
@@ -40,7 +41,7 @@ function browserDouble() {
   return page;
 }
 
-function testInfo(status: string, output: string) {
+function testInfo(status: string, output: string, onAttach?: () => void) {
   const attachments: string[] = [];
   return {
     status,
@@ -49,9 +50,33 @@ function testInfo(status: string, output: string) {
       assert.equal(options.path, output);
       assert.equal(options.contentType, 'application/json');
       attachments.push(name);
+      onAttach?.();
     },
     attachments,
   };
+}
+
+function mountedFixtureDouble() {
+  const events: string[] = [];
+  const mock = browserDouble();
+  const evaluate = mock.evaluate.bind(mock);
+  const page = Object.assign(mock, {
+    async evaluate(operation: unknown, action: Action) {
+      events.push(`evaluate:${action.action}`);
+      return evaluate(operation, action);
+    },
+    async close() { events.push('page-close'); },
+  });
+  const context = {
+    async newPage() { events.push('page-create'); return page; },
+  };
+  const fixture = async (
+    _args: { context: typeof context }, use: (value: typeof page) => Promise<void>,
+  ) => {
+    events.push('fixture-enter');
+    try { await use(page); } finally { await page.close(); }
+  };
+  return { context, events, fixture, page };
 }
 
 const accepted = {
@@ -114,5 +139,87 @@ test('failure still retains before cleanup and always uninstalls the collector',
     assert.equal(await mock.evaluate(() => null, { action: 'snapshot', moduleSpecifier: D141J_VISIBILITY_MODULE_SPECIFIER }), null);
   } finally {
     if (existsSync(output)) unlinkSync(output);
+  }
+});
+
+test('the shared mounted page fixture is inert by default and wires opt-in capture around the real page lifetime', async () => {
+  const previous = process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+  const restore = () => {
+    if (previous === undefined) delete process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+    else process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = previous;
+  };
+  try {
+    delete process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+    const disabled = mountedFixtureDouble();
+    await mountedD141jVisibilityPageFixture(
+      { context: disabled.context as never }, async () => { disabled.events.push('test-body'); },
+      testInfo('passed', join(mkdtempSync(join(tmpdir(), 'd141j-visibility-')), 'disabled.json')) as never,
+      disabled.fixture as never,
+    );
+    assert.deepEqual(disabled.events, ['fixture-enter', 'test-body', 'page-close']);
+    assert.deepEqual(disabled.page.evaluations, []);
+
+    process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = JSON.stringify({ expectedOccurrenceId: 'occurrence-1' });
+    const enabled = mountedFixtureDouble();
+    const output = join(mkdtempSync(join(tmpdir(), 'd141j-visibility-')), 'd141j-visibility.json');
+    const info = testInfo('passed', output, () => enabled.events.push('attach'));
+    await mountedD141jVisibilityPageFixture(
+      { context: enabled.context as never }, async () => { enabled.events.push('test-body'); },
+      info as never,
+      enabled.fixture as never,
+    );
+    assert.deepEqual(enabled.events, ['fixture-enter', 'evaluate:install', 'test-body', 'evaluate:snapshot', 'attach', 'evaluate:uninstall', 'page-close']);
+    assert.deepEqual(enabled.page.evaluations.map(({ action }) => action), ['install', 'snapshot', 'uninstall']);
+    assert.deepEqual(info.attachments, ['d141j-visibility.json']);
+    assert.equal(JSON.parse(readFileSync(output, 'utf8')).retention.beforePageClose, true);
+    unlinkSync(output);
+  } finally {
+    restore();
+  }
+});
+
+test('malformed mounted capture config fails closed without changing ordinary fixture behavior', async () => {
+  const previous = process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+  try {
+    process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = '{not-json';
+    const mounted = mountedFixtureDouble();
+    await mountedD141jVisibilityPageFixture(
+      { context: mounted.context as never }, async () => { mounted.events.push('test-body'); },
+      testInfo('passed', join(mkdtempSync(join(tmpdir(), 'd141j-visibility-')), 'malformed.json')) as never,
+      mounted.fixture as never,
+    );
+    assert.deepEqual(mounted.events, ['fixture-enter', 'test-body', 'page-close']);
+    assert.deepEqual(mounted.page.evaluations, []);
+  } finally {
+    if (previous === undefined) delete process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+    else process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = previous;
+  }
+});
+
+test('shared mounted wiring retains a failing test before the fixture closes its page', async () => {
+  const previous = process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+  process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = JSON.stringify({ expectedOccurrenceId: 'occurrence-1' });
+  const mounted = mountedFixtureDouble();
+  const output = join(mkdtempSync(join(tmpdir(), 'd141j-visibility-')), 'd141j-visibility.json');
+  const info = testInfo('failed', output, () => mounted.events.push('attach'));
+  try {
+    await assert.rejects(
+      mountedD141jVisibilityPageFixture(
+        { context: mounted.context as never },
+        async () => { mounted.events.push('test-body'); throw new Error('ordinary test failure'); },
+        info as never,
+        mounted.fixture as never,
+      ),
+      /ordinary test failure/,
+    );
+    assert.deepEqual(mounted.events, ['fixture-enter', 'evaluate:install', 'test-body', 'evaluate:snapshot', 'attach', 'evaluate:uninstall', 'page-close']);
+    assert.deepEqual(mounted.page.evaluations.map(({ action }) => action), ['install', 'snapshot', 'uninstall']);
+    assert.equal(JSON.parse(readFileSync(output, 'utf8')).retention.testOutcome, 'failed');
+    assert.equal(JSON.parse(readFileSync(output, 'utf8')).retention.beforePageClose, true);
+    assert.deepEqual(info.attachments, ['d141j-visibility.json']);
+  } finally {
+    unlinkSync(output);
+    if (previous === undefined) delete process.env.TIMELINE_D141J_VISIBILITY_CAPTURE;
+    else process.env.TIMELINE_D141J_VISIBILITY_CAPTURE = previous;
   }
 });

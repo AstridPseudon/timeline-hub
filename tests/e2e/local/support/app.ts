@@ -13,6 +13,7 @@ import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/c
 import { DEFAULT_VISIBLE_CLIP_SPAN_SECONDS } from '../../../../src/tools/video-editor/lib/timeline-asset-durations.ts';
 import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics, type MountedBootstrapDiagnosticTestInfo, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
 import { MOUNTED_DIAGNOSTIC_MAX_RECORDS, mountedDiagnosticInitScript } from '../p1-diagnostic-safety.ts';
+import { withMountedD141jVisibilityCollector } from './d141j-visibility.ts';
 import { closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture } from './p2-element-diagnostic.ts';
 
 export const UI = {
@@ -29,6 +30,46 @@ export const UI = {
 export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
 const mountedBootstrapDiagnosticTargets = new WeakMap<BrowserContext, MountedBootstrapDiagnosticTestInfo>();
+
+const D141J_VISIBILITY_CAPTURE_ENV = 'TIMELINE_D141J_VISIBILITY_CAPTURE';
+
+type D141jVisibilityCaptureConfig = { expectedOccurrenceId: string };
+
+function d141jVisibilityCaptureConfig(env: NodeJS.ProcessEnv = process.env): D141jVisibilityCaptureConfig | undefined {
+  const raw = env[D141J_VISIBILITY_CAPTURE_ENV]?.trim();
+  if (!raw) return undefined;
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const expectedOccurrenceId = (value as Record<string, unknown>).expectedOccurrenceId;
+    if (typeof expectedOccurrenceId !== 'string' || expectedOccurrenceId.trim().length === 0 || expectedOccurrenceId.length > 256) return undefined;
+    return { expectedOccurrenceId: expectedOccurrenceId.trim() };
+  } catch {
+    return undefined;
+  }
+}
+
+type MountedPageFixtureTestInfo = {
+  status?: unknown;
+  outputPath(...pathSegments: string[]): string;
+  attach(name: string, options: { path: string; contentType: string }): Promise<void>;
+};
+
+type MountedPageFixture = (
+  args: { context: BrowserContext }, use: (page: Page) => Promise<void>, testInfo: MountedPageFixtureTestInfo,
+) => Promise<void>;
+
+/** Keep the ordinary mounted fixture inert; the private env opt-in wraps its existing page lifetime only. */
+export async function mountedD141jVisibilityPageFixture(
+  args: { context: BrowserContext }, use: (page: Page) => Promise<void>, testInfo: MountedPageFixtureTestInfo,
+  mountedPageFixture: MountedPageFixture = elementApplyDiagnosticPageFixture,
+): Promise<void> {
+  const capture = d141jVisibilityCaptureConfig();
+  await mountedPageFixture(args, async (page) => {
+    if (!capture) return use(page);
+    return withMountedD141jVisibilityCollector(page, testInfo, capture.expectedOccurrenceId, () => use(page));
+  }, testInfo);
+}
 
 /** Opt the real bootstrap page into the reviewed producer and retain its snapshot before teardown. */
 export async function installMountedBootstrapDiagnostics(context: BrowserContext, testInfo: MountedBootstrapDiagnosticTestInfo): Promise<void> {
@@ -167,7 +208,7 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
     const context = await browser.newContext(harness.contextOptions as Parameters<Browser['newContext']>[0]);
     try { await use(context); } finally { await closeElementApplyDiagnosticContext(context); }
   },
-  page: elementApplyDiagnosticPageFixture,
+  page: mountedD141jVisibilityPageFixture,
   hungStackLifecycle: [async ({ page, harness }, use) => {
     const detach = harness.installHungRequestCapture(page);
     try { await use(undefined); } finally { detach(); }
