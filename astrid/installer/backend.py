@@ -603,8 +603,14 @@ class Backend:
         if not identity_ok:
             cause = _last_logged_error(self.service.log)
             if cause:
-                raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
-            raise VerificationError(f"Astrid's browser door did not become ready: {error}")
+                raise VerificationError(
+                    f"Astrid Runtime did not start: {cause} (details: {self.service.log})",
+                    safe_message=f"Astrid Runtime did not start; inspect {self.service.log}",
+                )
+            raise VerificationError(
+                f"Astrid's browser door did not become ready: {error}",
+                safe_message=f"Astrid's browser door did not become ready; inspect {self.service.log}",
+            )
 
         ready_file = data / "runtime" / "generic-host.ready.json"
         state, pack_host, failed = _classify_services(services, ready_file)
@@ -617,16 +623,20 @@ class Backend:
             service_state = pack_host.get("state", "missing") if pack_host else "missing"
             reason = pack_host.get("reason") if pack_host else None
             last_exit = pack_host.get("last_exit") if pack_host else None
-            label = "A declared Astrid service is failed" if crashed else "Astrid pack-host service hung during startup"
+            label = (
+                "A declared Astrid service crashed during startup"
+                if crashed else "Astrid pack-host service hung during startup"
+            )
             detail = (f"{label}: state={service_state}, reason={reason or 'none'}, "
                       f"last_exit={last_exit!r}; log={service_log}")
             if failed is not None:
                 detail += (f"; failed_service={failed.get('name')}, failed_state={failed.get('state')}, "
                            f"failed_reason={failed.get('reason') or 'none'}, "
                            f"failed_last_exit={failed.get('last_exit')!r}")
+            safe_detail = detail
             if tail:
                 detail += f"\nLast service log lines:\n{tail}"
-            return VerificationError(detail)
+            return VerificationError(detail, safe_message=safe_detail)
 
         if state == "crashed":
             raise service_failure(crashed=True)

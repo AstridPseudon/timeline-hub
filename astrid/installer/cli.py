@@ -13,6 +13,7 @@ from .backend import Backend
 from .core import (
     BackupSpaceError,
     Installer,
+    VerificationError,
     absolute,
     current,
     read_json,
@@ -125,5 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         print(FAILURE_MESSAGE)
         if isinstance(failure, BackupSpaceError):
             print(str(failure))
+        elif isinstance(failure, VerificationError) and failure.safe_message:
+            print(failure.safe_message)
         print(f"Details: {log}")
         return 1

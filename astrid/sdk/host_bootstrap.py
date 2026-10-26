@@ -109,7 +109,7 @@ def _pack_host_python_executable() -> str:
     candidate = Path(configured).expanduser()
     if not candidate.is_absolute():
         raise PackHostBootstrapError(
-            f"{PACK_HOST_PYTHON_ENV} must be an absolute path to an executable file"
+            f"{PACK_HOST_PYTHON_ENV} must be an absolute path; field={PACK_HOST_PYTHON_ENV}"
         )
     try:
         executable = candidate.is_file() and os.access(candidate, os.X_OK)
@@ -117,7 +117,7 @@ def _pack_host_python_executable() -> str:
         executable = False
     if not executable:
         raise PackHostBootstrapError(
-            f"{PACK_HOST_PYTHON_ENV} must be an absolute path to an executable file"
+            f"{PACK_HOST_PYTHON_ENV} path={str(candidate)[:300]} is not an executable file"
         )
     return _venv_interpreter_name(os.path.abspath(str(candidate)))
 
@@ -360,16 +360,8 @@ def _parked_host_identity_matches(state: Mapping[str, Any]) -> bool:
     return all(value and value in command for value in required)
 
 
-_EXCEPTION_LINE = re.compile(r"^(?:[A-Za-z_][\w.]*\.)?[A-Za-z_]\w*(?:Error|Exception|Failure)\b.*?:\s*\S")
-
-
 def _host_failure_cause(log_path: Path, *, max_chars: int = 400) -> str:
-    """Return the last exception line the child wrote to its log, if any.
-
-    The bootstrap used to report only "inspect <log>", which hid the actual
-    HostError (for example a capability matrix mismatch). Reads at most the last
-    64 KiB and never raises: a missing or unreadable log yields an empty string.
-    """
+    """Return only explicitly safe startup context from the child log."""
     try:
         with Path(log_path).open("rb") as handle:
             handle.seek(0, 2)
@@ -380,7 +372,14 @@ def _host_failure_cause(log_path: Path, *, max_chars: int = 400) -> str:
         return ""
     for line in reversed(tail.splitlines()):
         stripped = line.strip()
-        if stripped.startswith(("HostError:", "PackHostBootstrapError:")) or _EXCEPTION_LINE.match(stripped):
+        if stripped.startswith("generic host CLI exiting after failure:"):
+            if "safe_context=" in stripped:
+                return stripped.split("safe_context=", 1)[1][:max_chars]
+            return ""
+        if stripped.startswith((
+            "PackHostBootstrapError:",
+            "astrid.sdk.host_bootstrap.PackHostBootstrapError:",
+        )):
             return stripped[:max_chars]
     return ""
 
@@ -456,7 +455,9 @@ def _dependency_pythonpath() -> tuple[str, ...]:
     try:
         return dependency_pythonpath()
     except VibeComfyDependencyError as exc:
-        raise PackHostBootstrapError(str(exc)) from exc
+        raise PackHostBootstrapError(
+            "VibeComfy dependency paths could not be verified; field=PYTHONPATH"
+        ) from exc
 
 
 def _provision_render_runtime_env(
@@ -577,7 +578,7 @@ def _registered_host_status(state: Mapping[str, Any]) -> str:
     try:
         info = _process_snapshot().get(pid)
     except CleanupUncertainError as exc:
-        raise PackHostBootstrapError(f"process census unavailable: {exc}") from exc
+        raise PackHostBootstrapError("process census unavailable; field=registered_host") from exc
     if info is None:
         return "gone"
     if str(info.birth) != birth:
@@ -605,7 +606,7 @@ def _group_survivors(pgid: int, *, leader_birth: str | None = None) -> list[int]
     try:
         census = _process_snapshot()
     except CleanupUncertainError as exc:
-        raise PackHostBootstrapError(f"process census unavailable: {exc}") from exc
+        raise PackHostBootstrapError("process census unavailable; field=process_group") from exc
     leader = census.get(pgid)
     observed_leader_birth = (str(leader.birth) if leader is not None else
                              getattr(census, "exited", {}).get(pgid))
@@ -1652,9 +1653,8 @@ def ensure_pack_host(
             diagnostic = error if isinstance(error, Mapping) else {}
             code = str(diagnostic.get("code") or "host_registration_failed")[:128]
             request_id = str(diagnostic.get("request_id") or "")[:128]
-            message = str(
-                diagnostic.get("message") or "generic Astrid pack host registration failed"
-            )[:512]
+            cause = _host_failure_cause(log_path)
+            message = cause or "generic Astrid pack host registration failed; inspect host log"
             suffix = f" [request_id={request_id}]" if request_id else ""
             raise PackHostBootstrapError(
                 message + suffix,

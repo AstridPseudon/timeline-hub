@@ -1163,11 +1163,26 @@ def test_replaced_capability_record_reparses_current_adapter_matrix(tmp_path):
     host.register()
     assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
     assert host.capabilities[original.id].resource_keys == ()
-
     host.capabilities[original.id] = dataclasses.replace(invalid, matrix={})
     host.register(deliberate=True)
     assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "ready"
     assert host.admit("executor", original.id)[0]["id"] == original.id
+
+
+def test_invalid_capability_matrix_carries_only_safe_startup_context(tmp_path, caplog):
+    from astrid.core.execution import generic_host
+
+    matrix = tmp_path / "capabilities.json"
+    matrix.write_text('{"secret":"private-token-should-not-appear"', encoding="utf-8")
+    with pytest.raises(HostError) as failure:
+        GenericPackHost._load_matrix(matrix)
+
+    with caplog.at_level("ERROR", logger=generic_host.__name__):
+        generic_host._log_cli_exit_failure(failure.value)
+
+    assert "field=capability_matrix" in caplog.text
+    assert str(matrix) in caplog.text
+    assert "private-token-should-not-appear" not in caplog.text
 
 
 def test_malformed_network_policy_is_a_capability_scoped_registration_and_admission_error(tmp_path):

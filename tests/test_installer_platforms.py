@@ -555,7 +555,7 @@ def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkey
         backend.verify(version, data, "selected", timeout=90)
         assert clock.now >= 100
     elif scenario in {"crash", "failed"}:
-        with pytest.raises(RuntimeError, match="declared Astrid service is failed") as failure:
+        with pytest.raises(RuntimeError, match="declared Astrid service crashed during startup") as failure:
             backend.verify(version, data, "selected", timeout=90)
         assert "host startup detail" in str(failure.value)
         if scenario == "crash":

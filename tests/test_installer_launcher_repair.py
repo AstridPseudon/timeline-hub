@@ -247,7 +247,7 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
     monkeypatch.setattr("astrid.installer.backend.time.sleep", lambda _: None)
 
     if raises:
-        with pytest.raises(VerificationError, match="declared Astrid service is failed"):
+        with pytest.raises(VerificationError, match="declared Astrid service crashed during startup"):
             backend.verify(version, data, "realm", timeout=0.01)
     else:
         backend.verify(version, data, "realm", timeout=0.01)
@@ -298,6 +298,11 @@ def test_verification_rejects_pack_host_without_ready_file_with_service_evidence
     assert f"state={state}" in message
     assert "worker exited during startup" in message and "last_exit=7" in message
     assert "missing adapter" in message and "service-pack-host.log" in message
+    assert f"state={state}" in failure.value.safe_message
+    assert "worker exited during startup" in failure.value.safe_message
+    assert "last_exit=7" in failure.value.safe_message
+    assert "missing adapter" not in failure.value.safe_message
+    assert "service-pack-host.log" in failure.value.safe_message
 
 
 class ProcessBackend:

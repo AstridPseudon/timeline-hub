@@ -200,6 +200,10 @@ if TYPE_CHECKING:
 class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
 
+    def __init__(self, message: str, *, safe_message: str | None = None) -> None:
+        super().__init__(message)
+        self.safe_message = safe_message
+
 
 class CommandCleanupUnresolved(HostError):
     """A command finished but its task scope may still own child writers."""
@@ -5942,20 +5946,38 @@ class GenericPackHost:
         try:
             payload = load_capability_ledger(path)
         except ValueError as exc:
-            raise HostError(str(exc)) from exc
+            raise HostError(
+                "capability matrix could not be loaded",
+                safe_message=f"capability matrix could not be loaded; field=capability_matrix path={path}",
+            ) from exc
         if payload.get("schema_version") != 1 or not isinstance(payload.get("capabilities"), list):
-            raise HostError("capability matrix requires schema_version 1 and a capabilities list")
+            raise HostError(
+                "capability matrix requires schema_version 1 and a capabilities list",
+                safe_message=f"capability matrix schema or capabilities list is invalid; field=capability_matrix path={path}",
+            )
         allowed = {"required", "optional", "unsupported", "retired"}
         result = {}
         for entry in payload["capabilities"]:
             if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
-                raise HostError("capability matrix entries require an id")
+                raise HostError(
+                    "capability matrix entries require an id",
+                    safe_message=f"capability matrix entry is missing an id; field=capabilities path={path}",
+                )
             if entry.get("disposition") not in allowed:
-                raise HostError(f"invalid capability disposition for {entry.get('id')!r}")
+                raise HostError(
+                    f"invalid capability disposition for {entry.get('id')!r}",
+                    safe_message=f"capability disposition is invalid; field=disposition path={path}",
+                )
             if not entry.get("evidence_reason"):
-                raise HostError(f"capability matrix entry {entry['id']!r} needs evidence_reason")
+                raise HostError(
+                    f"capability matrix entry {entry['id']!r} needs evidence_reason",
+                    safe_message=f"capability evidence reason is missing; field=evidence_reason path={path}",
+                )
             if entry["id"] in result:
-                raise HostError(f"duplicate capability matrix entry {entry['id']!r}")
+                raise HostError(
+                    f"duplicate capability matrix entry {entry['id']!r}",
+                    safe_message=f"capability matrix has a duplicate id; field=id path={path}",
+                )
             result[entry["id"]] = entry
         return result
 
@@ -13619,8 +13641,18 @@ class _ManagedStdinShutdown:
 
 
 def _log_cli_exit_failure(error: BaseException) -> None:
-    """Log CLI failures without copying potentially sensitive exception text."""
-    _LOGGER.error("generic host CLI exiting after failure: error_type=%s", type(error).__name__[:96])
+    """Log only the type, plus context explicitly marked safe at a startup site."""
+    error_type = type(error).__name__[:96]
+    safe_message = error.safe_message if isinstance(error, HostError) else None
+    if isinstance(safe_message, str) and safe_message:
+        safe_context = " ".join(safe_message.split())[:400]
+        _LOGGER.error(
+            "generic host CLI exiting after failure: error_type=%s safe_context=%s",
+            error_type,
+            safe_context,
+        )
+    else:
+        _LOGGER.error("generic host CLI exiting after failure: error_type=%s", error_type)
 
 
 def _cli() -> int:
@@ -14024,6 +14056,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         try:
             registration = host.register() if args.register else {"capabilities": [record.manifest() for record in host.capabilities.values()]}
         except Exception as exc:
+            _log_cli_exit_failure(exc)
             code = str(getattr(exc, "code", "host_registration_failed"))[:128]
             request_id = str(getattr(exc, "request_id", ""))[:128]
             raw_message = getattr(exc, "message", None)

@@ -102,7 +102,7 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
                 "name": "probe", "state": "failed", "last_exit": None,
                 "restart_count": 0, "reason": "supervisor_failed",
             }]
-            with pytest.raises(VerificationError, match="declared Astrid service is failed"):
+            with pytest.raises(VerificationError, match="declared Astrid service crashed during startup"):
                 backend.verify(version, data, realm_id, timeout=0.5)
             shutil.rmtree(platform.log_dir() / "service-probe.log")
 

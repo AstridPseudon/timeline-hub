@@ -129,8 +129,10 @@ def test_pack_host_python_override_must_be_absolute_and_executable(tmp_path, mon
         bootstrap._pack_host_python_executable()
 
     monkeypatch.setenv(bootstrap.PACK_HOST_PYTHON_ENV, str(tmp_path / "missing-python"))
-    with pytest.raises(bootstrap.PackHostBootstrapError, match="executable file"):
+    with pytest.raises(bootstrap.PackHostBootstrapError, match="executable file") as failure:
         bootstrap._pack_host_python_executable()
+    assert bootstrap.PACK_HOST_PYTHON_ENV in str(failure.value)
+    assert str(tmp_path / "missing-python") in str(failure.value)
 
     non_executable = tmp_path / "non-executable-python"
     non_executable.write_text("not executable")
