@@ -1,0 +1,21 @@
+review_trace=control-logs/disk-trace.tsv
+job_id=app-P4-D141l-cli-source-review-0831
+primary_trace_started_before_source_reads=true
+primary_body_pid=2
+primary_sampler_pid=5
+threshold_bytes=4000000000
+primary_samples=21
+primary_first_kind=first
+primary_periodic_samples=19
+primary_final_samples=1
+primary_min_available_bytes=4789325824
+primary_max_available_bytes=4790833152
+primary_validation=PASS exit=0
+
+The primary sampler began before the plan and packet source reads and remained active through the review. Its parent shell exited after a command error; the sampler observed parent identity loss and stopped. The terminal sample was appended and custody-validated with the supplied immutable binding.
+
+explicit_reap_probe=control-logs/explicit-reap
+explicit_stop=SIGTERM kill_exit=0
+explicit_wait_exit=0
+explicit_reaped=true
+explicit_validation=PASS exit=0 samples=2

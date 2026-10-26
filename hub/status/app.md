@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T08:35:43Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 1m -->
-# app board, 2026-10-26T08:25:08.894781+00:00
+<!-- app | 2026-10-26T08:41:24Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
+# app board, 2026-10-26T08:37:00.064178+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -13,7 +13,7 @@
 | D141 placement | Retain exact intended history oracle | Luna and protected Luna | Main D141d;0243 PASS | merged | 0235;0243 | Only placement expected records:2 objects22 paths. Helpers, all other gestures and predicates exact. | 520d7e4fc12a |
 | D141 hosted custody | Review interrupted Runtime rehearsal | Luna | Runtime0756 transfer | merged | app-F-D141yb-custody-review-0756 | FAIL CUSTODY all7 findings; partial Agent Runtime only. Main original exit and reaping UNKNOWN. No replay. | Evidence only |
 | D141z hosted author | Stop final build process group safely | Luna | Runtime0812 and Main D141z | doing | app-F-D141z-build-stop-host-0812 | Private lifecycle candidate and harmless controls only; later independent review. No build or install. | Private source |
-| D141 P4 hosted source | Review one changed CLI source packet | Luna and Luna | Agent0815 transfer | review | Author0825; review0831 | Author tiny17/1 and poison PASS; production profile state missing on App. Same-checker independent review active. | Agent ecdc |
+| D141 P4 hosted source | Repair CLI source coordinates once | Luna and Luna | Independent0831 checker path FAIL | doing | First return0838; originals0825 and0831 | Static source qualified; checker references recycled author. New packet uses stable pins; profile gap remains App only. | Agent ecdc |
 | D141 Agent binding review | Return Agent0735 finite FAIL | Luna | Agent0817 transfer | merged | app-F-D141l-Agent-binding-review-0820 | Checker78 due45 absent App inputs; isolated10 and36 PASS. Native path questions remain; actual source not qualified. | Evidence only |
 | D141 Agent native path | Deliver complete second failure facts | Luna | Review0820 FAIL | merged | app-F-D141l-Agent-native-path-0828 | Five native findings returned. Direct test-run races daemon; cut FAIL skips pristine. Scope and trace limits explicit. | Evidence only |
 | D141 hosted whole path | Deliver Agent controller ordering facts | Luna | Runtime0752 transfer | merged | app-F-D141l-runtime-wholepath-0752 | Source investigation returned all six findings; local registry and late trace limits explicit. Agent0735 retains repair. | Evidence only |
@@ -74,7 +74,7 @@ D141x cancellation: exact obsolete app-pin-867cb273-d141-p2-transition-none-sing
 Maintenance0735 and0757: Compact1 additionally gzipped4 ended worker logs; packed0 scratch/0 test dirs. Only host0750-authorized empty d822/8585 sourceKEEP removed; all33 others exact. [Later normal cleanup](../../design/app-D141-compact1-result-0757.json). Earlier pass: guarded sweep3 exit0 removed0; existing helper printed Broken-pipe diagnostics. Compact20 exit0 packed0 scratch/0 test dirs and gzipped0logs. All35 preexisting KEEP markers preserve exact hashes/modes. Finished0707 source auto-recycled normally; no eligible clean ended App source remains except tiny Composition0606 held for the still-open comparison. Previous guarded5344/867/28e/6a releases remain recorded. DirtyU3, lockedU3c, bundles without metadata, hardlink cache and refused orphan graph remain held. No raw removal, hub operation or repack. [Current maintenance](../../design/app-D141-maintenance-result-0735.json).
 
 
-Blockers: App journeys — Ordinary preflight and body each need available>5200000000 after exact sources. Actual4942610432; short257389569 bytes. No measured journey X or hub approval.
+Blockers: App journeys — Ordinary preflight and body each need available>5200000000 after exact sources. Actual4913504256; no measured journey X or owner hub approval.
 Blockers: Agent — Intrinsic0735 failures and native whole-path findings delivered0835; owning repair and definitive full pair still owed. App hosts CLI source review only.
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
@@ -83,7 +83,7 @@ live 2 / cap 3; ready-undispatched 0. Both hosted read-only investigations retur
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through 2835473 bytes; board rewritten 2026-10-26T08:14:27.482826+00:00.
+INBOX consumed through 2842188 bytes; board rewritten 2026-10-26T08:37:00.064178+00:00.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.
 
@@ -94,3 +94,5 @@ H6 repeat 2026-10-26T08:14:27.482826+00:00: Agent0759 still owns0735 repair and 
 Hosted source0825: Main D141z08:05 sourcefix and AgentCLI0733 sourcepreparation accepted at ordinary admission. Threeindependent Lunas, noheavybody. D141z finalrun isheavy4.86GB, none authorizedhere; no furtherrehearsal. Later Main hostaudit no survivors clears currentprocessauditwait only; original0741exit/reap UNKNOWN retained.
 
 Independent binding0828: raw0820FAIL deliveredAgent withlocaltransport/registrylimits andactualCompositiontreecorrection. Mandatory independentnativewholepath0828queuedinparallelownersnextrepair; no Appwriter or duplicatechecker. D141z andCLI authorsactive; sourcecap3saturated.
+
+H6 repeat 2026-10-26T08:37:00.064178+00:00: Read updated Main D141z08:05, Agent0812 and Runtime0812 boards. Main later hostaudit found no survivors; original0741exit/reap remainsUNKNOWN, no replay. Finaldelivery isHEAVY4.86GB/wholeprocessgroupstop, notsource-only. Sourceauthor D141z andCLIreview live; binding0820FAIL pluscomplete native0828facts deliveredAgent. Sourcecap2/3 no readyundispatched. Normalmaintenance0824 terminal0,zeroeligiblecleanendedworktrees,0dirs/0logs,all37baselineKEEPexact; no hubmutation. Exactcurrentproofsourcesretained.

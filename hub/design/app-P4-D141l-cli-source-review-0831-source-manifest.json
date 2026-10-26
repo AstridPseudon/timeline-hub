@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.independent-source-manifest.v1",
+  "status": "SOURCE_QUALIFIED_PRODUCTION_INPUT_MISSING",
+  "source_only": true,
+  "base": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+  "actual_tuple": {
+    "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab", "clean": true},
+    "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7", "clean": true},
+    "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "parents": "82e9e13ddf1d7ec6c736521b2eb091dca9877598 4de54db14bdc9ddc2ce2e5887258b03acbffd30d 4937203f545a77fa3ca7597493e009c84eebeffa", "clean": true},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a", "clean": true}
+  },
+  "approved_input": {
+    "suite": "p4-current-becfe-http-3legs",
+    "selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+    "predicates_unchanged": true,
+    "candidate_row_exists": true,
+    "candidate_row_selector_count": 1,
+    "candidate_row_has_run_pytest": true,
+    "candidate_row_has_integration_marker": true,
+    "candidate_row_timeout_seconds": 45,
+    "candidate_row_cache_provider_disabled": true,
+    "candidate_row_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/body-evidence/p4-d141l-cli-selector.xml"
+  },
+  "production_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/p4-d141l-cli-selector.manifest",
+    "exists": true,
+    "profile_registry_sha": "MISSING:/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.astrid-registry-state.json",
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/body-evidence/p4-d141l-cli-selector.xml",
+    "body_evidence_exists": false,
+    "future_runmanifest_exists": false,
+    "manifest_ready_for_controller": false
+  },
+  "author_checker": {
+    "command": "/home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/evidence/check-source.py check",
+    "exit": 1,
+    "failure": "missing advertised author Agent worktree"
+  },
+  "historical_scope": {"original_10086": "retained", "correction_0159_0202": "retained", "queued_19479_8912": "held_unstarted", "app_8585": "metadata_only_until_D141v"}
+}

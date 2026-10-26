@@ -1,0 +1,32 @@
+{
+  "boundary": {
+    "collection": false,
+    "production_profile_ready": false,
+    "pytest": false,
+    "row_install": false,
+    "service_request": false
+  },
+  "launcher": {
+    "mode": "run",
+    "path": "/home/user/work/wt/app-P4-D141l-cli-source-host-0825/tools/p4-d73-pinned-launch.sh",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+  },
+  "poison": {
+    "exit_code": 1,
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/control-poison-agent-sha.manifest",
+    "observed": "D73 launcher: agent SHA mismatch",
+    "request_id": "p4-d141l-control-poison",
+    "stub_calls": 0
+  },
+  "positive": {
+    "argv_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/private control-logs/positive/control.xml",
+    "exit_code": 17,
+    "manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/control-positive.manifest",
+    "request_id": "p4-d141l-control-positive",
+    "runmanifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/private control-logs/positive/p4-d141l-control-positive.runmanifest",
+    "stub_calls": 1,
+    "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+  },
+  "schema": "timeline.p4.d141l.cli-selector.controls.v1",
+  "status": "PASS_TINY_RUN_MODE_CONTROLS_PRODUCTION_INPUT_MISSING"
+}

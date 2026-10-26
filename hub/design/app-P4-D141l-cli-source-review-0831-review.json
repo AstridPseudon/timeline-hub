@@ -1,0 +1,52 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.independent-review.v1",
+  "task": "P4 D141l independent CLI source review",
+  "overall": "SOURCE_QUALIFIED_WITH_REVIEW_CHECK_FAIL_AND_PRODUCTION_INPUT_MISSING",
+  "source_qualification": "SOURCE_QUALIFIED",
+  "review_checker": {
+    "status": "FAIL",
+    "command": "/home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/evidence/check-source.py check",
+    "exit": 1,
+    "cause": "advertised author Agent worktree /home/user/work/wt/app-P4-D141l-cli-source-host-0825 is absent; checker fails at git branch --show-current before its assertions"
+  },
+  "production_input": {
+    "status": "PRODUCTION_INPUT_MISSING",
+    "missing": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.astrid-registry-state.json",
+      "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/body-evidence",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P4-D141l-cli-source-host-0825/operational inputs/body-evidence/p4-d141l-cli-selector.xml"
+    ],
+    "meaning": "finite receiving inputs are absent; no body, collection, service request, install, or behavior credit was attempted"
+  },
+  "source_checks": {
+    "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "target_test_unchanged": true,
+    "launcher_unchanged": true,
+    "installer_unchanged": true,
+    "target_ast": "PASS",
+    "checker_ast": "PASS",
+    "stub_syntax": "PASS",
+    "launcher_syntax": "PASS",
+    "source_worktree_clean": true
+  },
+  "controls": {
+    "author_packet_claim": "positive stub exit 17/call 1; Agent-SHA poison nonzero/call 0",
+    "actual_control_xml": "MISSING (tiny stub does not produce JUnit)",
+    "production_junit": "NOT_RUN",
+    "pytest_collection": "NOT_RUN",
+    "service_request": "NOT_RUN",
+    "row_install": "NOT_RUN"
+  },
+  "trace": {
+    "primary_samples": 21,
+    "primary_min_available_bytes": 4789325824,
+    "threshold_bytes": 4000000000,
+    "primary_validation_exit": 0,
+    "explicit_reap_validation_exit": 0
+  },
+  "behavior_credit": "NONE"
+}

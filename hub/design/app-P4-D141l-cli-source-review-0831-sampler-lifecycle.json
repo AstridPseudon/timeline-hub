@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.sampler-lifecycle.v1",
+  "primary": {
+    "trace": "control-logs/disk-trace.tsv",
+    "job_id": "app-P4-D141l-cli-source-review-0831",
+    "body_pid": 2,
+    "sampler_pid": 5,
+    "started_before_source_reads": true,
+    "interval_seconds": 5,
+    "stop_threshold_bytes": 4000000000,
+    "samples": 21,
+    "first_periodic_final": [1, 19, 1],
+    "minimum_available_bytes": 4789325824,
+    "append_final_exit": 0,
+    "validation_exit": 0,
+    "lifecycle_gap": "the review shell exited after a command error, so the primary sampler self-stopped on parent identity loss before a direct kill/wait could be issued"
+  },
+  "explicit_reap_probe": {
+    "trace": "control-logs/explicit-reap/disk-trace.tsv",
+    "job_id": "app-P4-D141l-cli-source-review-0831-reap",
+    "stop_signal": "SIGTERM",
+    "kill_exit": 0,
+    "wait_exit": 0,
+    "reaped": true,
+    "validation_exit": 0,
+    "samples": 2
+  }
+}

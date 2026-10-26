@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.source-map.v1",
+  "advertised_author_agent": {
+    "path": "/home/user/work/wt/app-P4-D141l-cli-source-host-0825",
+    "exists": false,
+    "checker_reproducible": false
+  },
+  "review_source": {
+    "path": "/home/user/work/wt/app-P4-D141l-cli-source-review-0831",
+    "branch": "tl/app-P4-D141l-cli-source-review-0831",
+    "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab",
+    "clean": true
+  },
+  "other_sources": {
+    "runtime": {"path": "/home/user/work/runtime", "commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "app": {"path": "/home/user/work/app", "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "protected_files": {
+    "target_test": "8239ad0c3ac7de05d7ab0efac7b12c34532df33f7f22f33c9c270f0aeb30f213",
+    "launcher": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "installer": "1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805",
+    "approved_selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back"
+  },
+  "author_packet": {
+    "source_manifest_sha256": "dd9b3873c54327f0d0ace0ce5084b9189d0de96fe9b7cdb6f4b331e8bdf67881",
+    "candidate_row_sha256": "59db55968134dbbc651f08f74b42aa8f026b784af8dfe7174848c1cddb0f2e56",
+    "production_manifest_exists": true,
+    "production_manifest_mode": "0600",
+    "body_evidence_exists": false,
+    "production_junit_exists": false,
+    "positive_runmanifest_exists": true,
+    "positive_control_xml_exists": false
+  }
+}

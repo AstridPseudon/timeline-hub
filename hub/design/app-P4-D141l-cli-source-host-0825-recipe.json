@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.recipe.v1",
+  "status": "SOURCE_ONLY_PREPARED_PROFILE_INPUT_MISSING",
+  "task": "P4 D141l current CLI selector preparation",
+  "source": {
+    "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "app": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "selection": {
+    "suite": "p4-current-becfe-http-3legs",
+    "approved_selection_only": true,
+    "selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+    "predicates": "all existing CLI, sheet, document-preservation, canonical-readback and history predicates remain in the unchanged test",
+    "pytest": "run -- -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration"
+  },
+  "custody": {
+    "input_manifest": "operational inputs/p4-d141l-cli-selector.manifest",
+    "body_evidence": "operational inputs/body-evidence",
+    "junit": "operational inputs/body-evidence/p4-d141l-cli-selector.xml",
+    "single_junit_path_agrees": ["input manifest", "future runmanifest", "candidate actual argv"],
+    "historical_0055_mismatch_fixed_in_new_inputs": true
+  },
+  "controls": {
+    "launcher": "unchanged tools/p4-d73-pinned-launch.sh",
+    "positive": "original stub SHA 38afc8a5; run mode exit 17 and one call",
+    "poison": "Agent-SHA-only manifest poison; nonzero launcher exit and zero calls",
+    "pytest_or_collection": false,
+    "service_request_or_install": false
+  },
+  "dispatch_continuation": {
+    "owner": "existing controller",
+    "action": "CAS-replace only the existing suite row, read it back, then make one normal request-test",
+    "forced_run_or_admission_release": false,
+    "future_heavy_floor_bytes": 4714564096,
+    "future_trace": "real 5-second trace with continuous 4000000000-byte stop",
+    "concurrency": "one heavy body",
+    "own_preparation_regate": false,
+    "old_rows": "19479 and 8912 remain held/unstarted; historical 10086 remains unchanged"
+  },
+  "missing_supported_input": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.astrid-registry-state.json"
+}
