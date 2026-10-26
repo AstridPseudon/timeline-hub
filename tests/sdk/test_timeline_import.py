@@ -278,6 +278,8 @@ def test_sdk_export_then_import_round_trips_unknown_unpinned_effect(tmp_path):
     assert len(calls) == 1
     project_id, body, _key = calls[0]
     assert project_id == "target-project"
+    assert any(clip.get("clipType") == unknown_id
+               for clip in body["publication"]["parent_composition"]["clips"])
     assert body["differences"]["missing_effects"] == [unresolved]
     assert body["differences"]["different_effects"] == []
     assert receipt["missing_effects"] == [unresolved]
