@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.d141ee.writers15.review-source-manifest.v1",
+  "agent": {
+    "path": "/home/user/work/wt/agt-U2-D141ee-writers15-decision-next-review",
+    "commit": "c61c56d2f2b926febde4dad67d83d114790766ab",
+    "tree": "ff3b6e425b023c2690d85f168ba162688aeeb7f3",
+    "parent": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+    "status": "clean"
+  },
+  "runtime": {
+    "path": "/home/user/work/runtime",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "owner_scope_sha256": "fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22",
+  "changed_files": [
+    {"path": "astrid/packs/timeline/cli_native.py", "sha256": "fec5b6df32fac8394c1ae9d6b3b82df0b61c3ee699bbb10fd17103d05b032fe4"},
+    {"path": "tests/packs/timeline/test_cli_parity.py", "sha256": "37930a64faeedb4601a8dc3f6f4e439ec20cc44fcc46be34d354b85da74a9a17"},
+    {"path": "tests/packs/timeline/test_cli_status_publish.py", "sha256": "eabce60571be40290419046b8670ff16f2a0d76ad10aad0c6efccfb2fe42b26a"},
+    {"path": "tests/packs/timeline/test_verbs_working_copy.py", "sha256": "9f44715b44257376c56db904cbceb7a7cb1c1e68e37e4e4c7800673799619286"},
+    {"path": "tests/packs/video_editing/test_runtime_publication_chain.py", "sha256": "db1cdfa9df75476b8a949e49468b97f20dacbae05197f15d417ab7e1d78df9ff"},
+    {"path": "tests/sdk/test_runtime_response_conformance.py", "sha256": "52bd8cdf2670367d9ebe249d6eb7161ab905ee07d26e87d04a2f37aff2bb93ef"},
+    {"path": "tests/timeline/test_authoring_bundle.py", "sha256": "c3047d670994b3f56a24f2b87192c291fc1cd6654649cae5a7679cbec11be1d6"},
+    {"path": "tests/v10/test_timelines_create.py", "sha256": "d3a682c1fce10af41a2db439043651b67be71114cce78ea0eaa1157b227f3eab"}
+  ],
+  "original_git_blobs": {
+    "tests/packs/timeline/test_cli_parity.py": "0ed1126207a67e3c91dec18a61a2dbaddaf82f01",
+    "tests/packs/timeline/test_cli_status_publish.py": "3aa6c6547030d8c2b351bad628aac79de36969f4",
+    "tests/packs/timeline/test_verbs_working_copy.py": "7bacde79570a5464c5ea8db41ce2796d0d8dd140",
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "1957eb26453a8c228158853b137db23ba9227e3a",
+    "tests/sdk/test_runtime_response_conformance.py": "b19dc2acd18e41dfe01fa342a0148cb318b0bccf",
+    "tests/timeline/test_authoring_bundle.py": "17866d60092999eab90ffc43d035714a7cbd4973",
+    "tests/v10/test_timelines_create.py": "a3a682e8a65501d06f22649a3bd73d6cb397d2b3c2"
+  },
+  "scope_checks": {
+    "changed_file_count": 8,
+    "all_changed_files_allowed": true,
+    "outside_allowed_blob": false,
+    "original_blobs_present": true,
+    "installer2_outside_review": true,
+    "inverse38_outside_review": true,
+    "runtime_outside_review": true
+  }
+}

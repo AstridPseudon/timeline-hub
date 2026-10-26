@@ -1,0 +1,36 @@
+{
+  "schema": "timeline.d141ee.writers15.protected-review.v1",
+  "verdict": "FAIL",
+  "behavior_verdict": "FAIL",
+  "assigned_count": 15,
+  "assigned_unique_count": 15,
+  "assigned_n": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+  "source_base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "reviewed_head": "c61c56d2f2b926febde4dad67d83d114790766ab",
+  "reviewed_tree": "ff3b6e425b023c2690d85f168ba162688aeeb7f3",
+  "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "targeted_counts": {"total": 22, "passed": 22, "failed": 0, "errors": 0, "skipped": 0},
+  "assigned_id_counts": {"total": 15, "passed": 15, "failed": 0, "errors": 0},
+  "scope": {
+    "changed_files": 8,
+    "outside_allowed_blob": false,
+    "original_test_blobs_present": true,
+    "tests_restored_again": false,
+    "installer2_touched": false,
+    "inverse38_touched": false,
+    "runtime_touched": false
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS",
+    "mypy_exact": "FAIL_ENVIRONMENT",
+    "mypy_exact_detail": "NumPy __init__.pyi uses a type statement rejected by the configured mypy Python version"
+  },
+  "finite_findings": ["F1", "F2", "F3", "F4", "F5", "F6", "F7"],
+  "non_claims": [
+    "No full/core/browser/install/render/child-body suite was run.",
+    "A passing replacement selector is not credited where protected predicates were removed or the supported caller was not exercised.",
+    "No source, test, generated-file, hub, branch, or Git-internal repair was made by this reviewer."
+  ]
+}

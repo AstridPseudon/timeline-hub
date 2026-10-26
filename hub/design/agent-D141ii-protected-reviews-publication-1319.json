@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-26T13:17:31.198070+00:00",
+  "kind": "manager byte publication of original bounded worker summaries",
+  "files": [
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/review.json",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-review.json",
+      "sha256": "986d0f1122b9c331862fe1039e2f782d7f9beb6cc5b376a3734bf121474261f7",
+      "bytes": 1560
+    },
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/findings.md",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-findings.md",
+      "sha256": "c6ad7e4aea2d84cf6d7add75d2dafd9524a67ff9675e11ca7f30ed07d7686253",
+      "bytes": 3955
+    },
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-per-id.json",
+      "sha256": "c8c5e7e85d70d5c51af1197092960e602130c2d70e5f07a2ce6d3416b1b0e6e6",
+      "bytes": 5979
+    },
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-source-manifest.json",
+      "sha256": "4d6bf775dead45e247a5420c62cdc7925c7f8f930930b7a4bcab41699c638cda",
+      "bytes": 2747
+    },
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-validation.md",
+      "sha256": "e6aad29890fbe1ad18eb9a120e602642be07940e5bef8a782f46a71d3f59ec8c",
+      "bytes": 2492
+    },
+    {
+      "source": "workers/agt-U2-D141ee-writers15-decision-next-review/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-writers15-decision-next-review-handoff.md",
+      "sha256": "22b2d01a5f776941ec949829449b114c617c51b2ad56dce8c664c2055647dfd8",
+      "bytes": 2397
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/review.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-review.json",
+      "sha256": "e721ab23f435319cd0f476a5181dfa86cc2e85a761beb6fdec1b326a3e36eff3",
+      "bytes": 1538
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/findings.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-findings.md",
+      "sha256": "8c18290a8ff904e4cfa5a53cf9be335e42069d832af6a5ec896d60925d4cb40f",
+      "bytes": 710
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/per-id.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-per-id.json",
+      "sha256": "441075c1e98731b1164baabeb5eab7f03ed36650713e1518f860bdce2ad6ceb2",
+      "bytes": 2880
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-source-manifest.json",
+      "sha256": "5aa83bb2cde2b088b65b08265b8726501bef685b1e6240b0f1d6914071af896e",
+      "bytes": 1794
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/validation.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-validation.md",
+      "sha256": "92fc110ec7feeb6d5e984247fa62be611748245671e0727ba3185a6800a2dd67",
+      "bytes": 1796
+    },
+    {
+      "source": "workers/agt-U2-D141ee-installer2-decision-next-review/evidence/handoff.md",
+      "published": "design/agt-U2-D141ee-installer2-decision-next-review-handoff.md",
+      "sha256": "961145cb72a43b0aa5a4f0df3e31158eb9f6381057cf943c1125a8423f7aa536",
+      "bytes": 605
+    }
+  ],
+  "raw": "original XML/logs/traces retained under worker KEEP; not copied",
+  "writers_verdict": "FAIL F1-F7; 22 pytest PASS is execution only",
+  "installer_verdict": "PASS; exact two approved retirements, remaining4 PASS",
+  "home": "73e369b1a2f0448f033d252edae9b09fd64547de",
+  "return": "agt-U2-D141ii-writers15-return-1319 actual start13:16:41Z; first two precreated KEEP queue names refused before any worker; no WIP/body"
+}
