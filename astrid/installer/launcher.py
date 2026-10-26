@@ -146,7 +146,7 @@ if sys.argv[1:2] == ["credential"]:
     os.environ.update(env)
     from astrid.core.util.credential_store import main
     raise SystemExit(main(sys.argv[2:]))
-replace_process([python, "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
+replace_process([python, "-X", "utf8", "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
 '''
 
 
@@ -165,7 +165,7 @@ def install(root: Path) -> tuple[Path, ...]:
             '@echo off\r\n'
             'set "ASTRID_PROGRAM_ROOT=%~dp0"\r\n'
             'for /f "usebackq delims=" %%V in ("%ASTRID_PROGRAM_ROOT%current") do set "ASTRID_VERSION=%%V"\r\n'
-            '"%ASTRID_PROGRAM_ROOT%versions\\%ASTRID_VERSION%\\py\\Scripts\\python.exe" -I "%ASTRID_PROGRAM_ROOT%run_astrid.py" %*\r\n',
+            '"%ASTRID_PROGRAM_ROOT%versions\\%ASTRID_VERSION%\\py\\Scripts\\python.exe" -X utf8 -I "%ASTRID_PROGRAM_ROOT%run_astrid.py" %*\r\n',
             encoding="utf-8", newline="",
         )
         return launcher, runner
@@ -176,7 +176,7 @@ def install(root: Path) -> tuple[Path, ...]:
         'root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)\n'
         'version=$(cat "$root/current")\n'
         'case "$version" in *[!A-Za-z0-9._-]*|"") echo "Astrid current version pointer is invalid." >&2; exit 2;; esac\n'
-        'exec "$root/versions/$version/py/bin/python" -I "$root/run_astrid.py" "$@"\n',
+        'exec "$root/versions/$version/py/bin/python" -X utf8 -I "$root/run_astrid.py" "$@"\n',
         encoding="utf-8", newline="\n",
     )
     launcher.chmod(0o755)

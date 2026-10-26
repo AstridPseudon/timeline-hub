@@ -12,6 +12,19 @@ from astrid.installer.core import Version, read_json, write_json
 from astrid.installer.service import LABEL, Service, command, default_program_root
 
 
+def test_installer_runtime_command_sets_utf8_before_isolation(tmp_path, monkeypatch):
+    backend = Backend(tmp_path / "program", tmp_path / "log", tmp_path / "uv")
+    version = Version(tmp_path / "version", tmp_path / "python", tmp_path / "profile", {})
+    run = Mock(return_value='{"ok":true}')
+    monkeypatch.setattr(backend, "run", run)
+
+    backend.runtime(version, tmp_path / "data", "status")
+
+    assert run.call_args.args[0][:6] == [
+        version.python, "-X", "utf8", "-I", "-m", "astrid_runtime",
+    ]
+
+
 def test_service_wrapper_loads_settings_before_runtime(tmp_path, monkeypatch):
     settings = tmp_path / "service-env.json"
     write_json(settings, {"ASTRID_WARM_IDLE_SECONDS": "17", "ASTRID_ALLOW_UNQUALIFIED_GPU": "1"})
@@ -31,7 +44,7 @@ def test_service_wrapper_loads_settings_before_runtime(tmp_path, monkeypatch):
     monkeypatch.setitem(sys.modules, "astrid_runtime.cli", module)
     argv = command(version, tmp_path / "data", env_file=settings)
     with pytest.raises(SystemExit) as result:
-        exec(argv[3], {})
+        exec(argv[5], {})
     assert result.value.code == 0
     assert observed == [(["run", "--profile", "astrid", "--data-root", str(tmp_path / "data"),
                          "--source-manifest", str(version.profile)], "17", "1")]
@@ -43,7 +56,7 @@ def test_service_wrapper_rejects_unknown_or_nonstring_settings(tmp_path, setting
     path.write_text(json.dumps(settings))
     version = Version(tmp_path / "version", tmp_path / "python", tmp_path / "profile", {})
     with pytest.raises(ValueError, match="Invalid Astrid service-env.json"):
-        exec(command(version, tmp_path / "data", env_file=path)[3], {})
+        exec(command(version, tmp_path / "data", env_file=path)[5], {})
 
 
 def test_registration_preserves_settings_and_records_selection(tmp_path, monkeypatch):
