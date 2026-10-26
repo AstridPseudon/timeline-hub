@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-final-source-manifest.v1",
+  "base_commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+  "candidate_commit": "04545a1e52c58a5fa938cb4aa0a060328e8d3efc",
+  "candidate_tree": "0429c1f57f5d4244d722a59285140451dcf571cb",
+  "changed_paths": ["tests/e2e/local/support/app.ts", "tests/e2e/local/support/d141j-visibility.test.ts"],
+  "working_tree_clean": true,
+  "protected_blobs_equal": true,
+  "protected": ["tests/e2e/local/three-products.p2-popup.spec.ts", "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts", "src/tools/video-editor/adapters/app/useAstridShotsHost.ts", "src/tools/video-editor/hooks/useShotGroups.ts", "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx"],
+  "native_run": false,
+  "registration": false
+}

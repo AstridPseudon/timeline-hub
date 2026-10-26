@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-final-source-map.v1",
+  "coordinates": {
+    "config_parse": "tests/e2e/local/support/app.ts:34-50",
+    "real_fixture_wrapper": "tests/e2e/local/support/app.ts:52-72",
+    "shared_page_assignment": "tests/e2e/local/support/app.ts:207-215",
+    "browser_module_import_install_snapshot_uninstall": "tests/e2e/local/support/d141j-visibility.ts:35-59,104-112",
+    "retention_and_finally": "tests/e2e/local/support/d141j-visibility.ts:121-146",
+    "new_source_controls": "tests/e2e/local/support/d141j-visibility.test.ts:141-224",
+    "qualified_four_field_controls": [
+      "src/tools/video-editor/adapters/app/useAstridShotsHost.test.tsx",
+      "src/tools/video-editor/hooks/useShotGroups.test.ts",
+      "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx"
+    ]
+  },
+  "ordering": ["existing fixture newPage", "existing fixture install", "D141j evaluate install", "test body / initial read and render", "D141j snapshot", "write + attach", "D141j evaluate uninstall", "existing fixture retention", "existing page.close"],
+  "cycle_check": "app.ts imports d141j-visibility.ts; d141j-visibility.ts does not import app.ts",
+  "future_retention": "Playwright testInfo.outputPath('d141j-visibility.json') and testInfo.attach('d141j-visibility.json', ...); before outer page.close on PASS and FAIL"
+}

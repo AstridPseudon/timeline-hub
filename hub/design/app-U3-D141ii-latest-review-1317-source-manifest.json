@@ -1,0 +1,35 @@
+{
+  "task": "U3 D141ii independent latest review",
+  "base": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+  "upstream": {"commit": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671", "tree": "2d148030f81e8522a7751577037232f9de29f9d9"},
+  "candidate": {
+    "commit": "eac97ea597b33238eb1428a96dee18f7d9c7f2df",
+    "tree": "750e6dda47888aef91c14ef241aa4a43895a0c21",
+    "parents": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "00a014e2a393ebfb080c4fd85d5a08bc97bc6671"],
+    "diffstat": "64 files changed, 2771 insertions(+), 1261 deletions(-)"
+  },
+  "frozen_reference_metadata": {
+    "app": {"commit": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"},
+    "agent": {"commit": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"},
+    "runtime": {"commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"},
+    "composition": {"commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"}
+  },
+  "conflict_preimages": {
+    "public/install-manifest.json": {"base_stage1": "03d1e1167cb0bc5e9d5427af06b3a935604101ca", "ours_stage2": "b571570007cdef157f30054f90e9d58b6428ee12", "upstream_stage3": "fddf2401db5bcb3a4d9492e314157602bd944305", "resolution": "keep local Runtime fields; retain upstream Agent and other metadata intent; drop vibecomfy"},
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": {"base_stage1": "c61f31e717e22901ac8db209a6f03442d4a12ccf", "ours_stage2": "e46aafba87d24135fe8d0276482fb823b159db6e", "upstream_stage3": "ee2ac636cd972a36b93080ee6d857d846efd241c", "resolution": "keep both meaningful assertion blocks"},
+    "src/tools/video-editor/components/ElementsLibraryPanel.tsx": {"base_stage1": "78543d4894cce40700adeecbb5221f086b44dec9", "ours_stage2": "15c536637ff86f92ae6341fe6c96233c3add092d", "upstream": "deleted", "resolution": "take exact upstream deletion"},
+    "src/tools/video-editor/components/ElementsLibraryPanel.test.tsx": {"base_stage1": "b18352574830f80d380dee414744854fa03ea20b", "ours_stage2": "e432b18bae20d27cb68424d54665277d77a0a6a7", "upstream": "deleted", "resolution": "take exact upstream deletion"}
+  },
+  "resolved_checks": {
+    "install_manifest_sha256": "af06b0b0e45cda890b372bb6a039a4d66c60180fc3dfecfa13876514b57b7bf5",
+    "agent_chat_test_sha256": "b66fe542068c26c80324add5160235d69fd08455c6fbec2a8e9a52e8b7cf6ed3",
+    "manifest_agent": "e1c751def40f8fde59277226b6c190354d22744c",
+    "manifest_runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "manifest_runtime_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "runtime_lock_delta": false,
+    "vibecomfy_present": false,
+    "elements_files_present": false,
+    "conflict_markers_present": false
+  },
+  "pin_rationale": "The upstream Runtime fa9cd5464a8b37b02f971de375e56be846cd69e2 is explicitly overridden because the ZIP ships local Runtime 95d98f038320d5d46bd679ac000ab3e15825c935. Upstream Agent e1c751def40f8fde59277226b6c190354d22744c is retained. Normal updater/provenance work is D141v; no receipt was regenerated here."
+}

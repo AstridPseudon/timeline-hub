@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-final-review.v1",
+  "verdict": "PASS",
+  "classification": "PASS_MOUNTED_WIRING_SOURCE_READY",
+  "scope": "A3/P2 D141j independent firstreturn source review",
+  "candidate": {"commit": "04545a1e52c58a5fa938cb4aa0a060328e8d3efc", "tree": "0429c1f57f5d4244d722a59285140451dcf571cb", "private": true, "unmerged": true},
+  "prior_finding": {"id": "D141J-REVIEW-001", "classification": "FAIL_FINITE_MOUNTED_WIRING", "status": "superseded_by_proved_fix", "original": "immutable"},
+  "source_controls": {"new_mounted_controls": "PASS 6/6", "existing_collector_controls": "PASS 41/41", "malformed_config_fail_closed": "PASS", "default_inert": "PASS", "install_before_body": "PASS", "retention_before_page_close": "PASS", "finally_uninstall": "PASS"},
+  "protected": {"popup_assertions": true, "collector_blob": true, "checker_blob": true, "four_field_emitter_blobs": true, "changed_paths_only_allowed": true},
+  "native": {"status": "NOTRUN", "registration": false, "browser": false, "service": false, "request": false, "collection": false, "body": false, "cause": "UNKNOWN"},
+  "remaining_gap": "Finite doubles establish source lifecycle controls only; native mounted four-field observations remain unverified.",
+  "future_config": {"env": "TIMELINE_D141J_VISIBILITY_CAPTURE='{\"expectedOccurrenceId\":\"<real occurrence id>\"}'", "output_path": "testInfo.outputPath('d141j-visibility.json')", "attachment": "d141j-visibility.json", "ordinary_route": "env unset", "d66": "pass existing D66_* environment and command unchanged"}
+}

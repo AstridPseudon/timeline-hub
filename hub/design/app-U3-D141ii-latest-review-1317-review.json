@@ -1,0 +1,55 @@
+{
+  "task": "U3 D141ii independent latest review",
+  "reviewer": "app-U3-D141ii-latest-review-1317",
+  "candidate": {
+    "commit": "eac97ea597b33238eb1428a96dee18f7d9c7f2df",
+    "tree": "750e6dda47888aef91c14ef241aa4a43895a0c21",
+    "parents": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "00a014e2a393ebfb080c4fd85d5a08bc97bc6671"]
+  },
+  "verdict": "FAIL",
+  "qualified_source_verdict": "PASS_WITH_FINDINGS",
+  "targeted_validation_verdict": "PASS",
+  "path_map_verdict": "FAIL",
+  "source_review": {
+    "elements_deletions_exact": true,
+    "agent_chat_test_purposes_and_assertions_conserved": true,
+    "runtime_pin_rule": "PASS: Runtime 95d98f038320d5d46bd679ac000ab3e15825c935 retained; upstream fa9cd5464a8b37b02f971de375e56be846cd69e2 documented as overridden",
+    "agent_reference": "PASS: upstream e1c751def40f8fde59277226b6c190354d22744c retained",
+    "producer_receipt_regenerated": false,
+    "source_changes_by_reviewer": false
+  },
+  "findings": [
+    {
+      "id": "MAP-001",
+      "severity": "blocking_for_review",
+      "summary": "Author map credits gallery AddToTimeline as protected single journey",
+      "detail": "The protected accepted 24271 journey is p2-transition-none-single, raw transition clear in tests/e2e/local/three-products.p2-tour.spec.ts, not galleryAddToTimeline. The gallery feature is unrelated upstream UI and cannot establish the protected gesture.",
+      "required_action": "Use the original transition-none-single selector and mounted path for later reproof. Do not silently credit the gallery path."
+    },
+    {
+      "id": "MAP-002",
+      "severity": "blocking_for_review",
+      "summary": "Author map omits changed shared editor boundaries for protected journeys",
+      "detail": "The actual mounted placement, popup, parent, single, bulk, P1, registerAsset, and P3 paths execute changed TimelineEditorCore/Body and/or TimelineCanvas/Shell boundaries. Placement and registerAsset also traverse changed useTimelineState/useExternalDrop seams. The author map marks several of these as unaffected.",
+      "required_action": "Carry the corrected per-journey applicability map in handoff; later reproof only the affected original journeys."
+    }
+  ],
+  "limitations": [
+    "No browser, localhost, live socket, journey, collection, full suite, full-pair, or test-service run was performed.",
+    "The author no-preload startup ESM/__dirname diagnostic is retained as an existing diagnostic; the supported preload-backed command was rerun here.",
+    "The full pair versus actual upstream 00a014e2a393ebfb080c4fd85d5a08bc97bc6671 remains owed and was not run here."
+  ],
+  "evidence_files": [
+    "review-vitest.log",
+    "review-tsc.log",
+    "review-eslint.log",
+    "review-diff-check.log",
+    "source-manifest.json",
+    "affected-proofs.json",
+    "validation.md",
+    "findings.md",
+    "handoff.md",
+    "disk-trace.txt",
+    "sampler-lifecycle.json"
+  ]
+}

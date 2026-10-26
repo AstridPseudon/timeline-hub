@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "trace": "disk-trace.txt",
+  "samples": 6,
+  "interval_seconds": 5,
+  "stop_threshold_kb": 4194304,
+  "observed_available_kb": [4387264, 4417316, 4417332, 4417340, 4589024, 4589024],
+  "background_children": 0,
+  "explicit_stop_wait_reap": "foreground loop completed; wait returned successfully; no detached process",
+  "gaps": []
+}
