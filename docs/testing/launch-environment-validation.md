@@ -35,7 +35,7 @@ Ruff 0.12.0: original branch 2,200 versus merge base 2,197. The four new finding
 
 The result-manifest registry conformance test fails identically on merge base `8b6ed2116f` and the original branch: the registry has `music.duck` but the output-result exemption list does not. This is left unchanged.
 
-Final focused local results: 462 passed, 0 failed, 0 skipped; 282 deselected by existing lanes or focused name selection.
+Final focused local results: 495 passed, 0 failed, 0 skipped; 282 deselected by existing lanes or focused name selection.
 
 | Selection | Passed | Deselected |
 | --- | ---: | ---: |
@@ -45,6 +45,7 @@ Final focused local results: 462 passed, 0 failed, 0 skipped; 282 deselected by 
 | `tests/journeys/test_journey_plumbing.py` | 87 | 2 |
 | `tests/test_installer_tools.py` | 14 | 0 |
 | `tests/sdk/test_host_bootstrap_source_identity.py` | 74 | 0 |
+| `tests/test_structure_contracts.py` | 33 | 0 |
 | `tests/packs/test_vibecomfy_local.py` | 10 | 0 |
 | `tests/test_generic_host.py` (launch/worker/idle/readiness selections) | 103 | 225 |
 | `tests/packs/rendering/test_remotion_backend.py -k launch_bound` | 4 | 54 |
@@ -54,3 +55,5 @@ The separate result-manifest conformance case had 1 failure on each revision (or
 The first pushed CI run exposed one additional Pinokio mypy finding beyond main's known count: the empty discovery result tuple lacked an annotation. A same-environment full comparison of A1 and pre-A1 `de5c62b` had 1,932 diagnostics each with zero additions/removals; a merge-base comparison identified this `local.py` finding as pre-A1 branch work. The tuple is now explicitly typed. This removes that branch-only finding without changing discovery behavior; main's existing mypy failures are left alone.
 
 CI also exercised an additional SDK bootstrap pinning test absent from the brief: it now accepts ambient controls and compares the host/worker probe, registry and child projections. The original branch also fails `tests/test_artifact_manifest.py::test_cli_surface_is_current`; the same test fails on `de5c62b` before A1, so it is reported separately from main's existing artifact failure.
+
+The host change crossed the giant-file inventory's 50-line tolerance (recorded 14,166; pre-A1 14,210; A1 14,225). The documented host count is refreshed to 14,225; all 33 structure-contract tests pass. Other changed files remain within the existing inventory tolerance.
