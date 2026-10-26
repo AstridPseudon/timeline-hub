@@ -501,11 +501,17 @@ def _provision_render_runtime_env(
         # Node on PATH is never used silently, so the shell that launches the host cannot matter.
         from astrid.core.rendering.node_pin import resolve_pinned_node
 
-        resolution = resolve_pinned_node(
-            project_dir,
-            override=(child_env.get(ASTRID_NODE_EXECUTABLE) or "").strip() or None,
-            search_path=child_env.get("PATH"),
-        )
+        try:
+            resolution = resolve_pinned_node(
+                project_dir,
+                override=(child_env.get(ASTRID_NODE_EXECUTABLE) or "").strip() or None,
+                search_path=child_env.get("PATH"),
+            )
+        except Exception:
+            # Node discovery is an optional render setup step. Leave the host
+            # running, but ensure preflight sees rendering as unavailable.
+            child_env.pop(ASTRID_NODE_EXECUTABLE, None)
+            return
         if resolution.ok:
             child_env[ASTRID_NODE_EXECUTABLE] = str(resolution.path)
         # Missing or invalid tools are reported by render preflight; the host can still run other work.
