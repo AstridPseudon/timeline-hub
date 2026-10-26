@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.d141ii.writers15.return-protected-review.v1",
+  "verdict": "FAIL",
+  "behavior_verdict": "FAIL",
+  "reviewed_commit": "3638da72332dee5ffccacb704c9ac3c794b7c959",
+  "reviewed_tree": "6983046d907b9ec8f745a27a178b0413a66a2a45",
+  "author_parent": "c61c56d2f2b926febde4dad67d83d114790766ab",
+  "original_base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "owner_scope_sha256": "fb6a058429c94e0a1574f8ba349fea246ae9be855b9667da9f3ff81dac5938d22",
+  "original_purpose_count": 15,
+  "return_selector_count": 22,
+  "return_selector_counts": {"total": 22, "passed": 22, "failed": 0, "errors": 0, "skipped": 0},
+  "prior_neighbor_union_count": 7,
+  "union_selector_count": 29,
+  "union_selector_counts": {"total": 29, "passed": 29, "failed": 0, "errors": 0, "skipped": 0},
+  "protected_outcomes": {
+    "F1": "CLOSED",
+    "F2": "CLOSED",
+    "F3": "CLOSED_WITH_APPROVED_C0_REPLY_SHAPE",
+    "F4": "CLOSED",
+    "F5": "OPEN_FAIL_CALLER",
+    "F6": "CLOSED_WITH_APPROVED_COMMIT_REPLY_SHAPE",
+    "F7": "FAIL_ENVIRONMENT"
+  },
+  "finite_findings": ["F5", "F7"],
+  "scope": {
+    "baseline_to_reviewed_changed_files": 8,
+    "return_commit_changed_files": 3,
+    "outside_allowed_blob": false,
+    "original_test_blobs_present": true,
+    "tests_restored_again": false,
+    "installer2_touched": false,
+    "inverse38_touched": false,
+    "runtime_touched": false,
+    "product_files_changed_in_return_commit": false
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS",
+    "mypy_exact": "FAIL_ENVIRONMENT",
+    "mypy_target_override_python_3_12": "PASS"
+  },
+  "non_claims": [
+    "No full/core/browser/install/render/child-body suite was run.",
+    "The 22 return selectors and 29-node union are execution counts only; protected PASS requires assertion and caller closure.",
+    "No source, test, generated-file, hub, branch, or Git-internal repair was made by this reviewer."
+  ]
+}

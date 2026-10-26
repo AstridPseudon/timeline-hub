@@ -1,0 +1,35 @@
+{
+  "repo": "agent",
+  "reviewed_commit": "3638da72332dee5ffccacb704c9ac3c794b7c959",
+  "reviewed_tree": "6983046d907b9ec8f745a27a178b0413a66a2a45",
+  "author_parent": "c61c56d2f2b926febde4dad67d83d114790766ab",
+  "original_base": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+  "runtime_checkout": "/home/user/work/runtime",
+  "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "owner_scope_sha256": "fb6a058429c94e0a1574f8ba349fea246ae9be855b9667da9f3ff81dac5938d22",
+  "baseline_to_reviewed_files": {
+    "astrid/packs/timeline/cli_native.py": "0fccab838189b22ad5d39e28795f19d2f9cb0fdc",
+    "tests/packs/timeline/test_cli_parity.py": "317e96fc33551169ec31f47750c1055fd725ca1a",
+    "tests/packs/timeline/test_cli_status_publish.py": "39a62f53627e5df170709c8bb19e90f95f860b65",
+    "tests/packs/timeline/test_verbs_working_copy.py": "3c76eba0408181ed66b96324cfd6262274c64283",
+    "tests/packs/video_editing/test_runtime_publication_chain.py": "4648089110aca9479de9e95c4b0843257264ffe8",
+    "tests/sdk/test_runtime_response_conformance.py": "761e5356fb4859dbc5b0d41613b939f09f9dfe72",
+    "tests/timeline/test_authoring_bundle.py": "ccc0967c6e9a3fe5cfc083437024cb28810040e1",
+    "tests/v10/test_timelines_create.py": "07d2c0132b7e68b69a13d992e44181538c1dd642"
+  },
+  "return_commit_changed_files": [
+    "tests/packs/timeline/test_cli_status_publish.py",
+    "tests/packs/timeline/test_verbs_working_copy.py",
+    "tests/v10/test_timelines_create.py"
+  ],
+  "scope_result": {
+    "allowed_files": 8,
+    "changed_files_from_original_base": 8,
+    "outside_allowed_blob": false,
+    "original_test_blobs_present": true,
+    "product_files_changed_in_return_commit": false,
+    "installer2_touched": false,
+    "inverse38_touched": false,
+    "runtime_touched": false
+  }
+}

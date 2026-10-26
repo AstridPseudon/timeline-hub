@@ -1,0 +1,45 @@
+{
+  "at": "2026-10-26T13:31:58.041236+00:00",
+  "files": [
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/review.json",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-review.json",
+      "sha256": "f13d3e30a83af411758d6c52626e416d344c6ce819e05b0d2f59543cbc95a29f",
+      "bytes": 2011
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/findings.md",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-findings.md",
+      "sha256": "b839d947fee44ce11b8ea98c4fa3b6e65995e9df553e1e324e3b2f6a70863bc1",
+      "bytes": 4049
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/per-id.json",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-per-id.json",
+      "sha256": "c9008d87b531aac41402724f92a3ad11e57008b8146d73d9fee1368efbc3b36b",
+      "bytes": 8665
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-source-manifest.json",
+      "sha256": "bb4e8c62ad5d9e533a677d0c00bad5ad6b8b6911b4df246a526ad7a04ea332e2",
+      "bytes": 1788
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/validation.md",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-validation.md",
+      "sha256": "73b4670a542185b26e3753b34c624775747cdfb2e3c106c4e74185fae92e2f4f",
+      "bytes": 2453
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-review-next/evidence/handoff.md",
+      "published": "design/agt-U2-D141ii-writers15-return-review-next-handoff.md",
+      "sha256": "6e3837829b6e097614a153582a27886f2a24e040c384628d3923acf4784b0cbf",
+      "bytes": 2986
+    }
+  ],
+  "verdict": "FAIL F5 caller, F7 environment",
+  "counts": "22 PASS and union29 PASS execution only",
+  "next": "HARD Sol caller source and independent Luna wholepath dispatched in parallel",
+  "raw": "KEEP private originals retained; no original rewrite or raw transfer"
+}
