@@ -1,0 +1,104 @@
+{
+  "schema": "timeline.d141.frozen-ordinary-independent-review/v1",
+  "task": "rt-F-D141-frozen-final-review-0101",
+  "candidate": {
+    "branch": "tl/rt-F-D141-frozen-final-review-0101",
+    "commit": "1b709a79658e5c553281a4fe66d388fe284b6dd0",
+    "tree": "040c17724799aa53bda05775b88d0aac8db11289",
+    "base_commit_0032": "ba8bec724fb2f348a4d2fdb4389025138060d1d5",
+    "base_tree_0032": "dfd5cbf80322ed4772338f3d05897e32657177bd"
+  },
+  "verdict": "PASS_SOURCE",
+  "readiness": "NOT_READY",
+  "summary": "The 0055 source-binding delta closes the sole 0049 old-tuple finding. It changes only frozen source tuple/lock custody, related prose, and positive/negative binding assertions. The ordinary D139a route, verifier, ownership, D131, policy, C0 wire, D134 and D124 controls are preserved. Venue inputs remain honestly unbound and no Farm body was run.",
+  "diff_scope": {
+    "changed_paths": [
+      "ops-d140-farm/README.md",
+      "ops-d140-farm/commands.md",
+      "ops-d140-farm/receive-farm.sh",
+      "ops-d140-farm/test_recipe.py"
+    ],
+    "change_categories": [
+      "receiver comment and frozen Agent/Runtime/App tuple plus Agent runtime-lock blob/SHA constants",
+      "README/commands source-custody prose and D141 tuple labels",
+      "test assertions for current tuple, obsolete old tuple absence, and current lock constants"
+    ],
+    "forbidden_changes_observed": false,
+    "unchanged_control_paths": [
+      "ops-d140-farm/receipts.py",
+      "ops-child-custody/request-child-venv",
+      "ops-child-custody/make-child-venv",
+      "ops-child-custody/check-child-imports",
+      "ops-child-custody/source-manifest.json"
+    ]
+  },
+  "findings": [
+    {
+      "id": "D140-APPLICABILITY-010",
+      "status": "CLOSED_SOURCE_INHERITED",
+      "severity": "source",
+      "detail": "The ordinary D139a installed-schema route remains the default, while FARM_REQUIRED=1 remains the strict special branch. No new route or policy was introduced."
+    },
+    {
+      "id": "D140-FINAL-TUPLE-011",
+      "status": "CLOSED_SOURCE",
+      "severity": "blocking-source",
+      "detail": "The receiver now binds Agent 28e56cac/tree 2ebe2ddf, Runtime 6a011d58/tree ac5b8627, App 867cb273/tree 2b44a46c, and Composition 635f4de0/tree 5ab5191a. The obsolete 41ad/f103/569 tuple is absent from production receiver source; its IDs occur only in the explicit negative test assertions."
+    },
+    {
+      "id": "D141-FROZEN-LOCK-012",
+      "status": "PASS_SOURCE",
+      "severity": "source-custody",
+      "detail": "runtime.lock.json is bound to blob 2d4d12a1 and SHA 0cc3ba73 from the exact Agent commit; all 15 lock entries match the exact Runtime 6a011d58 source bytes."
+    },
+    {
+      "id": "D141-PRESERVATION-013",
+      "status": "PASS_SOURCE",
+      "severity": "preservation",
+      "detail": "No ordinary logic, verifier, ownership, D131, policy, client/schema/C0 wire, D134 or D124 selector change is present. The existing 97-test ordinary review result is reused; only four bounded controls were rerun."
+    },
+    {
+      "id": "D141-VENUE-014",
+      "status": "OPEN_NOT_READY",
+      "severity": "external-input",
+      "detail": "Farm receipt, installed schema, normal child, current import census, fresh D134 controls, and D124 output roots are not bound. This is an honest venue status, not a source failure and not a permission denial."
+    }
+  ],
+  "source_tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "origin": "https://github.com/peteromallet/astrid-agent", "local_checkout": "/home/user/work/wt/agt-pin-28e56cac", "clean": true},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "local_checkout": "/home/user/work/runtime", "clean": true},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "origin": "https://github.com/banodoco/reigh-app", "local_checkout": "/home/user/work/app", "clean": true},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "local_checkout": "/home/user/work/composition", "clean": true}
+  },
+  "source_identity": {
+    "agent_runtime_lock": {"path": "runtime.lock.json", "blob": "2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20", "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3", "bytes": 3577, "lock_entries": 15, "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "entries_match_runtime": true},
+    "agent_generated_client": {"blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+    "agent_commit_types": {"blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+    "agent_schema": {"blob": "1b3f12da05da3bb89fa76881184eefdf8232e076", "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"},
+    "runtime_schema": {"blob": "a97f1b31e27a6c27373799a84ec839b49188acdc", "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"},
+    "commit_schema": {"path": "contract/schemas/timeline-commit.json", "blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "equal_to_f103": true},
+    "d73_launcher": {"blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "bytes": 8487, "mode": "0755"},
+    "d73_suite": {"blob": "fbde96168dca681a76cff1526c23b8d0b74001eb", "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"}
+  },
+  "operational_sources": {
+    "received_kit_expected_maker": {"path": "ops-child-custody/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755", "Farm_received_path": "UNBOUND"},
+    "requester": {"sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755"},
+    "checker": {"sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755"}
+  },
+  "check_only": {
+    "command": "D140_PHASE=pre-child AGENT_CHECKOUT=/home/user/work/wt/agt-pin-28e56cac RUNTIME_CHECKOUT=/home/user/work/runtime APP_CHECKOUT=/home/user/work/app COMPOSITION_CHECKOUT=/home/user/work/composition ops-d140-farm/receive-farm.sh --check-only",
+    "result": "NOT_READY",
+    "exit_code": 1,
+    "checks": 66,
+    "pass": 24,
+    "nonpass": 42,
+    "source_checks": "all 20 source checkout/object/origin/blob checks PASS",
+    "side_effects": {"child": false, "pytest": false, "installer": false, "import": false, "store": false, "queue": false, "acquisition": false},
+    "json_sha256": "b0a1ee1337a2a89f52de5ff7124f61d7421e2ea23a60ea43314e93213dc108d2",
+    "body_routes_invoked": false
+  },
+  "farm_execution": "NOT_RUN_BY_SCOPE",
+  "runtime_full_pristine": "MAIN-OWNED; NOT FARM",
+  "conditional_pristine_five": "After the sole Farm cut core only, rerun pristine Agent 8b6ed2116fd1803d24b2be5bc08bd9490407fe4a and pristine Runtime fa9cd5464a8b37b02f971de375e56be846cd69e2 for the IDs in the Main five-node list that also fail the Farm cut core, in the same Farm child-environment kind, before REG classification. No blanket five-node body and no unrelated pristine suite.",
+  "historical_support": {"canonical_census": "4c4ee35d/ab1e4f61, 1146 rows, supporting-only and not relabelled current", "ordinary_97_pass": "reused from independent0049; not repeated as a full 97-test run"}
+}

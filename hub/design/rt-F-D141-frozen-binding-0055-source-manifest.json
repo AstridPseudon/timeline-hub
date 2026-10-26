@@ -1,0 +1,55 @@
+{
+  "schema": "timeline.d141.farm-source-binding-manifest/v1",
+  "status": "SOURCE_BOUND_VENUE_NOT_READY",
+  "scope": "source-only D141 binding for the qualified ordinary D140 route; not a Farm execution receipt",
+  "recipe_files": {
+    "ops-d140-farm/receive-farm.sh": {"sha256": "f506a7e5d24e03fcc1af745c66a5ca0a5ec48ce8029d01fd04e682c86c83cff7", "mode": "0755"},
+    "ops-d140-farm/README.md": {"sha256": "cddce5ff138bfa09a56e2199a669880a81e104988743d02bfad928f7a0960411", "mode": "0644"},
+    "ops-d140-farm/commands.md": {"sha256": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3", "mode": "0644"},
+    "ops-d140-farm/receipts.py": {"sha256": "c5531c7c75db63dd99016c8b4337dda41295a69f57dcf10f3a679d2a1b182b99", "mode": "0644", "changed": false},
+    "ops-d140-farm/test_recipe.py": {"sha256": "b9fd807e8e0699a3502ad42b4a9c70deb079ba20b6927ef64f67defaf9512919", "mode": "0644"}
+  },
+  "cut_document": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/D141-cut-tuple.md",
+    "sha256": "c11095ec91f41ffa14ec064b3f8d38625a015361a722ad95e6607b77cdca7876"
+  },
+  "frozen_tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "origin": "https://github.com/peteromallet/astrid-agent", "object": "present", "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70", "checkout_receipt_sha256": "f1938b186e2590eaa62d3a33d27446c47651402c6762f9e32fdec6f8670a69af", "checkout": "/home/user/work/wt/agt-pin-28e56cac", "checkout_clean": true},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "object": "present", "checkout_receipt": "MISSING: checkout-runtime-6a011d58... is not present in queue/done", "checkout": "UNBOUND", "checkout_clean": false},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "origin": "https://github.com/banodoco/reigh-app", "object": "present", "checkout_receipt": "MISSING: checkout-app-867cb273... is not present in queue/done", "checkout": "UNBOUND", "checkout_clean": false},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "object": "present", "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "checkout_receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1", "checkout": "/home/user/work/wt/vw-pin-635f4de0", "checkout_clean": true}
+  },
+  "source_blobs": {
+    "agent:runtime.lock.json": {"blob": "2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20", "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3", "bytes": 3577},
+    "agent:astrid_runtime_client/generated.py": {"blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+    "agent:astrid_runtime_client/timeline_commit_types.py": {"blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+    "runtime:contract/schemas/timeline-commit.json": {"blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"},
+    "runtime:runtime_protocol/canonical_schema.py": {"blob": "a97f1b31e27a6c27373799a84ec839b49188acdc", "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"}
+  },
+  "canonical15": {
+    "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer_version": "084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "count": 15,
+    "mappings_hashes_bytes_modes_unchanged": true,
+    "lock_sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "files": {
+      "astrid/core/timeline/schema/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "astrid_runtime_client/contract_metadata.py": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+      "astrid_runtime_client/generated.py": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+      "astrid_runtime_client/timeline_commit_types.py": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+      "tests/fixtures/runtime-responses/events_page_1_200.json": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "tests/fixtures/runtime-responses/events_page_2_200.json": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "tests/fixtures/runtime-responses/invalid_cursor_400.json": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "tests/fixtures/runtime-responses/managed_outputs_200.json": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "tests/fixtures/runtime-responses/not_found_404.json": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "tests/fixtures/runtime-responses/publish_conflict_409.json": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "tests/fixtures/runtime-responses/task_admission_201.json": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "tests/fixtures/runtime-responses/task_read_200.json": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "tests/fixtures/runtime-responses/validation_error_422.json": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "tests/fixtures/visual-boundary-v1.json": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "historical_supporting_census": {"sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "agent": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d", "runtime": "ab1e4f6141987706132916e2da16477f5a019464", "current_d141": false},
+  "c0_custody": {"schema_path": "contract/schemas/timeline-commit.json", "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "equal_to_historical_f103_bytes": true, "wire_shape_changed": false}
+}

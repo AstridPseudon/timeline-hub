@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.d141.farm-binding-controls/v1",
+  "receiver": "ops-d140-farm/receive-farm.sh",
+  "mode": "--check-only",
+  "positive": {
+    "kind": "real receiver private custody fixture",
+    "result": "PASS",
+    "test": "pytest -q ops-d140-farm/test_recipe.py",
+    "summary": "97 passed; ordinary D139a route and custody controls pass without child, request, Store, service, import, or core execution"
+  },
+  "wrong_old_head_negative": {
+    "result": "PASS",
+    "summary": "obsolete 41ad/f103/569 pins are not in the production receiver; stale tuple cannot qualify the bound source"
+  },
+  "preserved_controls": {
+    "ordinary_route": true,
+    "farm_required_special_guard": true,
+    "d139a_installed_schema": true,
+    "c0_wire_shapes": true,
+    "d134_positive_exit": 17,
+    "d134_positive_calls": 1,
+    "d134_poison_calls": 0,
+    "d124_core_roots": 22,
+    "d124_unfiltered": true,
+    "app_execution_dependency": false
+  },
+  "not_run": ["Farm census", "child request", "in-child imports", "D134 body", "D124 core body", "live service", "full suite", "package/network/Store/Git writes"]
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.d141.frozen-ordinary-source-manifest/v1",
+  "status": "PASS_SOURCE_VENUE_NOT_READY",
+  "candidate": {"commit": "1b709a79658e5c553281a4fe66d388fe284b6dd0", "tree": "040c17724799aa53bda05775b88d0aac8db11289", "base_0032": "ba8bec724fb2f348a4d2fdb4389025138060d1d5"},
+  "changed_recipe_files": {
+    "ops-d140-farm/receive-farm.sh": {"sha256": "f506a7e5d24e03fcc1af745c66a5ca0a5ec48ce8029d01fd04e682c86c83cff7", "bytes": 28478, "mode": "0755"},
+    "ops-d140-farm/README.md": {"sha256": "cddce5ff138bfa09a56e2199a669880a81e104988743d02bfad928f7a0960411", "bytes": 7652, "mode": "0644"},
+    "ops-d140-farm/commands.md": {"sha256": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3", "bytes": 12309, "mode": "0644"},
+    "ops-d140-farm/test_recipe.py": {"sha256": "b9fd807e8e0699a3502ad42b4a9c70deb079ba20b6927ef64f67defaf9512919", "bytes": 43377, "mode": "0644"}
+  },
+  "unchanged_control_files": {
+    "ops-d140-farm/receipts.py": "c5531c7c75db63dd99016c8b4337dda41295a69f57dcf10f3a679d2a1b182b99",
+    "ops-child-custody/request-child-venv": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+    "ops-child-custody/make-child-venv": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "ops-child-custody/check-child-imports": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+    "ops-child-custody/source-manifest.json": "7e4b00e6ea1034e5594436035a06b87ccc726915a47e0c1e2dd8fa29935aaa75"
+  },
+  "tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "origin": "https://github.com/peteromallet/astrid-agent"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "origin": "https://github.com/banodoco/reigh-app"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition"}
+  },
+  "bound_source_files": {
+    "agent:runtime.lock.json": {"blob": "2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20", "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3", "bytes": 3577, "lock_count": 15, "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "all_entries_match": true},
+    "agent:astrid_runtime_client/generated.py": {"blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+    "agent:astrid_runtime_client/timeline_commit_types.py": {"blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+    "agent:astrid/core/timeline/banodoco_schema.py": {"blob": "1b3f12da05da3bb89fa76881184eefdf8232e076", "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"},
+    "runtime:runtime_protocol/canonical_schema.py": {"blob": "a97f1b31e27a6c27373799a84ec839b49188acdc", "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"},
+    "runtime:contract/schemas/timeline-commit.json": {"blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "equal_to_f103": true},
+    "agent:tools/p4-d73-pinned-launch.sh": {"blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "bytes": 8487, "mode": "0755"},
+    "agent:tests/suites.conf.candidate.request.md": {"blob": "fbde96168dca681a76cff1526c23b8d0b74001eb", "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"}
+  },
+  "c0": {"schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "f103_equal": true, "wire_changed": false},
+  "historical_census": {"sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "agent": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d", "runtime": "ab1e4f6141987706132916e2da16477f5a019464", "rows": 1146, "current_d141": false},
+  "command_file": {"path": "ops-d140-farm/commands.md", "sha256": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3", "bytes": 12309, "mode": "0644", "core_roots": 22, "unfiltered": true, "contains_k_filter": false, "contains_collect_only": false}
+}
