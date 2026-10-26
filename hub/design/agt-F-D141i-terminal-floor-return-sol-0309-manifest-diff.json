@@ -1,0 +1,15 @@
+{
+  "old_positive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/positive.manifest",
+  "new_positive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/positive.manifest",
+  "old_to_new_keys": [
+    "junit_paths"
+  ],
+  "positive_poison_keys": [
+    "agent_sha"
+  ],
+  "positive_sha256": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643",
+  "poison_sha256": "222693fc9fb9b8a9abc5620c6f49eb1b872dd8d42a73c38abb8a69b319d3c1fc",
+  "profile_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+  "positive_diff": "--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/positive.manifest\n+++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/positive.manifest\n@@ -34,4 +34,4 @@\n runtime_lock_sha256=0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3\n original_p4_test_hash=b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac\n service_versions=agent:28e56cacb42d3da85b02e5b3543895b44f3d0f70,runtime:6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d,node:v20.19.4,composition:0.0.14,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b\n-junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml\n+junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml\n",
+  "poison_diff": "--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/poison.manifest\n+++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/poison.manifest\n@@ -34,4 +34,4 @@\n runtime_lock_sha256=0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3\n original_p4_test_hash=b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac\n service_versions=agent:28e56cacb42d3da85b02e5b3543895b44f3d0f70,runtime:6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d,node:v20.19.4,composition:0.0.14,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b\n-junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml\n+junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml\n"
+}

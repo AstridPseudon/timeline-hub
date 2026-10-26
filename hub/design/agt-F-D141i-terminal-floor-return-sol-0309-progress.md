@@ -1,0 +1,1 @@
+Author complete: D141I-FINAL-001 terminal comparison corrected;12 fresh terminal controls and fresh serialized positive/poison dry controls PASS. All protected readbacks exact;18 unchanged prior controls reused. Independent final bounded check pending; body and service unstarted. No product changes or policy decisions.

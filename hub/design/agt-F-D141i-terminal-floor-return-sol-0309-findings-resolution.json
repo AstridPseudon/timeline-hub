@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.agent.d141i.terminal-floor.findings-resolution.v1",
+  "finding": "D141I-FINAL-001",
+  "status": "AUTHOR_CORRECTED_BOUNDED_CONTROLS_PASS_INDEPENDENT_REVIEW_REQUIRED",
+  "review": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-final-review-0301/evidence/review.json",
+    "sha256": "d020ceb52884ecde934c77148a9111e4a757c2a0362806059e0e7229d778777d",
+    "id": "D141I-FINAL-001",
+    "prior_status": "FAIL_COMMAND"
+  },
+  "correction": {
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh",
+    "capture_line": 366,
+    "comparison_lines": [
+      368,
+      369
+    ],
+    "comparison": "after_body_available >= CONTINUOUS_STOP_BYTES",
+    "floor_bytes": 4000000000,
+    "read_failure_exit": 97,
+    "write_failure_exit": 98,
+    "below_floor_exit": 78
+  },
+  "fresh_cases": {
+    "block-above-floor": 0,
+    "block-equal-floor": 0,
+    "block-below-floor": 78,
+    "block-disk-read": 97,
+    "block-disk-write": 98,
+    "block-monitor-failure": 124,
+    "block-body-failure": 17,
+    "finish-below-floor": 78,
+    "finish-disk-read": 97,
+    "finish-disk-write": 98,
+    "finish-monitor-failure": 124,
+    "finish-body-failure": 17
+  },
+  "preserved": "Original0249 receipt/brief binding; current/beforebody floor4000000000; five-second monitor; numeric die; exact22roots/argv; four frozen clean sources/origins; venv-agent/profile18d/launcher9f668; existing controller continuation unchanged.",
+  "not_run": [
+    "pytest",
+    "collection",
+    "measurement body",
+    "request-test",
+    "registration",
+    "queue action"
+  ],
+  "next": "One bounded independent final check, then existing controller continuation under orchestrator control; no new admission/floor decision."
+}

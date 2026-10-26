@@ -1,0 +1,78 @@
+{
+  "schema": "timeline.agent.d141i.terminal-floor.readiness.v1",
+  "status": "READY_FOR_ONE_BOUNDED_INDEPENDENT_FINAL_CHECK",
+  "author_complete": true,
+  "finding": "D141I-FINAL-001",
+  "packet_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence",
+  "packet_sha256": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh": "cc16a840e049cfbabaa662b175cf094eba10af871bb166123a5339741adbc6d8",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/service-row.txt": "81ee29eebf05bb687c39449ca8551a6fde19340055d5472c54f9d493dbe3f43a",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/positive.manifest": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/poison.manifest": "222693fc9fb9b8a9abc5620c6f49eb1b872dd8d42a73c38abb8a69b319d3c1fc",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/manifest-diff.json": "af9aab1e12afd14b6fd13d8022efd7ec54ef4af8942f7f3ecaf631627459215c",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/preflight.json": "3f426affc1c1ec69f7e41fa9892c687a45a06e164ce20106b81a602087b3fec6",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/command-diff.json": "952c22391bdf1f6708790008f29fc5c7c1c01f066360c8a854c1a466595e01ee",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/source-manifest.json": "7c0b6c3fdf1384d7f5e71b04a587c61fc4898c3f4d48ae1d1b5f3d26cf6094b2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/terminal-controls.json": "4d9ae3bb414a6efd4a49f16175ee5dc4080a4191a75da415559a042936cade8b",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/validation.md": "22ab0f481c2706a15a5d24b710f36639731f0a2e369b942febdaa1a166850972",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/handoff.md": "40411e3713168c21cd7aaab3bce4d91a5863006572c16e4c4f8a61d072f69eb4",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/progress.md": "9307a49091ff384fb92ce5b46bb739edc2858eb9272e3a4c6cb863febe808ab2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/findings-resolution.json": "b941899e04162bd7e3041c1a5a2796625e7fe5c5870113a27ce248d40df1db6c"
+  },
+  "final_static_validation": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/privatecontrols/final-validation.json",
+    "sha256": "f6525653fbd61489ba007553dd9d6e60a76260972026620cb5b1456e24db2ec0",
+    "verdict": "PASS_STATIC_FINAL_PACKET"
+  },
+  "fresh_terminal_controls": {
+    "cases": 12,
+    "above_4000000001_exit": 0,
+    "equal_4000000000_exit": 0,
+    "below_3999999999_exit": 78,
+    "unreadable_exit": 97,
+    "unwritable_exit": 98,
+    "monitor_failure_exit": 124,
+    "body_failure_exit": 17,
+    "negative_finish_cases": 5
+  },
+  "prior_controls": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/admission-controls.json",
+    "prior_cases": 20,
+    "reused_unchanged": 18,
+    "terminal_cases_rerun": 2,
+    "stale_terminal_comparison_pass_claimed": false
+  },
+  "dry_controls": {
+    "positive": "preflight0/stub17/onecall",
+    "poison": "agent_sha-only exit1/zerocalls",
+    "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "serialized_materialized_sha256": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643"
+  },
+  "operational_python": {
+    "ruff": "PASS 4 sources",
+    "mypy": "PASS 4 sources",
+    "checks": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/privatecontrols/python-checks.json",
+    "checks_sha256": "9dadb0c56a128f82d2a69918456396c0cba3d6a7ad14a6742ca3148229f24af7",
+    "driver_provenance": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/privatecontrols/driver-provenance.json",
+    "driver_provenance_sha256": "ed23aaf0f36d7e255ee501828745f87bc863ca5a61aa83a19250c3f3d92b05f6"
+  },
+  "conservation": {
+    "physical_hash_readbacks": 28,
+    "historical_hash_readbacks": 386,
+    "frozen_sources_origins_clean_guards": "exact",
+    "original0249_receipt_brief": "exact original paths and hashes",
+    "launcher": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "actual_profile_lock": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d"
+  },
+  "production_runroot_started": false,
+  "measurement_body_executed": false,
+  "service_requested": false,
+  "independent_final_review": "REQUIRED; not performed by this author",
+  "next": "One final bounded independent check, then existing controller continuation toward ONE body; no policy decision required.",
+  "limits": [
+    "No pytest/collection/body/request-test/registration/queue action",
+    "No source/test/generated/schema/pin/profile/launcher/guard/kit/globaladmission/registry changes",
+    "No core outcome, REG/nonREG classification, or ship credit",
+    "P419479 held/unstarted; all raw KEEP; no deletion"
+  ]
+}
