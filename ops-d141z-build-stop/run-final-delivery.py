@@ -168,7 +168,13 @@ def overlap_identity(gate: dict[str, dict[str, str]]) -> dict[str, dict[str, lis
     return result
 
 
-def run_wrapper(command: list[str], service_tmp: Path) -> tuple[int, str]:
+def run_wrapper(
+    command: list[str],
+    service_tmp: Path,
+    *,
+    cancel_path: Path | None = None,
+    timeout_seconds: float = 30 * 60,
+) -> tuple[int, str]:
     service_tmp = service_tmp.absolute()
     if not service_tmp.is_dir() or service_tmp.is_symlink():
         raise ValueError(f"service TMPDIR must be a real directory: {service_tmp}")
@@ -185,7 +191,13 @@ def run_wrapper(command: list[str], service_tmp: Path) -> tuple[int, str]:
         GIT_OPTIONAL_LOCKS="0",
     )
     try:
-        code, output, _lifecycle = run_delivery(command, service_tmp, env=env)
+        code, output, _lifecycle = run_delivery(
+            command,
+            service_tmp,
+            env=env,
+            cancel_path=cancel_path,
+            timeout_seconds=timeout_seconds,
+        )
         return int(code), output
     finally:
         shutil.rmtree(stage_parent)
