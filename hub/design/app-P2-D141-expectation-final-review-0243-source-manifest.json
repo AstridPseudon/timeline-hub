@@ -1,0 +1,34 @@
+{
+  "task": "D141d",
+  "verdict": "PASS",
+  "base_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "candidate_commit": "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58",
+  "candidate_parent": "ffbe6e2c971d522422a108946fd36891420c9be2",
+  "candidate_tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+  "changed_source": {
+    "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "base_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "candidate_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149",
+    "diff": "82 insertions, 2 deletions",
+    "base_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "candidate_sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e"
+  },
+  "scope": {
+    "changed_paths": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+    "outside_blobs_exact": true,
+    "source_only_test_delta": true
+  },
+  "references": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "prior_failed_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-protected-review-0231/evidence/review.json",
+    "prior_repaired_return": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-local-return-0235/evidence/review.json",
+    "safe_fields": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "runtime_final_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P2-D141-history-final-review-0213-review.json",
+    "c0_contract": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md"
+  },
+  "collection": {
+    "listed_tests": 3,
+    "result": "repository not-run guard exit 1; no test body executed",
+    "reuse_reason": "test declarations/collection unchanged; only placement assertion body changed"
+  }
+}

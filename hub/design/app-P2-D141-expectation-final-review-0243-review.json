@@ -1,0 +1,45 @@
+{
+  "review": "app-P2-D141-expectation-final-review-0243",
+  "task": "D141d",
+  "status": "PASS",
+  "decision": "approved",
+  "base": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "candidate": {
+    "commit": "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58",
+    "parent": "ffbe6e2c971d522422a108946fd36891420c9be2",
+    "subject": "test(app): D141d localize placement materialization expectation"
+  },
+  "scope": {
+    "changed_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+    "numstat": "82\t2\ttests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "outside_blobs_exact": true,
+    "gesture_local": true,
+    "result": "PASS"
+  },
+  "oracle": {
+    "family": "commit.materialization",
+    "objects": 2,
+    "structural_paths": 22,
+    "source": "context.restored canonical occurrence shot/internal roots",
+    "successor": "context.before canonical occurrence shot/internal roots",
+    "identity_helper": "nativeBinding",
+    "comparison": "deep exact equality of complete history entry",
+    "fallback": "none",
+    "wildcard_or_partial_match": false
+  },
+  "predicate_checks": {
+    "shared_helpers_byte_exact": true,
+    "local_predicates_mechanical_match": true,
+    "caller_arguments_and_order_preserved": true,
+    "request_and_reply_assertions_preserved": true,
+    "reload_closure_guarded_undo_legacy_checks_preserved": true
+  },
+  "validation": {
+    "tsc_app": "PASS",
+    "tsc_node": "PASS",
+    "eslint_scoped": "PASS",
+    "git_diff_check": "PASS",
+    "collection_list": "REUSED_PRIOR: 3 tests listed, repository guard exit 1, no body executed"
+  },
+  "full_or_browser": "NOT_RUN_BY_SCOPE"
+}

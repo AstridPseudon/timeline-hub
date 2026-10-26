@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-26T02:51:11.757982+00:00",
+  "head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+  "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+  "candidate": "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58",
+  "candidate_tree_equal": true,
+  "parent_integration": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "parents": [
+    "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "65db3eb43bcec7aab8a75ef9107dc9d8e8951b58"
+  ],
+  "clean": true,
+  "changed_paths_from_prior_head": [
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts"
+  ],
+  "independent_protected_review": "app-P2-D141-expectation-final-review-0243",
+  "source_checks": "Author and independent app/node tsc, scoped eslint and diff PASS; all shared helpers and other gestures exact; two binding objects/22 paths deep equal, no fallback",
+  "body_proof": "NOTRUN on this head; six P2 plus P1/P3 reproof owed; no repeated full",
+  "p4_path": "Only App e2e test changed from independently path-qualified5fe; P4 actual Agent/Runtime body does not execute this file. Original XML custody still pending, no P4 GO credited.",
+  "ledger": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.app.md",
+    "worker_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-local-return-0235/evidence/ledger-line.md",
+    "exact_worker_line": "| D141d | App P2 automatic child placement | P2 placement expectation updated to the D124 materialization contract. | tests/e2e/local/three-products.p2-elements-assets.spec.ts |",
+    "already_installed": false,
+    "before_sha256": "9cb110bbc989ded380d8054103770bb194f7b07862e2896ad8093ba4cfe8bd78",
+    "after_sha256": "3239581ce5367c76e95f8536e9c320b4daa60212750877d6ce20f3f4c08949c6"
+  },
+  "zip_note_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-expectation-local-return-0235-zip-note.md"
+}

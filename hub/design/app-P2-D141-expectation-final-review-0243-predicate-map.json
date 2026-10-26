@@ -1,0 +1,53 @@
+{
+  "task": "D141d",
+  "verdict": "PASS",
+  "base": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "shared_helpers": [
+    {"name": "assertAcceptedReply", "comparison": "byte-exact", "result": "PASS"},
+    {"name": "assertNativeAcceptedReply", "comparison": "byte-exact", "result": "PASS"},
+    {"name": "assertHistoryEntry", "comparison": "byte-exact", "result": "PASS"},
+    {"name": "assertNativeHistoryEntry", "comparison": "byte-exact", "result": "PASS"},
+    {"name": "assertUndoHistoryEntry", "comparison": "byte-exact", "result": "PASS"}
+  ],
+  "local_copies": [
+    {
+      "name": "assertPlacementNativeHistoryEntry",
+      "original": "assertNativeHistoryEntry",
+      "mechanical_comparison": "original body with records: expected.records replaced by records: placementExpectedRecords(post, context, expected)",
+      "result": "PASS"
+    },
+    {
+      "name": "assertPlacementNativeAcceptedReply",
+      "original": "assertNativeAcceptedReply",
+      "mechanical_comparison": "original body with only the history-helper call renamed to the placement-local copy",
+      "result": "PASS"
+    },
+    {
+      "name": "assertPlacementUndoHistoryEntry",
+      "original": "assertUndoHistoryEntry",
+      "mechanical_comparison": "original body with only accepted-reply/history helper calls renamed to placement-local copies",
+      "result": "PASS"
+    }
+  ],
+  "placement_callers": [
+    {"base": "assertAcceptedReply(undo, committed.head, undoContext)", "candidate": "assertPlacementNativeAcceptedReply(undo, committed.head, undoContext)", "same_arguments_and_order": true},
+    {"base": "assertUndoHistoryEntry(undoContext.history, undo, post, undoContext)", "candidate": "assertPlacementUndoHistoryEntry(undoContext.history, undo, post, undoContext)", "same_arguments_and_order": true}
+  ],
+  "oracle_predicates": {
+    "target_family_presence": "target history records contain exactly two commit.materialization bindings",
+    "source_derivation": "nativeChild(context.restored, occurrence) -> shot and internal revision refs",
+    "successor_derivation": "nativeChild(context.before, occurrence) -> shot and internal revision refs",
+    "boundary_derivation": "post base revision/publication, submitted step id, command ordinal 0, input phase",
+    "identity_derivation": "nativeBinding(context.before, successor ref, successor physical ref, boundary)",
+    "edge_direction": "successor physical roots are edge_before and restored/source roots are edge_after",
+    "final_assertion": "complete expected history record is checked with toEqual",
+    "missing_family_or_fallback": "no fallback; missing target/records or wrong family count fails"
+  },
+  "scope": {
+    "allowed_file_only": true,
+    "non_placement_gestures_unchanged": true,
+    "outside_blobs_exact": true,
+    "production_source_changed": false,
+    "schema_pin_guard_fixture_changed": false
+  }
+}
