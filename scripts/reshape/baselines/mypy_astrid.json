@@ -5,7 +5,7 @@
     "scripts/reshape"
   ],
   "command": [
-    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/astrid-ci3/.venv/bin/python",
+    "python",
     "-m",
     "mypy",
     "astrid",
@@ -15,31 +15,31 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1937,
+  "finding_count": 1930,
   "code_counts": {
-    "arg-type": 428,
+    "arg-type": 426,
     "assignment": 158,
-    "attr-defined": 527,
+    "attr-defined": 511,
     "call-arg": 1,
     "call-overload": 38,
-    "dict-item": 34,
+    "dict-item": 33,
     "func-returns-value": 1,
     "import-untyped": 23,
-    "index": 151,
+    "index": 152,
     "list-item": 5,
     "method-assign": 2,
-    "misc": 34,
+    "misc": 32,
     "name-defined": 20,
     "no-redef": 16,
-    "operator": 24,
+    "operator": 26,
     "override": 8,
     "return": 4,
     "return-value": 30,
     "str-bytes-safe": 1,
-    "type-var": 2,
+    "type-var": 5,
     "typeddict-item": 6,
-    "union-attr": 347,
+    "union-attr": 353,
     "valid-type": 17,
-    "var-annotated": 60
+    "var-annotated": 62
   }
 }
