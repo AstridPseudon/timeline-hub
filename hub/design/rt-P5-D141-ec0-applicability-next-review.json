@@ -1,0 +1,71 @@
+{
+  "schema": "timeline.p5.d141.ec0a-successor-source-applicability-review.v1",
+  "read_only": true,
+  "verdict": "PASS_SOURCE_APPLICABILITY",
+  "scope": "One bounded independent source-applicability review for the original P5 execution boundaries after Agent ecdc242ed9b673f641759ecf029f95e89a2c6f92 -> ec0a9f5baef2c31bc5179087b83f044524575182.",
+  "decision": {
+    "affected_executed_p5_boundary": false,
+    "production_caller_uses_changed_cli_presenter": true,
+    "new_inverse_module_has_p5_caller": false,
+    "production_p5_caller_source_closure_unchanged": true,
+    "normal_consumer_payload_lock_artifact_selection_preserved": true,
+    "actual_missing_input_finite_coordinate_guard_preserved": true,
+    "new_p5_body": false,
+    "receipt_retarget": false,
+    "semantic_review": false,
+    "tests_run": false,
+    "full_suite_go": false
+  },
+  "original_receipt": {
+    "request_id": "runtime-d141-p5-cut-1026013331-6934",
+    "summary": "38 passed in 31.02s",
+    "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "agent": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "xml_sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688",
+    "case_set_sha256": "024cd7c2dd2f90c142727b1825bf5d6ee3ee72384547f6cfc925267586c5075c",
+    "counts": {"unique": 38, "passed": 38, "failed": 0, "errors": 0, "skipped": 0, "xfail": 0}
+  },
+  "final_tuple": {
+    "runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"]
+    },
+    "agent": {
+      "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "parents": ["73e369b1a2f0448f033d252edae9b09fd64547de", "66720e11e8daa26a4e192a83d592cbe5caafc109"]
+    },
+    "composition_context": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"]
+    }
+  },
+  "successor_delta": {
+    "command": "git -C /home/user/work/agent diff --name-status ecdc242ed9b673f641759ecf029f95e89a2c6f92 ec0a9f5baef2c31bc5179087b83f044524575182",
+    "path_count": 11,
+    "production_paths": ["astrid/core/timeline/inverses.py", "astrid/packs/timeline/cli_native.py"],
+    "test_paths": 9,
+    "stat": "1869 insertions(+), 13 deletions(-)",
+    "changed_production_roles": {
+      "astrid/core/timeline/inverses.py": "new pure inverse planner; no import or caller from the retained P5 provider/capture/SDK closure",
+      "astrid/packs/timeline/cli_native.py": "normal CLI document/ordinary-edit/show/undo presenter and error route; called by astrid/packs/timeline/cli.py, but not by the retained P5 body"
+    }
+  },
+  "closure_finding": {
+    "agent": "api.py, capture.py, commit.py, _common.py, authoring_bundle.py, generated.py, and contract_metadata.py are byte-identical between original Agent 28e and final Agent ec0a; no source imports astrid.core.timeline.inverses.",
+    "runtime": "The retained Runtime P5 closure is byte-identical from 6a to 95d except runtime_protocol/upgrade.py. Its changed _validate_candidate hunk is called from upgrade_realm; P5 setup calls migrate_canonical_to_current at tests/test_timeline_commit_crash.py:81.",
+    "provider_capture": "The P5 body statically imports astrid.sdk.timeline.capture and astrid.sdk.timeline.commit, captures capture_move, and runs the Runtime provider through the authenticated door; it does not import CLI modules or the new inverse planner.",
+    "collection": "P5 resolves Runtime tests/conftest.py and tests/lanes.py. Runtime tests/astrid_checkout.py only prepends the Agent package root and does not prepend Agent/tests.",
+    "lock": "Agent runtime.lock.json is byte-identical at ecdc and ec0a, SHA-256 cc1661b12d9d0a4600c79adab4e2d962db455b5819dee78a0353787d8d4f2b82; its 15 mappings, source_commit 95d, producer, manifest, and producer_version are preserved. Runtime contract/artifacts.json is byte-identical at 6a and 95d.",
+    "payload_selection": "The normal consumer payloads and lock/artifact selection remain the prior exact 15 mapping; no lock, manifest, generated client, DTO, or schema change is in ecdc..ec0a."
+  },
+  "limits": [
+    "No imports, collection, provider calls, preflight, targeted tests, full tests, typecheck, lint, package/environment/network acquisition, source refresh, service/queue/registry/kit/CAS/Store/hub/Git write, cleanup/deletion, fixture/assertion/generated/pin/DTO/schema edit, build/ZIP, credential, D130, or stopped-investigation action.",
+    "Integrated53 and final Agent handoff publications were read as source facts only; they are not a new P5 run or receipt.",
+    "The first observer attempt had no sample because the prescribed tmpdir path was a regular file; this gap is recorded in disk-trace.txt and sampler-lifecycle.json."
+  ]
+}

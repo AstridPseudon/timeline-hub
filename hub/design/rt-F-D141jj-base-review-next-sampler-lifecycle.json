@@ -1,0 +1,32 @@
+{
+  "format": "timeline-d141jj-review-sampler-lifecycle-v1",
+  "sampling": {
+    "interval_seconds": 5,
+    "filesystem": "/home/user/work/wt/rt-F-D141jj-base-review-next and /tmp",
+    "raw_trace": "disk-trace.txt",
+    "first_session_id": 4385,
+    "first_session_stop": "SIGINT",
+    "first_session_exit_code": 1
+  },
+  "observed_sampler": {
+    "session_id": 47256,
+    "pid_file": "tmp/reviewer-sampler.pid",
+    "observed_pid": 2,
+    "pid_namespace": "review exec PTY namespace",
+    "samples_observed": 3,
+    "trace": "tmp/reviewer-sampler.tsv",
+    "exit_code": 1,
+    "wait_observed": true,
+    "reap_observed": true,
+    "reap_basis": "terminal exec session returned a final status after the sampler trace stopped"
+  },
+  "admission_observations": {
+    "initial_free_bytes_before_heavy_check": 4969361408,
+    "positive_check_admission_free_bytes": 4969357312,
+    "positive_check_free_after_stage_bytes": 4967452672,
+    "failed_lifecycle_admission_free_bytes": 4959588352,
+    "required_pre_stage_free_bytes": 4960000000,
+    "required_post_check_floor_bytes": 4860000000
+  },
+  "no_syscall_tracing": true
+}

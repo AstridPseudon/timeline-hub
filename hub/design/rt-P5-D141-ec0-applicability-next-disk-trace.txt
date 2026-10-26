@@ -1,0 +1,26 @@
+Observer lifecycle and available-byte trace
+
+Required first-tool attempt:
+- The first tool attempted to start the observer at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-ec0-applicability-next/tmpdir/disk-observations.txt`.
+- The prescribed `tmpdir` path was a regular file, not a directory. The shell reported `Not a directory`; no available-byte sample was recorded by that attempt. This gap is preserved, not inferred away.
+
+Replacement observer (started after confirming the path type):
+- Location: `/tmp/rt-P5-D141-ec0-applicability-observer/disk-observations.txt`.
+- It sampled every five seconds while the review ran; all samples were above the 4 GiB stop threshold. The long observer was interrupted after review; its interruption did not produce a trustworthy child exit/reap record, so it is not claimed as a complete lifecycle.
+
+Final bounded observer with explicit PID, wait, exit, and reap attempt:
+- PID printed by the shell: `8`.
+- `ps` observed the PID in `S` state before waiting.
+- Exit: `0`.
+- `wait` returned `0`; second wait returned `0` (the shell reported `second_wait=0`).
+- `observer_reap_attempted=1`.
+
+Final bounded samples:
+
+```text
+2026-10-26T14:30:52Z available_bytes=4949012480
+2026-10-26T14:30:57Z available_bytes=4948951040
+2026-10-26T14:31:02Z available_bytes=4948918272
+```
+
+The final observed available bytes remained above `4294967296`; no stop-threshold condition occurred.

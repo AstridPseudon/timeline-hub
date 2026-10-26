@@ -38,3 +38,15 @@ App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just
 **Update 13:42Z (D141jj, owner):** App ships on 82e9e13d against upstream fc24f849. The catch-up eac97ea5 is deferred to the shot-layering work.
 
 **Update 14:12Z:** final Agent = ec0a9f5baef2c31bc5179087b83f044524575182 (tree 83b84c79941917fde535ee3ddba5533a776cace3). Runtime = 95d98f03. Composition = 635f4de0. App = 82e9e13d plus its final pin pass (pending).
+
+## FINAL TUPLE for F-final (recorded 14:35Z 26 Oct by main)
+| Repo | Head | Tree | Upstream base for the ZIP |
+|---|---|---|---|
+| agent | ec0a9f5baef2c31bc5179087b83f044524575182 | 83b84c79941917fde535ee3ddba5533a776cace3 | 64197afa297f |
+| app | abac6c809da25f4c6cc7cce61a7d5ea2ac067067 | e2632a4fbe63cadbd03b03edc5d34196a37304fd | fc24f84994dc (owner D141jj) |
+| runtime | 95d98f038320d5d46bd679ac000ab3e15825c935 | 78df31d62c5b9ba4c84dee4ea346e43a767718c1 | fa9cd5464a8b |
+| composition | 635f4de06fda | 5ab5191a2969 | 67b8aa3d0d68 |
+
+- **App abac6c80** = 82e9e13d plus the D141v pin metadata only (install-manifest and provenance, +4/-4), independent review PASS. The 82e9 journey and P4 proofs apply because no source changed.
+- **REG0:** all lanes.
+- **Known gaps:** SWAP, Element, popup ADD.

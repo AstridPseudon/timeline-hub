@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.p5.d141.disk-sampler-lifecycle.v1",
+  "stop_threshold_bytes": 4294967296,
+  "first_tool": {
+    "status": "gap",
+    "requested_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P5-D141-ec0-applicability-next/tmpdir/disk-observations.txt",
+    "observed_type": "regular file",
+    "error": "Not a directory",
+    "sample_recorded": false,
+    "lifecycle_recorded": false
+  },
+  "replacement_long_observer": {
+    "path": "/tmp/rt-P5-D141-ec0-applicability-observer/disk-observations.txt",
+    "sampling_seconds": 5,
+    "threshold_reached": false,
+    "lifecycle": "interrupted after review; no exit/reap claim"
+  },
+  "final_bounded_observer": {
+    "pid_printed": 8,
+    "ps_observed": true,
+    "samples": [
+      {"utc": "2026-10-26T14:30:52Z", "available_bytes": 4949012480},
+      {"utc": "2026-10-26T14:30:57Z", "available_bytes": 4948951040},
+      {"utc": "2026-10-26T14:31:02Z", "available_bytes": 4948918272}
+    ],
+    "exit": 0,
+    "wait_return": 0,
+    "second_wait_return": 0,
+    "reap_attempted": true,
+    "threshold_reached": false
+  }
+}

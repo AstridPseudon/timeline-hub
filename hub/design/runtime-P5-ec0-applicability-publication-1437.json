@@ -1,0 +1,50 @@
+{
+  "utc": "2026-10-26T14:35:19.723562+00:00",
+  "verdict": "PASS_SOURCE_APPLICABILITY",
+  "source": "38535b656a8657d2ac7a355fe1666e493a9bde13",
+  "coordinate_disclosure": "Worker wrote evidence/ into private Composition branch rather than exact ORCH root. Manager byte-published exact Git blobs; original coordinates and monitoring gaps remain. No integration merge.",
+  "files": [
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/review.json",
+      "published": "design/rt-P5-D141-ec0-applicability-next-review.json",
+      "bytes": 5146,
+      "sha256": "b25f9951fd8affc3f4d8364b392b46beaa9ab06462c431e5cb409325b49d4a58"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/findings.md",
+      "published": "design/rt-P5-D141-ec0-applicability-next-findings.md",
+      "bytes": 4416,
+      "sha256": "fcc195ecbec8760535b15ca0d4266e3fff096dc72ead5f27f7a02d7902e585a1"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/source-manifest.json",
+      "published": "design/rt-P5-D141-ec0-applicability-next-source-manifest.json",
+      "bytes": 9824,
+      "sha256": "822f210056e973348d6a36b89a9171bdb5d8df5db0270b8a305c2f83237f742a"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/validation.md",
+      "published": "design/rt-P5-D141-ec0-applicability-next-validation.md",
+      "bytes": 4915,
+      "sha256": "3a0732677637d216934726415becff90f2dd37a6f0567fcab03b307210d428f6"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/handoff.md",
+      "published": "design/rt-P5-D141-ec0-applicability-next-handoff.md",
+      "bytes": 1280,
+      "sha256": "27c3f5156cdbc46e5506e221a9502f3b7bd5e9b5739978796282518c57948b8f"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/disk-trace.txt",
+      "published": "design/rt-P5-D141-ec0-applicability-next-disk-trace.txt",
+      "bytes": 1471,
+      "sha256": "82b2746077e5c3a14917e3e7db841c971d6dd561759ee99609d5ef49262816bf"
+    },
+    {
+      "source": "git:38535b656a8657d2ac7a355fe1666e493a9bde13:evidence/sampler-lifecycle.json",
+      "published": "design/rt-P5-D141-ec0-applicability-next-sampler-lifecycle.json",
+      "bytes": 1134,
+      "sha256": "e0fa8a00776ae7aee4034bac6e43616f54b09235d4ebf4b940dd806285ff2f5a"
+    }
+  ]
+}
