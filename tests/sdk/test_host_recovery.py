@@ -279,6 +279,46 @@ def test_live_host_with_stale_source_is_retired_by_registration_when_idle(harnes
     assert len(harness.launches) == 1 and harness.marker()["pid"] == FAKE_PID
 
 
+def test_node_discovery_exception_leaves_host_running_and_render_unconfigured(harness, monkeypatch, caplog):
+    project = harness.source / "remotion"
+    (project / "node_modules").mkdir(parents=True)
+    (project / "package.json").write_text("{}", encoding="utf-8")
+    (harness.source / "astrid" / "core" / "execution" / "generic_host.py").write_text(
+        "# source changed to require a host replacement\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
+    monkeypatch.setattr(host_bootstrap, "_host_idle", lambda *_args: True)
+    retired = []
+    monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: retired.append(dict(state)))
+
+    def fail_node_discovery(*_args, **_kwargs):
+        raise RuntimeError("Node discovery unavailable")
+
+    monkeypatch.setattr("astrid.core.rendering.node_pin.resolve_pinned_node", fail_node_discovery)
+    harness.ensure()
+
+    assert len(harness.launches) == 1
+    assert len(retired) == 1
+    child_env = harness.launches[0]["env"]
+    assert "ASTRID_NODE_EXECUTABLE" not in child_env
+    assert "Node discovery unavailable" in caplog.text
+
+
+def test_busy_prior_host_is_not_replaced(harness, monkeypatch):
+    monkeypatch.setattr(host_bootstrap, "_registered_host_status", lambda _state: "ours")
+    monkeypatch.setattr(host_bootstrap, "_host_idle", lambda *_args: False)
+    retired = []
+    monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda state: retired.append(dict(state)))
+
+    (harness.source / "astrid" / "core" / "execution" / "generic_host.py").write_text(
+        "# source changed to require a host replacement\n", encoding="utf-8"
+    )
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="busy"):
+        harness.ensure()
+
+    assert not harness.launches and not retired
+
+
 def test_busy_live_host_is_deferred_and_untouched(harness):
     proc, child = harness.host(child="task")  # task work runs in its own session
     harness.register(proc.pid, source_closure_digest="stale")
