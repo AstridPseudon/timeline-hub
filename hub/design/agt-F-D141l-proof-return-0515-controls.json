@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.d141l.command-return.controls.v2",
+  "verdict": "PASS_COMMAND_CONTROLS_RECEIVING_NOT_READY",
+  "command_pair": {
+    "cut": "command-cut.sh",
+    "pristine": "command-pristine.sh",
+    "same_receipt_validator": true,
+    "same_settings": ["-n3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"],
+    "cut_roots": 22,
+    "pristine_roots": 17
+  },
+  "custody": {
+    "exact_sha_tree_clean_path_guards": true,
+    "interpreter_realpath_version_and_node_witness": true,
+    "owned_raw_stdout_stderr_junit_parents": true,
+    "before_after_source_records": true,
+    "before_during_after_disk_records": true,
+    "continuous_interval_seconds": 5,
+    "continuous_stop_bytes": 4000000000,
+    "d89d_floor_bytes": 4714564096,
+    "one_heavy_lock": true,
+    "body_monitor_evidence_exit_propagation": true,
+    "protected_keep_and_mode_inode_hash_dataflow": true
+  },
+  "admission_binding": {
+    "route": "existing request-test/test-run",
+    "authenticated_receipt_required": true,
+    "exact_request_id": "agent-core-full",
+    "exact_command_binding": true,
+    "manifest_sha256_binding": true,
+    "source_manifest_sha256_binding": true,
+    "brief_sha256_binding": true,
+    "app_owner_receipt_sha256_binding": true,
+    "substring_acceptance": false,
+    "self_authored_admission": false,
+    "invented_auth_mechanism": false
+  },
+  "tiny_controls": {
+    "route": "existing predecessor production launcher",
+    "status": "DEFINED_NOT_RUN_THIS_RETURN; current integration worktree is not the frozen cut and launcher correctly refuses it",
+    "generator": "tiny-controls.sh",
+    "predecessor_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/privatecontrols/normal-dry",
+    "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "positive": {"exit": 17, "calls": 1},
+    "poison": {"difference": "agent_sha only", "exit": 1, "calls": 0}
+  },
+  "not_run": ["pytest", "collection", "product import", "request-test", "full body", "live row/CAS/kit install", "P4 body"]
+}
+

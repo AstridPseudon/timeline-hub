@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.agent.d141l.command-return.admission-derivation.v2",
+  "inputs": {
+    "actual_26496_dispatch_bytes": 4826488832,
+    "actual_26496_source_admission_bytes": 4692029440,
+    "actual_26496_min_trace_bytes": 4311924736,
+    "continuous_stop_bytes": 4000000000,
+    "dispatch_floor_base_bytes": 4600000000,
+    "safety_margin_bytes": 200000000
+  },
+  "derivation": {
+    "x_bytes": 514564096,
+    "floor_bytes": 4714564096,
+    "formula": "max(4600000000, 4000000000 + max(4826488832-4311924736, 4692029440-4311924736) + 200000000)",
+    "one_application": "Apply once by the genuine controller dispatch receipt; both commands consume that exact receipt and do not re-admit after preparation."
+  },
+  "trace": {
+    "sample_count": 254,
+    "interval_seconds": 5,
+    "minimum_bytes": 4311924736,
+    "status": "historical_26496_retained_not_backfilled"
+  }
+}
+

@@ -1,0 +1,18 @@
+{
+  "schema": "timeline.agent.d141l.command-return.readiness.v2",
+  "status": "NOT_READY_RECEIVING",
+  "commands_ready": true,
+  "selection_resolved": true,
+  "selection": {"cut_roots": 22, "pristine_roots": 17, "identical_settings": true, "absent_roots_are_source_backed_na": true},
+  "app_receipt": {"available": true, "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "normal_ref_equal": true},
+  "controller_admission": {"available": false, "required_floor_bytes": 4714564096, "one_dispatch_only": true},
+  "pending_receiving": [
+    "exact clean integrated cut checkouts at Agent 8585/tree92 and Runtime 6a/treeac5 (current normal paths have advanced and are intentionally refused)",
+    "genuine normal home Agent U4a post-adoption receipt",
+    "genuine normal home Runtime source receipt matching the intended tuple",
+    "one authenticated request-test/test-run controller admission receipt and brief with exact request/tuple/command/manifest bindings"
+  ],
+  "not_pending": ["selection decision", "new source approval gate", "P4 authoring"],
+  "reason": "The source command controls are complete, but no future receiving receipt or admission is authored here; the current App receipt records Runtime 95d while this exact source pins Runtime 6a, so tuple readiness remains finite NOT_READY."
+}
+

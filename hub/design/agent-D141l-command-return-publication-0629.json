@@ -1,0 +1,46 @@
+{
+  "time": "2026-10-26T06:29:42.405075+00:00",
+  "scope": "SAFE exact operational source; not reviewed yet, no receiving/body credit",
+  "files": [
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-command-cut.sh",
+      "sha256": "b3693e96c02cfbe89e094c2013370fcf4feb2e8f386a98860ecec4c2a30d11d2"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-command-pristine.sh",
+      "sha256": "17800a0228c98c1859c55ea5f5b0ef08fe8824295c3dc40a9fcbef079259b2f9"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-rows.txt",
+      "sha256": "a0c3f466331dc37c883e853a5dad1367ea27e9116e97470be98fa0ade5e5c0c6"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-controls.json",
+      "sha256": "81a35f8bf85f7a3e32a0e0a69b93a0c9284a5d5cfb06cf7e8b5873da2fe40c39"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-admission-derivation.json",
+      "sha256": "a02a6472a7fe87e2ce22da356e6fcf63e52cfa5f0b8ba32b24fb91662332b9e8"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-source-manifest.json",
+      "sha256": "bd95b4aef1317f41e99a86940f413a99b9dce5b277aaa01bcdfdf29b2472ab5e"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-validation.md",
+      "sha256": "b74b278d37500622376dc2953b68cf8c7ace78deb6b4d99b29bc852e0234bfa5"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-readiness.json",
+      "sha256": "7fd2994d2b962056900009ab4eabfe82256ab5766dd1c8b203451b3cd4762a00"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-handoff.md",
+      "sha256": "7d77d861965837d52b6661e9a0d5605d12c79ea5c1cac97301abee403685fe14"
+    },
+    {
+      "path": "design/agt-F-D141l-proof-return-0515-check-source.py",
+      "sha256": "c5af3e45c06a8ab9c068f628178224442ef19277d7094bae2dfebd7c3988c128"
+    }
+  ]
+}
