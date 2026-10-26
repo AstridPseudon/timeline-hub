@@ -16,7 +16,7 @@ import {
   resolveAstridBridgePort,
   resolveAstridBridgeProxyPolicy,
 } from "./astridBridgeProxy";
-import { createWorkspaceRuntimeProxyOptions, RUNTIME_TOKEN_FILE_ENV } from "./runtimeProxy";
+import { createRuntimeOperationAdmissionPlugin, createRuntimeOperationProxyOptions, createWorkspaceRuntimeProxyOptions, RUNTIME_TOKEN_FILE_ENV } from "./runtimeProxy";
 import {AstridRuntimeClient} from '../../src/integrations/runtime/client';
 import { createElementAdmissionsPlugin } from "./astridElementAdmissions";
 import { resolveAstridSource, validateAstridToolCatalog } from "./astridSource";
@@ -89,6 +89,7 @@ export default defineConfig(() => {
   const runtimeToken = readRuntimeProxyToken(runtimeTokenFile);
   const runtimeProxy: Record<string, string | ProxyOptions> = runtimeTarget
     ? {
+      "/runtime-config/v1/operation": createRuntimeOperationProxyOptions(runtimeTarget),
       "/api/runtime": createWorkspaceRuntimeProxyOptions(runtimeTarget, runtimeToken),
       "/runtime-config/v1/workspace.json": { target: runtimeTarget, changeOrigin: true },
     }
@@ -107,22 +108,6 @@ export default defineConfig(() => {
     },
     readDocument:async(projectId:string,id:string)=>{try{return await elementRuntime.getDocument(projectId,id);}catch(error){if((error as {status?:number}).status===404)return null;throw error;}},
   }:undefined;
-  const generatedRegistryPath = path.resolve(
-    __dirname,
-    "../../node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
-  );
-  const generatedRegistryFallbackPath = path.resolve(
-    __dirname,
-    "../../src/tools/video-editor/lib/registry.generated.fallback.ts",
-  );
-  const themeApiPath = path.resolve(
-    __dirname,
-    "../../node_modules/@banodoco/timeline-composition/typescript/src/theme-api.ts",
-  );
-  const themeApiFallbackPath = path.resolve(
-    __dirname,
-    "../../src/tools/video-editor/lib/theme-api.fallback.tsx",
-  );
   const timelineSchemaPath = path.resolve(
     __dirname,
     "../../vendor/timeline-schema/typescript/dist/src/index.js",
@@ -155,6 +140,7 @@ export default defineConfig(() => {
       proxy: { ...astridAcpBridgeProxy, ...astridBridgeProxy, ...runtimeProxy },
     },
     plugins: [
+      createRuntimeOperationAdmissionPlugin(process.env.ASTRID_RUNTIME_OPERATION_ORIGIN),
       createElementAdmissionsPlugin(elementAdmissions),
       pairedRelay,
       astridBridgeAuthPlugin,
@@ -178,16 +164,9 @@ export default defineConfig(() => {
         "remotion": path.resolve(__dirname, "../../node_modules/remotion"),
         "@remotion/layout-utils": path.resolve(__dirname, "../../node_modules/@remotion/layout-utils"),
         "@remotion/media": path.resolve(__dirname, "../../node_modules/@remotion/media"),
-        "@banodoco/timeline-composition/registry.generated": fs.existsSync(generatedRegistryPath)
-          ? generatedRegistryPath
-          : generatedRegistryFallbackPath,
-        "@banodoco/timeline-composition/theme-api": fs.existsSync(themeApiPath)
-          ? themeApiPath
-          : themeApiFallbackPath,
         "@banodoco/timeline-schema": fs.existsSync(timelineSchemaPath)
           ? timelineSchemaPath
           : timelineSchemaFallbackPath,
-        "@banodoco/timeline-composition": path.resolve(__dirname, "../../node_modules/@banodoco/timeline-composition"),
         // Workspace-primitive aliases (mirrors banodoco shell webpack-alias.mjs).
         // Vendored into astrid-app/vendor/ so the Docker build context can resolve them
         // — the original ../../../../banodoco-workspace paths sit outside the build context.
@@ -210,7 +189,7 @@ export default defineConfig(() => {
       // The default scan walks every .html under the repo (test fixtures, examples),
       // and one vendored pack path there aborts the whole scan.
       // A failed scan leaves dependencies to be discovered lazily while the page
-      // loads, and each late discovery forces a full page reload.
+      // loads, and each late discovery (react-joyride) forces a full page reload.
       entries: ["index.html"],
       exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
     },

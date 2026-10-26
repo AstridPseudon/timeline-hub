@@ -581,6 +581,8 @@ const L04_PROJECT = "l04-project-id";
 const L04_TIMELINE = "l04-timeline";
 const L04_HEAD = "l04-head-1";
 const L04_NEXT_HEAD = "l04-head-2";
+const L04_PUBLICATION = "l04-publication-1";
+const L04_NEXT_PUBLICATION = "l04-publication-2";
 const L04_TOKEN = `sha256:${"a".repeat(64)}`;
 const L04_UNKNOWN = `sha256:${"b".repeat(64)}`;
 const L04_CARD_URL = `/api/runtime/v1/objects/${encodeURIComponent(L04_TOKEN)}`;
@@ -654,6 +656,25 @@ function makeL04Transport() {
           version: 1,
           created_at: "2026-10-08T00:00:00Z",
         });
+      if (
+        method === "GET" &&
+        path === `/v1/projects/${L04_PROJECT}/timelines/${L04_TIMELINE}`
+      ) {
+        const head = revised ? L04_NEXT_HEAD : L04_HEAD;
+        return response({
+          project_id: L04_PROJECT,
+          timeline_id: L04_TIMELINE,
+          version: 1,
+          name: "Opening name",
+          archived: false,
+          shots: [],
+          references: [],
+          head_revision_id: head,
+          head_publication_id: revised
+            ? L04_NEXT_PUBLICATION
+            : L04_PUBLICATION,
+        });
+      }
       const inspection =
         /^\/v1\/projects\/([^/]+)\/timelines\/([^/]+)\/inspect$/.exec(path);
       if (method === "POST" && inspection) {

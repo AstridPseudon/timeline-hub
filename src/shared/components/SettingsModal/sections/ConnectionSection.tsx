@@ -66,4 +66,3 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
       return { title: COPY.notRunning.title, detail: COPY.notRunning.sentence, checks: LOOKING };
   }
 }
-

@@ -1,12 +1,15 @@
+import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { TimelinePersistenceHandoffContext } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { AlertCircle, Film } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
+import type { PreviewRevision } from '@/tools/video-editor/components/PreviewPanel/previewRevision.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
-import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -24,6 +27,7 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import { ShotTimelineMediaControls } from './ShotTimelineMediaControls.tsx';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -38,6 +42,8 @@ type ShotTimelinePreviewProps = {
   composition: PreparedShotComposition;
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
+  /** Parent Runtime provider; popup saves reuse its A2 document outbox. */
+  timelineDataProvider?: DataProvider;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -141,11 +147,15 @@ function getConfigHeadRevisionId(config: { app?: unknown } | null | undefined): 
 function ShotTimelineEditorSurface({
   config,
   hardDurationSeconds,
+  occurrenceId,
+  parentDocumentId,
   editorHeadState,
   onActiveConfigChange,
 }: {
   config: ResolvedTimelineConfig;
   hardDurationSeconds?: number;
+  occurrenceId: string;
+  parentDocumentId: string;
   editorHeadState: { current: ShotTimelineEditorHeadState };
   onActiveConfigChange?: (config: ResolvedTimelineConfig) => void;
 }) {
@@ -245,6 +255,24 @@ function ShotTimelineEditorSurface({
             ? 'Save needs attention'
             : 'Unsaved changes — saving shortly';
 
+  const previewRevision = useMemo<PreviewRevision>(() => {
+    if (isAdoptingCanonicalHead && canonicalHeadRevisionId) {
+      return {
+        kind: 'unavailable',
+        unavailableTarget: {
+          targetRevisionId: canonicalHeadRevisionId,
+          reason: 'The mounted shot preview is still adopting the latest canonical revision.',
+        },
+      };
+    }
+    if (saveStatus !== 'saved') {
+      return { kind: 'local', baseRevisionId: canonicalHeadRevisionId };
+    }
+    return canonicalHeadRevisionId
+      ? { kind: 'committed', revisionId: canonicalHeadRevisionId }
+      : { kind: 'unknown', reason: 'The mounted shot timeline has no canonical revision identity.' };
+  }, [canonicalHeadRevisionId, isAdoptingCanonicalHead, saveStatus]);
+
   const previewConfig = useMemo(
     () => boundShotTimelinePreviewConfig(activeConfig, hardDurationSeconds),
     [activeConfig, hardDurationSeconds],
@@ -257,6 +285,7 @@ function ShotTimelineEditorSurface({
       data-shot-timeline-current-time={currentTime}
     >
       <ShotTimelineRecoveryControls />
+      <ShotTimelineMediaControls occurrenceId={occurrenceId} parentDocumentId={parentDocumentId} />
       {isAdoptingCanonicalHead ? (
         <div role="status" data-shot-timeline-head-adoption="pending" className="text-xs text-muted-foreground">
           Updating canonical shot; editing is paused.
@@ -281,6 +310,7 @@ function ShotTimelineEditorSurface({
           <RemotionPreview
             ref={previewRef}
             config={previewConfig}
+            previewRevision={previewRevision}
             compact
             onTimeUpdate={onPreviewTimeUpdate}
             playerContainerRef={playerContainerRef}
@@ -330,7 +360,7 @@ function ShotTimelineEditorSurface({
     </div>
   );
 }
-function ShotTimelineRecoveryControls() {
+export function ShotTimelineRecoveryControls() {
   const chrome = useTimelineChromeContext();
   const recovery = chrome.recoveryDraft;
   if (!recovery && !chrome.isConflictExhausted) {
@@ -385,6 +415,7 @@ export function ShotTimelinePreview({
   composition,
   occurrenceId,
   shotCompositionAdapter,
+  timelineDataProvider,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -520,6 +551,9 @@ export function ShotTimelinePreview({
           shotCompositionAdapter,
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
+          0,
+          timelineDataProvider,
+          timelineDataProvider,
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
@@ -529,12 +563,13 @@ export function ShotTimelinePreview({
     // recreating it for either would reset query/editor/recovery identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProjectionConfig, currentComposition.parentDocumentId,
-      currentComposition.projectId, occurrenceId, shotCompositionAdapter],
+      currentComposition.projectId, occurrenceId, shotCompositionAdapter, timelineDataProvider],
   );
   const initialTimelineData = useMemo(
     () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,
     [projectionConfig],
   );
+  useEffect(() => () => { void dataProvider?.dispose().catch(() => {}); }, [dataProvider]);
   const handleActiveConfigChange = useCallback((nextConfig: ResolvedTimelineConfig) => {
     if (!dataProvider) return;
     draftDirtyRef.current = true;
@@ -573,6 +608,8 @@ export function ShotTimelinePreview({
   dataProvider?.setPublishCallback(handleCanonicalCompositionPublished);
   const canEdit = shotCompositionAdapter?.publish !== undefined;
   const shotTimelineId = shotTimelineSessionId(currentComposition.parentDocumentId, occurrenceId, editorSessionToken);
+  const persistenceBinding = useMemo(() => dataProvider?.bindLocalDocumentSave(shotTimelineId),
+    [dataProvider, shotTimelineId]);
   if (freshHeadStatus === 'loading') {
     return <section data-shot-timeline-preview="true" data-shot-timeline-status="loading" aria-label="Shot timeline">Loading current shot timeline…</section>;
   }
@@ -623,25 +660,29 @@ export function ShotTimelinePreview({
         </div>
       </div>
 
-      <VideoEditorProvider
-        dataProvider={dataProvider!}
-        projectId={currentComposition.projectId}
-        projectSlug={currentComposition.projectId}
-        timelineId={shotTimelineId}
-        timelineName="Shot timeline"
-        userId={null}
-        timelineEditability={timelineEditability}
-        extensionHostEnabled={false}
-        onSaveStatusChange={handleSaveStatusChange}
-        initialTimelineData={initialTimelineData}
-      >
-        <ShotTimelineEditorSurface
-          config={projection.config}
-          hardDurationSeconds={hardDurationSeconds}
-          editorHeadState={editorHeadStateRef}
-          onActiveConfigChange={handleActiveConfigChange}
-        />
-      </VideoEditorProvider>
+      <TimelinePersistenceHandoffContext.Provider value={persistenceBinding}>
+        <VideoEditorProvider
+          dataProvider={dataProvider!}
+          projectId={currentComposition.projectId}
+          projectSlug={currentComposition.projectId}
+          timelineId={shotTimelineId}
+          timelineName="Shot timeline"
+          userId={null}
+          timelineEditability={timelineEditability}
+          extensionHostEnabled={false}
+          onSaveStatusChange={handleSaveStatusChange}
+          initialTimelineData={initialTimelineData}
+        >
+          <ShotTimelineEditorSurface
+            config={projection.config}
+            hardDurationSeconds={hardDurationSeconds}
+            occurrenceId={occurrenceId}
+            parentDocumentId={currentComposition.parentDocumentId}
+            editorHeadState={editorHeadStateRef}
+            onActiveConfigChange={handleActiveConfigChange}
+          />
+        </VideoEditorProvider>
+      </TimelinePersistenceHandoffContext.Provider>
     </section>
   );
 }

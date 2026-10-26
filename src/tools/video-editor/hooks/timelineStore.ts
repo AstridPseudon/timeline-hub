@@ -213,7 +213,7 @@ function createInitialDataSlice(): TimelineEditorDataContextValue {
 }
 
 /**
- * Every op in the pre-sync slice throws, matching `commands.validate/dryRun/apply`.
+ * Every op in the pre-sync slice throws.
  *
  * `useTimelineState` seeds the store during render, before descendants mount, so
  * no mounted consumer can reach these. A caller that does reach one is rendering
@@ -282,15 +282,6 @@ function createInitialOpsSlice(): TimelineEditorOpsContextValue {
   const commands: TimelineEditorOpsContextValue['commands'] = {
     buildAddMediaCommand: () => null,
     buildSwapCommand: () => null,
-    validate: () => {
-      throw new Error('Timeline commands are unavailable before the editor is mounted.');
-    },
-    dryRun: () => {
-      throw new Error('Timeline commands are unavailable before the editor is mounted.');
-    },
-    apply: () => {
-      throw new Error('Timeline commands are unavailable before the editor is mounted.');
-    },
   };
   const patchRegistry: TimelineEditorOpsContextValue['patchRegistry'] = opsUnavailable('patchRegistry');
   const unpatchRegistry: TimelineEditorOpsContextValue['unpatchRegistry'] = opsUnavailable('unpatchRegistry');

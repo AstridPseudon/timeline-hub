@@ -60,7 +60,7 @@ function presentEditorSaveFailure(error: unknown): void {
   normalizeAndPresentError(error, { context: 'shot-timeline-preview:test-editor-save' });
 }
 const popupChrome = vi.hoisted(() => ({
-  saveStatus: 'saved' as const,
+  saveStatus: 'saved' as 'saved' | 'saving' | 'dirty' | 'retrying' | 'error',
   isConflictExhausted: false,
   recoveryDraft: null as { updatedAt: string; baseVersion: number } | null,
   reloadFromServer: vi.fn(),
@@ -70,7 +70,10 @@ const popupChrome = vi.hoisted(() => ({
   timelineLoadGate: null as Promise<void> | null,
   onTimelineLoadStarted: vi.fn(),
 }));
-const previewProps = vi.hoisted(() => ({currentTime: undefined as number | undefined}));
+const previewProps = vi.hoisted(() => ({
+  currentTime: undefined as number | undefined,
+  previewRevision: undefined as unknown,
+}));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
   const ReactModule = await import('react');
@@ -79,9 +82,27 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
     __shotTimelineTestContext: context,
     useTimelinePlaybackContext: () => ReactModule.useContext(context),
     useTimelineEditorData: () => ReactModule.useContext(context),
+    useTimelineEditorOps: () => ({
+      selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(),
+      applyEdit: vi.fn(),
+      patchRegistry: vi.fn(),
+    }),
     useTimelineChromeContext: () => popupChrome,
   };
 });
+
+vi.mock('@/tools/video-editor/hooks/useAssetManagement.ts', () => ({
+  useAssetManagement: () => ({
+    prepareGenerationAsset: vi.fn(),
+    uploadImageGeneration: vi.fn(),
+    uploadVideoGeneration: vi.fn(),
+  }),
+}));
+
+vi.mock('@/tools/video-editor/hooks/useTimelineCommandsService.ts', () => ({
+  useTimelineCommandsService: () => ({ addClip: vi.fn() }),
+}));
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
   const ReactModule = await import('react');
@@ -122,6 +143,9 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
       currentTime: 0,
       onPreviewTimeUpdate: () => undefined,
       resolvedConfig: loaded?.config ?? null,
+      dataRef: { current: null },
+      selectedTrackId: null,
+      selectedClipIds: new Set<string>(),
       undo: () => setUndoCount((count) => count + 1),
     }), [loaded, undoCount]);
     return ReactModule.createElement(store.__shotTimelineTestContext.Provider, { value },
@@ -145,8 +169,9 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
 });
 
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({
-  RemotionPreview: (props: {currentTime?: number}) => {
+  RemotionPreview: (props: {currentTime?: number; previewRevision?: unknown}) => {
     previewProps.currentTime = props.currentTime;
+    previewProps.previewRevision = props.previewRevision;
     return React.createElement('div', { 'data-testid': 'preview' });
   },
 }));
@@ -164,6 +189,21 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx',
   };
 });
 
+vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx')>();
+  return {
+    ...actual,
+    useVideoEditorRuntime: () => ({
+      provider: { resolveAssetUrl: async (file: string) => file },
+      assetResolver: { resolveAssetUrl: async (file: string) => file },
+      project: { projectId: 'popup-test-project', projectSlug: 'popup-test-project' },
+      timelineId: 'popup-test-timeline',
+      timelineEditability: undefined,
+    }),
+    useOptionalVideoEditorRuntime: () => null,
+  };
+});
+
 describe('shot timeline popup persistence', () => {
   beforeEach(async () => {
     resetFakeIndexedDB();
@@ -172,10 +212,12 @@ describe('shot timeline popup persistence', () => {
     // inherits another test's unsaved draft.
     await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
     popupChrome.isConflictExhausted = false;
+    popupChrome.saveStatus = 'saved';
     popupChrome.recoveryDraft = null;
     popupChrome.timelineLoadGate = null;
     vi.clearAllMocks();
     previewProps.currentTime = undefined;
+    previewProps.previewRevision = undefined;
     popupChrome.reloadFromServer.mockResolvedValue(undefined);
   });
 
@@ -186,6 +228,49 @@ describe('shot timeline popup persistence', () => {
 
     await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
     expect(previewProps.currentTime).toBeUndefined();
+  });
+
+  it('labels the embedded preview from the authoritative canonical head', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual({
+      kind: 'committed',
+      revisionId: composition.headRevisionId,
+    });
+  });
+
+  it.each([
+    ['saving', false],
+    ['dirty', false],
+    ['retrying', false],
+    ['error', false],
+    ['saved', true],
+  ] as const)('keeps the embedded preview honest while the mounted save is %s', async (status, committed) => {
+    popupChrome.saveStatus = status === 'saved' ? 'saved' : status;
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual(committed
+      ? { kind: 'committed', revisionId: composition.headRevisionId }
+      : { kind: 'local', baseRevisionId: composition.headRevisionId });
+  });
+
+  it('keeps a conflicted embedded preview local instead of claiming the canonical head', async () => {
+    popupChrome.isConflictExhausted = true;
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual({
+      kind: 'local',
+      baseRevisionId: composition.headRevisionId,
+    });
   });
 
   it('renders recovery controls in the mounted popup surface', async () => {
@@ -254,6 +339,37 @@ describe('shot timeline popup persistence', () => {
     );
     await expect(provider.resolveAssetUrl('/api/astrid/v1/objects/already-resolved'))
       .resolves.toBe('/api/astrid/v1/objects/already-resolved');
+  });
+
+  it('keeps the parent Runtime media seam on the nested popup provider', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-1')!;
+    const popupConfig = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const prepareMediaImport = vi.fn().mockResolvedValue({} as never);
+    const mediaProvider = {
+      supportsDirectAssetUpload: true,
+      prepareMediaImport,
+      getProjectMediaSelection: vi.fn(),
+      getProjectVerifiedMedia: vi.fn(),
+    };
+
+    const provider = createShotTimelineDataProvider(
+      popupConfig,
+      composition,
+      occurrence.occurrenceId,
+      undefined,
+      undefined,
+      undefined,
+      0,
+      mediaProvider,
+    );
+    const file = new File(['popup'], 'popup.png', { type: 'image/png' });
+
+    expect(provider.supportsDirectAssetUpload).toBe(true);
+    await provider.prepareMediaImport?.(file);
+    expect(prepareMediaImport).toHaveBeenCalledWith(file);
+    expect(provider.getProjectMediaSelection).toBeDefined();
+    expect(provider.getProjectVerifiedMedia).toBeDefined();
   });
 
   it('keeps the mounted editor and undo history across its own publication acknowledgement', async () => {
@@ -663,6 +779,32 @@ describe('shot timeline popup persistence', () => {
       .toBe(shotTimelineRecoveryId('document-primary', 'occ-1'));
     expect(shotTimelineRecoveryId('document-primary', 'occ-2'))
       .not.toBe(shotTimelineRecoveryId('document-primary', 'occ-1'));
+  });
+
+  it('restores raw opaque app collisions in publication and the real rejected-publication draft', async () => {
+    resetFakeIndexedDB();
+    const graph = structuredClone(fixture);
+    const raw = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!
+        .internal_timeline_revision.timeline.clips[0] as Record<string, unknown>;
+    const app = JSON.parse('{"canonical":null,"canonicalTiming":{"storedOccurrenceDurationMs":null,"__proto__":[false,null]},"ordered":[0,false,null]}');
+    raw.app = app;
+    const composition = createShotCompositionAdapter({ load: vi.fn() }).prepare(graph);
+    const config = projectCanonicalComposition({ ...composition, occurrences: [composition.occurrences[0]] }).config;
+    const publish = vi.fn().mockRejectedValue(Object.assign(new Error('keep draft'), { status: 409 }));
+    const provider = createShotTimelineDataProvider(config, composition, 'occ-1', createShotCompositionAdapter({ load: vi.fn(), publish }));
+    const remember = vi.fn();
+    provider.getTimelineDraftRecoveryMetadata?.(remember);
+    expect(remember).toHaveBeenCalledWith(composition);
+    await expect(provider.saveTimeline('raw-collision-popup', config, 1)).rejects.toMatchObject({ status: 409 });
+    const candidate = publish.mock.calls[0][0].graph;
+    const updated = candidate.shot_revisions.at(-1).internal_timeline_revision.timeline.clips[0];
+    expect(updated.app).toStrictEqual(app);
+    const record = await loadTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
+    const draft = record!.draft.config as TimelineConfig;
+    expect(draft.clips[0].app).toStrictEqual(app);
+    expect(JSON.stringify(draft.clips[0].app)).toBe(JSON.stringify(app));
+    expect(raw.app).toStrictEqual(app);
+    expect(config.clips[0].app?.canonicalTiming).toHaveProperty('storedOccurrenceDurationMs', 2000);
   });
 
   it('bounds the preview from live draft extent and the hard blocker, not committed timing', () => {

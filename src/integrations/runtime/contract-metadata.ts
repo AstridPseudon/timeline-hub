@@ -3,7 +3,19 @@
  * Runtime remains the wire/schema authority.
  */
 
-import { PROTOCOL, SCHEMA_DIGEST, COMPONENT_MANIFEST_SHA256 } from './generated-contract-metadata.ts';
+import { CONTRACT_VERSION, PROTOCOL, SCHEMA_DIGEST, COMPONENT_MANIFEST_SHA256, OPERATIONS } from './generated-contract-metadata.ts';
+
+/** Full C0 v2 schemas, including D62's additive authenticated history ABI. */
+export function supportsFullV2Commit(): boolean {
+  return PROTOCOL === 'workspace.v1' && CONTRACT_VERSION === '0.2.14'
+    && COMPONENT_MANIFEST_SHA256 === 'sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5'
+    && [
+      'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c',
+      'sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2',
+      'sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b',
+    ].includes(SCHEMA_DIGEST)
+    && Array.isArray(OPERATIONS) && OPERATIONS.includes('commitTimeline') && OPERATIONS.includes('listTimelineCommits');
+}
 
 export const RUNTIME_PROTOCOL = PROTOCOL;
 /** The current generated Runtime contract; compatible older contracts are listed below. */

@@ -2,5 +2,8 @@
 # JWT verification stays on (the default): the function needs a user token.
 project_id = "astrid-app"
 
+[functions.complete_task]
+verify_jwt = false
+
 [functions.ai-voice-prompt]
 verify_jwt = true

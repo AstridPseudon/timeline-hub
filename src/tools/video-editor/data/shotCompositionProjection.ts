@@ -1,4 +1,5 @@
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
+import { cloneTimelineExtras } from '@/tools/video-editor/lib/timeline-domain.ts';
 import type {
   ResolvedAssetRegistryEntry,
   ResolvedTimelineConfig,
@@ -53,8 +54,16 @@ export type CanonicalClipIdentity = Readonly<{
 
 export type CanonicalCompositionProjection = Readonly<{
   config: ResolvedTimelineConfig;
-  clipIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
+  clipIdentities: ReadonlyMap<string, CanonicalProjectedClipIdentity>;
   occurrenceIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
+}>;
+
+export type CanonicalProjectedClipIdentity = CanonicalClipIdentity & Readonly<{
+  /** Authored ID, never the display prefix or child-N fallback. */
+  rawClipId: string | null;
+  ownerRef: string;
+  /** Null for missing, duplicate or unaddressable authored identities. */
+  clipRef: string | null;
 }>;
 
 function record(value: unknown): JsonObject | null {
@@ -319,13 +328,25 @@ function projectClip(
   rawClip: JsonObject,
   occurrence: CanonicalShotOccurrence,
   clipIndex: number,
-  clipIdentities: Map<string, CanonicalClipIdentity>,
+  clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
   clampToOccurrenceDuration: boolean,
+  storedOccurrenceDurationMs: number,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
-  const identity = identityForOccurrence(occurrence);
-  const clipId = text(rawClip.id) ?? `child-${clipIndex}`;
+  const rawClipId = text(rawClip.id) ?? null;
+  const clipId = rawClipId ?? `child-${clipIndex}`;
   const id = `${occurrence.occurrenceId}:${clipId}`;
+  const ownerRef = `occurrence:${occurrence.occurrenceId}`;
+  const addressable = [rawClipId, occurrence.occurrenceId].every((part) => (
+    part !== null && !part.includes('/') && !part.includes('::')
+  ));
+  const previousIdentity = clipIdentities.get(id);
+  const identity: CanonicalProjectedClipIdentity = Object.freeze({
+    ...identityForOccurrence(occurrence),
+    rawClipId,
+    ownerRef,
+    clipRef: addressable && !previousIdentity ? `${ownerRef}/clip:${rawClipId}` : null,
+  });
   // Runtime canonical revisions use one of two timeline encodings:
   // - the transport form (`at_ms`/`duration_ms`), or
   // - the editor form (`at`/`from`/`to`/`hold`), whose times are seconds.
@@ -353,9 +374,12 @@ function projectClip(
         : hasTrim
           ? Math.max(1, (rawTo - rawFrom) * 1000)
           : Math.max(1, occurrence.durationMs * speed);
-  // An unset gain stays unset: the effective volume rule (element default, else 1) applies downstream.
-  const gain = optionalFiniteNumber(rawClip.gain ?? rawClip.volume) ?? optionalFiniteNumber(occurrence.gain);
+  const childGain = finiteNumber(rawClip.gain ?? rawClip.volume, 1);
+  const occurrenceGain = finiteNumber(occurrence.gain, 1);
+  const gain = childGain * occurrenceGain;
   const muted = rawClip.muted === true || rawClip.mute === true || occurrence.muted === true;
+  const hasAuthoredGain = [rawClip.gain, rawClip.volume, occurrence.gain]
+    .some((value) => typeof value === 'number' && Number.isFinite(value));
   const track = text(rawClip.track) ?? occurrence.trackId ?? 'video';
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
   const asset = text(rawClip.asset_id) ?? text(rawClip.asset);
@@ -389,7 +413,7 @@ function projectClip(
     // retain those trim bounds instead of being converted to a parent-sized
     // hold. Hold remains the deterministic fallback for duration-only clips.
     ...(hasTrim ? {} : { hold: durationMs / 1000 }),
-    ...(muted ? { volume: 0 } : gain !== undefined ? { volume: gain } : {}),
+    ...(muted || hasAuthoredGain ? { volume: muted ? 0 : gain } : {}),
     ...preservedGeometry,
     ...(params ? { params } : {}),
     ...(record(rawClip.text) ? { text: rawClip.text as TimelineClip['text'] } : {}),
@@ -411,6 +435,7 @@ function projectClip(
         durationMs,
         occurrenceStartMs: occurrence.atMs,
         occurrenceDurationMs: occurrence.durationMs,
+        storedOccurrenceDurationMs,
       },
     },
   };
@@ -476,7 +501,7 @@ export function projectCanonicalComposition(
   ));
   assertDependencies(composition);
   const clips: TimelineClip[] = [];
-  const clipIdentities = new Map<string, CanonicalClipIdentity>();
+  const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
 
   for (const occurrence of outputOccurrences) {
@@ -507,6 +532,7 @@ export function projectCanonicalComposition(
           index,
           clipIdentities,
           options.clampToOccurrenceDuration !== false,
+          occurrence.durationMs,
         );
         if (projected) {
           if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {
@@ -547,6 +573,7 @@ export function projectCanonicalComposition(
   const output = outputBaseConfig?.output ?? { resolution: '1920x1080', fps: 30, file: `timeline-${composition.parentDocumentId}.mp4` };
   const baseApp = record(outputBaseConfig?.app) ?? {};
   const configBase: ResolvedTimelineConfig = {
+    ...(outputBaseConfig ? cloneTimelineExtras(outputBaseConfig) : {}),
     output,
     tracks: tracksFor(composition, outputBaseConfig, outputOccurrences),
     clips: projectedClips,

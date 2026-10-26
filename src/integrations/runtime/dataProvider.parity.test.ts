@@ -43,8 +43,29 @@ const objectUrl = (objectId: string) => `${BASE_URL}/v1/objects/${encodeURICompo
 type Fixture = ReturnType<typeof runtimeFixture>;
 type FixtureTransport = Fixture['transport'];
 
+function publicTimelineTransport(fixture: Fixture, delegate: FixtureTransport = fixture.transport): FixtureTransport {
+  const path = `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`;
+  return async (method, requestPath, headers, body) => {
+    if (method === 'GET' && requestPath === path) {
+      try {
+        return await delegate(method, requestPath, headers, body);
+      } catch (error) {
+        if (!(error instanceof Error) || !error.message.includes('retired mutable timeline GET')) throw error;
+        const current = fixture.read();
+        return { status: 200, headers: {}, body: json({
+          project_id: PROJECT_ID,
+          timeline_id: TIMELINE_ID,
+          head_revision_id: current.headRevisionId,
+          head_publication_id: 'publication-current',
+        }) };
+      }
+    }
+    return delegate(method, requestPath, headers, body);
+  };
+}
+
 function providerFor(fixture: Fixture, transport: FixtureTransport = fixture.transport) {
-  return new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: BASE_URL, token: 'fixture-token', transport });
+  return new RuntimeDataProvider({ projectId: PROJECT_ID, baseUrl: BASE_URL, token: 'fixture-token', transport: publicTimelineTransport(fixture, transport) });
 }
 
 const isPublication = (request: Fixture['requests'][number]) =>
@@ -470,7 +491,7 @@ describe('bundle passthrough', () => {
 
     expect((publications(fixture)[1].body as { parent_composition: { config: Record<string, unknown> } }).parent_composition.config.bundle).toBeNull();
     const reloaded = await providerFor(fixture).loadTimeline(TIMELINE_ID);
-    expect(reloaded.head).toEqual(cleared.head);
+    expect(reloaded.head).toEqual({ ...cleared.head, headPublicationId: 'publication-current' });
     expect(reloaded.bundle).toBeNull();
   });
 
@@ -528,6 +549,97 @@ describe('identity validation', () => {
 
     await expect(wrongProject.loadTimeline(TIMELINE_ID)).rejects.toThrow('belongs to project project-other, not project-r1');
     await expect(wrongRevision.loadTimeline(TIMELINE_ID)).rejects.toThrow('identity mismatch: requested parent-r1, got parent-other');
+  });
+
+  it('loads the matching revision/publication pair from the authenticated public timeline read', async () => {
+    const fixture = runtimeFixture({ parentComposition: composition() });
+    const provider = providerFor(fixture);
+
+    const loaded = await provider.loadTimeline(TIMELINE_ID);
+
+    expect(loaded.head).toMatchObject({
+      projectId: PROJECT_ID,
+      timelineId: TIMELINE_ID,
+      headRevisionId: 'parent-r1',
+      headPublicationId: 'publication-current',
+    });
+    expect(fixture.requests.filter((request) => request.method === 'GET'
+      && request.path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`)).toHaveLength(1);
+  });
+
+  it.each(['project_id', 'timeline_id'] as const)('refuses a public head from another %s', async (field) => {
+    const fixture = runtimeFixture({ parentComposition: composition() });
+    const transport: FixtureTransport = async (method, path, headers, body) => {
+      if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json({
+          project_id: field === 'project_id' ? 'project-other' : PROJECT_ID,
+          timeline_id: field === 'timeline_id' ? 'timeline-other' : TIMELINE_ID,
+          head_revision_id: 'parent-r1',
+          head_publication_id: 'publication-current',
+        }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+
+    await expect(providerFor(fixture, transport).loadTimeline(TIMELINE_ID))
+      .rejects.toThrow(`belongs to ${field === 'project_id' ? 'project project-other, not project-r1' : 'timeline timeline-other, not timeline-r1'}`);
+  });
+
+  it('refuses a moving public head without reading an unmatched immutable basis', async () => {
+    const fixture = runtimeFixture({ parentComposition: composition() });
+    const transport: FixtureTransport = async (method, path, headers, body) => {
+      if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json({
+          project_id: PROJECT_ID,
+          timeline_id: TIMELINE_ID,
+          head_revision_id: 'parent-r2',
+          head_publication_id: 'publication-r2',
+        }) };
+      }
+      if (method === 'POST' && path.endsWith('/inspect')) {
+        const response = await fixture.transport(method, path, headers, body);
+        const inspection = JSON.parse(new TextDecoder().decode(response.body)) as Record<string, unknown>;
+        inspection.revision_id = 'parent-r1';
+        inspection.head_revision_id = 'parent-r1';
+        return { ...response, body: json(inspection) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+    const provider = providerFor(fixture, transport);
+
+    await expect(provider.loadTimeline(TIMELINE_ID)).rejects.toThrow('head moved while pairing');
+    expect(fixture.requests.some((request) => request.method === 'GET'
+      && request.path.includes('/composition-revisions/'))).toBe(false);
+  });
+
+  it('preserves a true legacy null publication instead of inventing one', async () => {
+    const fixture = runtimeFixture({ parentComposition: composition() });
+    const transport: FixtureTransport = async (method, path, headers, body) => {
+      if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json({
+          project_id: PROJECT_ID,
+          timeline_id: TIMELINE_ID,
+          head_revision_id: 'parent-r1',
+          head_publication_id: null,
+        }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+
+    await expect(providerFor(fixture, transport).loadTimeline(TIMELINE_ID))
+      .resolves.toMatchObject({ head: { headRevisionId: 'parent-r1', headPublicationId: null } });
+  });
+
+  it('retains a captured pair for Runtime CAS after the public head moves', async () => {
+    const fixture = runtimeFixture({ parentComposition: composition() });
+    const provider = providerFor(fixture);
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    fixture.setHead('parent-r2', composition({ config: { clips: [], tracks: [{ ...track, label: 'Remote' }] } }));
+
+    await expect(provider.saveTimelineAtHead(TIMELINE_ID, initial.config, initial.head!))
+      .rejects.toMatchObject({ code: 'timeline_version_conflict' });
+    const publication = publications(fixture).at(-1);
+    expect(publication?.body).toMatchObject({ expected_head: 'parent-r1' });
   });
 });
 

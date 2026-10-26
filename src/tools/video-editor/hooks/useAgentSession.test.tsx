@@ -173,7 +173,7 @@ describe('timeline agent ACP chat', () => {
   it('allows the active writer to cancel and lets its prompt finish across active control updates', async () => {
     const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-active', sessions: [{ id: 'chat-active' }], draft: { text: '', revision: 1, queued_messages: [] } };
     let releasePrompt!: () => void;
-    let notifications: unknown[] = [];
+    const notifications: unknown[] = [];
     const promptWait = new Promise<void>(resolve => { releasePrompt = resolve; });
     const acp = {
       connect: vi.fn(async () => ({ connection_id: 'active-connection' })),
