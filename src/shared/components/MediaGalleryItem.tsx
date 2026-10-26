@@ -11,6 +11,7 @@ import { isAudioMedia, isVideoMedia } from '@/shared/lib/media/mediaTypeFilters'
 import { ShotActions } from "./MediaGalleryItem/components/ShotActions";
 import { ActionButtons } from "./MediaGalleryItem/components/ActionButtons";
 import { AddToTimelineButton } from "./MediaGalleryItem/components/AddToTimelineButton";
+import { HoverPeekButton } from "./MediaGalleryItem/components/HoverPeek";
 import { ItemShotBadges } from "./MediaGalleryItem/components/ItemShotBadges";
 import { ItemMetadataBar } from "./MediaGalleryItem/components/ItemMetadataBar";
 import { useMediaGalleryItemShotActions } from "./MediaGalleryItem/hooks/useShotActions";
@@ -38,6 +39,8 @@ import { deriveGalleryInputImages } from "./MediaGallery/utils";
 import { isImageEditTaskType } from "@/shared/lib/taskParamsUtils";
 import { useMarkVariantViewed } from "@/shared/hooks/variants/useMarkVariantViewed";
 import { getGenerationId, getMediaUrl, getThumbnailUrl } from '@/shared/lib/media/mediaTypeHelpers';
+import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl';
+import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
 import { isAdditiveSelectionEvent, isClickLikePointerGesture, isPrimaryPointer } from '@/shared/lib/interactions/selectionGesture';
 
@@ -366,6 +369,15 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   // video's own element takes the tap. Audio keeps its player's controls.
   const wrapperHandlesTouch = !isAudioContent && (enableSingleClick || (isMobile && !isVideoContent));
   const aspectRatioPadding = resolveAspectRatioPadding(image, projectAspectRatio);
+  const metadataAspectRatio = useMemo(() => {
+    const { width, height } = extractResolutionFromMetadata(image);
+    return width && height ? width / height : null;
+  }, [image]);
+  const peekProjectAspectRatio = parseRatio(projectAspectRatio);
+  const peekFullSrc = useMemo(() => {
+    const mediaRef = getMediaUrl(image);
+    return mediaRef ? bridgeMediaUrl(getProjectSelectionFallbackId(), mediaRef) : null;
+  }, [image]);
   const minHeight = isAudioContent ? '160px' : '120px';
   if (isPlaceholder) {
     return (
@@ -506,6 +518,18 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
           {/* Add to Timeline - Top Right, in place of the timestamp when it is shown on hover */}
           {onAddToTimeline && actualGenerationId && (
             <div className="absolute top-1.5 right-1.5">
+              {!isAudioContent && (
+                <HoverPeekButton
+                  image={image}
+                  thumbSrc={stableDisplayUrl || null}
+                  fullSrc={isVideoContent ? null : peekFullSrc}
+                  videoSrc={stableVideoUrl ?? actualSrc ?? null}
+                  isVideo={isVideoContent}
+                  metadataAspectRatio={metadataAspectRatio}
+                  projectAspectRatio={Number.isFinite(peekProjectAspectRatio) ? peekProjectAspectRatio : null}
+                  onOpenLightbox={onOpenLightbox}
+                />
+              )}
               <AddToTimelineButton
                 generationId={generationIdForActions}
                 onAddToTimeline={onAddToTimeline}

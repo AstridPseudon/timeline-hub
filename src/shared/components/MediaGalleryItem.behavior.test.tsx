@@ -494,6 +494,30 @@ describe('MediaGalleryItem touch selection', () => {
     expect(onImageClick).not.toHaveBeenCalled();
   });
 
+  it('shows the desktop eye beside the timeline "+" on image tiles', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const props = buildProps({
+      actions: { onAddToTimeline: vi.fn(), onOpenLightbox: vi.fn(), onImageLoaded: vi.fn() },
+    });
+
+    render(<MediaGalleryItem {...props} />);
+
+    expect(screen.getByLabelText('Preview')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add to timeline')).toBeInTheDocument();
+  });
+
+  it('gives audio tiles no eye', () => {
+    mocks.hasLoadedImage.mockReturnValue(true);
+    const props = buildProps({
+      image: { id: 'audio-2', url: 'sha256:audio-2', name: 'Track', type: 'audio' },
+      actions: { onAddToTimeline: vi.fn(), onOpenLightbox: vi.fn(), onImageLoaded: vi.fn() },
+    });
+
+    render(<MediaGalleryItem {...props} />);
+
+    expect(screen.queryByLabelText('Preview')).not.toBeInTheDocument();
+  });
+
   it('disables the tile control with the mismatch reason and does not add', () => {
     mocks.hasLoadedImage.mockReturnValue(true);
     const onAddToTimeline = vi.fn();
