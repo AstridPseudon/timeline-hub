@@ -63,11 +63,13 @@ def test_product_clients_match_canonical_contract_projection() -> None:
     assert manifest["generated"]["typescript"] == "packages/typescript/src/generated.ts"
     assert list(PYTHON_OPERATIONS) == operation_ids
     assert _typescript_operations() == operation_ids
-    # The product-facing clients retain one typed composition helper for the
-    # cold-launch timeline save journey. It is implemented in terms of the
-    # canonical document/timeline operations and is not an extra wire route.
+    # Product-facing clients retain two typed helpers over existing wire routes:
+    # the timeline save helper delegates to canonical document/timeline operations,
+    # and the streaming object helper delegates to canonical project-object ingest.
+    # Neither helper adds a wire operation.
     assert _python_methods() - {_snake_case(operation) for operation in operation_ids} == {
-        "update_timeline_document"
+        "update_timeline_document",
+        "ingest_project_object_stream",
     }
     assert typescript_methods - set(operation_ids) == {"updateTimelineDocument"}
     assert typescript_methods == set(operation_ids) | {"updateTimelineDocument"}
