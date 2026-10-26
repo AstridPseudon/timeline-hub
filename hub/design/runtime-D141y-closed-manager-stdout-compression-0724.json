@@ -1,0 +1,118 @@
+{
+  "utc": "2026-10-26T07:23:29.486982+00:00",
+  "scope": "Closed unreferenced23-24Oct Runtime manager stdout only; no26Oct witness, worker/test raw, KEEP, hub or product touched",
+  "guards": "Prior current reference census returned no design/brief/board/suite/notes matches; exit markers, older1h, owner regular nonsymlink singlelink, no openFD, stable source and decoded SHA/mode exact",
+  "before_free": 4598837248,
+  "after_free": 4609851392,
+  "saved_bytes": 11008506,
+  "files": [
+    {
+      "source": "managers/runtime/rounds/20261023T1601Z.log",
+      "compressed": "managers/runtime/rounds/20261023T1601Z.log.gz",
+      "original_bytes": 1358366,
+      "compressed_bytes": 323479,
+      "content_sha256": "f69aa7680dae07dc92f1806ea510f71236fb40980f81d17da7134cd99ddf5103",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261023T1438Z.log",
+      "compressed": "managers/runtime/rounds/20261023T1438Z.log.gz",
+      "original_bytes": 1315420,
+      "compressed_bytes": 337822,
+      "content_sha256": "8ab51feee8b109f9c6a9cfd8f96edf7c294f04b360c4f21ac4446f12563bb04c",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0717Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0717Z.log.gz",
+      "original_bytes": 1302586,
+      "compressed_bytes": 326549,
+      "content_sha256": "be8c2e6651ce953c720eb662702833305fe03f624e0fabb42ba10f2a187de277",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0310Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0310Z.log.gz",
+      "original_bytes": 1274631,
+      "compressed_bytes": 324228,
+      "content_sha256": "f99f516005e48cc3155915fb8e7d8568f5f1ba2d4fd3a7ca47213414cfabb057",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0420Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0420Z.log.gz",
+      "original_bytes": 1250883,
+      "compressed_bytes": 346510,
+      "content_sha256": "300484468d27f61f491dc2b9a54e6a5682ec3c54b02637360080ca52d49f7e90",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1804Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1804Z.log.gz",
+      "original_bytes": 1247303,
+      "compressed_bytes": 335080,
+      "content_sha256": "c952bcc0766826c55ccb0598b6d28b39c4c39ec82b666faf729962ecfbe3ce3c",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T0158Z.log",
+      "compressed": "managers/runtime/rounds/20261024T0158Z.log.gz",
+      "original_bytes": 1225408,
+      "compressed_bytes": 290524,
+      "content_sha256": "3ac4472bb3221a1dfe37e3082b7806ba05c0e6cb4c57acd7319ebed6b37775bf",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1211Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1211Z.log.gz",
+      "original_bytes": 1215608,
+      "compressed_bytes": 326416,
+      "content_sha256": "435fa2b9196fbc5d505fa6fc8c369f853f82af78b420898b7ebc29f965cce489",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1950Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1950Z.log.gz",
+      "original_bytes": 1202458,
+      "compressed_bytes": 352967,
+      "content_sha256": "d6ee3d487f9a85a4d6ad27620b976eba07c0efb3532a698dbde8dfa40316c4ed",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261023T1732Z.log",
+      "compressed": "managers/runtime/rounds/20261023T1732Z.log.gz",
+      "original_bytes": 1198991,
+      "compressed_bytes": 317631,
+      "content_sha256": "9682e006e1817f421fb1ea23c5e2502a3ccba49710b066e0268d6e34b4a3b920",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261023T2028Z.log",
+      "compressed": "managers/runtime/rounds/20261023T2028Z.log.gz",
+      "original_bytes": 1171214,
+      "compressed_bytes": 333259,
+      "content_sha256": "329aae8fa8a5a29c139822c2f8a598a20e593863d8b8585baa86d517d780d128",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261024T1432Z.log",
+      "compressed": "managers/runtime/rounds/20261024T1432Z.log.gz",
+      "original_bytes": 1168561,
+      "compressed_bytes": 308458,
+      "content_sha256": "6976d4dc96899d791af0c2dcaef11d11afea9238bd0494d2b1a38c5dd93b00c6",
+      "mode": "0o644",
+      "verified_decompressed_bytes": true
+    }
+  ]
+}

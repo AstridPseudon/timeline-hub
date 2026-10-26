@@ -1,0 +1,53 @@
+{
+  "scope": "Byte-exact SAFE evidence publication; author claim pending independent0719. No delivery publication. Raw retained in place.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-report.md",
+      "size": 787,
+      "sha256": "c1e61cf284770c02f167ff63cba8a2865c97c737591604324e9eb57025cefaf0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-results.json",
+      "size": 1399,
+      "sha256": "d25eec43c900866c899f721bb731998c54d13c297254e0cff054bbc0bb4790f5"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-source-manifest.json",
+      "size": 4003,
+      "sha256": "6d0fc26f6eebfa730136c80048957727db45fc03b5772f8925f00435a174e742"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-validation.md",
+      "size": 2350,
+      "sha256": "6438f131cf48e8986617a2053b427d38897ce0f36c0236567de469a1aaa70495"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-handoff.md",
+      "size": 902,
+      "sha256": "a56a37d2e58bde81cfb09a9125eb2b041cbecaea938e5e8a6fe8653067ded79b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/command.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-command.json",
+      "size": 1832,
+      "sha256": "55d3c0d4f8fe59fa8efa53d6d607d68b3be76da60c958655f54df310a8e3a839"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/source-tuple.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-source-tuple.json",
+      "size": 675,
+      "sha256": "6fe1b04ca64f38cc8a524bc397950df5a6bce835be614341a70e2c163d253c4d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-0710-disk-trace.txt",
+      "size": 2994,
+      "sha256": "616f6b0556e9b82d9eb205d537394066f30fbc76c7239a056c553987a04102e9"
+    }
+  ]
+}

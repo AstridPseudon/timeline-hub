@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.f.d141y.command.v1",
+  "task": "rt-F-D141y-rehearsal-0710",
+  "invocation_count": 1,
+  "argv": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "--dry-run",
+    "--source-tuple",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/source-tuple.json",
+    "--source-tuple-sha",
+    "6fe1b04ca64f38cc8a524bc397950df5a6bce835be614341a70e2c163d253c4d",
+    "--delivery-root",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/delivery",
+    "--work-root",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence/work",
+    "--template",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+    "--gate-results",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md"
+  ],
+  "timing": {
+    "started_at_utc": "2026-10-26T07:13:19.860065095+00:00",
+    "finished_at_utc": "2026-10-26T07:13:20.111436703+00:00",
+    "basis": "raw stdout creation and raw exit creation filesystem timestamps; start is the redirection-open lower bound"
+  },
+  "exit_code": 2,
+  "raw": {
+    "stdout": "raw-command.stdout",
+    "stderr": "raw-command.stderr",
+    "exit": "raw-command.exit",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8723a85802bb604561bf76ba507e71dc13fc4d4c4ae9bda553b32fee0fb90c95",
+    "exit_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  "zip_written": false,
+  "publication": false
+}

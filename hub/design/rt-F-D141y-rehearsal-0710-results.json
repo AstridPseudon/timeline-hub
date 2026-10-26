@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.f.d141y.results.v1",
+  "task": "rt-F-D141y-rehearsal-0710",
+  "verdict": "REFUSED_ALL_REPO_PREFLIGHT",
+  "cli_exit": 2,
+  "refusal": "all-repository preflight refused: ancestry refused for app: repo=/home/user/work/app base=fc24f84994dc36cfae9349112782ab4d91dbc73b tip=4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+  "preflight": {
+    "agent": "PASS_IDENTITY_CLEAN_ANCESTOR",
+    "runtime": "PASS_IDENTITY_CLEAN_ANCESTOR",
+    "app": "REFUSED_ANCESTRY",
+    "composition": "PASS_IDENTITY_CLEAN_ANCESTOR"
+  },
+  "actual_build": {
+    "agent": {"status": "NOT_REACHED", "patches": null, "tree": null, "bundle": null, "apply": null},
+    "runtime": {"status": "NOT_REACHED", "patches": null, "tree": null, "bundle": null, "apply": null},
+    "app": {"status": "NOT_REACHED", "patches": null, "tree": null, "bundle": null, "apply": null},
+    "composition": {"status": "NOT_REACHED", "patches": null, "tree": null, "bundle": null, "apply": null}
+  },
+  "prospective_source_only_stats_not_actual_build": {
+    "agent": {"files": 930, "added": 209713, "deleted": 10200},
+    "runtime": {"files": 324, "added": 103332, "deleted": 3238},
+    "app": {"files": 577, "added": 103469, "deleted": 4395},
+    "composition": {"files": 118, "added": 8257, "deleted": 774}
+  },
+  "zip_written": false,
+  "publication": false,
+  "tests_typecheck_lint": "NOTRUN: canonical tool rehearsal only"
+}
