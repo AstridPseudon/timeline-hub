@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-26T14:07:29.894408+00:00",
+  "worker": "agt-U4a-D141v-final-pin-review-next",
+  "kind": "manager added KEEP after actual metadata; marker absent at first check",
+  "worker_started": "2026-10-26T14:06:40Z",
+  "gap": "Running marker protected against maintenance before manager KEEP; no first-tool KEEP claim",
+  "raw_unchanged": true
+}

@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-26T14:06:40.885619+00:00",
+  "kind": "manager byte publication of terminal SAFE summaries",
+  "verdict": "AUTHOR_PASS_NO_CHANGE; independent metadata review queued",
+  "files": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D141v-final-pin-next/evidence/adoption.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-adoption.json",
+      "size": 686,
+      "sha256": "0477007986bbaaabf565226ad6156ba6f096a480ebabb1459c322ca55cc5116d"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D141v-final-pin-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-review.json",
+      "size": 5323,
+      "sha256": "7efbd752064ecb4b3bd28e6f0d40911dd4912b8b51b69ec6b70a9aa59218a1df"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D141v-final-pin-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-source-manifest.json",
+      "size": 5706,
+      "sha256": "26115cd23115e74bf495b5460c10ed7cb16f8f53129b11e54308481acc84e558"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D141v-final-pin-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-validation.md",
+      "size": 1115,
+      "sha256": "54793e77fd5165826f500ef126e92cd241d55dda5fb38e4ef8fb4c6102f9f4ae"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U4a-D141v-final-pin-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-U4a-D141v-final-pin-next-handoff.md",
+      "size": 704,
+      "sha256": "7b3163ddfc7f147c80845d764aed38a50e957037a6cadbd5a1a4207a02eebf4a"
+    }
+  ],
+  "KEEP_limit": "See immutable agent-D141v-final-pin-KEEP-coordinate-1405.json; raw disk trace retained local, actual scope only"
+}

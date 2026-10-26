@@ -1,0 +1,1512 @@
+{
+  "all_finite": true,
+  "disposition_counts": {
+    "owner_approved_retirement": 2,
+    "protected_writer_migration": 15,
+    "qualified_move": 9,
+    "retained_upstream_inverse": 38
+  },
+  "entries": [
+    {
+      "assertions_hashes": {
+        "current": "95661e02f59af0440336f79f3fe40abf35a55eeb920c0d03dbdfeea0eec7bd05",
+        "original": "95661e02f59af0440336f79f3fe40abf35a55eeb920c0d03dbdfeea0eec7bd05"
+      },
+      "assertions_same": true,
+      "body_hashes": {
+        "current": "775d432838289a90eb79e7725876a9ed305290a91594ae1fc880e3b42127998b",
+        "original": "775d432838289a90eb79e7725876a9ed305290a91594ae1fc880e3b42127998b"
+      },
+      "body_same": true,
+      "category": "qualified_move",
+      "classification": "RENAME_MOVE_ONLY",
+      "current_id": "tests.packs.timeline.test_cli_parity::test_project_defaults_to_the_current_project[commit]",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-preserve-writers18-review-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json"
+      },
+      "id": "move-writer-1",
+      "normalized_current_id": "tests.packs.timeline.test_cli_parity::test_project_defaults_to_the_current_project[commit]",
+      "original_id": "tests/packs/timeline/test_cli_parity.py::test_project_defaults_to_the_current_project[publish]",
+      "status": "PASS_PRIOR_RECEIPT"
+    },
+    {
+      "assertions_hashes": {
+        "current": "6d97407236195097a2422bc54368a030a9c10336ebfeae7a22a1f48bc9b9ce84",
+        "original": "6d97407236195097a2422bc54368a030a9c10336ebfeae7a22a1f48bc9b9ce84"
+      },
+      "assertions_same": true,
+      "body_hashes": {
+        "current": "fc72931166f169e947dc8681c2e628b34cd807395e424fb1ff9ec161a9c94f66",
+        "original": "fc72931166f169e947dc8681c2e628b34cd807395e424fb1ff9ec161a9c94f66"
+      },
+      "body_same": true,
+      "category": "qualified_move",
+      "classification": "RENAME_MOVE_ONLY",
+      "current_id": "tests.packs.timeline.test_cli_parity::test_explicit_project_wins_and_is_not_looked_up[commit]",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-preserve-writers18-review-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json"
+      },
+      "id": "move-writer-2",
+      "normalized_current_id": "tests.packs.timeline.test_cli_parity::test_explicit_project_wins_and_is_not_looked_up[commit]",
+      "original_id": "tests/packs/timeline/test_cli_parity.py::test_explicit_project_wins_and_is_not_looked_up[publish]",
+      "status": "PASS_PRIOR_RECEIPT"
+    },
+    {
+      "assertions_hashes": {
+        "current": "fa7e94e77c5a5abb0a099276f1ed0fe49e27619e8612451651768d62449b2999",
+        "original": "fa7e94e77c5a5abb0a099276f1ed0fe49e27619e8612451651768d62449b2999"
+      },
+      "assertions_same": true,
+      "body_hashes": {
+        "current": "b670cee46fd6cc501a67a5994a65c93d88158112aa417970cff8815a04adff7d",
+        "original": "b670cee46fd6cc501a67a5994a65c93d88158112aa417970cff8815a04adff7d"
+      },
+      "body_same": true,
+      "category": "qualified_move",
+      "classification": "RENAME_MOVE_ONLY",
+      "current_id": "tests.packs.timeline.test_cli_parity::test_no_current_project_is_a_clear_error[commit]",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-preserve-writers18-review-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-writers18-independent-publication-1120.json"
+      },
+      "id": "move-writer-3",
+      "normalized_current_id": "tests.packs.timeline.test_cli_parity::test_no_current_project_is_a_clear_error[commit]",
+      "original_id": "tests/packs/timeline/test_cli_parity.py::test_no_current_project_is_a_clear_error[publish]",
+      "status": "PASS_PRIOR_RECEIPT"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-1",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[__init__.py]",
+      "original_input": "__init__.py",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-2",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[generated.py]",
+      "original_input": "generated.py",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-3",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[materialize.py]",
+      "original_input": "materialize.py",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-4",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[theme.py]",
+      "original_input": "theme.py",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-5",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json]",
+      "original_input": "timeline.schema.json",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]"
+    },
+    {
+      "category": "qualified_move",
+      "classification": "RENAME_OR_MOVE",
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]",
+      "current_status": "PASS",
+      "evidence": {
+        "map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141ee-schema8-full-decision-next-map.json",
+        "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ee-inverse-schema-final-publication-1121.json"
+      },
+      "id": "move-schema-6",
+      "normalized_current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]",
+      "original_id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[validate.py]",
+      "original_input": "validate.py",
+      "status": "PASS_PRIOR_RECEIPT",
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "normalized_current_id": "tests.timeline.test_inverses::test_erased_payload_does_not_expose_content",
+      "original_id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "original_purpose": "Pass an ErasedPayload as clip.removed while the before projection contains secret.mp4; prove the planner refuses inversion rather than recovering erased content.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is False",
+        "\"erased\" occurs in result.revert_reason.lower()"
+      ],
+      "source_group": "erased_payload_confidentiality",
+      "source_line": 344,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "normalized_current_id": "tests.timeline.test_inverses::test_erased_payload_non_invertible",
+      "original_id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "original_purpose": "Treat an erased payload attached to clip.added as non-invertible.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is False",
+        "result.revert_kind == timeline.reverted",
+        "\"erased\" occurs in result.revert_reason.lower()"
+      ],
+      "source_group": "erased_payload_confidentiality",
+      "source_line": 328,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "original_purpose": "Refuse blind inversion of timeline.branched_from and return the audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "original_purpose": "Refuse blind inversion of timeline.created and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "original_purpose": "Refuse blind inversion of timeline.deleted and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "original_purpose": "Refuse blind inversion of timeline.erased and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "original_purpose": "Refuse blind inversion of timeline.recovered and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "original_purpose": "Refuse recursive blind inversion of timeline.reverted and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "original_id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "original_purpose": "Refuse blind inversion of timeline.tombstoned and return audit projections.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "invertible is False",
+        "revert_kind == timeline.reverted",
+        "before_projection is not None",
+        "after_projection is not None",
+        "event_id occurs in revert_reason"
+      ],
+      "source_group": "non_reversible_event_kind",
+      "source_line": 303,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "normalized_current_id": "tests.timeline.test_inverses::test_plan_inverse_is_pure",
+      "original_id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "original_purpose": "Prove repeated plan_inverse calls with the same TimelineEvent and before/after projections return equal inverse fields.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "r1/r2 invertible equal",
+        "r1/r2 inverse_kind equal",
+        "r1/r2 inverse_payload equal"
+      ],
+      "source_group": "planner_purity",
+      "source_line": 441,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "normalized_current_id": "tests.timeline.test_inverses::test_plan_inverses_is_pure",
+      "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "original_purpose": "Prove repeated plan_inverses calls over clip.added and track.added return equal lengths and inverse fields.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "len(r1) == len(r2)",
+        "each invertible equal",
+        "each inverse_kind equal",
+        "each inverse_payload equal"
+      ],
+      "source_group": "planner_purity",
+      "source_line": 458,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "normalized_current_id": "tests.timeline.test_inverses::test_plan_inverses_mixed_reversible_non_reversible",
+      "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "original_purpose": "Walk clip.added followed by timeline.deleted and retain one inverse result per event with mixed invertibility.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "len(results) == 2",
+        "results[0].invertible is True",
+        "results[1].invertible is False"
+      ],
+      "source_group": "planner_sequence",
+      "source_line": 400,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "normalized_current_id": "tests.timeline.test_inverses::test_plan_inverses_walk_sequence",
+      "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "original_purpose": "Walk clip.added, track.added, and pool.asset_added and return one inverse per event in original order.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "len(results) == 3",
+        "all results invertible",
+        "inverse kinds are clip.removed/track.removed/pool.asset_removed in order"
+      ],
+      "source_group": "planner_sequence",
+      "source_line": 373,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "normalized_current_id": "tests.timeline.test_inverses::test_plan_inverses_with_erased_event",
+      "original_id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "original_purpose": "Walk clip.added followed by an erased-payload clip.moved and keep the erased event non-invertible.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "len(results) == 2",
+        "results[0].invertible is True",
+        "results[1].invertible is False"
+      ],
+      "source_group": "planner_sequence",
+      "source_line": 415,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "original_purpose": "Restore the prior arrangement object from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == arrangement.replaced",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "original_purpose": "Produce audio.unbound from the clip/audio binding payload.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == audio.unbound",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "original_purpose": "Recover the prior audio asset binding from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == audio.bound",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "original_purpose": "Turn clip.added into clip.removed using the clip ID.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.removed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "original_purpose": "Restore the prior clip note from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.annotated",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "original_purpose": "Restore the clip's prior list index from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.moved",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "original_purpose": "Recover the full removed clip row and its prior index from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.added",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "original_purpose": "Restore the prior asset_id from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.replaced",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "original_purpose": "Restore prior clip start and duration from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.retimed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "original_purpose": "Emit the same clip pair swap as its mechanical inverse.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.swapped",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "original_purpose": "Restore old clip text from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == clip.text_set",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "original_purpose": "Remove the effect by clip_id/effect_id as the mechanical inverse.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.removed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "original_purpose": "Recover removed effect parameters from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.added",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "original_purpose": "Restore an effect parameter's prior value from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == effect.tuned",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "original_purpose": "Remove the newly added pool asset alias.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_removed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "original_purpose": "Restore the removed pool asset alias and prior score.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_added",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "original_purpose": "Restore the pool asset's prior score.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == pool.asset_scored",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "original_purpose": "Restore the prior theme override value.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == theme.overridden",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "original_purpose": "Restore the prior theme value.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == theme.set",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "original_purpose": "Restore the prior complete timeline config object.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == timeline.config_replaced",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "original_purpose": "Remove a newly added track by track_id.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == track.removed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "original_purpose": "Recover a removed track row and its prior label/kind from before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == track.added",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "original_purpose": "Recover the prior transition object from the left clip's before projection.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == transition.set",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "retained_upstream_inverse",
+      "current_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "disposition": "RESTORED_EXACT_PUBLIC_PURE_PLANNER",
+      "evidence": {
+        "approved_cases": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-inverse38-decision-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "normalized_current_id": "tests.timeline.test_inverses::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "original_id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "original_purpose": "Remove a newly set transition using its left/right clip IDs.",
+      "prior_result": "passed",
+      "protected_assertions": [
+        "result.invertible is True",
+        "result.inverse_kind == transition.removed",
+        "result.inverse_payload is not None"
+      ],
+      "source_group": "reversible_event_kind",
+      "source_line": 267,
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_parity.py::test_commit_migration_preserves_message_contract",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message",
+      "normalized_current_id": "tests.packs.timeline.test_cli_parity::test_commit_migration_preserves_message_contract",
+      "original_id": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message",
+      "original_purpose": "message-required parser refusal and accepted commit message",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]",
+      "original_purpose": "human conflict refusal, unchanged file/history, one commit attempt",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]",
+      "original_purpose": "JSON conflict refusal, unchanged file/history, one commit attempt",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": true,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_commit_migration_forwards_key_once_and_refuses_force",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once",
+      "original_purpose": "authenticated key, accepted head/receipt identity, one call, force parser refusal",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_output_keeps_summary_and_receipt",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope",
+      "original_purpose": "bounded human summary, JSON envelope, receipt-result identity, edits/cuts before write",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_C0_REPLY_SHAPE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_of_a_clean_working_copy_writes_nothing",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing",
+      "original_purpose": "unchanged status, null receipt, unchanged bytes/history, zero mutation calls",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]",
+      "original_purpose": "human partial-publication error, durable receipt/idempotency, one call, no history write",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]",
+      "normalized_current_id": "tests.packs.timeline.test_cli_status_publish::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]",
+      "original_id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]",
+      "original_purpose": "JSON partial-publication error, exact receipt/idempotency, one call, no history write",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": "public CLI -> commit_document -> TimelineSession -> generated commit_timeline -> Runtime/provider 409 -> public JSON",
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "normalized_current_id": "tests.packs.timeline.test_verbs_working_copy::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "original_id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "original_purpose": "editor revision-namespace diagnostic, conflict path, changed path, discard-first guidance, no overwrite",
+      "prior_execution": "PASS",
+      "protected_review": "PASS_SUPPORTED_CALLER",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": "public CLI -> commit_document -> TimelineSession -> generated commit_timeline -> Runtime/provider 409 -> public JSON",
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "normalized_current_id": "tests.packs.timeline.test_verbs_working_copy::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "original_id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "original_purpose": "generic revision-namespace diagnostic, conflict path, changed path, discard-first guidance, no overwrite",
+      "prior_execution": "PASS",
+      "protected_review": "PASS_SUPPORTED_CALLER",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_commit_render_publication_preserves_runtime_authority_without_local_save_or_invoke",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke",
+      "normalized_current_id": "tests.packs.video_editing.test_runtime_publication_chain::test_commit_render_publication_preserves_runtime_authority_without_local_save_or_invoke",
+      "original_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke",
+      "original_purpose": "guarded Runtime commit/render path, attempt/lease/timeline/version authority, no local save/invoke",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_migration_keeps_details_request_id_and_request",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details",
+      "normalized_current_id": "tests.sdk.test_runtime_response_conformance::test_commit_conflict_409_migration_keeps_details_request_id_and_request",
+      "original_id": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details",
+      "original_purpose": "typed conflict, exact details/request ID/request/idempotency preservation",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/timeline/test_authoring_bundle.py::test_approval_migration_is_bound_to_candidate_and_base_revision",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision",
+      "normalized_current_id": "tests.timeline.test_authoring_bundle::test_approval_migration_is_bound_to_candidate_and_base_revision",
+      "original_id": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision",
+      "original_purpose": "stale refusal before write, candidate/base/approval binding, one supported commit",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "normalized_current_id": "tests.timeline.test_authoring_bundle::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "original_id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation",
+      "original_purpose": "restart recovery, one render/claim generation, digest binding, one supported commit",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_ROUTE_CHANGE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "caller": null,
+      "category": "protected_writer_migration",
+      "changed_reply_shapes": [
+        "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+        "bounded human summary plus C0 JSON envelope/receipt identity",
+        "partial-publication error retaining receipt/idempotency details without retry",
+        "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+        "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+        "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+      ],
+      "current_id": "tests/v10/test_timelines_create.py::test_remote_create_empty_migration_preserves_shell_and_empty_head",
+      "evidence": {
+        "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/review.json",
+        "reviewed_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-writers-caller-review-next/evidence/per-id.json",
+        "targeted_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ii-integrated-kept53-next/evidence/targeted.xml"
+      },
+      "force_companion": false,
+      "id": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head",
+      "normalized_current_id": "tests.v10.test_timelines_create::test_remote_create_empty_migration_preserves_shell_and_empty_head",
+      "original_id": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head",
+      "original_purpose": "shell/idempotency, init/default output, full config/registry/occurrences/empty lists, history/bootstrap/base pair, step reads",
+      "prior_execution": "PASS_RETAINED_PRIOR",
+      "protected_review": "PASS_WITH_APPROVED_COMMIT_REPLY_SHAPE",
+      "status": "PASS_CURRENT_TARGETED"
+    },
+    {
+      "category": "owner_approved_retirement",
+      "current_id": null,
+      "date": "2026-10-26",
+      "evidence": {
+        "owner_approval": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+        "per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/per-id.json",
+        "retirement_ledger": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/retirement-ledger-entries.md"
+      },
+      "id": "tests/test_installer_schema.py::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "original_function_source_sha256": "a918238932392fdab15be4cd797092af1d14853e3060a9efab48dfb4d43c60d6",
+      "original_id": "tests/test_installer_schema.py::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "owner_quote_verbatim": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+      "preserved_source": "Runtime contract/schemas/timeline-config.schema.json remains the canonical schema source through runtime.lock.json; no npm transitive schema install was reintroduced.",
+      "removed_definition_only": true,
+      "replacement_controls": [
+        "tests/test_installer_schema.py::test_staging_verifies_the_local_schema_before_declaring_services",
+        "tests/test_installer_schema.py::test_local_schema_verification_rejects_a_changed_schema",
+        "astrid/installer/backend.py::Backend.stage -> _verify_local_timeline_schema -> Runtime-pinned local schema"
+      ],
+      "replacement_proof": {
+        "result": "4 passed",
+        "targeted_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/targeted.xml"
+      },
+      "status": "OWNER_APPROVED_RETIREMENT",
+      "supported_caller": "astrid/installer/backend.py::Backend.stage is the production caller; it verifies the local canonical schema before ordinary Python installs, locked Remotion staging, and service declaration."
+    },
+    {
+      "category": "owner_approved_retirement",
+      "current_id": null,
+      "date": "2026-10-26",
+      "evidence": {
+        "owner_approval": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-D141ii-installer-owner-approval-1300.md",
+        "per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/per-id.json",
+        "retirement_ledger": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/retirement-ledger-entries.md"
+      },
+      "id": "tests/test_installer_schema.py::test_remotion_lock_pins_the_transitive_schema_package",
+      "original_function_source_sha256": "c10befe3af82a12a9bb69c04a7fc919506ac6bef39341576c254b14c99540069",
+      "original_id": "tests/test_installer_schema.py::test_remotion_lock_pins_the_transitive_schema_package",
+      "owner_quote_verbatim": "I approve retiring exactly the two npm-schema installer test IDs listed in escalations/agent-20261026T1158Z-D141ee-final55-owner-scope.md, ledgered with this quote; replacement controls stay.",
+      "preserved_source": "The approved local Composition artifact remains locked; the obsolete external Composition v0.0.6 and transitive timeline-schema v0.0.1 graph remains absent.",
+      "removed_definition_only": true,
+      "replacement_controls": [
+        "tests/test_installer_schema.py::test_remotion_lock_pins_the_immutable_composition_public_entry",
+        "tests/test_installer_schema.py::test_d66_upstream_remotion_lock_pins_the_transitive_schema_package",
+        "remotion/package.json + remotion/package-lock.json local Composition 0.0.14 artifact and integrity"
+      ],
+      "replacement_proof": {
+        "result": "4 passed",
+        "targeted_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-installer2-decision-next/evidence/targeted.xml"
+      },
+      "status": "OWNER_APPROVED_RETIREMENT",
+      "supported_caller": "astrid/installer/backend.py::Backend.install_remotion_dependencies is the production caller of the locked local Composition dependency staging path."
+    }
+  ],
+  "force_companion_count": 1,
+  "record_count": 64,
+  "schema": "timeline.d141ii.independent-review.per-id.v1",
+  "unique_record_ids": 64
+}

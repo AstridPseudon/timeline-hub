@@ -1,0 +1,69 @@
+{
+  "base": {
+    "agent_commit": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "checks": {
+    "c0_static": true,
+    "git_bindings_clean": true,
+    "historical_receipts": true,
+    "id64_finite": true,
+    "owner_retirements": true,
+    "protected_review_behavior": true,
+    "replacement_controls": true,
+    "selector_conservation": true,
+    "source_input_hashes": true,
+    "trace_above_stop": true,
+    "xml_selectors": true
+  },
+  "counts": {
+    "actual_current_testcases": 53,
+    "actual_current_unique_selectors": 53,
+    "all_original_records": 64,
+    "errors": "0",
+    "failures": "0",
+    "owner_approved_retirement": 2,
+    "passed": "53",
+    "protected_writer_migration": 15,
+    "qualified_move": 9,
+    "retained_current_purposes": 53,
+    "retained_upstream_inverse": 38,
+    "skips": "0"
+  },
+  "finite_findings": [
+    "F7 protected writer review default mypy failed identically on baseline/candidate; explicit Python 3.12 target passed both."
+  ],
+  "force_companion": "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force",
+  "historical_preservation": {
+    "all397bad_outcomes_preserved": true,
+    "fullpair_ids": [
+      "24814",
+      "25513"
+    ],
+    "retargeted": false,
+    "source_refs": [
+      "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "64197afa297f86f1e738238d5e80aff6d33e303a"
+    ]
+  },
+  "limits": [
+    "No full/core/browser/render/live-journey/build/ZIP/final-gate run.",
+    "No live HTTP bearer authorization or SQLite persistence claim.",
+    "Nine prior moves and historical pair outcomes were not re-executed.",
+    "Reviewer trace has a disclosed restart/gap after a malformed first attempt; only valid JSONL samples are claimed."
+  ],
+  "reg0_recommendation": true,
+  "reply_shapes": [
+    "accepted commit envelope with canonical document, accepted revision/publication pins, and receipt",
+    "bounded human summary plus C0 JSON envelope/receipt identity",
+    "partial-publication error retaining receipt/idempotency details without retry",
+    "empty-create shell plus authenticated timeline.init/doc.patch commit result",
+    "requester-owned render publication with Runtime attempt/lease/timeline/version authority",
+    "typed 409 conflict, approval/restart route migration, and preserved request/details binding"
+  ],
+  "schema": "timeline.d141ii.independent-result-review.v1",
+  "scope": "U2/R2/G3/G4/G5 independent read-only terminal result-custody and ID64 preservation review",
+  "verdict": "PASS"
+}

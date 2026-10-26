@@ -1,0 +1,14 @@
+{
+  "changed_paths": [],
+  "consumer_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+  "lock_source_commit_after": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "only_allowed_metadata_file": "runtime.lock.json",
+  "producer_checkout": "/home/user/work/runtime",
+  "producer_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "producer_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+  "refresh_command": "/home/user/work/venv-agent/bin/python scripts/refresh_runtime_client.py --producer /home/user/work/runtime",
+  "result": "genuine no-change: existing Runtime provenance already selected",
+  "status": "complete_no_change",
+  "task": "U4a D141v",
+  "worktree_status": ""
+}

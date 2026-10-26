@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-26T14:05:08.823044+00:00",
+  "worker": "agt-U4a-D141v-final-pin-next",
+  "kind": "manager added KEEP after actual metadata; worker did not create it first",
+  "worker_started": "2026-10-26T14:04:08Z",
+  "gap": "Worker root was running and ineligible for compact/recycle; marker is now retained. No first-tool KEEP claim.",
+  "raw_unchanged": true
+}
