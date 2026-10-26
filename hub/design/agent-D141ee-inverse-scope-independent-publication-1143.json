@@ -1,0 +1,42 @@
+{
+  "recorded_at": "2026-10-26T11:42:42.993155+00:00",
+  "kind": "Exact independent originals: PASS_EVIDENCE with all38 scope pending; no behavior credit or approved retirement",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/review.json",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-review.json",
+      "sha256": "cfb35ae0baf171d8344f6f96b99d5f93c87899b8ac4e5599a193bb60b9b4b371",
+      "bytes": 4011
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/findings.md",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-findings.md",
+      "sha256": "145cccedd1a3103ebd3ca1334e12fbdb903ab176ab18e32a477540dfe30e0cb9",
+      "bytes": 2253
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-source-manifest.json",
+      "sha256": "b362260e1527bc1616be96e6e8be5cf5cea87f1238c30a339709f72d7404635e",
+      "bytes": 3025
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/validation.md",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-validation.md",
+      "sha256": "2d4fc3adb5ddd1a926f4fc6cc340068747cf89df5b83fb04b2d77d3fb4668090",
+      "bytes": 1854
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/handoff.md",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-handoff.md",
+      "sha256": "38ae9e535f15dcb690cc9f0963259898d8dfa8fa50061a9c9dea002735321b66",
+      "bytes": 781
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-review-1137/evidence/disk-trace.txt",
+      "destination": "design/agt-F-D141ee-inverse38-scope-review-1137-disk-trace.txt",
+      "sha256": "ae59aa066199af65c9fcb7f37a7edac11063e0a4a1cbef3f2d4bcabef637ad39",
+      "bytes": 1536
+    }
+  ]
+}

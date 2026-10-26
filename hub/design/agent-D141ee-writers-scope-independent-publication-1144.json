@@ -1,0 +1,42 @@
+{
+  "recorded_at": "2026-10-26T11:43:55.046267+00:00",
+  "verdict": "FAIL; earlier source-only closure assertions rejected. All15 behavior cases remain REG pending. One source first return, no test/product changes.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/review.json",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-review.json",
+      "sha256": "580a74afcbfcdbfb64b3de6f382c00adc8f8407d639509ee15386ce322564b5d",
+      "bytes": 12650
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/findings.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-findings.md",
+      "sha256": "6f99dd6d89d906eeefe41b77eca3a922ef223307e30a882d8fa2b2c25c97dd8c",
+      "bytes": 3776
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-source-manifest.json",
+      "sha256": "70cf7370986117c82166f05ebf4232c5f305652b9e7dae18ecd95a37ec469068",
+      "bytes": 9337
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/validation.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-validation.md",
+      "sha256": "34dab476a2cec898178658654898ff79ec3dc9e05cd09f64f08bd634020531a7",
+      "bytes": 2434
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/handoff.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-handoff.md",
+      "sha256": "00e7c9969485dd222d415b0737fd87b3a86e9e0290371236f573aa856247ad3f",
+      "bytes": 1146
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-review-1137/evidence/disk-trace.txt",
+      "destination": "design/agt-F-D141ee-writers15-scope-review-1137-disk-trace.txt",
+      "sha256": "4075f8e090c4ef756bdc11c19e212488e73db1bba320213ce5161edcd71f6bba",
+      "bytes": 288
+    }
+  ]
+}

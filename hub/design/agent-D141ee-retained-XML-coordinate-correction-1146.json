@@ -1,0 +1,59 @@
+{
+  "recorded_at": "2026-10-26T11:45:15.327480+00:00",
+  "kind": "Manager correction of an overly narrow temporary-path existence check; immutable worker originals unchanged",
+  "correction": "Original /tmp XML coordinates are absent, but worker evidence contains retained exact-name XML copies. Earlier manager claims that private XML was lost were incorrect. The raw XML exists at the actual retained evidence paths below. No test rerun or raw publication performed.",
+  "supersedes_manager_claims_in": [
+    "design/peer-agent-to-agent-lead-app-runtime-20261026T1133Z-D141ee-restoration-HOME-behavior-open.md",
+    "design/agent-D141ee-restoration-independent-publication-1132.json",
+    "design/agent-D141ee-installer-scope-independent-publication-1140.json",
+    "escalations/agent-20261026T1140Z-D141ee-upstream-preservation-scope.md",
+    "managers/agent/STATUS.md"
+  ],
+  "retained_xml": [
+    {
+      "actual_retained_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/restored-independent.xml",
+      "sha256": "8895a3918d7b3ffb9567cfe25879226b2e0341e33c7332299aff312c70385421",
+      "bytes": 1811,
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "2",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "2",
+          "time": "2.936",
+          "timestamp": "2026-10-26T11:28:03.491054+00:00",
+          "hostname": "vm"
+        }
+      ],
+      "concrete_case_count": 2,
+      "failures": 0,
+      "errors": 2,
+      "skipped": 0,
+      "mtime_ns": 1793014086699780175
+    },
+    {
+      "actual_retained_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141ee-restore-review-next/evidence/restored-unaffected.xml",
+      "sha256": "9adf91d918ee9deda37c0a3f6afdc6080a20a1cd94a2490ea8b6bb2ff49406d2",
+      "bytes": 70534,
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "15",
+          "skipped": "0",
+          "tests": "15",
+          "time": "4.362",
+          "timestamp": "2026-10-26T11:28:16.447318+00:00",
+          "hostname": "vm"
+        }
+      ],
+      "concrete_case_count": 15,
+      "failures": 15,
+      "errors": 0,
+      "skipped": 0,
+      "mtime_ns": 1793014101082766426
+    }
+  ],
+  "outcome": "Source restoration PASS; exact55 mixed invocation executes0 and returns two module collection errors; separate unaffected15 invocation FAIL15. No REG0."
+}

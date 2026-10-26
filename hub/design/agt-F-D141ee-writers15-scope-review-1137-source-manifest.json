@@ -1,0 +1,69 @@
+{
+  "schema": "timeline.f.d141ee.writers15.independent-scope-source-manifest.v1",
+  "review_verdict": "FAIL",
+  "agent_repo": "/home/user/work/wt/agt-F-D141ee-writers15-scope-review-1137",
+  "current_ref": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+  "current_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+  "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+  "runtime_supported_ref": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "c0_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md",
+  "requested_r4_docs_status": "absent at /home/user/peteromallet/astrid-agent/docs/projects/timeline-r4; frozen R4 control branch was inspected with git show where relevant",
+  "author_packet": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-1134/evidence",
+    "per_id_schema": "timeline.f.d141ee.writers15.per-id.v1",
+    "declared_result": "PASS_EVIDENCE",
+    "declared_count": 15,
+    "declared_ids_unique": 15,
+    "source_manifest_current_tree_matches_current": true
+  },
+  "restoration_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-writers18-review-next/evidence/restoration-manifest.json",
+    "declared_count": 15,
+    "overlap_with_assigned": 15,
+    "owner_retirement_not_granted": true,
+    "restoration_commit_already_merged": "14ccf296f3768fcde857047b263834e4a6bbe52e"
+  },
+  "source_files": [
+    {"path":"tests/packs/timeline/test_cli_parity.py","current_git_blob":"0ed1126207a67e3c91dec18a61a2dbaddaf82f01","current_sha256":"14b1ff737adef334f2c8c0539f10921bf73ea1dcf054d805240901376fda1dcf","pristine_git_blob":"71b61a296d8b23b1c5d69209fc6d9315cdb8a71a","pristine_sha256":"8ca7d72a5f7038dde9b9b0dfc23b85d047b8ccf342572916a0253ae625b24af8"},
+    {"path":"tests/packs/timeline/test_cli_status_publish.py","current_git_blob":"3aa6c6547030d8c2b351bad628aac79de36969f4","current_sha256":"e45d12255310ea94bea1741227a4907517d83f448df2d71ab0cde5a710a83c25","pristine_git_blob":"84df897acc31606eda119bef71abe2cfea6fdff4","pristine_sha256":"aef89abedf95ab9e83f12858362e304c918ca6fd228a47b7ff5dfd828ce5b2c9"},
+    {"path":"tests/packs/timeline/test_verbs_working_copy.py","current_git_blob":"7bacde79570a5464c5ea8db41ce2796d0d8dd140","current_sha256":"d27db2ce9ceda654af0ac722e45b358a33077a458b097a9f5adcdcb7f6686ce0","pristine_git_blob":"e44aed75ad8e97e761e795acb820854888a845d0","pristine_sha256":"659ea09fa924c10020b93a91cde487baaf276a606efb3fc85c6b700f099ee638"},
+    {"path":"tests/packs/video_editing/test_runtime_publication_chain.py","current_git_blob":"1957eb26453a8c228158853b137db23ba9227e3a","current_sha256":"8dfd78a379e40842f5e3c074b1799b37d2d3851f1b10d1f624dda65124c6b253","pristine_git_blob":"b17c8d1b622a84eda1a076c00ffd17697f1260a9","pristine_sha256":"35a6831cee04c43d9963993436e6383644e41785612487d1866c2a7961afcbd1"},
+    {"path":"tests/sdk/test_runtime_response_conformance.py","current_git_blob":"b19dc2acd18e41dfe01fa342a0148cb318b0bccf","current_sha256":"97394b5598f746e313221cd613afc8a43138b68c90cb408776e1cc0f186888a2","pristine_git_blob":"6fc678313f25caffb4796af986116b22523a1115","pristine_sha256":"8c7c2d36904a637702b6e6ed2786934f626ff6b06b9b538696dbb58a290541bb"},
+    {"path":"tests/timeline/test_authoring_bundle.py","current_git_blob":"17866d60092999eab90ffc43d035714a7cbd4973","current_sha256":"767420f61f794132ee58ff2ba3e31483ad2a46efb51577239dc535991920b0b0","pristine_git_blob":"c6084c424890fba59f2786439ad492efaff789d8","pristine_sha256":"113b761ff4742b0fe993033ce10ecea6528524e84325c62d975bb5d7e6f05051"},
+    {"path":"tests/v10/test_timelines_create.py","current_git_blob":"a3a1e8a65501d06f22649a3bd73d6cb397d2b3c2","current_sha256":"883d70ffd18ae6d5396e60bac7667610b4c6e44316d37bdf423b27c192491c2a","pristine_git_blob":"64623003fdc83f2be8eb5637e57602fc6de9b423","pristine_sha256":"60a21b974922b0410bf856e699ffeb79758690353a9f372c163d983678f82215"}
+  ],
+  "production_paths_checked": [
+    "astrid/packs/timeline/cli.py:_cmd_commit,_configure_commit",
+    "astrid/packs/timeline/cli_native.py:commit_document,_render_commit_result,commit_edit",
+    "astrid/sdk/timeline/sync.py:TimelineSession._flush,submit",
+    "astrid/sdk/workspace_client.py:commit_timeline and publish_parent_composition",
+    "astrid/sdk/timeline/commit.py:RuntimeCommitService.commit",
+    "astrid/sdk/timeline/publish.py:_PublishMixin.publish",
+    "astrid/packs/timeline/cli_working.py:_cmd_restructure",
+    "astrid/packs/rendering/shared/runtime_stitch.py:publish_authoring_proposal",
+    "astrid/core/timeline/authoring_bundle.py:publish_authoring_candidate",
+    "astrid/sdk/remote.py:RemoteTimelines.create_empty"
+  ],
+  "assigned": [
+    {"n":4,"id":"tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message","current_selector":"tests/packs/timeline/test_cli_parity.py::test_commit_requires_a_message"},
+    {"n":5,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]"},
+    {"n":6,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]"},
+    {"n":7,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_forwards_key_through_the_authenticated_closure"},
+    {"n":8,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt"},
+    {"n":9,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing"},
+    {"n":10,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]"},
+    {"n":11,"id":"tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]","current_selector":"tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]"},
+    {"n":12,"id":"tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]","current_selector":"tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite"},
+    {"n":13,"id":"tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]","current_selector":"tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite"},
+    {"n":14,"id":"tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke","current_selector":"tests/packs/video_editing/test_runtime_publication_chain.py::test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke"},
+    {"n":15,"id":"tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details","current_selector":"tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_maps_to_conflict_and_keeps_its_details"},
+    {"n":16,"id":"tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision","current_selector":"tests/timeline/test_authoring_bundle.py::test_d66_upstream_approval_is_bound_to_candidate_and_base_revision"},
+    {"n":17,"id":"tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation","current_selector":"tests/timeline/test_authoring_bundle.py::test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation"},
+    {"n":18,"id":"tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head","current_selector":"tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_native_commit"}
+  ],
+  "historical_evidence": {
+    "raw_private_xml": "not present; not claimed",
+    "retained_summary_only": true,
+    "prior_report_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/luna/reports/ (absent in this environment)"
+  }
+}

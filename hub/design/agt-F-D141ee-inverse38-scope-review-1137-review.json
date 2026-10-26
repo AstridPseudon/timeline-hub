@@ -1,0 +1,64 @@
+{
+  "schema": "timeline.f.d141ee.inverse38.scope-review.independent.v1",
+  "verdict": "PASS_EVIDENCE",
+  "scope": "U2 F D141ee inverse38 purpose and scope",
+  "assigned_count": 38,
+  "checked_count": 38,
+  "unique_count": 38,
+  "id_sets_equal": true,
+  "id_inventory_sha256": "8aa86a80a7c9bc277f267d48cbd383e37ba477989a735d20f4ef8fa562f2f9b0",
+  "author_classification_counts": {
+    "unresolved_intent_needing_owner_scope": 38,
+    "live_behavior_missing_current_supported_path": 0,
+    "c0_refused_or_solely_retired_proven": 0
+  },
+  "independent_classification": {
+    "same_body_and_assertions_current_pass": 0,
+    "owner_approved_retirement": 0,
+    "pending_owner_scope": 38,
+    "current_selector_rows_are_analogue_only": 25,
+    "rows_without_current_selector": 13
+  },
+  "protected_data_check": {
+    "purpose_present": 38,
+    "input_present": 38,
+    "protected_assertions_present": 38,
+    "reason_present": 38,
+    "parameters_and_parameter_tuples_bound_to_pristine_source": true
+  },
+  "finite_findings": [
+    {
+      "id": "F1",
+      "severity": "handoff-correction",
+      "finding": "The author evidence and bound restoration manifest still propose restoring the pristine product/test blobs and running the inverse targeted test.",
+      "evidence": "The exact test blob is already present at 445b9c1a7f:tests/timeline/test_inverses.py and was merged by 14ccf296f3; the old product module remains absent.",
+      "decision": "Do not repeat restoration or manufacture another test result. Preserve the retained targeted collection-error result as historical evidence only; the next action is owner scope disposition or a separately authorized protected migration."
+    },
+    {
+      "id": "F2",
+      "severity": "scope-boundary",
+      "finding": "The author’s single umbrella owner question must not be interpreted as blanket inverse retirement.",
+      "evidence": "MAIN D141ee requires a per-ID rename/move PASS, owner-approved D120 item 5 retirement, or restoration; C0/G5 do not themselves approve retirement. The event schema still retains TimelineEvent and ErasedPayload.",
+      "decision": "Keep all 38 pending. Any later owner decision must name the exact ID or an explicitly bounded equivalent group, preserve erased-content/confidentiality and other protected assertions, and name the supported caller/selector or an explicit no-selector disposition."
+    },
+    {
+      "id": "F3",
+      "severity": "evidence-boundary",
+      "finding": "Current command-record inverse tests and the commitTimeline route are semantic analogues, not same-body/assertion migrations of the old pure TimelineEvent planner.",
+      "evidence": "The current path is TimelineSession.undo -> commitTimeline -> Agent commands.execute/apply_inverse -> Runtime provider/store; no production plan_inverse/plan_inverses caller exists, and no exact current PASS was supplied.",
+      "decision": "Do not credit any analogue selector as a moved PASS or as proof that the old purpose is obsolete. If a live promise is retained, a future bounded author must name the minimal Agent repair and meaningful actual caller/selector."
+    }
+  ],
+  "behavior_claims": {
+    "behavior_pass": false,
+    "reg0": false,
+    "retirement": false,
+    "full_or_targeted_test_run_by_this_review": false
+  },
+  "inputs": {
+    "author_per_id": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-1134/evidence/per-id.json",
+    "author_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-inverse38-scope-1134/evidence/source-manifest.json",
+    "restoration_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-inverse38-review-next/evidence/restoration-manifest.json",
+    "main_ruling": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md:1097-1103"
+  }
+}

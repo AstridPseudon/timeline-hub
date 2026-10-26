@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.f.d141ee.inverse38.scope-review.independent-source-manifest.v1",
+  "status": "PASS_EVIDENCE",
+  "assigned_base": {
+    "ref": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "parent_supported_agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92"
+  },
+  "pristine": {
+    "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "product_blob": {
+      "path": "astrid/core/timeline/inverses.py",
+      "blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+      "sha256": "e67002be0ddf041cfc4e80ee23e727d2d4f0479c11fec07f387e349c657b530c"
+    },
+    "test_blob": {
+      "path": "tests/timeline/test_inverses.py",
+      "blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+    }
+  },
+  "restored_current_test": {
+    "merge": "14ccf296f3768fcde857047b263834e4a6bbe52e",
+    "path": "tests/timeline/test_inverses.py",
+    "blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+    "byte_identical_to_pristine": true
+  },
+  "current_source_findings": {
+    "old_inverse_module_on_assigned_base": "ABSENT",
+    "old_planner_production_callers": 0,
+    "timeline_event_schema_retained": true,
+    "erased_payload_schema_retained": true,
+    "current_agent_inverse": "astrid/sdk/timeline/inverse.py:1032-1220 apply_inverse",
+    "current_agent_commands": "astrid/sdk/timeline/commands.py:201-308",
+    "current_agent_session_undo": "astrid/sdk/timeline/sync.py:422-462",
+    "current_runtime_commit_route": "runtime_protocol/service.py:2468-2565 commit_timeline/_execute_timeline_commit",
+    "current_runtime_provider": "runtime_protocol/timeline_commit_provider.py:70-93",
+    "writer_owner": "Runtime only; Agent provider supplies semantics through commitTimeline"
+  },
+  "contract_scope": {
+    "c0": "/home/user/work/runtime/contract/commit-v2.md",
+    "relevant_rules": [
+      "Runtime is the only writer",
+      "Python Agent provider computes semantics, validation, rebase and inverses",
+      "undo is guarded against later history and A-to-B-to-A",
+      "absence of the old planner does not prove its event purpose obsolete"
+    ],
+    "canonical_runtime_schema_changed": false
+  },
+  "retained_history": {
+    "restore_validation": "Exact source restoration PASS; inverse targeted collection error due to absent astrid.core.timeline.inverses; aggregate retained run had 15 executed failures and 40 collection-error nodes.",
+    "raw_private_xml": "Not claimed present",
+    "historical_results_upgraded": false
+  },
+  "author_evidence_sha256": {
+    "per-id.json": "5b23bf57f6b56c5e1e602349d93c66bad67d03a3c33e8f9ee055ddb3227a8da5",
+    "source-manifest.json": "58d23adc9f4fdfacc96d4ad868f9313a6b82f126ab16afb0a0b8c82e45bfcd1d",
+    "validation.md": "6d5deddd5fb98c0140abc05167fb645d33bedbf0e8058a4cb405162d82f2ca44",
+    "handoff.md": "e6a939c5edca0d1991d6aabb203263e4616472cca2ea86d8976c908ae4cac7ae"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "timeline.f.d141ee.writers15.independent-scope-review.v1",
+  "verdict": "FAIL",
+  "scope": "Exactly assigned IDs 4-18 from the author packet, source-only against Agent 445b9c1, pristine 64197afa, C0 and PLAN U2/G5/F.",
+  "assigned_count": 15,
+  "assigned_unique_count": 15,
+  "behavior_pass_claim": false,
+  "reg0_claim": false,
+  "retirement_approval_claim": false,
+  "source_checks": {
+    "author_packet_ids_exact": true,
+    "restoration_manifest_overlap": 15,
+    "current_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "current_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "pristine_commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "c0_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md",
+    "user_requested_r4_docs_path": "/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/ (absent in this checkout)"
+  },
+  "finite_findings": [
+    {
+      "id": "F1",
+      "rows": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+      "finding": "The author disk trace is not a review-lifetime five-second sampler: disk-trace.txt contains five samples about one second apart plus df header lines. validation.md calls this six one-second samples.",
+      "required_decision": "Do not credit the author sampler; this review's fresh sampler is the only disk trace for this review."
+    },
+    {
+      "id": "F2",
+      "rows": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+      "finding": "The handoff's next action says to restore all 15 originals, but those originals were already restored by 445b9c1 and merged by 14ccf296f3 before this review.",
+      "required_decision": "Replace the obsolete restoration instruction with scope adjudication and, only after owner decisions, targeted same-kind verification; do not restore or edit tests again."
+    },
+    {
+      "id": "F3",
+      "rows": [4, 5, 6, 7, 9, 10, 11, 14, 15, 16, 17, 18],
+      "finding": "The packet labels these cases C0_REFUSED_OR_RETIRED_INTERFACE and its handoff calls twelve replacements settled. C0/G5 route retirement is only scope rationale; it does not retire the protected purpose or approve a moved assertion. Current source shows live supported commit callers for message validation, conflict/no-write/no-retry, no-op, receipt/idempotency, render authority, conflict mapping, approval/recovery, and empty initialization.",
+      "required_decision": "Keep each protected purpose REG-pending until the same body/assertions pass on the named current selector or MAIN records an exact owner retirement. Do not infer closure from an absent helper or old route."
+    },
+    {
+      "id": "F4",
+      "rows": [7],
+      "finding": "The original row asserts both idempotency forwarding and force=True forwarding. The packet preserves the former but treats the latter as retired without an exact per-ID proposed decision or replacement selector. C0 settles that force overwrite is refused, not that the whole original assertion can be silently closed.",
+      "required_decision": "Proposed MAIN/Agent decision: retain key propagation, one-call, success/head and authority coverage on tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_forwards_key_through_the_authenticated_closure; add/retain an explicit commit-path invalid/refused-force selector owned by the CLI/commit presenter. No force adapter."
+    },
+    {
+      "id": "F5",
+      "rows": [10, 11],
+      "finding": "The packet says the old narration-after-publish wrapper is not a second writer and closes the cases on generic commit selectors, but current 445b9c1 still has astrid/sdk/timeline/publish.py:_PublishMixin.publish and astrid/packs/timeline/cli_working.py:_cmd_restructure calls tl.publish. This is an upstream route/source-of-truth conflict requiring an explicit per-ID scope decision.",
+      "required_decision": "Proposed MAIN/Agent decision: preserve receipt durability, partial-failure details, idempotency and no-retry on the actual restructure/narration caller after it is routed through commitTimeline/provider; use the parameter-specific normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry selectors only as proposed replacements, not as an approved move."
+    },
+    {
+      "id": "F6",
+      "rows": [8, 12, 13],
+      "finding": "The packet correctly leaves these three owner-scope cases unresolved, but its current selectors are only weaker source mappings and cannot be credited as behavior preservation.",
+      "required_decision": "Keep pending. Row 8 needs the exact three-line human summary and JSON-envelope decision at cli_native.py:_render_commit_result. Rows 12 and 13 remain distinct actor/head inputs and need separate conflict-presenter decisions using the existing C0 reason/head, with no force option."
+    },
+    {
+      "id": "F7",
+      "rows": [15],
+      "finding": "The packet calls publish_parent_composition directly refused, while current Agent 445b9c1 still exposes WorkspaceClient.publish_parent_composition and RemoteTimelines dispatches that operation. Runtime refusal and Agent surface retirement are different claims; the source packet provides no exact owner decision joining them.",
+      "required_decision": "Proposed MAIN/Agent decision: preserve the commitTimeline 409 mapping selector for the supported route; separately record the old endpoint's exact refusal/retirement owner and keep no old writer body or replacement route."
+    }
+  ],
+  "cases": [
+    {"n": 4, "id": "tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/packs/timeline/test_cli_parity.py::test_commit_requires_a_message", "owner_decision": "Retain nonempty label and parsed-label assertions on commit; no publish-route revival."},
+    {"n": 5, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False]", "owner_decision": "Retain human refusal/no-write/no-retry on commit; old exception identity is not a retirement of the promise."},
+    {"n": 6, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[True]", "owner_decision": "Retain JSON refusal/no-write/no-retry as a distinct parameter case."},
+    {"n": 7, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once", "status": "SPLIT_SCOPE_REG_PENDING", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_forwards_key_through_the_authenticated_closure plus a force-refusal selector", "owner_decision": "Retain idempotency/one-call/authority; force must be rejected, never adapted."},
+    {"n": 8, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope", "status": "OWNER_SCOPE_PENDING", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt", "owner_decision": "MAIN decides exact human summary and JSON envelope; current weaker selector is not PASS."},
+    {"n": 9, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing", "owner_decision": "Retain successful no-op/no-receipt/no-history behavior on commit."},
+    {"n": 10, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]", "status": "REG_PENDING_CALLER_CONFLICT", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False]", "owner_decision": "Preserve human partial-failure receipt/no-retry on the actual restructure/narration commit caller."},
+    {"n": 11, "id": "tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]", "status": "REG_PENDING_CALLER_CONFLICT", "replacement_selector": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[True]", "owner_decision": "Retain JSON receipt/details/idempotency and no-retry as a distinct parameter case."},
+    {"n": 12, "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]", "status": "OWNER_SCOPE_PENDING", "replacement_selector": "tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite plus a dedicated editor-head presentation selector", "owner_decision": "MAIN decides actor identity/path/discard-first wording; preserve no-write/no-force regardless."},
+    {"n": 13, "id": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]", "status": "OWNER_SCOPE_PENDING", "replacement_selector": "tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite plus a dedicated generic-head presentation selector", "owner_decision": "MAIN decides generic actor/discard-first wording separately from row 12."},
+    {"n": 14, "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke", "owner_decision": "Retain attempt/lease/timeline/version authority and no-local-save/invoke through requester-owned commit plus render admission."},
+    {"n": 15, "id": "tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details", "status": "REG_PENDING_ROUTE_CONFLICT", "replacement_selector": "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_maps_to_conflict_and_keeps_its_details", "owner_decision": "Retain typed 409 details/request-id mapping on commit; separately decide old endpoint refusal, never revive it."},
+    {"n": 16, "id": "tests/timeline/test_authoring_bundle.py::test_approval_is_bound_to_candidate_and_base_revision", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/timeline/test_authoring_bundle.py::test_d66_upstream_approval_is_bound_to_candidate_and_base_revision", "owner_decision": "Retain exact candidate/base refusal, zero writer on refusal, approval id and one requester-owned commit."},
+    {"n": 17, "id": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/timeline/test_authoring_bundle.py::test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation", "owner_decision": "Retain restart recovery, one render/claim, digest binding and one requester-owned commit."},
+    {"n": 18, "id": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_empty_head", "status": "REG_PENDING_LIVE_PURPOSE", "replacement_selector": "tests/v10/test_timelines_create.py::test_remote_create_empty_creates_shell_then_native_commit", "owner_decision": "Retain shell, empty canonical head, defaults, project identity and idempotency through timeline.init/doc.patch commit."}
+  ],
+  "non_claims": [
+    "No behavior PASS, REG0, retirement approval or ship verdict.",
+    "No pytest, collection, typecheck, lint, request, CAS, service, browser, installer, package, body, or full-suite execution.",
+    "The removed private XML is not claimed present; retained summaries are not manufactured history."
+  ]
+}
