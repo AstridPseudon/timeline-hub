@@ -1,0 +1,31 @@
+{
+  "utc": "2026-10-26T08:25:08.894781+00:00",
+  "rows": [
+    {
+      "worker": "app-F-D141z-build-stop-host-0812",
+      "repo": "composition",
+      "base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "available_bytes": 4931874816,
+      "live_before": [],
+      "pending_before": [],
+      "source_only": true,
+      "heavy": false
+    },
+    {
+      "worker": "app-P4-D141l-cli-source-host-0825",
+      "repo": "agent",
+      "base": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "available_bytes": 4931862528,
+      "live_before": [],
+      "pending_before": [
+        "app-F-D141z-build-stop-host-0812"
+      ],
+      "source_only": true,
+      "heavy": false
+    }
+  ],
+  "floor": 4600000000,
+  "cap": 3,
+  "real_bodies": false,
+  "hub_reads_only": true
+}

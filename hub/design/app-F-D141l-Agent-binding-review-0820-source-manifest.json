@@ -1,0 +1,25 @@
+{
+  "review": "app-F-D141l-Agent-binding-review-0820",
+  "verdict": "FAIL",
+  "author_source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence/source-manifest.json",
+  "author_packet_file_sha256": {
+    "controller-continuation.sh": "780f2ce672ec8a002be784a0e44fd4ec82601b8342de9d8bad9d4b5f98f5e994",
+    "binding-source.py": "703b0fa3c36b4b9e47c456bd75a30fbcc65e8a81f78a82416732f6143d0f5044",
+    "check-source.py": "6e5c4f7702b1001f04ff7751e49c75b5b3e4b7d36e9e413322a1d5f2d3c02e7d",
+    "command-cut.sh": "72fa453e1cc01279e8c19c8fc691e6a4994a7d09f9c2c3f860b80ded05cd4022",
+    "command-pristine.sh": "cc700b6b82d8eefaf58fc25b78f21897f4d67372abbe8d4cb343ff807dec60da",
+    "tiny-controls.sh": "393a5bbefc1b0c7f57906e02dcfbf111843e8ff3bda5fd8ece74a3cfeb9a5b66",
+    "positive-stub.sh": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+    "positive.manifest": "d6a8865cc908b518ed0ffce7defe44f91846a983c8cd3befebbeb5477380f3e7",
+    "poison.manifest": "ba0bd7d07dc1dcfdd9da8a6fcf2cdce2341925f3ae99021f3fdfb8abb8413596",
+    "rows.txt": "4b32dc58b0ad6a728aba7c187dec2c0f4fc36404277bcdcaa3d48c2a0aacee57"
+  },
+  "app_binding": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "historical_4de_receipt_preserved": true},
+  "floors": {"controller_dispatch_bytes": 4714564096, "agent_core_full_service_bytes": 4700000000, "default_light_bytes": 5000000000, "continuous_stop_bytes": 4000000000},
+  "request_fields": ["target", "repo", "suite", "files", "nocache", "requested"],
+  "protected_settings": {"cut_roots": 22, "pristine_roots": 17, "pytest_workers": 3, "addopts": "", "cacheprovider": "disabled", "timeout_seconds": 45},
+  "missing_private_controls": {"count": 45, "groups": {"0249": 5, "26496": 10, "27388": 9, "10086": 10, "0318": 1, "0309": 3, "0515": 6, "0508": 1}},
+  "pristine_checkouts": {"agent": {"path": "/home/user/work/wt/agt-pin-64197afa", "present": false}, "runtime": {"path": "/home/user/work/wt/rt-pin-fa9cd546", "present": false}},
+  "live_registry": {"suite_config": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf", "agent_core_full_present": false, "agent_rows": ["full", "targeted", "conformance"]},
+  "manifests_distinct": {"command_manifest": "positive.manifest", "source_manifest": "source-manifest.json", "same_path": false, "same_bytes": false}
+}

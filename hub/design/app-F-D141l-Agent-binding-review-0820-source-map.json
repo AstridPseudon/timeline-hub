@@ -1,0 +1,31 @@
+{
+  "review": "app-F-D141l-Agent-binding-review-0820",
+  "verdict": "FAIL",
+  "base": {
+    "composition_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "author_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence",
+    "review_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence"
+  },
+  "review_inputs": {
+    "independent_0731_findings": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-findings.md", "sha256": "430afdfe612d4a50e24f19279687c65b65ed7d5ae17f8b7de4184b2fea281386"},
+    "independent_0731_review": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-review.json", "sha256": "d5b71f159632348c5f87c0cda65cf90f581b8d10d700670a46cb4a5aa99e4b3e"},
+    "runtime_0640_findings": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-findings.md", "status": "published"},
+    "runtime_0640_handoff": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-runtime-wholepath-0752-handoff.md", "status": "published"},
+    "contract": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md", "status": "read"}
+  },
+  "tuples": {
+    "integrated": {
+      "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "path": "/home/user/work/agent", "clean": true},
+      "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "path": "/home/user/work/runtime", "clean": true},
+      "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "path": "/home/user/work/app", "clean": true},
+      "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "path": "/home/user/work/composition", "clean": true}
+    },
+    "pristine": {
+      "agent": {"sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "path": "/home/user/work/wt/agt-pin-64197afa", "present": false},
+      "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "path": "/home/user/work/wt/rt-pin-fa9cd546", "present": false}
+    }
+  },
+  "ordering": ["dispatch floor", "row CAS", "request-test returned ID", "request bytes and native row capture", "brief and receipt", "test-run", "wait-test terminal", "terminal binding", "restore row", "serial pristine phase"],
+  "source_only": {"request_test": false, "test_run": false, "wait_test": false, "row_install": false, "body": false}
+}

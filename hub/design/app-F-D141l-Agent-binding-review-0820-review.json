@@ -1,0 +1,37 @@
+{
+  "task": "F D141l independent operational source review",
+  "verdict": "FAIL",
+  "status": "FAIL_FINITE_BLOCKERS",
+  "reviewed_base": {
+    "composition_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "author_evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-return-0735/evidence",
+    "reviewer_evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence"
+  },
+  "findings": [
+    {"id": "F-D141L-REVIEW-001", "severity": "blocking", "title": "Exact author checker is not reproducible: 45 retained inputs are absent"},
+    {"id": "F-D141L-REVIEW-002", "severity": "blocking", "title": "Pristine Agent and Runtime checkout paths are absent"},
+    {"id": "F-D141L-REVIEW-003", "severity": "blocking", "title": "Checker still requires the historical agent-core-full row although source-only uninstalled state is expected"},
+    {"id": "F-D141L-REVIEW-004", "severity": "blocking", "title": "Future controller only CAS-replaces an existing row and cannot establish the current missing agent-core-full row"},
+    {"id": "F-D141L-REVIEW-005", "severity": "blocking", "title": "Required original production launcher control is unverified: pinned runtime/profile is absent"}
+  ],
+  "controls": {
+    "author_exact_check": {"exit": 78, "result": "REFUSED missing 0249 exit path"},
+    "bash_n": {"exit": 0, "shell_count": 5},
+    "python_ast": {"exit": 0, "python_count": 2},
+    "controller_check": {"exit": 0, "status": "SOURCE_READY", "request_test": "not_called", "test_run": "not_called", "wait_test": "not_called"},
+    "isolated_controller": {"status": "PASS", "returned_ids": 2, "distinct_ids": true, "row_restored": true},
+    "isolated_admission": {"cases": 10, "positive": 1, "negative": 9},
+    "isolated_lifecycle": {"cases": 36, "exit": 0},
+    "tiny_launcher": {"exit": 1, "positive_calls": 0, "expected": "positive 17/1 and poison 1/0; poison not reached"}
+  },
+  "admission": {
+    "real_pair_started": false,
+    "request_test": "not_called",
+    "test_run": "not_called",
+    "wait_test": "not_called",
+    "rows_installed": false,
+    "body_started": false,
+    "ship_claim": false
+  }
+}

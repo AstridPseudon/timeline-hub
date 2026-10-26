@@ -1,0 +1,54 @@
+{
+  "utc": "2026-10-26T08:27:59.742171+00:00",
+  "worker": "app-F-D141l-Agent-binding-review-0820",
+  "verdict": "FAIL_FINITE_BLOCKERS",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-review.json",
+      "sha256": "1c64de7a2045d85df264a4fef03bdbbdc5beef63f8b83f4e1dee0d3ab81bf923",
+      "bytes": 2353
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-findings.md",
+      "sha256": "04bdef721832d33c8e9d08a6887dd514246d1c5a4a246c6eacc566c8a149c672",
+      "bytes": 4900
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-source-map.json",
+      "sha256": "aac4e4ede13055115e1f6c2b5533dab118972e3f45d817340e7df7b56fac969a",
+      "bytes": 3005
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-source-manifest.json",
+      "sha256": "2dcf079592f7ecf9c15ec781826078bfe78ab8b968487a8a3af3c8aca1997fcf",
+      "bytes": 2498
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-validation.md",
+      "sha256": "0c31a00eddca79ee0e35eaefebb4142fbe37b0f9bee98aec3bf0b083234eac62",
+      "bytes": 1887
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-handoff.md",
+      "sha256": "5b000e8afde1c460830361fc601ac5e4b3c11f642e6caf738aefdb8ac60cdfa9",
+      "bytes": 1430
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141l-Agent-binding-review-0820/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-Agent-binding-review-0820-disk-trace.txt",
+      "sha256": "7ab1b610e2ce23b11c740e910b90666fd73d51e381d94bed13424409160f2561",
+      "bytes": 1855
+    }
+  ],
+  "manager_limits": [
+    "45 missing retained inputs, absent pristine/toolchain and registry are App-host observations, not Agent authoritative absence.",
+    "review.json copied Composition tree5ab519 is wrong; actual6a2d tree is57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847. Raw reviewer originals unchanged.",
+    "Native concurrency, failed-cut continuation and queued floor need complete read-only whole-path disposition."
+  ]
+}
