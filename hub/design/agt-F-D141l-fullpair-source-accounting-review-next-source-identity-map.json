@@ -1,0 +1,490 @@
+{
+  "approved_retirements_added": 0,
+  "current_agent": {
+    "ref": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+  },
+  "current_runtime": {
+    "ref": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "symbol_matches": [
+      "95d98f038320d5d46bd679ac000ab3e15825c935:conformance/responses/retired_route_410.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:contract/artifacts.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:contract/commit-v2.md",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/acceptance.txt",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/parent-regression.txt",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/probe-source-candidate.txt",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/probe-source-parent.txt",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-native21-66e943bd/authenticated-state.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-native21-66e943bd/manifest.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-native21-67b709d6/authenticated-state.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-native21-67b709d6/manifest.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-p1-0b61b565/authenticated-state.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-p1-0b61b565/manifest.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-p1-3f22ff4d/authenticated-state.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/readiness-p1-3f22ff4d/manifest.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:diagnostics/readiness-auth/static-analysis.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:generators/generate.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:generators/python_client_init_template.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:generators/python_client_template.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:generators/timeline_commit_types.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:packages/python/astrid_runtime_client/__init__.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:packages/python/astrid_runtime_client/generated.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/canonical_schema.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/capture_validation.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/daemon.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/door.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/server.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/service.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/store.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_catalog.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_auth.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_baseline.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_execution.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_inputs.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_port.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_producer.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_producer_checkpoint.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_provider.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/timeline_commit_store.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:runtime_protocol/upgrade.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:scripts/artifact_manifest.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/baseline_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/fixtures/timeline_document_object_types.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/fixtures/timeline_inverse_native_order_1416.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/fixtures/timeline_leaf_inverse_1246.json",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/helpers/p2_commit_phase_capture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/historical_audio_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/qualify_absent_head_repair.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/readiness_auth_observation.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/restore_history_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/schema_fixtures.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_authored_json_key_parity.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_canonical_render_admission.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_capture_candidate_actual.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_capture_candidate_binding.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_capture_claim_identity.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_direct_render_admission.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_generation_publish_v1_settlement.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_idempotency_compaction.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_operation_handle_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_p2_commit_phase_capture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_precut_realm_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_precut_variants.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_project_reference_catalog.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_project_shot_catalog_custody.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_realm_admission_hardening.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_render_admission_exact_retry.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_render_admission_replay_compat.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_render_historical_admission.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_render_native_historical_retry.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_render_terminal_admission_retry.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_restore_history_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_runtime_domains.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_runtime_p1_blockers.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_runtime_unavailable_reason_tags.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_shot_candidate_promotion.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_shot_composition_runtime.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_snapshot_authority_refusal.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_snapshot_preflight.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_spec_reference.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_stage1_runtime_contract_completion.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_absent_head_repair_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_bundle2_contract.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_capture_projection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_catalog_history_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_clip_replacement.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_command_output_manifest_auth.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_acceptance.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_ancestry_reads.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_archive_replay.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_authentication.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_baseline.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_closure_growth.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_closure_invariants.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_contract.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_crash.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_execution.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_film_fixture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_input_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_inputs.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_port.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_producer.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_provider.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_read_basis.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_redacted_diagnostics.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_restore_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_restore_port.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_routes.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_sequential_verifier.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_type_generator.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_commit_validation.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_current_union_contract.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_diagnostic_key_correlation.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_document_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_document_object_contract.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_effect_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_empty_shell_repair.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_forward_created_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_fresh_bootstrap_scope.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_headless_overwrite_refused.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_assembly.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_authenticated_read.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_boundaries.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_diagnostics.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_emitter_boundaries.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_history_state.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_intermediate_image_auth.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_internal_nesting.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_inverse_historical_image.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_inverse_occurrence_retirement.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_inverse_removed_alias_boundary.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_inverse_sequential_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_inverse_stage_authentication.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_legacy_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_legacy_occupancy.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_lock_placement_limits.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_media_completion_fence.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_media_selection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_missing_observation_diagnostics.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_native_asset_union.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_native_inspection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_null_speed_retained.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_ordinary_http.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_pack_document_read.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_pack_inputs.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_pack_param_retained_read.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_popup_fork_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_popup_fork_owner_projection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_portable_pack_integration.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_producer_checkpoint.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_producer_guards.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_producer_record_boundary.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_projection_occupancy.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_public_s2_mixed_cli_journey.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_raw_capture.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_raw_payload_contract.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_reads_after_cut.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_recorder_abi_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_redo_restoration_boundary.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_reference_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_render_publication.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_render_publication_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_request_verification.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_schema_resolution.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_shared_inverse_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_shot_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_source_document_boundary.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_source_duplicate_authority.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_step_materialization_boundary.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_text_binding_clear.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_text_legacy_custody.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_text_selection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_unplaced_reference_projection.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_validation_cost.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_validation_walk.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_timeline_verified_media.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_visual_seam_admission.py",
+      "95d98f038320d5d46bd679ac000ab3e15825c935:tests/test_wc10_installed_launcher.py"
+    ],
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "five_cut_only_identity_checks": [
+    {
+      "actual_cut_result": "FAIL",
+      "behavioral_action": "retain failure as NEW_OURS/known gap; owner must restore or explicitly retire",
+      "check": "pristine exact function absent; current failure is source-backed N_A",
+      "current_blob": "38884ae901955ce59a949daaf788936812c4dd45",
+      "current_exact_functions": [
+        {
+          "body_sha256": "369ca3591b4d11ab47339d6d14c3b713519c7a03009996f8e78f747ee8459eea",
+          "decorators": [],
+          "line": 673,
+          "name": "test_d13_installed_native_preflight",
+          "parameters": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_file_present": true,
+      "current_file_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+      "function": "test_d13_installed_native_preflight",
+      "pristine_blob": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+      "pristine_exact_functions": [],
+      "pristine_file_present": true,
+      "pristine_file_sha256": "35a6831cee04c43d9963993436e6383644e41785612487d1866c2a7961afcbd1",
+      "renamed_body_exact_matches": [],
+      "requested_id": "test_d13_installed_native_preflight",
+      "source_file": "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "source_node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight"
+    },
+    {
+      "actual_cut_result": "FAIL",
+      "behavioral_action": "retain failure as NEW_OURS/known gap; owner must restore or explicitly retire",
+      "check": "pristine exact function absent; current failure is source-backed N_A",
+      "current_blob": "2e96eca68df432a444e795b1bd95ee1d4e8a1b18",
+      "current_exact_functions": [
+        {
+          "body_sha256": "1015411827593281a9ef24df18fe03549f67eeb4459c5f480858c8e3e6aefe90",
+          "decorators": [
+            "pytest.mark.integration"
+          ],
+          "line": 746,
+          "name": "test_public_document_compound_inverse_restores_exact_original",
+          "parameters": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_file_present": true,
+      "current_file_sha256": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "function": "test_public_document_compound_inverse_restores_exact_original",
+      "pristine_blob": "aeafff81c3fa08f2e6fb3d7c5425715ab03cf8ea",
+      "pristine_exact_functions": [],
+      "pristine_file_present": true,
+      "pristine_file_sha256": "e00ec6ac9230790bc40dd866479e13c371e9837b4ca25340176edb14886b7ad4",
+      "renamed_body_exact_matches": [],
+      "requested_id": "test_public_document_compound_inverse_restores_exact_original",
+      "source_file": "tests/timeline/test_authoring_media.py",
+      "source_node_id": "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original"
+    },
+    {
+      "actual_cut_result": "FAIL",
+      "behavioral_action": "retain failure as NEW_OURS/known gap; owner must restore or explicitly retire",
+      "check": "pristine exact function absent; current failure is source-backed N_A",
+      "current_blob": "2e96eca68df432a444e795b1bd95ee1d4e8a1b18",
+      "current_exact_functions": [
+        {
+          "body_sha256": "6c123cb5d33695cd27c07616035f916062769970adb61b40867555e2b3ce2abb",
+          "decorators": [
+            "pytest.mark.integration",
+            "pytest.mark.parametrize('recorded', [True, False])"
+          ],
+          "line": 741,
+          "name": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+          "parameters": [
+            "recorded",
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_file_present": true,
+      "current_file_sha256": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "function": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+      "pristine_blob": "aeafff81c3fa08f2e6fb3d7c5425715ab03cf8ea",
+      "pristine_exact_functions": [],
+      "pristine_file_present": true,
+      "pristine_file_sha256": "e00ec6ac9230790bc40dd866479e13c371e9837b4ca25340176edb14886b7ad4",
+      "renamed_body_exact_matches": [],
+      "requested_id": "test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "source_file": "tests/timeline/test_authoring_media.py",
+      "source_node_id": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]"
+    },
+    {
+      "actual_cut_result": "FAIL",
+      "behavioral_action": "retain failure as NEW_OURS/known gap; owner must restore or explicitly retire",
+      "check": "pristine exact function absent; current failure is source-backed N_A",
+      "current_blob": "2e96eca68df432a444e795b1bd95ee1d4e8a1b18",
+      "current_exact_functions": [
+        {
+          "body_sha256": "6c123cb5d33695cd27c07616035f916062769970adb61b40867555e2b3ce2abb",
+          "decorators": [
+            "pytest.mark.integration",
+            "pytest.mark.parametrize('recorded', [True, False])"
+          ],
+          "line": 741,
+          "name": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+          "parameters": [
+            "recorded",
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_file_present": true,
+      "current_file_sha256": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "function": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+      "pristine_blob": "aeafff81c3fa08f2e6fb3d7c5425715ab03cf8ea",
+      "pristine_exact_functions": [],
+      "pristine_file_present": true,
+      "pristine_file_sha256": "e00ec6ac9230790bc40dd866479e13c371e9837b4ca25340176edb14886b7ad4",
+      "renamed_body_exact_matches": [],
+      "requested_id": "test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "source_file": "tests/timeline/test_authoring_media.py",
+      "source_node_id": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]"
+    },
+    {
+      "actual_cut_result": "FAIL",
+      "behavioral_action": "retain failure as NEW_OURS/known gap; owner must restore or explicitly retire",
+      "check": "pristine exact function absent; current failure is source-backed N_A",
+      "current_blob": "2e96eca68df432a444e795b1bd95ee1d4e8a1b18",
+      "current_exact_functions": [
+        {
+          "body_sha256": "c9bda74badeb44ed13d983eeaa6bc26c4f2e47c01acfbcc93f93d955df3cf947",
+          "decorators": [
+            "pytest.mark.integration"
+          ],
+          "line": 910,
+          "name": "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+          "parameters": [
+            "tmp_path",
+            "monkeypatch",
+            "real_runtime",
+            "capsys"
+          ]
+        }
+      ],
+      "current_file_present": true,
+      "current_file_sha256": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "function": "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+      "pristine_blob": "aeafff81c3fa08f2e6fb3d7c5425715ab03cf8ea",
+      "pristine_exact_functions": [],
+      "pristine_file_present": true,
+      "pristine_file_sha256": "e00ec6ac9230790bc40dd866479e13c371e9837b4ca25340176edb14886b7ad4",
+      "renamed_body_exact_matches": [],
+      "requested_id": "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+      "source_file": "tests/timeline/test_authoring_media.py",
+      "source_node_id": "tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba"
+    }
+  ],
+  "five_summary": {
+    "actual_cut_failures_retained": 5,
+    "d63_cheap_rename_checks": {
+      "actual_cut_failures_retained": 5,
+      "pristine_exact_absent": 5,
+      "renamed_body_exact_matches": 0,
+      "total": 5
+    },
+    "pristine_exact_absent": 5,
+    "source_backed_na": 5,
+    "total": 5
+  },
+  "pristine_agent": {
+    "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+  },
+  "pristine_only_accounting": {
+    "approved_migrations_or_retirements_cited": 0,
+    "behavior_proven": 0,
+    "counterpart_statuses": {
+      "PASS": 9
+    },
+    "current_xml_counterpart_rows": 9,
+    "groups": {
+      "CLI/publish/native create": 18,
+      "inverse": 38,
+      "schema/installer": 8
+    },
+    "policy": "Source presence and changed parameter display/path do not prove preservation.",
+    "total": 64,
+    "unresolved": 64
+  },
+  "pristine_only_count": 64,
+  "pristine_only_source_files": [
+    {
+      "current_blob": "23885f8f6ee62ca9a85fadff4ff32cdf4b1350b0",
+      "current_present": true,
+      "current_sha256": "5b7a4c3a80daf2a2ceb0830dfca3d1ddc16b24cf66e496f11c3ae0b16bd381ce",
+      "pristine_blob": "e7d4a17c78999dd04339b0a0af1259e2c8922047",
+      "pristine_present": true,
+      "pristine_sha256": "0c56e06911e8c994978fb721f07a11f50dd67af90b33112f4ffb5a7b5d033b89",
+      "source_file": "tests/packs/rendering/test_render_export_task_adapter.py"
+    },
+    {
+      "current_blob": "fdd41177fce354b59f9dbd7967877410c7f6c2ea",
+      "current_present": true,
+      "current_sha256": "c0748f89014ca8a6def028c5f0e3d7779ab8ebe251b414c3de3cf2b22837b17e",
+      "pristine_blob": "71b61a296d8b23b1c5d69209fc6d9315cdb8a71a",
+      "pristine_present": true,
+      "pristine_sha256": "8ca7d72a5f7038dde9b9b0dfc23b85d047b8ccf342572916a0253ae625b24af8",
+      "source_file": "tests/packs/timeline/test_cli_parity.py"
+    },
+    {
+      "current_blob": "8e8f032696cb7c1b24f68029b835c7b7764d727b",
+      "current_present": true,
+      "current_sha256": "e8a3558f736d3b972affc2376b8df53b6d64549cd5fdb791f73ce35ce5adaa88",
+      "pristine_blob": "84df897acc31606eda119bef71abe2cfea6fdff4",
+      "pristine_present": true,
+      "pristine_sha256": "aef89abedf95ab9e83f12858362e304c918ca6fd228a47b7ff5dfd828ce5b2c9",
+      "source_file": "tests/packs/timeline/test_cli_status_publish.py"
+    },
+    {
+      "current_blob": "141e93bb4b51680f1cba1b83943278670e19cc05",
+      "current_present": true,
+      "current_sha256": "b11a0726ba7ebd8d6eadbccf11547b47f64e6dfcebf824f78c215d6cab0eaadc",
+      "pristine_blob": "e44aed75ad8e97e761e795acb820854888a845d0",
+      "pristine_present": true,
+      "pristine_sha256": "659ea09fa924c10020b93a91cde487baaf276a606efb3fc85c6b700f099ee638",
+      "source_file": "tests/packs/timeline/test_verbs_working_copy.py"
+    },
+    {
+      "current_blob": "38884ae901955ce59a949daaf788936812c4dd45",
+      "current_present": true,
+      "current_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+      "pristine_blob": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+      "pristine_present": true,
+      "pristine_sha256": "35a6831cee04c43d9963993436e6383644e41785612487d1866c2a7961afcbd1",
+      "source_file": "tests/packs/video_editing/test_runtime_publication_chain.py"
+    },
+    {
+      "current_blob": "6dae28323aeb7552f66fb60ab0fee9a3aebfd540",
+      "current_present": true,
+      "current_sha256": "3e2350df9cae9cc21b86aac4f89c2881107db3e4a0dcca7b333a5aa2fc2c21d5",
+      "pristine_blob": "6fc678313f25caffb4796af986116b22523a1115",
+      "pristine_present": true,
+      "pristine_sha256": "8c7c2d36904a637702b6e6ed2786934f626ff6b06b9b538696dbb58a290541bb",
+      "source_file": "tests/sdk/test_runtime_response_conformance.py"
+    },
+    {
+      "current_blob": "00ba669033726fc84b305144acd2c9c40eb314df",
+      "current_present": true,
+      "current_sha256": "04816de33b09557c7416730395987698eecccc79cb5e9cc482e0e90702a8ed41",
+      "pristine_blob": "ede759060078ab18a9eac75fd682ddb429073518",
+      "pristine_present": true,
+      "pristine_sha256": "f2ac2a403afa2e834706a768439d8a3a3a641565f0fe054bd777cd905988fcb5",
+      "source_file": "tests/test_installer_schema.py"
+    },
+    {
+      "current_blob": "4e4c9e61cd94707b3ec7d03f7ad1b862511a9275",
+      "current_present": true,
+      "current_sha256": "5c207413bbfb902318270161dd7ae90f0b9fda74d004d2e761e1469e39df8f24",
+      "pristine_blob": "c6084c424890fba59f2786439ad492efaff789d8",
+      "pristine_present": true,
+      "pristine_sha256": "113b761ff4742b0fe993033ce10ecea6528524e84325c62d975bb5d7e6f05051",
+      "source_file": "tests/timeline/test_authoring_bundle.py"
+    },
+    {
+      "current_blob": "2e96eca68df432a444e795b1bd95ee1d4e8a1b18",
+      "current_present": true,
+      "current_sha256": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "pristine_blob": "aeafff81c3fa08f2e6fb3d7c5425715ab03cf8ea",
+      "pristine_present": true,
+      "pristine_sha256": "e00ec6ac9230790bc40dd866479e13c371e9837b4ca25340176edb14886b7ad4",
+      "source_file": "tests/timeline/test_authoring_media.py"
+    },
+    {
+      "current_blob": null,
+      "current_present": false,
+      "current_sha256": null,
+      "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "pristine_present": true,
+      "pristine_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025",
+      "source_file": "tests/timeline/test_inverses.py"
+    },
+    {
+      "current_blob": "fff1a470def7759f9577fc4d45062b64c359c577",
+      "current_present": true,
+      "current_sha256": "26e24104559325d7dfe913ef7d4f1d2adb039a97c5afa0137e3287f873f42b00",
+      "pristine_blob": "64623003fdc83f2be8eb5637e57602fc6de9b423",
+      "pristine_present": true,
+      "pristine_sha256": "60a21b974922b0410bf856e699ffeb79758690353a9f372c163d983678f82215",
+      "source_file": "tests/v10/test_timelines_create.py"
+    }
+  ],
+  "pristine_runtime": {
+    "ref": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "symbol_matches": [],
+    "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+  },
+  "schema": "timeline.f.d141l.fullpair.source-identity-map.v1"
+}

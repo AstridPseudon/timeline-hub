@@ -1,0 +1,60 @@
+{
+  "utc": "2026-10-26T11:05:10.714545+00:00",
+  "scope": "independent accounting PASS, product acceptance INCOMPLETE; no REG0",
+  "files": [
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/review.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-review.json",
+      "sha256": "297426703165023f6e2bed43961edacc94cf64a8773c7b5b61aadd1a7f218fcf",
+      "bytes": 2243
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/findings.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-findings.md",
+      "sha256": "3b543145b3267ff9ea80f2088f05a0baeaaaf4330a0365840c2399508c2735e2",
+      "bytes": 1253
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/source-map.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-source-map.json",
+      "sha256": "0248a860bc610ffed9daef062eb4b861de45816193bf68f1db62c47241aca677",
+      "bytes": 31097
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-source-manifest.json",
+      "sha256": "9f970d02495433c53a5a7dbf4ab91a2426f57d01a76644651f5d7394ab4ea4cf",
+      "bytes": 7517
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/validation.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-validation.md",
+      "sha256": "296ce3305edf84e8fc9713b1c09b2d18038c5bec6264f031052b23bf93de251f",
+      "bytes": 823
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/handoff.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-handoff.md",
+      "sha256": "54a8f39a37a559a9e67018173959b366ddc341fa09497eb527f0059443ddba5b",
+      "bytes": 907
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/counts.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-counts.json",
+      "sha256": "e0636522cc4ec0574958afa66264e9ac52061274da087a179e1ab6d2202fd340",
+      "bytes": 3883
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/pristine-only-map.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-pristine-only-map.json",
+      "sha256": "da93faa23302345bfa29912cf8e0b15dd490d579f3e9406a3602868ff4ed5b26",
+      "bytes": 273414
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/source-identity-map.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-review-next-source-identity-map.json",
+      "sha256": "0248a860bc610ffed9daef062eb4b861de45816193bf68f1db62c47241aca677",
+      "bytes": 31097
+    }
+  ]
+}

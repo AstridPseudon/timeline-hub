@@ -1,0 +1,60 @@
+{
+  "acceptance_verdict": "INCOMPLETE_LIVE_UPSTREAM_BEHAVIOR_ROWS",
+  "current_reg_candidates": 0,
+  "current_tuple": {
+    "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935"
+  },
+  "fails_both": 19,
+  "five_cut_only": {
+    "actual_failures_retained": 5,
+    "d63_renamed_body_exact_matches": 0,
+    "not_pass_or_count_deduction": true,
+    "pristine_exact_absent": 5,
+    "source_backed_na": 5
+  },
+  "limits": [
+    "No fuzzy title/body equivalence.",
+    "No current PASS counterpart is pristine behavior preservation.",
+    "No new retirement, migration, assertion adaptation, or REG0/ship claim.",
+    "FAILS_BOTH retain actual causes/locations from unchanged join evidence.",
+    "No tests, collection, provider, request, install, dependency, body, or full suite run."
+  ],
+  "nested_count_equations": [
+    "9561 = 9388 + 173",
+    "3255 = 3082 + 173",
+    "397 = 201 + 196"
+  ],
+  "no_reg0_or_complete_acceptance": true,
+  "operational_composition": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+  "pristine_only": {
+    "approved_migrations_or_retirements_cited": 0,
+    "behavior_proven": 0,
+    "current_xml_counterpart_rows": 9,
+    "groups": {
+      "CLI/publish/native create": 18,
+      "inverse": 38,
+      "schema/installer": 8
+    },
+    "mapped": 64,
+    "unresolved": 64
+  },
+  "pristine_tuple": {
+    "agent": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+  },
+  "product_acceptance": "INCOMPLETE",
+  "product_changes": false,
+  "result": "PASS_EVIDENCE",
+  "schema": "timeline.f.d141l.fullpair.source-accounting-review.v2",
+  "scope": "One independent protected source/accounting review of terminal1051 over the existing D141l full pair.",
+  "source_evidence_verdict": "PASS",
+  "terminal_pair": {
+    "cut_service_id": "agent-agent-core-full-1026100428-24814",
+    "cut_xml_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+    "pristine_service_id": "agent-agent-core-full-1026103030-25513",
+    "pristine_xml_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+  },
+  "tests_run": false
+}
