@@ -1,1 +1,1 @@
-2026-10-26T13:30:11Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; F-shot-layering-prep DONE: 108 refs re-mapped, 4 items settled (a,c VERIFIED; b,d PARTIAL), fixture drafted; published design/farm-shot-layering-prep-*; hub-repack real run + delivery-build form await the owner; perms rules intact
+2026-10-26T14:35:33Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (last job: shot-layering prep, published); hub-repack real run + delivery-build form await the owner; perms rules intact
