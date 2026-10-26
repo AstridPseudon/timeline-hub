@@ -179,6 +179,91 @@ def test_private_installer_rejects_symlink_destination_parent_and_target(tmp_pat
     assert (safe / "full-d141-pristine.env").is_file()
 
 
+@pytest.mark.parametrize("existing_destination", [True, False])
+def test_private_installer_rejects_existing_symlinked_ancestor(
+    tmp_path: Path, existing_destination: bool
+) -> None:
+    config = _qualified_config(tmp_path / "bindings")
+    outside = tmp_path / "outside"
+    existing_parent = outside if existing_destination else outside / "existing-parent"
+    existing_parent.mkdir(parents=True)
+    (outside / "sentinel").write_bytes(b"outside\x00unchanged\n")
+    if existing_destination:
+        (existing_parent / "candidate").mkdir()
+    parent = tmp_path / "parent-link"
+    parent.symlink_to(outside, target_is_directory=True)
+    before = {
+        path.relative_to(outside): path.read_bytes() if path.is_file() else None
+        for path in outside.rglob("*")
+    }
+
+    with pytest.raises(route.RouteError, match="symlink"):
+        route.install_candidate(config, parent / existing_parent.relative_to(outside) / "candidate")
+
+    assert {
+        path.relative_to(outside): path.read_bytes() if path.is_file() else None
+        for path in outside.rglob("*")
+    } == before
+
+
+def test_private_installer_checks_existing_ancestor_mode(tmp_path: Path) -> None:
+    config = _qualified_config(tmp_path / "bindings")
+    parent = tmp_path / "unsafe-parent"
+    destination = parent / "existing-parent" / "candidate"
+    destination.mkdir(parents=True)
+    parent.chmod(0o777)
+    with pytest.raises(route.RouteError, match="unsafe owner or mode"):
+        route.install_candidate(config, destination)
+    assert list(destination.iterdir()) == []
+
+
+@pytest.mark.parametrize("target", ["suites.conf", "full-d141-cut.env", "full-d141-pristine.env"])
+@pytest.mark.parametrize("symlink", [True, False])
+def test_private_installer_preserves_bytes_on_child_or_cas_refusal(
+    tmp_path: Path, target: str, symlink: bool
+) -> None:
+    config = _qualified_config(tmp_path / "bindings")
+    destination = tmp_path / "candidate"
+    destination.mkdir()
+    sentinel = tmp_path / "outside-sentinel"
+    sentinel.write_bytes(b"outside\x00unchanged\n")
+    (destination / "keep").write_bytes(b"private unchanged\n")
+    child = destination / target
+    if symlink:
+        child.symlink_to(sentinel)
+    else:
+        child.write_bytes(b"different existing bytes\n")
+    before = {path.name: path.read_bytes() for path in destination.iterdir()}
+
+    with pytest.raises(route.RouteError, match="unsafe" if symlink else "private CAS"):
+        route.install_candidate(config, destination)
+
+    assert {path.name: path.read_bytes() for path in destination.iterdir()} == before
+    assert child.is_symlink() == symlink
+    assert sentinel.read_bytes() == b"outside\x00unchanged\n"
+
+
+def test_private_installer_normal_nested_path_is_idempotent(tmp_path: Path) -> None:
+    config = _qualified_config(tmp_path / "bindings")
+    destination = tmp_path / "private" / "candidate"
+    route.install_candidate(config, destination)
+    assert (destination / "suites.conf").read_text() == "\n".join(route.render_rows(config)) + "\n"
+    for entry in config["routes"]:
+        env = (destination / f"{entry['name']}.env").read_text()
+        assert f"D141_RUNTIME_COMMIT={entry['runtime']['commit']}\n" in env
+        assert f"D141_AGENT_COMMIT={entry['agent']['commit']}\n" in env
+    (destination / "keep").write_bytes(b"private unchanged\n")
+    before = {
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+        for path in destination.iterdir()
+    }
+    route.install_candidate(config, destination)
+    assert {
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+        for path in destination.iterdir()
+    } == before
+
+
 def test_status_cli_is_json_and_does_not_launch() -> None:
     completed = subprocess.run(
         [sys.executable, str(route.ROOT / "route.py"), "status"],

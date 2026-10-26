@@ -325,7 +325,6 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
         raise RouteError("installer destination must be a separate absolute directory")
     rows = render_rows(config)
     _check_install_path(destination)
-    destination.mkdir(parents=True, exist_ok=True)
     row_text = "\n".join(rows) + "\n"
     row_path = destination / "suites.conf"
     _check_install_file(row_path)
@@ -345,6 +344,7 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
         if env_path.exists() and env_path.read_text() != env_text:
             raise RouteError(f"private CAS destination already contains {env_path.name}")
         env_paths.append((env_path, env_text))
+    destination.mkdir(parents=True, exist_ok=True)
     if not row_path.exists():
         row_path.write_text(row_text)
     for env_path, env_text in env_paths:
@@ -353,24 +353,14 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
 
 
 def _check_install_path(destination: Path) -> None:
-    current = destination
-    missing: list[Path] = []
-    while not current.exists():
-        missing.append(current)
-        if current.parent == current:
-            break
-        current = current.parent
-    if current.is_symlink():
-        raise RouteError("installer parent is a symlink")
-    if not current.is_dir():
-        raise RouteError("installer parent is not a directory")
-    _check_parent_mode(current, "installer parent")
-    for parent in missing:
+    # Inspect from the root so an existing child cannot hide a symlink above it.
+    for parent in (*reversed(destination.parents), destination):
         if parent.is_symlink():
             raise RouteError("installer parent is a symlink")
-    for parent in missing:
-        if parent.parent.exists():
-            _check_parent_mode(parent.parent, "installer parent")
+        if parent.exists():
+            if not parent.is_dir():
+                raise RouteError("installer parent is not a directory")
+            _check_parent_mode(parent, "installer parent")
     if destination.exists():
         if destination.is_symlink() or not destination.is_dir():
             raise RouteError("installer destination must be a regular directory")
