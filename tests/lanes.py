@@ -112,7 +112,7 @@ def _declare(name: str, skip_when: str, reason: str, ci: tuple[str, ...], **extr
 
 requires_windows_security = _declare(
     "windows-security", "sys_platform != 'win32'",
-    "native Windows socket exclusivity and file DACL APIs", (), no_ci=NO_WINDOWS_CI,
+    "native Windows socket exclusivity and file DACL APIs", ("windows-realm-publication",),
 ).mark()
 requires_linux_tree_custody = _declare(
     "linux-tree-custody", "sys_platform != 'linux'",
