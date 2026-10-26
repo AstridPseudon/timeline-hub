@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-26T11:59:23.794093+00:00",
+  "free_before": 6311071744,
+  "free_after": 6315651072,
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0806Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0806Z.log.xz",
+      "decoded_sha256": "c82fafdc9ab3cae4211240c837fec3b107929f2b8cdda145905f354c4d7e6afa",
+      "original_bytes": 768682,
+      "compressed_bytes": 152700,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0942Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0942Z.log.xz",
+      "decoded_sha256": "06a0ff83a270f43c3ab754894daf697185beeaa2b37137bcf3dcd4a52ce0a86a",
+      "original_bytes": 1226633,
+      "compressed_bytes": 231260,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1018Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1018Z.log.xz",
+      "decoded_sha256": "0ea6aca71095b9c30ea990d35795e873626f40a2b368d1145f652ee651574537",
+      "original_bytes": 1238233,
+      "compressed_bytes": 225736,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1053Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1053Z.log.xz",
+      "decoded_sha256": "de84eb071f0c6d3b28571d3b1b379eaf02b4c58b97b95b672aded7cec1e45ee4",
+      "original_bytes": 2254062,
+      "compressed_bytes": 295068,
+      "mode": "0o644"
+    }
+  ],
+  "skipped": [],
+  "saved_bytes": 4582846,
+  "scope": "hourly guarded lossless closed manager stdout only; single-link/nonKEEP/exit marker/no live FD/no active evidence reference; raw workers/tests and active manager log untouched"
+}

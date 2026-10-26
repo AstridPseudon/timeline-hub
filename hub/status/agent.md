@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T11:54:26Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 5m -->
-# agent board, 2026-10-26T11:49:29.028779+00:00
+<!-- agent | 2026-10-26T11:59:13Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
+# agent board, 2026-10-26T11:58:11.447995+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -50,7 +50,7 @@
 
 
 | D141ee inverse scope | Decide pure planner preservation per ID | Luna and independent Luna | Independent scope PASS; exact 38 IDs in escalation1140 | blocked:orchestrator | agt-F-D141ee-inverse38-scope-review-1137 | Current undo is an analogue; no exact passing move. Public event schema persists. All 38 pending owner scope. | Evidence only |
-| D141ee writers scope | Qualify corrected 15 case purpose map | Luna and independent Luna | Corrected author terminal; all 15 still REG pending | review | agt-F-D141ee-writers15-return-review-1148 | Actual publish wrappers delegate to commit; old endpoint refused. One independent review, no product changes. | Evidence only |
+| D141ee writers scope | Decide protected upstream caller migrations | Luna and independent Luna | Corrected independent scope PASS; exact 15 IDs in escalation1140 | blocked:orchestrator | agt-F-D141ee-writers15-return-review-1148 | Live purposes retained; old caller assertions need exact decisions. Wrappers commit and old endpoint refuses. All 15 REG pending. | Evidence only |
 | D141ee installer scope | Decide exact old schema packaging assertions | Luna and independent Luna | Independent scope PASS; exact 2 IDs in escalation1140 | blocked:orchestrator | agt-F-D141ee-installer2-scope-review-1137 | Old npm graph conflicts with approved Runtime canonical schema. Tests restored and FAIL; no retirement approved. | Evidence only |
 
 Integration: Agent 14ccf296f3768fcde857047b263834e4a6bbe52e / tree 6806fec5657f26097d0d0f3da29082907e6faadd, clean; Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; App82e9e13ddf1d7ec6c736521b2eb091dca9877598/tree6a6e49eb4461b5ca1a7fa1247653bc794f26d710; productComposition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. OperationalComposition6a2d/tree57f68 is separate. Protected pristineAgent64197afa297f86f1e738238d5e80aff6d33e303a and Runtimefa9cd5464a8b37b02f971de375e56be846cd69e2 remain normally checked out. No upstream chase. D141v final pin pass is gated actual REG0/all lane fixes; App8585 pointer expected until then.
@@ -77,11 +77,11 @@ Current pass 2026-10-26T11:33:24.661712+00:00: normal source-preserving restorat
 
 Three disjoint Luna source maps actually started 11:31:59, 11:32:00 and 11:32:01 on exact445b, normal prequeue free7380234240 bytes. Each must classify exact original purpose against current supported caller, distinguish live fixes from C0-refused or retired interfaces, and return finite per-ID owner decision lists where needed. No retirement or old-route revival authorized. New prospective manager5s trace began after actual starts and is supplemental; own worker traces assessed independently, no backfill. All three worker KEEP set while active. Current free6990352384 bytes, no heavy. H6 read App11:21 and Runtime11:21: P4 current GO remains; App seven selectors in progress; Runtime final install gated actual proofs and final pin pass. D130 remains absolute. INBOX consumed through2177914 bytes.
 
-Blockers: Proof preservation — Exact 55 tests restored and independently source reviewed; 15 fail and 40 cannot collect. Three independent reviewers check finite live fixes versus exact owner scope decisions. No REG0 or final pins.
-Blockers: MAIN scope — Exact installer2 canonical-schema conflict and inverse38 public-planner intent need owner scope; one escalation agent-20261026T1140Z-D141ee-upstream-preservation-scope.md contains lists.
+Blockers: Proof preservation — Exact 55 tests restored and independently source reviewed; 15 fail and 40 cannot collect. All three finite scope maps now independently qualified; no passing preservation or retirement assumed.
+Blockers: MAIN scope — Exact inverse38, writer15 protected caller migrations and installer2 schema conflict need recorded owner decisions. One escalation agent-20261026T1158Z-D141ee-final55-owner-scope.md has full55 and choices.
 Blockers: SWAP safety — Existing Runtime1537 classifier refusal held; no retry or alternate route.
-Next ready: Three independent scope verdicts; dispatch authorized live repair where proved and send exact upstream preservation or retirement decisions to MAIN. REG0 and pins stay gated.
-live 1 / cap 6; ready-undispatched 0. Corrected writer purpose map in independent review; inverse38 and installer2 decisions are with MAIN. No heavy body.
+Next ready: Recorded exact owner scope dispositions, then bounded preservation or protected migration authors and own affected-node proof. No ready author before that decision; REG0 and pins stay gated.
+live 0 / cap 6; ready-undispatched 0. All three scope maps terminal and independently reviewed; exact55 decision with MAIN/owner. No heavy body.
 
 Maintenance current pass: compact-scratch terminal0 packed0 scratch,0 logs,0tests; sweep-tmp3 terminal0 removed0 with known Broken-pipe diagnostics. Metadata census22 present Agent/App trees,21KEEP and zero ended nonKEEP eligible; no recycle candidate. Source authors each sampled only first5 seconds rather than whole lifecycle; explicit limitation retained, no backfill. Supplemental manager trace11:32 onward is distinct. Current available 6724595712 bytes.
 
@@ -90,3 +90,7 @@ Current scope pass11:44: inverse38 and installer2 independent PASS_EVIDENCE are 
 Manager correction11:46: earlier temporary-path-only check incorrectly inferred XML loss. Actual workers/agt-U2-D141ee-restore-review-next/evidence/restored-independent.xml and restored-unaffected.xml are retained. Exact hashes/counts are recorded in [XML coordinate correction](../../design/agent-D141ee-retained-XML-coordinate-correction-1146.json). Original peer/publication/source reports remain unchanged, correction explicitly supersedes manager loss claim. No re-run/raw transfer or altered outcome.
 
 11:49 writer source return terminal0, publication1149 retains exact six originals. Actual restructure/narration wrapper delegates through TimelineSession/RemoteTimelines to commitTimeline; Runtime old publish_parent_composition immediately refuses retired_route. No second writer proved by interface existence. Every15protectedpurpose remains REG pending; force refusal remains mandatory and actor-specific diagnostics separate. One independent final source review1148 queued immediately; no source implementation or tests executed. Exact full55 owner list and raw XML correction1146 already sent MAIN/lead.
+
+11:54 final corrected writer review terminal0 PASS_EVIDENCE, publication1154. All inverse38/writers15/installer2 now have independently qualified per-case purpose/source maps; none gains behavior or retirement credit. One combined escalation1140 full55 and concrete source-of-truth/API/protected caller migration choices is ready for MAIN/owner per header11:23. No additional analysis loop or speculative old-route revival. Current free6316105728bytes, live0/cap6, noheavy; exact source restoration HOME14cc remains clean.
+
+11:58 transport correction: hub-sync escalation cp-n preserved initial1140 installer-only copy despite local supplements. Published new immutable FINAL55 escalation1158 and separate correctly addressed peer-agent-to-runtime and peer-agent-to-app notes. Prior multi-area peer filenames delivered only to firstareaAgent; new notes route to actual owners. All exact55 outcomes and three terminal independent maps now have one final decision packet. No hub mutation or workaround.
