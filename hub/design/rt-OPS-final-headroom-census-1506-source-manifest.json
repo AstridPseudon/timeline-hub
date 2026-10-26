@@ -1,0 +1,37 @@
+{
+  "census": "rt-OPS-final-headroom-census-1506",
+  "observed_at_utc": "2026-10-26T15:11:11Z",
+  "base_context": {
+    "composition_revision": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime_revision": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "agent_revision": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "app_revision": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "app_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "read_sources": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "use": "settled plan and F operational-support scope"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md", "use": "current Runtime board, F-final blocker, dirty/refused candidate state"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/INBOX.md", "use": "current Runtime INBOX tail and header context"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md", "use": "current board header and final tuple"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/runtime-20261026T1450Z-final-source-headroom-decision.md", "use": "exact Main cleanup hold and sole remaining decision"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-review-next/evidence/sampler-lifecycle.json", "use": "existing sampler lifecycle metadata only"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-repack", "use": "supported owner-gated command syntax and guards"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/recycle", "use": "supported guarded refusal path, not executed"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch", "use": "supported guarded compaction eligibility, not executed"}
+  ],
+  "excluded_by_instruction": [
+    "oldvenv contents",
+    "agent-remotion",
+    "sealed1811",
+    "D130",
+    "refusedsmoke",
+    "Store/stagingtools",
+    "dirty Runtime tree contents",
+    "hubrepo contents",
+    "XML/log/credential/private payloads"
+  ],
+  "method": "bounded metadata-only du/stat/rg and existing-record review; no source, product, credential, or private-content dump"
+}

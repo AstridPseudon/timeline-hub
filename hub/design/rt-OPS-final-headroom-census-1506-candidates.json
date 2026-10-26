@@ -1,0 +1,171 @@
+{
+  "census": "rt-OPS-final-headroom-census-1506",
+  "observed_at_utc": "2026-10-26T15:11:11Z",
+  "scope": [
+    "$ORCH metadata under workers, tests/cache, archive-v1-20261022",
+    "/home/user/work/wt top-level metadata and recorded Runtime candidate state"
+  ],
+  "ordinary_recovery": "NONE",
+  "headroom": {
+    "required_pre_stage_bytes": 4960000000,
+    "prior_recorded_available_bytes": 4916580352,
+    "prior_gap_bytes": 43419648,
+    "current_available_bytes": 4899520512,
+    "current_gap_bytes": 60479488,
+    "measurement_command": "df -B1 --output=avail /home/user /tmp",
+    "measurement_is_metadata_only": true
+  },
+  "candidates": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-resume-next",
+      "size_bytes": 347684864,
+      "owner": "Runtime F-final review owner",
+      "lifecycle": "finished",
+      "keep": true,
+      "open_row_or_reference": "Current F-final source-positive review fixture; current Runtime final tuple and manager records reference it.",
+      "disqualifying_facts": ["KEEP marker", "current proof fixture", "not an ordinary release"],
+      "supported_tool": "compact-scratch or recycle would be guarded, but neither is eligible for this KEEP/current proof record",
+      "decision": "protected"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741",
+      "size_bytes": 364339200,
+      "owner": "Runtime F-final rehearsal owner",
+      "lifecycle": "finished",
+      "keep": true,
+      "open_row_or_reference": "Current F-final rehearsal evidence and failed-rehearsal record retained by manager controls.",
+      "disqualifying_facts": ["KEEP marker", "retained rehearsal evidence", "not an ordinary release"],
+      "supported_tool": "compact-scratch or recycle would be guarded, but neither is eligible for this KEEP record",
+      "decision": "protected"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-parent-single-0107",
+      "size_bytes": 289853440,
+      "owner": "Runtime P2 proof owner",
+      "lifecycle": "finished and recycled worktree",
+      "keep": false,
+      "open_row_or_reference": "Current proof fixture referenced by tests/suites.conf and manager records.",
+      "disqualifying_facts": ["proof evidence remains referenced", "not a disposable ordinary worker record"],
+      "supported_tool": "compact-scratch would need current reference/lease verification; no run authorized",
+      "decision": "protected"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217",
+      "size_bytes": 282918912,
+      "owner": "Runtime P2 proof owner",
+      "lifecycle": "finished and recycled worktree",
+      "keep": false,
+      "open_row_or_reference": "Current proof fixture referenced by tests/suites.conf and manager records.",
+      "disqualifying_facts": ["proof evidence remains referenced", "not a disposable ordinary worker record"],
+      "supported_tool": "compact-scratch would need current reference/lease verification; no run authorized",
+      "decision": "protected"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/archive-v1-20261022",
+      "size_bytes": 2097152,
+      "owner": "ORCH control archive custody",
+      "lifecycle": "finished stale archive",
+      "keep": "not marked",
+      "open_row_or_reference": "Old control snapshots only; no current open row established by this bounded census.",
+      "disqualifying_facts": ["only 2 MiB, below the 43.4 MiB prior gap", "no supported ordinary release command", "no deletion authorized"],
+      "supported_tool": "none without an explicit owner decision",
+      "decision": "not_actionable"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/cache",
+      "size_bytes": 6881280,
+      "owner": "central test service",
+      "lifecycle": "cache",
+      "keep": "unknown",
+      "open_row_or_reference": "Central result cache; no current cache-release row or supported cleanup command established.",
+      "disqualifying_facts": ["only 6.9 MiB", "would require cache ownership decision", "no cache mutation permitted"],
+      "supported_tool": "none",
+      "decision": "not_actionable"
+    },
+    {
+      "path": "/home/user/work/wt/.test-agt-m2-speech-ad97-normal-pin-pair-native014-sockets-integration-1020183350-13220",
+      "size_bytes": 15032320,
+      "owner": "unknown/unmarked",
+      "lifecycle": "unknown",
+      "keep": "unknown",
+      "open_row_or_reference": "No worker ownership or current row established; metadata only.",
+      "disqualifying_facts": ["unowned/unmarked", "age and size do not establish release permission", "only 15 MiB"],
+      "supported_tool": "none",
+      "decision": "not_actionable"
+    },
+    {
+      "path": "/home/user/work/wt/nesttest",
+      "size_bytes": 8192,
+      "owner": "unknown/unmarked",
+      "lifecycle": "unknown",
+      "keep": "unknown",
+      "open_row_or_reference": "No worker ownership or current row established; metadata only.",
+      "disqualifying_facts": ["unowned/unmarked", "negligible size", "age and size do not establish release permission"],
+      "supported_tool": "none",
+      "decision": "not_actionable"
+    },
+    {
+      "path": "/home/user/work/wt/rt-m2-parent-media-door-proof",
+      "size_bytes": null,
+      "owner": "Runtime historical candidate",
+      "lifecycle": "finished/dirty per current manager record",
+      "keep": false,
+      "open_row_or_reference": "Known Runtime non-KEEP candidate; exact content not inspected by this census.",
+      "disqualifying_facts": ["DIRTY", "supported recycle refused", "force cleanup prohibited"],
+      "supported_tool": "recycle (would refuse; not run)",
+      "decision": "owner_decision_only"
+    },
+    {
+      "path": "/home/user/work/wt/rt-m2-public018-generation-gate-preflight-1134",
+      "size_bytes": null,
+      "owner": "Runtime historical candidate",
+      "lifecycle": "finished/dirty per current manager record",
+      "keep": false,
+      "open_row_or_reference": "Known Runtime non-KEEP candidate; exact content not inspected by this census.",
+      "disqualifying_facts": ["DIRTY", "supported recycle refused", "force cleanup prohibited"],
+      "supported_tool": "recycle (would refuse; not run)",
+      "decision": "owner_decision_only"
+    },
+    {
+      "path": "/home/user/work/wt/rt-m2-rt03-peer-agreed-raw-capture-impl",
+      "size_bytes": null,
+      "owner": "Runtime historical candidate",
+      "lifecycle": "finished/dirty per current manager record",
+      "keep": false,
+      "open_row_or_reference": "Known Runtime non-KEEP candidate; exact content not inspected by this census.",
+      "disqualifying_facts": ["DIRTY", "supported recycle refused", "force cleanup prohibited"],
+      "supported_tool": "recycle (would refuse; not run)",
+      "decision": "owner_decision_only"
+    },
+    {
+      "path": "/home/user/work/wt/rt-m3-capture-candidate-actual-pair",
+      "size_bytes": null,
+      "owner": "Runtime historical candidate",
+      "lifecycle": "finished/dirty per current manager record",
+      "keep": false,
+      "open_row_or_reference": "Known Runtime non-KEEP candidate; exact content not inspected by this census.",
+      "disqualifying_facts": ["DIRTY", "supported recycle refused", "force cleanup prohibited"],
+      "supported_tool": "recycle (would refuse; not run)",
+      "decision": "owner_decision_only"
+    },
+    {
+      "path": "/home/user/work/wt/rt-m3-legacy-capture-replay-proof",
+      "size_bytes": null,
+      "owner": "Runtime historical candidate",
+      "lifecycle": "finished/dirty per current manager record",
+      "keep": false,
+      "open_row_or_reference": "Known Runtime non-KEEP candidate; exact content not inspected by this census.",
+      "disqualifying_facts": ["DIRTY", "supported recycle refused", "force cleanup prohibited"],
+      "supported_tool": "recycle (would refuse; not run)",
+      "decision": "owner_decision_only"
+    }
+  ],
+  "finite_owner_decision": {
+    "command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-repack runtime",
+    "read_only_precheck": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-repack runtime --dry-run",
+    "reason": "Only the existing owner-gated, lossless Main hub operation could plausibly address the remaining final headroom after ordinary guarded recovery is exhausted.",
+    "guards": ["owner approval in the Main session", "hub-sync lock", "no live test run", "minimum free threshold", "pack and verify before prune-packed"],
+    "not_authorized_by_census": true,
+    "never_use": ["--force", "alternate cleanup route", "dirty-worktree cleanup"]
+  }
+}

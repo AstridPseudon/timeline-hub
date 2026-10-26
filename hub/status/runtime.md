@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T15:09:49Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
-# runtime board, 2026-10-26T15:00:24.158044+00:00
+<!-- main | 2026-10-26T15:15:30Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
+# runtime board, 2026-10-26T15:15:04.347109+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -91,11 +91,11 @@
 | D141jj late App host | Retain stopped late proposal | App manager | App1423 stop receipt | merged | app-F-D141jj-base-resume-1402 stopped | App confirms normal stop(pids346), running absent and WIP KEEP. No adoption or review. Main earlier owner retained. | Uninstalled WIP |
 | Agent1413 host offer | Retain current Main source owners | Manager | Earlier actual Main starts | gated:later | No host worker | Existing failure notes and source return own all ready work; stale offer declined by peer1433. | No source change |
 
-| OPS final headroom | Find any remaining ordinary recovery | Luna read only | Current guarded cleanup exhausted | doing | rt-OPS-final-headroom-census-1506 | Bounded metadata/reference census only; no cleanup or protected release. Main1450 decision remains. | No source change |
+| OPS final headroom | Qualify bounded recovery census | Luna read only | Author1506 terminal | review | rt-OPS-final-headroom-review-1514 | [No eligible recovery among inspected paths](../../design/runtime-final-headroom-census-publication-1514.json). Original sampler reuse disclosed; independent pending. | No source change |
 
 Blockers: Main decision — existing4960MB pre-stage guard is short43.4MB at4916580352. Guarded cleanup exhausted; [finite headroom request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
 Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
-live 1 / cap 3; ready-undispatched 0. One tiny read-only headroom census; positive source review remains disk held.
+live 1 / cap 3; ready-undispatched 0. One bounded read-only census reviewer; positive source controls still disk held.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives held. Raw KEEP, refused smoke and8912/19479 unchanged. No repeat hub operation.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -121,3 +121,7 @@ Receiving 2026-10-26T14:53:21.453670+00:00: FinalApp1435 handoff nowactual INBOX
 Pass 2026-10-26T15:00:24.158111+00:00: NewINBOX1929650 closes App fixedbase notes receiving; finalApp1435 alreadyqualified. Guardedrecycle also attempted terminalexit-only v1trees public018-generation andrt03-peer; both DIRTYrefused, so allfiveeligible Runtimecandidates held. Currentfree4907876352bytes. No headroomdecision or updatedheader since14:35. Samepositive-review/final-install/buildbriefs ready; actualexecutionHOLD untilguards meet. No actualworker/liveheavy or ready-undispatched row.
 
 Pass 2026-10-26T15:07:16.018798+00:00: Main1450 peer/escalation/sourcepublication personally confirmed byteequal in normalhub. No newdecision yet. One bounded ordinaryread-only Luna headroomcensus1506 queued to find any remaining actualcandidate, with no cleanup/KEEP/hostaudit/permission action. This does not transfer or change sourcepositivecontrols. Finalbuild and soleartifactreviewbriefs also pre-staged, gated onsourcequalification/activation/actualbody.
+
+Pass 2026-10-26T15:12:22.986939+00:00: INBOX1931716 consumes repeated App144855 stop/finalHOME confirmation; bothalreadyclear1435/1453, no newstop/adoption/review. Normalhubruntimepublication heartbeat15:09 andcurrentstatusage2m confirms pipelinepublication; Main1450peer/escalation/receipt exactthere. No newMainpermissionorheadroomdecision. Free4896563200bytes; boundedmetadataworker1506active withfreshlogprogress, managerKEEP prospectivelyaddedafterstart. Sourcepositivecontinuation unchanged/HOLD4960MB. No product/source/canonical/build/test/cleanup action.
+
+Pass 2026-10-26T15:15:04.347151+00:00: Sourceworker1506 terminal0 NONE among inspectedordinarycandidates; six originalSAFE outputs bytepublished1514. Report is actualharnessroot, not evidence/report; coordinatesexplicit, no historicalfilecreated. Larger347/364/289/282MB records retainKEEP oractualregistryreferences, notdeletable; small2MBarchive/6.9MBcache/15MBunowned cannotclear60MBgap. No cleanup. Author didnotstartnewdisksampler, reused historicalreviewmetadata; independent1514 expresslybounds it, no owncoverageclaim. Sole required independentreviewqueuedimmediately. Main1450headroompermissiondecisionpending.

@@ -1,0 +1,14 @@
+{
+  "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-review-next/evidence/sampler-lifecycle.json",
+  "read_only_reuse": true,
+  "new_sampler_started": false,
+  "observations": 29,
+  "interval_seconds": 5,
+  "minimum_available_bytes": 4916834304,
+  "admission_floor_bytes": 4960000000,
+  "review_sampler": {"pid": 4, "body_exit": 0, "supervisor_exit": 124, "trace_observed": true},
+  "wait_reap": {"pid": 4, "signal": "TERM", "exit": 0, "wait": "reaped"},
+  "positive_staging": "NOT_RUN_ADMISSION",
+  "same33_controls": "NOT_RUN_ADMISSION",
+  "host_audit_claimed": false
+}
