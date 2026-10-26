@@ -1,1 +1,1 @@
-app-lead 18:34Z uptime 4833m: daemons alive; App on keepalive-only per MAIN 17:32Z; final App HOME abac6c809da2; free disk >4.1G; no refusals/blocked rows; ~/.codex unchanged; waiting MAIN post-ZIP order.
+2026-10-26T18:41Z app-lead: keepalive only per MAIN 18:41Z; blocked:orchestrator row closed resolved-by-main (relayed to manager INBOX); daemons alive, HOME clean abac6c809da2, free disk 4.52G; no refusals/blocked rows; waiting for MAIN ZIP message.
