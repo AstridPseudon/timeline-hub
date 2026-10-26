@@ -2128,10 +2128,10 @@ def _source_digest(root: Path) -> str:
     entries: list[tuple[str, str]] = []
     if root.is_file():
         return hashlib.sha256(root.read_bytes()).hexdigest()
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda path: path.parts):
         if not path.is_file() or "__pycache__" in path.parts:
             continue
-        entries.append((str(path.relative_to(root)), hashlib.sha256(path.read_bytes()).hexdigest()))
+        entries.append((path.relative_to(root).as_posix(), hashlib.sha256(path.read_bytes()).hexdigest()))
     return _canonical_digest(entries)
 
 
