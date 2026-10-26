@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:18:27Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 1m -->
-# app board, 2026-10-26T00:17Z
+<!-- app | 2026-10-26T00:22:59Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-26T00:22Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Prior final289 and later affected127 plus warmup2, types and lint PASS. Final D141 source and cut proof separate. | d24ed69; 2f36246a32 |
@@ -7,8 +7,8 @@
 | A2 | Production dependent save funnel | HARD Sol and Luna | C0 and U3 | merged | Authors and independent reviews | Mounted outbox, authoritative replies, refusal handling and dependent edits integrated. Cut P1 still owed. | Current home |
 | A3 | Popup placement element and asset saves | Luna and HARD Sol | A2 | merged | Authors and independent reviews | Six original tails historically qualified. SWAP and Element remain known gaps. Final six cut proofs owed. | Current home |
 | A4 | Retire reachable legacy executor | Luna and independent Luna | Historical P1 GO | merged | Caller census and source reviews | Zero reachable legacy writers; behavioral tests preserved. Historical source scope only. | Current home |
-| U3 D141 | Qualify restored upstream tour gate | Luna and independent Luna | Author0014 PASS89 | review | app-U3-D141-tour-final-review-0017 | Exact source repair db8:89PASS, app/node types and lint PASS. Only AgentChat.tsx changed; all tests exact. Final independent review active. | db8cc7655e5c |
-| U4p D141 Runtime | Adopt exact frozen Runtime through tools | Luna | Final independent source receipt | review | Adopter0011 complete; final reviewer next | ToolPASS vendor17/schema2/lint. Only locksourcepointer changed; canonical15 and mapped14 exact. Included in source0014 base. | 55b2e66cf6a2 |
+| U3 D141 | Preserve frozen source join and tour REG | Luna and independent Luna | Independent0017 SOURCEPASS | merged | Source0014; review0017; normal receipt | Home tree equals reviewed db8 exactly. Independent89/types/lint PASS. Frozen7ca ancestor; final generated adoption still separate. | 263b728f0140 |
+| U4p D141 Runtime | Adopt exact frozen Runtime through tools | Luna and independent Luna | Independent0017 PASS | merged | Adopter0011; review0017; normal home | Tool vendor17/schema2/lint PASS; locksource only. Independent canonical15/mapped14/schema custody PASS on exact home tree. | 263b728f0140 |
 | U4p D141 Agent | Re-vendor exact final Agent source | Luna | Final Agent home and source | blocked:agent | Existing peer2354 and0009 | Agent reviewer2357 active. Runtime adoption independent and dispatched; final browser provenance and manifest follow Agent receipt. | Agent cut pending |
 | D141 notes | Install reviewed SWAP and Element paragraphs | Luna and independent Luna | Runtime existing notes owner | blocked:runtime | Notes2354; reviewer0003 PASS; peer0006 | Exact two paragraphs independently qualified and byte published. Runtime installs; no GO or ZIP claim. | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full2354; reviewer0003 PASS | All exact artifacts and hashes qualified. Prepared only; final tuple and MAIN GO still required. | Evidence only |
@@ -31,7 +31,7 @@
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer1944 | Prior archive qualified; recycle DIRTY refusal retained. Targets untouched. | No source edits |
 | F final | Final delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final gate, F-final or ZIP claim. Upstream tips fixed; no upstream chasing. | Cut pending |
 
-Integration: App5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed79699 verification route;30 Node20 controls/types/lint PASS. Current manifest historical Runtimeab1e/Agent070dfc/Composition635f. Final U3 WIP4572 has BOTH5696769 and frozen7ca61bb3280beca21d98a854af266a382f7ce5df parents. Sole source2358 resolves files only; ordinary Git sandbox restriction is not a safety refusal.
+Integration: App263b728f014040afc9c6b3fdfb54963b93b757eb/tree6594cb861575456f3548f868abfa46958dbbf514. Entire tree equals independently reviewed db8; source home receipt design/app-U3-D141-source-home-0023.json. Final Agent vendor/provenance and manifest remain pending; no final cut freeze claimed. Historical predecessor5696769/tree0748 follows. Entire tree equals reviewed79699 verification route;30 Node20 controls/types/lint PASS. Current manifest historical Runtimeab1e/Agent070dfc/Composition635f. Final U3 WIP4572 has BOTH5696769 and frozen7ca61bb3280beca21d98a854af266a382f7ce5df parents. Sole source2358 resolves files only; ordinary Git sandbox restriction is not a safety refusal.
 
 D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required ship proof P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures unchanged, visible and listed. Final source needs one independent product review, notes one review; unchanged reruns need receipts only. Bodies wait allthreeheads and recorded MAIN GO.
 
@@ -39,9 +39,9 @@ Blockers: Agent final producer input — Runtime frozen6a011/treeac5b actual HOM
 Blockers: Final cut GO — Main owns recorded allthreeheads and GO. App final source2358 active; no full/comparator/journey body before recorded release.
 Blockers: Farm core — Runtime owns complete receiving recipe and Farm owns child/import/preflight/core. Latest Farm23:54 has no body. No App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal1537 still holds recovery and related qualification. Existing Runtime escalation owns disposition; D141 does not authorize a retry.
-Next ready: Reviewer0017 terminal. Exact final Agent home receipt -> normal browser vendor and manifest tools immediately on db8 source. All independent ready work dispatched. Full/pristine/journeys wait allheads/GO.
-live 1 / cap 6; ready-undispatched 0. Luna0017 independent source and Runtime custody review active. Source0014 passed89/types/lint. Agent final producer not HOME yet; no ready proof body before allheads/GO.
-INBOX consumed through 2567967 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
+Next ready: Final Agent home -> dispatch prepared vendor0022 immediately. Source join already HOME and exact tree verified. Final generated custody review thennormalmerge/FREEZE. Full/pristine/journeys remain finalallheads/GO-held.
+live 0 / cap 6; ready-undispatched 0. Source and Runtime lock HOME263b, exact reviewed tree. Prepared vendor0022 waits actualAgenthome, not a ready row. Fresh5.47GB, no heavy body or early proof before finalallheads/GO.
+INBOX consumed through 2570275 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
 
 Safety: Manager writes only ORCH boards/briefs/peers and byte-publishes authored SAFE evidence. No manager product/test/generated/pin edits, direct Git writes, upstream push, M5 or credentials. Dirty U3/orphan guards and refused targets untouched. Prior D130 hold absolute.
 Later: Gate3 correctedD133B deferred unchanged; D23 helpercut and D14 retained; D79 ZIP-held; E4 dropped. Shared105/media48 source release is Agent normalc585 per latest owner board; behavior awaits Farm core, no new App propagation. Missing native records retain UNKNOWN. No own-test source investigations under D141.

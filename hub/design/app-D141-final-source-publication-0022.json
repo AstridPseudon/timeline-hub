@@ -1,0 +1,32 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-final-review-0017/evidence/review.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-final-review-0017-review.json",
+    "sha256": "872cbbee307ead6d7da3cb57cc0afcc2dd51af5fd86617cc6d2a717821a4f8b8",
+    "bytes": 3526
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-final-review-0017/evidence/findings.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-final-review-0017-findings.md",
+    "sha256": "9c16b7739ba9db9d978aacfd596a4b3470fa713c60f17a85f8660c17b7d00a66",
+    "bytes": 1874
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-final-review-0017/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-final-review-0017-source-manifest.json",
+    "sha256": "e0abd953b51db06fdc93f86436f677e9080dc5a4c12455b823bb2dba55baf2da",
+    "bytes": 1958
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-final-review-0017/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-final-review-0017-validation.md",
+    "sha256": "d073825230d370d0cfceb20d37e512a6cdd6511a99647bd614c11aae7f7f930e",
+    "bytes": 2495
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-final-review-0017/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-final-review-0017-handoff.md",
+    "sha256": "62ae1e0b82781f1373872a64c8e40c261bf8ff65ae9b12b17f88b66931da2eec",
+    "bytes": 1318
+  }
+]

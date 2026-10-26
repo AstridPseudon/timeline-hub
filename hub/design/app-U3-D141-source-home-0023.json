@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T00:22:44.462373+00:00",
+  "head": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+  "tree": "6594cb861575456f3548f868abfa46958dbbf514",
+  "reviewed_source": "db8cc7655e5ca81a9c0989a5104645b069571e98",
+  "reviewed_tree": "6594cb861575456f3548f868abfa46958dbbf514",
+  "entire_tree_equal": true,
+  "frozen_upstream": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "frozen_upstream_ancestor": true,
+  "independent_review": "app-U3-D141-tour-final-review-0017 SOURCEPASS",
+  "source_proof": "independent89 and both app/node types plus lint PASS; prior unchanged14 targeted files receipt retained",
+  "pending": "Final Agent browser vendor/provenance and installer manifest through normal worker tools; final cut freeze and MAIN GO not yet claimed",
+  "normal_merge_receipt": "queue/done/merge-app-U3-D141-tour-gate-return-0014"
+}

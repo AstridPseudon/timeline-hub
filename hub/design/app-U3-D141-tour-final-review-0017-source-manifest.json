@@ -1,0 +1,42 @@
+{
+  "task": "U3/U4p D141 final source review",
+  "candidate_head": "db8cc7655e5ca81a9c0989a5104645b069571e98",
+  "candidate_tree": "6594cb861575456f3548f868abfa46958dbbf514",
+  "candidate_parent": "55b2e66cf6a2d789db9ffb4334847687e2da3e4c",
+  "source0af": "0af0ddb59a16ffae8215854a0b9236954c70c882",
+  "source0af_tree": "736026fcdd9ba9fa377a4d06d7fca166c6e3fea8",
+  "frozen_app": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "allowed_source_path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+  "changed_from_source0af": [
+    "runtime.lock.json",
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+  ],
+  "test_mock_fixture_paths_changed_from_source0af": [],
+  "current_source_sha256": "dad081792bc46c057e6da494a4fefd04184247f0df755495ff5f887c4d9fde0b",
+  "frozen_source_sha256": "24b518351b55d947f5b623feab0ab2f8e2f05c470e27ce98f4055a5d1917b845",
+  "predicate_lines": {
+    "tour_hook": 232,
+    "tour_return": 235,
+    "availability_door": 237
+  },
+  "ancestry": {
+    "runtime_adoption_is_ancestor": true,
+    "frozen_app_is_ancestor": true
+  },
+  "runtime": {
+    "producer_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "lock_source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "mapping_count": 14,
+    "vendor_lock_check": "PASS",
+    "producer_clean": true,
+    "producer_artifacts_sha256": "9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3",
+    "producer_manifest_sha256": "414243ac7ab66ea197571e0ef85dbe8b4049e7a10a662a90870d9b9459aad369",
+    "timeline_commit_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+  },
+  "deferred": {
+    "public_manifest_runtime_sha": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_vendor_provenance": "pending final Agent qualification"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "task": "U3/U4p D141 final source review",
+  "worker": "app-U3-D141-tour-final-review-0017",
+  "candidate_head": "db8cc7655e5ca81a9c0989a5104645b069571e98",
+  "candidate_tree": "6594cb861575456f3548f868abfa46958dbbf514",
+  "candidate_parent": "55b2e66cf6a2d789db9ffb4334847687e2da3e4c",
+  "frozen_app": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "runtime_adoption": "55b2e66cf6a2d789db9ffb4334847687e2da3e4c",
+  "verdict": "SOURCEPASS",
+  "verdict_scope": "protected U3/U4p source qualification only; not whole-cut readiness",
+  "source_review": {
+    "allowed_path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "owner_return_delta": "6 insertions in the allowed source path",
+    "current_source_sha256": "dad081792bc46c057e6da494a4fefd04184247f0df755495ff5f887c4d9fde0b",
+    "frozen_source_sha256": "24b518351b55d947f5b623feab0ab2f8e2f05c470e27ce98f4055a5d1917b845",
+    "gate_order": [
+      "useRenderDiagnostic",
+      "useAgentChatBridge",
+      "useEditorTourRunning",
+      "TourChatPanel early return",
+      "isTimelineAgentSessionsAvailable",
+      "AvailableAgentChatPanel live session hooks"
+    ],
+    "tests_and_mocks_changed": false,
+    "source0af_to_head_paths": ["runtime.lock.json", "src/tools/video-editor/components/AgentChat/AgentChat.tsx"],
+    "outside_allowed_paths_conserved": true,
+    "ancestry": {
+      "runtime_adoption_is_ancestor": true,
+      "frozen_app_is_ancestor": true
+    }
+  },
+  "targeted_tests": {
+    "command": "PATH=/opt/node20/bin:$PATH npm run test:app -- --no-cache --maxWorkers=1 src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "result": "PASS",
+    "files": 2,
+    "tests_passed": 89,
+    "tests_total": 89,
+    "tour_chat_panel": "13/13",
+    "agent_chat": "76/76"
+  },
+  "static_checks": {
+    "scoped_eslint": "PASS",
+    "tsconfig_app": "PASS",
+    "tsconfig_node": "PASS",
+    "git_diff_check": "PASS",
+    "worktree_clean": "PASS"
+  },
+  "runtime_adoption": {
+    "result": "PASS_TOOL_ONLY_ADOPTION",
+    "producer_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "lock_source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "vendor_lock_check": "PASS",
+    "mapping_count": 14,
+    "generated_schema_config_and_mappings_conserved": true,
+    "source_product_change": false
+  },
+  "findings": [
+    {
+      "id": "U3-U4P-D141-EVIDENCE-LABEL",
+      "severity": "nonblocking_evidence_defect",
+      "status": "reported",
+      "details": "The inherited U4p source-custody JSON names contract/artifacts.json.version as a required file, but that path does not exist. The canonical producer version is the version field in contract/artifacts.json; the actual file hash, producer version, clean producer checkout, and read-only vendor-lock check all pass."
+    }
+  ],
+  "deferred_qualification": [
+    "public/install-manifest.json still names Runtime source ab1e4f6141987706132916e2da16477f5a019464; final manifest qualification remains pending",
+    "Agent vendor/astrid-browser/provenance.json remains unqualified for the two historical mismatches: vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx and vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts",
+    "final Agent head and final Agent-generated manifest/vendor inputs remain pending"
+  ],
+  "full_suite_browser_build_zip": "NOT_RUN_BY_TASK_SCOPE"
+}
