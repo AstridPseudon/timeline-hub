@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:39:41Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
-# agent board, 2026-10-26T01:33Z
+<!-- agent | 2026-10-26T01:43:32Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+# agent board, 2026-10-26T01:40Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -88,7 +88,7 @@
 | D134 host environment | Explain current fourteen host failures | Luna read only | Independent assessment complete | merged | Reader1948; review1954 PASS | PASS source assessment; final proof FAIL | Current full launcher rejects PYTHONNOUSERSITE before host launch. Source equal96df; owner20:09 marks14 UNVERIFIED pending custody proof. No REG0. | Evidence only |
 | D134 environment preparation | Preserve unsupported recipe seam | Luna | Independent source review | later | Author2000; independent2010 PASS | PASS source seam; no usable fix | D73 reinjects PYTHONNOUSERSITE at128 and149. Candidate omits dispatch/origin checks and is not runnable. Normal D137 route unchanged. | Evidence only |
 | D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | See proof | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
-| D139 merged child and core | Qualify frozen tuple on Farm | Farm and Runtime | Farm genuine receiving and core | doing | Farm census0130; Runtime handoff011036 | Complete qualified recipe1b709a received; Farm pre-child census active. Then normal child, imports, controls and22-root core. No Agent child request. | Agent28e / Runtime6a |
+| D139 merged child and core | Qualify frozen tuple on Farm | Farm and Runtime | Farm permission disposition | blocked:farm | Farm0130 and0137; existing lead ask0140 | Farm board reports approval required for census. No census, child or core body. Existing Farm lead owns disposition; no alternate route. | Agent28e / Runtime6a |
 | D134 D73 source | Preserve supported launcher environment | Luna | Protected2036 cumulative PASS | merged | Source intake2102; normal22bf | Source controls PASS; live core owed | Exact two reviewed operational files HOME. Intake repeated focused2 despite no-repeat brief; retained without extra credit. | 22bf4560aa /bb688 |
 | D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | See proof | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
 | D134 managed media48 | Preserve occurrence media setup | Luna | Farm cut full core | blocked:farm | Author2016; independent2024 PASS | See proof | UNAPPLIED source unchanged. Existing9486 addresses item-birth seam; mutable author Runtime and missing XML unqualified. No new API decision. | Evidence only |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 service admission | Apply recorded exact P4 disk floor | Luna | D141c 4.7 GB and source controls | doing | agt-OPS-D141-P4-admission-0136 | Private candidate only; same queued19479 retained. Independent review then normal kit CAS; all other floors exact. | No product change |
+| P4 service admission | Install qualified exact P4 disk floor | Luna | Main kit CAS and publication | blocked:runtime | Author0136; independent0139 PASS | Both ran12 controls PASS. Exact8aa7 source qualified; Main installer requested. Same service19479 queued; no body. | 6c00 source only |
 | P4 D141 cut rerun | Run proof with bound JUnit path | Luna and service | Independent0124 source PASS | doing | Controller0128 after0119/0124 | Source PASS; CAS only owned row, outside bytes exact. Service19479 queued at fixed5GB floor, zero body. Dispatch5016035328; old10086 custodyFAIL retained. | Frozen28e/867c/6a |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
@@ -140,10 +140,10 @@ Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f
 Core open: 370 measured (D134, measurement-only), ship-grade pending.
 Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190 FAIL,180 ERROR,173 subtests PASS,1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Independent2029 source classification370: own344 =132 setup,0 proved product,212 UNKNOWN; host14 UNVERIFIED,other12 UNKNOWN. Source edits deduct nothing.
 
-Blockers: Farm — qualified complete recipe received; genuine census, child, imports, controls and cut core still owed. D140 prohibits Agent child/core; old3e163 stays.
+Blockers: Farm — census0137 stopped at approval prompt for receive-farm.sh --check-only. Existing Farm lead ask0140 owns disposition; no retry or alternate route. Child/core NOTRUN.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Existing service19479 after normal admission clears; independent result review on terminal. live 2 / cap 3 source; one controller, zero body. ready-undispatched 0.
+Next ready: Existing service19479 after normal admission clears; independent result review on terminal. live 1 / cap 3 source; one controller, zero body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -153,7 +153,7 @@ Disk: 4891828224 bytes currently. Sweep3 removed0; compact gzipped6 logs, no scr
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
-INBOX consumed through 2018883 bytes. D141c GO and lead App transport consumed; exact per-ID/env packet0051 sent to lead, Runtime and Farm.
+INBOX consumed through 2021114 bytes. D141c GO and lead App transport consumed; exact per-ID/env packet0051 sent to lead, Runtime and Farm.
 
 Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime final normal6a011 and independent2350 PASS received from actual published board/peer. Agent firstreturn0001 normally fixed stale am-footage artifact; provenance0005 immediately dispatched on that branch. Initial2357 FAIL retained with full source conservation and missing/wrong-environment tests. Bun2357 borrowed App node_modules (missing zod); final qualification must use actual existing Agent profile dependency tree. No source overwrite or test weakening.
 
@@ -189,6 +189,10 @@ Pass 2026-10-26T01:28Z: Independent0124 terminal PASS_OPERATIONAL_SOURCE; immedi
 
 Pass 2026-10-26T01:30Z: H6 Runtime01:15 and Farm01:30 actual source boards clear recipe blocker: complete qualified1b709a handoff011036 received, Farm sole census0130 active. Changed receiving/core row to doing and removed stale Runtime source blocker. Runtime cut full has actual outcomes, pristine still serial; no REG inference. P4 controller0128 active, no actual new service receipt yet.
 
-Blockers: Runtime kit — existing P4 service19479 waits fixed5GB service floor despite recorded D141c4.7GB admission. Peer peer-agent-to-runtime-lead-20261026T0133Z-D141-P4-service-admission.md sent; no bypass or second request.
+Blockers: Runtime kit — exact8aa7 source and independent0139 PASS ready; Main normal CAS/publication requested in peer peer-agent-to-runtime-lead-20261026T0143Z-D141-P4-admission-PASS-install-now.md. Same queued19479; no bypass or second request.
 
 Pass 01:33Z: Plan, common rules, header and new inbox read (no new bytes). H6 actual Farm01:30/Runtime01:15/App01:17 read. P4 row CAS succeeded;19479 queued at fixed service floor, zero body. Ordinary sweep3/compact active; Runtime/lead peer requests normal implementation of existing D141c admission. All raw KEEP and frozen sources retained.
+
+Pass 01:40Z: Source0136 complete6c00/8aa7 with12 offline controls PASS; independent0139 dispatched immediately on same branch. Source packet byte-published. H6 Farm latest board reports census approval stop, existing lead ask0140; core row now blocked:farm with no duplicate escalation or alternate route. Existing P4 request19479 stays queued, zero body.
+
+Pass 01:43Z: Independent0139 terminal PASS, all12 unchanged offline controls actually run. Exact source6c00/8aa7 and five independent artifacts byte-published; immediate Main normal CAS/publication peer sent, preserving global kit ownership. No new source cycle, frozen merge or alternate request. Current service19479 still queued zero body.

@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.ops.d141c.p4-admission.source-manifest.v1",
+  "task": "OPS P4 D141c admission",
+  "base": {
+    "repo": "composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "candidate": {
+    "test_run": "ops-d141-p4-admission/test-run",
+    "control": "ops-d141-p4-admission/admission-controls.sh",
+    "canonical_preimage": "/home/user/timeline-hub/hub/kit/bin/test-run",
+    "canonical_sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "mode": "0755"
+  },
+  "admission": {
+    "named_repo": "agent",
+    "named_suite": "p4-current-becfe-http-3legs",
+    "named_floor_bytes": 4700000000,
+    "named_floor_inclusive": true,
+    "named_heavy": true,
+    "agent_core_full_floor_bytes": 4700000000,
+    "light_floor_bytes": 5000000000,
+    "heavy_floor_bytes": 5200000000,
+    "global_hard_start_guard_bytes": 4500000000,
+    "stop_bytes": 4000000000,
+    "one_heavy_body": true
+  },
+  "installation": {
+    "source_only_floor_bytes": 4600000000,
+    "canonical_kit_install": false,
+    "suite_registration": false,
+    "service_request": false,
+    "production_files_changed": false
+  }
+}

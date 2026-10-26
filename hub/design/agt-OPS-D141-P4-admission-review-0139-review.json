@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task": "OPS P4 D141c independent admission review",
+  "reviewed_commit": "6c00a49f51e0588a189bbf53d46b49c5392c353f",
+  "base_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "verdict": "PASS",
+  "readiness": "INSTALLATION_NOT_DONE",
+  "candidate": {
+    "path": "ops-d141-p4-admission/test-run",
+    "sha256": "8aa75771f6d3b3e7b65570580131a4866f3e65440d9d815a717c1189e323f5ce",
+    "bytes": 15113,
+    "mode": "0755"
+  },
+  "canonical_preimage": {
+    "path": "/home/user/timeline-hub/hub/kit/bin/test-run",
+    "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "bytes": 14962,
+    "mode": "0755",
+    "realpath_distinct": true,
+    "same_file": false
+  },
+  "scoped_diff": {
+    "candidate_vs_canonical_only_expected": true,
+    "changes": [
+      "classifies only repo agent plus suite p4-current-becfe-http-3legs as heavy",
+      "assigns that exact suite the 4700000000-byte inclusive floor",
+      "preserves the existing 4500000000 global guard, 5000000000 light floor, 5200000000 strict default-heavy floor, and agent-core-full 4700000000 inclusive exception"
+    ],
+    "outside_bytes_changed": false,
+    "product_files_changed": false
+  },
+  "offline_controls": {
+    "command": "TMPBASE=/tmp/w-ae8a21dde3/ops-d141c-review0139 ops-d141-p4-admission/admission-controls.sh ops-d141-p4-admission/test-run review0139",
+    "result": "PASS",
+    "cases": 12,
+    "central_body_invoked": false,
+    "service_request": false,
+    "case_groups": [
+      "named P4 floor and one-byte-below floor",
+      "light floor",
+      "default-heavy equality and above-floor",
+      "core floor and one-byte-below floor",
+      "global hard-start guard",
+      "invalid and unreadable disk",
+      "reciprocal named-heavy and other-heavy busy-slot rejection"
+    ]
+  },
+  "findings": [
+    {
+      "id": "P4-D141c-R001",
+      "severity": "informational",
+      "status": "accepted",
+      "text": "Installation, suite registration, live queue admission, and the heavy test body were not performed by this source-only review."
+    },
+    {
+      "id": "P4-D141c-R002",
+      "severity": "informational",
+      "status": "accepted",
+      "text": "Product typecheck, lint, and pytest are not applicable because this candidate has no product-code delta."
+    }
+  ]
+}

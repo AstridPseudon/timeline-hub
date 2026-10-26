@@ -1,0 +1,70 @@
+{
+  "schema": "timeline.ops.d141c.p4-admission.evidence-manifest.v1",
+  "task": "agt-OPS-D141-P4-admission-0136",
+  "base": {
+    "repo": "composition",
+    "branch": "tl/agt-OPS-D141-P4-admission-0136",
+    "base_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "canonical_preimage": {
+    "path": "/home/user/timeline-hub/hub/kit/bin/test-run",
+    "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "mode": "0755",
+    "bytes": 14962
+  },
+  "candidate": {
+    "test_run": {
+      "git_path": "ops-d141-p4-admission/test-run",
+      "git_blob_sha1": "44fddd1952c009a325ab9de151d11e3e4f994544",
+      "sha256": "8aa75771f6d3b3e7b65570580131a4866f3e65440d9d815a717c1189e323f5ce",
+      "mode": "0755",
+      "bytes": 15113
+    },
+    "control": {
+      "git_path": "ops-d141-p4-admission/admission-controls.sh",
+      "git_blob_sha1": "5e89b0a16afc12f116f2904ba779e0ea9c847d05",
+      "sha256": "6fd4462e62a1962db9b298f9f03dae3ba842d7ea818b24f67968ed0c76813737",
+      "mode": "0755",
+      "bytes": 3776
+    },
+    "source_install_manifest": {
+      "git_path": "ops-d141-p4-admission/source-manifest.json",
+      "git_blob_sha1": "2d704555346a70c3069525af18847a8fc07cf69f",
+      "sha256": "8b5cda45aaeaeedde34a8836ffe27d42abad63131c5afdfe4b7891b6cb98e2e1",
+      "mode": "0644",
+      "bytes": 1241
+    }
+  },
+  "scoped_diff": {
+    "outside_bytes_changed": false,
+    "changed_source_lines": [
+      "HV=light; P4_NAMED=0",
+      "case $suite in full*|agent-core-full) HV=heavy;; esac",
+      "case \"$repo:$suite\" in agent:p4-current-becfe-http-3legs) HV=heavy; P4_NAMED=1;; esac",
+      "FLOOR_BYTES=5000000000; if [ \"$HV\" = heavy ]; then FLOOR_BYTES=5200000000; { [ \"$suite\" = agent-core-full ] || [ \"$P4_NAMED\" = 1 ]; } && FLOOR_BYTES=4700000000; fi",
+      "{ [ \"$AVAILABLE_BYTES\" -lt \"$FLOOR_BYTES\" ] || { [ \"$HV\" = heavy ] && [ \"$suite\" != agent-core-full ] && [ \"$P4_NAMED\" != 1 ] && [ \"$AVAILABLE_BYTES\" -eq \"$FLOOR_BYTES\" ]; }; } && { echo \"low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named 4.7 GB exceptions inclusive, light inclusive, default heavy strictly above)\" | tee \"$D/why\"; exit 3; }"
+    ],
+    "policy": "Only agent:p4-current-becfe-http-3legs is newly named; it is heavy and receives the existing 4,700,000,000-byte inclusive exception. All other policy branches remain canonical."
+  },
+  "admission": {
+    "named_suite": "agent/p4-current-becfe-http-3legs",
+    "named_floor_bytes": 4700000000,
+    "named_floor_inclusive": true,
+    "named_is_heavy": true,
+    "agent_core_full_floor_bytes": 4700000000,
+    "light_floor_bytes": 5000000000,
+    "default_heavy_floor_bytes": 5200000000,
+    "global_start_guard_bytes": 4500000000,
+    "stop_bytes": 4000000000,
+    "source_only_floor_bytes": 4600000000,
+    "one_heavy_body": true
+  },
+  "installation": {
+    "canonical_kit_installed": false,
+    "suite_row_installed": false,
+    "service_requested": false,
+    "production_request_or_body": false,
+    "product_repositories_modified": false
+  }
+}
