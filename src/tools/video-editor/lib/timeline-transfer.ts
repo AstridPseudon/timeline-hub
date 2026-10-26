@@ -171,7 +171,7 @@ export async function exportTimelineArchive(input: { projectId: string; timeline
     const client = options.client ?? new AstridRuntimeClient();
     const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
     options.toast?.update(toastId, 'Preparing timeline export…');
-    const { value: plan } = await getActionJson(client, input.projectId, 'timeline.export_plan', { project: input.projectId, timeline: input.timelineId }, 'plan', fetchImpl, options.client !== undefined);
+    const { value: plan } = await getActionJson(client, input.projectId, 'rendering.timeline_export_plan', { project: input.projectId, timeline: input.timelineId }, 'plan', fetchImpl, options.client !== undefined);
     const manifest = asRecord(plan.manifest, 'Export manifest');
     const timeline = asRecord(plan.timeline, 'Export timeline');
     if (manifest.format !== 'astrid.timeline/1' || !Array.isArray(manifest.media) || !Array.isArray(manifest.transcripts) || !Array.isArray(plan.media)) throw new Error('Runtime returned an invalid timeline export plan.');
@@ -461,7 +461,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const checkInputs: Record<string, unknown> = { project: projectId, check_only: true };
     if (checkManifestBytes.byteLength <= INLINE_MANIFEST_LIMIT) checkInputs.manifest = checkManifest;
     else checkInputs.manifest_file = await uploadJson(client, projectId, new Blob([checkManifestBytes], { type: 'application/json' }), 'manifest-check.json');
-    const check = await getActionJson(client, projectId, 'timeline.prepare_import', checkInputs, 'result', fetchImpl, options.client !== undefined);
+    const check = await getActionJson(client, projectId, 'rendering.timeline_prepare_import', checkInputs, 'result', fetchImpl, options.client !== undefined);
     const missingEffects = effectNames(Array.isArray(check.value.missing_effects) ? check.value.missing_effects : []);
     const differentEffects = effectNames(Array.isArray(check.value.different_effects) ? check.value.different_effects : []);
     options.toast?.update(toastId, 'Checking existing media…');
@@ -502,7 +502,7 @@ export async function importTimelineArchive(file: File, projectId: string, optio
     const payloadObject = await uploadJson(client, projectId, payloadBlob, 'timeline-import-payload.json');
     actionInputs.payload = payloadObject;
     options.toast?.update(toastId, 'Preparing imported timeline…');
-    const preparedAction = await getActionJson(client, projectId, 'timeline.prepare_import', actionInputs, 'prepared', fetchImpl, options.client !== undefined);
+    const preparedAction = await getActionJson(client, projectId, 'rendering.timeline_prepare_import', actionInputs, 'prepared', fetchImpl, options.client !== undefined);
     validatePreparedMedia(preparedAction.value, media, transcripts);
     const preparedBytes = encoder.encode(JSON.stringify(preparedAction.value));
     if (preparedBytes.byteLength > MAX_JSON_ENTRY) throw new Error('Prepared timeline metadata exceeds 64 MiB.');

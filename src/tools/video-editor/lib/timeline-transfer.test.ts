@@ -37,7 +37,7 @@ function fakeClient(options: { checkFails?: boolean; existingMedia?: boolean; mi
   const uploads: Array<{ digest: string; blob: Blob; url: string; mediaType: string; expectedDigest: string }> = [];
   const commits: unknown[] = [];
   const client = {
-    listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'timeline.prepare_import', definition_digest: 'sha256:capability', status: 'ready', estimated_scratch_bytes: 10, estimated_output_bytes: 20 }], next_cursor: null })),
+    listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'rendering.timeline_prepare_import', definition_digest: 'sha256:capability', status: 'ready', estimated_scratch_bytes: 10, estimated_output_bytes: 20 }], next_cursor: null })),
     admitTask: vi.fn(async (input: Record<string, unknown>) => {
       admissions.push(input);
       const params = ((input.spec as { inputs: Record<string, unknown> }).inputs);
@@ -103,7 +103,7 @@ describe('timeline transfer workflows', () => {
       paths.push(url.pathname + url.search);
       expect(classifyPairedRoute(url.pathname + url.search, 'GET')?.service).toBe('astrid');
       const body = JSON.stringify({
-        items: [{ capability_id: 'timeline.export_plan', definition_digest: artifactDigest, status: 'ready', required_resource_keys: [], estimated_scratch_bytes: 0, estimated_output_bytes: 0 }],
+        items: [{ capability_id: 'rendering.timeline_export_plan', definition_digest: artifactDigest, status: 'ready', required_resource_keys: [], estimated_scratch_bytes: 0, estimated_output_bytes: 0 }],
         next_cursor: null,
       });
       return new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -135,8 +135,8 @@ describe('timeline transfer workflows', () => {
     const mediaBytes = new TextEncoder().encode('media-stream');
     const plan = { manifest: { format: 'astrid.timeline/1', name: 'Timeline', media: [{ sha256: mediaSha, size: mediaBytes.length }], elements: [], transcripts: [] }, timeline: { timeline_id: 't' }, transcripts: {}, media: [{ sha256: mediaSha, size: mediaBytes.length, original_name: 'clip.mp4' }] };
     const client = {
-      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'timeline.export_plan', definition_digest: 'sha256:cap', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 1 }], next_cursor: null })),
-      admitTask: vi.fn(async (input: Record<string, unknown>) => { order.push('admit'); expect(input.spec).toEqual({ capability_id: 'timeline.export_plan', kind: 'action', inputs: { project: 'p', timeline: 't' }, outputs: {}, extra_pack_roots: [] }); return { task_id: 'export-task', state: 'succeeded' }; }),
+      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'rendering.timeline_export_plan', definition_digest: 'sha256:cap', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 1 }], next_cursor: null })),
+      admitTask: vi.fn(async (input: Record<string, unknown>) => { order.push('admit'); expect(input.spec).toEqual({ capability_id: 'rendering.timeline_export_plan', kind: 'action', inputs: { project: 'p', timeline: 't' }, outputs: {}, extra_pack_roots: [] }); return { task_id: 'export-task', state: 'succeeded' }; }),
       getTask: vi.fn(),
       listManagedOutputs: vi.fn(async () => ({ items: [{ output_port: 'plan', digest: artifactDigest, size: new TextEncoder().encode(JSON.stringify(plan)).length }], next_cursor: null })),
       ingestProjectObject: vi.fn(), listProjectObjects: vi.fn(), importProjectMedia: vi.fn(), importTimeline: vi.fn(),
@@ -171,7 +171,7 @@ describe('timeline transfer workflows', () => {
       createWritable: async () => new WritableStream<Uint8Array>({ write() { if (++writeCount === 8) throw new Error('disk full'); } }),
     }));
     const client = {
-      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'timeline.export_plan', definition_digest: 'sha256:cap', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 0 }], next_cursor: null })),
+      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'rendering.timeline_export_plan', definition_digest: 'sha256:cap', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 0 }], next_cursor: null })),
       admitTask: vi.fn(async () => ({ task_id: 'export-task', state: 'succeeded' })),
       getTask: vi.fn(),
       listManagedOutputs: vi.fn(async () => ({ items: [{ output_port: 'plan', digest: artifactDigest, size: new TextEncoder().encode(JSON.stringify(plan)).length }], next_cursor: null })),
@@ -200,7 +200,7 @@ describe('timeline transfer workflows', () => {
     delete (globalThis as typeof globalThis & { showSaveFilePicker?: unknown }).showSaveFilePicker;
     const largePlan = { manifest: { format: 'astrid.timeline/1', name: 'Large', elements: [], media: [{ sha256: mediaSha, size: 1024 * 1024 * 1024 }], transcripts: [] }, timeline: {}, transcripts: {}, media: [{ sha256: mediaSha, size: 1024 * 1024 * 1024 }] };
     const largeClient = {
-      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'timeline.export_plan', definition_digest: 'd', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 0 }], next_cursor: null })),
+      listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'rendering.timeline_export_plan', definition_digest: 'd', status: 'ready', estimated_scratch_bytes: 0, estimated_output_bytes: 0 }], next_cursor: null })),
       admitTask: vi.fn(async () => ({ task_id: 'large', state: 'succeeded' })), getTask: vi.fn(),
       listManagedOutputs: vi.fn(async () => ({ items: [{ output_port: 'plan', digest: artifactDigest }], next_cursor: null })),
       ingestProjectObject: vi.fn(), getProjectObjectLocation: vi.fn(), importProjectMedia: vi.fn(), importTimeline: vi.fn(),
