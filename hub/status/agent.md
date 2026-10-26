@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T07:40:35Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
-# agent board, 2026-10-26T07:38:38.887215+00:00
+<!-- agent | 2026-10-26T07:45:01Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+# agent board, 2026-10-26T07:41:58.040275+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -21,7 +21,7 @@
 | D141l U2 | Preserve custody and installer source | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408; reviewer0432 | Whole54path union,906 own/26 upstream blobs and both test families conserved. e1c installer ancestor. | 5d202569f3 |
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
 | D141l proof source | Qualify repaired full pair controls | Sol and independent Luna | Independent0707 PASS_COMMAND | merged | Sol0638 and reviewer0707 | 10 admission and36 lifecycle; tiny17/1 and1/0 PASS. Source only; actual controller binding owed. | Evidence only |
-| D141l binding | Complete existing controller continuation | Luna | Independent0731 FAIL6 | gated:D89-source | agt-F-D141l-binding-return-0735 prepared | Wrong output paths, undefined producer, association, live-path coverage and copied trace. First samebranch return prepared. | 6a2d1c22ec80 WIP |
+| D141l binding | Complete existing controller continuation | Luna | Independent0731 FAIL6 | blocked:runtime | Source hosting requested0743;0735 reserved | Wrong output paths, undefined producer, association, live-path coverage and copied trace. First samebranch return prepared. | 6a2d1c22ec80 WIP |
 | D141l whole path | Resolve exact current controller ordering | Runtime Luna | New0731 FAIL6; existing0640 owner | blocked:runtime | Runtime0640 finite extension requested0735 | Original0640 retained. Request service-floor and CAS/request/witness ordering, no author/body transfer. | Evidence only |
 | D141u selection | Apply recorded comparable full scope | MAIN and Luna | D141u-a05:13 | merged | Existing command return0515 | Confirmed22 cut/17 pristine roots; same settings, every present ID compared; source-backed N/A for absent own IDs. | Decision only |
 | D141l receiving | Retain genuine new App tuple | App Luna | Review0454 and normal HOME0459 | merged | App0448 and reviewer0454 | Exact HOME5344/treedd989 adopted Agent8585 normally. Source receipt0459 hash qualified; no new gate credit. | 5344c53e3063 |
@@ -60,7 +60,7 @@ Blockers: Agent controller — Binding0731 FAIL6, samebranch return0735 ready be
 Blockers: SWAP safety — Runtime1537 classifier refusal retains absolute hold; existing escalation, no retry, transfer or alternate route.
 Next ready: Binding return0735 at4.5GB; CLI prep0733 at4.6GB. Both prepared, source admission held. live0 / cap0 below4.5GB; ready-undispatched2. No heavy body.
 
-Inbox consumed through2142684 bytes. Manager writes board/briefs/peers/escalations/KEEP metadata and byte-exact SAFE publications only. No product/test/generated/pin edit, Git internals write, hub write, upstream push, credential orM5 action. No finalbuild/ZIP claimed.
+Inbox consumed through2144690 bytes. Manager writes board/briefs/peers/escalations/KEEP metadata and byte-exact SAFE publications only. No product/test/generated/pin edit, Git internals write, hub write, upstream push, credential orM5 action. No finalbuild/ZIP claimed.
 
 07:32 pass: Binding author0718 terminal07:24:42 exit0, source6a2d1c22/tree from Composition WIP only,101 evidence files accidentally committed there; no source merge. Exact ORCH output contains only supplemental manager trace. Claimed worker trace is copied0638 history and does not cover0718; no current trace claim. ONE independent all-findings Luna0731 actually started07:29:31 at4648656896 normal4.6GB source admission. It audits missing output coordinates/trace and the complete real receipt producer, row/command argument flow, future-service circularity and claimed controls. No repair or body in review.
 
@@ -74,3 +74,11 @@ Final pass07:39: Read current headerD141y and07:21 command-source gate; source/c
 
 Additional guarded lossless cleanup: closed manager0601/0636/0712 stdout logs compressed toXZ after noactivefd/reference/singlelink/mode/hash checks, saved3073307 bytes; current0714 log and activeINBOX untouched. [Receipt0738](../../design/agent-D141-closed-manager-output-compression-0738.json). Persistent archived-v1 localduplicate relief remains0 because ordinarysync restored those3files; no repeatdeletion. No raw/KEEP/worktree/pin/hub/Store touch.
 Actual currentfree=4485971968 bytes at2026-10-26T07:38:38.887215+00:00; criticalsource4.5GB gap=14028032, normal source4.6GB gap=114028032, full/P4 floor4714564096 gap=228592128. All concrete next briefs prepared; zero live local worker, noheavy. No source dispatch below ownfloor.
+
+Current pass 2026-10-26T07:41:58.040275+00:00: PLAN, COMMON, newINBOX and latest header read; currenthomeecdc clean. Actualworkers query confirms0718 and0731 terminal; zero live Agentworkers. NewINBOX2142684..2144690 is delayed selfpeer0718, no new decision or owning ask. H6 Runtime07:29 and App07:12 read: Runtime correction0729 review owns dryrun disclosure; App0707 catchup and0710/0726 Nodecomparison own existing tasks. Runtime0735 finitewholepath extension remains peerpending, no author/body transfer.
+
+Fresh currentcensus37 presenttrees/36KEEP/oneprotected dirtyG2, zero eligible endednonKEEP. Compact0/sweep3 normalroutes started; no safety refusal or protectedcleanup. Closed0714 stdout compressed losslessly with decodedSHA/mode check; receipt agent-D141-closed-manager-output-compression-0744.json. Currentfree=4482727936bytes; source return0735 still waits4500000000 and P4prep0733 waits4600000000. Fullpair/CLIbody4714564096 unchanged. live0 / cap0 below4.5GB; ready-undispatched2 diskheld. No newservice/body/rowinstall, hub/KEEP/Store/pin/product/test mutation.
+
+Source failover0743: requested Runtime host the EXISTING ready binding return0735 at normal4.6GB, only with complete exact inputs. Exact brief byte-published; local0735 reserved UNDISPATCHED pending host acceptance or finite decline, no duplicate. Runtime0640 independentwholepath remains separate. No body/venue/floor/refusedaction transfer. Peer ownership becomes row immediately; no orchestrator decision needed.
+
+Header07:34 actualAppcatchup CLEARED:82e9e13ddf1d7ec6c736521b2eb091dca9877598/tree6a6e49eb4461b5ca1a7fa1247653bc794f26d710, parents4de54+4937203f. Header07:32 retains3inheritedlintfindings and2NodeENOENTs, no lintPASSclaim. Newbinding0735 andCLIprep0733 briefs now name new82e inputs; original0638/0707 reports/manifests remain scoped4de, neverretargeted. Hostrequest0743 updated before anyactualauthor. Newowning source dependency clear, no newreceiving/pin task. Compact0 terminal2scratch/1log/0tests, sweep3terminal0removed; no refusal/KEEPtouch. Free 4478902272bytes, localready still held.
