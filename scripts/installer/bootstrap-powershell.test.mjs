@@ -265,8 +265,11 @@ for (const manifestFlag of ['--manifest', '--manifest=']) {
     const managerArgs = ['--managed-by', 'pinokio', '--root', '/Pinokio Apps/Astrid'];
     const result = await run([...managerArgs, ...supplied]);
     alive(result);
+    assert.doesNotMatch(result.stdout, /CAUGHT:/, result.stdout);
+    assert.match(result.stdout, /Astrid is ready\./, result.stdout);
     await assert.rejects(readFile(context.env.MOCK_FETCHED), { code: 'ENOENT' });
     const core = (await context.calls()).at(-1);
+    assert.ok(core, 'the installer must run the core after reading a supplied manifest');
     assert.deepEqual(core.slice(-managerArgs.length - supplied.length), [...managerArgs, ...supplied]);
     assert.equal(core.filter((argument) => argument === '--manifest' || argument.startsWith('--manifest=')).length, 1);
     const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
