@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-26T00:15:13Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# app2 board, 2026-10-26T00:07:38Z
+<!-- app2 | 2026-10-26T00:18:15Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-26T00:16:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -166,12 +166,12 @@
 
 | P2-D127d-cost | Preserve unproved offline cost | Runtime Sol; Luna | D141 stops Element work | gated:D141-known-gap | Runtime2123 UNAPPLIED; waiter2153 | Helper123ms and synthetic267ms did not reproduce live cost. Waiter link UNPROVED. No fix or next body; D130 stays in force. | Benchmark only |
 
-| F-D137-core | Preserve Farm child and core handoff | Runtime Sol and Luna; Farm | Reviewed recipe and frozen cut tuple | blocked:runtime | Sol2338; security2353; Farm | Installed kit2314 PASS. Repair0634 has69 private PASS; security2353 active. Farm cut binding, census, child, imports, dry preflight and core remain owed. | Recipe0634 candidate |
+| F-D137-core | Preserve Farm child and core handoff | Runtime Sol and Luna; Farm | Authentic recipe and frozen cut tuple | blocked:runtime | Runtime Sol0003; Farm existing owner | Latest Runtime Next ready names receipt repair0003 then independent review. Authentic complete handoff, cut binding, Farm census, child, imports and core remain owed. | Recipe candidate held |
 
 | F-D139-runtime-union | Qualify merged Runtime targeted union | Runtime service; independent Luna | Independent2219 PASS | merged | Runtime9082; independent2219 | 1571 PASS, zero fail/error/skip in70.6s. Exact source, six bodies and durable XML independently qualified. No Agent full-core or final-gate credit. | Runtimef103 / Agent4c4ee |
 
 | D136c-original9 | Preserve transferred original nine result | App Luna; independent Luna | D141 stops original9 work | gated:D141-known-gap | App2330; independent2335 | NO-GO: nine setup errors, exit1 in39.34s. Source/privacy/custody PASS; structured values absent and causes UNKNOWN. Unchanged visible failures; no next body. | Agentd133; Runtime2f1f |
-| F-D141-cut | Track transferred morning cut gates | App, Agent, Runtime and Farm | App and Agent final joins | gated:D141-cut | Runtime2350; App2358; Agent2357 | Runtime frozen6a011 with review PASS119 targeted. App resolves six conflicts; Agent join in review. D141b comparator17 upstream roots; five project-only not applicable. | Runtime6a011d58e6 |
+| F-D141-cut | Track transferred morning cut gates | App, Agent, Runtime and Farm | App and Agent final reviews | gated:D141-cut | Runtime2350; App0009; Agent0008 | Runtime frozen6a011. App six conflicts resolved, review0009 active. Agent normal generated inputs PASS, cumulative0008 active. Pristine17-root comparison and cut gates owed. | Runtime6a011d58e6 |
 
 D56.4: Proof is folded into App. MAIN closed the D125 hosting exception. Summaries only: no Proof dispatch, body, provisioning, retry, cleanup or product merge. Historical rows retain their recorded scopes and are transferred to App.
 
@@ -183,12 +183,12 @@ core open: final cut count UNKNOWN; two transferred P2 gaps are SWAP and Element
 regressions: 1 confirmed FPS regression historically; final cut count UNKNOWN. Typed-location successor20db had independent source PASS; D100a exact reviewed delta is HOMEc585 after receiving2341 PASS. No integrated behavior closure follows. Original9 actual2330 retains9 setupERROR and all9 causes UNKNOWN. D141 stops that investigation and retains the failing tests. Measurement18455 remains failed custody with XML missing;370 bad nodes are not a ship-grade count.
 
 Blockers: Cut tuple and REG proof — owner Runtime, App, Agent and Farm. Runtime is frozen6a011; App and Agent joins, complete cut tuple, ship-grade core, comparators and final gates remain owed. D141b uses17 pristine roots; five project-only not applicable. Proof owns no execution.
-Blockers: Farm core — owner Runtime. Installed kit2314 PASS; recipe2332 FAIL on authenticity. Repair0634 has69 private PASS; independent security2353 and complete corrected cut-tuple handoff are owed before Farm census, child, imports, dry preflight and core.
+Blockers: Farm core — owner Runtime. Installed kit2314 PASS; latest published Next ready names receipt repair0003 then independent review. Complete authentic cut-tuple handoff, Farm census, child, imports, dry preflight and core are owed.
 Next ready: None for Proof. App owns cut P1/P2/P3 verdicts; Agent owns P4; Runtime owns P5 and delivery; Farm owns ship-grade Agent core. Existing lane owners act under D141.
 
 Safety: D130 automatic classifier refusal remains in force. SWAP recovery and related acceptance stay stopped: no retry, rephrase, alternate route, transfer or rollback. D127e only proves static WAL reachability; Element wait causality is UNPROVED. D141 makes both documented gaps, without lifting any refusal. Existing Runtime escalation remains; no new decision request.
 
-Pass 2026-10-26T00:07:38Z: inbox817752 unchanged. Header SHA2563504a69c4b96da96d26b127aad9e29340a09174ebbbb3d25e2eb8628f3b13391 includes D141 and D141b, both read. Normal bin/workers ap2- again confirms1313 done, zero live. H6 Runtime23:55, App23:59, Agent23:58 and Farm00:00 published boards checked. No Proof blocked row ready: recipe2353 review and complete cut tuple still owed. Agent D100a receiving2341 PASS is HOMEc585; historical FPS regression has no new behavior closure. Runtime final join6a011 is frozen with119 targeted and independent2350 PASS. App2358 owns six conflicts; Agent2357 reviews joinaa5a. Summary-only peer235910 pointed App to authentic tuple file; App cleared that gate. Free disk 5779243008 bytes; no cleanup or execution.
+Pass 2026-10-26T00:16:55Z: inbox817752 unchanged. Header SHA256e5bfe4e182ab7d9a036fa2bc5b9aeb0d2329873be7ca753e6c2acfbc2540a33a read; D141/D141b and frozen Runtime6a011 remain recorded. H6 Runtime00:06, App00:08, Agent00:10 and Farm00:10 checked. No Proof blocked row ready: recipe review/complete handoff and two cut heads remain owed. App six conflicts resolved and review0009 active; Agent normal artifact and provenance PASS, cumulative0008 active. Summary-only peer001420 flags missing Runtime current rows so owner can publish its recipe0003 disposition. Prior peer235910 missing-file need cleared by App. Free disk 5770940416 bytes; no cleanup, dispatch, body, provisioning, retry or merge. D125 receipt hash unchanged.
 
 D125 receipt remains SHA2562074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Supplied submit stopped before D66 at missing tsx; no normal request ID, preflight ID, XML or body. Do not provision dependencies, retry, or touch the Node tree, four checkouts or private output root.
 
