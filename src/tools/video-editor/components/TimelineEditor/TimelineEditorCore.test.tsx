@@ -293,6 +293,86 @@ describe('TimelineEditorCore', () => {
     }
   });
 
+  it('correlates every accepted read with its later mounted render', async () => {
+    const expectedOccurrenceId = 'occ-5';
+    const collector = createD141jVisibilityCollector(expectedOccurrenceId);
+    const uninstallCollector = installD141jVisibilityCollector(collector);
+    const firstContract = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+    const secondContract = {
+      ...firstContract,
+      primary_timeline: {
+        ...firstContract.primary_timeline,
+        head: {
+          ...firstContract.primary_timeline.head,
+          revision_id: 'timeline-rev-3',
+        },
+      },
+    };
+    const firstShotCompositionPort = {
+      load: vi.fn(async () => firstContract),
+    };
+    const secondShotCompositionPort = {
+      load: vi.fn(async () => secondContract),
+    };
+    let latestHost: ReturnType<typeof useAstridShotsHost> | null = null;
+
+    function MountedVisibilityChain({ shotCompositionPort }: { shotCompositionPort: typeof firstShotCompositionPort }) {
+      const host = useAstridShotsHost('project-001', 'document-primary', shotCompositionPort);
+      latestHost = host;
+      const groups = useShotGroups([], [], host.canonicalOccurrences);
+      return <TimelineEditorCore canonicalOccurrences={host.canonicalOccurrences} shotGroups={groups} />;
+    }
+
+    let mounted: ReturnType<typeof renderWithStore> | null = null;
+    try {
+      mounted = renderWithStore(<MountedVisibilityChain shotCompositionPort={firstShotCompositionPort} />);
+      await waitFor(() => expect(firstShotCompositionPort.load).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(latestHost?.canonicalComposition?.headRevisionId).toBe('timeline-rev-2'));
+
+      mounted.unmount();
+      mounted = renderWithStore(<MountedVisibilityChain shotCompositionPort={secondShotCompositionPort} />);
+      await waitFor(() => expect(secondShotCompositionPort.load).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(latestHost?.canonicalComposition?.headRevisionId).toBe('timeline-rev-3'));
+
+      const artifact = collector.snapshot();
+      const acceptedReads = artifact.events.filter((event) => event.kind === 'accepted-canonical-read');
+      expect(acceptedReads).toHaveLength(2);
+      expect(acceptedReads.map((event) => event.acceptedReadHeadRevisionId)).toEqual([
+        'timeline-rev-2',
+        'timeline-rev-3',
+      ]);
+      expect(new Set(acceptedReads.map((event) => event.acceptedReadId)).size).toBe(2);
+
+      const artifactPath = process.env.D141J_VISIBILITY_ARTIFACT_PATH;
+      const staleArtifactPath = process.env.D141J_VISIBILITY_STALE_ARTIFACT_PATH;
+      if (artifactPath) {
+        writeFileSync(artifactPath, `${JSON.stringify(artifact, null, 2)}\n`);
+        const checkerPath = path.resolve(process.cwd(), 'scripts/testing/check-d141j-visibility.mjs');
+        const checkerOutput = execFileSync(process.execPath, [checkerPath, artifactPath], { encoding: 'utf8' });
+        expect(checkerOutput).toContain('"status":"PASS"');
+
+        if (staleArtifactPath) {
+          const firstReadId = acceptedReads[0].acceptedReadId;
+          const secondReadId = acceptedReads[1].acceptedReadId;
+          const staleArtifact = {
+            ...artifact,
+            events: artifact.events.map((event) => (
+              event.kind === 'active-occurrences-before-useShotGroups' && event.acceptedReadId === secondReadId
+                ? { ...event, acceptedReadId: firstReadId }
+                : event
+            )),
+          };
+          writeFileSync(staleArtifactPath, `${JSON.stringify(staleArtifact, null, 2)}\n`);
+          expect(() => execFileSync(process.execPath, [checkerPath, staleArtifactPath], { encoding: 'utf8' })).toThrow();
+        }
+      }
+    } finally {
+      mounted?.unmount();
+      latestHost = null;
+      uninstallCollector();
+    }
+  });
+
   function SharedPopupSelection({ owner, testId }: { owner: TimelineClipDataOwner; testId: string }) {
     const { selectedClipIds } = useTimelineMultiSelect(owner);
     return <output data-testid={testId}>{[...selectedClipIds].join('|') || 'none'}</output>;

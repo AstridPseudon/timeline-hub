@@ -1,5 +1,6 @@
 export type D141jVisibilityEvent = Readonly<{
   kind: 'accepted-canonical-read';
+  acceptedReadId: string;
   projectId: string;
   parentDocumentId: string;
   acceptedReadHeadRevisionId: string;
@@ -7,18 +8,21 @@ export type D141jVisibilityEvent = Readonly<{
   occurrenceIds: readonly string[];
 }> | Readonly<{
   kind: 'active-occurrences-before-useShotGroups';
+  acceptedReadId: string;
   projectId: string;
   parentDocumentId: string;
   acceptedReadHeadRevisionId: string;
   occurrenceIds: readonly string[];
 }> | Readonly<{
   kind: 'useShotGroups-input-and-result';
+  acceptedReadId: string;
   inputOccurrenceIds: readonly string[];
   resultOccurrenceIds: readonly string[];
   resultGroupKeys: readonly string[];
   resultGroupCount: number;
 }> | Readonly<{
   kind: 'before-shot-group-overlay';
+  acceptedReadId: string;
   canonicalOccurrenceIds: readonly string[];
   shotGroupOccurrenceIds: readonly string[];
   shotGroupKeys: readonly string[];
@@ -33,16 +37,28 @@ export type D141jVisibilityArtifact = Readonly<{
 
 export type D141jVisibilityCollector = Readonly<{
   record: (event: D141jVisibilityEvent) => void;
+  nextAcceptedReadId: () => string;
   snapshot: () => D141jVisibilityArtifact;
 }>;
 
 let activeCollector: D141jVisibilityCollector | null = null;
+const readCorrelationByOccurrences = new WeakMap<object, Readonly<{
+  acceptedReadId: string;
+  projectId: string;
+  parentDocumentId: string;
+  acceptedReadHeadRevisionId: string;
+}>>();
 
 export function createD141jVisibilityCollector(expectedOccurrenceId: string): D141jVisibilityCollector {
   const events: D141jVisibilityEvent[] = [];
+  let acceptedReadCount = 0;
   return {
     record(event) {
       events.push(event);
+    },
+    nextAcceptedReadId() {
+      acceptedReadCount += 1;
+      return `accepted-read-${acceptedReadCount}`;
     },
     snapshot() {
       return {
@@ -68,16 +84,28 @@ export function observeD141jAcceptedCanonicalRead({
   acceptedReadHeadRevisionId,
   previousAcceptedReadHeadRevisionId,
   occurrenceIds,
+  occurrences,
 }: {
   projectId: string;
   parentDocumentId: string;
   acceptedReadHeadRevisionId: string;
   previousAcceptedReadHeadRevisionId: string | null;
   occurrenceIds: readonly string[];
+  occurrences?: readonly { occurrenceId: string }[];
 }): void {
   if (!activeCollector) return;
+  const acceptedReadId = activeCollector.nextAcceptedReadId();
+  if (occurrences) {
+    readCorrelationByOccurrences.set(occurrences, {
+      acceptedReadId,
+      projectId,
+      parentDocumentId,
+      acceptedReadHeadRevisionId,
+    });
+  }
   activeCollector?.record({
     kind: 'accepted-canonical-read',
+    acceptedReadId,
     projectId,
     parentDocumentId,
     acceptedReadHeadRevisionId,
@@ -96,12 +124,15 @@ export function observeD141jActiveOccurrencesBeforeUseShotGroups(
   if (!activeCollector) return;
   const acceptedRead = [...canonicalOccurrences][0];
   if (!acceptedRead) return;
+  const correlation = readCorrelationByOccurrences.get(canonicalOccurrences);
+  if (!correlation) return;
   const occurrenceIds = canonicalOccurrences.map((occurrence) => occurrence.occurrenceId);
   activeCollector.record({
     kind: 'active-occurrences-before-useShotGroups',
-    projectId: acceptedRead.projectId,
-    parentDocumentId: acceptedRead.parentDocumentId,
-    acceptedReadHeadRevisionId: getAcceptedReadHeadRevisionId(),
+    acceptedReadId: correlation?.acceptedReadId ?? '',
+    projectId: correlation?.projectId ?? acceptedRead.projectId,
+    parentDocumentId: correlation?.parentDocumentId ?? acceptedRead.parentDocumentId,
+    acceptedReadHeadRevisionId: correlation?.acceptedReadHeadRevisionId ?? '',
     occurrenceIds,
   });
 }
@@ -117,8 +148,11 @@ export function observeD141jUseShotGroupsInputAndResult(
   }>,
 ): void {
   if (!activeCollector) return;
+  const correlation = readCorrelationByOccurrences.get(inputOccurrences);
+  if (!correlation) return;
   activeCollector.record({
     kind: 'useShotGroups-input-and-result',
+    acceptedReadId: correlation?.acceptedReadId ?? '',
     inputOccurrenceIds: inputOccurrences.map((occurrence) => occurrence.occurrenceId),
     resultOccurrenceIds: resultGroups
       .map((group) => group.canonicalIdentity?.occurrenceId ?? group.pendingOccurrenceId ?? '')
@@ -139,8 +173,11 @@ export function observeD141jBeforeShotGroupOverlay(
   }>,
 ): void {
   if (!activeCollector) return;
+  const correlation = readCorrelationByOccurrences.get(canonicalOccurrences);
+  if (!correlation) return;
   activeCollector.record({
     kind: 'before-shot-group-overlay',
+    acceptedReadId: correlation?.acceptedReadId ?? '',
     canonicalOccurrenceIds: canonicalOccurrences.map((occurrence) => occurrence.occurrenceId),
     shotGroupOccurrenceIds: shotGroups
       .map((group) => group.canonicalIdentity?.occurrenceId ?? group.pendingOccurrenceId ?? '')
@@ -150,14 +187,4 @@ export function observeD141jBeforeShotGroupOverlay(
     )),
     shotGroupCount: shotGroups.length,
   });
-}
-
-function getAcceptedReadHeadRevisionId(): string {
-  // The collector records the accepted head on its first event. This keeps the
-  // hook seam read-only without threading diagnostic state through product APIs.
-  const snapshot = activeCollector?.snapshot();
-  const acceptedRead = snapshot?.events.find((event) => event.kind === 'accepted-canonical-read');
-  return acceptedRead?.kind === 'accepted-canonical-read'
-    ? acceptedRead.acceptedReadHeadRevisionId
-    : '';
 }

@@ -213,6 +213,7 @@ export function useAstridShotsHost(
         acceptedReadHeadRevisionId: composition.headRevisionId,
         previousAcceptedReadHeadRevisionId: currentHead ?? null,
         occurrenceIds: composition.occurrences.map((occurrence) => occurrence.occurrenceId),
+        occurrences: composition.occurrences,
       });
       // Advance the pinned server snapshot independently of the draft
       // projection. `canonicalOccurrences` continues to prefer the draft,
