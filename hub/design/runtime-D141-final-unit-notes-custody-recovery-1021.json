@@ -1,0 +1,50 @@
+{
+  "utc": "2026-10-26T10:21:00.793202+00:00",
+  "scope": "Byte-exact recovery of worker-authored relative evidence; no source or original evidence rewritten",
+  "source": "d77575d45ad8920592b7d5352518e63b6048cfb6",
+  "original_relative_path_error": true,
+  "files": [
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/comparison.py",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/comparison.py",
+      "bytes": 13286,
+      "sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/correction.json",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/correction.json",
+      "bytes": 6881,
+      "sha256": "1bb0d6d686b39861d6955c4e098f9ee6d7db43540148fe4c0e6586a3f36f01d6"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/disk-trace.txt",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/disk-trace.txt",
+      "bytes": 508,
+      "sha256": "a09e72ced372406aa5933cfb125b47fba3a49b8075e5ed012ee89576761d94ad"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/handoff.md",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/handoff.md",
+      "bytes": 1422,
+      "sha256": "8b07f3f71cf6e8a53b74ef27689dcb7b148888a5d8fcf6538010399da0c8930e"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/sampler-lifecycle.json",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/sampler-lifecycle.json",
+      "bytes": 796,
+      "sha256": "1eabfbdddee9ead204cfeff4edc10cfed223ca9ed975d7e9ce047bd7bdb2617d"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/source-manifest.json",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/source-manifest.json",
+      "bytes": 6178,
+      "sha256": "3dfc71eff8ede4dc8691ed4d9fafdd59a5ac67ede32d655606df28fcb8f1a08c"
+    },
+    {
+      "git_source": "d77575d45ad8920592b7d5352518e63b6048cfb6:evidence/validation.md",
+      "received": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/validation.md",
+      "bytes": 2320,
+      "sha256": "46d71a1b95910469118673372902c7aeb8b8076bdbacd039aa1208702438ada6"
+    }
+  ]
+}
