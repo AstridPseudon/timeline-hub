@@ -38,6 +38,73 @@ def test_boundary_vectors_match_runtime_byte_for_byte():
         assert boundary_report(vector["context"]) == vector["expected"], vector["name"]
 
 
+def test_materialized_occurrence_timing_is_visual_only_and_matches_shared_vectors():
+    vectors = _fixture(ROOT / "conformance/fixtures/occurrence-media-projection.json")
+    child_assets = {
+        row["asset_id"]: {
+            "object_id": row["object_id"], "content_sha256": row["digest"],
+            "type": row["media_type"],
+        }
+        for row in vectors["assets"]
+    }
+    child = {
+        "tracks": copy.deepcopy(vectors["tracks"]),
+        "clips": copy.deepcopy(vectors["clips"]),
+        "registry": {"assets": child_assets},
+    }
+    original_child = copy.deepcopy(child)
+    parent_clip = copy.deepcopy(vectors["parent_clip"])
+    parent = {
+        "config": {
+            "output": {"resolution": "1280x720", "fps": 30},
+            "tracks": [{"id": "parent-visual-lane", "kind": "visual"}],
+            "clips": [parent_clip],
+        },
+        "registry": {"assets": {"standalone-source": {"object_id": "object-standalone-source", "type": "image/png"}}},
+        "clips": [copy.deepcopy(parent_clip)],
+        "occurrences": [
+            {
+                "occurrence_id": "occ-1", "shot_id": "shot-alpha", "shot_revision_id": "rev-a",
+                "placement": {"start_ms": vectors["occurrence"]["at_ms"]},
+                "source_offset": vectors["occurrence"]["source_offset"],
+                "duration_ms": vectors["occurrence"]["duration_ms"],
+                "speed": vectors["occurrence"]["speed"], "track": vectors["occurrence"]["track"],
+                "gain": 1, "muted": False,
+            },
+            {
+                "occurrence_id": "occ-2", "shot_id": "shot-alpha", "shot_revision_id": "rev-a",
+                "placement": {"start_ms": vectors["next_occurrence"]["at_ms"]},
+                "source_offset": 0, "duration_ms": vectors["next_occurrence"]["duration_ms"],
+                "speed": 1, "track": vectors["next_occurrence"]["track"], "gain": 1, "muted": False,
+            },
+        ],
+    }
+    shots = {("shot-alpha", "rev-a"): {"internal_timeline_revision_id": "projection-internal"}}
+    internals = {"projection-internal": {"payload": child}}
+
+    _, projection = admit_closure(parent, shots, internals, timeline_id="main", materialize=True)
+    clips = {clip["id"].removeprefix("occ-1:"): clip for clip in projection["render_config"]["clips"] if clip["id"].startswith("occ-1:")}
+    for clip_id, expected in vectors["expected"].items():
+        clip = clips[clip_id]
+        assert clip["at"] == pytest.approx(expected["at"]), clip_id
+        assert clip["from"] == pytest.approx(expected["from"]), clip_id
+        if "to" in expected:
+            assert clip["to"] == pytest.approx(expected["to"]), clip_id
+        if "hold" in expected:
+            assert clip["hold"] == pytest.approx(expected["hold"]), clip_id
+        assert clip.get("speed") == expected.get("speed"), clip_id
+        source_duration = clip["hold"] if "hold" in clip else clip["to"] - clip["from"]
+        assert source_duration / clip.get("speed", 1) == pytest.approx(expected["timeline_duration"]), clip_id
+    rendered_standalone = projection["render_config"]["clips"][0]
+    assert {key: rendered_standalone.get(key) for key in parent_clip} == parent_clip
+    assert projection["render_registry"]["assets"]["occ-1:lane-audio-source"]["object_id"] == "object-lane-audio-source"
+    assert clips["audio-track-inherited"]["app"]["canonicalTiming"]["sourceOffsetMs"] == 350
+    assert clips["audio-track-inherited"]["app"]["canonicalTiming"]["occurrenceSpeed"] == 1.5
+    assert projection["render_config"]["clips"][1]["id"] == "occ-1:visual-trim-inherited"
+    assert child == original_child
+    assert parent["clips"] == [parent_clip]
+
+
 @pytest.mark.integration  # compares against a sibling Astrid checkout's copy of the vectors
 def test_shared_astrid_boundary_vectors_match_runtime_byte_for_byte():
     fixture = Path(os.environ.get("ASTRID_VISUAL_BOUNDARY_FIXTURE") or astrid_checkout() / "tests/fixtures/visual-boundary-v1.json")
