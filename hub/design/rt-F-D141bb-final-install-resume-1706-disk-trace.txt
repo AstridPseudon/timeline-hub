@@ -1,0 +1,36 @@
+{"event":"sampler-start-request","interval_seconds":5,"stop_threshold_bytes":4294967296,"filesystem":"/tmp"}
+2026-10-26T17:07:11Z pid=4
+2026-10-26T17:07:25Z pid=3
+2026-10-26T17:07:42Z sampler_pid=2
+2026-10-26T17:07:42Z available_bytes=5161185280 threshold_bytes=4294967296
+2026-10-26T17:07:52Z sampler_pid=2
+2026-10-26T17:07:52Z available_bytes=5161181184 threshold_bytes=4294967296
+2026-10-26T17:07:57Z available_bytes=5161074688 threshold_bytes=4294967296
+2026-10-26T17:08:02Z available_bytes=5161177088 threshold_bytes=4294967296
+2026-10-26T17:08:07Z available_bytes=5161070592 threshold_bytes=4294967296
+2026-10-26T17:08:12Z available_bytes=5161041920 threshold_bytes=4294967296
+2026-10-26T17:08:17Z available_bytes=5160939520 threshold_bytes=4294967296
+2026-10-26T17:08:22Z available_bytes=5160910848 threshold_bytes=4294967296
+2026-10-26T17:08:27Z available_bytes=5160910848 threshold_bytes=4294967296
+2026-10-26T17:08:32Z available_bytes=5160898560 threshold_bytes=4294967296
+2026-10-26T17:08:37Z available_bytes=5161558016 threshold_bytes=4294967296
+2026-10-26T17:08:42Z available_bytes=5160898560 threshold_bytes=4294967296
+2026-10-26T17:08:47Z available_bytes=5160738816 threshold_bytes=4294967296
+2026-10-26T17:08:52Z available_bytes=5160845312 threshold_bytes=4294967296
+2026-10-26T17:08:57Z available_bytes=5158420480 threshold_bytes=4294967296
+2026-10-26T17:09:02Z available_bytes=5158420480 threshold_bytes=4294967296
+2026-10-26T17:09:07Z available_bytes=5158420480 threshold_bytes=4294967296
+2026-10-26T17:09:12Z available_bytes=5158293504 threshold_bytes=4294967296
+2026-10-26T17:09:17Z available_bytes=5158174720 threshold_bytes=4294967296
+2026-10-26T17:09:22Z available_bytes=5158268928 threshold_bytes=4294967296
+2026-10-26T17:09:27Z available_bytes=5158268928 threshold_bytes=4294967296
+2026-10-26T17:09:32Z available_bytes=5157867520 threshold_bytes=4294967296
+2026-10-26T17:09:37Z available_bytes=5157867520 threshold_bytes=4294967296
+2026-10-26T17:09:42Z available_bytes=5157867520 threshold_bytes=4294967296
+2026-10-26T17:09:47Z available_bytes=5157867520 threshold_bytes=4294967296
+2026-10-26T17:09:52Z available_bytes=5157797888 threshold_bytes=4294967296
+2026-10-26T17:09:57Z available_bytes=5157797888 threshold_bytes=4294967296
+2026-10-26T17:10:02Z available_bytes=5157797888 threshold_bytes=4294967296
+2026-10-26T17:10:07Z available_bytes=5157797888 threshold_bytes=4294967296
+2026-10-26T17:10:12Z available_bytes=5157797888 threshold_bytes=4294967296
+2026-10-26T17:10:17Z available_bytes=5157187584 threshold_bytes=4294967296

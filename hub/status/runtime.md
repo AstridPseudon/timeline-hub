@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T17:09:01Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+<!-- main | 2026-10-26T17:14:32Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
 # runtime board, 2026-10-26T17:07:11.020197+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@
 | P4 cut receipt | Retain corrected actual three-case PASS | Luna and Service | Main0211 records independent0202 PASS | merged | Actual10086; correction0151; review0202 | Actual3 of3 PASS23.668s; XMLafca45b7 real retained path correction qualified. No second body or kit install;19479 must not start. | Frozen cut |
 | P2 placement cut | Qualify intended authoritative record shape | Luna | Independent0213 PASS bounded | merged | Author0207; review0213 | All22 keys associate with intendedD124 materialization family; fullidentities corrected. Exactpredicate proof absent; App owns protected migration and rerun. | D12416bb in28e |
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
-| F-final install | Activate exact destination final rows | Luna | Independent complete checker PASS | doing | rt-F-D141bb-final-install-resume-1706 | [Pre-write stop](../../design/runtime-F-final-install-prewrite-stop-1706.json). Registry unchanged. Same WIP resumes with canonical tuple outputs and unmodified CLI. | Final abac/ec0a/95d/635f |
+| F-final install | Qualify actual final activation | Luna and independent Luna | Actual installer exit 0 | review | Installer1706; rt-F-final-install-review-next | [Activation](../../design/runtime-F-final-activation-publication-1712.json). Three rows concrete, canonical tuples installed, original bytes conserved. Readback queued. | Final abac/ec0a/95d/635f |
 | F-final placement note | Retain installed App placement ZIP line | Luna | Independent0258 PASS | merged | Installer0254; review0258 | Exact line once per target;568 outside files and prior notes exact. Controlled render PASS. [Receipt](../../design/rt-F-D141-placement-note-review-0258-review.json). | App520d7e4f |
 | F-final App ledger | Retain installed App ZIP note | Luna | Independent0225 PASS | merged | Installer0215; independent0225 | Exact0203 note once per document;568 outside files and known gaps unchanged. Render PASS. [Receipt](../../design/rt-F-D141-receiving-final-review-0225-review.json). | App5fe3e4de |
 | F-final notes | Install reviewed D141 notes | Luna | Independent0032 PASS | merged | rt-F-D141-notes-install-0038 | Exact pair installed;568 outside files unchanged; App paragraphs unchanged; render PASS. No ZIP claim. | 5738d66d / f4bb7346 |
@@ -96,7 +96,7 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: Independent protected check of actual repaired harness; then existing final installer, installation review, one build and artifact review.
-live 1 / cap 6; ready-undispatched 0. Guarded final installer being dispatched; protected checker and both maps terminal. No heavy build before installation review.
+live 1 / cap 6; ready-undispatched 0. Independent installed-route reviewer queued. Actual guarded activation and protected checker are terminal PASS; one build follows readback.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
@@ -133,3 +133,5 @@ Current pass 2026-10-26T16:58:58.889649+00:00: Sol1647 AUTHOR_COMPLETE_PASS term
 Current pass 2026-10-26T17:04:22.526595+00:00: Actual protected SAME-checker exit0 and all original purposes qualified. Raw request hash authenticates exact checker; reviewer copied digest typo preserved separately. Original11 source/static/same33 chain plus completed protected controls closes tooling prerequisite at bounded scope. Existing final installer released immediately under MainGO. Free5164597248. No cleanup, product edit, body or original rewrite.
 
 Current pass 2026-10-26T17:07:11.020197+00:00: Prior installer proposed tuple globals redirection inconsistent with immutable command paths; manager stopped through supported route BEFORE writes. Registry original7b1f, both canonicaltuples absent. Same-WIP Luna1706 resume queued immediately with exact originaldestinations and unchangedCLI; no new source or guard changes. Installationreview/build briefs name actual resume. No cleanup/floortrip.
+
+Current pass 2026-10-26T17:12:02.856514+00:00: Actual installer terminal exit0. Canonical original destinations, exact backup, source11 and all priorregistry bytes conserved. Independent installed-route reviewer queued immediately; no body yet. Free5156536320. No cleanup or floortrip.

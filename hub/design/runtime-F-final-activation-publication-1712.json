@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-26T17:12:02.856514+00:00",
+  "worker": "rt-F-D141bb-final-install-resume-1706",
+  "scope": "Actual accepted CLI activation; independent installation readback pending. No builder.",
+  "registry_actual_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+  "source_tuple_actual_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+  "gate_tuple_actual_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/installation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-installation.json",
+      "sha256": "fc521e70502261468f821d84db55a6dc2171a4fb74c880c4f49b8fc546170a02",
+      "bytes": 351981
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/registry-conservation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-registry-conservation.json",
+      "sha256": "f91eeef2d2047dfea81a36342f8cf0c8929b66faddaab3ff594b6e9e8f798d98",
+      "bytes": 214502
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-source-manifest.json",
+      "sha256": "5d7795f889785bc1f35c716a67d6aa34b374b2cf84ba013a2a0ae403300e65b5",
+      "bytes": 10058
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-validation.md",
+      "sha256": "9038d42dce185e772425b1d355b236cca4f502d04d94245da31aa2140caf6b32",
+      "bytes": 1025
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-handoff.md",
+      "sha256": "ba2ba2716845da6e33dbf1f06690eb0e4c848965e1b8494a7cb4466d16ca65f7",
+      "bytes": 989
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/required-inputs.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-required-inputs.json",
+      "sha256": "7d19ae285fb04f64413b559e946b93ce400c0a25698c25a1f80e84f87558a0c0",
+      "bytes": 106908
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-disk-trace.txt",
+      "sha256": "d180b42a256358bcc3bd177af39b503844dee2b1e1bc65f2778d567fa5c8322d",
+      "bytes": 2558
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141bb-final-install-resume-1706/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141bb-final-install-resume-1706-sampler-lifecycle.json",
+      "sha256": "a82212d1b90e1dff37f0affe7bdf1fbf9b87bb6c5f334ae378f9d42e2441cad1",
+      "bytes": 915
+    }
+  ]
+}
