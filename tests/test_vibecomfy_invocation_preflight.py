@@ -191,6 +191,65 @@ def _fake_loaded_workflow(*, prompt: str = "hello", prompt_reachable: bool = Tru
     )
 
 
+def test_remote_admission_preflights_against_the_run_comfyui_schema(monkeypatch, tmp_path):
+    members = {
+        "python": b"workflow = 'fixture'",
+        "companion": b"{}",
+        "source": b"{}",
+    }
+    by_digest = {
+        "sha256:" + hashlib.sha256(data).hexdigest(): data
+        for data in members.values()
+    }
+    filenames = {"python": "workflow.py", "companion": "workflow.vibe.json", "source": "source.json"}
+    descriptors = {
+        name: {
+            "object_id": "sha256:" + hashlib.sha256(data).hexdigest(),
+            "digest": "sha256:" + hashlib.sha256(data).hexdigest(),
+            "filename": filenames[name],
+        }
+        for name, data in members.items()
+    }
+
+    class Client:
+        def get_object(self, digest: str) -> bytes:
+            return by_digest[digest]
+
+    class Workflow:
+        inputs = {}
+        outputs = [SimpleNamespace(node_id="1")]
+        edges = []
+
+        def compile(self, _kind, *, run_inputs):
+            assert run_inputs == {}
+            return {"1": {"class_type": "SaveImage", "inputs": {}}}
+
+    loaded = SimpleNamespace(
+        resolved=SimpleNamespace(
+            workflow=Workflow(), workflow_identity="fixture", revision_id="rev-1",
+            semantic_digest="sha256:" + "1" * 64,
+        ),
+        workflow_content_digest="sha256:" + "2" * 64,
+    )
+    seen = {}
+
+    def load(path, scratch, **kwargs):
+        seen["comfy_url"] = kwargs.get("comfy_url")
+        assert path.read_bytes() == members["python"]
+        return loaded
+
+    monkeypatch.setattr("astrid.packs.vibecomfy.production_engine.load_workflow_path", load)
+    comfy_url = "http://127.0.0.1:8188"
+    receipt = _vibecomfy_invocation_preflight(
+        Client(),
+        {"inputs": {**descriptors, "comfy_url": comfy_url}},
+        strict=True,
+    )
+
+    assert seen["comfy_url"] == comfy_url
+    assert receipt["phase"] == "submission"
+
+
 def test_invocation_preflight_rejects_unresolved_prompt_and_wrong_source_binding(
     monkeypatch, tmp_path
 ):

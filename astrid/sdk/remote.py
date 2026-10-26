@@ -182,9 +182,16 @@ def _vibecomfy_invocation_preflight(
             source_video_path.write_bytes(managed_members[managed_member])
         from astrid.packs.vibecomfy.invocation_preflight import preflight_invocation
 
+        comfy_url = str(inputs.get("comfy_url") or "")
+        if comfy_url:
+            from astrid.core.generation.backends.vibecomfy_local_server import validate_comfy_url
+
+            comfy_url = validate_comfy_url(comfy_url)
+
         receipt = preflight_invocation(
             paths["python"],
             run_inputs=run_inputs,
+            comfy_url=comfy_url,
             expected_prompt=(
                 str(inputs["prompt"])
                 if isinstance(inputs.get("prompt"), str) and inputs["prompt"].strip()

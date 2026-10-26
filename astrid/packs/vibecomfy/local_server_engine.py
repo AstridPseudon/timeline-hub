@@ -163,7 +163,8 @@ def local_server_bundle(resolved: Any, destination: Path, *, output_identity: st
         parent_revision=bundle.revision_id, operation="authored",
         parent_evidence={"revision_id": bundle.revision_id, "workflow_identity": bundle.workflow_identity},
         source_format="ready_template",
-        extra_members={"source.json": source.read_bytes()} if source and source.is_file() else None,
+        # A full path: a bare name is published relative to the process cwd.
+        extra_members={root / "source.json": source.read_bytes()} if source and source.is_file() else None,
     )
     return load_bundle(derived.python_path, trust=Provenance.USER_CONFIRMED)
 
@@ -171,6 +172,7 @@ def local_server_bundle(resolved: Any, destination: Path, *, output_identity: st
 def run_local_server(
     resolved: Any, destination: Path, *, comfy_url: str, comfy_output_dir: str,
     task_identity: str, attempt_identity: str | None, run_inputs: Mapping[str, Any] | None,
+    workflow_conversion_object_info_sha256: str | None = None,
 ) -> ProductionRunResult:
     from vibecomfy.runtime.run import run_sync
     from vibecomfy.runtime.session import SessionConfig
@@ -245,6 +247,11 @@ def run_local_server(
             # (including the chosen seed) that actually reached /prompt.
             payload = json.loads(result_path.read_text(encoding="utf-8"))
             payload["inputs"].update(bindings)
+            if workflow_conversion_object_info_sha256 is not None:
+                schema_provenance = payload["evidence"]["producer"]["runtime"]["schema_provenance"]
+                schema_provenance["workflow_conversion_object_info_sha256"] = (
+                    workflow_conversion_object_info_sha256
+                )
             result_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
             return _result_from_runtime_result(result, tuple(Path(path) for path in result.outputs))
         except BaseException as exc:

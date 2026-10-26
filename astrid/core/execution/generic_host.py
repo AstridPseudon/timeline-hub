@@ -41,6 +41,7 @@ from urllib.parse import quote, urlsplit
 
 from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol.storage import free_disk_floor_bytes
 
 from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from astrid.core.execution.platform_helpers import owned_by_current_user
@@ -1503,9 +1504,17 @@ def _prepare_vibecomfy_execution_identity(
             source=inputs.get("source"),
             scratch=scratch,
         ) as (workflow_path, _authority):
+            comfy_url = str(inputs.get("comfy_url") or "")
+            if comfy_url:
+                from astrid.core.generation.backends.vibecomfy_local_server import (
+                    validate_comfy_url,
+                )
+
+                comfy_url = validate_comfy_url(comfy_url)
             loaded = load_workflow_path(
                 workflow_path,
                 scratch / "canonical-loader",
+                comfy_url=comfy_url,
             )
             return (
                 loaded_workflow_execution_identity(loaded, readiness_profile),
@@ -4320,18 +4329,24 @@ def _evidence_cap_message(detail: str | None) -> str:
     return f"generated evidence cap exceeded: {detail}"
 
 
-def _attempt_evidence_cap(policy_cap_bytes: int, storage_estimate: Mapping[str, int] | None) -> int:
-    """Return one attempt's evidence cap: the host cap, or its admitted envelope.
+def _task_storage_limits(task_data: Mapping[str, Any]) -> dict[str, int] | None:
+    """Render estimates plan capacity; other packs retain their hard envelopes."""
+    estimate = _task_storage_estimate(task_data)
+    capability = task_data.get("capability") or task_data.get("capability_id")
+    return None if capability == "rendering.render" else estimate
 
-    An admitted storage envelope already bounds scratch and output on their
-    own (see ``_assert_live_storage_envelope``), and its frame sequence can be
-    larger than the generic cap. Raising the cap to that envelope never makes
-    the attempt unbounded; it stops a valid render from failing the generic cap.
+
+def _render_media_roots(root: Path) -> tuple[Path, ...]:
+    """Keep render media out of the diagnostic evidence budget.
+
+    These files are protected by actual volume space. Logs and other evidence
+    retain the existing per-attempt and concurrent retained-root caps.
     """
-    if storage_estimate is None:
-        return int(policy_cap_bytes)
-    envelope = int(storage_estimate["scratch_bytes"]) + int(storage_estimate["output_bytes"])
-    return max(int(policy_cap_bytes), envelope)
+    return tuple(
+        path for path in root.iterdir()
+        if path.name in {"inputs", "managed-objects", "outputs", "render-inputs"}
+        or any(marker in path.name for marker in _RENDERER_WORKSPACE_MARKERS)
+    )
 
 
 def _assert_live_storage_envelope(
@@ -4339,7 +4354,24 @@ def _assert_live_storage_envelope(
     root: Path,
     output_root: Path,
 ) -> None:
-    """Fail while a child is writing, before an overrun reaches settlement."""
+    """Guard real volume space, plus hard envelopes for bounded non-render packs."""
+    floor = free_disk_floor_bytes()
+    for volume_path in dict.fromkeys((root, output_root)):
+        if not volume_path.exists():
+            volume_path = root
+        available = int(shutil.disk_usage(volume_path).free)
+        if available < floor:
+            raise StorageEnvelopeError(
+                f"task storage exhausted: {available / 1e9:.2f} GB free, "
+                f"below the {floor / 1e9:.2f} GB free-space reserve. Free disk space and try again.",
+                diagnostic={
+                    "guard": "free_disk_space",
+                    "category": "insufficient_storage",
+                    "available_bytes": available,
+                    "floor_bytes": floor,
+                    **_storage_envelope_measurement(root, output_root),
+                },
+            )
     if estimate is None:
         return
     total_bytes = _attempt_tree_bytes(root)
@@ -4381,7 +4413,8 @@ def _task_storage_envelope(
     root: Path,
     staged_outputs: list[Mapping[str, Any]],
 ) -> dict[str, int] | None:
-    """Enforce an explicit whole-task storage ceiling before CAS upload."""
+    """Measure usage before CAS upload and enforce bounded non-render packs."""
+    _assert_live_storage_envelope(None, root, root / "outputs")
     estimate = _task_storage_estimate(task_data)
     if estimate is None:
         return None
@@ -4389,7 +4422,6 @@ def _task_storage_envelope(
     output_limit = estimate["output_bytes"]
     output_root = root / "outputs"
     resolved_output_root = output_root.resolve()
-    published_output_bytes = 0
     published_paths: set[Path] = set()
     for descriptor in staged_outputs:
         raw_path = descriptor.get("path")
@@ -4403,7 +4435,6 @@ def _task_storage_envelope(
             raise HostError("staged output path escapes the output directory")
         if resolved_path not in published_paths:
             published_paths.add(resolved_path)
-            published_output_bytes += int(path.stat().st_size)
     # Use the same stable-output view as the live counter.  This includes the
     # published result manifest and any undeclared stable file, while treating
     # atomic writer temporaries as scratch.  The latter prevents the estimate
@@ -4417,11 +4448,12 @@ def _task_storage_envelope(
     output_bytes = sum(int(path.stat().st_size) for path in output_paths)
     total_bytes = _attempt_tree_bytes(root)
     scratch_bytes = max(0, total_bytes - output_bytes)
-    if output_bytes > output_limit:
+    limits = _task_storage_limits(task_data)
+    if limits is not None and output_bytes > output_limit:
         raise HostError(
             f"staged output bytes {output_bytes} exceed task output limit {output_limit}"
         )
-    if scratch_bytes > scratch_limit:
+    if limits is not None and scratch_bytes > scratch_limit:
         raise HostError(
             f"attempt scratch bytes {scratch_bytes} exceed task scratch limit {scratch_limit}; "
             "this task exceeded its scratch budget. Re-run as a review render (640x360) or a "
@@ -4429,11 +4461,11 @@ def _task_storage_envelope(
         )
     return {
         "scratch_bytes": scratch_bytes,
-        "scratch_limit_bytes": scratch_limit,
+        "estimated_scratch_bytes": scratch_limit,
         "output_bytes": output_bytes,
-        "output_limit_bytes": output_limit,
+        "estimated_output_bytes": output_limit,
         "total_bytes": total_bytes,
-        "total_limit_bytes": scratch_limit + output_limit,
+        "estimated_total_bytes": scratch_limit + output_limit,
     }
 
 
@@ -7792,7 +7824,7 @@ class GenericPackHost:
             if output.get("role", "result") == "result"
             and isinstance(output.get("digest"), str)
         }
-        storage_estimate = _task_storage_estimate(task_data)
+        storage_estimate = _task_storage_limits(task_data)
         thumbnail_index = 0
         for output in outputs:
             if output.get("role", "result") != "result":
@@ -9253,7 +9285,7 @@ class GenericPackHost:
                 observed_epoch = self.runtime_state.get("runtime_epoch")
                 if observed_epoch is not None and observed_epoch != claim_epoch:
                     raise HostError("claimed runtime_epoch disagrees with observed runtime")
-            storage_estimate = _task_storage_estimate(task_data)
+            storage_estimate = _task_storage_limits(task_data)
             if record.definition.metadata.get("storage_estimate_required"):
                 if storage_estimate is None:
                     raise HostError(
@@ -9301,10 +9333,11 @@ class GenericPackHost:
         # debug/single-attempt callers. Long-lived hosts use ``attempt_base``
         # so sequential tasks get isolated namespaces.
         root = self._allocate_attempt_root(task_id, attempt_id)
-        attempt_evidence_cap = _attempt_evidence_cap(
-            self.execution_policy.evidence_cap_bytes,
-            storage_estimate,
-        )
+        # Render media capacity is guarded by disk_usage, not the evidence cap.
+        # Other packs retain their finite, explicitly admitted storage caps.
+        attempt_evidence_cap = self.execution_policy.evidence_cap_bytes
+        if storage_estimate is not None:
+            attempt_evidence_cap = max(attempt_evidence_cap, sum(storage_estimate.values()))
         runtime_limit = contract_limits.get("max_runtime_seconds")
         lifetime = _AttemptLifetime(self.execution_policy, time.monotonic(), runtime_limit)
         # Noninteractive native sessions still need their finite submission bound.
@@ -9434,6 +9467,7 @@ class GenericPackHost:
                         evidence_root,
                         immutable_inputs=immutable_input_baseline,
                         cap_bytes=attempt_evidence_cap,
+                        excluded_roots=_render_media_roots(root) if capability_id == "rendering.render" else (),
                     )
                 except EvidenceCapError as exc:
                     evidence_cap_exceeded = True
@@ -10061,6 +10095,7 @@ class GenericPackHost:
                     root,
                     immutable_inputs=immutable_input_baseline,
                     cap_bytes=attempt_evidence_cap,
+                    excluded_roots=_render_media_roots(root) if capability_id == "rendering.render" else (),
                 )
                 self._publish_evidence_status()
                 lifetime.assert_deadline()

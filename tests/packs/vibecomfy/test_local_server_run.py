@@ -138,6 +138,14 @@ def test_real_server_url_writes_managed_result_and_records_fresh_seed(comfy, tmp
         )
         managed = manifest["managed_generation_result"]
         assert managed["task_id"] == f"task-{number}"
+        expected_schema_digest = "sha256:" + hashlib.sha256(
+            json.dumps(comfy.schema, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        assert (
+            managed["evidence"]["producer"]["runtime"]["schema_provenance"]
+            ["workflow_conversion_object_info_sha256"]
+            == expected_schema_digest
+        )
         seeds.append(managed["inputs"]["seed"])
         assert (out / manifest["managed_generation_result_path"]).is_file()
         result = next(row for row in manifest["outputs"] if row["role"] == "result")
@@ -145,6 +153,9 @@ def test_real_server_url_writes_managed_result_and_records_fresh_seed(comfy, tmp
         output_names.append(original.name)
         assert hashlib.sha256((out / result["path"]).read_bytes()).digest() == hashlib.sha256(original.read_bytes()).digest()
         assert hashlib.sha256(original.read_bytes()).hexdigest() == comfy.output_hashes[original.name]
+        # The attempt's source.json sits beside its derived workflow, not in the cwd.
+        assert (out / "local-server-workflow" / "source.json").is_file()
+        assert not (tmp_path / "source.json").exists()
     assert seeds[0] != seeds[1]
     assert len(set(output_names)) == 2
     assert [prompt["1"]["inputs"]["seed"] for prompt in comfy.prompts] == seeds

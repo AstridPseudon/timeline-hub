@@ -18,7 +18,7 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx": "sha256:aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/element.yaml": "sha256:c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx": "sha256:aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml": "sha256:a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts": "sha256:7d04f19d21b5a59555cc4725d54fa087e57068a8cf9da58f618be05764082fb9",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts": "sha256:1e94041c8178687a82e4c5b54fb29b8cf0c281f74e9e624fdaf832f647072afa",
@@ -168,5 +168,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:fe27d7039ed9b5a7ad10ba1540d3ed5a1a1f0d794fcf7bd928ab6593749a1a28"
+  "version": "sha256:a6de31757f8f9678064a47579ddab839f786699f863494eb2c3f4440318991f3"
 }
