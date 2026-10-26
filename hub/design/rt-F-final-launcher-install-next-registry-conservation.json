@@ -1,0 +1,183 @@
+{
+  "all_unselected_registry_lines_conserved": true,
+  "canonical_notes": {
+    "README.template.md": {
+      "bytes": 52052,
+      "gid": 0,
+      "inode": 2130156,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "regular": true,
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+      "symlink": false,
+      "uid": 0
+    },
+    "gate-results.md": {
+      "bytes": 48240,
+      "gid": 0,
+      "inode": 2130155,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "regular": true,
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399",
+      "symlink": false,
+      "uid": 0
+    }
+  },
+  "changed_row_count": 2,
+  "changed_rows": [
+    {
+      "after_sha256": "5b642b1a96f5cceb745886f566a435eca64764c75fbdd105327a75584a7c1b7a",
+      "before_sha256": "95714eb061e7a1c7093be48046ea01e8d0eb4af47c35d76d3e36656a2994d050",
+      "line": 230,
+      "name": "delivery-v2-final"
+    },
+    {
+      "after_sha256": "4f41a4f9b710107962a1622a623011cf41d913be4f7717f43750b8f608347fec",
+      "before_sha256": "edf64ce81841ee1a804a08a5c5ca654041fa4622e9896df7545ca30a4e1a2bde",
+      "line": 231,
+      "name": "delivery-v2-dryrun"
+    }
+  ],
+  "core_row_conserved": true,
+  "derived_postimage_matches_actual": true,
+  "derived_postimage_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+  "line_count": {
+    "post": 231,
+    "pre": 231
+  },
+  "postimage_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+  "preimage_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+  "proof_rows": {
+    "d141-p5-cut": "6be05d00fb80c5c9fed24b614a523c5ffaa2afc71f8089736f5ef195ed1e2b27",
+    "full-d141-cut": "fcd4ca8f45d683f5af15cacdd8bfc213b43774a9a11f8e503341b6249a44878a",
+    "full-d141-pristine": "c12d0642b9f57ed008cc042b296b5432d5b88c3edccc5bbb63c9281c67b59f99",
+    "full-d141-pristine-targeted15": "c58378a2036cca8d188447fd49abdd1b0b3be5765d9a252485b4f784b865314e"
+  },
+  "protected_source_artifacts": {
+    "D68_wrapper": {
+      "bytes": 19914,
+      "gid": 0,
+      "inode": 2123285,
+      "mode": "0o755",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/delivery_gate_build.py",
+      "regular": true,
+      "sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+      "symlink": false,
+      "uid": 0
+    },
+    "builder": {
+      "bytes": 31889,
+      "gid": 0,
+      "inode": 1632716,
+      "mode": "0o755",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+      "regular": true,
+      "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "symlink": false,
+      "uid": 0
+    },
+    "candidate_rows": {
+      "bytes": 5721,
+      "gid": 0,
+      "inode": 2123296,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/runtime-final-service-rows.txt",
+      "regular": true,
+      "sha256": "d86ef7ee366adff5bcf2297f40cb247e14b8d818f2dd147b97bb26cb8a974f18",
+      "symlink": false,
+      "uid": 0
+    },
+    "core_inventory": {
+      "bytes": 25664,
+      "gid": 0,
+      "inode": 2123284,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/core-inventory.json",
+      "regular": true,
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "symlink": false,
+      "uid": 0
+    },
+    "core_runner": {
+      "bytes": 18055,
+      "gid": 0,
+      "inode": 2123293,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/run-final-services.py",
+      "regular": true,
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "symlink": false,
+      "uid": 0
+    },
+    "delivery_caller": {
+      "bytes": 14375,
+      "gid": 0,
+      "inode": 2123292,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/run-final-delivery.py",
+      "regular": true,
+      "sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+      "symlink": false,
+      "uid": 0
+    },
+    "gate_tuple": {
+      "bytes": 1348,
+      "gid": 0,
+      "inode": 2041114,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-gate-tuple.json",
+      "regular": true,
+      "sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+      "symlink": false,
+      "uid": 0
+    },
+    "lifecycle_helper": {
+      "bytes": 23186,
+      "gid": 0,
+      "inode": 2123286,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/delivery_lifecycle.py",
+      "regular": true,
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "symlink": false,
+      "uid": 0
+    },
+    "review_acceptance": {
+      "bytes": 12332,
+      "gid": 0,
+      "inode": 2130279,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/check-launcher.py",
+      "regular": true,
+      "sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+      "symlink": false,
+      "uid": 0
+    },
+    "source_tuple": {
+      "bytes": 574,
+      "gid": 0,
+      "inode": 2041113,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-source-tuple.json",
+      "regular": true,
+      "sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+      "symlink": false,
+      "uid": 0
+    }
+  },
+  "status": "PASS",
+  "temporary_stage_files": []
+}

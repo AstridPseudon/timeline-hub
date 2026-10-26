@@ -1,0 +1,8 @@
+floor_bytes=4000000000
+minimum_observed_bytes=5115457536
+samples=11
+child_exit=0
+waited_and_reaped=True
+install_available_before=5115723776
+install_available_after=5115547648
+floor_status=PASS

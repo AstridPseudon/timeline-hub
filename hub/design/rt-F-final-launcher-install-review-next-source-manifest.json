@@ -1,0 +1,275 @@
+{
+  "candidate_files": {
+    "check.sh": {
+      "actual_mode": "0o755",
+      "actual_sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+      "expected_mode": "0o755",
+      "expected_sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/check.sh"
+    },
+    "core-inventory.json": {
+      "actual_mode": "0o644",
+      "actual_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "expected_mode": "0o644",
+      "expected_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/core-inventory.json"
+    },
+    "delivery_gate_build.py": {
+      "actual_mode": "0o755",
+      "actual_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+      "ast_parse": "PASS",
+      "expected_mode": "0o755",
+      "expected_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/delivery_gate_build.py"
+    },
+    "delivery_lifecycle.py": {
+      "actual_mode": "0o644",
+      "actual_sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "ast_parse": "PASS",
+      "expected_mode": "0o644",
+      "expected_sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/delivery_lifecycle.py"
+    },
+    "inherited-runtime-final-service-rows.txt": {
+      "actual_mode": "0o644",
+      "actual_sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+      "expected_mode": "0o644",
+      "expected_sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/inherited-runtime-final-service-rows.txt"
+    },
+    "install-final-services.py": {
+      "actual_mode": "0o644",
+      "actual_sha256": "ae18753b7d66aa750608c1e0c683af9150812fcae32b35d05418b2fd59ebd2e4",
+      "ast_parse": "PASS",
+      "expected_mode": "0o644",
+      "expected_sha256": "ae18753b7d66aa750608c1e0c683af9150812fcae32b35d05418b2fd59ebd2e4",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/install-final-services.py"
+    },
+    "install-map.json": {
+      "actual_mode": "0o644",
+      "actual_sha256": "c262a1ea4255f371cbe4bcbe2729743dd63ace8101200f2c64dac9dbd35ab308",
+      "expected_mode": "0o644",
+      "expected_sha256": "c262a1ea4255f371cbe4bcbe2729743dd63ace8101200f2c64dac9dbd35ab308",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/install-map.json"
+    },
+    "receiving_controls.py": {
+      "actual_mode": "0o644",
+      "actual_sha256": "9d3f50fd3eb46e6992ea330cfcbd4dee41df31880190a47276d3b187a3f8a015",
+      "ast_parse": "PASS",
+      "expected_mode": "0o644",
+      "expected_sha256": "9d3f50fd3eb46e6992ea330cfcbd4dee41df31880190a47276d3b187a3f8a015",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/receiving_controls.py"
+    },
+    "run-final-delivery.py": {
+      "actual_mode": "0o644",
+      "actual_sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+      "ast_parse": "PASS",
+      "expected_mode": "0o644",
+      "expected_sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/run-final-delivery.py"
+    },
+    "run-final-services.py": {
+      "actual_mode": "0o644",
+      "actual_sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "ast_parse": "PASS",
+      "expected_mode": "0o644",
+      "expected_sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/run-final-services.py"
+    },
+    "runtime-final-service-rows.txt": {
+      "actual_mode": "0o644",
+      "actual_sha256": "d86ef7ee366adff5bcf2297f40cb247e14b8d818f2dd147b97bb26cb8a974f18",
+      "expected_mode": "0o644",
+      "expected_sha256": "d86ef7ee366adff5bcf2297f40cb247e14b8d818f2dd147b97bb26cb8a974f18",
+      "hash_match": true,
+      "mode_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/runtime-final-service-rows.txt"
+    }
+  },
+  "canonical_notes": {
+    "README.template.md": {
+      "actual_sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+      "expected_sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+      "gid": 0,
+      "match": true,
+      "mode": "0o644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "symlink": false,
+      "uid": 0
+    },
+    "gate-results.md": {
+      "actual_sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399",
+      "expected_sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399",
+      "gid": 0,
+      "match": true,
+      "mode": "0o644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "symlink": false,
+      "uid": 0
+    }
+  },
+  "canonical_tuples": {
+    "gate_tuple": {
+      "bytes": 1348,
+      "expected_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+      "gid": 0,
+      "identity_match": true,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-gate-tuple.json",
+      "regular": true,
+      "sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+      "symlink": false,
+      "uid": 0
+    },
+    "source_tuple": {
+      "bytes": 574,
+      "expected_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+      "gid": 0,
+      "identity_match": true,
+      "mode": "0o644",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-source-tuple.json",
+      "regular": true,
+      "sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+      "symlink": false,
+      "uid": 0
+    }
+  },
+  "format": "timeline-f-final-launcher-independent-readback-v1",
+  "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "immutable_artifacts": {
+    "builder": {
+      "actual_gid": 0,
+      "actual_mode": "0o755",
+      "actual_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "actual_symlink": false,
+      "actual_uid": 0,
+      "expected_gid": 0,
+      "expected_mode": "0o755",
+      "expected_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "expected_symlink": false,
+      "expected_uid": 0,
+      "identity_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build"
+    },
+    "gate_tuple": {
+      "actual_gid": 0,
+      "actual_mode": "0o644",
+      "actual_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+      "actual_symlink": false,
+      "actual_uid": 0,
+      "expected_gid": 0,
+      "expected_mode": "0o644",
+      "expected_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+      "expected_symlink": false,
+      "expected_uid": 0,
+      "identity_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-gate-tuple.json"
+    },
+    "registry": {
+      "actual_gid": 0,
+      "actual_mode": "0o600",
+      "actual_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+      "actual_symlink": false,
+      "actual_uid": 0,
+      "backup_identity_match": true,
+      "expected_gid": 0,
+      "expected_mode": "0o600",
+      "expected_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+      "expected_symlink": false,
+      "expected_uid": 0,
+      "identity_match": true,
+      "live_metadata_match": true,
+      "live_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "preimage_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15"
+    },
+    "review_acceptance": {
+      "actual_gid": 0,
+      "actual_mode": "0o644",
+      "actual_sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+      "actual_symlink": false,
+      "actual_uid": 0,
+      "expected_gid": 0,
+      "expected_mode": "0o644",
+      "expected_sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+      "expected_symlink": false,
+      "expected_uid": 0,
+      "identity_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/check-launcher.py"
+    },
+    "source_tuple": {
+      "actual_gid": 0,
+      "actual_mode": "0o644",
+      "actual_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+      "actual_symlink": false,
+      "actual_uid": 0,
+      "expected_gid": 0,
+      "expected_mode": "0o644",
+      "expected_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+      "expected_symlink": false,
+      "expected_uid": 0,
+      "identity_match": true,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-source-tuple.json"
+    }
+  },
+  "integration_heads": {
+    "agent": {
+      "actual_sha": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "actual_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "expected_sha": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "expected_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "match": true,
+      "root": "/home/user/work/agent"
+    },
+    "app": {
+      "actual_sha": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+      "actual_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+      "expected_sha": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+      "expected_tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+      "match": true,
+      "root": "/home/user/work/app"
+    },
+    "composition": {
+      "actual_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "actual_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "expected_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "expected_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "match": true,
+      "root": "/home/user/work/composition"
+    },
+    "runtime": {
+      "actual_sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "actual_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "expected_sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "expected_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "match": true,
+      "root": "/home/user/work/runtime"
+    }
+  },
+  "registry_postimage_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+  "registry_preimage_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+  "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+  "status": "PASS"
+}

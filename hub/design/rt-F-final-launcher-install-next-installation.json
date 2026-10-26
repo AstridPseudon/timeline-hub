@@ -1,0 +1,68 @@
+{
+  "atomic_sequence": {
+    "atomic_replace": true,
+    "directory_fsync": true,
+    "hard_link_backup": true,
+    "private_temp_stage": true,
+    "readback_guard": true,
+    "stage_fsync": true,
+    "temporary_stage_clean": true
+  },
+  "available_bytes_after": 5115547648,
+  "available_bytes_before": 5115723776,
+  "backup_exact_preimage": true,
+  "command": [
+    "python3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/install-final-services.py",
+    "--registry",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "--candidate",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/runtime-final-service-rows.txt",
+    "--builder",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "--source-tuple",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-source-tuple.json",
+    "--gate-tuple",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-gate-tuple.json",
+    "--backup",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/backups/suites.conf.preimage",
+    "--install"
+  ],
+  "exit": 0,
+  "postimage": {
+    "bytes": 165630,
+    "gid": 0,
+    "inode": 1714490,
+    "mode": "0o600",
+    "nlink": 1,
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "regular": true,
+    "sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+    "symlink": false,
+    "uid": 0
+  },
+  "preimage": {
+    "expected_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "registry": {
+      "bytes": 165562,
+      "gid": 0,
+      "inode": 1714407,
+      "mode": "0o600",
+      "nlink": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/backups/suites.conf.preimage",
+      "regular": true,
+      "sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+      "symlink": false,
+      "uid": 0
+    }
+  },
+  "status": "PASS",
+  "stderr": "",
+  "stdout": "installed /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate/runtime-final-service-rows.txt into /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf; predecessor backup /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/backups/suites.conf.preimage\n",
+  "tuple_bindings": {
+    "gate_mode": "0o644",
+    "gate_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+    "source_mode": "0o644",
+    "source_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561"
+  }
+}

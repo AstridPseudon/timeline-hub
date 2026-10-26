@@ -1,0 +1,49 @@
+{
+  "at": "2026-10-26T17:44:29.311069+00:00",
+  "scope": "Actual unchanged accepted scoped installer CLI exit0; postimage2df2. Author readback PASS, independent readback pending. No builder/service.",
+  "actual_registry_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/installation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-installation.json",
+      "sha256": "dddb049c71efc5238a321166aa3bf371304b0d66410badb2d4c145c9f3bd3a50",
+      "bytes": 3313
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/registry-conservation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-registry-conservation.json",
+      "sha256": "0214998453aca83caac86ca325e47c88e3ed199574904821ea515174ae83d436",
+      "bytes": 6858
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-source-manifest.json",
+      "sha256": "f96fdbd5f97ef83d0cb10f9b7a1a67835153cd3e41c8d1fb4f7f21eae8cc29f0",
+      "bytes": 7176
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-validation.md",
+      "sha256": "603f2cc5581c4c40ec9c84a17ccf2ce4cb24ee282eacac4463bf5d177c22b53a",
+      "bytes": 1406
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-handoff.md",
+      "sha256": "ddd6db828585ef52cdb1f45f33f5e0437cb10bb88fd9fcd7b038d0c40a45cf5e",
+      "bytes": 892
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-disk-trace.txt",
+      "sha256": "75e1567fff7ae8e00fac839d5116751c4f5bf018ba6d7a97eb1e3c0c574c3ba1",
+      "bytes": 193
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-next-sampler-lifecycle.json",
+      "sha256": "90e0136aa1d3328bad957f209b0238e2f4508ca0d4590dbb14272bc95106175b",
+      "bytes": 1095
+    }
+  ]
+}

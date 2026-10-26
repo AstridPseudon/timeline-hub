@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T17:47:27.327974+00:00",
+  "scope": "PASS actual independent corrected installation readback. Only two import-setup row changes; core/outside/fourproofrows/source/tuple/notes preserved. No sourcechecker or builder.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-report.md",
+      "sha256": "27e6afe959ef60751934dc265284530af758dddb1abd9fe40450b1970ba0bce1",
+      "bytes": 612
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-review.json",
+      "sha256": "234795d369094cf8b4013bf2394c5bd76d2a0fc27db3c98028ea5d612a0b028f",
+      "bytes": 27168
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-findings.md",
+      "sha256": "b836b27ea193657831b763cbd550158bb6a9833313ec10699db34bd8014baac2",
+      "bytes": 58
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-source-manifest.json",
+      "sha256": "c7d75de0fbca2e8ec52f27f236473007f6ef54deaf2b3b97800e7b2a9d5f9153",
+      "bytes": 13177
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-validation.md",
+      "sha256": "de148e6ed847fd6b598163494272c9cb7247004ea7a1bb4abacfc905045d5f21",
+      "bytes": 2024
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-handoff.md",
+      "sha256": "0de0b2aa39e4aac44423fedc376630322fd14adf98613478cb5e1911802c3b07",
+      "bytes": 608
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-disk-trace.txt",
+      "sha256": "4974505e74d91c9ee1e0e2db9a5e3fe066b0795666fe4d145174bfb0a5f28387",
+      "bytes": 360
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-install-review-next-sampler-lifecycle.json",
+      "sha256": "4d330dc716a8d2d503ceddaee9f156dd3b485b53a40f4615f364f66c6f749fe6",
+      "bytes": 435
+    }
+  ]
+}
