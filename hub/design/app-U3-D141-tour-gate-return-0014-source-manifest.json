@@ -1,0 +1,21 @@
+{
+  "task": "U3/D141",
+  "worker": "app-U3-D141-tour-gate-return-0014",
+  "base_head": "55b2e66cf6a2d789db9ffb4334847687e2da3e4c",
+  "base_parent": "0af0ddb59a16ffae8215854a0b9236954c70c882",
+  "current_parent": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "frozen_upstream": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+  "allowed_source_path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+  "changed_paths": [
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+  ],
+  "test_files_changed": [],
+  "source_sha256_after_edit": "dad081792bc46c057e6da494a4fefd04184247f0df755495ff5f887c4d9fde0b",
+  "frozen_source_sha256": "24b518351b55d947f5b623feab0ab2f8e2f05c470e27ce98f4055a5d1917b845",
+  "ancestry": {
+    "current_parent_is_ancestor": true,
+    "frozen_upstream_is_ancestor": true
+  },
+  "generated_inputs_changed": false,
+  "working_tree_scope": "single allowed source file only"
+}

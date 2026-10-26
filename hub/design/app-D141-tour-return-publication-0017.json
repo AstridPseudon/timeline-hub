@@ -1,0 +1,32 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-gate-return-0014/evidence/source-manifest.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-gate-return-0014-source-manifest.json",
+    "sha256": "eea57ca8079569293ddce29e939201217af3f2d303ce6ac24f53d0225cebee26",
+    "bytes": 915
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-gate-return-0014/evidence/findings.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-gate-return-0014-findings.json",
+    "sha256": "91d843506fd66bdfdcdc5ee72d779df0afac66989cc4c7cce7c753023bac2eb4",
+    "bytes": 953
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-gate-return-0014/evidence/validation.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-gate-return-0014-validation.md",
+    "sha256": "3618a2be5289ae43d34fb4154a06a3da22184f1371c9e41745b30a5ccb84688f",
+    "bytes": 2253
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-gate-return-0014/evidence/predicate-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-gate-return-0014-predicate-map.json",
+    "sha256": "a41dc78c168dd234d6d297b9a862c550c5b731b6760a5e9661e8add593b2c02c",
+    "bytes": 776
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141-tour-gate-return-0014/evidence/handoff.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141-tour-gate-return-0014-handoff.md",
+    "sha256": "84a46cbe6542f068ce62e2db0ea8b8abd70dcfaf0101b5d3ba869959e7e2a3a6",
+    "bytes": 787
+  }
+]

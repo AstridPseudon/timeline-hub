@@ -1,0 +1,18 @@
+{
+  "task": "U3/D141",
+  "predicate": "tourRunning",
+  "source": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+  "restored_predicate": "useEditorTourRunning()",
+  "true_branch": "return <TourChatPanel isExpanded={isExpanded} />",
+  "ordering": [
+    "useRenderDiagnostic",
+    "useAgentChatBridge",
+    "useEditorTourRunning",
+    "TourChatPanel early return",
+    "isTimelineAgentSessionsAvailable",
+    "AvailableAgentChatPanel and live session hooks"
+  ],
+  "non_tour_predicate_preserved": "isTimelineAgentSessionsAvailable()",
+  "protected_behavior": "TourChatPanel tests mount without session hooks, bridge calls, or live availability checks while the editor tour is running",
+  "validation": "13/13 TourChatPanel tests pass; 76/76 AgentChat tests pass"
+}

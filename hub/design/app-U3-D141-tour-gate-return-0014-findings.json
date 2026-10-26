@@ -1,0 +1,16 @@
+{
+  "task": "U3/D141",
+  "finding": "U3-D141-REG-TOUR-GATE",
+  "status": "resolved_in_owner_return",
+  "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+  "restored_behavior": "AgentChatPanel imports useEditorTourRunning and TourChatPanel, then returns TourChatPanel before the availability door and live session hooks while the editor tour is running.",
+  "preserved_behavior": "For non-tour renders, the existing isTimelineAgentSessionsAvailable door and AvailableAgentChatPanel unified menu/voice/session path remain unchanged.",
+  "source_review_basis": "Independent source review proved the frozen upstream gate was missing and caused all 13 protected TourChatPanel tests to fail.",
+  "tests": {
+    "AgentChat.test.tsx": {"passed": 76, "total": 76},
+    "TourChatPanel.test.tsx": {"passed": 13, "total": 13},
+    "total": {"passed": 89, "total": 89}
+  },
+  "test_files_modified": false,
+  "generated_or_vendor_changes": false
+}
