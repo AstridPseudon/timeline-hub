@@ -1,0 +1,33 @@
+{
+  "schema": "timeline.f.d141y.review-source-manifest.v1",
+  "task": "rt-F-D141y-rehearsal-review-0719",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "author_evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/evidence",
+  "author_source_tuple_sha256": "6fe1b04ca64f38cc8a524bc397950df5a6bce835be614341a70e2c163d253c4d",
+  "author_source_manifest_sha256": "6d0fc26f6eebfa730136c80048957727db45fc03b5772f8925f00435a174e742",
+  "sources": {
+    "agent": {"root": "/home/user/work/agent", "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "origin_main": "64197afa297f86f1e738238d5e80aff6d33e303a", "origin_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e", "ancestor_exit": 0, "clean": true, "fetch_head_mtime_at_review": "2026-10-26 07:17:36.560080354 +0000", "fetch_tip_entries_at_review": 1},
+    "runtime": {"root": "/home/user/work/runtime", "sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "origin_main": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "origin_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "ancestor_exit": 0, "clean": true, "fetch_head_mtime_at_review": "2026-10-26 07:18:04.652082024 +0000", "fetch_tip_entries_at_review": 3},
+    "app": {"root": "/home/user/work/app", "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "origin_main": "fc24f84994dc36cfae9349112782ab4d91dbc73b", "origin_tree": "faf477adef3ec24c9cc359486ac16866500ab219", "ancestor_exit": 1, "clean": true, "fetch_head_mtime_at_review": "2026-10-26 07:18:06.976082162 +0000", "fetch_tip_entries_at_review": 1},
+    "composition": {"root": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin_main": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "origin_tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "ancestor_exit": 0, "clean": true, "fetch_head_mtime_at_review": "2026-10-26 07:18:13.308082539 +0000", "fetch_tip_entries_at_review": 261}
+  },
+  "receipts": {
+    "agent": "/home/user/timeline-hub/hub/design/agent-U4a-D141-postREG-home-0622.json",
+    "app": "/home/user/timeline-hub/hub/design/app-D141s-postREG-source-home-0545.json",
+    "runtime": "/home/user/timeline-hub/hub/design/rt-F-D141-postREG-custody-review-0513-producer-corrected.json",
+    "runtime_peer": "/home/user/timeline-hub/hub/design/peer-runtime-to-agent-app-main-20261026T051500Z-postREG-final-producer.md"
+  },
+  "controls": {
+    "delivery_build": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build", "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"},
+    "README.template.md": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md", "sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776"},
+    "gate-results.md": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md", "sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47"}
+  },
+  "author_raw_hashes": {
+    "raw-command.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "raw-command.stderr": "8723a85802bb604561bf76ba507e71dc13fc4d4c4ae9bda553b32fee0fb90c95",
+    "raw-command.exit": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+  },
+  "author_safe_files_verified": ["report.md", "results.json", "source-manifest.json", "validation.md", "handoff.md", "command.json", "source-tuple.json", "disk-trace.txt"],
+  "author_terminal_reap_artifacts": {"present": false, "finding": "required terminal/reap sampler custody absent"},
+  "reviewer_sampler": {"admission_bytes_declared": 4601331712, "stop_bytes": 4000000000, "sampling_seconds": 5, "trace": "disk-trace.txt", "terminal": "review-terminal-trace.txt", "reap": "review-reap-sampler.txt"}
+}

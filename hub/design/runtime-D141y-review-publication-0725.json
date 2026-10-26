@@ -1,0 +1,47 @@
+{
+  "scope": "Independent0719 FAIL F1; original single invocation/refusal/source accounting independently PASS. No delivery publication.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-report.md",
+      "size": 699,
+      "sha256": "fbee81b08825a4243bec4dd784814d7693cf04df66cfc22a19420630af1dcf44"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-review.json",
+      "size": 4284,
+      "sha256": "4675bbafcf25b0ef6538980ca7439e8cda0bf775fa6686863b17e23843c61921"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-findings.md",
+      "size": 2498,
+      "sha256": "8e494d3806bc40b9fd113152b5fd865b61e1f30c050bba7c1469658df3dba889"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-source-manifest.json",
+      "size": 4136,
+      "sha256": "c30b588bf80cd38b77c82859819a0eec459c5c5914f988dce516beb57330113a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-validation.md",
+      "size": 2552,
+      "sha256": "50a8eef63b5bb1c71b9d51536d890c8e8a0256e3c0d4858cda8bc16774cd4c51"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-handoff.md",
+      "size": 587,
+      "sha256": "3a0ce63a71ec999bac7747a8bfb55f76eb4d75a7cce7243c7331a23af2965232"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-rehearsal-review-0719-disk-trace.txt",
+      "size": 469,
+      "sha256": "b0080a2fff7958301efc52a6a8e57d838a76c85a635c32b51d849ac13b30d2aa"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "schema": "timeline.f.d141y.independent-review.v1",
+  "task": "rt-F-D141y-rehearsal-review-0719",
+  "author_task": "rt-F-D141y-rehearsal-0710",
+  "verdict": "FAIL",
+  "verdict_scope": "honesty_completeness_custody_of_single_canonical_dryrun",
+  "actual_build_outcome": "REFUSED_ALL_REPO_PREFLIGHT",
+  "author_result_honest": true,
+  "author_invocation_count": 1,
+  "author_cli_exit": 2,
+  "author_refusal": "all-repository preflight refused: ancestry refused for app: repo=/home/user/work/app base=fc24f84994dc36cfae9349112782ab4d91dbc73b tip=4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "status": "FAIL",
+      "title": "Required terminal/reap sampler custody is not retained",
+      "detail": "The author brief required retaining a terminal trace and reap sampler. The author evidence directory contains no such artifacts or hashes. Its disk trace has monitor/finalization samples only and no terminal/reap marker; finalize.log does not record a sampler PID termination/wait. The author report claim that the sampler was reaped after finalization is therefore not independently custodial.",
+      "evidence": [
+        "author evidence/disk-trace.txt",
+        "author worker/finalize.log",
+        "author evidence directory file inventory"
+      ]
+    },
+    {
+      "id": "P1",
+      "severity": "informational",
+      "status": "PASS",
+      "title": "Tuple identity and clean source custody match",
+      "detail": "The four tuple commits and trees resolve exactly in their named worktrees, all four are clean, the tuple SHA is 6fe1b04ca64f38cc8a524bc397950df5a6bce835be614341a70e2c163d253c4d, and the normal receipts support Agent, Runtime, App, and Composition identities.",
+      "evidence": [
+        "author evidence/source-tuple.json",
+        "author evidence/source-manifest.json",
+        "agent-U4a-D141-postREG-home-0622.json",
+        "app-D141s-postREG-source-home-0545.json",
+        "peer-runtime-to-agent-app-main-20261026T051500Z-postREG-final-producer.md"
+      ]
+    },
+    {
+      "id": "P2",
+      "severity": "informational",
+      "status": "PASS",
+      "title": "Single invocation and raw refusal are authentic",
+      "detail": "command.json records invocation_count 1; raw stdout is empty, raw stderr contains the App ancestry refusal, raw exit is 2, and their hashes match source-manifest.json. The author log shows no subset retry or alternate delivery invocation.",
+      "evidence": [
+        "author evidence/command.json",
+        "author evidence/raw-command.stdout",
+        "author evidence/raw-command.stderr",
+        "author evidence/raw-command.exit",
+        "author worker/log.txt"
+      ]
+    },
+    {
+      "id": "P3",
+      "severity": "informational",
+      "status": "PASS",
+      "title": "NOT_REACHED accounting is mechanically supported",
+      "detail": "results.json marks patches, tree, bundle, and apply null/NOT_REACHED for all four repositories. The canonical source calls preflight_all before creating staging/work roots or entering the build_repo patch/bundle/apply loop. Prospective diff arithmetic matches the reported counts and remains explicitly non-build data.",
+      "evidence": [
+        "author evidence/results.json",
+        "bin/delivery-build lines 650-671 and 318-354",
+        "source-only git diff --numstat verification"
+      ]
+    },
+    {
+      "id": "P4",
+      "severity": "informational",
+      "status": "PASS",
+      "title": "Control and JSON evidence is internally consistent",
+      "detail": "The four author JSON files parse; required safe files are present; control hashes match current delivery-build, template, and gate-results; the author safe/raw hashes reproduce. No delivery/work directory or ZIP exists under author evidence.",
+      "evidence": [
+        "author evidence file inventory",
+        "author worker final hash listing",
+        "author evidence/source-manifest.json"
+      ]
+    }
+  ],
+  "limits": [
+    "No delivery-build invocation was made by this review.",
+    "No tests, imports, browser, service, fetch, checkout, source change, or corrective authoring was performed.",
+    "FAIL is for receipt completeness/custody, not for misclassifying the ordinary App ancestry refusal."
+  ]
+}

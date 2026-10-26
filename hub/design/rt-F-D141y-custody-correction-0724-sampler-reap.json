@@ -1,0 +1,10 @@
+{
+  "schema": "timeline.f.d141y.custody-correction.sampler-reap.v1",
+  "observation_scope": "present_time_only",
+  "sampler_pid": 8,
+  "reap_at_utc": "2026-10-26T07:25:20.217Z",
+  "wait_return": 143,
+  "reaped_pid": 8,
+  "reap_status": "REAP_RECORDED",
+  "historical_receipt": false
+}

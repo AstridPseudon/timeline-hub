@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.f.d141y.custody-correction.sampler-start.v1",
+  "observation_scope": "present_time_only",
+  "started_at_utc": "2026-10-26T07:25:10.193Z",
+  "sampler_pid": 8,
+  "declared_admission_bytes": 4608192512,
+  "declared_admission_at_utc": "2026-10-26T07:24:07.605992+00:00",
+  "initial_available_bytes": 4605661184,
+  "stop_bytes": 4000000000,
+  "sampling_seconds": 5,
+  "trace": "disk-trace.txt",
+  "historical_receipt": false
+}

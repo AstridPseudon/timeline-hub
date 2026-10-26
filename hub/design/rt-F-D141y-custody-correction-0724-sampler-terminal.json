@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.f.d141y.custody-correction.sampler-terminal.v1",
+  "observation_scope": "present_time_only",
+  "sampler_pid": 8,
+  "terminal_at_utc": "2026-10-26T07:25:16.203Z",
+  "terminal_available_bytes": 4605603840,
+  "stop_bytes": 4000000000,
+  "terminal_status": "TERM",
+  "termination_signal": "TERM",
+  "kill_return": 0,
+  "historical_receipt": false
+}
