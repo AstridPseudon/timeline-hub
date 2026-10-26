@@ -18,6 +18,8 @@ export interface QuickDescriptor {
   /** N4 acceptance provenance for the already-imported CLI archive. */
   sourceArchiveBytes?: number;
   freeBytesBefore?: number;
+  /** Physical short TMPDIR used by the N4 fixture children. */
+  shortTmpDir?: string;
   /** Optional empty project provisioned by the N4 Runtime fixture for the UI archive round trip. */
   transferProjectId?: string;
   transferProjectName?: string;
@@ -40,6 +42,9 @@ export function parseQuickDescriptor(text: string): QuickDescriptor {
     if (record[key] !== undefined && (typeof record[key] !== 'number' || !Number.isSafeInteger(record[key]) || record[key] <= 0)) {
       throw new Error(`ASTRID_QUICK_DESCRIPTOR ${key} must be a positive safe integer`);
     }
+  }
+  if (record.shortTmpDir !== undefined && (typeof record.shortTmpDir !== 'string' || !isAbsolutePath(record.shortTmpDir))) {
+    throw new Error('ASTRID_QUICK_DESCRIPTOR shortTmpDir must be an absolute path when present');
   }
   for (const key of ['transferProjectId', 'transferProjectName'] as const) {
     if (record[key] !== undefined && (typeof record[key] !== 'string' || !record[key])) {

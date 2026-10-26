@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, statfsSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -84,6 +84,8 @@ function gitHead(checkout: string): string {
 export default async function globalSetup(): Promise<() => Promise<void>> {
   const appMode = process.env.N4_APP_MODE ?? 'hosted';
   if (appMode !== 'hosted' && appMode !== 'local') throw new Error('N4_APP_MODE must be hosted or local');
+  const runLabel = process.env.N4_RUN_LABEL?.trim();
+  if (runLabel && !/^[a-zA-Z0-9_-]{1,32}$/.test(runLabel)) throw new Error('N4_RUN_LABEL may contain only letters, numbers, underscores, and hyphens (up to 32 characters)');
   const importedResultFile = requiredEnv('N4_IMPORT_RESULT');
   const xferRoot = path.dirname(repoRoot);
   const underXfer = (candidate: string) => candidate === xferRoot || candidate.startsWith(`${xferRoot}${path.sep}`);
@@ -122,18 +124,18 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   if (pythonVersion !== '3.11') throw new Error(`N4 browser requires the supplied Python 3.11 environment; got ${pythonVersion}`);
   const runtimePython = astridPython;
   const browserRoot = path.join(sandboxRoot, 'browser');
-  const outputRoot = path.join(browserRoot, appMode);
+  const outputRoot = runLabel ? path.join(browserRoot, runLabel, appMode) : path.join(browserRoot, appMode);
+  if (runLabel && existsSync(outputRoot)) throw new Error(`N4 browser run output already exists; choose a fresh N4_RUN_LABEL: ${outputRoot}`);
   const support = path.join(outputRoot, 'support');
   const credentials = path.join(outputRoot, 'credentials');
   const evidenceRoot = path.join(outputRoot, 'evidence');
   const downloadsRoot = path.join(outputRoot, 'downloads');
   const isolatedHome = path.join(outputRoot, 'home');
-  const isolatedTmp = path.join(outputRoot, 'tmp');
   const xdgConfig = path.join(outputRoot, 'xdg-config');
   const xdgCache = path.join(outputRoot, 'xdg-cache');
   const xdgData = path.join(outputRoot, 'xdg-data');
   const astridHome = path.join(outputRoot, 'astrid-home');
-  for (const dir of [outputRoot, support, credentials, evidenceRoot, downloadsRoot, isolatedHome, isolatedTmp, astridHome, xdgConfig, xdgCache, xdgData, path.join(outputRoot, 'harness-temp')]) {
+  for (const dir of [outputRoot, support, credentials, evidenceRoot, downloadsRoot, isolatedHome, astridHome, xdgConfig, xdgCache, xdgData, path.join(outputRoot, 'harness-temp')]) {
     mkdirSync(dir, { recursive: true, mode: 0o700 });
   }
 
@@ -145,14 +147,16 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   if (!doorCredential.token || !doorCredential.actor_id) throw new Error('sandbox door product credential lacks a token and actor_id');
 
   const originPort = await freePort();
+  const shortTmpRoot = mkdtempSync(path.join(realpathSync('/private/tmp'), 'an4-'));
+  chmodSync(shortTmpRoot, 0o700);
   const hostedOrigin = `https://astrid.test:${originPort}`;
   const envCommon: NodeJS.ProcessEnv = {
     ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
     ...(process.env.NODE_OPTIONS ? { NODE_OPTIONS: process.env.NODE_OPTIONS } : {}),
     HOME: isolatedHome,
-    TMPDIR: isolatedTmp,
-    TMP: isolatedTmp,
-    TEMP: isolatedTmp,
+    TMPDIR: shortTmpRoot,
+    TMP: shortTmpRoot,
+    TEMP: shortTmpRoot,
     ASTRID_HOME: astridHome,
     XDG_CONFIG_HOME: xdgConfig,
     XDG_CACHE_HOME: xdgCache,
@@ -179,26 +183,47 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     delete process.env[key];
   }
 
+  const callerTmpdir = process.env.TMPDIR;
+  const callerTmp = process.env.TMP;
+  const callerTemp = process.env.TEMP;
+  const restoreCallerTempEnvironment = () => {
+    if (callerTmpdir === undefined) delete process.env.TMPDIR;
+    else process.env.TMPDIR = callerTmpdir;
+    if (callerTmp === undefined) delete process.env.TMP;
+    else process.env.TMP = callerTmp;
+    if (callerTemp === undefined) delete process.env.TEMP;
+    else process.env.TEMP = callerTemp;
+  };
+
   // Set these before importing existing harness/build helpers, which derive their checkout paths from process.env.
   Object.assign(process.env, envCommon);
   delete process.env.ASTRID_APP_DIRECT_DIST;
-  const { spawnGroup } = await import('./support/harness.ts');
-  const runtimePort = 0;
-  const runtimeChild = spawnGroup(runtimePython, ['-m', 'runtime_protocol.cli', 'start', '--root', realmRoot,
-    '--support-root', supportRoot, '--port', String(runtimePort), '--display-name', 'N4 Browser Acceptance',
-    '--door-origin', hostedOrigin, '--door-port', '0', '--door-credential-file', doorCredentialFile,
-    '--door-audit-log', auditFile], {
-    cwd: runtimeCheckout,
-    env: { PATH: process.env.PATH, HOME: isolatedHome, TMPDIR: isolatedTmp, TMP: isolatedTmp, TEMP: isolatedTmp,
-      ASTRID_HOME: astridHome, XDG_CONFIG_HOME: xdgConfig, XDG_CACHE_HOME: xdgCache, XDG_DATA_HOME: xdgData,
-      PYTHONUNBUFFERED: '1', PYTHONDONTWRITEBYTECODE: '1',
-      ASTRID_PYTHON: runtimePython, ASTRID_RUNTIME_CHECKOUT: runtimeCheckout, ASTRID_RUNTIME_DATA_ROOT: sandboxRoot },
-    exactEnv: true,
-  });
+  let spawnGroup: (typeof import('./support/harness.ts'))['spawnGroup'];
+  try {
+    ({ spawnGroup } = await import('./support/harness.ts'));
+  } catch (error) {
+    restoreCallerTempEnvironment();
+    rmSync(shortTmpRoot, { recursive: true, force: true });
+    throw error;
+  }
+  let runtimeChild: Awaited<ReturnType<typeof spawnGroup>> | undefined;
   let hostChild: Awaited<ReturnType<typeof spawnGroup>> | undefined;
   let localAppChild: Awaited<ReturnType<typeof spawnGroup>> | undefined;
   try {
-    const started = await waitForLine(runtimeChild, 'endpoint');
+    const runtimePort = 0;
+    const runtime = spawnGroup(runtimePython, ['-m', 'runtime_protocol.cli', 'start', '--root', realmRoot,
+      '--support-root', supportRoot, '--port', String(runtimePort), '--display-name', 'N4 Browser Acceptance',
+      '--door-origin', hostedOrigin, '--door-port', '0', '--door-credential-file', doorCredentialFile,
+      '--door-audit-log', auditFile], {
+      cwd: runtimeCheckout,
+      env: { PATH: process.env.PATH, HOME: isolatedHome, TMPDIR: shortTmpRoot, TMP: shortTmpRoot, TEMP: shortTmpRoot,
+        ASTRID_HOME: astridHome, XDG_CONFIG_HOME: xdgConfig, XDG_CACHE_HOME: xdgCache, XDG_DATA_HOME: xdgData,
+        PYTHONUNBUFFERED: '1', PYTHONDONTWRITEBYTECODE: '1',
+        ASTRID_PYTHON: runtimePython, ASTRID_RUNTIME_CHECKOUT: runtimeCheckout, ASTRID_RUNTIME_DATA_ROOT: sandboxRoot },
+      exactEnv: true,
+    });
+    runtimeChild = runtime;
+    const started = await waitForLine(runtime, 'endpoint');
     const discoveryFile = path.join(supportRoot, 'discovery.json');
     const discovery = JSON.parse(readFileSync(discoveryFile, 'utf8')) as Record<string, string>;
     const endpoint = String(started.endpoint ?? '');
@@ -212,8 +237,6 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     if (discovery.realm_id && discovery.realm_id !== realmId) throw new Error('Runtime discovery realm identity disagrees with its startup output');
     const workerCredentialFile = String(discovery.worker_credential_file ?? started.worker_credential_file ?? '');
     if (!workerCredentialFile || !existsSync(workerCredentialFile)) throw new Error('N4 sandbox Runtime did not publish its worker credential');
-    const workerCredential = JSON.parse(readFileSync(workerCredentialFile, 'utf8')) as { token?: string };
-    if (!workerCredential.token) throw new Error('N4 worker credential has no token');
 
     // The product-facing hosted UI obtains export-plan work from the canonical timeline pack host.
     hostChild = spawnGroup(astridPython, ['-m', 'astrid.core.execution.generic_host', 'run',
@@ -225,7 +248,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       '--runtime-instance-id', runtimeInstanceId, '--attempt-root', path.join(outputRoot, 'attempts'),
       '--register', '--poll-seconds', '0.5'], {
       cwd: astridCheckout,
-      env: { PATH: process.env.PATH, HOME: isolatedHome, TMPDIR: isolatedTmp, TMP: isolatedTmp, TEMP: isolatedTmp,
+      env: { PATH: process.env.PATH, HOME: isolatedHome, TMPDIR: shortTmpRoot, TMP: shortTmpRoot, TEMP: shortTmpRoot,
         ASTRID_HOME: astridHome, XDG_CONFIG_HOME: xdgConfig, XDG_CACHE_HOME: xdgCache, XDG_DATA_HOME: xdgData,
         PYTHONUNBUFFERED: '1', PYTHONDONTWRITEBYTECODE: '1',
         ASTRID_PYTHON: astridPython, PYTHONPATH: `${astridCheckout}${path.delimiter}${runtimeCheckout}`, ASTRID_RUNTIME_DATA_ROOT: sandboxRoot,
@@ -279,6 +302,7 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       headRevisionId: head,
       realmId,
       runtimeInstanceId,
+      shortTmpDir: shortTmpRoot,
       sourceArchiveBytes,
       freeBytesBefore: freeBefore,
       revisions: { astrid: gitHead(astridCheckout), runtime: gitHead(runtimeCheckout), app: gitHead(repoRoot) },
@@ -334,10 +358,19 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
       for (const child of [localAppChild, hostChild, runtimeChild]) {
         if (child) await stopOwnedChild(child).catch((error) => errors.push(error));
       }
+      restoreCallerTempEnvironment();
+      if (!errors.length) {
+        try { rmSync(shortTmpRoot, { recursive: true }); } catch (error) { errors.push(error); }
+      }
       if (errors.length) throw new AggregateError(errors, 'N4 owned browser fixture processes did not stop cleanly');
     };
   } catch (error) {
-    for (const child of [localAppChild, hostChild, runtimeChild]) if (child) await stopOwnedChild(child).catch(() => {});
+    const stopErrors: unknown[] = [];
+    for (const child of [localAppChild, hostChild, runtimeChild]) {
+      if (child) await stopOwnedChild(child).catch((stopError) => stopErrors.push(stopError));
+    }
+    restoreCallerTempEnvironment();
+    if (!stopErrors.length) rmSync(shortTmpRoot, { recursive: true, force: true });
     throw error;
   }
 }
