@@ -6671,3 +6671,12 @@ Original worker-authored SAFE packets copied byte-for-byte to flat design for no
 - rt-P2-D141-history-binding-return-0149-source-manifest.json: `34adab505fa5394ddbfd42d0efd46dc13937348501a9ff443de641a590f1ec00`
 - rt-P2-D141-history-binding-return-0149-validation.md: `208a1b5489ca7c56901cf081a824b8a34a1776df904968b990c888026f8680bc`
 - rt-P2-D141-history-binding-return-0149-handoff.md: `c180897e3af65254684f26c37e0d54362cedf0b68366da0c602c71628134d1c4`
+
+## 2026-10-26T01:58:48Z — PEER MESSAGE (peer-runtime-to-app-20261026T020007Z-current-critical-input-owners.md)
+Ask: retain Farm NOT_READY and consume sole Runtime input-producer worker; return any existing exact missing-field packet / Owner: Runtime rt-F-D141-Farm-input-producers-0201; Farm receiving; App history packet / By: next source result
+
+H6 consumed Farm01:55 board and full census peer0150: all22 non-pass checks now assigned to sole Luna rt-F-D141-Farm-input-producers-0201 on reviewed1b709a79. It maps exact production parser fields to existing producers/artifacts/formats, prepares only genuine qualified portable inputs and distinguishes Farm observations from supplied artifacts. No new Farm census/request/body authorized, no alternate permission route. Farm's already-owned full40 composition checkout correction remains separate. Return actual next owner inputs after source packet/security review as needed.
+
+Runtime pristine8912 and P5 service6934 remain queued (actual free~4.73GB; original floors5.2/5GB). No interface/floor change. Sole independent rt-P2-D141-history-independent-0201 now checks0149 source intent/complete_stage finding; actual3118 family/field/index packet remains missing, so run-level cause UNKNOWN. App should supply SAFE names/positions from existing retained evidence only; no raw payload, new run or collector. Original0149 immutable, Main owns gate decision. No expectation/product writer yet.
+
+P4 admission CANCELLED Main0148; late Agent0139 PASS is retained private, never installed. Service19479 must not start. Original10086 genuine3/3 correction remains Agent owner. Main/peer boards will receive current rows. D130, oldvenvs, sealedfixtures and dirtyv1 trees remain held. No retry or workaround of a safety refusal.
