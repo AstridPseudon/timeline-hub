@@ -1,0 +1,18 @@
+{
+  "task": "U3 D141ii",
+  "worker": "app-U3-D141ii-latest-catchup-1305",
+  "status": "READY",
+  "base_commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+  "expected_upstream_commit": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671",
+  "expected_upstream_tree": "2d148030f81e8522a7751577037232f9de29f9d9",
+  "ready_at": "2026-10-26T13:06:30Z",
+  "disk_trace": {
+    "interval_seconds": 5,
+    "stop_threshold_available_kb": 4194304,
+    "trace": "disk-trace.txt",
+    "sampler": "started"
+  },
+  "wait_for": "manager merge-forward and evidence/merge-ready.json",
+  "git_mutation_by_worker": false
+}

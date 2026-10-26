@@ -1,0 +1,25 @@
+{
+  "task": "U3 D141ii",
+  "status": "completed_controlled_window",
+  "interval_seconds": 5,
+  "stop_threshold_available_kb": 4194304,
+  "trace": "disk-trace.txt",
+  "initial_attempt": {
+    "status": "stopped_immediately",
+    "reason": "temporary worker tmpdir path was a harness-created file; no trace sample was accepted"
+  },
+  "active_attempt": {
+    "started_at": "2026-10-26T13:13:54Z",
+    "scratch_log": "/tmp/w-1cc0a22205/d141ii-disk-sampler.setsid.log",
+    "pid_observed": 8,
+    "detached_with_setsid": true,
+    "last_observed_sample": "2026-10-26T13:16:00Z",
+    "foreground_window": {
+      "samples": 6,
+      "started_at": "2026-10-26T13:15:35Z",
+      "completed_at": "2026-10-26T13:16:05Z",
+      "stop_reason": "controlled_window_complete; available space remained above threshold"
+    }
+  },
+  "monitor_note": "Detached background attempts were reaped by the sandbox between shell calls; the continuous foreground window is the authoritative trace."
+}

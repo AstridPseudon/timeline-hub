@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.app.d141j.diagnostic-route-sampler-lifecycle.v2",
+  "initial_command": "mkdir -p evidence workerKEEP; foreground 5-second df sampler writing evidence/disk-trace.txt in the same tool call",
+  "sampler_exit": 0,
+  "sampler_reaped": true,
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/disk-trace.txt",
+  "worker_keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/workerKEEP",
+  "observed_available": "4.3G",
+  "future_admission": "> 5.2GB free once before one heavy dispatch",
+  "future_stop_floor": "4GB",
+  "later_native_sampler": "NOTRUN",
+  "body_or_service_started": false
+}

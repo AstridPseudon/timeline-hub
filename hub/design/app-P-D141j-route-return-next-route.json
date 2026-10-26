@@ -1,0 +1,108 @@
+{
+  "schema": "timeline.app.d141j.future-diagnostic-route.v2",
+  "status": "NOTRUN_FINITE_MISSING_SEAM",
+  "registration": false,
+  "request_executed": false,
+  "body_executed": false,
+  "candidate_pending_sourcequalification": false,
+  "mounted_capture_qualified": false,
+  "source_binding": {
+    "current_actual_source": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "current_actual_tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+    "source_visibility": "PASS_SOURCE_VISIBILITY from independent 1245 review",
+    "mounted_capture": "FAILED_FINITE_MOUNTED_WIRING from independent 1305 review",
+    "1255_capture_candidate": {
+      "commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+      "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857",
+      "status": "UNQUALIFIED_HELPER_ONLY",
+      "not_used_as_mounted_route": true
+    }
+  },
+  "selector": {
+    "name": "p2-popup-add",
+    "repo": "app",
+    "target": "app-pin-3bb09fc6",
+    "files": ["tests/e2e/local/three-products.p2-popup.spec.ts"],
+    "grep": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+    "count": 1,
+    "popup_spec_unchanged": true
+  },
+  "source_tuple": {
+    "app": {"sha": "3bb09fc656c6b8a81243f8f796115013b56d621f", "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73", "checkout": "/home/user/work/wt/app-pin-3bb09fc6", "materialized": false},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "generated_with": "buildSubmitPlan and serviceRecipe from private pure control; no submit or registry call"
+  },
+  "future_request_metadata": {
+    "target": "app-pin-3bb09fc6",
+    "repo": "app",
+    "suite": "full-d141j-p2-popup-add-3bb09fc6-diagnostic",
+    "preflight_suite": "full-d141j-p2-popup-add-3bb09fc6-diagnostic-preflight",
+    "files": ["tests/e2e/local/three-products.p2-popup.spec.ts"],
+    "nocache": true,
+    "requested": false,
+    "registration": false,
+    "note": "Prospective orchestration metadata only; not Runtime v2 wire"
+  },
+  "argv": {
+    "preflight": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "p2-popup-add", "--preflight"],
+    "normal": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "p2-popup-add"],
+    "submit_wrapper": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "p2-popup-add", "--submit"]
+  },
+  "cwd": "/home/user/work/wt/app-pin-3bb09fc6",
+  "generated_recipes": {
+    "preflight": "D66_APP_SHA='3bb09fc656c6b8a81243f8f796115013b56d621f' D66_APP_TREE='3d286bf4dd68c3c791b0351bb6257d302fbdca73' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-3bb09fc6' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' D66_P2_COMMIT_PHASE_CAPTURE_HELPER='/home/user/work/wt/rt-pin-95d98f03/tests/helpers/p2_commit_phase_capture.py' D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256='095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add' --preflight",
+    "normal": "D66_APP_SHA='3bb09fc656c6b8a81243f8f796115013b56d621f' D66_APP_TREE='3d286bf4dd68c3c791b0351bb6257d302fbdca73' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-3bb09fc6' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' D66_P2_COMMIT_PHASE_CAPTURE_HELPER='/home/user/work/wt/rt-pin-95d98f03/tests/helpers/p2_commit_phase_capture.py' D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256='095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add'",
+    "preflight_sha256": "f00719b9e0f95e31ef66038796c49723dc408fdce85f530607a3a59b0d112365",
+    "normal_sha256": "5cdd8db6eb6b1eac72eae8b37af7cc7efdf8542c425a1f54427eb1066df979e9",
+    "preflight_bytes": 1184,
+    "normal_bytes": 1172
+  },
+  "environment": {
+    "D66_P2_COMMIT_PHASE_CAPTURE_HELPER": "/home/user/work/wt/rt-pin-95d98f03/tests/helpers/p2_commit_phase_capture.py",
+    "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "TEST_KEEP": "inherit unchanged from future controller",
+    "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS": ""
+  },
+  "outputs": {
+    "controller_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/future-native/d141j-p2-popup-add-3bb09fc6-diagnostic/output",
+    "controller_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/future-native/d141j-p2-popup-add-3bb09fc6-diagnostic/KEEP",
+    "expected_visibility_artifact": "<actual-normal-result-dir>/d66/d141j-visibility.json",
+    "expected_checker": "/home/user/work/wt/app-pin-3bb09fc6/scripts/testing/check-d141j-visibility.mjs <actual-normal-result-dir>/d66/d141j-visibility.json",
+    "retained_service_outputs": ["manifest.json", "collection.txt", "p2-popup-add.xml", "runtime-private/", "d141j-visibility.json"],
+    "unknown_until_native_route": ["actual-normal-result-dir", "actual result ID", "actual artifact digest"]
+  },
+  "admission": {
+    "free_bytes_once_before_dispatch": "> 5200000000",
+    "observed_source_prep_free_bytes": "4.3G filesystem available during initial 5-second trace",
+    "observed_source_prep_admission": "BELOW_FUTURE_5.2GB_THRESHOLD",
+    "stop_floor": "4000000000",
+    "heavy_concurrency": 1,
+    "native_trace_seconds": 5,
+    "poll_seconds_max": 60,
+    "timeout_minutes": 180,
+    "inherited_TEST_KEEP": true,
+    "no_path_relocation": true,
+    "no_resubmit": true,
+    "no_browser_or_body_now": true
+  },
+  "collector_status": {
+    "enabled_in_real_mounted_app": false,
+    "artifact_extracted_at_native_boundaries": false,
+    "reason": "Independent 1305 found withMountedD141jVisibilityCollector only in the new finite test; no call exists from the real popup spec, App fixture, mounted bootstrap, or D66 transfer.",
+    "required_existing_api": ["installD141jVisibilityCollector(collector)", "collector.snapshot()"],
+    "finite_gap": "An authorized existing mounted-App invocation and browser-to-service artifact transfer are missing. Do not execute until that seam exists."
+  },
+  "provenance": {
+    "old_review": "app-P-D141j-route-review-1256",
+    "old_failures_retained": ["D141J-ROUTE-001", "D141J-ROUTE-002"],
+    "old_receipts_reused": false,
+    "original_proof_tuple_untouched": true
+  }
+}

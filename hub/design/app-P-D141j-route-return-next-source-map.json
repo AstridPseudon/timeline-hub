@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.app.d141j.diagnostic-source-map.v2",
+  "current_actual_source": {
+    "commit": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+    "qualification": "PASS_SOURCE_VISIBILITY only; mounted capture not qualified"
+  },
+  "production_chain": [
+    {"boundary": "accepted-read", "file": "src/tools/video-editor/adapters/app/useAstridShotsHost.ts", "line": 210, "helper": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:81-115", "value": "acceptedReadHeadRevisionId, occurrenceIds, projectId, parentDocumentId"},
+    {"boundary": "activeCanonicalOccurrences immediately before useShotGroups", "file": "src/tools/video-editor/hooks/useShotGroups.ts", "line": 188, "helper": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:117-138", "value": "active occurrenceIds and correlated accepted-read identity"},
+    {"boundary": "useShotGroups input and result", "file": "src/tools/video-editor/hooks/useShotGroups.ts", "lines": [273, 336], "helper": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:140-164", "value": "inputOccurrenceIds, resultOccurrenceIds, resultGroupKeys, resultGroupCount"},
+    {"boundary": "before ShotGroupOverlay", "file": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "line": 931, "helper": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:167-189", "value": "canonicalOccurrenceIds, shotGroupOccurrenceIds, shotGroupKeys, shotGroupCount"}
+  ],
+  "collector": {
+    "file": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+    "active_state": "module-private activeCollector initialized null at line 44",
+    "installer": "installD141jVisibilityCollector at lines 73-78",
+    "snapshot": "collector.snapshot at lines 52-70",
+    "production_callers_found": false
+  },
+  "test_only_controls": {
+    "file": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx",
+    "first_control_lines": [254, 294],
+    "repeated_read_control_lines": [296, 371],
+    "install_lines": [257, 299],
+    "artifact_lines": [278, 346],
+    "checker_lines": [281, 350],
+    "meaning": "Exact source controls with synthetic fixtures; not native mounted-App output"
+  },
+  "unqualified_capture_candidate": {
+    "commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+    "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857",
+    "helper": "tests/e2e/local/support/d141j-visibility.ts",
+    "finite_test": "tests/e2e/local/support/d141j-visibility.test.ts",
+    "independent_review": "FAIL_FINITE_MOUNTED_WIRING",
+    "usage_census": {"mounted_spec_call": false, "app_fixture_call": false, "finite_test_call": true, "production_installer_call": false}
+  },
+  "checker": {
+    "file": "scripts/testing/check-d141j-visibility.mjs",
+    "sha256": "bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27",
+    "requires": "one uniquely correlated accepted-read chain per accepted read, ordered active/useShotGroups/overlay events, and nonempty expected occurrence fields",
+    "stale_association": "rejected by unmatched or non-unique acceptedReadId"
+  },
+  "service_route": {
+    "builder": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "buildSubmitPlan": "lines 361-373",
+    "serviceRecipe": "lines 375-405",
+    "normal_manifest_write": "lines 734-738 and 768-777",
+    "terminal_manifest_write": "lines 899-903",
+    "popup_spec": "tests/e2e/local/three-products.p2-popup.spec.ts:941-947; unchanged between 82e9e13d and 3bb09fc6"
+  },
+  "finite_gap": "No supported mounted-production caller invokes installD141jVisibilityCollector or transfers collector.snapshot() to the D66 output. The supported Runtime helper is a phase sink only."
+}

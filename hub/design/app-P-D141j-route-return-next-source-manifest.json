@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.app.d141j.diagnostic-route-source-manifest.v2",
+  "status": "SOURCE_BOUND_FINITE_MOUNTED_EXTRACTION_GAP",
+  "registration": false,
+  "request_executed": false,
+  "candidate_source_qualification": "SOURCE_VISIBILITY_PASS_MOUNTED_WIRING_FAIL",
+  "original_proof_tuple": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "prospective_diagnostic_tuple": {
+    "app": {"sha": "3bb09fc656c6b8a81243f8f796115013b56d621f", "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73", "checkout": "/home/user/work/wt/app-pin-3bb09fc6", "materialized": false},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "current_actual_source": {
+    "commit": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+    "review": "independent 1245 PASS_SOURCE_VISIBILITY",
+    "changed_files": [
+      {"path": "scripts/testing/check-d141j-visibility.mjs", "sha256": "bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27"},
+      {"path": "src/tools/video-editor/adapters/app/useAstridShotsHost.ts", "sha256": "59c1982900d564564487fb871527ac92e7b80e61350793ac36491ccaf3e8ffdf"},
+      {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx", "sha256": "4f9ed3c617ecbd4619b233960053e0e571ad00e6dea7a108226d9aab584e4a07"},
+      {"path": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts", "sha256": "504088ca11b9522f39e38328cfcd636f621768387c4dc2b5c461a76ab9856e56"}
+    ]
+  },
+  "mounted_capture_candidate": {
+    "commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+    "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857",
+    "private": true,
+    "independent_review": "FAIL_FINITE_MOUNTED_WIRING",
+    "changed_files": [
+      {"path": "tests/e2e/local/support/d141j-visibility.ts", "sha256": "97cb782069904555f66ce389edc344076a533497a388c6117c03b4463e1d5dce"},
+      {"path": "tests/e2e/local/support/d141j-visibility.test.ts", "sha256": "6176468933f404ad870e5c9407e987bc700a90b4ff2d96548ef8f9d97155b6f4"}
+    ],
+    "use": "unqualified source-control provenance only; not mounted route authority"
+  },
+  "protected_unchanged": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "scripts/testing/d66-plain-stack.mjs": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "public/install-manifest.json": "47e89fbe576a1c118b074a9fb5ef7d8b5eb788405d5537a9808d1b8279f28e41",
+    "vendor/astrid-build-inputs/manifest.json": "5cedfb8b544b73dc0db769e45ba19740de61b5296aca107fbb550185f58ee2df"
+  },
+  "supported_runtime_helper": {
+    "path": "/home/user/work/wt/rt-pin-95d98f03/tests/helpers/p2_commit_phase_capture.py",
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "role": "existing D66 Runtime phase capture sink only; it does not enable or extract the App D141j collector"
+  },
+  "normal_manifests": {
+    "install": {"path": "/home/user/work/app/public/install-manifest.json", "sha256": "47e89fbe576a1c118b074a9fb5ef7d8b5eb788405d5537a9808d1b8279f28e41"},
+    "build_inputs": {"path": "/home/user/work/app/vendor/astrid-build-inputs/manifest.json", "sha256": "5cedfb8b544b73dc0db769e45ba19740de61b5296aca107fbb550185f58ee2df"},
+    "use": "read-only normal manifests; no source retarget"
+  },
+  "native": {"status": "NOTRUN", "registration": false, "browser": false, "collection": false, "request": false, "body": false, "cause": "FINITE_MOUNTED_WIRING_GAP"},
+  "old_review_provenance": {"worker": "app-P-D141j-route-review-1256", "failures_retained": ["D141J-ROUTE-001", "D141J-ROUTE-002"], "old_receipt_retarget": false}
+}

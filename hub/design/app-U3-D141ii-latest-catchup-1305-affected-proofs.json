@@ -1,0 +1,183 @@
+{
+  "task": "U3 D141ii",
+  "status": "offline_applicability_only",
+  "proof_base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "rule": "Maps are source applicability only. No browser, journey, collection, or full suite was run here.",
+  "maps": {
+    "placement": {
+      "base_proof_sources": [
+        "src/shared/lib/placement/documentPlacement.ts",
+        "src/shared/lib/placement/placementService.ts",
+        "src/shared/lib/placement/__tests__/documentPlacement.test.ts",
+        "src/shared/lib/placement/__tests__/placementService.test.ts",
+        "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts",
+        "src/tools/video-editor/commands/placementRequester.ts",
+        "src/tools/video-editor/commands/placementRequester.test.ts",
+        "src/tools/video-editor/commands/nativePlacementCapture.ts",
+        "src/tools/video-editor/commands/nativePlacementCapture.test.ts",
+        "src/tools/video-editor/commands/sessionPlacement.ts",
+        "src/tools/video-editor/commands/editorImagePlacement.ts",
+        "src/tools/video-editor/commands/commitSession.placement.test.ts"
+      ],
+      "direct_delta_paths": [],
+      "transitive_delta_paths": [
+        "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+        "src/tools/video-editor/components/TimelineEditorShellCore.tsx",
+        "src/tools/video-editor/components/TimelineEditorShellToolbar.tsx"
+      ],
+      "nativelauncher_or_pin_paths": [],
+      "later_reproof_journeys": ["P3 Gate-5 editor creation-tools path"],
+      "reason": "Placement producers and semantic/outbox tests are unchanged; editor chrome/tool wiring is upstream-touched and merits the later P3 mounted reproof."
+    },
+    "popup": {
+      "base_proof_sources": [
+        "tests/e2e/local/three-products.p2-popup.spec.ts",
+        "tests/e2e/local/support/p2-popup-oracle.test.mjs",
+        "src/tools/travel-between-images/components/ShotTimelinePreview.tsx",
+        "src/tools/travel-between-images/components/shotTimelineDataProvider.ts",
+        "src/tools/travel-between-images/pages/LocalTimelineShotBrowser.tsx"
+      ],
+      "direct_delta_paths": [],
+      "transitive_delta_paths": [],
+      "nativelauncher_or_pin_paths": [],
+      "later_reproof_journeys": [],
+      "reason": "The private popup diagnostic and mounted popup producer sources are outside this merge delta; the independent popup diagnostic remains nonblocking."
+    },
+    "parent": {
+      "base_proof_sources": [
+        "tests/e2e/local/parent-split-command.spec.ts",
+        "tests/e2e/local/parent-trim-command.spec.ts",
+        "tests/e2e/local/support/p2-parent-oracle.test.mjs",
+        "tests/e2e/local/support/p2-parent-hashes-bootstrap.test.mjs",
+        "src/tools/video-editor/commands/parentClipAddCapture.ts",
+        "src/tools/video-editor/commands/parentClipSwapCapture.ts",
+        "src/tools/video-editor/commands/parentClipAddCapture.test.ts",
+        "src/tools/video-editor/commands/parentClipSwapCapture.test.ts"
+      ],
+      "direct_delta_paths": [],
+      "transitive_delta_paths": [],
+      "nativelauncher_or_pin_paths": [],
+      "later_reproof_journeys": [],
+      "reason": "Parent proof sources, controls, and launch configs are untouched by the resolved delta."
+    },
+    "single": {
+      "base_proof_sources": [
+        "src/tools/video-editor/commands/placementRequester.ts",
+        "src/tools/video-editor/commands/nativePlacementCapture.ts",
+        "src/tools/video-editor/commands/editorImagePlacement.ts",
+        "src/shared/components/MediaGalleryItem.tsx",
+        "src/shared/components/MediaGallery/hooks/useMediaGalleryItemProps.ts",
+        "src/features/gallery/hooks/useGalleryPageState.ts"
+      ],
+      "direct_delta_paths": [
+        "src/shared/components/MediaGalleryItem.tsx",
+        "src/shared/components/MediaGalleryItem/components/AddToTimelineButton.tsx",
+        "src/shared/components/MediaGallery/hooks/useMediaGalleryItemProps.ts",
+        "src/shared/components/MediaGallery/hooks/useMediaGalleryViewInteractions.ts",
+        "src/shared/components/MediaGallery/MediaGallery.tsx",
+        "src/features/gallery/components/GenerationsPane/components/GenerationsPaneGallery.tsx",
+        "src/features/gallery/hooks/useGalleryPageState.ts",
+        "src/shared/components/SelectionContextMenu.tsx"
+      ],
+      "transitive_delta_paths": [
+        "src/shared/components/MediaGallery/types.ts",
+        "src/shared/components/MediaGalleryItem/types.ts",
+        "src/shared/components/SelectionContextMenu.test.tsx",
+        "src/shared/components/MediaGalleryItem.behavior.test.tsx",
+        "src/shared/components/MediaGalleryItem/components/AddToTimelineButton.test.tsx"
+      ],
+      "nativelauncher_or_pin_paths": ["public/install-manifest.json"],
+      "later_reproof_journeys": ["gallery single Add-to-Timeline path"],
+      "reason": "Upstream adds the gallery single-item Add-to-Timeline button and carries it through the gallery selection/context-menu props; only the later mounted caller journey can establish save-funnel behavior."
+    },
+    "bulk": {
+      "base_proof_sources": [
+        "src/tools/video-editor/components/PropertiesPanel/BulkClipPanel.tsx",
+        "src/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.tsx",
+        "src/tools/video-editor/components/PropertiesPanel/BulkClipPanelBody.test.tsx",
+        "src/tools/video-editor/lib/bulk-utils.ts",
+        "src/tools/video-editor/lib/bulk-utils.test.ts"
+      ],
+      "direct_delta_paths": [],
+      "transitive_delta_paths": [
+        "src/shared/components/SelectionContextMenu.tsx",
+        "src/features/gallery/components/GenerationsPane/components/GenerationsPaneGallery.tsx"
+      ],
+      "nativelauncher_or_pin_paths": [],
+      "later_reproof_journeys": [],
+      "reason": "Bulk editor producers and tests are untouched; shared selection changes do not reach the bulk clip panel source."
+    },
+    "registerAsset": {
+      "base_proof_sources": [
+        "src/tools/video-editor/lib/asset-registry.ts",
+        "src/tools/video-editor/lib/timeline-asset-plans.ts",
+        "src/tools/video-editor/hooks/useTimelineState.ts",
+        "src/tools/video-editor/hooks/useTimelineCommandsService.ts",
+        "src/tools/video-editor/lib/browser-runtime.ts",
+        "src/tools/video-editor/testing/providerCompatibility.shared.ts",
+        "src/tools/video-editor/lib/asset-registry.test.ts"
+      ],
+      "direct_delta_paths": ["src/tools/video-editor/hooks/useTimelineState.ts"],
+      "transitive_delta_paths": [
+        "src/tools/video-editor/hooks/useExternalDrop.ts",
+        "src/tools/video-editor/lib/external-drop-utils.ts",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx"
+      ],
+      "nativelauncher_or_pin_paths": ["public/install-manifest.json"],
+      "later_reproof_journeys": ["P2 registerAsset / element-assets mounted path"],
+      "reason": "The state seam and external-drop asset path are upstream-touched; registerAsset remains on the existing Runtime client/outbox route and needs the later mounted proof."
+    },
+    "P1": {
+      "base_proof_sources": [
+        "tests/e2e/local/three-products.p1-chain.spec.ts",
+        "tests/e2e/local/p1-diagnostic-safety.test.ts",
+        "tests/e2e/local/p1-diagnostic-safety.ts",
+        "tests/fixtures/p1-feasibility/cases.json",
+        "src/tools/video-editor/commands/p1FeasibilityCorpus.test.ts",
+        "src/tools/video-editor/commands/p1EncoderCorpus.test.ts"
+      ],
+      "direct_delta_paths": [],
+      "transitive_delta_paths": [],
+      "nativelauncher_or_pin_paths": ["public/install-manifest.json"],
+      "later_reproof_journeys": [],
+      "reason": "P1 chain, diagnostics, fixtures, and save/outbox producer sources are not in the resolved delta; the manifest pin rule is metadata-only and does not establish P1 behavior."
+    },
+    "P3": {
+      "base_proof_sources": [
+        "tests/e2e/local/three-products.spec.ts",
+        "tests/e2e/local/three-products.p2-tour.spec.ts",
+        "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
+        "tests/e2e/local/support/gate5-fault-order.test.mjs",
+        "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx",
+        "src/tools/video-editor/components/AgentChat/AgentChat.tsx"
+      ],
+      "direct_delta_paths": [
+        "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx",
+        "src/tools/video-editor/components/TimelineEditorShellCore.tsx",
+        "src/tools/video-editor/components/TimelineEditorShellToolbar.tsx",
+        "src/tools/video-editor/components/TimelineRenderControls.tsx",
+        "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+        "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx"
+      ],
+      "transitive_delta_paths": [
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+        "src/tools/video-editor/hooks/useTimelineState.ts",
+        "src/tools/video-editor/hooks/useExternalDrop.ts",
+        "src/tools/video-editor/lib/external-drop-utils.ts"
+      ],
+      "nativelauncher_or_pin_paths": ["public/install-manifest.json"],
+      "later_reproof_journeys": ["P3 Gate-5 mounted editor/tour journey"],
+      "reason": "The P3 e2e files are untouched, but the mounted editor chrome, creation tools, render controls, and AgentChat implementation changed; only the later P3 journey can re-establish integrated behavior."
+    }
+  }
+}

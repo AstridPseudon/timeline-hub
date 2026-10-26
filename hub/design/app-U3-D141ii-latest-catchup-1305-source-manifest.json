@@ -1,0 +1,138 @@
+{
+  "task": "U3 D141ii",
+  "base": {
+    "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "upstream": {
+    "commit": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671",
+    "tree": "2d148030f81e8522a7751577037232f9de29f9d9",
+    "lead_fresh_reply": "INBOX13:07Z fetch==ls-remote"
+  },
+  "merge_forward": {
+    "route": "bin/merge-forward",
+    "manager_exit_code": 1,
+    "resolution_status": "working_tree_resolved_harness_finalization_pending"
+  },
+  "frozen_candidate_fullids": {
+    "app": {
+      "commit": "8f0c2484463e9b666d184a744d52e252984e551a",
+      "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178"
+    },
+    "agent_sdk": {
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+    },
+    "runtime": {
+      "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+      "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"
+    },
+    "composition": {
+      "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+      "tree": "49975e7a54fd594e1b7fc807681fe28611d57864"
+    }
+  },
+  "conflict_preimages": {
+    "public/install-manifest.json": {
+      "base_stage1": "03d1e1167cb0bc5e9d5427af06b3a935604101ca",
+      "ours_stage2": "b571570007cdef157f30054f90e9d58b6428ee12",
+      "upstream_stage3": "fddf2401db5bcb3a4d9492e314157602bd944305",
+      "resolution": "keep ours runtime sha/schema_digest; use upstream agent and metadata; drop vibecomfy"
+    },
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": {
+      "base_stage1": "c61f31e717e22901ac8db209a6f03442d4a12ccf",
+      "ours_stage2": "e46aafba87d24135fe8d0276482fb823b159db6e",
+      "upstream_stage3": "ee2ac636cd972a36b93080ee6d857d846efd241c",
+      "resolution": "keep both meaningful test blocks"
+    },
+    "src/tools/video-editor/components/ElementsLibraryPanel.test.tsx": {
+      "base_stage1": "b18352574830f80d380dee414744854fa03ea20b",
+      "ours_stage2": "e432b18bae20d27cb68424d54665277d77a0a6a7",
+      "upstream": "deleted",
+      "resolution": "take upstream deletion via apply_patch Delete File"
+    },
+    "src/tools/video-editor/components/ElementsLibraryPanel.tsx": {
+      "base_stage1": "78543d4894cce40700adeecbb5221f086b44dec9",
+      "ours_stage2": "15c536637ff86f92ae6341fe6c96233c3add092d",
+      "upstream": "deleted",
+      "resolution": "take upstream deletion via apply_patch Delete File"
+    }
+  },
+  "resolved_file_sha256": {
+    "public/install-manifest.json": "af06b0b0e45cda890b372bb6a039a4d66c60180fc3dfecfa13876514b57b7bf5",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx": "b66fe542068c26c80324add5160235d69fd08455c6fbec2a8e9a52e8b7cf6ed3"
+  },
+  "delta_paths_status_sorted": [
+    "M public/install-manifest.json",
+    "M src/features/gallery/components/GenerationsPane/GenerationsPane.lightbox.test.tsx",
+    "M src/features/gallery/components/GenerationsPane/GenerationsPane.test.tsx",
+    "M src/features/gallery/components/GenerationsPane/GenerationsPane.tsx",
+    "M src/features/gallery/components/GenerationsPane/components/GenerationsPaneControls.test.tsx",
+    "M src/features/gallery/components/GenerationsPane/components/GenerationsPaneControls.tsx",
+    "A src/features/gallery/components/GenerationsPane/components/GenerationsPaneEmptyState.test.tsx",
+    "A src/features/gallery/components/GenerationsPane/components/GenerationsPaneEmptyState.tsx",
+    "M src/features/gallery/components/GenerationsPane/components/GenerationsPaneGallery.test.tsx",
+    "M src/features/gallery/components/GenerationsPane/components/GenerationsPaneGallery.tsx",
+    "M src/features/gallery/components/GenerationsPane/hooks/useGenerationsPaneController.test.ts",
+    "M src/features/gallery/components/GenerationsPane/hooks/useGenerationsPaneController.ts",
+    "A src/features/gallery/components/GenerationsPane/lib/emptyState.test.ts",
+    "A src/features/gallery/components/GenerationsPane/lib/emptyState.ts",
+    "A src/features/gallery/components/GenerationsPane/lib/paneGridLayout.test.ts",
+    "A src/features/gallery/components/GenerationsPane/lib/paneGridLayout.ts",
+    "M src/features/gallery/hooks/__tests__/useGalleryPageState.test.ts",
+    "M src/features/gallery/hooks/useGalleryPageState.ts",
+    "M src/shared/components/MediaGallery/MediaGallery.tsx",
+    "M src/shared/components/MediaGallery/hooks/useMediaGalleryItemProps.ts",
+    "M src/shared/components/MediaGallery/hooks/useMediaGalleryViewInteractions.ts",
+    "M src/shared/components/MediaGallery/types.ts",
+    "M src/shared/components/MediaGalleryItem.behavior.test.tsx",
+    "M src/shared/components/MediaGalleryItem.tsx",
+    "A src/shared/components/MediaGalleryItem/components/AddToTimelineButton.test.tsx",
+    "A src/shared/components/MediaGalleryItem/components/AddToTimelineButton.tsx",
+    "M src/shared/components/MediaGalleryItem/types.ts",
+    "M src/shared/components/SelectionContextMenu.test.tsx",
+    "M src/shared/components/SelectionContextMenu.tsx",
+    "A src/shared/components/selectors/ShotFilter.test.tsx",
+    "M src/shared/components/selectors/ShotFilter.tsx",
+    "M src/shared/components/ui/segmented-control.tsx",
+    "M src/shared/contexts/usePaneLockPolicyState.test.ts",
+    "M src/shared/contexts/usePaneLockPolicyState.ts",
+    "A src/shared/hooks/layout/useElementWidth.test.tsx",
+    "A src/shared/hooks/layout/useElementWidth.ts",
+    "A src/shared/hooks/useSlidingPane.test.tsx",
+    "M src/shared/state/panesStore.test.ts",
+    "M src/shared/state/panesStore.ts",
+    "M src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+    "M src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "M src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "M src/tools/video-editor/components/AgentChat/TourChatPanel.test.tsx",
+    "M src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+    "M src/tools/video-editor/components/AgentChat/projectChatDraftPersistence.test.ts",
+    "M src/tools/video-editor/components/AgentChat/projectChatDraftPersistence.ts",
+    "D src/tools/video-editor/components/ElementsLibraryPanel.test.tsx",
+    "D src/tools/video-editor/components/ElementsLibraryPanel.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineCanvas.test.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineCreateTools.test.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+    "M src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx",
+    "M src/tools/video-editor/components/TimelineEditorShellCore.tsx",
+    "M src/tools/video-editor/components/TimelineEditorShellToolbar.test.tsx",
+    "M src/tools/video-editor/components/TimelineEditorShellToolbar.tsx",
+    "M src/tools/video-editor/components/TimelineRenderControls.test.tsx",
+    "M src/tools/video-editor/components/TimelineRenderControls.tsx",
+    "M src/tools/video-editor/hooks/useExternalDrop.test.tsx",
+    "M src/tools/video-editor/hooks/useExternalDrop.ts",
+    "M src/tools/video-editor/hooks/useTimelineState.ts",
+    "M src/tools/video-editor/lib/external-drop-utils.ts",
+    "M src/tools/video-editor/lib/mobile-interaction-conformance.test.tsx"
+  ],
+  "pin_and_producer_rules": {
+    "runtime_lock": "no current delta; preserve local Runtime95d98f038320d5d46bd679ac000ab3e15825c935 fields",
+    "install_manifest": "local Runtime95d98f038320d5d46bd679ac000ab3e15825c935 fields retained; upstream Runtimefa9cd5464a8b37b02f971de375e56be846cd69e2 intentionally overridden",
+    "agent_reference": "upstream Agent e1c751def40f8fde59277226b6c190354d22744c retained",
+    "producer_receipt": "not regenerated"
+  },
+  "final_harness_commit_and_tree": "pending harness finalization"
+}

@@ -1,0 +1,55 @@
+{
+  "utc": "2026-10-26T13:17:46.263087+00:00",
+  "worker": "app-P-D141j-route-return-next",
+  "scope": "Byte custody publication only; own original scope and validation controls",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/findings.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-findings.md",
+      "sha256": "553705f9b9676ef5d9f0b6e3c58e7a5c275ae93a0cc6dbcfd9a5dfe8c87a9412",
+      "bytes": 2464
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/handoff.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-handoff.md",
+      "sha256": "1dfdc30cd1af77e7e0d4c9aa85d28ae8e33298005de2c4f6a3c1bd3b045bd7d1",
+      "bytes": 1339
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/report.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-report.md",
+      "sha256": "ec26f1e7c7f971a12da6a0fdca320fcdbd03098213f04ebbf0fd31d004164b2b",
+      "bytes": 888
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/route.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-route.json",
+      "sha256": "a02519ad2f00b7146a7757e8895f72b6c3d44cc1ad1dde894ad60112e2a1faa1",
+      "bytes": 8764
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/sampler-lifecycle.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-sampler-lifecycle.json",
+      "sha256": "e4562d79986b55f6a83fc8ed3d5ebb6687c22a641532af1d84fb013dd8c680da",
+      "bytes": 775
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/source-manifest.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-source-manifest.json",
+      "sha256": "0b62fa33071b93435993957542b11c89e860239ba6b37d985b526b0b26f4670f",
+      "bytes": 4570
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/source-map.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-source-map.json",
+      "sha256": "471fcb70d8bc15f84904ee547493911c957e9e3aa2993dfc5a3d3f6d965a75aa",
+      "bytes": 3768
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-route-return-next/evidence/validation.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-route-return-next-validation.md",
+      "sha256": "46243a531d26d2226242b6755c07f3b2c3fee8649d2ba06436c2e0595e8cb8b2",
+      "bytes": 1734
+    }
+  ]
+}
