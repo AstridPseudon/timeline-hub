@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type MutableRefObject,
 } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -37,6 +38,8 @@ import {
 import { useOptionalAgentChatRegistry } from "@/shared/contexts/AgentChatContext.tsx";
 import { useOptionalGlobalHeaderSlot } from "@/shared/contexts/ToolPageHeaderContext.tsx";
 import { toast } from "@/shared/components/ui/toast.tsx";
+import { useTimelineChromeContext } from "@/tools/video-editor/hooks/timelineStore.ts";
+import { exportTimelineArchive, importTimelineArchive } from "@/tools/video-editor/lib/timeline-transfer.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import { VideoEditorProvider } from "@/tools/video-editor/contexts/VideoEditorProvider.tsx";
 import { devLocalExtensions } from "@/tools/video-editor/dev/localExtensions.ts";
@@ -99,6 +102,21 @@ export const LAST_OPENED_PROJECT_STORAGE_KEY =
 
 /** Root class that turns off Chrome's horizontal overscroll swipe-back while the editor is mounted (see index.css). */
 export const VIDEO_EDITOR_SWIPE_LOCK_CLASS = "video-editor-swipe-lock";
+
+function TimelineTransferSaveBridge({ target }: { target: MutableRefObject<(() => Promise<unknown>) | null> }) {
+  const chrome = useTimelineChromeContext();
+  target.current = chrome.flushPendingSave;
+  return null;
+}
+
+function transferToast() {
+  return {
+    loading: (message: string) => toast.info(message, { duration: 60_000 }),
+    update: (id: unknown, message: string) => { if (typeof id === 'string') toast.info(message, { id, duration: 60_000 }); },
+    success: (message: string, id?: unknown) => toast.success(message, { ...(typeof id === 'string' ? { id } : {}), duration: 5_000 }),
+    error: (message: string, id?: unknown) => toast.error(message, { ...(typeof id === 'string' ? { id } : {}), duration: 5_000 }),
+  };
+}
 
 type EditorProject = {
   slug: string;
@@ -294,6 +312,7 @@ export default function VideoEditorPage() {
 
   const [mountedSaveStatus, setMountedSaveStatus] =
     useState<SaveStatus>("saved");
+  const flushTimelineSaveRef = useRef<(() => Promise<unknown>) | null>(null);
   const [settingPrimaryTimelineId, setSettingPrimaryTimelineId] = useState<
     string | null
   >(null);
@@ -762,6 +781,25 @@ export default function VideoEditorPage() {
       await new AstridRuntimeClient().renameTimeline(selectedProject.project_id, timelineId, name);
       await runtimeDiscovery.timelinesQuery.refetch();
     },
+    onExportTimeline: (timelineId: string, timelineName: string) => {
+      const flushPendingSave = flushTimelineSaveRef.current;
+      if (!flushPendingSave) { toast.error("The timeline editor is still loading. Try again in a moment."); return; }
+      void exportTimelineArchive({ projectId: projectId ?? "", timelineId, timelineName, flushPendingSave }, { toast: transferToast() });
+    },
+    onImportTimeline: (file: File) => {
+      if (!projectId || tourHeader?.disabled) return;
+      const transferToasts = transferToast();
+      void importTimelineArchive(file, projectId, {
+        toast: transferToasts,
+      }).then(async (receipt) => {
+        const importedId = typeof receipt.timeline_id === "string" ? receipt.timeline_id : null;
+        await runtimeDiscovery.timelinesQuery.refetch();
+        if (importedId) setSearchParams((current) => {
+          if (current.get("project") !== projectId) return current;
+          const next = new URLSearchParams(current); next.set("timeline", importedId); return next;
+        });
+      }).catch(() => undefined);
+    },
     onCreateTimeline: timelines?.some(t => !t.is_shot) ? handleCreateAdditionalTimeline : handleCreateFirstTimeline,
     creatingTimeline: creatingFirstTimeline,
     onSetPrimaryTimeline: handleSetPrimaryTimeline,
@@ -870,6 +908,7 @@ export default function VideoEditorPage() {
             extensionHostEnabled
             extensionReleaseRevision="shipped"
           >
+            <TimelineTransferSaveBridge target={flushTimelineSaveRef} />
             {tourSelection && <EditorTourTimelineDriver />}
             <AstridVideoEditorShell
               mode="full"

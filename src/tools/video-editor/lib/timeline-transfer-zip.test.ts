@@ -116,6 +116,18 @@ describe("stored ZIP64 timeline transport", () => {
       await expect(readStoredZip(blobFromBytes(damaged))).rejects.toThrow("Only stored ZIP entries are supported");
   });
 
+  it("cancels a live entry source when the destination rejects a write", async () => {
+    let cancelled = false;
+    const source = new ReadableStream<Uint8Array>({
+      pull(controller) { controller.enqueue(new Uint8Array([1])); },
+      cancel() { cancelled = true; },
+    });
+    let writeCount = 0;
+    const destination = new WritableStream<Uint8Array>({ write() { if (++writeCount > 1) throw new Error("disk full"); } });
+    await expect(writeStoredZip([{ name: "media/x", size: 1, stream: () => source }], destination)).rejects.toThrow("disk full");
+    expect(cancelled).toBe(true);
+  });
+
   it("encodes ZIP64 offsets and sizes beyond 4 GiB without allocating that payload", () => {
     const offset = 5n * 1024n * 1024n * 1024n;
     const descriptor = __zipTestUtils.dataDescriptor(0x12345678, offset);

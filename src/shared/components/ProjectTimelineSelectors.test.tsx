@@ -9,6 +9,37 @@ beforeAll(() => {
 });
 
 describe('ProjectTimelinePicker', () => {
+  it('offers Export only on the current row and pins Import below New timeline', async () => {
+    const onExportTimeline = vi.fn();
+    const onImportTimeline = vi.fn();
+    const onCreateTimeline = vi.fn();
+    render(<ProjectTimelinePicker
+      projects={[]}
+      timelines={[{ id: 'current', name: 'Main Cut' }, { id: 'other', name: 'Alt Cut' }]}
+      projectId="project-id"
+      timelineId="current"
+      onSelectProject={vi.fn()}
+      onSelectTimeline={vi.fn()}
+      onCreateTimeline={onCreateTimeline}
+      onExportTimeline={onExportTimeline}
+      onImportTimeline={onImportTimeline}
+    />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
+    const currentRow = await screen.findByRole('option', { name: /Main Cut/ });
+    const otherRow = screen.getByRole('option', { name: /Alt Cut/ });
+    expect(within(currentRow).getByRole('button', { name: 'Export timeline' })).toBeInTheDocument();
+    expect(within(otherRow).queryByRole('button', { name: 'Export timeline' })).toBeNull();
+    await user.click(within(currentRow).getByRole('button', { name: 'Export timeline' }));
+    expect(onExportTimeline).toHaveBeenCalledWith('current', 'Main Cut');
+    expect(onCreateTimeline).not.toHaveBeenCalled();
+    const create = screen.getByRole('button', { name: 'New timeline' });
+    const importAction = screen.getByRole('button', { name: 'Import timeline…' });
+    expect(create.compareDocumentPosition(importAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Import timeline archive'), { target: { files: [new File(['zip'], 'timeline.astrid')] } });
+    expect(onImportTimeline).toHaveBeenCalledWith(expect.objectContaining({ name: 'timeline.astrid' }));
+  });
+
   it('shows project and timeline names with the primary indicator', async () => {
     render(
       <ProjectTimelinePicker

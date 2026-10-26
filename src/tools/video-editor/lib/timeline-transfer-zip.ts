@@ -263,6 +263,9 @@ export async function writeStoredZip(
             onProgress?.({ entry: entry.name, entryBytes: actualSize, entrySize: entry.size, totalBytes: completedBytes + actualSize, totalSize });
           }
         }
+      } catch (error) {
+        try { await reader.cancel(error); } catch { /* Preserve the write or source error. */ }
+        throw error;
       } finally {
         reader.releaseLock();
       }
