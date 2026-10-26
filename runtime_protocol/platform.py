@@ -668,6 +668,26 @@ class _Job:
         if not kernel.AssignProcessToJobObject(self.handle, int(process._handle)):
             raise ctypes.WinError(ctypes.get_last_error())
 
+    def active_processes(self):
+        from ctypes import wintypes
+        class Accounting(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_int64) for name in (
+                "TotalUserTime", "TotalKernelTime", "ThisPeriodTotalUserTime", "ThisPeriodTotalKernelTime",
+            )] + [(name, ctypes.c_uint32) for name in (
+                "TotalPageFaultCount", "TotalProcesses", "ActiveProcesses", "TotalTerminatedProcesses",
+            )]
+        kernel = _kernel()
+        kernel.QueryInformationJobObject.argtypes = [
+            wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD),
+        ]
+        kernel.QueryInformationJobObject.restype = wintypes.BOOL
+        accounting = Accounting()
+        if not kernel.QueryInformationJobObject(
+            self.handle, 1, ctypes.byref(accounting), ctypes.sizeof(accounting), None,
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return accounting.ActiveProcesses
+
     def close(self):
         if getattr(self, "handle", None):
             _kernel().CloseHandle(self.handle); self.handle = None
@@ -854,6 +874,17 @@ def tree_exited(process):
         with getattr(process, "_waitpid_lock", nullcontext()):
             return _darwin_tree_exited(process)
     return process.poll() is not None
+
+
+def tree_drained(process):
+    """Close and confirm a Windows process tree once its Job has no members."""
+    job = getattr(process, "_runtime_job", None)
+    if job is None:
+        raise ProcessLookupError("process has no Windows Job Object")
+    if job.active_processes():
+        return False
+    job.close()
+    return True
 
 
 def _darwin_tree_exited(process):

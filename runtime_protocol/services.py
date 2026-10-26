@@ -9,6 +9,7 @@ import os
 import re
 import stat
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass, field
@@ -204,6 +205,8 @@ class ServiceSupervisor:
         env["PATH"] = scripts + os.pathsep + env.get("PATH", "")
         env["VIRTUAL_ENV"] = str(Path(scripts).parent)
         env.update({k: self.values.get(v, v) for k, v in spec.env.items()})
+        if sys.platform == "win32" and "HOME" not in env and env.get("USERPROFILE"):
+            env["HOME"] = env["USERPROFILE"]
         return env
 
     def _ready_path(self, spec):

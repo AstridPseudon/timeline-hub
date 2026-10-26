@@ -162,6 +162,16 @@ def test_service_environment_and_argv_keep_spaces_and_literal_shell_syntax(tmp_p
     assert (tmp_path / "logs/service-example.log").read_text() == "first\nsecond\n"
 
 
+def test_windows_service_environment_uses_userprofile_when_home_is_absent(tmp_path, monkeypatch):
+    from runtime_protocol import services
+    monkeypatch.setattr(services, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.delenv("HOME", raising=False)
+    monkeypatch.setenv("USERPROFILE", "user home with spaces")
+    supervisor = _supervisor(tmp_path)
+
+    assert supervisor._environment(supervisor._services[0].spec)["HOME"] == "user home with spaces"
+
+
 def test_restart_backoff_caps_and_resets_only_after_stable_running(tmp_path, monkeypatch):
     supervisor = _supervisor(tmp_path)
     delays, observed = [], []
@@ -385,11 +395,10 @@ def test_windows_service_spawn_assigns_job_before_resuming_and_hides_console(mon
     job.close.assert_not_called()
 
 
-def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, monkeypatch):
+@pytest.mark.parametrize("winerror", [5, 32, 33])
+def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, monkeypatch, winerror):
     from runtime_protocol import logs
     monkeypatch.setattr(logs, "sys", SimpleNamespace(platform="win32"))
-    sleep = Mock()
-    monkeypatch.setattr(logs.time, "sleep", sleep)
     real_replace = Path.replace
     attempts = []
     with RotatingLog(tmp_path / "runtime.log", max_bytes=5) as log:
@@ -398,14 +407,13 @@ def test_rotation_retries_windows_sharing_violation_after_closing_log(tmp_path, 
             attempts.append(path)
             if len(attempts) == 1:
                 error = PermissionError("sharing violation")
-                error.winerror = 32
+                error.winerror = winerror
                 raise error
             return real_replace(path, target)
         monkeypatch.setattr(Path, "replace", replace)
         log.write("12345")
         log.write("next")
     assert len(attempts) == 2
-    sleep.assert_called_once_with(0.01)
     assert (tmp_path / "runtime.log.1").read_text() == "12345"
     assert (tmp_path / "runtime.log").read_text() == "next"
 

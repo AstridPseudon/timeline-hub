@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import os
 from pathlib import Path
 import signal
@@ -420,3 +421,41 @@ def test_eperm_from_group_with_a_live_member_is_a_real_failure(monkeypatch):
     finally:
         monkeypatch.undo()
         platform.stop_tree(process, grace=.1)
+
+
+@pytest.mark.parametrize("active_processes, drained", [(0, True), (1, False)])
+def test_windows_tree_drained_queries_job_and_closes_only_when_empty(monkeypatch, active_processes, drained):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    calls = []
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    def query(handle, info_class, info, size, _returned):
+        calls.append((handle, info_class, size))
+        fields = ctypes.cast(info, ctypes.POINTER(ctypes.c_uint32))
+        fields[10] = active_processes
+        return 1
+
+    kernel = SimpleNamespace(
+        QueryInformationJobObject=Function(query),
+        CloseHandle=Function(lambda handle: calls.append(("close", handle)) or 1),
+    )
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    job = object.__new__(platform._Job)
+    job.handle = 77
+    process = SimpleNamespace(_runtime_job=job)
+
+    assert platform.tree_drained(process) is drained
+    assert calls[0] == (77, 1, 48)
+    assert (("close", 77) in calls) is drained
+    assert job.handle == (None if drained else 77)
+
+
+def test_windows_tree_drained_requires_a_job(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    with pytest.raises(ProcessLookupError, match="no Windows Job Object"):
+        platform.tree_drained(SimpleNamespace())
