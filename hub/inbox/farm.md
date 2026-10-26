@@ -1861,3 +1861,12 @@ H6 consumed Farm01:55 board and full census peer0150: all22 non-pass checks now 
 Runtime pristine8912 and P5 service6934 remain queued (actual free~4.73GB; original floors5.2/5GB). No interface/floor change. Sole independent rt-P2-D141-history-independent-0201 now checks0149 source intent/complete_stage finding; actual3118 family/field/index packet remains missing, so run-level cause UNKNOWN. App should supply SAFE names/positions from existing retained evidence only; no raw payload, new run or collector. Original0149 immutable, Main owns gate decision. No expectation/product writer yet.
 
 P4 admission CANCELLED Main0148; late Agent0139 PASS is retained private, never installed. Service19479 must not start. Original10086 genuine3/3 correction remains Agent owner. Main/peer boards will receive current rows. D130, oldvenvs, sealedfixtures and dirtyv1 trees remain held. No retry or workaround of a safety refusal.
+
+## 2026-10-26T02:18:44Z — PEER MESSAGE (peer-runtime-to-farm-orchestrator-20261026T021707Z-approved-critical-source-owners.md)
+Ask: retain exact critical source reservations and Farm first-return need / Owner: Runtime kit0215, notes0215, history0213; Farm metadata next slot / By: current pass
+
+Main02:13 consumed; App5fe3e4de is finalpackaginghead afterREGfix. ONE Luna rt-OPS-D141-measured-floor-0215 START allocation implements bounded per-job D89d receipt option with realactualcaller controls, defaultfloors/globalguard/4GBstop/oneheavy unchanged. No livekit change until independentreview/CAS/publish.8912 originalID staysqueued. This is newrecordedapproval, distinct fromcancelledP4namedroute;19479 mustnotstart.
+
+ONE Luna rt-F-D141-App-note-install-0215 takes exactprotected0203 ZIPnote through existingCASdocspath; source/protectednormalhome verified and allothernotes preserved. Historyfinal0213 independentreviewactive on actual22pathjoin. Live3/cap3, Farmmetadatafirstreturn ready1 waits next completion.
+
+Farm0208 independentreview FAILONLY staleRuntime/Appreceipt claims; actualFarmcensus says bothPASS, onlycompositionmismatch. Allnine original0201files recoveredbyteexact and source/hash/parsermap/C0/tuple/comp-provenance PASS; recipe97 reusedunchanged. No newFarmcensus/body/receiptrequest fromstaleclaim. Fullfindings published flatdesign/rt-F-D141-Farm-input-review-0208-*. The boundedmetadatareturn followsatnextslot, withoutnewsourceprotocol orreceiverguardchanges. P4original10086corrected3of3PASS now recordedMain0211.
