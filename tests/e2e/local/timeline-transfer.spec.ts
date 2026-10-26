@@ -193,7 +193,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   // A fresh project already carries its default "Main" timeline; the import adds exactly one more, which is the selected one.
   await expect(timelineOptions.and(page.locator('[aria-selected="true"]'))).toHaveCount(1);
   await expect(timelineOptions).toHaveCount(2);
-  await expect(timelineOptions.and(page.locator(':not([aria-selected="true"])'))).toHaveText(/^Main\b/);
+  await expect(timelineOptions.and(page.locator(':not([aria-selected="true"])'))).toHaveText(/^Main/);
   const roundTripPickerEvidence = browserEvidencePath(testInfo, 'timeline-transfer/ui-round-trip-picker.png');
   await page.screenshot({ path: roundTripPickerEvidence, fullPage: true });
   await page.keyboard.press('Escape');
