@@ -1,6 +1,6 @@
 # Getting Started with Astrid
 
-Windows isn't supported yet; CI runs on Linux and macOS.
+**Windows: beta.**
 
 Install Astrid on this computer, then use it at
 [astrid.haus](https://astrid.haus) by default. If you want to change the editor
