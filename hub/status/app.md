@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T07:16:24Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# app board, 2026-10-26T07:08:56Z
+<!-- app | 2026-10-26T07:21:23Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
+# app board, 2026-10-26T07:20:11Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -34,7 +34,7 @@
 | D141 P5 | Retain38 and exact bounded applicability | Runtime and service | Independent0513 and correction0619 | merged | Actual6934;0513;0619; App0645 | Original38 PASS31.02s retained. Independent0637 qualifies95d/ecdc source path; normal originals and actualGit verified0708. No newbody or retarget. | Historical6a tuple |
 | D141 core | Receive definitive same-kind comparison | Agent and service | Main D141u | blocked:agent | 0455;0507;0500;0508 | Early17 candidates,376 UNKNOWN retained; freeze2 identical full pair definitive. Farm only for undecidable environment need. | Pending8585 pair |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
-| D74 headroom | Recycle obsolete source pins | Manager and lead | Host0550 and0702 CLEAR; repeated guards | merged | Recycle5344 and867 | Exact old867 now unreferenced after18617 cancellation; recycle PASS. Raw test/controller KEEP retained. | No source edit |
+| D74 headroom | Recycle obsolete source pins | Manager and lead | Host0550/0702/0718 CLEAR; repeated guards | merged | Recycle5344;867; oldAgent28e andRuntime6a | Four exact superseded source pins recycled normally; old28e/6a freed150MB. All proof rawKEEP and Git source objects retained. | No source edit |
 | D74 holds | Preserve refused or unowned targets | Manager and lead | Existing owner dispositions | gated:owner-holds | Existing guarded holds | DirtyU3, lockedU3c, missing metadata bundles, hardlink cache and refused orphan graph untouched. | No source edit |
 | D141 SWAP | Retain documented safety-held gap | Existing owner | D130 absolute hold | gated:safety-D130 | Actual3250;refusal1537 | Original NO GO. No retry, transfer or alternate qualification. | Historical tuple |
 | D141 stopped | Retain other known gaps and failures | Existing owners | D141 stop | gated:D141-stop | Existing stopped lineages | Element32016/15200 FAIL;B0222330 nine setup errors;D77 unqualified;own tests visible unchanged. | Historical tuples |
@@ -59,7 +59,7 @@ P4/P5 and cross-lane: historical10086 XMLafca45b7 exact3PASS23.668s, immutable c
 
 D141x cancellation: exact obsolete app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617 CANCELLED by owning lead supported route, reason superseded by freeze-2 head4de54db1. Originalrequest/registry/raw retained; pending moved to queue/superseded.8912/19479 unchanged. Decision and operational cancellation blockers cleared. Fresh static0704 plus lead /proc CLEAR0702 and repeated clean/source/liveplan/lease/hardlink/KEEP guards allowed ONLY empty sourceKEEP867 release and bin/recycle PASS. Old5344 already guardedrecycled. Git objects/branches/receipts/raw retained. [Release](../../design/app-D141x-old867-release-0703.json).
 
-Maintenance0708: sweep3 terminal removed0; compact20 terminal0scratch/0testdirs/2oldlogs. Of37 preexisting KEEP markers only authorized empty867 source marker removed; all36 remaining exact, every raw test/controller marker retained. [Result](../../design/app-D141-maintenance-result-0708.json). DirtyU3, locked initializingU3c, bundles without metadata, hardlinked cache and refused orphan paths remain held. No hub operation; owner approval for repack absent, lead-only dry-run remains lead work.
+Maintenance0708: sweep3 terminal removed0; compact20 terminal0scratch/0testdirs/2oldlogs. Of37 preexisting KEEP markers only authorized empty867 source marker removed; all36 remaining exact at that pass, every raw test/controller marker retained. Later host0718-authorized empty old28e/6a source markers released with all fresh guards and normalrecycle; about150MB restored, no raw marker removed. [Result](../../design/app-D141-maintenance-result-0708.json). DirtyU3, locked initializingU3c, bundles without metadata, hardlinked cache and refused orphan paths remain held. No hub operation; owner approval for repack absent, lead-only dry-run remains lead work.
 
 Blockers: App review disk — Catch-up independent0707 needs ordinary source admission while pristine heavy17524 runs; candidate4937203 remains unmerged.
 Blockers: App journeys — Normal5.0/5.2GB floors after pairedDROP; no journey-kind measured X. Genuine headroom required; no owner hub approval.
@@ -71,4 +71,4 @@ live 0 / cap 3; ready-undispatched 0. Sole heavy service17524 running; source re
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through 2808217 bytes; board rewritten 2026-10-26T07:12:40.074077+00:00. Managers write operational board, briefs, peers, KEEP metadata and byte-exact safe publications only. Every product/test/generated/pin change remains worker-owned.
+INBOX consumed through 2808627 bytes; board rewritten 2026-10-26T07:12:40.074077+00:00. Managers write operational board, briefs, peers, KEEP metadata and byte-exact safe publications only. Every product/test/generated/pin change remains worker-owned.
