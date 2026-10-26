@@ -4005,6 +4005,42 @@ def test_readiness_preserves_network_guard_in_final_command_popen_environment(tm
     assert json.loads(actual['ASTRID_NETWORK_POLICY']) == {'mode': 'deny'}
 
 
+@pytest.mark.parametrize("allow_runtime_connection", [False, True])
+def test_child_environment_writes_exact_network_hook_bytes_on_windows(
+    tmp_path, monkeypatch, allow_runtime_connection
+):
+    _write_manifest(tmp_path / "guarded-command")
+    host = GenericPackHost(pack_roots=[tmp_path])
+    record = host.discover()[0]
+    attempt = tmp_path / "attempt"
+    attempt.mkdir()
+    write_text = Path.write_text
+
+    def crlf_translating_write_text(path, content, *args, **kwargs):
+        return write_text(path, content.replace("\n", "\r\n"), *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", crlf_translating_write_text)
+    env, secrets = host._child_environment(
+        record,
+        attempt,
+        network_policy={"mode": "deny"},
+        allow_runtime_connection=allow_runtime_connection,
+    )
+    expected = (
+        "from astrid.core.execution.network_policy import install_from_environment\n"
+        "install_from_environment()\n"
+        if allow_runtime_connection
+        else generic_host._STRICT_NETWORK_HOOK_SOURCE
+    )
+    try:
+        assert (attempt / ".astrid-network-hook" / "sitecustomize.py").read_bytes() == (
+            expected.encode("utf-8")
+        )
+    finally:
+        env.clear()
+        secrets.clear()
+
+
 
 class _IdleReadinessRuntime(FakeRuntime):
     """Explicit producer-shaped identity for the idle/renewal contract tests."""
