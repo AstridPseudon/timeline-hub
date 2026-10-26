@@ -1,6 +1,6 @@
 import { readFileSync, statfsSync, writeFileSync } from 'node:fs';
 import { expect } from '@playwright/test';
-import { EDITOR_TOUR_VERSION } from '../../../shared/lib/editorTourVersion.ts';
+import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
 import { browserEvidencePath } from './support/evidence.ts';
 import { test } from './support/app.ts';
 
