@@ -1324,6 +1324,19 @@ def _prepare_managed_render_inputs(
             snapshot = candidate_preview_snapshot(
                 authoring_preview, snapshot=snapshot, client=_client
             )
+        # `resolve_managed_render_snapshot` returned this graph only after
+        # reading and validating the exact typed parent -> shot -> internal
+        # revision closure. Preserve that producer proof across the ordinary
+        # managed-render snapshot boundary. Unpublished candidate exports are
+        # not certified by this saved-revision path.
+        host_transition_contract = (
+            "runtime-parent-closure/v1"
+            if authoring_preview is None
+            and isinstance(snapshot.composition_graph, Mapping)
+            and isinstance(snapshot.expansion, Mapping)
+            and snapshot.expansion.get("canonical") is True
+            else None
+        )
         child_records: list[dict[str, Any]] = []
         review_shots: list[dict[str, Any]] = []
         review_phrases: list[dict[str, Any]] = []
@@ -1525,15 +1538,20 @@ def _prepare_managed_render_inputs(
         "element_resources": _admitted_timeline_element_resources(snapshot.config),
     }
     authority = snapshot.authority()
+    timeline_snapshot = {
+        "config": dict(snapshot.config),
+        "registry": dict(snapshot.registry),
+    }
+    if host_transition_contract == "runtime-parent-closure/v1":
+        timeline_snapshot["metadata"] = {
+            "host_transition_contract": host_transition_contract,
+        }
     values.update(
         {
             # The generic host materializes this immutable snapshot below the
             # assigned attempt.  The SDK never writes a project-side render
             # snapshot or hands a project-root locator to a renderer.
-            "timeline_snapshot": {
-                "config": dict(snapshot.config),
-                "registry": dict(snapshot.registry),
-            },
+            "timeline_snapshot": timeline_snapshot,
             "timeline_authority": authority,
         }
     )

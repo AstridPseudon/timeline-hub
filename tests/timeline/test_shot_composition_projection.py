@@ -18,10 +18,65 @@ from astrid.sdk.timeline_editing import _clip_duration
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot_composition.json"
 ORDER_FIXTURE = FIXTURE.with_name("shot_track_order.json")
+MEDIA_PROJECTION_FIXTURE = Path(__file__).parents[1] / "editing_conformance" / "fixtures" / "occurrence_media_projection.json"
 
 
 def graph() -> dict:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
+
+
+def test_occurrence_timing_is_media_specific_and_matches_shared_projection_vectors() -> None:
+    vectors = json.loads(MEDIA_PROJECTION_FIXTURE.read_text(encoding="utf-8"))
+    source = graph()
+    source["occurrences"][0].update(vectors["occurrence"])
+    source["occurrences"][1].update(vectors["next_occurrence"])
+    revision = next(
+        item for item in source["shot_revisions"]
+        if item["shot_id"] == "shot-alpha" and item["revision_id"] == "rev-a"
+    )
+    timeline = revision["internal_timeline_revision"]["timeline"]
+    timeline["tracks"] = copy.deepcopy(vectors["tracks"])
+    timeline["clips"] = copy.deepcopy(vectors["clips"])
+    revision["assets"] = copy.deepcopy(vectors["assets"])
+
+    parent_config = {
+        "output": {"resolution": "1280x720", "fps": 30, "file": "canonical.mp4"},
+        "tracks": [{"id": "parent-visual-lane", "kind": "visual", "label": "Shots"}],
+        "clips": [copy.deepcopy(vectors["parent_clip"])],
+        "registry": {"assets": {"standalone-source": {"object_id": "object-standalone-source", "type": "image/png"}}},
+    }
+    projected = project_shot_composition(source, base_config=parent_config)
+    clips = {
+        clip["app"]["astrid_shot_composition"]["source_clip_id"]: clip
+        for clip in projected.config["clips"]
+        if clip.get("shot_occurrence_id") == "occ-1"
+    }
+
+    for clip_id, expected in vectors["expected"].items():
+        clip = clips[clip_id]
+        assert clip["at"] == pytest.approx(expected["at"]), clip_id
+        assert clip["from"] == pytest.approx(expected["from"]), clip_id
+        if "to" in expected:
+            assert clip["to"] == pytest.approx(expected["to"]), clip_id
+        if "hold" in expected:
+            assert clip["hold"] == pytest.approx(expected["hold"]), clip_id
+        assert clip.get("speed") == expected.get("speed"), clip_id
+        assert _clip_duration(clip) == pytest.approx(expected["timeline_duration"]), clip_id
+    assert clips["audio-track-inherited"]["app"]["astrid_shot_composition"]["source_offset"] == 350
+    assert clips["audio-track-inherited"]["app"]["astrid_shot_composition"]["speed"] == 1.5
+    assert projected.config["clips"][0] == vectors["parent_clip"]
+    assert timeline["clips"] == vectors["clips"]
+    assert projected.registry["assets"]["lane-audio-source"]["type"] == "audio"
+
+
+def test_asset_media_classification_requires_an_exact_asset_id() -> None:
+    from astrid.core.timeline.shot_composition_projection import _audio_clip
+
+    assert not _audio_clip(
+        {"asset_id": "picture-source", "track": "untyped"},
+        track_definitions=[{"id": "untyped"}],
+        revision={"assets": [{"media_type": "audio/wav"}]},
+    )
 
 
 def test_shot_only_layer_merge_matches_chapter_render_order_and_keeps_properties():
@@ -44,8 +99,8 @@ def test_projection_preserves_frames_trim_audio_and_occurrence_placement() -> No
     projected = project_shot_composition(source)
     video = next(item for item in projected.config["clips"] if item["shot_occurrence_id"] == "occ-1" and item["app"]["astrid_shot_composition"]["source_clip_id"] == "alpha-video")
     assert video["at"] == 0
-    assert video["from"] == 2
-    assert video["to"] == 4  # one second of the two-times-speed source remains
+    assert video["from"] == pytest.approx(2.007)
+    assert video["to"] == pytest.approx(4.007)  # one second of the two-times-speed source remains
     assert video["volume"] == 0
     assert video["app"]["astrid_shot_composition"]["source_offset"] == 7
     assert video["app"]["astrid_shot_composition"]["speed"] == 1.5

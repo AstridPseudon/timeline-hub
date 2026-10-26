@@ -1,4 +1,5 @@
 """Producer facts from the exact closure; media admission is isolated here."""
+from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import Path
 
@@ -61,6 +62,7 @@ def test_historical_capture_keeps_exact_parent_and_child_pins(client):
     authority = result["capture_snapshot"]["metadata"]["capture_authority"]
     assert result["revision_id"] == authority["parent_revision_id"] == "parent-1"
     assert authority["parent_content_digest"] == client.parent["content_digest"]
+    assert result["capture_snapshot"]["metadata"]["host_transition_contract"] == "runtime-parent-closure/v1"
     assert authority["expansion"]["children"] == [{
         "timeline_id": "main", "revision_id": "internal-1", "config_version": 1,
         "config_hash": client.internals[0]["content_digest"],
@@ -82,6 +84,7 @@ def test_saved_capture_keeps_the_entire_managed_expansion(client):
     assert snapshot["registry"] == projected.registry
     assert snapshot["metadata"]["capture_authority"]["expansion"] == {
         **expansion, "parent_content_digest": parent["content_digest"]}
+    assert snapshot["metadata"]["host_transition_contract"] == "runtime-parent-closure/v1"
     assert expansion["graph"] and "outputs" in expansion
 
 
@@ -114,12 +117,67 @@ def test_candidate_capture_preserves_compiled_digest_and_unpublished_identity(cl
     preview = candidate(client)
     result = prepare(client, authoring_preview=preview)
     authority = result["capture_snapshot"]["metadata"]["capture_authority"]
+    assert result["capture_snapshot"]["metadata"]["host_transition_contract"] == "runtime-parent-closure/v1"
     publication = preview["publication"]
     assert authority["parent_revision_id"] == publication["parent_revision_id"]
     assert authority["parent_content_digest"] == publication["content_digest"]
     assert authority["expansion"]["working_copy"]["candidate_digest"] == preview["candidate_digest"]
     assert result["capture_snapshot"]["metadata"]["working_copy"]["base_parent"] == preview["head"]
     assert all(read[0] != "parent" for read in client.reads)
+
+
+@pytest.mark.parametrize("working_copy", [False, True], ids=["saved-parent", "typed-working-copy"])
+def test_exact_capture_producer_mints_binding_transition_contract(client, tmp_path, working_copy):
+    import json
+
+    from astrid.core.rendering.verified_source import mint_prepared_source
+
+    preview = candidate(client) if working_copy else None
+    snapshot = prepare(client, **({"authoring_preview": preview} if preview else {}))["capture_snapshot"]
+    authority = snapshot["metadata"]["capture_authority"]
+    expansion = authority["expansion"]
+    assert snapshot["metadata"]["host_transition_contract"] == "runtime-parent-closure/v1"
+    assert isinstance(expansion["occurrences"], list)
+    assert isinstance(expansion["children"], list)
+
+    attempt = tmp_path / "attempt"
+    inputs = attempt / "inputs"
+    inputs.mkdir(parents=True)
+    timeline_path = inputs / "timeline.json"
+    assets_path = inputs / "registry.json"
+    timeline_path.write_text(json.dumps(snapshot["config"]), encoding="utf-8")
+    assets_path.write_text(json.dumps(snapshot["registry"]), encoding="utf-8")
+    marker = snapshot["metadata"].get("working_copy")
+    if working_copy:
+        assert isinstance(marker, Mapping)
+        revision_digest = marker["candidate_digest"]
+        ref = {
+            "project_id": authority["project_id"],
+            "timeline_id": authority["timeline_id"],
+            "revision_id": authority["parent_revision_id"],
+            "source_kind": "working_copy",
+            "revision_digest": revision_digest,
+            "working_copy": {
+                "candidate_digest": marker["candidate_digest"],
+                "publication_digest": marker["publication_digest"],
+                "base_revision_id": marker["base_parent"]["revision_id"],
+                "base_revision_digest": marker["base_parent"]["content_digest"],
+            },
+        }
+    else:
+        revision_digest = authority["parent_content_digest"]
+        ref = {
+            "project_id": authority["project_id"],
+            "timeline_id": authority["timeline_id"],
+            "revision_id": authority["parent_revision_id"],
+            "source_kind": "revision",
+            "revision_digest": revision_digest,
+        }
+    source = mint_prepared_source(
+        ref=ref, authority=authority, snapshot=snapshot,
+        timeline_path=timeline_path, assets_path=assets_path, attempt=attempt,
+    )
+    assert source.read()["transition_contract"] == "runtime-parent-closure/v1"
 
 
 @pytest.mark.parametrize("scope", ["project_id", "timeline_id"])
@@ -236,6 +294,7 @@ def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(tmp
         assert values.timeline_source.read()["ref"] == ref
         assert values.timeline_source.read()["authority"] == authority
         assert values.timeline_source.read()["snapshot"] == snapshot
+        assert values.timeline_source.read()["transition_contract"] == "runtime-parent-closure/v1"
 
 
 @pytest.mark.parametrize('working_copy', [False, True])

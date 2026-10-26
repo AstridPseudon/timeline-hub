@@ -360,6 +360,9 @@ def _open_current_input_closure(
         "shots": deepcopy(list((expansion or {}).get("shots") or [])),
         "occurrences": deepcopy(list((expansion or {}).get("occurrences") or [])),
         "canonical": True,
+        # Transient host proof. It is stripped before this closure is sent to
+        # Runtime, whose expansion must remain byte-for-byte authoritative.
+        "_host_transition_contract": "runtime-parent-closure/v1",
     }
     return deepcopy(dict(projected_config)), deepcopy(dict(projected_registry)), authority
 
@@ -452,6 +455,9 @@ def _open_candidate_input_closure(
         "occurrences": [dict(row) for row in projected.occurrences],
         "canonical": True,
         "working_copy": built["marker"],
+        # candidate_projection has validated and frozen this exact typed
+        # authoring bundle; the marker never comes from caller labels.
+        "_host_transition_contract": "runtime-parent-closure/v1",
     }
     return deepcopy(dict(projected.config)), deepcopy(dict(projected.registry)), authority
 
@@ -764,6 +770,7 @@ def prepare_filmstrip(
             )
             if requested_revision not in (None, '') and closure.get('parent_revision_id') != str(requested_revision):
                 _fail('Input inspection resolved a different immutable parent than the requested revision.')
+        closure.pop('_host_transition_contract', None)
         from astrid.core.timeline.duration import timeline_duration_frames
         canvas = config.get('theme_overrides', {}).get('visual', {}).get('canvas', {})
         fps = canvas.get('fps', 30) if isinstance(canvas, Mapping) else 30
@@ -846,6 +853,7 @@ def prepare_filmstrip(
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
             except Exception as exc:
                 _fail(f'Composed frame capture cannot resolve admitted saved revision {requested_revision!r}: {exc}')
+        host_transition_contract = closure.pop('_host_transition_contract', None)
         # The parent projection carries canonical media identities. Check them
         # against managed render admission so every asset is authorized and
         # materializable before Remotion runs, but send the projection itself:
@@ -902,6 +910,10 @@ def prepare_filmstrip(
         snapshot['registry'] = deepcopy(registry)
         snapshot['metadata']['selection'] = 'composed_frame_capture'
         snapshot['metadata']['capture_authority'] = deepcopy(authority)
+        if host_transition_contract == 'runtime-parent-closure/v1':
+            # Host-only provenance is kept alongside the immutable capture,
+            # never mixed into Runtime's authoritative expansion payload.
+            snapshot['metadata']['host_transition_contract'] = host_transition_contract
         snapshot['metadata']['capture_identity'] = capture_identity
         from astrid.core.timeline.astrid_ns import read_app
 

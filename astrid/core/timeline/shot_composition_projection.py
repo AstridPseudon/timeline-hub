@@ -157,6 +157,62 @@ def _duration(clip: Mapping[str, Any], *, path: str) -> float:
         raise ShotCompositionProjectionError(f"{path} has invalid timing: {exc}") from exc
 
 
+def _audio_clip(
+    clip: Mapping[str, Any],
+    *,
+    track_definitions: Sequence[Mapping[str, Any]],
+    revision: Mapping[str, Any],
+) -> bool:
+    """Use declared track kind first, then explicit clip or asset media kind."""
+    track_id = clip.get("track")
+    track = next(
+        (row for row in track_definitions if isinstance(row, Mapping) and row.get("id") == track_id),
+        {},
+    )
+    track_kind = track.get("kind") if isinstance(track, Mapping) else None
+    if track_kind in {"audio", "visual"}:
+        return track_kind == "audio"
+    clip_type = clip.get("clipType", clip.get("clip_type", clip.get("type")))
+    if isinstance(clip_type, str) and clip_type.lower() == "audio":
+        return True
+
+    asset_id = clip.get("asset", clip.get("asset_id"))
+    assets: list[tuple[Any, Mapping[str, Any]]] = []
+    revision_assets = revision.get("assets")
+    if isinstance(revision_assets, list):
+        assets.extend(
+            (row.get("asset_id"), row)
+            for row in revision_assets
+            if isinstance(row, Mapping)
+        )
+    internal = revision.get("internal_timeline_revision")
+    internal = internal if isinstance(internal, Mapping) else {}
+    timeline = internal.get("timeline")
+    timeline = timeline if isinstance(timeline, Mapping) else {}
+    local_registry = timeline.get("registry")
+    local_registry = local_registry if isinstance(local_registry, Mapping) else {}
+    local_assets = local_registry.get("assets")
+    if isinstance(local_assets, Mapping) and isinstance(asset_id, str):
+        entry = local_assets.get(asset_id)
+        if isinstance(entry, Mapping):
+            assets.append((asset_id, entry))
+    for candidate_id, asset in assets:
+        if candidate_id != asset_id:
+            continue
+        source = asset.get("source") if isinstance(asset.get("source"), Mapping) else {}
+        for value in (asset.get("media_type"), asset.get("type"), asset.get("role"), source.get("media_type"), source.get("type")):
+            if isinstance(value, str) and (value.strip().lower() == "audio" or value.strip().lower().startswith("audio/")):
+                return True
+    return False
+
+
+def _source_offset_seconds(occurrence: Mapping[str, Any], *, path: str) -> float:
+    value = occurrence.get("source_offset", occurrence.get("source_offset_ms", 0))
+    if isinstance(value, Mapping):
+        value = value.get("start", value.get("start_ms", 0))
+    return _number(value, f"{path}.source_offset") / 1000.0
+
+
 def _placement_speed(value: Any, *, path: str) -> float:
     """Read a numeric or rational placement playback rate."""
     if isinstance(value, Mapping):
@@ -319,15 +375,19 @@ def _project_clip(
     occurrence_start: float,
     occurrence_end: float,
     occurrence_speed: float,
+    track_definitions: Sequence[Mapping[str, Any]],
     path: str,
 ) -> dict[str, Any] | None:
     clip = _timeline_clip(raw, path=path)
     relative_at = _number(clip.get("at", 0), f"{path}.at", default=0.0)
     _placement_speed(occurrence_speed, path=f"{path}.occurrence_speed")
-    source_duration = _duration(clip, path=path)
-    # The occurrence speed is a placement property.  Keep the authored child
-    # speed intact and expose the placement value in the immutable app
-    # namespace; timing remains the authored child window, as in the editor.
+    is_audio = _audio_clip(clip, track_definitions=track_definitions, revision=revision)
+    authored_child_speed = clip.get("speed")
+    child_speed = _number(authored_child_speed, f"{path}.speed", default=1.0)
+    effective_speed = child_speed if authored_child_speed is not None else (1.0 if is_audio else occurrence_speed)
+    if effective_speed <= 0:
+        raise ShotCompositionProjectionError(f"{path}.speed must be positive")
+    source_duration = _duration({**clip, "speed": effective_speed}, path=path)
     absolute_at = occurrence_start + relative_at
     absolute_end = absolute_at + source_duration
     if absolute_at >= occurrence_end or absolute_end <= occurrence_start:
@@ -336,18 +396,23 @@ def _project_clip(
     visible_duration = max(0.0, clipped_end - absolute_at)
     if visible_duration <= 0:
         return None
-    child_speed = _number(clip.get("speed", 1), f"{path}.speed", default=1.0)
-    if child_speed <= 0:
-        raise ShotCompositionProjectionError(f"{path}.speed must be positive")
+    source_from = _number(clip.get("from", 0), f"{path}.from", default=0.0)
     if "hold" in clip:
-        # ``hold`` is stored in source seconds. Keep the authored speed on the
-        # projected clip and convert the visible cap back to source units so
-        # the renderer divides by speed exactly once.
-        clip["hold"] = visible_duration * child_speed
+        clip["hold"] = visible_duration * effective_speed
     elif "to" in clip:
-        source_from = _number(clip.get("from", 0), f"{path}.from", default=0.0)
-        clip["to"] = source_from + visible_duration * child_speed
+        clip["to"] = source_from + visible_duration * effective_speed
     clip["at"] = absolute_at
+    source_offset = 0.0 if is_audio else _source_offset_seconds(occurrence, path=path)
+    if "from" in clip or "to" in clip or source_offset:
+        clip["from"] = source_from + source_offset
+    if "to" in clip:
+        clip["to"] += source_offset
+    if authored_child_speed is not None:
+        clip["speed"] = effective_speed
+    elif not is_audio and effective_speed != 1:
+        clip["speed"] = effective_speed
+    else:
+        clip.pop("speed", None)
     _apply_placement_transform(clip, occurrence, path=path)
     original_id = str(clip["id"])
     occurrence_id = occurrence["occurrence_id"]
@@ -447,6 +512,7 @@ def project_shot_composition(
                 occurrence_start=start,
                 occurrence_end=end,
                 occurrence_speed=speed,
+                track_definitions=config.get("tracks", []),
                 path=f"shot_revisions[{index}].timeline.clips[{clip_index}]",
             )
             if projected is not None:
@@ -680,6 +746,7 @@ def project_runtime_parent_composition(
                 occurrence_start=start,
                 occurrence_end=end,
                 occurrence_speed=speed,
+                track_definitions=config.get("tracks", []),
                 path=f"internal_timeline_revisions[{internal_revision_id!r}].payload.clips[{clip_index}]",
             )
             if projected is None:

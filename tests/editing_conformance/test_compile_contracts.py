@@ -38,6 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).parent / 'fixtures'
 AUDIO = json.loads((FIXTURES / 'audio_compile_contract.json').read_text(encoding='utf-8'))
 VISUAL = json.loads((FIXTURES / 'visual_compile_contract.json').read_text(encoding='utf-8'))
+MEDIA_PROJECTION = json.loads((FIXTURES / 'occurrence_media_projection.json').read_text(encoding='utf-8'))
 
 
 def _graph(path):
@@ -196,6 +197,81 @@ def _source_clip(projection, occurrence_id, source_clip_id):
     return next(c for c in projection.config['clips']
                 if c.get('shot_occurrence_id') == occurrence_id
                 and c['app']['astrid_shot_composition']['source_clip_id'] == source_clip_id)
+
+
+def test_media_specific_occurrence_projection_matches_shared_vectors():
+    vectors = MEDIA_PROJECTION
+    parent_clip = deepcopy(vectors['parent_clip'])
+    parent_config = {
+        'output': {'resolution': '1280x720', 'fps': 30, 'file': 'canonical.mp4'},
+        'tracks': [{'id': 'parent-visual-lane', 'kind': 'visual', 'label': 'Shots'}],
+        'clips': [parent_clip],
+    }
+    child_assets = {
+        asset['asset_id']: {
+            'object_id': asset['object_id'], 'content_sha256': asset['digest'],
+            'type': asset['media_type'],
+        }
+        for asset in vectors['assets']
+    }
+    child_timeline = {
+        'tracks': deepcopy(vectors['tracks']),
+        'clips': deepcopy(vectors['clips']),
+        'registry': {'assets': child_assets},
+    }
+    parent_payload = {
+        'config': parent_config,
+        'clips': [deepcopy(parent_clip)],
+        'registry': {'assets': {'standalone-source': {'object_id': 'object-standalone-source', 'type': 'image/png'}}},
+        'occurrences': [
+            {
+                'occurrence_id': 'occ-1', 'shot_id': 'shot-alpha', 'shot_revision_id': 'rev-a',
+                'at_ms': vectors['occurrence']['at_ms'],
+                'duration_ms': vectors['occurrence']['duration_ms'],
+                'source_offset': vectors['occurrence']['source_offset'],
+                'speed': vectors['occurrence']['speed'], 'track': vectors['occurrence']['track'],
+            },
+            {
+                'occurrence_id': 'occ-2', 'shot_id': 'shot-alpha', 'shot_revision_id': 'rev-a',
+                'at_ms': vectors['next_occurrence']['at_ms'],
+                'duration_ms': vectors['next_occurrence']['duration_ms'],
+                'source_offset': 0, 'speed': 1, 'track': vectors['next_occurrence']['track'],
+            },
+        ],
+    }
+    parent = {
+        'project_id': 'project-001', 'timeline_id': 'document-primary',
+        'revision_id': 'parent-rev-media-projection', 'payload': parent_payload,
+    }
+    shot_revisions = [{
+        'shot_id': 'shot-alpha', 'revision_id': 'rev-a',
+        'internal_timeline_revision_id': 'internal-media-projection',
+    }]
+    internal_revisions = [{
+        'revision_id': 'internal-media-projection', 'payload': child_timeline,
+    }]
+
+    projected = project_runtime_parent_composition(
+        parent, shot_revisions=shot_revisions,
+        internal_timeline_revisions=internal_revisions,
+    )
+    clips = {
+        clip['app']['astrid_shot_composition']['source_clip_id']: clip
+        for clip in projected.config['clips']
+        if clip.get('shot_occurrence_id') == 'occ-1'
+    }
+    for clip_id, expected in vectors['expected'].items():
+        clip = clips[clip_id]
+        assert clip['at'] == pytest.approx(expected['at']), clip_id
+        assert clip['from'] == pytest.approx(expected['from']), clip_id
+        if 'to' in expected:
+            assert clip['to'] == pytest.approx(expected['to']), clip_id
+        if 'hold' in expected:
+            assert clip['hold'] == pytest.approx(expected['hold']), clip_id
+        assert clip.get('speed') == expected.get('speed'), clip_id
+        assert clip_timeline_duration(clip) == pytest.approx(expected['timeline_duration']), clip_id
+    assert projected.config['clips'][0] == parent_clip
+    assert projected.registry['assets']['occ-1:lane-audio-source']['object_id'] == 'object-lane-audio-source'
 
 
 def _clock():

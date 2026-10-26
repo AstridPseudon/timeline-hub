@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
+import sys
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,9 +14,59 @@ from typing import Any, Callable, Iterator, Mapping, Sequence, cast
 
 from runtime_protocol import platform
 
-from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION, ASTRID_PACKS_PATH
 from astrid.core.rendering.contracts import FrameWindow
-from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
+from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools, probe_context
+
+
+def _compile_verified_canonical_transitions(
+    props: dict[str, Any], *, fps: float, timeline_path: Path, assets_path: Path,
+    runtime_tools: RemotionRuntimeTools, project_dir: Path,
+) -> None:
+    """Compile canonical transition declarations at the host registry boundary.
+
+    Native/inline TimelineConfig requests and verified native revisions retain
+    the package's established outgoing-transition behavior. Only the explicit
+    host contract minted by the exact typed-parent capture producer selects
+    incoming-transition semantics.
+    """
+    from astrid.core.rendering.verified_source import inherited_source
+
+    source = inherited_source(timeline_path, assets_path)
+    if source is None:
+        return
+    binding = source.read()
+    if binding.get("transition_contract") != "runtime-parent-closure/v1":
+        return
+
+    helper = (project_dir / "scene-query.mjs").resolve(strict=True)
+    helper.relative_to(project_dir.resolve())
+    if not helper.is_file():
+        raise ValueError("scene query helper is not a file")
+    environment = probe_context(environment=os.environ, python_executable=sys.executable)["node_env"]
+    # This selector was already admitted by the Remotion runtime status probe.
+    # The webpack alias resolver must see the same external pack roots as the
+    # host scene query path.
+    if ASTRID_PACKS_PATH in os.environ:
+        environment[ASTRID_PACKS_PATH] = os.environ[ASTRID_PACKS_PATH]
+    payload = {"operation": "compile-canonical-transitions", "props": props,
+               "basis": {"fps": fps}}
+    try:
+        result = subprocess.run(
+            [str(runtime_tools.node_executable), str(helper), str(project_dir)],
+            input=json.dumps(payload, allow_nan=False), cwd=project_dir, env=environment,
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise ValueError(f"canonical transition compilation unavailable: {exc}") from exc
+    if result.returncode:
+        raise ValueError(result.stderr.strip() or "canonical transition compilation failed")
+    compiled = json.loads(result.stdout)
+    if (not isinstance(compiled, dict) or compiled.get("fps") != fps
+            or not isinstance(compiled.get("tracks"), list)):
+        raise ValueError("canonical transition compiler returned an invalid vector")
+    source.validate(timeline_path, assets_path)
+    props["compiledTransitions"] = compiled
 
 
 def _accounted_attempt_root(
@@ -247,6 +299,15 @@ def _prepared_remotion_root(
                     runtime_tools=runtime_tools,
                     fps=audio_profile.fps_rational[0] / audio_profile.fps_rational[1],
                 )
+            composition_profile = backend._canonical_profile(
+                timeline_path, backend._load_registry_mapping(assets_path), theme_path,
+            )
+            _compile_verified_canonical_transitions(
+                merged_props,
+                fps=composition_profile.fps_rational[0] / composition_profile.fps_rational[1],
+                timeline_path=timeline_path, assets_path=assets_path,
+                runtime_tools=runtime_tools, project_dir=project_dir,
+            )
             staged_video.parent.mkdir(parents=True, exist_ok=True)
             props_path.write_text(json.dumps(merged_props), encoding="utf-8")
             if on_scene_props is not None and frame_numbers is not None:

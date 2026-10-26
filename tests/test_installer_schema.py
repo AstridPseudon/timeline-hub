@@ -251,21 +251,17 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
     package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
     lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
     composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
+    composition_spec = package["dependencies"]["@banodoco/timeline-composition"]
+    artifact = ROOT / "remotion" / composition_spec.removeprefix("file:")
+    integrity = _integrity(artifact)
     public_exports = (".", "./evaluation", "./theme-api", "./registries",
                       "./effects.generated", "./animations.generated",
                       "./transitions.generated", "./registry.generated")
 
-    assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
-    )
-    assert composition["version"] == "0.0.14"
-    assert composition["resolved"] == (
-        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
-    )
-    assert composition["integrity"] == (
-        "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
-    )
+    assert composition_spec.startswith("file:artifacts/banodoco-timeline-composition-")
+    assert composition["version"] == "0.0.15"
+    assert composition["resolved"] == composition_spec
+    assert composition["integrity"] == integrity
     assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
     assert "node_modules/@banodoco/timeline-theme-2rp" not in lock["packages"]
 
@@ -273,7 +269,7 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
         manifest = json.load(archive.extractfile("package/package.json"))
         files = {member.name for member in archive.getmembers()}
     assert manifest["name"] == "@banodoco/timeline-composition"
-    assert manifest["version"] == "0.0.14"
+    assert manifest["version"] == "0.0.15"
     for export in public_exports:
         for target in manifest["exports"][export].values():
             assert target.startswith("./dist/")
@@ -290,12 +286,10 @@ def test_d72_runtime_and_composition_pins_have_no_obsolete_externals():
     artifact = ROOT / "remotion" / composition_spec.removeprefix("file:")
 
     assert composition_spec.startswith("file:artifacts/")
-    assert composition["version"] == "0.0.14"
+    assert composition["version"] == "0.0.15"
     assert composition["resolved"] == composition_spec
     assert composition["integrity"] == _integrity(artifact)
-    assert composition["integrity"] == (
-        "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
-    )
+    assert composition["integrity"] == _integrity(artifact)
 
     runtime_lock = json.loads((ROOT / "runtime.lock.json").read_text(encoding="utf-8"))
     schema_pin = runtime_lock["files"]["astrid/core/timeline/schema/timeline-config.schema.json"]

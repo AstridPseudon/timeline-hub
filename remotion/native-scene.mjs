@@ -3,7 +3,7 @@ import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import {remotionPrimitiveAliasesFor} from './webpack-alias.mjs';
 
-export const loadHostScene = async (project) => {
+const loadHostSceneModule = async (project) => {
   const aliases = remotionPrimitiveAliasesFor(project)({}).resolve.alias;
   const result = await build({
     absWorkingDir: project, entryPoints: [path.join(project, 'src/host-scene.ts')],
@@ -28,5 +28,8 @@ export const loadHostScene = async (project) => {
   // No executable output is written after launch binding. Sources, aliases,
   // esbuild and installed dependencies are the selected runtime's bound inputs.
   const entry = `data:text/javascript;base64,${Buffer.from(result.outputFiles[0].text).toString('base64')}`;
-  return (await import(entry)).prepareHostScene;
+  return import(entry);
 };
+
+export const loadHostScene = async (project) => (await loadHostSceneModule(project)).prepareHostScene;
+export const loadHostTransitionCompiler = async (project) => (await loadHostSceneModule(project)).compileHostTransitions;
