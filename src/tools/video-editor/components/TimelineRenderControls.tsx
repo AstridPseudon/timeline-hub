@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shar
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import type { VisualSeamReport } from '@/tools/video-editor/data/visualSeamContract.ts';
+import { EditorErrorMessage } from './EditorErrorMessage.tsx';
 
 function diagnosticRecord(value: unknown): Record<string, unknown> | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -375,7 +376,7 @@ export function TimelineRenderControls({
           </button>
           <div className="flex items-start gap-1 pr-5">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-            <span>{renderError.split('\n')[0]}</span>
+            <EditorErrorMessage message={renderError} />
           </div>
           {hasVisualSeamFindings(chrome.visualSeamReport) && (
             <VisualBoundaryReport
