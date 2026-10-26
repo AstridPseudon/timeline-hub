@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.ops.d141.runtime-interim.controls.v2",
+  "command": "TMPDIR=<private-temp> PYTHONDONTWRITEBYTECODE=1 python3 -I privateops-d141-measured-floor/controls/real-controls.py",
+  "result": "PASS",
+  "isolated_cases": 44,
+  "prior_cases_preserved": 37,
+  "new_cases": [
+    "symlink-before-final",
+    "fifo-before-final",
+    "regular-before-final",
+    "parent-substitution-before-final",
+    "symlink-before-validation",
+    "fifo-before-validation",
+    "regular-before-validation"
+  ],
+  "positive_paths": ["exact target15", "exact P5 service6934", "normal generated full ID", "failure", "cancellation/reaping"],
+  "negative_paths": ["App paired kit pending", "floor/default/global stop", "one-heavy occupancy", "receipt/source/witness poison", "held IDs", "P5 lookalikes"],
+  "publication_smoke": "installed-bin -> published-bin -> received-bin hash/mode parity; no controls sibling dependency",
+  "fixture_root": "/tmp/d141h-controls-hscOLD/d141-controls-30d0qncr"
+}

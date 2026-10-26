@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.ops.d141.runtime-interim.findings-map.v2",
+  "reviewed_candidate": "5113868cc3",
+  "prior_review": {"id": "D141H-SEC-001", "verdict": "FAIL", "source": "rt-OPS-D141-runtime-split-review-0340-findings.md"},
+  "closure": {
+    "D141H-SEC-001": {
+      "status": "CLOSED",
+      "fix": [
+        "sampler creates a 0600 regular single-link trace with O_CREAT|O_EXCL|O_NOFOLLOW",
+        "sampler binds trace device/inode/owner/mode/link-count and physical-parent device/inode/owner/mode fingerprint",
+        "append reopens through O_NOFOLLOW parent-directory descriptors with O_NONBLOCK and compares the immutable binding",
+        "validation reads the same verified descriptor, eliminating path check/read TOCTOU"
+      ],
+      "attacks": ["symlink-before-final", "fifo-before-final", "regular-before-final", "parent-substitution-before-final", "symlink-before-validation", "fifo-before-validation", "regular-before-validation"],
+      "result": "all refused or safely validated; bounded; zero redirected writes"
+    }
+  },
+  "controls": {"prior_37_preserved": true, "new_trace_security_cases": 7, "total_isolated_cases": 44, "result": "PASS"},
+  "remaining_findings": []
+}

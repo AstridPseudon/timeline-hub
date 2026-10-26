@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.d141g-a.source-manifest.v1",
+  "candidate_commit": "ef19a4d053fa1146dce09b1ba9d2f73561387330",
+  "candidate_tree": "5b55ba64f30411c043d9699d70749b791ed4d03b",
+  "worktree": "/home/user/work/wt/rt-OPS-D141-paired-wholepath-review-0344",
+  "status": "clean_before_evidence",
+  "files": [
+    {"path": "ops-d141-measured-floor/bin/d141-append-final.py", "sha256": "67524e434a55cc221336de2b5ca1051ee1dae1ccad8ed32f453ee4a5f13a2671", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/bin/d141-disk-trace.py", "sha256": "1fb5ff9a7f4c7fbb416cccd9b552640cb0a041964935b7e8724e34ea5c2bb440", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/bin/d141-validate-receipt.py", "sha256": "ff538a0154e8ef70fd138b98f99b5c8c6b5adfda8d54c0379355f76303cf2c21", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/bin/d141-validate-trace.py", "sha256": "a535869877130aebc39eb1171757613dd19f3c70ef1c5a3554b9dbd8f440fb27", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/bin/test-run", "sha256": "9b43dac3f8e001cc927dca9e91633aea014dc45b2b6ddf42d416f584b8aae00e", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/controls/real-controls.py", "sha256": "5df39f1290b25f158e4ceb8079e67307ce633208c8ee9e8796334f0944ad9506", "mode": "755", "type": "regular"},
+    {"path": "ops-d141-measured-floor/install-manifest.json", "sha256": "e1aeedf78c4d4e331cc0127e9c88d1d02b58d62382ca25a82a069ee4bfd04bd1", "mode": "644", "type": "regular"}
+  ],
+  "delta_from_parent": {
+    "paired_runtime_changes": [
+      "bin/test-run: pair marker/preflight lookup, one paired execution unit, final whole-unit stop check",
+      "bin/d141-validate-receipt.py: paired record schema and registry row/hash checks",
+      "controls/real-controls.py: paired positive/failure/cancel/stop/concurrency/poison cases"
+    ],
+    "unchanged_security_files_relevant_to_findings": [
+      "bin/d141-append-final.py",
+      "bin/d141-validate-trace.py"
+    ]
+  },
+  "app_0309_binding": {
+    "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+    "registration": false,
+    "target": "app-pin-520d7e4f",
+    "selector": "p2-automatic-child-placement",
+    "app_head": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "app_tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+    "normal_command_sha256": "600fca0fa7852eac45179b2a485b9b160d4d807ebb752456e292636b69a85eaa",
+    "preflight_command_sha256": "82f4ad3c8a4bc940c10d52c9b9bf230f49c59c7e8865a3c0144498e412cafe8d",
+    "binding_json_sha256": "a9947b5924c6b0b212b0d1ee7e3de0948cb0b65ec0ff8bd901ea50637cf6caf3",
+    "source_manifest_json_sha256": "495b4f4d969ed361c806e707995e686e344142db421320315c469da9f960dbba",
+    "publication_json_sha256": "not_recomputed_from_source_publication_record"
+  },
+  "freeze2": {
+    "app_upstream_head": "7796159ce894",
+    "app_candidate_head_required_before_reproof": "unknown until merge-forward",
+    "decision": "do not refresh hashes blindly; rerun the same pure builder on the new head"
+  }
+}

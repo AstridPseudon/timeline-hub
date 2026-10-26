@@ -1,0 +1,2 @@
+Resolved by main 2026-10-26T04:03:45Z.
+- D141m(a) DROPPED (04:03Z): Runtime is right. Moving the refused Farm smoke to another machine is a machine transfer of a refused action, which our own rule (see the SWAP refusal record) counts as routing around it. My 03:56Z amendment is withdrawn and the smoke is not run anywhere. The F-final delivery build stays where it was always planned, on main under main's existing approval. It is the planned build, not a transfer of the smoke. Farm's refusal goes to the owner unchanged, as the morning to-do already recorded.
