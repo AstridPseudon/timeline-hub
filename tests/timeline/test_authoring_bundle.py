@@ -20,7 +20,6 @@ from astrid.core.timeline.authoring_bundle import (
     inspect_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
-    promote_approved_authoring_candidate,
     publish_authoring_candidate,
     validate_authoring_candidate,
 )
@@ -1476,29 +1475,37 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
         service.close()
 
 
-def test_approval_is_bound_to_candidate_and_base_revision():
-    parent, shots, timelines = _closure(shared=True)
-    candidate = open_authoring_bundle(
-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
-    )
-    approval = approve_authoring_candidate(
-        candidate, approver="editor-1", approval_id="approval-1"
-    )
-    writer = _Writer()
-
-    changed = copy.deepcopy(candidate)
-    changed["parent"]["config"]["approved-edit"] = True
-    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
-        promote_approved_authoring_candidate(
-            changed, approval, writer, idempotency_key="promote-1"
+def test_approval_migration_is_bound_to_candidate_and_base_revision(tmp_path):
+    service, candidate, writer = _real_authoring_candidate(tmp_path)
+    try:
+        approval = approve_authoring_candidate(
+            candidate, approver="editor-1", approval_id="approval-1"
         )
-    assert writer.calls == []
+        assert approval["base_parent"] == candidate["base_parent"]
 
-    promoted = promote_approved_authoring_candidate(
-        candidate, approval, writer, idempotency_key="promote-1"
-    )
-    assert promoted["approval"]["approval_id"] == "approval-1"
-    assert len(writer.calls) == 1
+        changed = copy.deepcopy(candidate)
+        changed["parent"]["config"]["approved-edit"] = True
+        changed["base_parent"]["content_digest"] = "sha256:" + "f" * 64
+        assert compile_authoring_candidate(changed).candidate_digest != approval["candidate_digest"]
+        with pytest.raises(
+            AuthoringBundleError,
+            match="approval is stale or does not match candidate: candidate_digest",
+        ):
+            publish_authoring_candidate(
+                changed, writer, idempotency_key="promote-1", approval=approval
+            )
+        assert writer.calls == []
+
+        published = publish_authoring_candidate(
+            candidate, writer, idempotency_key="promote-1", approval=approval
+        )
+        assert published["approval"] == approval
+        assert published["approval"]["approval_id"] == "approval-1"
+        assert published["candidate_digest"] == approval["candidate_digest"]
+        assert "approval" not in writer.calls[0][2]
+        assert len(writer.calls) == 1
+    finally:
+        service.close()
 
 
 def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
@@ -1640,12 +1647,19 @@ def test_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_
         parent, shot_revisions=shots, internal_timeline_revisions=timelines
     )
     approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
-    writer = _Writer()
-    promoted = promote_approved_authoring_candidate(
-        candidate, approval, writer, idempotency_key="promote-render-1"
-    )
-    assert promoted["candidate_digest"] == approval["candidate_digest"]
-    assert len(writer.calls) == 1
+    service, candidate, writer = _real_authoring_candidate(tmp_path)
+    try:
+        approval = approve_authoring_candidate(
+            candidate, approver="editor-1", approval_id="approval-render-1"
+        )
+        promoted = publish_authoring_candidate(
+            candidate, writer, idempotency_key="promote-render-1", approval=approval
+        )
+        assert promoted["approval"] == approval
+        assert promoted["candidate_digest"] == approval["candidate_digest"]
+        assert len(writer.calls) == 1
+    finally:
+        service.close()
 
 
 def test_diff_of_an_unedited_checkout_is_empty_and_names_clips_by_id():

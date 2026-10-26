@@ -514,39 +514,71 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     ]
 
 
-def test_remote_create_empty_creates_shell_then_empty_head() -> None:
-    writer = _Writer()
-    result = RemoteTimelines(writer).create_empty(
+def test_remote_create_empty_migration_preserves_shell_and_empty_head(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(
         project="render-smoke",
         timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
         config=DEFAULT_CONFIG,
         idempotency_key="caller-1",
     )
     assert result.ok, result.error
-    assert result.data == {
-        "project_id": "P-1",
-        "timeline_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
-        "head_revision_id": "H-1",
-        "created": True,
-    }
+    assert result.data["project_id"] == runtime_create_case.project
+    assert result.data["timeline_id"] == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    assert result.data["head_revision_id"] == result.data["canonical_document"]["parent_revision"]["revision_id"]
+    assert result.data["created"] is True
     assert result.idempotency_key == "caller-1"
-    shell, head = writer.calls
+    shell, replay_read, head_read, commit = runtime_create_case.calls
     assert shell == (
         "create_timeline",
         ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
-        {"idempotency_key": "caller-1-shell"},
+        {"name": None, "idempotency_key": "caller-1-shell"},
     )
-    name, args, kwargs = head
-    assert name == "publish_parent_composition"
-    assert args[0] == "P-1"  # the runtime's project id, not the slug
-    publication = args[2]
-    assert publication["expected_head"] is None
-    assert publication["parent_composition"] == {
-        "config": DEFAULT_CONFIG,
-        "registry": {},
-        "clips": [],
-        "occurrences": [],
+    assert replay_read[0] == head_read[0] == "list_timeline_commits"
+    assert commit[0] == "commit_timeline"
+    assert commit[1][:2] == (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV")
+    assert commit[1][2]["project_id"] == runtime_create_case.project
+    assert commit[1][2]["timeline_id"] == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    assert commit[1][2]["commands"][0]["op"] == "timeline.init"
+    assert commit[1][2]["commands"][0]["args"]["output"] == {
+        "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+        "background": None, "background_scale": None,
     }
-    assert publication["shot_revisions"] == []
-    assert publication["internal_timeline_revisions"] == []
-    assert kwargs == {"idempotency_key": "caller-1-head"}
+    assert commit[1][2]["commands"][0]["args"] == {
+        "name": "Main",
+        "slug": "main",
+        "output": {
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    }
+    assert commit[1][2]["commands"][1:]
+    assert commit[2] == {"idempotency_key": "caller-1-head"}
+    payload = result.data["canonical_document"]["parent_revision"]["payload"]
+    assert payload["name"] == "Main"
+    assert payload["slug"] == "main"
+    assert payload["config"] == {
+        **DEFAULT_CONFIG,
+        "output": {
+            "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+        "clips": [],
+    }
+    assert payload["registry"] == {"assets": {}}
+    assert payload["clips"] == []
+    assert payload["occurrences"] == []
+    assert result.data["canonical_document"]["shot_revisions"] == []
+    assert result.data["canonical_document"]["internal_timeline_revisions"] == []
+    history = runtime_create_case.timelines.history(
+        runtime_create_case.project, result.data["timeline_id"], limit=100,
+    )
+    assert history.ok
+    assert result.data["head_revision_id"] == history.data["head"]["revision_id"]
+    assert len(history.data["items"]) == 2
+    assert history.data["items"][0]["intent"] == "bootstrap"
+    assert commit[1][2]["base_revision_id"] == history.data["items"][0]["revision_id"]
+    assert commit[1][2]["base_publication_id"] == history.data["items"][0]["publication_id"]
+    assert len([item for item in history.data["items"] if item["intent"] == "recorded"]) == 1
+    assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
+        {"kind": "scope", "ref": "timeline", "path": []},
+    ]

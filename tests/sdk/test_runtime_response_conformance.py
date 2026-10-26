@@ -234,16 +234,20 @@ def test_commit_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
     assert sent_headers[-1]["Idempotency-Key"] == idempotency_key
 
 
-def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
-    client, calls = _client("publish_conflict_409")
+def test_commit_conflict_409_migration_keeps_details_request_id_and_request() -> None:
+    sent_headers: list[dict[str, str]] = []
+    client, calls = _client("publish_conflict_409", sent_headers=sent_headers)
     recorded = fixture("publish_conflict_409")
+    request = _concrete(recorded["request"]["body"], project_id="project-1")
+    idempotency_key = "commit-conflict-409"
     with pytest.raises(WorkspaceClientError) as raised:
-        client.publish_parent_composition("project-1", "main", recorded["request"]["body"], idempotency_key="k")
+        client.commit_timeline("project-1", "main", request, idempotency_key=idempotency_key)
     error = raised.value
     assert (error.status, error.code) == (409, "conflict")
     assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
     assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
-    _sent_the_recorded_request("publish_conflict_409", calls, project_id="project-1")
+    _sent_the_recorded_request("publish_conflict_409", calls, exact_request=True, project_id="project-1")
+    assert sent_headers[-1]["Idempotency-Key"] == idempotency_key
 
 
 def test_invalid_cursor_400_keeps_its_status_and_code() -> None:
