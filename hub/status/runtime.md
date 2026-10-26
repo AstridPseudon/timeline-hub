@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T15:04:07Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
+<!-- main | 2026-10-26T15:09:49Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
 # runtime board, 2026-10-26T15:00:24.158044+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -91,9 +91,11 @@
 | D141jj late App host | Retain stopped late proposal | App manager | App1423 stop receipt | merged | app-F-D141jj-base-resume-1402 stopped | App confirms normal stop(pids346), running absent and WIP KEEP. No adoption or review. Main earlier owner retained. | Uninstalled WIP |
 | Agent1413 host offer | Retain current Main source owners | Manager | Earlier actual Main starts | gated:later | No host worker | Existing failure notes and source return own all ready work; stale offer declined by peer1433. | No source change |
 
+| OPS final headroom | Find any remaining ordinary recovery | Luna read only | Current guarded cleanup exhausted | doing | rt-OPS-final-headroom-census-1506 | Bounded metadata/reference census only; no cleanup or protected release. Main1450 decision remains. | No source change |
+
 Blockers: Main decision — existing4960MB pre-stage guard is short43.4MB at4916580352. Guarded cleanup exhausted; [finite headroom request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No install or build.
 Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
-live 0 / cap 3; ready-undispatched 0. Positive source review prepared but disk held; all other final proof, metadata and notes rows complete.
+live 1 / cap 3; ready-undispatched 0. One tiny read-only headroom census; positive source review remains disk held.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives held. Raw KEEP, refused smoke and8912/19479 unchanged. No repeat hub operation.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -117,3 +119,5 @@ Pass 2026-10-26T14:51:25.536638+00:00: Both reviews terminal0. Agentfailure note
 Receiving 2026-10-26T14:53:21.453670+00:00: FinalApp1435 handoff nowactual INBOX1928221 consumed; manager verifies three metadatahashes, fourclean fullheads/trees and currentorigin refs exact in [receiving1453](../../design/runtime-final-App-receiving-1453.json). App finalmetadata wait clear. Currentcanonicalnotes c39e/5b12 and independent1450 PASS control over historical60b/7cac paragraph above. No newsource/test/body or duplicateadoption. Mainheadroomdecision is sole remaining blocker.
 
 Pass 2026-10-26T15:00:24.158111+00:00: NewINBOX1929650 closes App fixedbase notes receiving; finalApp1435 alreadyqualified. Guardedrecycle also attempted terminalexit-only v1trees public018-generation andrt03-peer; both DIRTYrefused, so allfiveeligible Runtimecandidates held. Currentfree4907876352bytes. No headroomdecision or updatedheader since14:35. Samepositive-review/final-install/buildbriefs ready; actualexecutionHOLD untilguards meet. No actualworker/liveheavy or ready-undispatched row.
+
+Pass 2026-10-26T15:07:16.018798+00:00: Main1450 peer/escalation/sourcepublication personally confirmed byteequal in normalhub. No newdecision yet. One bounded ordinaryread-only Luna headroomcensus1506 queued to find any remaining actualcandidate, with no cleanup/KEEP/hostaudit/permission action. This does not transfer or change sourcepositivecontrols. Finalbuild and soleartifactreviewbriefs also pre-staged, gated onsourcequalification/activation/actualbody.
