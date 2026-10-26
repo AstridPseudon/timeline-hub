@@ -322,9 +322,12 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                         "output_bytes": registered["estimated_output_bytes"],
                     },
                     idempotency_key=f"timeline-action-{len(task_outputs)}",
-                ).raise_for_error()
+                )
+                assert pending.ok, pending.error
                 task_id = pending.data["task_id"]
-                task = client.tasks.show(task_id).raise_for_error().data
+                shown = client.tasks.show(task_id)
+                assert shown.ok, shown.error
+                task = shown.data
                 run_id = task["run_id"]
                 assert len(host.run(once=True)) == 1
                 observed = observe_task_invocation(
