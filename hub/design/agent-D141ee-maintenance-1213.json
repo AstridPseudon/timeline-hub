@@ -1,0 +1,39 @@
+{
+  "utc": "2026-10-26T12:13:05.335204+00:00",
+  "record_kind": "manager-recorded terminal tool results, not copied raw stdout",
+  "compact": {
+    "command": "bin/compact-scratch 0",
+    "exit": 0,
+    "packed_scratch_dirs": 5,
+    "gzipped_worker_logs": 0,
+    "packed_test_dirs": 0,
+    "reported_free_mib_before": 6206,
+    "reported_free_mib_after": 6252
+  },
+  "sweep": {
+    "command": "bin/sweep-tmp 3",
+    "exit": 0,
+    "removed_dirs": 0,
+    "reported_free_mib_before": 6252,
+    "reported_free_mib_after": 6249,
+    "stderr": "Known ls Broken pipe helper diagnostics were emitted; terminal exit0 and removed0."
+  },
+  "actual_free_bytes_at_receipt": 6550880256,
+  "census": {
+    "utc": "2026-10-26T12:05:03.238155+00:00",
+    "present_worker_trees": 47,
+    "KEEP_trees": 46,
+    "eligible_ended_nonKEEP_trees": 0,
+    "nonKEEP_tree": "agt-G2-open-commit, protected"
+  },
+  "limits": [
+    "No pre-run full marker hash inventory recorded; no marker byte-equality claim.",
+    "No eligible tree was recycled. No KEEP marker removal, hub repack, Store/staging or raw evidence operation.",
+    "Five eligible nonKEEP scratch directories were packed only by the guarded existing compact-scratch tool."
+  ],
+  "tool_sha256": {
+    "compact-scratch": "897c81bde0f1a7409efae90cbee2a6372e20ff3a630dda4b75a094e91516e2c2",
+    "sweep-tmp": "c78619cc350d088efab1addd7f63a17e34c6cae7c6aa0d07cbbe38536d19ca53",
+    "recycle": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+  }
+}
