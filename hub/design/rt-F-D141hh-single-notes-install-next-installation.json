@@ -1,0 +1,102 @@
+{
+  "backups": {
+    "README.template.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 41963,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/backups/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+    },
+    "gate-results.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 37956,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/backups/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+    }
+  },
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "cas": {
+    "before_inventory_durable_before_mutation": true,
+    "directory_fsync_after_each_replace": true,
+    "exact_backups_fsynced_before_mutation": true,
+    "guarded_staged_atomic_replacements": true,
+    "outside_after_count": 568,
+    "outside_before_count": 568,
+    "outside_maps_equal": true,
+    "preimage_guard_before_mutation": true,
+    "readback": true,
+    "replacement_order": [
+      "README.template.md",
+      "gate-results.md"
+    ],
+    "rollback_used": false,
+    "unknown_drift_overwritten": false,
+    "wrapper_post_cas_assertion_corrected_read_only": true
+  },
+  "conservation": {
+    "balanced_fences_and_placeholders": true,
+    "full_input_prefix": true,
+    "independent_fail_custody_separate_from_accepted_pass": true,
+    "no_body_reproof_reg0_zip_claim": true,
+    "prior_32_ids_ledgers_witnesses_limits": true,
+    "prior_gaps_and_historical_custody_limit": true,
+    "prior_lineage": true,
+    "sole_suffix_once_per_document": true
+  },
+  "installed_targets": {
+    "README.template.md": {
+      "bytes": 43978,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+    },
+    "gate-results.md": {
+      "bytes": 39916,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+    }
+  },
+  "no_other_canonical_write": true,
+  "no_product_or_full_suite_claim": true,
+  "operation_note": "One guarded CAS completed. The first wrapper exited after mutation on an over-strict README marker assertion; installed bytes were not rewritten, and final checks were read-only.",
+  "outside_inventory": {
+    "after_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/outside-after.json",
+    "before_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/outside-before.json",
+    "count_after": 568,
+    "count_before": 568,
+    "individually_hashed": true,
+    "unchanged": true
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "e1d311b255337c2224d010574c87c253a02fb7d8ffcd8fffd614a296cd8feef0",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "rendered_sha256": "2a8cd85b4d12a6f29e433c2da9c806eb071b3520d7b7a62162ba5f7147b83765"
+  },
+  "review_verdict": "PASS",
+  "schema": "timeline.d141hh.single-notes-installation/v1",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES",
+  "task": "rt-F-D141hh-single-notes-install-next"
+}

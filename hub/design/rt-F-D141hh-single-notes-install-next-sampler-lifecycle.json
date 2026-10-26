@@ -1,0 +1,32 @@
+{
+  "cas_completed": true,
+  "coverage_limit": "Durable 5-second observations; no continuous coverage claim between samples or after termination. Initial first-tool gap remains explicit.",
+  "covers_cas_and_readback": true,
+  "final_read_only_verification": true,
+  "first_tool_gap": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/tmpdir",
+    "reason": "Initial first-tool command attempted to mkdir the pre-existing regular tmpdir pointer and failed before sampling; this gap is disclosed and not backfilled.",
+    "status": "FAIL"
+  },
+  "interval_seconds": 5.0,
+  "operation_error": null,
+  "operation_sampler": {
+    "covers_cas_and_readback": false,
+    "durable_first_sample_observed": true,
+    "exit_code": -15,
+    "pid": 4,
+    "started_before_admission_and_mutation": true,
+    "wait_reap_observed": true
+  },
+  "reaped": true,
+  "sampler_exit_code": -15,
+  "sampler_pid": 4,
+  "sampler_started_ns": 1793017548913118516,
+  "schema": "timeline.d141hh.sampler-lifecycle/v1",
+  "status": "PASS_BOUNDED_CAS",
+  "stop_free_bytes": 4000000000,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/disk-trace.txt",
+  "waited": true,
+  "wrapper_post_cas_assertion": "README wording uses \"raw KEEP was added prospectively\"; final conservation checks used the exact reviewed wording.",
+  "wrapper_post_cas_assertion_failed_after_mutation": true
+}

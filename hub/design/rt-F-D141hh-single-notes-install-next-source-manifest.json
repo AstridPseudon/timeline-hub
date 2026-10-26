@@ -1,0 +1,148 @@
+{
+  "backups": {
+    "README.template.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 41963,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/backups/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+    },
+    "gate-results.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 37956,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/backups/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+    }
+  },
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "candidates": {
+    "README.template.md": {
+      "bytes": 43978,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md",
+      "preimage_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "regular_non_symlink": true,
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+    },
+    "gate-results.md": {
+      "bytes": 39916,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md",
+      "preimage_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "regular_non_symlink": true,
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+    }
+  },
+  "cas": {
+    "before_inventory_durable_before_mutation": true,
+    "directory_fsync_after_each_replace": true,
+    "exact_backups_fsynced_before_mutation": true,
+    "guarded_staged_atomic_replacements": true,
+    "outside_after_count": 568,
+    "outside_before_count": 568,
+    "outside_maps_equal": true,
+    "preimage_guard_before_mutation": true,
+    "readback": true,
+    "replacement_order": [
+      "README.template.md",
+      "gate-results.md"
+    ],
+    "rollback_used": false,
+    "unknown_drift_overwritten": false,
+    "wrapper_post_cas_assertion_corrected_read_only": true
+  },
+  "conservation": {
+    "balanced_fences_and_placeholders": true,
+    "full_input_prefix": true,
+    "independent_fail_custody_separate_from_accepted_pass": true,
+    "no_body_reproof_reg0_zip_claim": true,
+    "prior_32_ids_ledgers_witnesses_limits": true,
+    "prior_gaps_and_historical_custody_limit": true,
+    "prior_lineage": true,
+    "sole_suffix_once_per_document": true
+  },
+  "inputs": {
+    "author_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/source-manifest.json",
+      "sha256": "da565c32ca4e485147aef5d13362751d5e72d9c67db8257e0188ebb29ee92606"
+    },
+    "author_source_publication": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-single-notes-source-publication-next.json",
+      "sha256": "affa8f9ec74aadb068bdcfcd4fbce49b98bf29ee58185ce174bd2d476aa485c3"
+    },
+    "checker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+      "post_cas_result": "{\"candidates\": {\"candidate-README.template.md\": {\"bytes\": 43978, \"input_sha256\": \"90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84\", \"path\": \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md\", \"sha256\": \"715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071\", \"suffix_bytes\": 2015}, \"candidate-gate-results.md\": {\"bytes\": 39916, \"input_sha256\": \"ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1\", \"path\": \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md\", \"sha256\": \"d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d\", \"suffix_bytes\": 1960}}, \"render\": {\"balanced_fences\": true, \"caller\": \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py\", \"caller_sha256\": \"ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca\", \"controlled_inputs\": [\"agent\", \"runtime\", \"app\", \"composition\"], \"disclosure_occurrences\": 2, \"fallback_placeholder_behavior\": true, \"fallback_sha256\": \"9f1a0177eed648d0828615eff17fd0e64c0fd2467e9b46ecab03cdd6b6bf823a\", \"function\": \"render_readme\", \"function_only\": true, \"placeholders_resolved\": true, \"rendered_sha256\": \"2a8cd85b4d12a6f29e433c2da9c806eb071b3520d7b7a62162ba5f7147b83765\"}, \"status\": \"PASS_PRIVATE_D141HH_CANDIDATES\"}",
+      "pre_cas_result": "PASS_PRIVATE_D141HH_CANDIDATES",
+      "sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658"
+    },
+    "protected_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-review-next/evidence/review.json",
+      "sha256": "4f3571e6123bc8747207d87a166f742545b10197f85802804c9879c8d251493d",
+      "verdict": "PASS"
+    },
+    "protected_review_publication": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-single-notes-review-publication-next.json",
+      "sha256": "68e4f4a8b17088b2bab13ff43ee5ea51eb5d4118cda511de16dba1c90a632eee",
+      "verdict": "PASS"
+    }
+  },
+  "installed_targets": {
+    "README.template.md": {
+      "bytes": 43978,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+    },
+    "gate-results.md": {
+      "bytes": 39916,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+    }
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "e1d311b255337c2224d010574c87c253a02fb7d8ffcd8fffd614a296cd8feef0",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "rendered_sha256": "2a8cd85b4d12a6f29e433c2da9c806eb071b3520d7b7a62162ba5f7147b83765"
+  },
+  "reviewed_source_facts": {
+    "accepted_separate_from_original_fail_custody": true,
+    "composition_context_only": true,
+    "future_output_only_relocation_retained": true,
+    "future_test_keep_only": true,
+    "late_raw_keep_retained": true,
+    "normal_exit": 0,
+    "normal_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+    "normal_pass": true,
+    "normal_seconds": 257,
+    "original_1135_notrun": true,
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320"
+  },
+  "schema": "timeline.d141hh.single-notes-install-source-manifest/v1",
+  "scope": "two named canonical documentary files only; no product/repo/test/assertion/generated/pin/schema/kit/queue/registry/service/hub/Git mutation",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES",
+  "task": "rt-F-D141hh-single-notes-install-next"
+}

@@ -1,0 +1,3 @@
+sampler pid=5 started_ns=1793017775722559239 interval_s=5.0 stop_bytes=4000000000
+sampler pid=5 t_ns=1793017775724975615 available_bytes=5574934528 stop_bytes=4000000000
+sampler pid=5 t_ns=1793017780725690416 available_bytes=5574934528 stop_bytes=4000000000

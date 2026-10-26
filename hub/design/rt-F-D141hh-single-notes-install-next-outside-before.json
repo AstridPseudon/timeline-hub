@@ -1,0 +1,3415 @@
+{
+  "count": 568,
+  "files": [
+    {
+      "bytes": 23036,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.correction-predecessor.20261025T011024Z",
+      "sha256": "06aa4386a58dd8e1f1dc3f5fdfa0114a0dd98723819f842adff8c6a5a8c243e5"
+    },
+    {
+      "bytes": 10955,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261024T123115Z",
+      "sha256": "79ec78539bf67ef03045a9fe9d6a11f85a36d8b056471c8ecb188a71189515c9"
+    },
+    {
+      "bytes": 16892,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261024T171108Z",
+      "sha256": "f992e70af6b5a158a639338bd499d8ab32864ff7a3bba8faeabef57e58e51ebc"
+    },
+    {
+      "bytes": 21155,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261025T010832Z",
+      "sha256": "b18fbb9fa4b3e96cda071b9073cbf5c044ba371af5bb460fb3626d4a02e7efd2"
+    },
+    {
+      "bytes": 21155,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261025T010843Z",
+      "sha256": "b18fbb9fa4b3e96cda071b9073cbf5c044ba371af5bb460fb3626d4a02e7efd2"
+    },
+    {
+      "bytes": 23126,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261025T191213Z",
+      "sha256": "1b223bdb9a98a43ce0b4ce55ef0dd3adae0078e142cdcf7a7876417f6a2dee74"
+    },
+    {
+      "bytes": 23758,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md.predecessor.20261025T194141Z",
+      "sha256": "a5ba95670b7e897bf5f1002cf7e68250a6498713317da34d14f2bc90caa6b331"
+    },
+    {
+      "bytes": 5509,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/README.md",
+      "sha256": "2b60f3ffdb3dd56e6e39036fcfd290a823d801f989095b5e97b6847bc2a79164"
+    },
+    {
+      "bytes": 12047,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/SHA256SUMS",
+      "sha256": "400c0ea25f93f3f095f0de9942e86c39d0a569bb84aa815e64fda574603be505"
+    },
+    {
+      "bytes": 212947,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/bundles/composition.bundle",
+      "sha256": "a9afac8a72e3e4b25d5394478f1c8e75460b7ac4e8eefe255ea48f85d1802f95"
+    },
+    {
+      "bytes": 737885,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/bundles/runtime.bundle",
+      "sha256": "040757a8f99efb5da6fc51ca2336b4f59586b322f24396a40bd54832f6b0e3aa"
+    },
+    {
+      "bytes": 299239,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0001-Import-authenticated-Composition-package-025.patch",
+      "sha256": "b03958f6ef6956cd49708a38ed6dce81e0777a5c3317b2a43fdafab3f0c7d7a1"
+    },
+    {
+      "bytes": 6933,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0002-Apply-canonical-shared-easing-phase.patch",
+      "sha256": "982a7a58ab7742729ca037e863aea661c94e918b5a89c5ed837c7a232a57af83"
+    },
+    {
+      "bytes": 7043,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0003-Regenerate-easing-phase-JavaScript-outputs.patch",
+      "sha256": "af7eeb4c4a70b5bc45a6b4bbd84090c028829bf679bdf477e42eeddbfc6c8145"
+    },
+    {
+      "bytes": 32510,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0004-Add-host-admitted-scene-media-and-non-occluding-comp.patch",
+      "sha256": "4493c1f0815487e23762320619a95f6045256468d5553e8e9fad8593087c0a41"
+    },
+    {
+      "bytes": 2965,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0005-Respect-known-off-canvas-component-support-without-h.patch",
+      "sha256": "7b9f3ea3b6269f69466b327327ebfc2523a3c9b4bf886007fb008463d054602a"
+    },
+    {
+      "bytes": 27172,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0006-Bind-modifier-keyframes-to-admitted-parameter-schema.patch",
+      "sha256": "951b09c8cf6774e98ed2c74ff4224fdb71c71fdfd35f21b6690c3ee7809fbf91"
+    },
+    {
+      "bytes": 4479,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0007-fix-scene-preserve-assetless-native-hold-absence-and.patch",
+      "sha256": "de0b8891c997212ccd1d4b7a66599bc62fbd2bc2d5f8236668ede201e9f5918c"
+    },
+    {
+      "bytes": 151962,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0008-build-composition-make-evaluator-checks-honest.patch",
+      "sha256": "42dab8d4e766bdf7b71da90163b1182400cbcdeb057a459e1f31f12448e92d01"
+    },
+    {
+      "bytes": 30686,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0009-build-composition-verify-reproducible-M0-setup.patch",
+      "sha256": "c6511c9c9f6d285dc9ae632219d58f3c39880ac1dfbb2e8d00c48ae1fdf56be5"
+    },
+    {
+      "bytes": 2144,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0010-docs-document-fresh-checkout-setup.patch",
+      "sha256": "cb00c428019fc3f36427461b858f95529abfdb08a3a0c69c3e4de5a569c06320"
+    },
+    {
+      "bytes": 181799,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0011-feat-composition-build-portable-0.0.8-package-with-s.patch",
+      "sha256": "95af95fd4c94607567d45234d6962a2c9273a006138c7b0e72c80c3bb7b5a137"
+    },
+    {
+      "bytes": 40109,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0012-fix-composition-make-animation-easing-support-regist.patch",
+      "sha256": "e0b25af9e5ac5f751f6f2dd2d85ad668e5304f68721b81e8186127ea13d51f1f"
+    },
+    {
+      "bytes": 50688,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0013-feat-composition-add-opt-in-incoming-preroll-policy.patch",
+      "sha256": "ad35c9e08392bb61a4cfe7b0ed5a798b4b89d8afe0252fc7829a0ff5eb12122c"
+    },
+    {
+      "bytes": 45450,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0014-feat-composition-expose-canonical-occlusion-and-decl.patch",
+      "sha256": "25f7d226164591acad21e68f34effa28636554d6fbbb9e514e265ba0d5187fc5"
+    },
+    {
+      "bytes": 5688,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0015-fix-composition-guard-malformed-scene-diagnostics-in.patch",
+      "sha256": "7f37378ff2c121ac632efe9e5b235784256679b81d1d5c154cb78fd43d132af2"
+    },
+    {
+      "bytes": 46275,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0016-feat-composition-compile-canonical-incoming-transiti.patch",
+      "sha256": "d01ad7f230dfd344a9b51991ab40cc4a2c08605c9439190a82a05fbeb03e185f"
+    },
+    {
+      "bytes": 14067,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0017-feat-evaluation-expose-shared-clip-opacity-calculati.patch",
+      "sha256": "230f9707ffe487c4f52f56dce1da08e181552369cb3fe9260b81dd3464c1cfe8"
+    },
+    {
+      "bytes": 2257,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0018-chore-composition-prepare-0.0.10-opacity-package-can.patch",
+      "sha256": "4c1689a3cc7ec4f3e031eae63a5daa8484c1452dc89ba2f616710f9d0d40fb36"
+    },
+    {
+      "bytes": 6260,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0019-feat-evaluation-export-public-media-clock-helpers.patch",
+      "sha256": "abab4122165b80a708bd74b068d48c8bd6bda404fb7cb782b5d8ecf48694f858"
+    },
+    {
+      "bytes": 10051,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0020-fix-theme-align-public-default-with-existing-export-.patch",
+      "sha256": "9acf489351fed6498746cef9706e6bdd1bb98f630061551cf42409d09ca9b3ac"
+    },
+    {
+      "bytes": 4908,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0021-fix-align-canvas-defaults-and-scene-role-lookup.patch",
+      "sha256": "5db079fb857087edc3aa944d42d0ef326cc9ee42806a4a1814cc6f6aee3b991a"
+    },
+    {
+      "bytes": 1941,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/composition/0022-chore-composition-prepare-0.0.12-package.patch",
+      "sha256": "f75a278b5bd22a7cc8c6a179e92203f464690857d8d5fa31a147dd4d55830f60"
+    },
+    {
+      "bytes": 39740,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0001-feat-runtime-retain-exact-consumed-document-inputs.patch",
+      "sha256": "af6d82ab9ab5312696b7a355c45db98527d7d56a57c6a582326a2ae2f928d706"
+    },
+    {
+      "bytes": 33564,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0002-feat-runtime-add-timeline-commit-door-and-provider-s.patch",
+      "sha256": "b43a2fca8beb8e259ecc7365d150707104234c00f2aa9d1b8a2ecf7c4f3b1c8b"
+    },
+    {
+      "bytes": 18855,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0003-tl-rt-m1-film-fixture-Result-one-API-built-film-like.patch",
+      "sha256": "8bb6f90bbdb61939e9f496ad2341297accb5c2cd84006f0b35a2ca84f232e2d3"
+    },
+    {
+      "bytes": 191291,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0004-feat-timeline-add-frozen-commit-schemas-and-detached.patch",
+      "sha256": "cf211e99bc05d9beca8582ab43963399a3de6b9634eb6028b5d6851a7588a9e2"
+    },
+    {
+      "bytes": 18628,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0005-fix-runtime-validate-retained-timeline-inputs.patch",
+      "sha256": "b4435eac5f5a755212997f7bbe382f566ce5240d30cbef93b7dabf84dfb2d21c"
+    },
+    {
+      "bytes": 54943,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0006-feat-timeline-verify-publication-baselines-without-s.patch",
+      "sha256": "6bc74d2bfeb1b957ca350db8d81d4d6ba831179364f52b72e2d496c0aa16d8ba"
+    },
+    {
+      "bytes": 30887,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0007-fix-runtime-correct-timeline-door-integration.patch",
+      "sha256": "e59bfef06ffbdf3a0fd93eba0c6c955b90650e2914dee00d934052c6b7119b5d"
+    },
+    {
+      "bytes": 12659,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0008-fix-runtime-validate-canonical-bootstrap-and-managed.patch",
+      "sha256": "c4804c9cf448fcc887807c7fca4047c11ccd899b6fd8d05d10fea209dc453187"
+    },
+    {
+      "bytes": 98502,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0009-feat-timeline-integrate-scoped-commit-provider-servi.patch",
+      "sha256": "26695a65e2937d078b9fedc4ae5b3481d9674e1ebfd9c4ca2f66de04915fa4f1"
+    },
+    {
+      "bytes": 120808,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0010-feat-runtime-add-atomic-timeline-commit-acceptance.patch",
+      "sha256": "18b709afb11c7b832cea082974f3b4525b7145c778d6f442ed6004ab50631821"
+    },
+    {
+      "bytes": 121638,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0011-tl-rt-m1-artifacts-Result-finish-reviewed-validator-.patch",
+      "sha256": "f474cdb21273576a632e6b98074a48c17c52751448bb28e6ae354ab3b64960b8"
+    },
+    {
+      "bytes": 11335,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0012-fix-timeline-preserve-atomic-create-and-bootstrap-ch.patch",
+      "sha256": "30946b0083818d76450a0e89d6e9eebca9e2aeb7a5df3c1a1a35e846282b5da8"
+    },
+    {
+      "bytes": 14313,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0013-fix-runtime-expose-immutable-timeline-read-basis.patch",
+      "sha256": "a23d70e112d8ea6ff305fda5e9b71f6dc9dee54cf3e7f9e52998497f39d12a64"
+    },
+    {
+      "bytes": 23474,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0014-fix-runtime-verify-durable-timeline-recorder-integri.patch",
+      "sha256": "57dbd1bfc80797358d3bad94fb4cbf2be44545ee1352d862d8a36905b58aec9d"
+    },
+    {
+      "bytes": 7037,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0015-fix-runtime-bound-accepted-replay-integrity-to-its-e.patch",
+      "sha256": "d5864b8e2f91d1bc876e3993bdf32b1f60d154517b651d242f2328dbd1aaa3c7"
+    },
+    {
+      "bytes": 84376,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0016-fix-contract-preserve-raw-immutable-timeline-payload.patch",
+      "sha256": "eb6e2d674f311f31fb8f68a6f06094b8fcefec793ba09cefa653b73906c4250b"
+    },
+    {
+      "bytes": 5589,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0017-fix-runtime-preserve-fixed-tuple-cardinality-in-Type.patch",
+      "sha256": "390aed51363b272526f6e4793baf3fa1c605a5e6893dfb486eb6bcca73a7e912"
+    },
+    {
+      "bytes": 19900,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0018-test-timeline-preserve-disjoint-intent-in-real-inver.patch",
+      "sha256": "8a1a4fb6c44d07ea83b61549dc901aea2f9bae2d21f59b656a2632a6b5222a24"
+    },
+    {
+      "bytes": 21654,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0019-test-timeline-require-real-retained-input-M1-safety-.patch",
+      "sha256": "5f4866efbf73fe285270493b67e07880ff9f5b7953e22dc3b9bea2070d22cf19"
+    },
+    {
+      "bytes": 962,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0020-test-runtime-isolate-installed-wheel-probe.patch",
+      "sha256": "83a4feb840b7f55a4874bef9d599651fec64e096140839e50026dda3fa3f67c8"
+    },
+    {
+      "bytes": 12739,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0021-test-runtime-restore-authentic-pre-v31-schema-fixtur.patch",
+      "sha256": "24177f188f8b0876f6bf77060ed2aac85b95977e8b17679f93031f17683312f4"
+    },
+    {
+      "bytes": 29660,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0022-fix-timeline-preserve-verified-restore-sources-and-i.patch",
+      "sha256": "5d5db85f200805619387562e7b411c86c0908b119634270a5ce556114f444ecf"
+    },
+    {
+      "bytes": 54540,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0023-test-timeline-preserve-restore-behavior-through-guar.patch",
+      "sha256": "2d542fe8be77da68d441bdfe8fd4309ce84a24129ff31e3c1265c2f7745da192"
+    },
+    {
+      "bytes": 1557,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0024-test-runtime-isolate-artifact-manifest-import.patch",
+      "sha256": "21ad0cb3587fa4c47195e0e5bc2fd0e975de31bae820369e02ec05829cc1996a"
+    },
+    {
+      "bytes": 19267,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0025-test-runtime-prove-two-project-timeline-commit-isola.patch",
+      "sha256": "5c43ab6eead28efcb2ad1dce836671bea7fd3e7befd64d32a37f20db30c3c55c"
+    },
+    {
+      "bytes": 27523,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0026-fix-timeline-refuse-unrelated-occupied-shot-destinat.patch",
+      "sha256": "7b8302f3751f46a47f53e249da3b52785eef574886b756d65b03677d08e5639a"
+    },
+    {
+      "bytes": 44033,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0027-fix-contract-stage-parent-track-label-artifacts-for-.patch",
+      "sha256": "74542611b97eee89a6ac4e91165cd5fd6072058715756ae38e41c98af09df0c5"
+    },
+    {
+      "bytes": 23093,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0028-fix-generator-preserve-shared-object-union-DTO-const.patch",
+      "sha256": "d12b792dd22d15740ef0404e1d30cad245ab96232c3bf01882c88efca61c841c"
+    },
+    {
+      "bytes": 4566,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0029-fix-runtime-client-export-TrackSetArgs-from-package-.patch",
+      "sha256": "1aed78bd2bd34588c44daade3602b9e337d2afe49780a57fa6d32d96b50fc6d9"
+    },
+    {
+      "bytes": 192930,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0030-feat-runtime-generate-ordinary-and-PARAM-Bundle2-can.patch",
+      "sha256": "634f022e3417ffeb236a4b41233a43b39b9455f1402e5d470d4cb4f0df03bf8b"
+    },
+    {
+      "bytes": 8259,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0031-fix-runtime-default-null-clip-speed-during-timeline-.patch",
+      "sha256": "a032f2a36c0e950a5d7ec5d06b3097efa1e092f8b36b2c5747a71afa99e3b1b9"
+    },
+    {
+      "bytes": 13248,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0032-test-timeline-prove-retained-null-speed-reads-withou.patch",
+      "sha256": "404fe35c779a4c1f3fd6491ec7704ed14e08338b45bc5fd60c51f231a74fdcd4"
+    },
+    {
+      "bytes": 113270,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0033-feat-runtime-expose-verified-media-selection-metadat.patch",
+      "sha256": "60e4d948957011ffe57d81a1989ac31544b96534210bd2a8d3f2319f614fabdf"
+    },
+    {
+      "bytes": 153706,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0034-feat-runtime-compose-ordinary-popup-read-review-cand.patch",
+      "sha256": "2da4cae5ec063264d1dfd3c4c2db28b8cc6b3875c144f9b90727f63745ee653f"
+    },
+    {
+      "bytes": 3429,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0035-test-runtime-pin-__proto__-constructor-prototype-key.patch",
+      "sha256": "a0c73f33d6ec9228991f504d6ab67ee5688bcc7d4f607dea36b876de738769c2"
+    },
+    {
+      "bytes": 83878,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0036-feat-runtime-expose-exact-retained-project-pack-obje.patch",
+      "sha256": "8875ae8ea366016e36801f0f68d94b4572678cce3c32bf33656fe4ed29b03365"
+    },
+    {
+      "bytes": 88642,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0037-fix-runtime-refuse-forged-capture-content-at-admissi.patch",
+      "sha256": "ab633d5b46be13890573fd16c08a8653bbda624b34cf0d5b31ed30d83839bf84"
+    },
+    {
+      "bytes": 17742,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0038-feat-runtime-land-door-create-timeline-route-and-sam.patch",
+      "sha256": "8f879c7a0591ea411996e534a49ddc1371c53058a5664a8efcbdb57768236343"
+    },
+    {
+      "bytes": 1048155,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0039-refactor-runtime-retire-legacy-canonical-timeline-wr.patch",
+      "sha256": "ebe2c34f1349fee90365b87a08ead7965e1cc207b13efef5fad04d2f22d11c6b"
+    },
+    {
+      "bytes": 88095,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0040-feat-runtime-expose-exact-retained-config-pack-Docum.patch",
+      "sha256": "cb69d6175eb20d0953d1ed543e8da0601a3ba43024c0448f246c66c752e41015"
+    },
+    {
+      "bytes": 4300,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0041-fix-runtime-tell-capture-senders-how-to-resend-refus.patch",
+      "sha256": "363fd91d2973ea3d642cb82256298c19ab570e5ea1130319097134d3251db21c"
+    },
+    {
+      "bytes": 5180,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0042-test-runtime-pin-that-authored-headless-shells-are-n.patch",
+      "sha256": "f54df99d1336bdee842d44e5e45d68f2bca1576e390acf2df32ba3a6082cc180"
+    },
+    {
+      "bytes": 20263,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0043-chore-runtime-remove-stray-root-dumps-and-restore-re.patch",
+      "sha256": "08500e098a99c9e8ea025d9eb649be44ea03f22ecf28e8315f67114fe547447b"
+    },
+    {
+      "bytes": 8952,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0044-fix-runtime-admit-a-candidate-less-working-copy-capt.patch",
+      "sha256": "292e3655a454c04f68ad0717274cb25dffbf313993c72ce7727b069a1b50c6b7"
+    },
+    {
+      "bytes": 13311,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0045-test-runtime-triage-timeline-writer-tests-after-lega.patch",
+      "sha256": "cf32a2268c30194145f5e9fa5c6baca0f900ca41061cfd1e73f67ab6579e6745"
+    },
+    {
+      "bytes": 44333,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0046-test-runtime-restore-project-reference-catalog-class.patch",
+      "sha256": "abf2d882a3d89d235ae39e89df687ba2b6cb174ac3ef4cdf48e03db98c9aa6e7"
+    },
+    {
+      "bytes": 1791,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0047-test-runtime-expect-live-404-for-foreign-owned-refer.patch",
+      "sha256": "8b479e8b0c967bdcb80d1a82e0cdfc63653de60906fdd2292760534322b42099"
+    },
+    {
+      "bytes": 2721,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0048-test-runtime-pin-refusal-of-empty-headless-shells-wi.patch",
+      "sha256": "cb0de8417019da3b6edf46cf040df8d7f683de9e8160ac8d1996effefd6bf9f8"
+    },
+    {
+      "bytes": 57628,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0049-fix-runtime-restore-the-composition-revisions-publis.patch",
+      "sha256": "00939ada2c0ee5b40162d1edca773a7ef489c46a8c291e169fd4e3bc04f2d4e3"
+    },
+    {
+      "bytes": 4843,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0050-fix-timeline-refuse-adopting-a-headless-shell-that-c.patch",
+      "sha256": "2200c980fccfcf36b259a5a8a0bdbf37bd9d7ca1a30fd6c8ca8159ed2c00c212"
+    },
+    {
+      "bytes": 11067,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0051-test-runtime-pin-raises-on-individual-strict-xfails-.patch",
+      "sha256": "add04e5954eef0884efdc9f975d65716baa221cf446faf0631ab5a69f660232b"
+    },
+    {
+      "bytes": 8349,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0052-fix-runtime-refuse-empty-publication-over-hidden-hea.patch",
+      "sha256": "3150dd9871d0a64bb987054314608b71b2c50f799111a31fa9c15b74fa42d83d"
+    },
+    {
+      "bytes": 30831,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0053-test-runtime-run-kept-project-reference-catalog-halv.patch",
+      "sha256": "aa9c648bd5655fbf0017b7d495bc93e33e2e1a6038885300898af24ce22bb672"
+    },
+    {
+      "bytes": 10688,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0054-test-runtime-cover-commit-crash-windows-between-proj.patch",
+      "sha256": "e38a63fe1ec08b09286ae7c67098f97d8d04202f4a05cd294963194a0e4a7dbf"
+    },
+    {
+      "bytes": 1741,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0055-test-runtime-give-legacy-capture-xfail-a-ledger-refe.patch",
+      "sha256": "12d1472beb5fda1598a1d6322fc49bb2588ed5b73232eb8ac4da734cfe621456"
+    },
+    {
+      "bytes": 10850,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0056-refactor-runtime-consolidate-verified-read-family-be.patch",
+      "sha256": "634f88f5c97615adad8852783adc3e64df33eca1628c2694b167353d3d5327c7"
+    },
+    {
+      "bytes": 34392,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0057-feat-runtime-exact-UTF-8-text-selection-and-recorded.patch",
+      "sha256": "ce45a2db03271bc1ba93af1c18a04417e95df4573683886681d86273aa8db7df"
+    },
+    {
+      "bytes": 5217,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0058-test-timeline-cover-undo-refusal-undo-dry-run-retry-.patch",
+      "sha256": "e5da9206bb20abb77dc016728ca7c673507da0fbb347729025ae6c5c9015b62e"
+    },
+    {
+      "bytes": 8971,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T075309Z/patches/runtime/0059-refactor-runtime-share-capture-source-kind-and-paren.patch",
+      "sha256": "20619758b0e58bf17db259e273c1b52cb8f3c76c60349364f2f7931b0ef443e3"
+    },
+    {
+      "bytes": 6081,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/README.md",
+      "sha256": "6eb505d869d9b5f0a74ae45909c1b60621d054661855f0884e9ba5d0443c05db"
+    },
+    {
+      "bytes": 997,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/SHA256SUMS",
+      "sha256": "dca660e406ab2ebb4a285811e67f5a911acdb4e04e8da82ae578fd3d5bbef48a"
+    },
+    {
+      "bytes": 537349,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/bundles/agent.bundle",
+      "sha256": "12b5ff6396438a55c91493b86db4403c7c85cbeff94063fccae60b57169d7a1e"
+    },
+    {
+      "bytes": 427568,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/bundles/app.bundle",
+      "sha256": "95967c8591efd01cba47caae56e0ac5e501692b9fc82f97c32c9078a1f206ede"
+    },
+    {
+      "bytes": 212947,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/bundles/composition.bundle",
+      "sha256": "a9afac8a72e3e4b25d5394478f1c8e75460b7ac4e8eefe255ea48f85d1802f95"
+    },
+    {
+      "bytes": 737693,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/bundles/runtime.bundle",
+      "sha256": "b8e842d8a12d42e1f4e9f679f234eb7551de2c6d722346d56eb17c891e0f8b35"
+    },
+    {
+      "bytes": 1345396,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "c26bfa5725a395637dd3695bac09e64bdc61fa0d677bc2735ed616d1bc442ae1"
+    },
+    {
+      "bytes": 4744304,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+      "sha256": "3b2edc69675ae4f63282ee2e19bae2a9a16a607df873c808d79391605282c811"
+    },
+    {
+      "bytes": 462304,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "d67ef2d6239a276b4574cb1f4ae4d6783133870be3b5af78c54decb95dee5447"
+    },
+    {
+      "bytes": 2376632,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T080141Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "69cb97a9abecfe18559f5856023aa1a0c4a07111f3e83b6141638ca713ccec8e"
+    },
+    {
+      "bytes": 7262,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/README.md",
+      "sha256": "ba2f281fafb3010fabc7da7739402e0f8b64da5dee4f8600f49de7525a9db46b"
+    },
+    {
+      "bytes": 862,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/SHA256SUMS",
+      "sha256": "91a6143403300e0eae04dca21d912f002635496a2db5f4c135b08afd50094e10"
+    },
+    {
+      "bytes": 1137354,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/bundles/agent.bundle",
+      "sha256": "ae7c070992394449cd55ff4d20f630d6b823f1dd902df125b97adc6e29467212"
+    },
+    {
+      "bytes": 470901,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/bundles/app.bundle",
+      "sha256": "9b79d0aa062c863f88c31c5279cdb52a8720b82171673a93a8aceaec6eb90126"
+    },
+    {
+      "bytes": 203721,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/bundles/composition.bundle",
+      "sha256": "326c6b65d69f17f2bf073738823d869a9597bddbafb97b06b5d3f7afa769617e"
+    },
+    {
+      "bytes": 826988,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/bundles/runtime.bundle",
+      "sha256": "e55ebaf3a5d5551a748073abf3291225be236bfa55aae7186e47bf8179173c45"
+    },
+    {
+      "bytes": 3890049,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "0dfed13425a48782fc025c397a48514a71f7b0c6b33bfd63237b3dc2cc5cedcb"
+    },
+    {
+      "bytes": 463263,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "849e67ad642b2f7aecd71b7ac9c218214c6420df37289063cb763a73f1bfbcdc"
+    },
+    {
+      "bytes": 2582765,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T110716Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "53d6c8af3df32dfa02b8f321858ac9495d559fa9be933e8af18c440f854031fa"
+    },
+    {
+      "bytes": 7262,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/README.md",
+      "sha256": "ed8c70a7a29e9e825648f8cd86ce000444080e2e969621303199bacca50ba99a"
+    },
+    {
+      "bytes": 862,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/SHA256SUMS",
+      "sha256": "2b5df1735c124b49f078af81104211318d454e90a5901844e11654a599554917"
+    },
+    {
+      "bytes": 1190918,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/bundles/agent.bundle",
+      "sha256": "66d4e961f5712c24c5f874225011eb1a9311eb6c7f5801b47d65c71a9610685f"
+    },
+    {
+      "bytes": 470901,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/bundles/app.bundle",
+      "sha256": "9b79d0aa062c863f88c31c5279cdb52a8720b82171673a93a8aceaec6eb90126"
+    },
+    {
+      "bytes": 204517,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/bundles/composition.bundle",
+      "sha256": "088c780cbc06982f14b391b70ac30b359c6b95eaa2ed4b94dcc40a4166d596c2"
+    },
+    {
+      "bytes": 954272,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/bundles/runtime.bundle",
+      "sha256": "d9dfb0e7f160079282fc5eee0cad50d4780bb5ab20791786b5e4716cff664bec"
+    },
+    {
+      "bytes": 4062230,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "3630fbf7c76cee93a31c2326e80e0b088725e11b653632c899c7fd77daca9546"
+    },
+    {
+      "bytes": 463263,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "055ac929d76584ba1ad1d66abdc71572c04439745fce65a320118ded5e05930c"
+    },
+    {
+      "bytes": 2863838,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T112907Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "ae3cee786883b92675dbcb6b26e65abad986ae460792e7c46cedbd7a5c5676c2"
+    },
+    {
+      "bytes": 425,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T214810Z/.removed-large-files.txt",
+      "sha256": "70a713826604f3a2d86dd5cf2f173119234dc34f48fd02d94e6fa7c40d21574a"
+    },
+    {
+      "bytes": 11791,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T214810Z/README.md",
+      "sha256": "4a66c0ed5d47433f5d611aa4dc53fdebdef6cb1f0f6ba4a61a8cb2ca8ef8e209"
+    },
+    {
+      "bytes": 296,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T214810Z/SHA256SUMS",
+      "sha256": "5d86a297a781f0155a251f9ac94701f0a67c19c7bac83dd55ca0c6e00afefa55"
+    },
+    {
+      "bytes": 425,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T215117Z/.removed-large-files.txt",
+      "sha256": "b875de4edd885b7e37d114e95b4de799b6df1c0e276cb9e374d030bc78497e5f"
+    },
+    {
+      "bytes": 11791,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T215117Z/README.md",
+      "sha256": "b9db27ea653432208a6940ea85e4fc2eebc4a0256a0d22cc4ab33a353ef87a89"
+    },
+    {
+      "bytes": 296,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T215117Z/SHA256SUMS",
+      "sha256": "f155941b285954af83a904b1465f736c04b66c3628b082a3a384356a992c76d1"
+    },
+    {
+      "bytes": 15459,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/README.md",
+      "sha256": "07a70a9e694d0bd72bad3895896a44aae93753648dfd16bb426205503146145f"
+    },
+    {
+      "bytes": 997,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/SHA256SUMS",
+      "sha256": "f2fa0d86b853e0fb4c9d7d0181094339b1d938af5bd50f8525b95ddb99b0723f"
+    },
+    {
+      "bytes": 210467,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/bundles/composition.bundle",
+      "sha256": "e87819426831307273a9c162e5826ec8c24d5eabb4cdcba44dbe9c411d7c9c4a"
+    },
+    {
+      "bytes": 3397477,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/bundles/runtime.bundle",
+      "sha256": "e5bf1feebc06a2e037fbd7ebb8d9d3f63543f48bf19494804d94be7a508addad"
+    },
+    {
+      "bytes": 7536924,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "f3a2552a7c1ac279002bd00e06983cacabee2c19f37be9e46e666d6ee4fbcafc"
+    },
+    {
+      "bytes": 8614190,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+      "sha256": "d11271c617ba0cf4c65b0b784a8913e2168dcd451959c373bf5690828a253cbd"
+    },
+    {
+      "bytes": 472391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "57527d3128ba0f0c142f5e3a7791cd1339d7feaee9ade7af63b11ea84179120c"
+    },
+    {
+      "bytes": 3756813,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261020T221618Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "df61250f56053feb89e2ebe8ce05d3af36c0f11151f1ce5d442f253b7e307ec6"
+    },
+    {
+      "bytes": 1079,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T004311Z/.removed-large-files.txt",
+      "sha256": "63fa307e630f93fd19d79fdd69423a23df88ff78fc74076435f99bb20bc37aa3"
+    },
+    {
+      "bytes": 12998,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T004311Z/README.md",
+      "sha256": "48253d03178fa7338b993e01f3ec08d9d82a066929becdd6c794b4aa25699822"
+    },
+    {
+      "bytes": 997,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T004311Z/SHA256SUMS",
+      "sha256": "ddfa402457a02161e1a2f29211cc92b99a62a8b848aff3e814674bdae8161b91"
+    },
+    {
+      "bytes": 213040,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T004311Z/bundles/composition.bundle",
+      "sha256": "031ab6e4463aadf904bfdf44853b8b9ca6da7a42385489970a3e692ba8ab5041"
+    },
+    {
+      "bytes": 473971,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T004311Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "1e26cd36400b8df07c9bca2c25d099e8bc1c8ee449690c5efb4f13b7dcad3788"
+    },
+    {
+      "bytes": 1079,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/.removed-large-files.txt",
+      "sha256": "837ea50ec0f181b763f93655c9336f391dc0aa47c54da2638ca7ded7d416cd15"
+    },
+    {
+      "bytes": 14645,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/README.md",
+      "sha256": "2f55c5b3d8da9ad67a5e3cbb1d514521e66a2657d9f0ad508ec7e268178b917a"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/SHA256SUMS",
+      "sha256": "0010fe40f356c8489ba2dbda6ece3b96af99d1b009d0e3663127d2f7419613f7"
+    },
+    {
+      "bytes": 218530,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/bundles/composition.bundle",
+      "sha256": "13ee47ac9fabc46851896e3a458259f498a78eb6b81d8864dcf8c2cbbd0abd34"
+    },
+    {
+      "bytes": 10519,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/extras/owner-film-differences.md",
+      "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+    },
+    {
+      "bytes": 12221,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/extras/owner_film_cliplook_scan-v1.0.8.zip",
+      "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+    },
+    {
+      "bytes": 485410,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T013934Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "1b557ebf582b86c25373480cd1ade86a7b5e5549b6f5069cae6d78a6fea5d866"
+    },
+    {
+      "bytes": 14447,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/README.md",
+      "sha256": "80ab42f9eb6d3d43d6e287c67094c1c655f1ef1b538e99f8c8e719befba8ac34"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/SHA256SUMS",
+      "sha256": "ba5cd3b42a9a8c3968de87e2e5e978749c6ca1250257521ba1a67fe1d6c66741"
+    },
+    {
+      "bytes": 1934182,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/bundles/agent.bundle",
+      "sha256": "0a2ed18327721850772042fce60f2dfd9ab1feb91749eb2cd3638358e59d54fb"
+    },
+    {
+      "bytes": 1570722,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/bundles/app.bundle",
+      "sha256": "895026341b621cdca8d60394e9627e0fe49dab32b52ee51bd02c97da1d695ede"
+    },
+    {
+      "bytes": 226084,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/bundles/composition.bundle",
+      "sha256": "779e7945d7dcf02903f1cab96293fe4fcea6bfb2c70621a856ca3718f329577f"
+    },
+    {
+      "bytes": 1093738,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/bundles/runtime.bundle",
+      "sha256": "0c802aa52684ca2395fc9a5f0e8e78ca36eb8ddfaee5540343a1f53be68977fd"
+    },
+    {
+      "bytes": 10519,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/extras/owner-film-differences.md",
+      "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+    },
+    {
+      "bytes": 12221,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/extras/owner_film_cliplook_scan-v1.0.8.zip",
+      "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+    },
+    {
+      "bytes": 6488657,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "3748fe26d8b875ce297c28797167768246a9af3ac8ae0f01ea93dd4cadbc0707"
+    },
+    {
+      "bytes": 8068759,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+      "sha256": "a34533db73dfecd7f768c05a0ca15b0a23b6342366c0e6f4e4f402fedaa70b7b"
+    },
+    {
+      "bytes": 498625,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "75c0b5a8f5f941014dd5a1d6b400cca7fde35ec3d54b02ee06e18fe23eb7866e"
+    },
+    {
+      "bytes": 3368359,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T033649Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "b5f313bbac2757cdc0434d482ea0770ef0e03bf27eefcc4eb65e31aefc3b686b"
+    },
+    {
+      "bytes": 19218,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/README.md",
+      "sha256": "cb88f6f5d82f9e8adbdbb4d05aebd70b81b3eb1b94816ddf011d3e20949478bc"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/SHA256SUMS",
+      "sha256": "7ba303c30e709b58c3ad0f6b0034d078cc90eb6f0d7fe976be8553b53cc8bbde"
+    },
+    {
+      "bytes": 1938755,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/bundles/agent.bundle",
+      "sha256": "858cdb1912cd4f9d08db1392c4d3cc03b72093d26b4252f2d0aaddeb75691d0b"
+    },
+    {
+      "bytes": 1584568,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/bundles/app.bundle",
+      "sha256": "7671a4641ee3bb489c00b0c86a54a8e8a3b7cb5733de10ce3c933488f17ccca0"
+    },
+    {
+      "bytes": 226084,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/bundles/composition.bundle",
+      "sha256": "779e7945d7dcf02903f1cab96293fe4fcea6bfb2c70621a856ca3718f329577f"
+    },
+    {
+      "bytes": 1095960,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/bundles/runtime.bundle",
+      "sha256": "b66c54883f5549c1edfa8b2e289091ca0c1a781e13121c54c52c7a9b70743aae"
+    },
+    {
+      "bytes": 10519,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/extras/owner-film-differences.md",
+      "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+    },
+    {
+      "bytes": 12221,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/extras/owner_film_cliplook_scan-v1.0.8.zip",
+      "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+    },
+    {
+      "bytes": 6488657,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "1ce066fdc4f4f47c4aca0ca74672dbafd33c9d603b2bb16faa30cc1e18d1d66f"
+    },
+    {
+      "bytes": 8124555,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+      "sha256": "e7212613dc3ecbb1f8cdc0a9b8cf4e60ff2d06460cd25134dcad95e6ade703ee"
+    },
+    {
+      "bytes": 498625,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "95979e1051404545132d3cda3986d82021e3377acd82955695f6c21ef3aaade1"
+    },
+    {
+      "bytes": 3369629,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T040409Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "ec5ac754f3e9c9c0a2fa173d3664d4347fb030fe4d9c7a0d0ef222b2c937cbd5"
+    },
+    {
+      "bytes": 22467,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/README.md",
+      "sha256": "b61c52086699084ec4243ceb6fe058d9a22d9c4222fdfeb6fde3ba62f4fd9b5d"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/SHA256SUMS",
+      "sha256": "f3085b2b1d63c16cb1161066c03e31045d859ba96fbae6ca434c29862280e2f3"
+    },
+    {
+      "bytes": 2049398,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/bundles/agent.bundle",
+      "sha256": "59efbf8daa9d97dde38d0740012007bf6239a15fdf396db9adc8603346462edd"
+    },
+    {
+      "bytes": 1643991,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/bundles/app.bundle",
+      "sha256": "479081ed441c555ecb6123c44de15b1b8ab86ff998a93855581b735a7c32105b"
+    },
+    {
+      "bytes": 226084,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/bundles/composition.bundle",
+      "sha256": "779e7945d7dcf02903f1cab96293fe4fcea6bfb2c70621a856ca3718f329577f"
+    },
+    {
+      "bytes": 1095960,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/bundles/runtime.bundle",
+      "sha256": "b66c54883f5549c1edfa8b2e289091ca0c1a781e13121c54c52c7a9b70743aae"
+    },
+    {
+      "bytes": 10519,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/extras/owner-film-differences.md",
+      "sha256": "969fe3034ca1e7b7aab061ff16575fe7f7d973d9c9ec1f81c347464c4d9da220"
+    },
+    {
+      "bytes": 12221,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/extras/owner_film_cliplook_scan-v1.0.8.zip",
+      "sha256": "204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee"
+    },
+    {
+      "bytes": 6645419,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/patches/agent/0001-Squash-tl-integration-of-agent-onto-origin-main.patch",
+      "sha256": "66fc393dee4a1b557e6ab51c23ac78211bb6aaa1391c6d6b149d52958bb00919"
+    },
+    {
+      "bytes": 8240733,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/patches/app/0001-Squash-tl-integration-of-app-onto-origin-main.patch",
+      "sha256": "7fcb6b7544691623951524c84b9d3325aada3a340e2488d393b61eda13a76b8f"
+    },
+    {
+      "bytes": 498625,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/patches/composition/0001-Squash-tl-integration-of-composition-onto-origin-mai.patch",
+      "sha256": "84e96f06db1c3c8009ab06ddb9bad53fb8f3ed8aa0b33ce2c39af8d918429e10"
+    },
+    {
+      "bytes": 3369629,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261021T070948Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "d52c2776ef1d3b411f8068105a7d3ccb28eb6b3ea8436622c5ccce3c48ac6d30"
+    },
+    {
+      "bytes": 22460,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261023T074257Z/README.md",
+      "sha256": "9ce3ab9858a427d95c00b8847fd041b17145fda089e52ab65db21d4794ad683f"
+    },
+    {
+      "bytes": 308,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261023T074257Z/SHA256SUMS",
+      "sha256": "2b97b1ab8a944bb9e9b945f608daf4e26e1adca16084f6d9317aafb23ae6c25f"
+    },
+    {
+      "bytes": 1360089,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261023T074257Z/bundles/runtime.bundle",
+      "sha256": "dff2f2cda99e6325e7aa8a346d33105d4d4cc997fc4f984eaaaea892d19035f3"
+    },
+    {
+      "bytes": 3974501,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/build-20261023T074257Z/patches/runtime/0001-Squash-tl-integration-of-runtime-onto-origin-main.patch",
+      "sha256": "51b24c2d93d568ca6caaf038b73054541911cec419775633500be857f0cba8e5"
+    },
+    {
+      "bytes": 10558,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md.predecessor.20261024T123115Z",
+      "sha256": "23d3a529d8d210418553815d45a3b924d2ddb699d319cac415f48746ecebb852"
+    },
+    {
+      "bytes": 8244,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md.predecessor.20261024T171108Z",
+      "sha256": "8cdaa1147db72e494dc407d613fb60a4da264f623ce71c345f504621351a1044"
+    },
+    {
+      "bytes": 10544,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md.predecessor.20261025T010843Z",
+      "sha256": "d520c0904c3d484d4b11f8a867e5f8b740c93b9840a378a2cf044d65758e01a6"
+    },
+    {
+      "bytes": 12559,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md.predecessor.20261025T191213Z",
+      "sha256": "6e140b4f93d8525857de7da9e67cac29a962e0a304e897e0100caa2d4dfd3941"
+    },
+    {
+      "bytes": 13191,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md.predecessor.20261025T194141Z",
+      "sha256": "2b1af9924445e5f991937f06bcc34451d9168d118ad5f269485862f06daac01e"
+    },
+    {
+      "bytes": 2443,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kit-README.md",
+      "sha256": "06efc4d7faa69dde8e666d3249f1aa6446f0b6e61f7b3eabd8ba6c6b24a5ad14"
+    },
+    {
+      "bytes": 1919,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/START-HERE.md",
+      "sha256": "6dfa512bec7e2237ba18b368811a972c2bef6790bde87b799e549a097f9c6f60"
+    },
+    {
+      "bytes": 4462,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/AGENT-MACHINE.md",
+      "sha256": "efeb4a03f3329e8c2182793edba4c1b2f4d6db09867f05952d8c315029064035"
+    },
+    {
+      "bytes": 8601,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/AREA-LEAD.md",
+      "sha256": "8fdfd9b6ee99e4e589289abb97f20d77d8a3f29ff9234b43f047f44ed83a5645"
+    },
+    {
+      "bytes": 2103,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/AUDIT-BRIEF.md",
+      "sha256": "debc2e78ef201418bb04f4f276e42bb67fef32c014f2bb124ecfbd4c097990c8"
+    },
+    {
+      "bytes": 6261,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/COMMON.md",
+      "sha256": "ead5251c6b6fda6f00ba2a9b027155e678ab30319c8fba14d325d62356d59aa1"
+    },
+    {
+      "bytes": 3535,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/COMMS.md",
+      "sha256": "ca7629674a129dc772c1f073258e2936e4799830b23b11b56b390afa44761181"
+    },
+    {
+      "bytes": 6295,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/LEAD-AGENT.md",
+      "sha256": "269a71ab6422d2e82e39b45bcf190c8c94768f125f235b8b7865609bc157384f"
+    },
+    {
+      "bytes": 18699,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/MANAGER-COMMON.md",
+      "sha256": "5efffc098719f89a3ef4b7db879c12918b9c124dafdeee006fe2f9ea0407f72d"
+    },
+    {
+      "bytes": 2807,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/MODELS.md",
+      "sha256": "d4aaa09208cf4371ba6fb97064ca3dadde8f4b26f23e93622466c6d3e0cfaeb9"
+    },
+    {
+      "bytes": 2391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/MULTI-MACHINE.md",
+      "sha256": "2c9848facaa7b7abaa09dd920e283fa60a91d970266904940d1b281000bec2be"
+    },
+    {
+      "bytes": 36840,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/PLAN.md",
+      "sha256": "96a763b35044125c388c45d2574ebeb7ffa3775788a1aa41120f93f22361c0de"
+    },
+    {
+      "bytes": 996,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/audit",
+      "sha256": "e0c1617709a0881cfc6ea6e65712904b1e5ca57cca0fc3753cd60531d9dcf82c"
+    },
+    {
+      "bytes": 181,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/build-delivery",
+      "sha256": "935804f65cba4e13e0feebbf4e5d57b4f91f72253ad69def856d1524703e7ea1"
+    },
+    {
+      "bytes": 2117,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/claude-perms.sh",
+      "sha256": "66a3936991dbf0fb4ec1c06d2011a3b414f66ba2722e667bd4fa4c16dd6296a9"
+    },
+    {
+      "bytes": 1422,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/compact-scratch",
+      "sha256": "db607b33b317027c227d7434f51caa0ec5c14558aff21e1e5da17239485ba47a"
+    },
+    {
+      "bytes": 15873,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/delivery-build",
+      "sha256": "cee29952d65b306414c9c5492b6be594a5b47d8a091f307bbb525bc42a4db81e"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/digest",
+      "sha256": "27712463ead8eecb56bb329559f0b6ae9c6cb5efc80834e93834ee66aa8b33fd"
+    },
+    {
+      "bytes": 6763,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/dispatch",
+      "sha256": "fe4d54376efa44eb3190e3aa2d7c257d30829d2660800ee22d89adf4b8998419"
+    },
+    {
+      "bytes": 2164,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/dispatcher-daemon",
+      "sha256": "07cec74cfa25300ef70ad8bfcd0176e3feb26d141b114138c7cf58fc7ed95f68"
+    },
+    {
+      "bytes": 18119,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/hub-sync",
+      "sha256": "de5a09b32205eacc31dc3e53a45f0b521c7d6c391fb8c0f2f8f3576e0233e598"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/hub-syncd",
+      "sha256": "af4ec9b63bba5e44b621e072daf46e05b4b8eabb921f06ccb539efddc86e5d8f"
+    },
+    {
+      "bytes": 751,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/inbox-merge",
+      "sha256": "b22cfb7f7f3a175038554bb56e6f0bcf181399df3382f7583a48a8581e3c2d89"
+    },
+    {
+      "bytes": 1013,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/ledger-index",
+      "sha256": "722057970e62a9328aa083106ce749ac6154922febd228927dbcf3ff87702c62"
+    },
+    {
+      "bytes": 1495,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/make-checkout",
+      "sha256": "8430f253367b308ba69b93e084e57351891bce42235a018d061d2b07c5dc6ffc"
+    },
+    {
+      "bytes": 2138,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/make-runtime",
+      "sha256": "0bba1f5e69319dad8b68295eac1fddf7ba35ea21cc32d784407852700e7df202"
+    },
+    {
+      "bytes": 803,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/merge",
+      "sha256": "95a944077d0bb1709cf1081bd63af776914a5b87ba9b416fa613f9cd66212075"
+    },
+    {
+      "bytes": 1357,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/merge-forward",
+      "sha256": "150b8926993690bd92a75a4bef748e5d531f06fb07b1a7e302aa384093470a08"
+    },
+    {
+      "bytes": 21306,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/progress-json",
+      "sha256": "adeb4dbf0dbcb9d675461c9f8a1d092039a46c885f1ce5a19d4efd94bc31ccd5"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/progress-publish",
+      "sha256": "6255d44eac02a2feb4e972bda2acabad84a5f0734c993481b03f62d56720ffac"
+    },
+    {
+      "bytes": 17396,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/provision-agent-machine",
+      "sha256": "364e5bc0abd102de090bf3a9f0c27b1decb1237cf5fff183a0b65b229d1a818a"
+    },
+    {
+      "bytes": 1129,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/recycle",
+      "sha256": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+    },
+    {
+      "bytes": 2015,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/refresh-main",
+      "sha256": "705551a9b29fbbfd16e984bf01b6c2782ab50a9b4b425ad3e6cb08f4c8a5e4cd"
+    },
+    {
+      "bytes": 524,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request",
+      "sha256": "6a51fa4c5997b883c7411520c551922bfe1b915e86a96b8dd43e92414c50b7a5"
+    },
+    {
+      "bytes": 540,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-checkout",
+      "sha256": "7be0d49327aec1b724e4661f7e1da32c71539630952a50ac4932fb7606281fd1"
+    },
+    {
+      "bytes": 364,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-merge",
+      "sha256": "06b56e54c99cc0223da298f484545fabd6671933e845438f376e1bfae2041c15"
+    },
+    {
+      "bytes": 798,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-merge-remote",
+      "sha256": "5b783900e3e6502eac9eae64e4a6ec3554e709e0b3cd87d021cce1d8107637f9"
+    },
+    {
+      "bytes": 644,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-runtime",
+      "sha256": "15b07daf4cd46a225ecc020c11e3ec8f3a62368c73d9ba6940ad3ce4ea8191ff"
+    },
+    {
+      "bytes": 876,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-stop",
+      "sha256": "fad6a6ed8075f90803f92375ee9ada23f2684dfc5e5e3f79d231807ad68af69c"
+    },
+    {
+      "bytes": 532,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-stop-test",
+      "sha256": "ed0ea4d941d4c873ad1708a9fff02b61dd8e2a4a9539e2d6f69e2506b6b02107"
+    },
+    {
+      "bytes": 1736,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874"
+    },
+    {
+      "bytes": 1206,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/rm-own",
+      "sha256": "2028e354b17498ff3b55809933c582bd9c0ad4f60d46d05d57b7f8b4b5fe20db"
+    },
+    {
+      "bytes": 3061,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/run-manager",
+      "sha256": "9fa0796b878214085361c636838d274f06053c2774f2fef9ab3fe4be831fe461"
+    },
+    {
+      "bytes": 939,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/stop-test",
+      "sha256": "d225643a90462fbf4987426212147915bd5e174b9641fb54f40f9dee195ece1a"
+    },
+    {
+      "bytes": 1582,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/stop-worker",
+      "sha256": "12bbacf117177fd509feaa7440175048671f287d0e8e0d825915935327e2f6ae"
+    },
+    {
+      "bytes": 1375,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/sweep-tmp",
+      "sha256": "ccb6ce41b3f1e3a71484982236879dedae72c44438ecb473bfbe12e303ef8e51"
+    },
+    {
+      "bytes": 6201,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/test-run",
+      "sha256": "7d1b17ba75b3bd3165a919a45aff05932d1381094b9d2aaa6c131d18844cb3bb"
+    },
+    {
+      "bytes": 5605,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/tick-facts",
+      "sha256": "16f748b300b9b55334d6bfba9bcdfd8a7891b32a2341c364e8093e3ce7728493"
+    },
+    {
+      "bytes": 701,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/wait-test",
+      "sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204"
+    },
+    {
+      "bytes": 2688,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/watch-events",
+      "sha256": "b35f3d251fc2b8870320155b5d45589110eb92ada4850b39870c62441d637e1e"
+    },
+    {
+      "bytes": 591,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/bin/workers",
+      "sha256": "30b8e58210f78826524d5190bb649c2540d54df5d079c9991291855fbcc412f7"
+    },
+    {
+      "bytes": 5126,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/BRIEF.md",
+      "sha256": "2070c9ed3ed7891621019cc02bc23385009234f2b5a975112098d162993c3677"
+    },
+    {
+      "bytes": 277,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/a610-current-env-request.txt",
+      "sha256": "b839c1aa5ca1f6bb7a0083c78f446a719035ea1d3fe5c4e55a8df1112e63238e"
+    },
+    {
+      "bytes": 13073,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/a610-failed-node-ids.json",
+      "sha256": "35b21e62f1566406c07033d0aa1a5df6e4bd76f8221411e49996726b04b7dafd"
+    },
+    {
+      "bytes": 485,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/dispatch-1759.txt",
+      "sha256": "3493fe1fdb2ca36259aa92e5dcad84e11d5489a7d2e20a0bf2963a6e165c075a"
+    },
+    {
+      "bytes": 151,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/dispatch-1810.txt",
+      "sha256": "29fe3b622b9d10709e9f9d46be41426ea83568c86fdec060988f393a833ae63f"
+    },
+    {
+      "bytes": 113,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/dispatch-1812.txt",
+      "sha256": "17694283aa16986a999c95bc61d9b346381062f45de07c075193a4a2fc8cbf42"
+    },
+    {
+      "bytes": 51160,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/full-a610-inventory.json",
+      "sha256": "c3e73dbe81a1b4b95b59940bfa51c816d43337a9f4be41bb1e83fcaa252e9b1a"
+    },
+    {
+      "bytes": 3383,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/m1-opaque-final-review.md",
+      "sha256": "1629b777534d9d3c934aae36a7e705b5dd4e718eabb40d0eeb7dfb0072d49bb5"
+    },
+    {
+      "bytes": 7058,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/m2-reviewed-foundation.md",
+      "sha256": "798df441d838fac4f39f0bb278279e90d0a5a58df72d62a7a7dd1e5151338869"
+    },
+    {
+      "bytes": 3981,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/opaque-remap-probe.md",
+      "sha256": "ac01d6e5bcb5b2176121c60531003d4aea688b61e71d8d83cdc23c7a60afca43"
+    },
+    {
+      "bytes": 1226,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/pcm_helper_lane_20261020_0957.py",
+      "sha256": "c36fca6508ba98a0d50c1d6199fc229457bf50a55c74a961418f8e895f613ec7"
+    },
+    {
+      "bytes": 5879,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/resume-1515.md",
+      "sha256": "a39917646cbcd136fa24e0e6fed3eb38cf1b701aa8e9b459e51693567658b363"
+    },
+    {
+      "bytes": 7435,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/resume-1720-detail.md",
+      "sha256": "5adbea7f2e1ee567c2ffa9f12dd11e547eadf97444ba5a88beb249028826414a"
+    },
+    {
+      "bytes": 5301,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/shared-identity-probe-incomplete.log",
+      "sha256": "e76a50b7e63a103c30d1e277511c332ee4586dd255a57473e93061b8e2cfcbec"
+    },
+    {
+      "bytes": 28350,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/shared-identity-probe-reviewed.py",
+      "sha256": "66a4ffe82d4cb0e1a314242444319fd843159595cfeb3463f41ccfeeefabd16f"
+    },
+    {
+      "bytes": 11361,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/managers/agent/notes/shared-identity-probe.log",
+      "sha256": "b585fb4f2d933bb56d65a441d7aac30072dc5f25ff688fec05270e10e883918b"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/agent-remotion-0010.env",
+      "sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/agent-remotion-0012.env",
+      "sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/agent-remotion-0013.env",
+      "sha256": "e03e177251a99e37820c001f6fe6f88f2f503d1f939a5f67eed6ed59eeca2d07"
+    },
+    {
+      "bytes": 531,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/agent-remotion-current.env",
+      "sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c"
+    },
+    {
+      "bytes": 523,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/agent-remotion.env",
+      "sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02"
+    },
+    {
+      "bytes": 3389,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/provision/venv-agent-child-s2.txt",
+      "sha256": "478af081b0f27c1e90dac1ab4b0b645583f34787ecfe7b8079d1bb88ca034761"
+    },
+    {
+      "bytes": 3382,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/provision/venv-agent-child.txt",
+      "sha256": "8d5a74739873791febb072a7671323b3e55396bc8a19e26df370cdd6fa20e062"
+    },
+    {
+      "bytes": 3332,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/provision/venv-agent.txt",
+      "sha256": "1d8d8c3212b2726da6e89ef6714477522d331c25fd677f9a4d0b8627f0660bb0"
+    },
+    {
+      "bytes": 38123,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-agent/orch/tests/suites.conf",
+      "sha256": "9a9510343ee335369d39a53e7bcfa1e3fa6bc7389d301c1f1074217daa4b776e"
+    },
+    {
+      "bytes": 2410,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/START-HERE.md",
+      "sha256": "c34b46c03c295acb75d6cfc067676a0a2b4fa369fee19f7d80304727a76f8330"
+    },
+    {
+      "bytes": 1820,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/code/README.md",
+      "sha256": "35c4cc557b5c50ccaa5c7da58e8eb4f92ddccd7f4b48080e81ba929f0aeb78cc"
+    },
+    {
+      "bytes": 13922,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/code/app.bundle",
+      "sha256": "237845215b0c9d6ad00aa8958684b89e86c2ea0435fd547b8c376f6b9e842398"
+    },
+    {
+      "bytes": 15595,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/code/composition.bundle",
+      "sha256": "c7897dade9b96c6b0761a9f017884799755e5e0059715594f7d256f5dc7694cf"
+    },
+    {
+      "bytes": 41373,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/code/runtime.bundle",
+      "sha256": "aa8544d06d0aaf6611e370ce279f19c30cb21c43f644ec8928a2a39478be4d56"
+    },
+    {
+      "bytes": 7096,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/AREA-LEAD.md",
+      "sha256": "791eaece0493c5821283ad6815de34285763396b76e284e1d217d543d53cf0e6"
+    },
+    {
+      "bytes": 2103,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/AUDIT-BRIEF.md",
+      "sha256": "debc2e78ef201418bb04f4f276e42bb67fef32c014f2bb124ecfbd4c097990c8"
+    },
+    {
+      "bytes": 4527,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/COMMON.md",
+      "sha256": "2ea5b05840f1929e89abe0d524f5721618a063e2f79cb6ad9dedce11e8b36f39"
+    },
+    {
+      "bytes": 3001,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/COMMS.md",
+      "sha256": "23ff0160dc16a974d92003d6427709774626d135bd5caca08784924d6815144f"
+    },
+    {
+      "bytes": 7094,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/MANAGER-COMMON.md",
+      "sha256": "53bd35594773bd56c27e108d17619bb91e44da2d341f28d59589b41649c77b94"
+    },
+    {
+      "bytes": 1306,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/MODELS.md",
+      "sha256": "1f6d923445aa3f85b531e933866546344c4428db5873e31d8642ad8ad3cda098"
+    },
+    {
+      "bytes": 2391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/MULTI-MACHINE.md",
+      "sha256": "2c9848facaa7b7abaa09dd920e283fa60a91d970266904940d1b281000bec2be"
+    },
+    {
+      "bytes": 26274,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/PLAN.md",
+      "sha256": "ebc9b488c3e0921de74dedbfcb92ebfe9c1055ffc45ce85fa58c8157ebcf2ade"
+    },
+    {
+      "bytes": 748,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/audit",
+      "sha256": "952277ed07f16d8a9a80b92941456c8e1c4c872e2a8f22db129975b358f348c3"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/digest",
+      "sha256": "27712463ead8eecb56bb329559f0b6ae9c6cb5efc80834e93834ee66aa8b33fd"
+    },
+    {
+      "bytes": 3184,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/dispatch",
+      "sha256": "b7fe2a046cb569807d12f9edd41c2670e1f319dad42c91cf7c4ec45b820767ee"
+    },
+    {
+      "bytes": 1285,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/dispatcher-daemon",
+      "sha256": "ebbee371a21648be8ba875da08c21222f26b709abc99f3f27105314b8d03103a"
+    },
+    {
+      "bytes": 7202,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/hub-sync",
+      "sha256": "7ae5746b16d3ef736539be90cbeded6b8c2980f20e8a74d98c7397d74b5d50f8"
+    },
+    {
+      "bytes": 339,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/hub-syncd",
+      "sha256": "fefaf083f0d2008286b8b9fae35b8f03e721de993f1826f578c67909de653061"
+    },
+    {
+      "bytes": 803,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/merge",
+      "sha256": "95a944077d0bb1709cf1081bd63af776914a5b87ba9b416fa613f9cd66212075"
+    },
+    {
+      "bytes": 457,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/recycle",
+      "sha256": "1b4bfdfb15f505ae41627fcb8e630f5567f95ff57b6ad9c3bd34991e3050888c"
+    },
+    {
+      "bytes": 1285,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/refresh-main",
+      "sha256": "e2d99687826f8ab0f714c2b238ed54a59f1eaf5ab736704a737606e821230123"
+    },
+    {
+      "bytes": 524,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/request",
+      "sha256": "6a51fa4c5997b883c7411520c551922bfe1b915e86a96b8dd43e92414c50b7a5"
+    },
+    {
+      "bytes": 364,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/request-merge",
+      "sha256": "06b56e54c99cc0223da298f484545fabd6671933e845438f376e1bfae2041c15"
+    },
+    {
+      "bytes": 681,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/request-merge-remote",
+      "sha256": "4ef98f3b499a5aebbfe77fa22180936d0843b7feeee8a2c614b3171384db5151"
+    },
+    {
+      "bytes": 1592,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/request-test",
+      "sha256": "ba3c54ed5d8889d0c9dc42f4b52181d4fcd07714a811c08163f2cb714fd824e8"
+    },
+    {
+      "bytes": 1176,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/run-manager",
+      "sha256": "c80dc9c0c27b758923999a860994fbf60d9fe3998ee7f60e8c5e69170aa12fab"
+    },
+    {
+      "bytes": 5191,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/test-run",
+      "sha256": "8618ae5f64722761736897da222c06c9286fc84fce7187e044ec129f68e763ba"
+    },
+    {
+      "bytes": 701,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/wait-test",
+      "sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204"
+    },
+    {
+      "bytes": 826,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/watch-events",
+      "sha256": "53fbf6cc817e630d8452fe986b41429db0dea2db8ac9a422d504d68dfc13d3d5"
+    },
+    {
+      "bytes": 591,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/bin/workers",
+      "sha256": "30b8e58210f78826524d5190bb649c2540d54df5d079c9991291855fbcc412f7"
+    },
+    {
+      "bytes": 8384,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/agent-coordination.md",
+      "sha256": "8350306f8863b0e085356dd3f7e5d3676f5a23a00538477766ab697ef1f2c48e"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/agent-env-ready.md",
+      "sha256": "07301d375a18b75ea06ba2af2da92f24c41e85444b9b481fc99ce9b06b61f855"
+    },
+    {
+      "bytes": 13230,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/agent-review-notes.md",
+      "sha256": "819a132abaf2bd397fd1819b80b1c2fce8dce24e974867a512baef74625ce687"
+    },
+    {
+      "bytes": 6942,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/app-baseline.md",
+      "sha256": "082c59e54924c90b7f79ebbb5542b6126996b5cd2f9f04caae0b32b5c20b9d7b"
+    },
+    {
+      "bytes": 28738,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/app-contract-consumption.md",
+      "sha256": "3e8e5199ddcf10a3aef4c1b69f339259eb1a562a07bf1aa0250ffb9799b66a01"
+    },
+    {
+      "bytes": 6783,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/app-contract-review.md",
+      "sha256": "0526b5dec944d513904e9eb57e9d8ba99a1d71372e9a1775faf05f8dbc50b513"
+    },
+    {
+      "bytes": 7131,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/app-m1-coordination.md",
+      "sha256": "f5837616229843ee4f538cd00e66def73cd3c7b5ffb1b600b56c5ce7848cc4fa"
+    },
+    {
+      "bytes": 53805,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/app-writers.md",
+      "sha256": "f117be6d51964e7334beed21dc6b1b9e082a7838ee2f85d645131dd8443fb5ea"
+    },
+    {
+      "bytes": 32033,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/command-schema-handoff.md",
+      "sha256": "f65584d7a778868d84173816069b817856d065251e483a7bc8b3d2ebcd0bf4c6"
+    },
+    {
+      "bytes": 73889,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/commit-contract.md",
+      "sha256": "1a40dae4ed168aafc2f5557942a68d99e4940975b4c46d76dbc577f36b0f5e73"
+    },
+    {
+      "bytes": 16823,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/edit-command.schema.json",
+      "sha256": "2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427"
+    },
+    {
+      "bytes": 47858,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/edit-recipe.md",
+      "sha256": "c474e0eacbc48ab77441a70aa31fb4eedc97f789bc4d741018a3e9202443a653"
+    },
+    {
+      "bytes": 57081,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/extensions.md",
+      "sha256": "56f013a536750fffd40dd46b032dd041c7e27a16d691f528c3ac959acda9353f"
+    },
+    {
+      "bytes": 7585,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/journey-baseline.md",
+      "sha256": "441f753b643e5ffe8eee79cd634d938f6bc39221f951460d7ad23015327edc14"
+    },
+    {
+      "bytes": 14167,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/journey-preflight.md",
+      "sha256": "5f39c6ace1b58f925e489a0f790e93f8363127546bd31a09fa1a385222b40ba4"
+    },
+    {
+      "bytes": 1665,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/journey-runtime-env.md",
+      "sha256": "e79514768eb1953d46337e365d707369bde4581e7217585b643c3b47ad0fe457"
+    },
+    {
+      "bytes": 31808,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/m1-agent-coordination.md",
+      "sha256": "3d4dfb2301cad632e1f220231013a89d5760b65552b949f0d0a02bdd69e9869c"
+    },
+    {
+      "bytes": 6393,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/player-audio-feasibility.md",
+      "sha256": "7400c6c04bbaaa9551b0536e642a796731af918f82a262c3fabfa33a87ff2fef"
+    },
+    {
+      "bytes": 48076,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/port-failure-index.tsv",
+      "sha256": "567a8dca754799230364d99a964e214da14e586211a675b051679d40f539118e"
+    },
+    {
+      "bytes": 23642,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/port-manifest.md",
+      "sha256": "dfcd721a6f5d03e07f84f9d5385a0988307bc653bd377b1860cf6dc1af16f847"
+    },
+    {
+      "bytes": 3415,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/port-spike-ready.md",
+      "sha256": "c440ec293e9cb47096c40b085aeaae3bd065bb83eb6dbac1122dc7ae0a5f5c80"
+    },
+    {
+      "bytes": 5646,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/runtime-baseline.md",
+      "sha256": "cff00a44bbcad9db6e5ce682208391270066985f3c8567bc8c1530b71f875297"
+    },
+    {
+      "bytes": 10510,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/runtime-contract-review.md",
+      "sha256": "1401d7f3be4b5cf0db85c341bd04ebce05546759d1ca9e65563795c3f997a66f"
+    },
+    {
+      "bytes": 2323,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/runtime-coordination.md",
+      "sha256": "1ebaab9a158df48d9274fb83aca13d174f16aca0a9b1ad034003b817841e6c9b"
+    },
+    {
+      "bytes": 1659,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/runtime-m1-coordination.md",
+      "sha256": "ad73e0b819ecd330ce297868e43ee977f9032148a00dfc2550f38bb3d78bf172"
+    },
+    {
+      "bytes": 47639,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/runtime-m1-handoff.md",
+      "sha256": "ffdddcb026273a30cda7e598c863ceb201b8b5f056e43dbc264df623791d8cf6"
+    },
+    {
+      "bytes": 17089,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/suffix-basis-agent.md",
+      "sha256": "23dec95f190b5efc097f6f29f9e71bf768d7aa69588c36d91695ff440421f8ba"
+    },
+    {
+      "bytes": 18560,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/suffix-basis-runtime.md",
+      "sha256": "3da5c7ea85a589b3f558d47790492f1147a423473879ea36de086da96167f5c7"
+    },
+    {
+      "bytes": 9821,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/suffix-basis.md",
+      "sha256": "ae488e010404abb65d3ce9e3892259be789f4972c567277af6ebb654c4ebf25c"
+    },
+    {
+      "bytes": 4544,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/viewing-contract-review.md",
+      "sha256": "2c86c08206970788e64b54fa5b7ba17b4d7f0bda92777df97e93667085bdd08e"
+    },
+    {
+      "bytes": 1579,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/viewing-coordination.md",
+      "sha256": "52e020cd3f767bf5abc9710700d2d952c0c7a5735c28de60db0504a0aaab0be7"
+    },
+    {
+      "bytes": 39394,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/design/viewing.md",
+      "sha256": "8a0f3ce4db6f87fff8f3dcc7f2fa9494ee466e08a248f7b1980f939e71718447"
+    },
+    {
+      "bytes": 3184,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/BRIEF.md",
+      "sha256": "bb39701e6107ab9e3a6a396c772ee328dea4e9c96e1785c862c2b42e5adc7d6b"
+    },
+    {
+      "bytes": 14786,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/INBOX.md",
+      "sha256": "0d791d1d9a4dcc69ade35b372775dbd49b4334fee76ce312c10bbaa2bef9115b"
+    },
+    {
+      "bytes": 2376,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/STATUS.md",
+      "sha256": "7aabacf998ecee1abfaea8d5e176eb0095b70b646e5502f526410fba3d03ce92"
+    },
+    {
+      "bytes": 2254,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-baseline-full.md",
+      "sha256": "b10a8aadadb8d6bf695b9f17094e2686dd217641050ab007507b2f605d4ed3a0"
+    },
+    {
+      "bytes": 2422,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-contract-map.md",
+      "sha256": "33df5500d1489340fafd3aa400c9c5ae23e92a38da359de88b34ca8dc2b7cccc"
+    },
+    {
+      "bytes": 1732,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-env.md",
+      "sha256": "7c920dc5245e3ccafcaf409f6d96dfc2c9bdde8dc9091f84f5e73f09b04c3e07"
+    },
+    {
+      "bytes": 1894,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-listen-guard.md",
+      "sha256": "2c1e3cacf756811ca11edc360b3ff3033479437124dcabba77a5c78b4898e609"
+    },
+    {
+      "bytes": 3781,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-loopback.md",
+      "sha256": "c9569b597699a0d161fe4d4e6a63337350fce5044d15944e0822f361a932c54f"
+    },
+    {
+      "bytes": 2192,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m0-writers.md",
+      "sha256": "5f7c920573039b750137ababbb9215bd87ad5f8d47c158927affbc01125be7ae"
+    },
+    {
+      "bytes": 3182,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-authoring-basis.md",
+      "sha256": "46d67a3bd4955c91e6037e671d5bac1570a6ae381b0178099b99e4a932c882a4"
+    },
+    {
+      "bytes": 3253,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-capture-parity.md",
+      "sha256": "e137a05aab6fa8ca342cf068e4fdd7e43a303312837475fe970b6c8c5d067445"
+    },
+    {
+      "bytes": 2590,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-capture-review.md",
+      "sha256": "f18b8feac760780117a70723e6bd6b3526353729a19714162979fc3a9def4e3a"
+    },
+    {
+      "bytes": 2777,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-client-review.md",
+      "sha256": "8caf4dcd37a4bdb161608dfcc3ffc1b6919fe02b5f725ab3c11d5c9d89ece160"
+    },
+    {
+      "bytes": 3853,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-commit-client.md",
+      "sha256": "72f766f0ddf1d529a6afc62347414922c088fda62896f7877341e5ec390dd556"
+    },
+    {
+      "bytes": 3405,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-move-capture.md",
+      "sha256": "00345bf41694cee3357531d21baf82d6f42788c6757f9274c9310e2e9c882139"
+    },
+    {
+      "bytes": 2425,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-outbox-browser.md",
+      "sha256": "a3bca69b223114c917c34fff3f31f554b6551001c3f57d3b2b4162c8a9db6d47"
+    },
+    {
+      "bytes": 2033,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-outbox-race.md",
+      "sha256": "fefd1ac7ae1949ae8b7dd3987b4173e2ed92186d58d35ab57f9a5cd2238721d6"
+    },
+    {
+      "bytes": 2525,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/managers/app/briefs/app-m1-outbox.md",
+      "sha256": "8cd906103607dad15e7ec484a8203bbbaf59f35a6e9e439ac24b8f110232e358"
+    },
+    {
+      "bytes": 547812,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/reviews/astra-checkpoint-a.log",
+      "sha256": "e60a8602d17924376f1f306c817bef558f97047aad844daa5a64e17307db9714"
+    },
+    {
+      "bytes": 5395,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/reviews/astra-checkpoint-a.md",
+      "sha256": "93732cef09c43ba38e7da593164ea8b9a2c103e8a917dc9e447da050f7f7d14d"
+    },
+    {
+      "bytes": 1954,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/reviews/astra-checkpoint-a.prompt",
+      "sha256": "70675fa54f53a92a7d6c2c514078fe4cdc412d312313b95495c3993c0db3bd6d"
+    },
+    {
+      "bytes": 3330,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/reviews/checkpoint-a-changes.md",
+      "sha256": "ad371fbbc283b20e7ac924413960d83e0a2f64b891bde0d7e0b670dcb3d587c4"
+    },
+    {
+      "bytes": 1914,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app/orch/tests/suites.conf",
+      "sha256": "88c413a9442186a656118197a2732d62f8e45ef4f76d74ae6b12da3a4e3cc72e"
+    },
+    {
+      "bytes": 1859,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/START-HERE.md",
+      "sha256": "b914d3ec080c70e62e65c233776c384f1b44c26bbe1a8934e82beb3662fc4412"
+    },
+    {
+      "bytes": 8144,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/AREA-LEAD.md",
+      "sha256": "636db88efc14b692e13b148a22fc6193fb40e51036ae081b8f9a203813fd9f66"
+    },
+    {
+      "bytes": 2103,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/AUDIT-BRIEF.md",
+      "sha256": "debc2e78ef201418bb04f4f276e42bb67fef32c014f2bb124ecfbd4c097990c8"
+    },
+    {
+      "bytes": 5867,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/COMMON.md",
+      "sha256": "da67857f61e73c5284a2399661e58542e67feaae8985cbaa365d1be308026a38"
+    },
+    {
+      "bytes": 3535,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/COMMS.md",
+      "sha256": "ca7629674a129dc772c1f073258e2936e4799830b23b11b56b390afa44761181"
+    },
+    {
+      "bytes": 5479,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/LEAD-APP2.md",
+      "sha256": "ad5faca8b8fe8a03b1392d06aa3d59ac5bb9357d285d7fbda6d6b647c2f18cee"
+    },
+    {
+      "bytes": 12554,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/MANAGER-COMMON.md",
+      "sha256": "c01f13cb9debe2e7cc0370b5712893c5f38d984c2ea9ef5661adf4e1d518b502"
+    },
+    {
+      "bytes": 2807,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/MODELS.md",
+      "sha256": "d4aaa09208cf4371ba6fb97064ca3dadde8f4b26f23e93622466c6d3e0cfaeb9"
+    },
+    {
+      "bytes": 2391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/MULTI-MACHINE.md",
+      "sha256": "2c9848facaa7b7abaa09dd920e283fa60a91d970266904940d1b281000bec2be"
+    },
+    {
+      "bytes": 36840,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/PLAN.md",
+      "sha256": "96a763b35044125c388c45d2574ebeb7ffa3775788a1aa41120f93f22361c0de"
+    },
+    {
+      "bytes": 748,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/audit",
+      "sha256": "952277ed07f16d8a9a80b92941456c8e1c4c872e2a8f22db129975b358f348c3"
+    },
+    {
+      "bytes": 181,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/build-delivery",
+      "sha256": "935804f65cba4e13e0feebbf4e5d57b4f91f72253ad69def856d1524703e7ea1"
+    },
+    {
+      "bytes": 2117,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/claude-perms.sh",
+      "sha256": "66a3936991dbf0fb4ec1c06d2011a3b414f66ba2722e667bd4fa4c16dd6296a9"
+    },
+    {
+      "bytes": 15873,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/delivery-build",
+      "sha256": "cee29952d65b306414c9c5492b6be594a5b47d8a091f307bbb525bc42a4db81e"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/digest",
+      "sha256": "27712463ead8eecb56bb329559f0b6ae9c6cb5efc80834e93834ee66aa8b33fd"
+    },
+    {
+      "bytes": 6491,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/dispatch",
+      "sha256": "fc07d9b8148ac00ffe5e141e71bfc36f36ae38b190b5e4ee329c7299b75915cc"
+    },
+    {
+      "bytes": 1491,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/dispatcher-daemon",
+      "sha256": "355b4d279cac30032099fef2822b4da3c451ba56b8503e7d43b01a0344937259"
+    },
+    {
+      "bytes": 14915,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/hub-sync",
+      "sha256": "83b671fd10e6c31f25ae4d48ab0a505feb4a13316df038a01af22b26a847efd4"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/hub-syncd",
+      "sha256": "af4ec9b63bba5e44b621e072daf46e05b4b8eabb921f06ccb539efddc86e5d8f"
+    },
+    {
+      "bytes": 751,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/inbox-merge",
+      "sha256": "b22cfb7f7f3a175038554bb56e6f0bcf181399df3382f7583a48a8581e3c2d89"
+    },
+    {
+      "bytes": 1013,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/ledger-index",
+      "sha256": "722057970e62a9328aa083106ce749ac6154922febd228927dbcf3ff87702c62"
+    },
+    {
+      "bytes": 803,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/merge",
+      "sha256": "95a944077d0bb1709cf1081bd63af776914a5b87ba9b416fa613f9cd66212075"
+    },
+    {
+      "bytes": 1357,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/merge-forward",
+      "sha256": "150b8926993690bd92a75a4bef748e5d531f06fb07b1a7e302aa384093470a08"
+    },
+    {
+      "bytes": 21306,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/progress-json",
+      "sha256": "adeb4dbf0dbcb9d675461c9f8a1d092039a46c885f1ce5a19d4efd94bc31ccd5"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/progress-publish",
+      "sha256": "6255d44eac02a2feb4e972bda2acabad84a5f0734c993481b03f62d56720ffac"
+    },
+    {
+      "bytes": 1129,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/recycle",
+      "sha256": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+    },
+    {
+      "bytes": 2015,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/refresh-main",
+      "sha256": "705551a9b29fbbfd16e984bf01b6c2782ab50a9b4b425ad3e6cb08f4c8a5e4cd"
+    },
+    {
+      "bytes": 524,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/request",
+      "sha256": "6a51fa4c5997b883c7411520c551922bfe1b915e86a96b8dd43e92414c50b7a5"
+    },
+    {
+      "bytes": 364,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/request-merge",
+      "sha256": "06b56e54c99cc0223da298f484545fabd6671933e845438f376e1bfae2041c15"
+    },
+    {
+      "bytes": 798,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/request-merge-remote",
+      "sha256": "5b783900e3e6502eac9eae64e4a6ec3554e709e0b3cd87d021cce1d8107637f9"
+    },
+    {
+      "bytes": 1592,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/request-test",
+      "sha256": "ba3c54ed5d8889d0c9dc42f4b52181d4fcd07714a811c08163f2cb714fd824e8"
+    },
+    {
+      "bytes": 1206,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/rm-own",
+      "sha256": "2028e354b17498ff3b55809933c582bd9c0ad4f60d46d05d57b7f8b4b5fe20db"
+    },
+    {
+      "bytes": 3061,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/run-manager",
+      "sha256": "9fa0796b878214085361c636838d274f06053c2774f2fef9ab3fe4be831fe461"
+    },
+    {
+      "bytes": 6089,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/test-run",
+      "sha256": "bc7780c26219cd103f6d2607323ef254e0ddabfe1ac5d34f76c25b425093d5cd"
+    },
+    {
+      "bytes": 701,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/wait-test",
+      "sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204"
+    },
+    {
+      "bytes": 1206,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/watch-events",
+      "sha256": "b37eb67eac4ff6675dcdd47a07831b43b5fcc80a7e64c37bd1227f8eb44cd732"
+    },
+    {
+      "bytes": 591,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/bin/workers",
+      "sha256": "30b8e58210f78826524d5190bb649c2540d54df5d079c9991291855fbcc412f7"
+    },
+    {
+      "bytes": 3850,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/managers/app2/BRIEF.md",
+      "sha256": "6b37f71230097d7c3482d2a8ca109e7c1acdafb3fdb46bf2114cfbd3d421f00f"
+    },
+    {
+      "bytes": 230,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/managers/app2/INBOX.md",
+      "sha256": "579ddf7a31a26d0eaa3dfeb7ff81bf0b1e051978bd2453e23c6feb8e5b45e3d3"
+    },
+    {
+      "bytes": 55,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/managers/app2/STATUS.md",
+      "sha256": "68d1a8fa80d837be4e43800347ce363aa92cf0ce7d686f968fcb58e44cdb11bc"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/tests/agent-remotion-0010.env",
+      "sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/tests/agent-remotion-0012.env",
+      "sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a"
+    },
+    {
+      "bytes": 531,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/tests/agent-remotion-current.env",
+      "sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c"
+    },
+    {
+      "bytes": 523,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/tests/agent-remotion.env",
+      "sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02"
+    },
+    {
+      "bytes": 25481,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-app2/orch/tests/suites.conf",
+      "sha256": "7a560f6cad337d458b0ac0d0bcbc90d708ad1eeef22701bfb007681eebdb1753"
+    },
+    {
+      "bytes": 1160,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/START-HERE.md",
+      "sha256": "66f44ce42dfc663e8ee0aa31aed519fdc7d36db47787d2ac965c7a8216ccc98a"
+    },
+    {
+      "bytes": 4462,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/AGENT-MACHINE.md",
+      "sha256": "efeb4a03f3329e8c2182793edba4c1b2f4d6db09867f05952d8c315029064035"
+    },
+    {
+      "bytes": 8601,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/AREA-LEAD.md",
+      "sha256": "8fdfd9b6ee99e4e589289abb97f20d77d8a3f29ff9234b43f047f44ed83a5645"
+    },
+    {
+      "bytes": 2103,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/AUDIT-BRIEF.md",
+      "sha256": "debc2e78ef201418bb04f4f276e42bb67fef32c014f2bb124ecfbd4c097990c8"
+    },
+    {
+      "bytes": 6261,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/COMMON.md",
+      "sha256": "ead5251c6b6fda6f00ba2a9b027155e678ab30319c8fba14d325d62356d59aa1"
+    },
+    {
+      "bytes": 3535,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/COMMS.md",
+      "sha256": "ca7629674a129dc772c1f073258e2936e4799830b23b11b56b390afa44761181"
+    },
+    {
+      "bytes": 5660,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/LEAD-FARM.md",
+      "sha256": "436c0dc429e5764249317867180829e914776e56836e86039c07c6a94454e3f7"
+    },
+    {
+      "bytes": 6789,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/LEAD.md",
+      "sha256": "142551c3767472eee4dade4f194c0895b0a192c0195a75f89b07606e0b1b357c"
+    },
+    {
+      "bytes": 28907,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/MANAGER-COMMON.md",
+      "sha256": "15b4cec83e74a67d0c49db9603b265ff7dadc0437f6bb1f01fb27ef7a07f6e5f"
+    },
+    {
+      "bytes": 3356,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/MODELS.md",
+      "sha256": "e6446b69d9f8aa799d45398c0349630c813eeedc79af3cbf6d25715e546c3385"
+    },
+    {
+      "bytes": 2391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/MULTI-MACHINE.md",
+      "sha256": "2c9848facaa7b7abaa09dd920e283fa60a91d970266904940d1b281000bec2be"
+    },
+    {
+      "bytes": 37961,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/PLAN.md",
+      "sha256": "33f0cb1b1e626dae94ae3a8ba3b3bea2ee7211a8b73af1ff0cf9ef3146477be4"
+    },
+    {
+      "bytes": 996,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/audit",
+      "sha256": "e0c1617709a0881cfc6ea6e65712904b1e5ca57cca0fc3753cd60531d9dcf82c"
+    },
+    {
+      "bytes": 181,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/build-delivery",
+      "sha256": "935804f65cba4e13e0feebbf4e5d57b4f91f72253ad69def856d1524703e7ea1"
+    },
+    {
+      "bytes": 2117,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/claude-perms.sh",
+      "sha256": "66a3936991dbf0fb4ec1c06d2011a3b414f66ba2722e667bd4fa4c16dd6296a9"
+    },
+    {
+      "bytes": 747,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/close-merge-request",
+      "sha256": "5a68f0cb634b29f9998451df8dec891bbfbdc8ae491751109348f9179d69fc07"
+    },
+    {
+      "bytes": 1664,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/compact-scratch",
+      "sha256": "13d3689055537b67cf0c50b7092c03581a297d6a41b41fa153fef09e065433ea"
+    },
+    {
+      "bytes": 24834,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/delivery-build",
+      "sha256": "3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/digest",
+      "sha256": "27712463ead8eecb56bb329559f0b6ae9c6cb5efc80834e93834ee66aa8b33fd"
+    },
+    {
+      "bytes": 7356,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/dispatch",
+      "sha256": "3ba5a184b8bc664eb9ef66de44e690763d891351c2c9ea880b4bef5530c32f5e"
+    },
+    {
+      "bytes": 3736,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/dispatcher-daemon",
+      "sha256": "b68f1d9aafe3d4cca6feb9413fcd9e4d51da5d8e30c4b2c7ed107ebf79a79dee"
+    },
+    {
+      "bytes": 19396,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/hub-sync",
+      "sha256": "5a48c806e14d4f4b30c1f562120268267f1fe9bc2abf112e47692fb92b4b4933"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/hub-syncd",
+      "sha256": "af4ec9b63bba5e44b621e072daf46e05b4b8eabb921f06ccb539efddc86e5d8f"
+    },
+    {
+      "bytes": 1376,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/inbox-merge",
+      "sha256": "023298993078e5523c4bb32cbc2e1c6e8d33accfedf33445207e47e8f3c686e4"
+    },
+    {
+      "bytes": 1013,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/ledger-index",
+      "sha256": "722057970e62a9328aa083106ce749ac6154922febd228927dbcf3ff87702c62"
+    },
+    {
+      "bytes": 1495,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/make-checkout",
+      "sha256": "8430f253367b308ba69b93e084e57351891bce42235a018d061d2b07c5dc6ffc"
+    },
+    {
+      "bytes": 2473,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/make-child-venv",
+      "sha256": "b136f3c3fb24aa252dd4bb4ec875bc87c0b1565edf1f8392c1b08e514b0d89c4"
+    },
+    {
+      "bytes": 2138,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/make-runtime",
+      "sha256": "0bba1f5e69319dad8b68295eac1fddf7ba35ea21cc32d784407852700e7df202"
+    },
+    {
+      "bytes": 803,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/merge",
+      "sha256": "95a944077d0bb1709cf1081bd63af776914a5b87ba9b416fa613f9cd66212075"
+    },
+    {
+      "bytes": 1357,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/merge-forward",
+      "sha256": "150b8926993690bd92a75a4bef748e5d531f06fb07b1a7e302aa384093470a08"
+    },
+    {
+      "bytes": 21306,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/progress-json",
+      "sha256": "adeb4dbf0dbcb9d675461c9f8a1d092039a46c885f1ce5a19d4efd94bc31ccd5"
+    },
+    {
+      "bytes": 613,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/progress-publish",
+      "sha256": "6255d44eac02a2feb4e972bda2acabad84a5f0734c993481b03f62d56720ffac"
+    },
+    {
+      "bytes": 17396,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/provision-agent-machine",
+      "sha256": "364e5bc0abd102de090bf3a9f0c27b1decb1237cf5fff183a0b65b229d1a818a"
+    },
+    {
+      "bytes": 1129,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/recycle",
+      "sha256": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+    },
+    {
+      "bytes": 2015,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/refresh-main",
+      "sha256": "705551a9b29fbbfd16e984bf01b6c2782ab50a9b4b425ad3e6cb08f4c8a5e4cd"
+    },
+    {
+      "bytes": 524,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request",
+      "sha256": "6a51fa4c5997b883c7411520c551922bfe1b915e86a96b8dd43e92414c50b7a5"
+    },
+    {
+      "bytes": 540,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-checkout",
+      "sha256": "7be0d49327aec1b724e4661f7e1da32c71539630952a50ac4932fb7606281fd1"
+    },
+    {
+      "bytes": 681,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-child-venv",
+      "sha256": "f9e5ea6f2ff577ebd25218a1eba751e17fafd474b1e1a3a3adbb8524a80c440e"
+    },
+    {
+      "bytes": 364,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-merge",
+      "sha256": "06b56e54c99cc0223da298f484545fabd6671933e845438f376e1bfae2041c15"
+    },
+    {
+      "bytes": 798,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-merge-remote",
+      "sha256": "5b783900e3e6502eac9eae64e4a6ec3554e709e0b3cd87d021cce1d8107637f9"
+    },
+    {
+      "bytes": 1139,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-ready",
+      "sha256": "b09f6fbea1cf683fe798c2ecb491132163768d89bd1ba0078d3c9df8eb0a0225"
+    },
+    {
+      "bytes": 644,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-runtime",
+      "sha256": "15b07daf4cd46a225ecc020c11e3ec8f3a62368c73d9ba6940ad3ce4ea8191ff"
+    },
+    {
+      "bytes": 876,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-stop",
+      "sha256": "fad6a6ed8075f90803f92375ee9ada23f2684dfc5e5e3f79d231807ad68af69c"
+    },
+    {
+      "bytes": 680,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-stop-test",
+      "sha256": "84eadf08f30e8831cb39166193ce21671d509c837f2820a161fad07ea015b75a"
+    },
+    {
+      "bytes": 1736,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874"
+    },
+    {
+      "bytes": 1206,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/rm-own",
+      "sha256": "2028e354b17498ff3b55809933c582bd9c0ad4f60d46d05d57b7f8b4b5fe20db"
+    },
+    {
+      "bytes": 3988,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/run-manager",
+      "sha256": "d9f07b3032f5882ad1f1bb50c651d776126de0530ac2335107cb87cb1b59e15e"
+    },
+    {
+      "bytes": 2163,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/stop-test",
+      "sha256": "bfef92514cebe42ba5329d00e4020cfd4879ce205bf722e55b1db2175b8d4901"
+    },
+    {
+      "bytes": 1582,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/stop-worker",
+      "sha256": "12bbacf117177fd509feaa7440175048671f287d0e8e0d825915935327e2f6ae"
+    },
+    {
+      "bytes": 2455,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/sweep-tmp",
+      "sha256": "c78619cc350d088efab1addd7f63a17e34c6cae7c6aa0d07cbbe38536d19ca53"
+    },
+    {
+      "bytes": 7164,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/test-run",
+      "sha256": "2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35"
+    },
+    {
+      "bytes": 6621,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/tick-facts",
+      "sha256": "834e5818ab418fd53492d232a32fe0e84512b81c8560865ee5570094628700e6"
+    },
+    {
+      "bytes": 701,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/wait-test",
+      "sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204"
+    },
+    {
+      "bytes": 3439,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/watch-events",
+      "sha256": "641fd5dea38953c93d6f8c9d515b4abd5cfc3a0e95291f48e65cb697017bba13"
+    },
+    {
+      "bytes": 591,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/bin/workers",
+      "sha256": "30b8e58210f78826524d5190bb649c2540d54df5d079c9991291855fbcc412f7"
+    },
+    {
+      "bytes": 259,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/managers/farm/BRIEF.md",
+      "sha256": "c1d97642b99a6b4406fa95fe017c5ea37e16c628a18fc4107990108e88530829"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/agent-remotion-0010.env",
+      "sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/agent-remotion-0012.env",
+      "sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a"
+    },
+    {
+      "bytes": 528,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/agent-remotion-0013.env",
+      "sha256": "e03e177251a99e37820c001f6fe6f88f2f503d1f939a5f67eed6ed59eeca2d07"
+    },
+    {
+      "bytes": 531,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/agent-remotion-current.env",
+      "sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c"
+    },
+    {
+      "bytes": 523,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/agent-remotion.env",
+      "sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02"
+    },
+    {
+      "bytes": 3368,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/provision/venv-agent-child-s2-c13.txt",
+      "sha256": "c22ba017c636abdfba24374d694d1f23de4e46a7aa045a923f2bb1d3e2e5e910"
+    },
+    {
+      "bytes": 3389,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/provision/venv-agent-child-s2.txt",
+      "sha256": "478af081b0f27c1e90dac1ab4b0b645583f34787ecfe7b8079d1bb88ca034761"
+    },
+    {
+      "bytes": 3382,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/provision/venv-agent-child.txt",
+      "sha256": "8d5a74739873791febb072a7671323b3e55396bc8a19e26df370cdd6fa20e062"
+    },
+    {
+      "bytes": 3332,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/provision/venv-agent.txt",
+      "sha256": "1d8d8c3212b2726da6e89ef6714477522d331c25fd677f9a4d0b8627f0660bb0"
+    },
+    {
+      "bytes": 78821,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-farm/orch/tests/suites.conf",
+      "sha256": "df6d8d504c8dd174b96944ff681ea7ea2dd7a017348c90f9be7be55556b3ce48"
+    },
+    {
+      "bytes": 2434,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/START-HERE.md",
+      "sha256": "630fb84552612d7a47241b5d52afddc70241415c5fbca38515095bd09edb47c1"
+    },
+    {
+      "bytes": 1820,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/code/README.md",
+      "sha256": "35c4cc557b5c50ccaa5c7da58e8eb4f92ddccd7f4b48080e81ba929f0aeb78cc"
+    },
+    {
+      "bytes": 13922,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/code/app.bundle",
+      "sha256": "237845215b0c9d6ad00aa8958684b89e86c2ea0435fd547b8c376f6b9e842398"
+    },
+    {
+      "bytes": 15595,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/code/composition.bundle",
+      "sha256": "c7897dade9b96c6b0761a9f017884799755e5e0059715594f7d256f5dc7694cf"
+    },
+    {
+      "bytes": 41373,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/code/runtime.bundle",
+      "sha256": "aa8544d06d0aaf6611e370ce279f19c30cb21c43f644ec8928a2a39478be4d56"
+    },
+    {
+      "bytes": 7096,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/AREA-LEAD.md",
+      "sha256": "791eaece0493c5821283ad6815de34285763396b76e284e1d217d543d53cf0e6"
+    },
+    {
+      "bytes": 2103,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/AUDIT-BRIEF.md",
+      "sha256": "debc2e78ef201418bb04f4f276e42bb67fef32c014f2bb124ecfbd4c097990c8"
+    },
+    {
+      "bytes": 4527,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/COMMON.md",
+      "sha256": "2ea5b05840f1929e89abe0d524f5721618a063e2f79cb6ad9dedce11e8b36f39"
+    },
+    {
+      "bytes": 3001,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/COMMS.md",
+      "sha256": "23ff0160dc16a974d92003d6427709774626d135bd5caca08784924d6815144f"
+    },
+    {
+      "bytes": 7094,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/MANAGER-COMMON.md",
+      "sha256": "53bd35594773bd56c27e108d17619bb91e44da2d341f28d59589b41649c77b94"
+    },
+    {
+      "bytes": 1306,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/MODELS.md",
+      "sha256": "1f6d923445aa3f85b531e933866546344c4428db5873e31d8642ad8ad3cda098"
+    },
+    {
+      "bytes": 2391,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/MULTI-MACHINE.md",
+      "sha256": "2c9848facaa7b7abaa09dd920e283fa60a91d970266904940d1b281000bec2be"
+    },
+    {
+      "bytes": 26274,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/PLAN.md",
+      "sha256": "ebc9b488c3e0921de74dedbfcb92ebfe9c1055ffc45ce85fa58c8157ebcf2ade"
+    },
+    {
+      "bytes": 748,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/audit",
+      "sha256": "952277ed07f16d8a9a80b92941456c8e1c4c872e2a8f22db129975b358f348c3"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/digest",
+      "sha256": "27712463ead8eecb56bb329559f0b6ae9c6cb5efc80834e93834ee66aa8b33fd"
+    },
+    {
+      "bytes": 3184,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/dispatch",
+      "sha256": "b7fe2a046cb569807d12f9edd41c2670e1f319dad42c91cf7c4ec45b820767ee"
+    },
+    {
+      "bytes": 1285,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/dispatcher-daemon",
+      "sha256": "ebbee371a21648be8ba875da08c21222f26b709abc99f3f27105314b8d03103a"
+    },
+    {
+      "bytes": 7202,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/hub-sync",
+      "sha256": "7ae5746b16d3ef736539be90cbeded6b8c2980f20e8a74d98c7397d74b5d50f8"
+    },
+    {
+      "bytes": 339,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/hub-syncd",
+      "sha256": "fefaf083f0d2008286b8b9fae35b8f03e721de993f1826f578c67909de653061"
+    },
+    {
+      "bytes": 803,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/merge",
+      "sha256": "95a944077d0bb1709cf1081bd63af776914a5b87ba9b416fa613f9cd66212075"
+    },
+    {
+      "bytes": 457,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/recycle",
+      "sha256": "1b4bfdfb15f505ae41627fcb8e630f5567f95ff57b6ad9c3bd34991e3050888c"
+    },
+    {
+      "bytes": 1285,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/refresh-main",
+      "sha256": "e2d99687826f8ab0f714c2b238ed54a59f1eaf5ab736704a737606e821230123"
+    },
+    {
+      "bytes": 524,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/request",
+      "sha256": "6a51fa4c5997b883c7411520c551922bfe1b915e86a96b8dd43e92414c50b7a5"
+    },
+    {
+      "bytes": 364,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/request-merge",
+      "sha256": "06b56e54c99cc0223da298f484545fabd6671933e845438f376e1bfae2041c15"
+    },
+    {
+      "bytes": 681,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/request-merge-remote",
+      "sha256": "4ef98f3b499a5aebbfe77fa22180936d0843b7feeee8a2c614b3171384db5151"
+    },
+    {
+      "bytes": 1592,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/request-test",
+      "sha256": "ba3c54ed5d8889d0c9dc42f4b52181d4fcd07714a811c08163f2cb714fd824e8"
+    },
+    {
+      "bytes": 1176,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/run-manager",
+      "sha256": "c80dc9c0c27b758923999a860994fbf60d9fe3998ee7f60e8c5e69170aa12fab"
+    },
+    {
+      "bytes": 5191,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/test-run",
+      "sha256": "8618ae5f64722761736897da222c06c9286fc84fce7187e044ec129f68e763ba"
+    },
+    {
+      "bytes": 701,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/wait-test",
+      "sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204"
+    },
+    {
+      "bytes": 826,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/watch-events",
+      "sha256": "53fbf6cc817e630d8452fe986b41429db0dea2db8ac9a422d504d68dfc13d3d5"
+    },
+    {
+      "bytes": 591,
+      "mode": "0755",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/bin/workers",
+      "sha256": "30b8e58210f78826524d5190bb649c2540d54df5d079c9991291855fbcc412f7"
+    },
+    {
+      "bytes": 8384,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/agent-coordination.md",
+      "sha256": "8350306f8863b0e085356dd3f7e5d3676f5a23a00538477766ab697ef1f2c48e"
+    },
+    {
+      "bytes": 1205,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/agent-env-ready.md",
+      "sha256": "07301d375a18b75ea06ba2af2da92f24c41e85444b9b481fc99ce9b06b61f855"
+    },
+    {
+      "bytes": 13230,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/agent-review-notes.md",
+      "sha256": "819a132abaf2bd397fd1819b80b1c2fce8dce24e974867a512baef74625ce687"
+    },
+    {
+      "bytes": 6942,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/app-baseline.md",
+      "sha256": "082c59e54924c90b7f79ebbb5542b6126996b5cd2f9f04caae0b32b5c20b9d7b"
+    },
+    {
+      "bytes": 28738,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/app-contract-consumption.md",
+      "sha256": "3e8e5199ddcf10a3aef4c1b69f339259eb1a562a07bf1aa0250ffb9799b66a01"
+    },
+    {
+      "bytes": 6783,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/app-contract-review.md",
+      "sha256": "0526b5dec944d513904e9eb57e9d8ba99a1d71372e9a1775faf05f8dbc50b513"
+    },
+    {
+      "bytes": 7131,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/app-m1-coordination.md",
+      "sha256": "f5837616229843ee4f538cd00e66def73cd3c7b5ffb1b600b56c5ce7848cc4fa"
+    },
+    {
+      "bytes": 53805,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/app-writers.md",
+      "sha256": "f117be6d51964e7334beed21dc6b1b9e082a7838ee2f85d645131dd8443fb5ea"
+    },
+    {
+      "bytes": 32033,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/command-schema-handoff.md",
+      "sha256": "f65584d7a778868d84173816069b817856d065251e483a7bc8b3d2ebcd0bf4c6"
+    },
+    {
+      "bytes": 73889,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/commit-contract.md",
+      "sha256": "1a40dae4ed168aafc2f5557942a68d99e4940975b4c46d76dbc577f36b0f5e73"
+    },
+    {
+      "bytes": 16823,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/edit-command.schema.json",
+      "sha256": "2a4058f883c59457052e4b42f74cc2fa411cf004f98f1c7ef953ecbe894ff427"
+    },
+    {
+      "bytes": 47858,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/edit-recipe.md",
+      "sha256": "c474e0eacbc48ab77441a70aa31fb4eedc97f789bc4d741018a3e9202443a653"
+    },
+    {
+      "bytes": 57081,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/extensions.md",
+      "sha256": "56f013a536750fffd40dd46b032dd041c7e27a16d691f528c3ac959acda9353f"
+    },
+    {
+      "bytes": 7585,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/journey-baseline.md",
+      "sha256": "441f753b643e5ffe8eee79cd634d938f6bc39221f951460d7ad23015327edc14"
+    },
+    {
+      "bytes": 14167,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/journey-preflight.md",
+      "sha256": "5f39c6ace1b58f925e489a0f790e93f8363127546bd31a09fa1a385222b40ba4"
+    },
+    {
+      "bytes": 1665,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/journey-runtime-env.md",
+      "sha256": "e79514768eb1953d46337e365d707369bde4581e7217585b643c3b47ad0fe457"
+    },
+    {
+      "bytes": 31808,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/m1-agent-coordination.md",
+      "sha256": "3d4dfb2301cad632e1f220231013a89d5760b65552b949f0d0a02bdd69e9869c"
+    },
+    {
+      "bytes": 6393,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/player-audio-feasibility.md",
+      "sha256": "7400c6c04bbaaa9551b0536e642a796731af918f82a262c3fabfa33a87ff2fef"
+    },
+    {
+      "bytes": 48076,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/port-failure-index.tsv",
+      "sha256": "567a8dca754799230364d99a964e214da14e586211a675b051679d40f539118e"
+    },
+    {
+      "bytes": 23642,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/port-manifest.md",
+      "sha256": "dfcd721a6f5d03e07f84f9d5385a0988307bc653bd377b1860cf6dc1af16f847"
+    },
+    {
+      "bytes": 3415,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/port-spike-ready.md",
+      "sha256": "c440ec293e9cb47096c40b085aeaae3bd065bb83eb6dbac1122dc7ae0a5f5c80"
+    },
+    {
+      "bytes": 5646,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/runtime-baseline.md",
+      "sha256": "cff00a44bbcad9db6e5ce682208391270066985f3c8567bc8c1530b71f875297"
+    },
+    {
+      "bytes": 10510,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/runtime-contract-review.md",
+      "sha256": "1401d7f3be4b5cf0db85c341bd04ebce05546759d1ca9e65563795c3f997a66f"
+    },
+    {
+      "bytes": 2323,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/runtime-coordination.md",
+      "sha256": "1ebaab9a158df48d9274fb83aca13d174f16aca0a9b1ad034003b817841e6c9b"
+    },
+    {
+      "bytes": 1659,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/runtime-m1-coordination.md",
+      "sha256": "ad73e0b819ecd330ce297868e43ee977f9032148a00dfc2550f38bb3d78bf172"
+    },
+    {
+      "bytes": 47639,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/runtime-m1-handoff.md",
+      "sha256": "ffdddcb026273a30cda7e598c863ceb201b8b5f056e43dbc264df623791d8cf6"
+    },
+    {
+      "bytes": 17089,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/suffix-basis-agent.md",
+      "sha256": "23dec95f190b5efc097f6f29f9e71bf768d7aa69588c36d91695ff440421f8ba"
+    },
+    {
+      "bytes": 18560,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/suffix-basis-runtime.md",
+      "sha256": "3da5c7ea85a589b3f558d47790492f1147a423473879ea36de086da96167f5c7"
+    },
+    {
+      "bytes": 9821,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/suffix-basis.md",
+      "sha256": "ae488e010404abb65d3ce9e3892259be789f4972c567277af6ebb654c4ebf25c"
+    },
+    {
+      "bytes": 4544,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/viewing-contract-review.md",
+      "sha256": "2c86c08206970788e64b54fa5b7ba17b4d7f0bda92777df97e93667085bdd08e"
+    },
+    {
+      "bytes": 1579,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/viewing-coordination.md",
+      "sha256": "52e020cd3f767bf5abc9710700d2d952c0c7a5735c28de60db0504a0aaab0be7"
+    },
+    {
+      "bytes": 39394,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/design/viewing.md",
+      "sha256": "8a0f3ce4db6f87fff8f3dcc7f2fa9494ee466e08a248f7b1980f939e71718447"
+    },
+    {
+      "bytes": 2728,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/BRIEF.md",
+      "sha256": "a65731ccd54fc20d0e72febe4a56e5d64601be833989e40f47deb0b21d54a402"
+    },
+    {
+      "bytes": 7039,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/INBOX.md",
+      "sha256": "334c6b8b3d86a635581bd176402d3337a1c5b0b569493cecd47b860f106c035c"
+    },
+    {
+      "bytes": 3387,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/STATUS.md",
+      "sha256": "55d02885df0f6d44694c60cb6b958b771e4ebd39dcf783c00dbe0fc8a91105ec"
+    },
+    {
+      "bytes": 3671,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-build-prep.md",
+      "sha256": "3b05d76811013a7c5b557fb83a889726d08b98722ed9829738f34dfaaf060fde"
+    },
+    {
+      "bytes": 3638,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-build-verify.md",
+      "sha256": "d25e40a069b90b66a15c6b6eae35bad9c070949edc82bb961d17c96d0eb981db"
+    },
+    {
+      "bytes": 3011,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-build.md",
+      "sha256": "34567ddeffd7e52db303df1f9d06c200af54e0a07014b6e716ef791a57228889"
+    },
+    {
+      "bytes": 2240,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-inventory.md",
+      "sha256": "ee566cda569bb03837e8d3df64319de98498a94a9112e9e0794b91cf74e9e7ee"
+    },
+    {
+      "bytes": 3005,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-package-seam.md",
+      "sha256": "2e4a64074bc4943cbe9e5350396ac584d7175c6228405e8a1cea3afdb45c1821"
+    },
+    {
+      "bytes": 993,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m0-setup-doc.md",
+      "sha256": "ecf350ac31d28630e8b668fd9721921d16b2d6787de322a9a3e803662be3ba81"
+    },
+    {
+      "bytes": 2181,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-agent-label-review.md",
+      "sha256": "126cedb3c5605087aeb6eba423e306654e173e53455f208b1c070d0e0d214ece"
+    },
+    {
+      "bytes": 1914,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-agent-labels.md",
+      "sha256": "ae626f066a0d26e818215e13b02387c42b8bad6d560bf7a6bc565db8d44e0a2d"
+    },
+    {
+      "bytes": 1123,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-app-label-clean.md",
+      "sha256": "fc3f9119ae56686ab2ede1a8b76de357f275b3d2d92878bd881ffe53eb71cee9"
+    },
+    {
+      "bytes": 2307,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-app-label-review.md",
+      "sha256": "3b9ec451ff6db9852f2fa9545be50ef3906b8c6a3eef8619e9b836f41328cd89"
+    },
+    {
+      "bytes": 2102,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-app-labels.md",
+      "sha256": "e44b3a7df05e3b9abfe0bfc412545a5a7a574772255289f9a68704fb56857be9"
+    },
+    {
+      "bytes": 2335,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-input-labels.md",
+      "sha256": "85cac135ebd0bf62f40623f43cb9c1599f6b916012e5a4ee326a002626de3a6e"
+    },
+    {
+      "bytes": 2117,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-player-audio.md",
+      "sha256": "0b08cf830406f286d9309e83f09775e26870ac8dfd790aa9c8fe0b25048a9f02"
+    },
+    {
+      "bytes": 2837,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m1-player-mix.md",
+      "sha256": "c53c118d087b34d45da92422bca8d6c20b98634cf5f79ff2bd8be0f90435e16a"
+    },
+    {
+      "bytes": 2892,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/managers/viewing/briefs/vw-m3-built-package.md",
+      "sha256": "c52db7f6e90663c446b1201675c3d485f02081409ec4a5050e353d63cf9f139c"
+    },
+    {
+      "bytes": 547812,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/reviews/astra-checkpoint-a.log",
+      "sha256": "e60a8602d17924376f1f306c817bef558f97047aad844daa5a64e17307db9714"
+    },
+    {
+      "bytes": 5395,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/reviews/astra-checkpoint-a.md",
+      "sha256": "93732cef09c43ba38e7da593164ea8b9a2c103e8a917dc9e447da050f7f7d14d"
+    },
+    {
+      "bytes": 1954,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/reviews/astra-checkpoint-a.prompt",
+      "sha256": "70675fa54f53a92a7d6c2c514078fe4cdc412d312313b95495c3993c0db3bd6d"
+    },
+    {
+      "bytes": 3330,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/reviews/checkpoint-a-changes.md",
+      "sha256": "ad371fbbc283b20e7ac924413960d83e0a2f64b891bde0d7e0b670dcb3d587c4"
+    },
+    {
+      "bytes": 1914,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/area-viewing/orch/tests/suites.conf",
+      "sha256": "88c413a9442186a656118197a2732d62f8e45ef4f76d74ae6b12da3a4e3cc72e"
+    },
+    {
+      "bytes": 1820,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/code/README.md",
+      "sha256": "35c4cc557b5c50ccaa5c7da58e8eb4f92ddccd7f4b48080e81ba929f0aeb78cc"
+    },
+    {
+      "bytes": 13922,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/code/app.bundle",
+      "sha256": "237845215b0c9d6ad00aa8958684b89e86c2ea0435fd547b8c376f6b9e842398"
+    },
+    {
+      "bytes": 15595,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/code/composition.bundle",
+      "sha256": "c7897dade9b96c6b0761a9f017884799755e5e0059715594f7d256f5dc7694cf"
+    },
+    {
+      "bytes": 41373,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/code/runtime.bundle",
+      "sha256": "aa8544d06d0aaf6611e370ce279f19c30cb21c43f644ec8928a2a39478be4d56"
+    },
+    {
+      "bytes": 161172,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/timeline-area-agent.zip",
+      "sha256": "81c02491412c96c2d03ae056b5e07b9b0b376f504a60ca59d644a37bc794814a"
+    },
+    {
+      "bytes": 574019,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/timeline-area-app.zip",
+      "sha256": "452918c1022dd04a53370e567afb6f17e5cec87ee594a9cd5721ff3f4ed9a9fb"
+    },
+    {
+      "bytes": 90427,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/timeline-area-app2.zip",
+      "sha256": "123e6fc2ae11a689e5aceb7f3b1a1fd50b6500edbf2a678b5a5a22da83e3deeb"
+    },
+    {
+      "bytes": 145685,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/timeline-area-farm.zip",
+      "sha256": "f3790b6ec3aacbf2f186018abe25ed0c51e1b594561ec0761610dbaaa8b047ac"
+    },
+    {
+      "bytes": 570553,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/kits/timeline-area-viewing.zip",
+      "sha256": "daed7160edd9177718fb4964da6e8eca6ecc3ba8438c061070c9f927bd80b3f1"
+    },
+    {
+      "bytes": 2720,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/HOWTO.md",
+      "sha256": "a0efe76c2d533debdea15178a0e221541f6a24ab17a9d2cd1111f8e04965c3c6"
+    },
+    {
+      "bytes": 1264,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/areas.json",
+      "sha256": "a9405249cb27b92370163db4fe8a830aabb1588a62101938ccbb6ffc3293286b"
+    },
+    {
+      "bytes": 2615,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/blockers-manual.json",
+      "sha256": "eeffcec8e603a22417194bc48d554e3302914f45c326634d306afc779b0c0aea"
+    },
+    {
+      "bytes": 2747,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/blockers.json",
+      "sha256": "8a1744c5051afbaba4df124b03b3c37cd340ae7536aadd808bf6700bab09fbbb"
+    },
+    {
+      "bytes": 1295,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/gates.json",
+      "sha256": "f6f1413007eae2cc19f3157cff8a3ce8591ab4757469e698d0c1af479e95a079"
+    },
+    {
+      "bytes": 25841,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/index.html",
+      "sha256": "52fa2a727db97484b00aeecade91118954debcd4fb11d32968457ae176dd992b"
+    },
+    {
+      "bytes": 12148,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/m1_exit.json",
+      "sha256": "d73b4dd17e8bfa98518f2e15ecb3bb075ff36ce12b5b898cacee35ceb36dcb67"
+    },
+    {
+      "bytes": 3879,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/merges_by_hour.json",
+      "sha256": "369c6a12a2e4b845237518bbc58177c01c852a0d38badc68ac46bcbc7a6cbb51"
+    },
+    {
+      "bytes": 1108,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/progress/milestones.json",
+      "sha256": "aaa154894e7a866a1b19de29c5cc89a569d6016459a8983c6f0381fccf10a460"
+    }
+  ],
+  "phase": "immediate-before-cas",
+  "schema": "timeline.d141hh.single-notes-outside-inventory/v1"
+}

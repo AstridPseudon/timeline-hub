@@ -1,0 +1,19 @@
+{
+  "coverage_limit": "Two late durable samples only; no continuous whole-worker trace and no repair of installer or historical custody gaps.",
+  "first_tool_gap": {
+    "reason": "The worker did not start with the required sampler; this bounded late sampler cannot establish first-tool or continuous coverage.",
+    "status": "FAIL",
+    "tmpdir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-install-review-next/tmpdir"
+  },
+  "interval_seconds": 5.0,
+  "reaped": true,
+  "sampler_exit_code": 0,
+  "sampler_pid": 5,
+  "schema": "timeline.d141hh.single-install-review-sampler/v1",
+  "started_ns": 1793017775698037318,
+  "status": "completed",
+  "stop_free_bytes": 4000000000,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-install-review-next/evidence/disk-trace.txt",
+  "waited": true,
+  "worker_first_tool_trace": false
+}

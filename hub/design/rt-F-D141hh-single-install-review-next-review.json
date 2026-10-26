@@ -1,0 +1,104 @@
+{
+  "schema": "timeline.d141hh.single-install-review/v1",
+  "task": "rt-F-D141hh-single-install-review-next",
+  "verdict": "PASS_BOUNDED_CAS",
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "scope": "Independent installation/source/hash/conservation/custody check only; no semantic review, prose repair, product test, build, service, or ZIP action.",
+  "canonical_targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "bytes": 43978,
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "equals_candidate": true,
+      "backup_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "prefix_bytes": 41963,
+      "suffix_bytes": 2015,
+      "suffix_occurrences": 1
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "bytes": 39916,
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "equals_candidate": true,
+      "backup_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "prefix_bytes": 37956,
+      "suffix_bytes": 1960,
+      "suffix_occurrences": 1,
+      "numbered_ids": 32
+    }
+  },
+  "outside_conservation": {
+    "before_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/outside-before.json",
+    "after_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/evidence/outside-after.json",
+    "count_before": 568,
+    "count_after": 568,
+    "maps_equal": true,
+    "every_entry_recomputed": true,
+    "comparison_fields": ["full_path", "sha256", "bytes", "mode"],
+    "current_matches_before_and_after": true
+  },
+  "cas_source_review": {
+    "installer_worker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next",
+    "wrapper_log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/wrapper.log",
+      "start": "2026-10-26T12:23:14Z",
+      "finalize": "2026-10-26T12:26:58Z",
+      "exit_code": 0
+    },
+    "inline_native_source": {
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-install-next/log.txt",
+      "lines": [5267, 5427],
+      "sha256": "1159b903131a4d89fe870f1bb2e73d6bcc33a129ab1f1d6f6143fa96bd5d5e7a"
+    },
+    "one_guarded_cas": true,
+    "durable_before_inventory": true,
+    "backups_before_mutation_and_fsynced": true,
+    "staged_atomic_replacements": true,
+    "replacement_order": ["README.template.md", "gate-results.md"],
+    "directory_fsync_after_each_replace": true,
+    "readback": true,
+    "second_cas_or_rewrite": false,
+    "rollback_used": false
+  },
+  "checker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+    "sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658",
+    "command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+    "write_flag": false,
+    "result": "PASS_PRIVATE_D141HH_CANDIDATES"
+  },
+  "render": {
+    "function_only": true,
+    "function": "render_readme",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": ["agent", "runtime", "app", "composition"],
+    "placeholders_resolved": true,
+    "balanced_fences": true,
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "actual_readback_render_sha256": "1a6cedb9678cee52dedc44d2d6e8b02af2d82eda988d7b57530e8a10ed141fb0"
+  },
+  "custody_limits": {
+    "installer_first_tool_trace": "MISSING",
+    "installer_tmpdir": "regular file pointer; no mkdir performed",
+    "late_sampler": "two durable samples only; PID, exit, wait and reap observed; no continuous coverage claim",
+    "original_single_custody": "FAIL_CUSTODY remains distinct and unchanged",
+    "main_d141hh_service_disposition": "accepted bounded service PASS, not custody PASS",
+    "late_raw_keep": "retained as prospective and not retroactive",
+    "future_output_only_relocation": "retained",
+    "original_no_body_1135": "NOTRUN; no retarget or reproof",
+    "test_keep": "future submits only; no historical backfill"
+  },
+  "post_cas_assertion": {
+    "failed_after_successful_mutation": true,
+    "cause": "over-strict README wording assertion",
+    "finalization": "read-only hash/map/conservation verification",
+    "canonical_bytes_rewritten_after_failure": false
+  },
+  "no_product_claim": true
+}
