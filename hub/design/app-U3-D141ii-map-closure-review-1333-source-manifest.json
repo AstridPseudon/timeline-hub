@@ -1,0 +1,29 @@
+{
+  "task": "U3 D141ii finite closure",
+  "base": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+  "candidate": {"commit": "eac97ea597b33238eb1428a96dee18f7d9c7f2df", "tree": "750e6dda47888aef91c14ef241aa4a43895a0c21", "parents": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "00a014e2a393ebfb080c4fd85d5a08bc97bc6671"]},
+  "corrected_map": {"path": "app-U3-D141ii-map-return-1329/evidence/affected-proofs.json", "sha256": "f1fa125d4df693ed640d56cc14e62ee4bee3e0850333620bdaf88c039df01563", "entries": 8, "ids": ["9168", "27026", "16601", "24271", "27060", "10328", "32161", "6447"]},
+  "map_adoption": {
+    "comparison": "canonical JSON comparison with prior independent corrected map",
+    "result": "semantic equality for all map entries; only candidate identity and explicit popup nonblocking-gap metadata were added",
+    "original_failure_labels_preserved": true,
+    "single_transition_none_not_gallery": true,
+    "all_eight_later_reproof": true,
+    "full_pair_vs_upstream_owed": true
+  },
+  "pins": {
+    "agent": "e1c751def40f8fde59277226b6c190354d22744c",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "upstream_runtime_overridden": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "main_1322_acceptance_until_D141v": true,
+    "rationale_preserved": true
+  },
+  "prior_validation_log_sha256": {
+    "review-vitest.log": "ff1ac15bcb45eff4917d630b79c2aea97fcf27ccb2c9d2fbd9cfb562502ff0ff",
+    "review-tsc.log": "f398462e2465f7cf4f13b8de1d3efd70a1e78811cd14ef58e951f361511175e9",
+    "review-eslint.log": "25a52b5de80b34c859901d79b833ce9638343f32467ffe21fcc06f09c082db7f",
+    "review-diff-check.log": "63e3425b82e214c65a07873f4d42c3967effe00ca712429648e817d92e844454"
+  },
+  "map_return_recorded_hashes_recomputed": true,
+  "worktree_product_delta": false
+}

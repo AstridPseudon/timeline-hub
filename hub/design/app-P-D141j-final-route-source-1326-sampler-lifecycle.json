@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.worker.disk-sampler.v1",
+  "worker": "app-P-D141j-final-route-source-1326",
+  "session_id": 5511,
+  "interval_seconds": 5,
+  "threshold_free_kb": 4194304,
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-source-1326/evidence/disk-trace.txt",
+  "stop_reason": "explicit_stop_after_evidence",
+  "sampler_exit": "SIGINT/exit 1",
+  "final_free_kb": 4580472,
+  "final_free_gb_decimal": 4.680163,
+  "threshold_reached": false,
+  "scratch_bytes_observed": "68K",
+  "reaped": true
+}

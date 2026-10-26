@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.app.d141j.final-route-source-map.v1",
+  "candidate": {
+    "commit": "04545a1e52c58a5fa938cb4aa0a060328e8d3efc",
+    "tree": "0429c1f57f5d4244d722a59285140451dcf571cb"
+  },
+  "occurrence_derivation": "tests/e2e/local/three-products.p2-popup.spec.ts:273-283 assigns sharedOccurrenceId=f2-occurrence-copy; :943 selects the unchanged data-clip-id selector.",
+  "popup_case": "tests/e2e/local/three-products.p2-popup.spec.ts:941-946",
+  "selector": ".clip-action[data-clip-id=\"f2-occurrence-copy:f2-agent-clip\"]",
+  "fixture_config": "tests/e2e/local/support/app.ts:34-50",
+  "fixture_wrapper": "tests/e2e/local/support/app.ts:62-72",
+  "page_fixture_assignment": "tests/e2e/local/support/app.ts:207-215",
+  "collector_install": "tests/e2e/local/support/d141j-visibility.ts:35-59,104-112",
+  "retention": "tests/e2e/local/support/d141j-visibility.ts:121-146",
+  "output_path": "testInfo.outputPath('d141j-visibility.json') then testInfo.attach('d141j-visibility.json', ...)",
+  "source_events": {
+    "accepted_read": "useAstridShotsHost.ts:210-216",
+    "active_occurrences": "useShotGroups.ts:188",
+    "useShotGroups_input_result": "useShotGroups.ts:273,336",
+    "overlay": "TimelineEditorCore.tsx:931"
+  },
+  "checker": "scripts/testing/check-d141j-visibility.mjs:20-109",
+  "d66_builder": "scripts/testing/d66-plain-stack.mjs:361-395,638-695",
+  "d66_env_propagation": "scripts/testing/d66-plain-stack.mjs:748-765,781-795; playwrightLaunchEnv spreads baseEnv and does not delete TIMELINE_D141J_VISIBILITY_CAPTURE"
+}

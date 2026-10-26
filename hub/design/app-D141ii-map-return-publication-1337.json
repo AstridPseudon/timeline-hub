@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-26T13:37:59.698296+00:00",
+  "worker": "app-U3-D141ii-map-return-1329",
+  "scope": "Byte publication only; exact original verdict/scope controls; no body/merge",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-return-1329/evidence/affected-proofs.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-return-1329-affected-proofs.json",
+      "sha256": "f1fa125d4df693ed640d56cc14e62ee4bee3e0850333620bdaf88c039df01563",
+      "bytes": 12601,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-return-1329/evidence/handoff.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-return-1329-handoff.md",
+      "sha256": "aaccfa419c93e4fe609c69d6c871d9f0a6dce3280c09640847dcddaaf308528c",
+      "bytes": 2204,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-return-1329/evidence/sampler-lifecycle.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-return-1329-sampler-lifecycle.json",
+      "sha256": "18b7fa9683e308d46872a5a5cf090546daa4d0f4c2bebfdb08990253651f9c13",
+      "bytes": 407,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-return-1329/evidence/source-manifest.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-return-1329-source-manifest.json",
+      "sha256": "130715a9bcf7237b2237bc997c6248b64b6bdf3423af9de4d3eff9f111c328a0",
+      "bytes": 3693,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-return-1329/evidence/validation.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-return-1329-validation.md",
+      "sha256": "180b64c5c23d2be230078b087e10626c230abb7d1a686c6d076727ad344d5e3d",
+      "bytes": 1183,
+      "mode": "0o644"
+    }
+  ]
+}

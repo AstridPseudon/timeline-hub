@@ -1,1 +1,1 @@
-app-lead 12:55Z uptime 4494m: daemons alive; all six D141ff selectors terminal+qualified (parent/single/bulk/asset/P1/P3 PASS), placement PASS, popup known gap; visibility source 1226 private; final pins wait Agent final-55 scope; App HOME 82e9e13ddf1d; no refusals/blocked rows; ~/.codex unchanged.
+app-lead 13:47Z uptime 4545m: daemons alive; OWNER D141jj option B: App ships on 82e9e13ddf1d against upstream fc24f84994dc; eac97ea5 NOT merged (post-ZIP); no new full pair/journeys; D141v pin pass waits Agent REG0; popup known gap; no refusals/blocked rows; ~/.codex unchanged.

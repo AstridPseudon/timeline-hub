@@ -1,0 +1,48 @@
+{
+  "task": "U3 D141ii independent finite closure check",
+  "scope": "corrected original-path map and tree conservation only",
+  "finite_closure_verdict": "PASS",
+  "original_overall_verdict": "FAIL_MAP001_MAP002_RETAINED_IMMUTABLE",
+  "source_qualification": "PASS_WITH_FINDINGS from independent review 1317",
+  "candidate": {
+    "commit": "eac97ea597b33238eb1428a96dee18f7d9c7f2df",
+    "tree": "750e6dda47888aef91c14ef241aa4a43895a0c21",
+    "base": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "upstream_parent": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671"
+  },
+  "map_controls": {
+    "corrected_map": "app-U3-D141ii-map-return-1329/evidence/affected-proofs.json",
+    "map_sha256": "f1fa125d4df693ed640d56cc14e62ee4bee3e0850333620bdaf88c039df01563",
+    "entries": 8,
+    "ids": ["9168", "27026", "16601", "24271", "27060", "10328", "32161", "6447"],
+    "all_later_reproof": true,
+    "all_have_executed_changed_mounted_boundary": true,
+    "single_is_transition_none_not_gallery": true,
+    "original_sources_present": true,
+    "popup_known_nonblocking_gap_preserved": true,
+    "full_pair_owed": true
+  },
+  "conservation": {
+    "composition_worktree_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_worktree_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "composition_status_clean": true,
+    "app_integration_branch": "tl/integration",
+    "app_integration_head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "app_integration_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "app_integration_status_clean": true,
+    "candidate_tree_resolves": true,
+    "worker_authored_product_delta": false,
+    "worker_authored_test_pin_generated_delta": false
+  },
+  "pins": {
+    "agent": "e1c751def40f8fde59277226b6c190354d22744c",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "upstream_runtime_overridden": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "rationale_preserved": true,
+    "main_1322_agent_pin_until_D141v_preserved": true
+  },
+  "limitations": [
+    "No source, test, pin, generated, product, Git metadata, browser, service, full-suite, collection, or full-pair change/run was made by this worker.",
+    "Later journey reproof and the full pair against upstream remain owed through the normal service/floors."
+  ]
+}

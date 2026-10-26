@@ -1,0 +1,105 @@
+{
+  "utc": "2026-10-26T13:37:59.698296+00:00",
+  "worker": "app-P-D141j-final-route-review-1333",
+  "scope": "Byte publication only; exact original verdict/scope controls; no body/merge",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/check-source.mjs",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-check-source.mjs",
+      "sha256": "e407e54810058112d44160f62cc7c8ba0cbcf7716c17bc5f07262517dc6cd60d",
+      "bytes": 557,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/findings.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-findings.md",
+      "sha256": "7daa5fe4a59a08c25df1189988b76bc65b13e446932b7e9f61aa5da1bb3c175c",
+      "bytes": 2686,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/handoff.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-handoff.md",
+      "sha256": "0eca46cfb58ecb73341288072ca64bba4cd71f286d8daa56dc0ad55af3b888a7",
+      "bytes": 1076,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/production-propagation-control.mjs",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-production-propagation-control.mjs",
+      "sha256": "6f6e26e766c3d43cd0f8b83a7b42cd76bc45152689a2f2ec93260e08859c9fa9",
+      "bytes": 2726,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/production-propagation-results.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-production-propagation-results.json",
+      "sha256": "aa60719d97ed3de8ab2a3df2e6bac84a978ec9f5e3a970274a74f731d75ca295",
+      "bytes": 865,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/pure-route-control.mjs",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-pure-route-control.mjs",
+      "sha256": "1cf9dd8a8471540acfd819ccfc35cdec06c499d1bedb1b76ac03f9ea6b7154aa",
+      "bytes": 14272,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/review.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-review.json",
+      "sha256": "4fbfa9438b881d4943486f8de27a9ab390cd42f75a074e72b3125c9cdf4676d8",
+      "bytes": 1864,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/route.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-route.json",
+      "sha256": "9b752ed91173aaea8f5972b1a3ab62bc84af094462b9c96a0e457c468d1f9bbd",
+      "bytes": 7766,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/sampler-lifecycle.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-sampler-lifecycle.json",
+      "sha256": "c9b3b01d7c87da57b8ec970ff60bd3bcfc31249878eae47bbaf44dab0bc49f4e",
+      "bytes": 526,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/source-manifest.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-source-manifest.json",
+      "sha256": "243f52d581f4bec180796fbf2275676143c343de67150796fa1e0b3f10b8b484",
+      "bytes": 6309,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/source-map.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-source-map.json",
+      "sha256": "82b4c1bf8e88ebf9c23bfbbf0a931aff7bb0f43741b7b000bbc8575290efcaa6",
+      "bytes": 1544,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/synthetic-control-results.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-synthetic-control-results.json",
+      "sha256": "b7b8134b350150c5de7fb4d8730f635061121bd7f2ae279b8c126b354993cd68",
+      "bytes": 2291,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/synthetic-controls.mjs",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-synthetic-controls.mjs",
+      "sha256": "16f05ecae3c0f738393ae1e3c8be35ab266761f494d0fda5b4c89a689b3d7cd5",
+      "bytes": 2859,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-final-route-review-1333/evidence/validation.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-final-route-review-1333-validation.md",
+      "sha256": "5490f9687cda2af57ee02b5e9d48aa29b9de7373b9c9811bbf6542b9765ea5d6",
+      "bytes": 1788,
+      "mode": "0o644"
+    }
+  ]
+}

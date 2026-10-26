@@ -1,0 +1,11 @@
+{
+  "task": "U3 D141ii bounded map return",
+  "worker": "app-U3-D141ii-map-return-1329",
+  "candidate_tree": "750e6dda47888aef91c14ef241aa4a43895a0c21",
+  "source_tree_conserved": true,
+  "scope": "absolute evidence handoff and corrected applicability map only",
+  "journey_execution": "not_run",
+  "full_pair": "owed",
+  "evidence_outputs_sha256_recorded_in": "source-manifest.json",
+  "cleanup": "none"
+}

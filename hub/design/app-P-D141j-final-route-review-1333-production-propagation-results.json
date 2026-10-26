@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.app.d141j.production-propagation-control.v1",
+  "status": "PASS_REAL_D66_PLAYWRIGHT_SEAM",
+  "source": {
+    "repo": "/home/user/banodoco/reigh-app",
+    "commit": "04545a1e52c58a5fa938cb4aa0a060328e8d3efc",
+    "path": "scripts/testing/d66-plain-stack.mjs"
+  },
+  "intercepted": true,
+  "executed": false,
+  "input": {
+    "observationKey": "TIMELINE_D141J_VISIBILITY_CAPTURE",
+    "value": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}"
+  },
+  "output": {
+    "observationValue": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}",
+    "playwrightOutputDir": "/tmp/d141j-production-propagation-control/p2-popup-add",
+    "junitOutput": "/tmp/original.xml",
+    "runtimeLogDir": null,
+    "runtimeLaunchOrdinal": null
+  },
+  "sideEffects": {
+    "service": false,
+    "browser": false,
+    "request": false,
+    "native": false
+  }
+}

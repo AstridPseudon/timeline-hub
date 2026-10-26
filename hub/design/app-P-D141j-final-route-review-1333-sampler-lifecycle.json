@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.app.d141j.sampler-lifecycle.v1",
+  "status": "PASS_BOUNDED_SOURCE_ONLY",
+  "started_utc": "2026-10-26T13:35:17Z",
+  "samples": 5,
+  "interval_seconds": 1,
+  "admission_floor_bytes": 5583457484,
+  "admission_floor_satisfied": "not_evaluated_future_heavy_gate",
+  "continuous_stop_bytes": 4294967296,
+  "minimum_observed_available_bytes": 4854566912,
+  "heavy_jobs": 0,
+  "native_runs": 0,
+  "test_keep_before_queues": true,
+  "stop_wait_reap": "no child process was started; bounded sampler exited 0"
+}

@@ -1,0 +1,49 @@
+{
+  "utc": "2026-10-26T13:37:59.698296+00:00",
+  "worker": "app-U3-D141ii-map-closure-review-1333",
+  "scope": "Byte publication only; exact original verdict/scope controls; no body/merge",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/findings.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-findings.md",
+      "sha256": "19d437270addb8eee3d5ba1339416e2f3be3b241b42e4bb044654abaf3614316",
+      "bytes": 2453,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/handoff.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-handoff.md",
+      "sha256": "c69229c68e3a9ea6209ed998839b21c95a2386b14eee2cd21a6f38e0e6f8872f",
+      "bytes": 1343,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/review.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-review.json",
+      "sha256": "591f030cff8415c5c5474908ec979904f02bb4c37c9538fc3d6f64f873ddf5d5",
+      "bytes": 2293,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/sampler-lifecycle.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-sampler-lifecycle.json",
+      "sha256": "df575e56b180e66f6d389badfe2456245d13ead734e67a112d42ca120d092652",
+      "bytes": 505,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/source-manifest.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-source-manifest.json",
+      "sha256": "9b5b1d27b7c08e9e6a284cc18ff3da34ebb33083d42eb2503010f609fe81763f",
+      "bytes": 1847,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U3-D141ii-map-closure-review-1333/evidence/validation.md",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-U3-D141ii-map-closure-review-1333-validation.md",
+      "sha256": "6b3ec607ec45f4783c414cb0990fe788ef7c9c65989bee992ee097d547525296",
+      "bytes": 2108,
+      "mode": "0o644"
+    }
+  ]
+}

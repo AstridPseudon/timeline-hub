@@ -1,0 +1,12 @@
+{
+  "task": "U3 D141ii finite closure",
+  "status": "completed",
+  "scope": "bounded worker-evidence disk and process conservation sampler",
+  "samples": 3,
+  "interval_seconds": 5,
+  "stop_threshold_kb": 4194304,
+  "observed_used_kb": [232, 232, 232],
+  "background_children_started": 0,
+  "explicit_stop_wait_reap": "foreground loop completed; no background process was started; no reap was needed",
+  "gaps": ["No browser/service/full/full-pair or journey run; documentation/tree conservation only"]
+}

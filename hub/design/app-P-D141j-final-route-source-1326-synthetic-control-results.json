@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.app.d141j.synthetic-controls.v1",
+  "status": "PASS_FAITHFUL_INTERCEPTS_ONLY",
+  "recipe_unchanged": true,
+  "observation_assignment": "TIMELINE_D141J_VISIBILITY_CAPTURE='{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}'",
+  "expected_occurrence_id": "f2-occurrence-copy",
+  "native_cwd": "/home/user/work/wt/app-pin-04545a1e",
+  "native_argv": [
+    "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "--max-old-space-size=6144",
+    "--import",
+    "tsx",
+    "scripts/testing/d66-plain-stack.mjs",
+    "p2-popup-add"
+  ],
+  "propagation": {
+    "service_process": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}",
+    "playwright_launch": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}",
+    "native_intercept": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}"
+  },
+  "output_retention": {
+    "pass": "testInfo.outputPath('d141j-visibility.json') + attach before page close",
+    "fail": "same finally path; retention.capture may be unavailable and events remain honest"
+  },
+  "intercepted": {
+    "service": [
+      {
+        "executable": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+        "executed": false
+      },
+      {
+        "executable": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+        "executed": false
+      }
+    ],
+    "browser": [
+      {
+        "operation": "playwright child launch",
+        "executed": false,
+        "env_observed": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}"
+      }
+    ],
+    "request": [
+      {
+        "operation": "Runtime/App request",
+        "intercepted": true,
+        "executed": false
+      }
+    ],
+    "native_process": [
+      {
+        "cwd": "/home/user/work/wt/app-pin-04545a1e",
+        "argv": [
+          "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+          "--max-old-space-size=6144",
+          "--import",
+          "tsx",
+          "scripts/testing/d66-plain-stack.mjs",
+          "p2-popup-add"
+        ],
+        "env_observed": "{\"expectedOccurrenceId\":\"f2-occurrence-copy\"}",
+        "side_effects": false
+      }
+    ]
+  }
+}

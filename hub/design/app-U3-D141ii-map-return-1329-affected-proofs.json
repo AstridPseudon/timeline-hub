@@ -1,0 +1,139 @@
+{
+  "task": "U3 D141ii",
+  "status": "corrected_offline_applicability_map",
+  "rule": "These are source maps only. No browser, journey, collection, full suite, or full-pair was run.",
+  "candidate": {"commit": "eac97ea597b33238eb1428a96dee18f7d9c7f2df", "tree": "750e6dda47888aef91c14ef241aa4a43895a0c21"},
+  "base_proof": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+  "common_nativelauncher_and_pins": {
+    "manifest": "public/install-manifest.json",
+    "manifest_runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "manifest_agent": "e1c751def40f8fde59277226b6c190354d22744c",
+    "runtime_lock": "runtime.lock.json unchanged in candidate delta",
+    "upstream_runtime_override": "fa9cd5464a8b37b02f971de375e56be846cd69e2 overridden because ZIP ships local Runtime; D141v owns normal updater/provenance",
+    "observation": "Manifest is launch metadata, not journey proof; each affected mounted path still needs its original journey reproof."
+  },
+  "maps": {
+    "placement": {
+      "accepted_id": "9168",
+      "selector": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+      "original_source": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts", "tests/e2e/local/support/app.ts"],
+      "path": "openTimeline -> openEmbeddedCanonicalShot -> ShotTimelinePreview -> TimelineEditorCore -> TimelineCanvas/useTimelineState -> useExternalDrop -> handleFileDrop -> occurrence.add-media",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "mounted shared boundary; removed text-tool props while passing remaining drop/editor handlers", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx", "role": "mounted shared boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "changed canvas flex/min-height/footer tool layout", "executed": true},
+        {"path": "src/tools/video-editor/hooks/useTimelineState.ts", "role": "changed useExternalDrop argument boundary", "executed": true},
+        {"path": "src/tools/video-editor/hooks/useExternalDrop.ts", "role": "changed drag/drop dispatch boundary; file branch retained, text-tool branch removed", "executed": true},
+        {"path": "src/tools/video-editor/lib/external-drop-utils.ts", "role": "removed text-tool helper; image file handleFileDrop body is unchanged", "executed": false},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "later_reproof": true,
+      "reason": "Actual embedded file placement crosses changed editor/drop seams; do not reduce this to editor chrome."
+    },
+    "popup": {
+      "accepted_id": "27026",
+      "selector": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "original_source": ["tests/e2e/local/three-products.p2-popup.spec.ts", "src/tools/travel-between-images/components/ShotTimelinePreview.tsx", "src/tools/travel-between-images/components/ShotTimelineMediaControls.tsx"],
+      "path": "openPopup -> ShotEditorView -> ShotTimelinePreview -> changed TimelineEditorCore boundary; ADD/SWAP controls remain in unchanged popup sources",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "rendered shared editor boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx", "role": "rendered shared editor boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "rendered child canvas layout boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "protected_add_swap_hunk": "not changed in ShotTimelinePreview/ShotTimelineMediaControls; shared editor boundary is nevertheless mounted",
+      "known_nonblocking_gap": "popup diagnostic remains optional and independent under Main D141ff",
+      "later_reproof": true,
+      "reason": "Private popup diagnostic stays independent/nonblocking, but the protected mounted popup path is not source-unaffected through its changed shared editor import."
+    },
+    "parent": {
+      "accepted_id": "16601",
+      "selector": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "original_source": ["tests/e2e/local/three-products.p2-tour.spec.ts", "tests/e2e/local/support/app.ts"],
+      "path": "openCommandTimeline -> clip-action[data-clip-id=appClipId] pointer drag -> TimelineCanvas -> clip.move parent at patch",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "changed canvas flex/min-height/sticky footer and creation-tool boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "passes changed canvas contract", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditorShellCore.tsx", "role": "mounted shell render/layout boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "parent_identity_note": "This is parent move 16601, not generic parent trim/split.",
+      "later_reproof": true,
+      "reason": "The protected mounted editor executes changed canvas/shell boundaries even though the pointer move handler and v2 save producer are unchanged."
+    },
+    "single": {
+      "accepted_id": "24271",
+      "selector": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+      "original_source": ["tests/e2e/local/three-products.p2-tour.spec.ts", "tests/e2e/local/support/app.ts"],
+      "path": "openCommandTimeline -> clip-action[data-clip-id=transitionClipId] -> Effects tab -> transition combobox -> None -> parent transition remove",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "changed mounted canvas layout/creation-tool boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "changed shared boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditorShellCore.tsx", "role": "changed mounted shell boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "gallery_add_to_timeline": "unrelated upstream UI; not accepted 24271 and not credited",
+      "later_reproof": true,
+      "reason": "Correct original selector is transition-none-single; shared mounted editor boundary changed."
+    },
+    "bulk": {
+      "accepted_id": "27060",
+      "selector": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "original_source": ["tests/e2e/local/three-products.p2-tour.spec.ts", "tests/e2e/local/support/app.ts"],
+      "path": "openCommandTimeline -> select appClipId and shift-select transitionClipId -> Effects tab -> None -> atomic parent transition removes",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "changed mounted canvas layout/creation-tool boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "changed shared boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditorShellCore.tsx", "role": "changed mounted shell boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "later_reproof": true,
+      "reason": "The bulk protected gesture is the transition-none-bulk path, not gallery selection UI; mounted shared boundaries changed."
+    },
+    "registerAsset": {
+      "accepted_id": "10328",
+      "selector": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo",
+      "original_source": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts", "tests/e2e/local/support/app.ts", "src/tools/video-editor/lib/asset-registry.ts"],
+      "path": "openTimeline -> dropFileOnTimeline -> TimelineEditorCore/Canvas -> useTimelineState -> useExternalDrop -> handleFileDrop -> media-import/media-selection -> clip.add-media parent",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/hooks/useTimelineState.ts", "role": "changed useExternalDrop call boundary", "executed": true},
+        {"path": "src/tools/video-editor/hooks/useExternalDrop.ts", "role": "changed dispatch boundary; file branch retained", "executed": true},
+        {"path": "src/tools/video-editor/lib/external-drop-utils.ts", "role": "removed text-tool helper; file handler body unchanged", "executed": false},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "changed mounted boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "later_reproof": true,
+      "reason": "The real media import/registry path crosses changed state and external-drop seams; existing local Runtime/outbox funnel remains in scope for later proof."
+    },
+    "P1": {
+      "accepted_id": "32161",
+      "selector": "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+      "original_source": ["tests/e2e/local/three-products.p1-chain.spec.ts", "tests/e2e/local/p1-diagnostic-safety.ts"],
+      "path": "openChain -> clip-action source -> timeline ruler/playhead -> keyboard s split -> Timing tab source-in trim -> v2 save/outbox/restart/retry",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "mounted editor canvas/layout boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "mounted shared boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditorShellCore.tsx", "role": "mounted shell/layout boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "later_reproof": true,
+      "reason": "P1 source and producer tests are unchanged, but the actual mounted split/trim path executes changed editor boundaries; manifest is metadata only."
+    },
+    "P3": {
+      "accepted_id": "6447",
+      "selector": "M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent",
+      "original_source": ["tests/e2e/local/three-products.spec.ts", "tests/e2e/local/support/gate5-reset-precondition.test.mjs", "tests/e2e/local/support/gate5-fault-order.test.mjs"],
+      "path": "openCommandTimeline -> AgentChat edit -> lost ACK/recovery -> newer local gesture -> exact retry/restart -> guarded Undo",
+      "changed_paths": [
+        {"path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx", "role": "direct Agent edit UI/controlflow", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx", "role": "direct mounted gesture/layout boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditorShellCore.tsx", "role": "direct mounted shell boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineRenderControls.tsx", "role": "mounted render/control boundary", "executed": true},
+        {"path": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "role": "shared boundary", "executed": true},
+        {"path": "public/install-manifest.json", "role": "native launch pin metadata", "executed": "startup metadata"}
+      ],
+      "later_reproof": true,
+      "reason": "P3 directly exercises multiple changed editor and AgentChat paths; exact retry/undo remains an owed mounted proof."
+    }
+  }
+}
