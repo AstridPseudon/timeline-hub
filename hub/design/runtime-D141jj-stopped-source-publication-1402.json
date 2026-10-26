@@ -1,0 +1,90 @@
+{
+  "at": "2026-10-26T14:01:55.244732+00:00",
+  "qualification": "Unreviewed incomplete stopped WIP only. Last positive control failed; no source PASS. Exact transport, no new source or qualification.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/check.sh",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--check.sh",
+      "sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+      "bytes": 20995,
+      "mode": "0o755"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/core-inventory.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--core-inventory.json",
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "bytes": 25664,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/delivery_gate_build.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--delivery_gate_build.py",
+      "sha256": "fb4d5feea84caf0deca96a028ca85eb2b92360af32f1c2dd1d425ee952baac26",
+      "bytes": 15920,
+      "mode": "0o755"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/delivery_lifecycle.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--delivery_lifecycle.py",
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "bytes": 23186,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/inherited-runtime-final-service-rows.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--inherited-runtime-final-service-rows.txt",
+      "sha256": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+      "bytes": 5513,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/install-final-services.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--install-final-services.py",
+      "sha256": "0d44de26e229a68fa8d9773477962219dec9a8d25f8f227bf1d22fd93450ea82",
+      "bytes": 13245,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/install-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--install-map.json",
+      "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618",
+      "bytes": 3384,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/receiving_controls.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--receiving_controls.py",
+      "sha256": "a5d20f98d80c066179e65e7368735c89e09da136a36da0098737431dc2dff08a",
+      "bytes": 3696,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/run-final-delivery.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--run-final-delivery.py",
+      "sha256": "2a655233cd8d3e00163454811eb61d878891caf86edf368cb513fbdff6c17a3e",
+      "bytes": 13193,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/run-final-services.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--run-final-services.py",
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "bytes": 18055,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/candidate/runtime-final-service-rows.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-candidate--runtime-final-service-rows.txt",
+      "sha256": "89f420de2db94310b0ae9516dacadaf3cf04fb98039971a5f1e24e28fafbe65b",
+      "bytes": 5505,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-source-1345/evidence/check_jj.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-stopped-1402-check_jj.py",
+      "sha256": "922fdfe1adeb6c7bb8a347202784e5e49fd458b3368a5d73a4c09eb14b0158b7",
+      "bytes": 11249,
+      "mode": "0o644"
+    }
+  ]
+}
