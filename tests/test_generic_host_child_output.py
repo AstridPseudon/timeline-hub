@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 import threading
 import time
@@ -12,7 +11,6 @@ import pytest
 from astrid.core.execution import generic_host
 from astrid.core.execution.generic_host import GenericPackHost, HostCancelled
 from tests.test_generic_host import _write_manifest
-
 
 _PIPE_CAPACITY = 4096
 
