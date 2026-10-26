@@ -270,7 +270,6 @@ function createTestStore(data: TimelineData = timelineData) {
     },
     chrome: {
       handleAddTrack: vi.fn(),
-      handleAddTextAt: vi.fn(),
       handleClearUnusedTracks: vi.fn(),
       unusedTrackCount: 0,
     },

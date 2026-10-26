@@ -92,7 +92,6 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/examples/extensions/live-webcam-canary/index.ts",
   "src/tools/video-editor/examples/extensions/postprocess-shader-canary/index.ts",
   "src/tools/video-editor/hooks/clip-editing/useClipSplitting.ts",
-  "src/tools/video-editor/hooks/clip-editing/useClipTextOverlay.ts",
   "src/tools/video-editor/hooks/useAgentSession.ts",
   "src/tools/video-editor/hooks/useClipResizeGesture.ts",
   "src/tools/video-editor/hooks/useEffectResources.ts",

@@ -24,7 +24,6 @@ import {
   useClipDeletion,
   useClipPositioning,
   useClipSplitting,
-  useClipTextOverlay,
 } from './clip-editing/index.ts';
 import type { ClipEditingContext } from './clip-editing/index.ts';
 import type { DeleteClipOptions } from './clip-editing/types.ts';
@@ -55,8 +54,6 @@ export interface UseClipEditingResult {
   handleToggleMuteClips: (clipIds: string[]) => void;
   handleToggleMute: () => void;
   handleDetachAudioClip: (clipId: string) => void;
-  handleAddText: () => void;
-  handleAddTextAt: (trackId: string, time: number) => void;
 }
 
 export { DURATION_KEYS, patchAffectsDuration, recalcActionEnd } from '@/tools/video-editor/lib/clip-editing-utils.ts';
@@ -348,7 +345,6 @@ export function useClipEditing({
   const clipPositioning = useClipPositioning(clipEditingContext);
   const clipSplitting = useClipSplitting(clipEditingContext);
   const clipAudioManagement = useClipAudioManagement(clipEditingContext);
-  const clipTextOverlay = useClipTextOverlay(clipEditingContext);
 
   return {
     onOverlayChange,
@@ -359,6 +355,5 @@ export function useClipEditing({
     ...clipPositioning,
     ...clipSplitting,
     ...clipAudioManagement,
-    ...clipTextOverlay,
   };
 }
