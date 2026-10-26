@@ -1,0 +1,25 @@
+{
+  "candidate": "8f278b91accec5852e39bb84822e99124fccb81d",
+  "result": "FAIL",
+  "predicates": [
+    {"name":"Tour early gate / D135 lost-gate prevention","status":"preserved","evidence":"AgentChatPanel checks tourRunning and returns TourChatPanel before available session hooks; protected Tour source/tests unchanged."},
+    {"name":"Runtime door/status and local unavailable state","status":"preserved","evidence":"isTimelineAgentSessionsAvailable and RuntimeConnection status paths remain; targeted AgentChat tests pass."},
+    {"name":"voice input and Stop composer behavior","status":"preserved","evidence":"useAgentVoice, voice guards, and AgentChatComposer voice/Stop controls remain; AgentChat targeted tests pass."},
+    {"name":"chat menu and new-chat flow","status":"preserved","evidence":"AgentChatMenu and NewChatMenu use separate refs and overlay state; menu/startup tests pass."},
+    {"name":"draft/outbox queue persistence and dependent recovery","status":"preserved","evidence":"ProjectChatDraftPersistence, CAS save, recovery rebind, paused head, and retry paths remain; hooks/commands protected paths unchanged."},
+    {"name":"sent-request queue filtering","status":"preserved","evidence":"displayedQueue filters transcript request IDs plus active and optimistic IDs; upstream active/optimistic tests retained and pass."},
+    {"name":"whole-chat Markdown export","status":"preserved","evidence":"conversationExport implementation/tests and AgentChat download button include turns, tool results, editor requests, optimistic input, and assistant draft."},
+    {"name":"calmer preview transport","status":"preserved","evidence":"hover/touch reveal, compact controls, volume/speed/fullscreen remain; loop Player prop and resolution transport are absent; 15 playback tests pass."},
+    {"name":"upstream installer User-Agent pin","status":"lost","evidence":"manifest names Agent 28e56, while upstream 61062 names e1c751; qualified Agent 28e56 lacks e1c751 astrid-installer User-Agent behavior.","severity":"blocker","fix_scope":"qualify later Agent freeze-2 receiving producer and regenerate manifest with supported updater"},
+    {"name":"C0 production caller wire shape and guards","status":"unchanged_in_scope","evidence":"No runtime/client/command/placement source paths changed from local parent; this review does not claim integrated Runtime proof."},
+    {"name":"source placement guards (16) and loads (2)","status":"unchanged_in_scope","evidence":"Protected placement and command/hook source paths have zero changed paths from local parent."}
+  ],
+  "test_attribution": {
+    "local_parent_family": "existing AgentChat, Tour, preview, queue, Runtime/outbox and foundation behavior retained; protected paths zero changed",
+    "upstream_d085_family": "9 calmer-preview paths, including playback/preference tests",
+    "upstream_61062_family": "manifest producer pin only; required Agent behavior is not in qualified producer",
+    "upstream_779_family": "action logs, export module/test, and AgentChat export integration/test",
+    "upstream_d822_family": "AgentChat queue filtering/Stop changes, composer, and queue tests",
+    "independent_targeted_total": "116 tests in 5 files; no full-suite credit"
+  }
+}

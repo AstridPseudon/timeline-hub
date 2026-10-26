@@ -1,0 +1,47 @@
+{
+  "result": "FAIL",
+  "candidate": {
+    "commit": "8f278b91accec5852e39bb84822e99124fccb81d",
+    "tree": "99d79cb47496c0ca682b0cd42aa911177761bb31",
+    "parents": [
+      "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+      "d822d2f5d2bd05187b4ff5b6071c3e13945d4747"
+    ]
+  },
+  "upstream": {
+    "commit": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "sequence": [
+      "d0853acbc5ddd0f1a80fb6e2d99eb66bd93df10e",
+      "61062e5556829be54139408c6e039861557c6621",
+      "7796159ce89408aa307988ec4cfc29bc99783a25",
+      "d822d2f5d2bd05187b4ff5b6071c3e13945d4747"
+    ]
+  },
+  "findings": [
+    {
+      "id": "U3-D141l-001",
+      "severity": "blocker",
+      "path": "public/install-manifest.json",
+      "predicate": "Freeze-2 upstream installer download User-Agent behavior must remain available through the producer named by the manifest",
+      "evidence": {
+        "upstream_pin_commit": "61062e5556829be54139408c6e039861557c6621",
+        "upstream_agent_pin": "e1c751def40f8fde59277226b6c190354d22744c",
+        "required_behavior_commit": "e1c751def40f8fde59277226b6c190354d22744c",
+        "required_behavior_path": "astrid/installer/tools.py",
+        "required_behavior": "download() constructs urllib.request.Request with User-Agent astrid-installer/<ASTRID_VERSION>",
+        "candidate_agent_pin": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "candidate_agent_contains_required_behavior": false,
+        "ancestry_check": "e1c751def is neither an ancestor nor a descendant of 28e56cac",
+        "candidate_manifest_generation": "normal scripts/installer/update-manifest.mjs --write succeeds for qualified Agent/Runtime tuple"
+      },
+      "exact_fix_scope": "Obtain and qualify the exact later Agent freeze-2 receiving producer that contains e1c751def's installer UA behavior, then regenerate public/install-manifest.json with the supported updater. Do not hand-edit the manifest, silently adopt e1c751def, or alter App guards/tests."
+    }
+  ],
+  "other_findings": 0,
+  "coverage_limits": [
+    "No full, browser, journey, localhost, or live-socket suite was run per brief.",
+    "Targeted checks do not establish current integrated Runtime/Agent/Composition tuple readiness.",
+    "The candidate index is intentionally not staged by this worker; the harness owns staging/commit."
+  ]
+}

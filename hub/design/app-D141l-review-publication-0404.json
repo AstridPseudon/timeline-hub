@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-26T04:03:31.699083+00:00",
+  "worker": "app-U3-D141l-independent-review-0358",
+  "verdict": "FAIL",
+  "finding": "U3-D141l-001 qualified Agent installer UA producer required",
+  "publications": [
+    {
+      "name": "app-U3-D141l-independent-review-0358-findings.md",
+      "sha256": "61b9c481cc9af11baad3eee2e32324962e193cfbc4a2e83a55bb8eeca1047cab",
+      "bytes": 3002
+    },
+    {
+      "name": "app-U3-D141l-independent-review-0358-handoff.md",
+      "sha256": "a1cf58d826c1800afa853cfecbde2e1995555dcd9cd542ed9671758e3de5faf1",
+      "bytes": 1227
+    },
+    {
+      "name": "app-U3-D141l-independent-review-0358-predicate-map.json",
+      "sha256": "7105d36a15123d190229d3d913df7d404940f2de28f59a61c9ab0f47cab07f15",
+      "bytes": 3237
+    },
+    {
+      "name": "app-U3-D141l-independent-review-0358-review.json",
+      "sha256": "82cbf3228bad1362bf15e20c97d7977f51f200123ea11e484187099bfbb4a7e0",
+      "bytes": 2376
+    },
+    {
+      "name": "app-U3-D141l-independent-review-0358-source-manifest.json",
+      "sha256": "8574d05c3423ecb8b78a2d0ccfe9931287b9d685a4ddc1e535634b36d9b83c4d",
+      "bytes": 3652
+    },
+    {
+      "name": "app-U3-D141l-independent-review-0358-validation.md",
+      "sha256": "4b788405dd8a4e04df85c6183bf68ec30213986c3e1bbdacc0ba8c7b7a4b0a41",
+      "bytes": 3430
+    }
+  ]
+}

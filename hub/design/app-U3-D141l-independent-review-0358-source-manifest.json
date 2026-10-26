@@ -1,0 +1,64 @@
+{
+  "review": "U3 D141l independent review",
+  "candidate": {
+    "commit": "8f278b91accec5852e39bb84822e99124fccb81d",
+    "tree": "99d79cb47496c0ca682b0cd42aa911177761bb31",
+    "local_parent": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "upstream_parent": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "upstream_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36"
+  },
+  "upstream_sequence": [
+    {"commit":"d0853acbc5ddd0f1a80fb6e2d99eb66bd93df10e","subject":"Calm the preview player controls","unique_paths":9},
+    {"commit":"61062e5556829be54139408c6e039861557c6621","subject":"Pin the installer User-Agent fix","unique_paths":1},
+    {"commit":"7796159ce89408aa307988ec4cfc29bc99783a25","subject":"Add whole chat Markdown download","unique_paths":5},
+    {"commit":"d822d2f5d2bd05187b4ff5b6071c3e13945d4747","subject":"hide sent requests from queue","unique_paths":3}
+  ],
+  "full_16_path_accounting": {
+    "paths_changed_from_local_parent": [
+      "src/pages/Home/PublicAstridShell.css",
+      "src/shared/components/RuntimeConnection/EmptyEditorShell.tsx",
+      "src/shared/components/conversation/actionGroupLogs.ts",
+      "src/shared/components/conversation/conversationExport.test.ts",
+      "src/shared/components/conversation/conversationExport.ts",
+      "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "src/tools/video-editor/components/AgentChat/AgentChatComposer.tsx",
+      "src/tools/video-editor/components/PreviewPanel/PreviewPanel.tsx",
+      "src/tools/video-editor/components/PreviewPanel/PreviewTransport.tsx",
+      "src/tools/video-editor/components/PreviewPanel/RemotionPreview.playback.test.tsx",
+      "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx",
+      "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.test.ts",
+      "src/tools/video-editor/components/PreviewPanel/previewPlaybackPreferences.ts",
+      "src/tools/video-editor/lib/themeTokens.ts"
+    ],
+    "conflict_path": "public/install-manifest.json",
+    "conflicts": [
+      "public/install-manifest.json",
+      "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx"
+    ],
+    "unrelated_changed_paths": 0,
+    "candidate_conflict_blobs": {
+      "public/install-manifest.json":"a7365eb2b6b91fc8f28b1e5a362925c158bdb253",
+      "src/tools/video-editor/components/AgentChat/AgentChat.tsx":"c64a361d164b88f37773d85657eb451847d18b48",
+      "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx":"7e614ad02e92af16816f4a4b93daf47ae2f464ba",
+      "src/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx":"9bb629eee5511cc074a8e5faa5d9886e851445f6"
+    }
+  },
+  "qualified_tuple": {
+    "agent_commit":"28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree":"2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "runtime_commit":"6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree":"ac5b862744bece65b2e30565db1777bacd60da28",
+    "composition_commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "runtime_schema_digest":"sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "installer_ua": {
+    "upstream_commit":"e1c751def40f8fde59277226b6c190354d22744c",
+    "path":"astrid/installer/tools.py",
+    "behavior_present_in_qualified_agent":false,
+    "required_next_step":"later Agent freeze-2 receiving producer qualification"
+  }
+}
