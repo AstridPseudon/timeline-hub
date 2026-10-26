@@ -10,6 +10,39 @@ from pathlib import Path
 from astrid.core.cli.domain_output import DomainResult, print_result
 
 
+def _commit_conflict_message(parsed, details: Mapping[str, object]) -> str:
+    """Present the commit refusal with the same actor/discard-first guidance as the editor."""
+    current = details.get("current")
+    base = details.get("base")
+    current_revision = current.get("revision_id") if isinstance(current, Mapping) else None
+    base_revision = base.get("revision_id") if isinstance(base, Mapping) else None
+    if isinstance(current_revision, str) and current_revision.startswith("astrid.editor.timeline."):
+        actor = "the editor"
+    else:
+        actor = "someone"
+    from astrid.sdk.timeline.revisions import short_revision
+
+    changed = []
+    conflicts = details.get("conflicts")
+    if isinstance(conflicts, list):
+        for conflict in conflicts:
+            if isinstance(conflict, Mapping):
+                ref = conflict.get("ref")
+                path = conflict.get("path")
+                if isinstance(ref, str) and ref:
+                    changed.append(ref)
+                elif isinstance(path, list) and path:
+                    changed.append("/".join(str(part) for part in path))
+    changed_text = ", ".join(changed) if changed else "the changed timeline fields"
+    return (
+        f"not published: {actor} published {short_revision(current_revision)} after your checkout "
+        f"({short_revision(base_revision)}), and you both changed:\n  {changed_text}\n"
+        f"next: timelines discard {parsed.ref} --project {parsed.project}, then timelines checkout "
+        f"{parsed.ref} --project {parsed.project} --fresh, and re-apply your edit.\n"
+        "  force overwrite is refused; discard the newer head first."
+    )
+
+
 def _document_error(parsed, exc: Exception, *, code: str | None = None) -> DomainResult:
     """Turn a detached-document refusal into the normal structured CLI error."""
     from astrid.sdk.contracts import ErrorObject
@@ -25,8 +58,11 @@ def _document_error(parsed, exc: Exception, *, code: str | None = None) -> Domai
         "suggested_command",
         f"astrid timelines checkout {parsed.ref} --project {parsed.project}",
     )
+    message = str(exc)
+    if details.get("status") in {"conflict", "refused"} and isinstance(details.get("current"), Mapping):
+        message = _commit_conflict_message(parsed, details)
     return DomainResult.failure(
-        ErrorObject(code or str(getattr(exc, "code", "timeline_commit_error")), str(exc), details),
+        ErrorObject(code or str(getattr(exc, "code", "timeline_commit_error")), message, details),
         idempotency_key=parsed.idempotency_key or "",
     )
 
@@ -148,6 +184,13 @@ def commit_document(parsed) -> int:
         return print_result(result, as_json=parsed.json)
     try:
         checkout, bundle, base = _detached_document(parsed)
+        summary = None
+        if not parsed.json and not parsed.dry_run:
+            edits = checkout.edits()
+            summary = (
+                len(edits.get("changes") or []) if isinstance(edits, Mapping) else 0,
+                len(checkout.changed_cut_ids()),
+            )
         raw = _preview_detached_document(checkout, bundle, base, parsed, dry_run=parsed.dry_run)
         result = _commit_envelope(raw, parsed.idempotency_key)
     except (TimelineEditError, WorkspaceClientError, OSError, ValueError, TypeError, KeyError) as exc:
@@ -156,18 +199,39 @@ def commit_document(parsed) -> int:
         result,
         as_json=parsed.json,
         human_renderer=lambda value: _render_commit_result(
-            value, dry_run=parsed.dry_run, label=parsed.message
+            value, dry_run=parsed.dry_run, label=parsed.message, summary=summary,
+            project=parsed.project, ref=parsed.ref,
         ),
     )
 
 
-def _render_commit_result(value: object, *, dry_run: bool, label: str | None = None) -> str:
+def _render_commit_result(
+    value: object,
+    *,
+    dry_run: bool,
+    label: str | None = None,
+    summary: tuple[int, int] | None = None,
+    project: str | None = None,
+    ref: str | None = None,
+) -> str:
     if dry_run:
         return f"preview only; no publication accepted{f' · {label}' if label else ''}"
     if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
         raise TypeError("native commit renderer received an invalid result envelope")
     data = value.data
     suffix = f" · {label}" if label else ""
+    if summary is not None:
+        from astrid.sdk.timeline.revisions import short_revision
+
+        previous = short_revision(data.get("previous_revision_id"))
+        accepted = short_revision(data.get("accepted_revision_id"))
+        clip_word = "clip" if summary[0] == 1 else "clips"
+        cut_word = "cut" if summary[1] == 1 else "cuts"
+        return (
+            f"published {previous} → {accepted}: {label or 'Timeline edit'}\n"
+            f"changed: {summary[0]} {clip_word} in {summary[1]} {cut_word}\n"
+            f"next: timelines edit {ref or '<timeline>'} --project {project or '<project>'}"
+        )
     return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}"
             f"{suffix}\n"
             f"{data['show_command']}")

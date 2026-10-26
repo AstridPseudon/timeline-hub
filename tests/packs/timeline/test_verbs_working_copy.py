@@ -596,26 +596,23 @@ def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
     (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
     ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
 ])
-def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
-    from astrid.sdk.timeline import store
+def test_commit_conflict_names_the_writer_and_offers_discard_first(head, who):
+    from types import SimpleNamespace
 
-    class _Timelines:
-        def open_composition(self, *_args, **_kwargs):
-            return type("Shown", (), {"ok": True, "error": None,
-                                      "data": {"summary": {"head_revision_id": head}}})()
+    from astrid.packs.timeline.cli_native import _commit_conflict_message
 
-    class _Client:
-        timelines = _Timelines()
-
-    monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
-    monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
-
-    with pytest.raises(TimelineEditError) as refused:
-        store.publish_bundle(copy.deepcopy(bundle()), "key", client=_Client())
-    message = str(refused.value)
+    parsed = SimpleNamespace(ref="t", project="p")
+    details = {
+        "status": "conflict",
+        "reason": "dependency_changed",
+        "base": {"revision_id": "rev-0", "publication_id": "base"},
+        "current": {"revision_id": head, "publication_id": "head"},
+        "conflicts": [{"ref": "p/a-rocket (clip) moved 1.8s", "path": ["a-rocket"]}],
+    }
+    message = _commit_conflict_message(parsed, details)
 
     assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
     assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
-    assert "  publish --force overwrites the newer published version." in message
+    assert "force overwrite is refused" in message
     assert "to overwrite theirs" not in message
     assert "astrid.e\n" not in message and "astrid.e " not in message
