@@ -735,8 +735,8 @@ describe('shot timeline popup persistence', () => {
     const loaded = await provider.loadTimeline('shot');
     expect(loaded.config).toMatchObject({
       output: nextConfig.output,
-      tracks: nextConfig.tracks,
-      clips: nextConfig.clips,
+      tracks: [{ id: 'video' }, { id: 'audio' }],
+      clips: [{ id: 'alpha-video', hold: 2 }, { id: 'alpha-audio', hold: 2 }],
     });
     await provider.saveTimeline('shot', nextConfig);
 
@@ -761,7 +761,56 @@ describe('shot timeline popup persistence', () => {
 
     expect(provider.adoptCleanBaseline(nextConfig, nextComposition)).toBe(false);
     const loaded = await provider.loadTimeline('shot');
-    expect(loaded.config).toMatchObject({ output: config.output, tracks: config.tracks, clips: config.clips });
+    expect(loaded.config).toMatchObject({
+      output: config.output,
+      tracks: [{ id: 'video' }, { id: 'audio' }],
+      clips: [{ id: 'alpha-video' }, { id: 'alpha-audio' }],
+    });
+  });
+
+  it('round-trips the occurrence child timeline without projection IDs or track groups', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const publish = vi.fn(async (request) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-4')!;
+    const projected = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const provider = createShotTimelineDataProvider(projected, composition, 'occ-4', adapter);
+
+    const loaded = await provider.loadTimeline('shot-round-trip');
+    expect(loaded.config.clips.map((clip) => clip.id)).toEqual(['beta-video']);
+    expect(loaded.config.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    const edited = {
+      ...loaded.config,
+      clips: loaded.config.clips.map((clip) => clip.id === 'beta-video'
+        ? { ...clip, label: 'Edited child clip', hold: 1.5 } : clip),
+    };
+
+    await provider.saveTimeline('shot-round-trip', edited, loaded.configVersion);
+    const saved = publish.mock.calls[0]![0].graph;
+    const publishedOccurrence = saved.occurrences.find((item) => item.occurrence_id === 'occ-4')!;
+    const savedRevision = saved.shot_revisions.find((item) => (
+      item.shot_id === publishedOccurrence.shot_id && item.revision_id === publishedOccurrence.revision_id
+    ))!;
+    const savedTimeline = savedRevision.internal_timeline_revision.timeline;
+    expect(savedTimeline.clips.map((clip) => clip.id)).toEqual(['beta-video']);
+    expect(savedTimeline.clips.find((clip) => clip.id === 'beta-video')).toMatchObject({
+      id: 'beta-video', label: 'Edited child clip', hold: 1.5,
+    });
+    expect(savedTimeline.tracks.every((track) => !track.id.includes('~'))).toBe(true);
+    expect(savedTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+
+    const savedComposition = adapter.prepare(saved);
+    const savedOccurrence = savedComposition.occurrences.find((item) => item.occurrenceId === 'occ-4')!;
+    const reopened = createShotTimelineDataProvider(
+      projectCanonicalComposition({ ...savedComposition, occurrences: [savedOccurrence] }).config,
+      savedComposition,
+      'occ-4',
+      adapter,
+    );
+    const reloaded = await reopened.loadTimeline('shot-round-trip-reload');
+    expect(reloaded.config.clips.find((clip) => clip.id === 'beta-video')).toMatchObject({
+      id: 'beta-video', label: 'Edited child clip', hold: 1.5,
+    });
   });
 
 
