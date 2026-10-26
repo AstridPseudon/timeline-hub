@@ -141,6 +141,9 @@ shutil.copyfile(os.environ['MOCK_MANIFEST'], sys.argv[sys.argv.index('--output')
         const launcherSource = path.join(root, 'mock-uv-launcher.cs');
         const launcherScript = path.join(root, 'build-mock-uv.ps1');
         const executable = path.join(root, 'mock-uv.exe');
+        const systemPowerShellSource = path.join(root, 'mock-system-powershell.cs');
+        const systemPowerShellScript = path.join(root, 'build-mock-system-powershell.ps1');
+        const systemPowerShell = path.join(root, 'system root/System32/WindowsPowerShell/v1.0/powershell.exe');
         await writeFile(mockScript, mockUv);
         await writeFile(launcherSource, String.raw`
 using System;
@@ -186,13 +189,44 @@ public static class AstridMockUvLauncher {
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_UV_LAUNCHER_SOURCE)) -OutputType ConsoleApplication -OutputAssembly $env:MOCK_UV_EXECUTABLE
 `);
+        await writeFile(systemPowerShellSource, String.raw`
+using System;
+using System.IO;
+public static class AstridMockSystemPowerShell {
+    public static int Main(string[] arguments) {
+        string argumentPath = Environment.GetEnvironmentVariable("MOCK_BOOTSTRAP_ARGS");
+        if (!String.IsNullOrEmpty(argumentPath)) File.WriteAllText(argumentPath, String.Join(Environment.NewLine, arguments));
+        if (Environment.GetEnvironmentVariable("MOCK_BOOTSTRAP_STDERR") == "1") Console.Error.WriteLine("bootstrap progress on stderr");
+        string source = Environment.GetEnvironmentVariable("MOCK_SOURCE_UV");
+        if (String.IsNullOrEmpty(source)) source = Environment.GetEnvironmentVariable("MOCK_UV_SOURCE");
+        string destination = Path.Combine(Environment.GetEnvironmentVariable("UV_UNMANAGED_INSTALL"), "uv.exe");
+        File.Copy(source, destination, true);
+        return 0;
+    }
+}
+`);
+        await writeFile(systemPowerShellScript, `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_SYSTEM_POWERSHELL_SOURCE)) -OutputType ConsoleApplication -OutputAssembly $env:MOCK_SYSTEM_POWERSHELL_EXECUTABLE
+`);
         env.MOCK_UV_SCRIPT = mockScript;
         env.MOCK_UV_PYTHON = process.env.ASTRID_TEST_PYTHON || 'python';
         env.MOCK_UV_LAUNCHER_SOURCE = launcherSource;
         env.MOCK_UV_EXECUTABLE = executable;
+        env.MOCK_SYSTEM_POWERSHELL_SOURCE = systemPowerShellSource;
+        env.MOCK_SYSTEM_POWERSHELL_EXECUTABLE = systemPowerShell;
+        await mkdir(path.dirname(systemPowerShell), { recursive: true });
         await rm(executable, { force: true });
+        await rm(systemPowerShell, { force: true });
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', launcherScript], { cwd: repo, env });
+        await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', systemPowerShellScript], { cwd: repo, env });
         env.MOCK_UV_SOURCE = executable;
+        const systemPowerShellCommand = "$PowerShell = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'";
+        const windowsInstaller = path.join(root, 'windows-install.ps1');
+        const installerScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
+          .replace(systemPowerShellCommand, `$PowerShell = '${systemPowerShell}'`);
+        await writeFile(windowsInstaller, installerScript);
+        env.MOCK_INSTALL_SCRIPT = windowsInstaller;
       } else {
         env.MOCK_UV_SOURCE = path.join(windowsBootstrap, 'uv.exe');
         await mkdir(windowsBootstrap, { recursive: true });
@@ -214,6 +248,7 @@ Copy-Item -LiteralPath $env:MOCK_UV_SOURCE -Destination (Join-Path $env:UV_UNMAN
         Copy-Item $env:MOCK_MANIFEST $OutFile
     }
 }
+if ($env:MOCK_PROCESSOR_ARCHITECTURE) { $env:PROCESSOR_ARCHITECTURE = $env:MOCK_PROCESSOR_ARCHITECTURE }
 try {
     if ($args.Count) {
         & ([scriptblock]::Create([IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT))) @args
@@ -227,7 +262,7 @@ try {
 [Console]::WriteLine('PREFERENCE: ' + $ErrorActionPreference)
 [Console]::WriteLine('NATIVE-STATUS: ' + $global:LASTEXITCODE)
 `);
-      env.MOCK_INSTALL_SCRIPT = path.join(repo, 'public/install.ps1');
+      if (process.platform !== 'win32') env.MOCK_INSTALL_SCRIPT = path.join(repo, 'public/install.ps1');
       return harness;
     },
     cleanup() { return rm(root, { recursive: true, force: true }); },

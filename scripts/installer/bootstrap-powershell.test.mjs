@@ -2,13 +2,22 @@ import assert from 'node:assert/strict';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { test } from 'node:test';
 import { createPinnedRepo, failure, fixture, observe, preparation, repo, terminalInterrupt } from './fixture.mjs';
 import { declaredSkip } from '../../scripts/quality/declared-skip.mjs';
 
 // CI selects pwsh on POSIX and both Windows PowerShell 5.1 and pwsh on Windows.
 const powershell = process.env.ASTRID_TEST_PWSH || 'pwsh';
+
+function assertLocalRequirement(localInstall, expectedPath, sha, suffix = '') {
+  const requirement = localInstall.find((argument) => argument.startsWith('git+') && argument.endsWith(`@${sha}${suffix}`));
+  assert.ok(requirement, JSON.stringify(localInstall));
+  const pinned = suffix ? requirement.slice(4, -suffix.length) : requirement.slice(4);
+  const revision = pinned.lastIndexOf('@');
+  assert.equal(pinned.slice(revision + 1), sha);
+  assert.equal(fileURLToPath(pinned.slice(0, revision)), expectedPath);
+}
 
 test('PowerShell opens install log appends with sharing compatible with the running service', async () => {
   const script = await readFile(path.join(repo, 'public/install.ps1'), 'utf8');
@@ -47,7 +56,9 @@ test('PowerShell explains first-run preparation before Python setup completes', 
 
 for (const architecture of ['PROCESSOR_ARCHITECTURE', 'PROCESSOR_ARCHITEW6432']) {
   test(`PowerShell refuses ARM64 via ${architecture} before downloads`, () => scenario(async (context, run) => {
-    const result = await run([], { PROCESSOR_ARCHITECTURE: 'AMD64', PROCESSOR_ARCHITEW6432: '', [architecture]: 'ARM64' });
+    const result = await run([], architecture === 'PROCESSOR_ARCHITECTURE'
+      ? { MOCK_PROCESSOR_ARCHITECTURE: 'ARM64', PROCESSOR_ARCHITECTURE: 'AMD64', PROCESSOR_ARCHITEW6432: '' }
+      : { PROCESSOR_ARCHITECTURE: 'AMD64', PROCESSOR_ARCHITEW6432: 'ARM64' });
     alive(result);
     assert.match(result.stdout, /CAUGHT: Astrid does not support Windows ARM64 yet\./);
     assert.doesNotMatch(result.stdout, /Details:|Astrid could not get ready/);
@@ -58,7 +69,7 @@ for (const architecture of ['PROCESSOR_ARCHITECTURE', 'PROCESSOR_ARCHITEW6432'])
 
 test('PowerShell -File reports ARM64 refusal as one sentence with a failure status', () => scenario(async (context) => {
   const result = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', path.join(repo, 'public/install.ps1')], {
-    PROCESSOR_ARCHITECTURE: 'ARM64', PROCESSOR_ARCHITEW6432: '',
+    PROCESSOR_ARCHITECTURE: 'AMD64', PROCESSOR_ARCHITEW6432: 'ARM64',
   });
   assert.equal(result.code, 1);
   assert.equal(result.stderr.trim(), 'Astrid does not support Windows ARM64 yet.');
@@ -225,9 +236,8 @@ test('PowerShell tolerates native stderr, forwards arguments and avoids Python s
   assert.ok(calls.every((args) => !args.includes('--require-hashes')), 'bootstrap must not install third-party dependencies');
   const localInstall = calls.find((args) => args[0] === 'pip' && args.includes('--no-deps'));
   assert.ok(localInstall, 'pinned local packages must be installed without resolving dependencies');
-  for (const name of ['runtime', 'agent']) {
-    assert.ok(localInstall.includes(`git+${pathToFileURL(path.join(context.root, name === 'agent' ? 'source with spaces' : 'runtime source')).href}@${context.manifest[name].sha}`));
-  }
+  assertLocalRequirement(localInstall, path.join(context.root, 'runtime source'), context.manifest.runtime.sha, '#subdirectory=packages/python');
+  assertLocalRequirement(localInstall, path.join(context.root, 'source with spaces'), context.manifest.agent.sha);
   assert.ok(localInstall.some((arg) => arg.endsWith('#subdirectory=packages/python')), JSON.stringify(localInstall));
   assert.ok(!core.includes('--with'));
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /native progress on stderr/);
@@ -260,7 +270,13 @@ test('PowerShell scriptblock invocation forwards --update and Pinokio root argum
 $ErrorActionPreference = 'Continue'
 function Invoke-WebRequest {
     param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
-    Copy-Item $env:MOCK_MANIFEST $OutFile
+    if ($Uri.StartsWith('https://astral.sh/')) {
+        [IO.File]::WriteAllText($OutFile, @'
+Copy-Item -LiteralPath $env:MOCK_UV_SOURCE -Destination (Join-Path $env:UV_UNMANAGED_INSTALL 'uv.exe') -Force
+'@)
+    } else {
+        Copy-Item $env:MOCK_MANIFEST $OutFile
+    }
 }
 function irm { param([string]$Uri) [IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT) }
 try {
@@ -452,29 +468,15 @@ pathlib.Path(os.environ['MOCK_BOOTSTRAP_ARGS']).write_text(json.dumps(sys.argv[1
 print('bootstrap progress on stderr', file=sys.stderr)
 shutil.copy2(os.environ['MOCK_SOURCE_UV'], pathlib.Path(os.environ['UV_UNMANAGED_INSTALL']) / 'uv.exe')
 `, { mode: 0o755 });
+  } else {
+    context.env.MOCK_BOOTSTRAP_STDERR = '1';
   }
-  const harness = await readFile(path.join(context.root, 'invoke.ps1'), 'utf8');
-  await writeFile(path.join(context.root, 'invoke.ps1'), harness.replace('\ntry {', `
-function Invoke-WebRequest {
-    param([switch]$UseBasicParsing, [Parameter(Position=0)][string]$Uri, [string]$OutFile)
-    if ($env:MOCK_FETCH_EXIT) { throw 'The fixture download failed.' }
-    if ($Uri.StartsWith('https://astral.sh/')) {
-        [IO.File]::WriteAllText($OutFile, @'
-[IO.File]::WriteAllText($env:MOCK_BOOTSTRAP_ARGS, (ConvertTo-Json -InputObject @($args) -Compress))
-[Console]::Error.WriteLine('bootstrap progress on stderr')
-Copy-Item -LiteralPath $env:MOCK_SOURCE_UV -Destination (Join-Path $env:UV_UNMANAGED_INSTALL 'uv.exe') -Force
-'@)
-    } else {
-        if ($Uri.EndsWith('/developer-manifest.json') -or $Uri.EndsWith('/install-manifest.json')) { [IO.File]::WriteAllText($env:MOCK_FETCHED, $Uri) }
-        Copy-Item $env:MOCK_MANIFEST $OutFile
-    }
-}
-try {`));
   const result = await run();
   alive(result);
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
-  const args = JSON.parse(await readFile(context.env.MOCK_BOOTSTRAP_ARGS, 'utf8'));
+  const encodedArgs = await readFile(context.env.MOCK_BOOTSTRAP_ARGS, 'utf8');
+  const args = process.platform === 'win32' ? encodedArgs.split(/\r?\n/) : JSON.parse(encodedArgs);
   assert.deepEqual(args.slice(0, 5), ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File']);
   assert.match(args[5], /uv\.ps1$/);
   assert.match(await readFile(context.env.MOCK_LOG, 'utf8'), /bootstrap progress on stderr/);
@@ -482,6 +484,8 @@ try {`));
 
 for (const coreExit of ['0', '23']) {
   test(`PowerShell -File fetches real HTTP manifest and reports core status ${coreExit}`, () => scenario(async (context) => {
+    const prepared = await context.run(powershell, ['-NoProfile', '-NonInteractive', '-File', path.join(context.root, 'invoke.ps1')]);
+    alive(prepared);
     context.manifest.agent.repo = path.join(context.root, 'http source');
     const committedSource = '# committed HTTP source\n';
     context.manifest.agent.sha = await createPinnedRepo(context.manifest.agent.repo, committedSource);
@@ -534,7 +538,7 @@ test('PowerShell accepts localhost file URLs as local pinned repositories', () =
   assert.match(result.stdout, /Astrid is ready\./);
   assert.doesNotMatch(result.stdout, /CAUGHT:/);
   const localInstall = (await context.calls()).find((args) => args[0] === 'pip' && args.includes('--no-deps'));
-  assert.ok(localInstall.includes(`git+${local}@${context.manifest.agent.sha}`));
+  assertLocalRequirement(localInstall, repoPath, context.manifest.agent.sha);
 }));
 
 test('PowerShell streams an unbuffered installer stage before the transaction can finish', () => scenario(async (context) => {
