@@ -41,7 +41,7 @@ def build_export_plan_artifacts(client: Any, project: str, timeline: str, out_di
     write_artifact(result_path, summary)
     write_receipt(root, kind="timeline.export_plan", inputs={"project": project, "timeline": timeline}, outputs=[
         {"name": "plan", "path": plan_path.name, "role": "result", "is_primary": True, "type": "file"},
-        {"name": "result", "path": result_path.name, "role": "support", "is_primary": False, "type": "file"},
+        {"name": "result", "path": result_path.name, "role": "auxiliary", "is_primary": False, "type": "file"},
     ])
     return summary
 

@@ -81,7 +81,7 @@ def build_prepare_import_artifacts(
     write_artifact(result_path, summary)
     output_entries.append({
         "name": "result", "path": result_path.name,
-        "role": "support" if output_entries else "result",
+        "role": "auxiliary" if output_entries else "result",
         "is_primary": not output_entries, "type": "file",
     })
     write_receipt(root, kind="timeline.prepare_import", inputs=inputs, outputs=output_entries)

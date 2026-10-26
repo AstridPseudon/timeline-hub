@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from astrid.core._shared.result_manifest import harvest_staged_outputs
 from astrid.packs.timeline.actions._common import decode_manifest
 from astrid.packs.timeline.actions._common import open_worker_runtime_client
-from astrid.packs.timeline.actions.export_plan.run import _summary
+from astrid.packs.timeline.actions.export_plan.run import _summary, build_export_plan_artifacts
 from astrid.packs.timeline.actions.prepare_import.run import build_prepare_import_artifacts
 
 
@@ -120,6 +121,81 @@ def test_action_client_uses_the_host_worker_connection_for_runtime_reads(monkeyp
     assert client._transport.endpoint == "http://127.0.0.1:17341"
     assert client._transport.token == "host-issued-worker-token"
     assert calls == [("list_projects", None, 50)]
+
+
+def test_transfer_action_receipts_harvest_every_staged_json_output(tmp_path, monkeypatch):
+    """Exercise each action receipt through Runtime's actual output harvester."""
+    from astrid.core.execution.generic_host import GenericPackHost
+    from astrid.packs.timeline.actions.export_plan import run as export_action
+
+    pack_root = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "timeline"
+    host = GenericPackHost(pack_roots=[pack_root])
+    records = {record.id: record for record in host.discover()}
+
+    def harvest(capability_id, output_root):
+        record = records[capability_id]
+        descriptors = harvest_staged_outputs(
+            output_root,
+            definition=record.definition,
+            declared_outputs=record.definition.outputs,
+            require=True,
+        )
+        return host._typed_outputs(record, descriptors, tmp_path)
+
+    monkeypatch.setattr(
+        export_action,
+        "export_plan",
+        lambda *_args: {
+            "manifest": {"name": "Saved edit"},
+            "timeline": {"timeline_id": "main"},
+            "media": [{"size": 13}],
+            "transcripts": {"transcripts/one.json": {}},
+        },
+    )
+
+    export_root = tmp_path / "export"
+    build_export_plan_artifacts(object(), "source-project", "main", export_root)
+    exported = harvest("timeline.export_plan", export_root)
+    assert {item["name"]: item["artifact_type"] for item in exported} == {
+        "plan": "timeline/export-plan",
+        "result": "application/json",
+    }
+    export_json = {
+        item["name"]: json.loads(Path(item["path"]).read_text(encoding="utf-8"))
+        for item in exported
+    }
+    assert export_json["plan"]["manifest"]["name"] == "Saved edit"
+    assert export_json["result"]["media_bytes"] == 13
+
+    manifest_json = json.dumps(_manifest(_empty_source()))
+    check_root = tmp_path / "check-only"
+    build_prepare_import_artifacts(
+        project="target-project", out_dir=check_root, manifest_json=manifest_json, check_only=True,
+    )
+    checked = harvest("timeline.prepare_import", check_root)
+    assert [(item["name"], item["artifact_type"]) for item in checked] == [
+        ("result", "application/json"),
+    ]
+    assert json.loads(Path(checked[0]["path"]).read_text(encoding="utf-8"))["check_only"] is True
+
+    payload_path = tmp_path / "payload.json"
+    payload_path.write_text(json.dumps({"timeline": _empty_source(), "transcripts": {}}), encoding="utf-8")
+    prepare_root = tmp_path / "prepare"
+    build_prepare_import_artifacts(
+        project="target-project", out_dir=prepare_root, manifest_json=manifest_json,
+        payload_file=str(payload_path),
+    )
+    prepared = harvest("timeline.prepare_import", prepare_root)
+    assert {item["name"]: item["artifact_type"] for item in prepared} == {
+        "prepared": "timeline/prepared-import",
+        "result": "application/json",
+    }
+    prepare_json = {
+        item["name"]: json.loads(Path(item["path"]).read_text(encoding="utf-8"))
+        for item in prepared
+    }
+    assert prepare_json["prepared"]["publication"]["project_id"] == "target-project"
+    assert prepare_json["result"]["timeline_id"] == prepare_json["prepared"]["timeline_id"]
 
 
 @pytest.mark.integration
