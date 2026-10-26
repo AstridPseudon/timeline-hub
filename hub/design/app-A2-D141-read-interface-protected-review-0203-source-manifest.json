@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+  "parents": ["867cb2737af1b46dc608c7cd37c349e920fe9422"],
+  "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+  "base": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "base_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "candidate_diff_sha256": "d584c42449c700bdbba9db289bc9dfb5d433756ac0fc4b42c9a440e34e089bf7",
+  "changed_files": {
+    "src/integrations/runtime/dataProvider.ts": {"base_blob": "5c830fe2b4661c9722ad22960f752c968604acd1", "candidate_blob": "a9115da0910af30baaf7b98c70f8cae9ee8f3d59", "sha256": "a8a28da4b386ced902a8c9d38c94daf899d293bcfbeff4ad9a5d8a3de62e9e4d"},
+    "src/tools/video-editor/data/DataProvider.ts": {"base_blob": "a3fe1d4157b65242b4b2a62df107becc0d311d07", "candidate_blob": "286fa147e9216fb968dd49e8813e3d0c96ce783a", "sha256": "6c9d4ee57e628fb40a781d75ba09b7003b43aa527d12e3bc123a5c504b0900fb"},
+    "src/shared/lib/placement/placementService.ts": {"base_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99", "candidate_blob": "f8c7564ba787ec2d2068bfa129db67769af941c0", "sha256": "8d7be679f8e728105f420ed6f579ee09cec4570e74cc4bb839a409ecf563ce5b"},
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts": {"base_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a", "candidate_blob": "6fa15804960500a99a466d1a0931e9c0451b538a", "sha256": "cbf0d2341810e3c0435590e2c5d6a0e59922448392e5fd87683c7e1efb182632"},
+    "src/tools/video-editor/lib/shot-group-pack-commands.test.ts": {"base_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff", "candidate_blob": "a073bb4b88ddd9a9216f3bded0e969d41331d33e", "sha256": "a37dc005acaa5942b0116c601029d8bf291fa1710664aa01408d50fdc8acf782"}
+  },
+  "out_of_scope_paths": [],
+  "ancestry_check": "base is direct parent; candidate is on reviewed lineage",
+  "protected_unchanged": true,
+  "no_deletions": true
+}

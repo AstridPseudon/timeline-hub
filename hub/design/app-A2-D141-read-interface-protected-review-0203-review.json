@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "review": "independent protected product review",
+  "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+  "candidate_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+  "base": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "base_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "findings": [],
+  "limitations": [
+    "No full App, browser, live Runtime, pack-task, schema/wire, or P1/P2/P3 integrated-head rerun was requested or performed."
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "protected_test": {
+    "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+    "original_titles": [
+      "deep-copies document nodes and registry refs with final-video lineage and no shared objects",
+      "refuses media-bearing duplicates before task admission or timeline mutation",
+      "polls a command at the caller-supplied cadence until succeeded",
+      "refreshes the document view to the promoted primary variant",
+      "duplicates only the explicitly active non-default timeline and never touches relational storage",
+      "refuses the retired promote-primary family before task admission or timeline mutation"
+    ],
+    "ast_audit": {
+      "method_removed": "RuntimeDataProvider.loadTimelineCommandBasisWithDisplay mock method only",
+      "candidate_added_bytes": 743,
+      "byte_exact_after_removal": true,
+      "ast_equal_after_removal": true,
+      "fixture_and_mock_preimages_equal": true,
+      "original_loads_2_and_commit_side_subtraction_preserved": true
+    },
+    "interface_support": {
+      "path": "shot-group-pack-commands.test.ts:65-80",
+      "semantics": "basis read is counted once; returned display config/version/registry are cloned from current fixture state; revision/publication mismatch rejects; no counter compensation was added"
+    }
+  },
+  "production": {
+    "editor": "src/tools/video-editor/components/AstridTimelineEditor.tsx:164,348-371",
+    "caller": "src/tools/video-editor/lib/shot-group-pack-commands.ts:378-419",
+    "combined_reader": "src/integrations/runtime/dataProvider.ts:997-1005",
+    "display_reader": "src/integrations/runtime/dataProvider.ts:1030-1048,1453-1527",
+    "numeric_version": "runtimeVersion(record) at dataProvider.ts:1670-1676; provider-local version increments on verified head/publication identity changes at 1488-1517, not history length",
+    "placement_continuation": "src/shared/lib/placement/placementService.ts:338-357",
+    "closure_validation_and_fresh_pair": "placementService.ts:252-267",
+    "owner_and_outbox_boundary": "placementService.ts:271-284; localSaveSession send at 283; provider.commitTimeline",
+    "post_preflight_async_gap": "head.mutate is single-use and reuses basis only inside createDocumentStore; authoringBundleFromDocument awaits before a new basis read and both revision/publication comparisons",
+    "no_new_wire_or_writer": "request construction, outbox, commitTimeline, Runtime CAS, schema, pins, and merge/read policy are unchanged"
+  },
+  "source_path_controls_reviewed": [
+    "cold/no-cache combined read",
+    "display publication mismatch across await",
+    "caller cold two-basis-read boundary",
+    "revision mismatch after awaited preflight",
+    "publication mismatch after awaited preflight",
+    "post-validation await mismatch before owner/transform"
+  ],
+  "scope": "No invented canonical closure or pins; no cache assumption; no skipped validation; no bypassed trust; no alternate write route."
+}

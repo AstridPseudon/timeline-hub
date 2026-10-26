@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "controls_file": "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts",
+  "controls_byte_exact": true,
+  "targeted_result": "16/16 PASS",
+  "controls": [
+    ["places a generation by publishing a new head revision", "accepted closure; zero old-route traffic"],
+    ["re-reads the head and re-applies the placement once after a stale-head conflict", "bounded local stale-pair retry preserves sibling edit"],
+    ["surfaces the conflict when the head stays stale", "bounded repeated stale-pair refusal"],
+    ["a definitive Runtime refusal is retained without semantic replay", "definitive refusal retains original intent"],
+    ["an invalid placement is retained without semantic replay", "invalid refusal retains original intent"],
+    ["an unclassified transport failure is retained without semantic replay", "unknown failure retains original intent"],
+    ["retains the actual handoff dependency_changed conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retains the actual handoff binding_changed conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retains the actual handoff value_conflict conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retains the actual handoff selection_changed conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retains the actual handoff atomic_scope_changed conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retains the actual handoff stale_head conflict and original guards on recovery", "exact request/key and no replacement intent"],
+    ["retries local document staleness before authoring exactly one durable placement", "two stable-read pairs on bounded retry"],
+    ["bounds local read retries without creating any durable intent", "four reads; no owner, intent, or request"],
+    ["retries an unknown acknowledgement with the exact durable request and key", "idempotent exact request/key recovery"],
+    ["adopts recovered canonical closure before a later placement merges over an intervening head", "accepted closure adopted before dependent mutation"]
+  ],
+  "preserved_source_guards": {
+    "capture": "placementService.ts:124-169 exact source/head/parent pair and document equivalence",
+    "accepted_adoption": "placementService.ts:203-218 accepted head and canonical assembly check",
+    "recovery": "placementService.ts:291-305 single-owner recovery; multiple owners refuse",
+    "retry": "placementService.ts:382-408 bounded retry only for local PlacementDocumentChangedError and allowVersionRebase",
+    "disposal": "placementService.ts:400-403 session disposal retained"
+  },
+  "freshness": "Initial basis is consumed once; full closure validation awaits; fresh basis then checks both revision and publication before identity/session/owner creation.",
+  "result": "No guard assertion, input, title, or protected workspace test was changed."
+}
