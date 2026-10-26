@@ -16,6 +16,19 @@ from astrid.sdk import host_bootstrap
 from tests.packs.rendering.test_render_export_task_adapter import _owned_validation_fixture
 
 
+def test_staged_schema_applies_native_windows_permissions(tmp_path, monkeypatch):
+    from runtime_protocol import platform
+
+    from tests.packs.rendering import test_render_export_task_adapter as adapter
+
+    restricted = []
+    monkeypatch.setattr(adapter, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "owner_only", lambda path: restricted.append(path))
+    source = tmp_path / "selected-agent"
+    adapter._stage_schema(source)
+    assert set(restricted) == {source, *source.rglob("*")}
+
+
 def test_installed_launch_proof_survives_worker_and_render_environment_filters(tmp_path, monkeypatch):
     def provisioned_registries(project, contexts, python, **_kwargs):
         # This test isolates profile propagation from installed registry discovery.

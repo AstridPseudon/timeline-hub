@@ -61,6 +61,12 @@ def _stage_schema(source: Path, *, missing: str | None = None) -> Path:
         if relative.as_posix() == missing:
             continue
         target.write_bytes((REMOTION_ROOT.parent / relative).read_bytes())
+    if sys.platform == "win32":
+        from runtime_protocol import platform
+
+        # Admission checks every selected source ancestor's native DACL.
+        for path in (source, *source.rglob("*")):
+            platform.owner_only(path)
     return source / _local_schema.SCHEMA_RELATIVE_PATH
 
 
