@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from pathlib import PurePosixPath
+from pathlib import PurePosixPath, PureWindowsPath
 from typing import Any
 
 
@@ -438,7 +438,12 @@ def _normalize_layout_exception_path(
             )
         )
         return None, issues
-    if normalized.is_absolute() or ".." in normalized.parts or "." in normalized.parts:
+    if (
+        PureWindowsPath(raw_path.strip()).drive
+        or normalized.is_absolute()
+        or ".." in normalized.parts
+        or "." in normalized.parts
+    ):
         issues.append(
             LayoutValidationIssue(
                 "pack.yaml",

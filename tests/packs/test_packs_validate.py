@@ -27,6 +27,7 @@ from astrid.core.pack.validate import (
     validate_first_party_packs_root,
     validate_pack,
 )
+from astrid.core.pack.validate_layout import parse_layout_exceptions
 
 _FIRST_PARTY_PACKS_ROOT = Path(__file__).resolve().parents[2] / "astrid" / "packs"
 
@@ -1316,6 +1317,46 @@ class TestPackValidatorClass(MinimalPackTestCase):
 
 class TestLayoutContractExceptions(MinimalPackTestCase):
     """Declared layout exceptions are parsed and surfaced as one aggregate failure."""
+
+    def test_layout_exception_rejects_windows_drive_path(self) -> None:
+        for path in ("C:relative", "C:/absolute"):
+            with self.subTest(path=path):
+                parsed, issues = parse_layout_exceptions(
+                    {
+                        "metadata": {
+                            "layout": {
+                                "exceptions": [
+                                    {
+                                        "path": path,
+                                        "class": "domain_exception",
+                                        "reason": "Legacy path.",
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                )
+                self.assertEqual(parsed, [])
+                self.assertTrue(issues)
+
+    def test_layout_exception_preserves_relative_posix_path(self) -> None:
+        parsed, issues = parse_layout_exceptions(
+            {
+                "metadata": {
+                    "layout": {
+                        "exceptions": [
+                            {
+                                "path": "executors/demo/legacy.py",
+                                "class": "domain_exception",
+                                "reason": "Legacy path.",
+                            }
+                        ]
+                    }
+                }
+            }
+        )
+        self.assertEqual(issues, [])
+        self.assertEqual(parsed[0].path, "executors/demo/legacy.py")
 
     def test_permanent_layout_exception_with_lifecycle_passes(self) -> None:
         root = self.make_pack_root()
