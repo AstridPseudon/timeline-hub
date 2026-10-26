@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-26T07:51:57.618076+00:00",
+  "worker": "agt-F-D141l-binding-return-0735",
+  "kind": "source_only",
+  "floor_bytes": 4500000000,
+  "available_bytes": 4507217920,
+  "authority": "D141q-c",
+  "base": "tl/agt-F-D141l-controller-binding-prep-0718",
+  "base_sha": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+  "brief_sha256": "93b91ff4656102293f4c2d3415d09ba5485c8ff04f57c179ea95d5643cf5ebfb",
+  "scope": "No installation request-test or body; tiny source controls only"
+}
