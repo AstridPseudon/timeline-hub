@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T01:20:29Z",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/normal-result.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-normal-result.json",
+      "sha256": "56cb08b8f4386fc971f6beec820e9773e7e777a1aff14016c0dce62fc6c595a0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/receipt.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-receipt.json",
+      "sha256": "bb8fba6c46f23ce3cea078a24aea7a701ffd32d4e0a631d9cd9f6287b4657b62"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-validation.md",
+      "sha256": "f487c77e4c0a1870b2ca59f31174c15f7f9635173e5eae0d9b83821483369809"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-handoff.md",
+      "sha256": "3f6276dc38c780f084ec762dd70a14bf7a03af82b6825fc31a7288cee2ff4a01"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/pristine-result.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-pristine-result.json",
+      "sha256": "1f220d2bf7c052b5a12aeb069325467dc7ace45a9903ba6f8deb80e5d4266655"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-full-pristine-controller-0043/evidence/reg-diff.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-full-pristine-controller-0043-reg-diff.json",
+      "sha256": "e4d2c28c6d40b55745579a6b1b9bf8dc625afc84705b5a6f9884f982ac4978e4"
+    }
+  ],
+  "qualification": "terminal receipts only; first classification incomplete, return0120 active"
+}

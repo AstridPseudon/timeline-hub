@@ -1,0 +1,133 @@
+{
+  "result_id": "app-full-1026004326-12174",
+  "route": "integration:app",
+  "status": "fail",
+  "exit": 1,
+  "duration_seconds": 961,
+  "source": {
+    "repo": "app",
+    "head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "checkout": "/home/user/work/app",
+    "clean_before": true,
+    "clean_after": true,
+    "snapshot_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-full-1026004326-12174/snap",
+    "snapshot_post": "service removed /home/user/work/wt/.test-app-full-1026004326-12174 after completion"
+  },
+  "invocation": {
+    "request_argv": [
+      "PATH=/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "integration:app",
+      "full",
+      "--no-cache"
+    ],
+    "wait_argv": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+      "app-full-1026004326-12174"
+    ],
+    "registered_suite_argv": ["npm", "test", "--", "--maxWorkers=3"],
+    "effective_shell": "npm run test:app && npm run test:node --maxWorkers=3",
+    "node": "v20.20.0",
+    "npm": "10.8.2",
+    "required_environment": {
+      "PATH": "/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+      "TMPDIR": "/tmp/app-d141-<result-id>",
+      "XDG_CACHE_HOME": "/tmp/app-d141-<result-id>/xdg-cache",
+      "npm_config_cache": "/tmp/app-d141-<result-id>/npm-cache",
+      "VITE_CACHE_DIR": "/tmp/app-d141-<result-id>/vite-cache",
+      "VITEST_CACHE_DIR": "/tmp/app-d141-<result-id>/vitest-cache",
+      "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers"
+    },
+    "private_service_env": "not emitted by service; recipe-required per-run temp/cache bindings were service-owned"
+  },
+  "counts": {
+    "vitest": {
+      "test_files": {"failed": 5, "passed": 1356, "total": 1361},
+      "tests": {"failed": 33, "passed": 19734, "total": 19767}
+    },
+    "node": {"status": "NOTRUN", "counts": null, "reason": "npm run test:app exited 1, so the &&-chained test:node phase did not start"},
+    "expected_failure_markers": 0,
+    "forbidden_expected_failure_markers": 0
+  },
+  "failures": [
+    {
+      "file": "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+      "kind": "failed_suite",
+      "tests": 0,
+      "detail": "SCHEMA_DIGEST expected sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2; received sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+    },
+    {
+      "file": "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+      "tests": 2,
+      "test_names": [
+        "A3 mounted popup full caller > carries a real mounted shared-child add through the accepted v2 commit transport",
+        "A3 mounted popup full caller > carries a real mounted shared-child add through the merged v2 commit transport"
+      ],
+      "detail": "popupAuthorityFixture.py failed with candidate: all authored fps declarations must retain their typed locations"
+    },
+    {
+      "file": "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "tests": 3,
+      "test_names": [
+        "routed element save with the class Runtime provider > settles the catalog gesture after the pending history response resolves",
+        "routed element save with the class Runtime provider > settles the catalog gesture after the pending commit response resolves",
+        "routed element save with the class Runtime provider > settles the catalog gesture after the pending refresh response resolves"
+      ],
+      "detail": "mounted.unexpected contained PUT /v1/projects/selection"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelineSave.test.tsx",
+      "tests": 27,
+      "test_names": [
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: true)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: true)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: true)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: true)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: dependent conflict (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old selection (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: mismatched old selection (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: extra old selection (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old metadata (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selector (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: existing asset (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: rebased (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: true)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: false)",
+        "recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: true)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (accepted)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (merged)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (lost acknowledgement)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (later_write)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (aba_write)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (history_unavailable)",
+        "recovered draft durability > mounted Undo uses the public client, authoritative history and reload (invalid)"
+      ],
+      "details": [
+        "prepared-video cases expected four clips but observed three",
+        "missing-selection cases could not find an accessible alert",
+        "Undo timeline cases expected merge mode atomic but received fields"
+      ]
+    },
+    {
+      "file": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+      "tests": 1,
+      "test_names": ["shot-group pack commands > duplicates only the explicitly active non-default timeline and never touches relational storage"],
+      "detail": "expected runtime.loads 2, received 3"
+    }
+  ],
+  "raw": {
+    "request": {"path": "tests/app-full-1026004326-12174/request", "sha256": "bc94b743446ddcd7c6993c250adb968b0eb2366fa1abde3665d88d5ebab84c42"},
+    "status": {"path": "tests/app-full-1026004326-12174/status", "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"},
+    "exit": {"path": "tests/app-full-1026004326-12174/exit", "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"},
+    "summary": {"path": "tests/app-full-1026004326-12174/summary", "sha256": "1e46e5871efed11d611cee5da547f4611e3c5f36018e2f62b40a24e95f66ec1e"},
+    "log": {"path": "tests/app-full-1026004326-12174/log.txt", "sha256": "fcc5e73b9fa41f7ff7afc8f91813a126495d52358f5d32d1505874b546349fd6"},
+    "snap": {"path": "tests/app-full-1026004326-12174/snap", "sha256": "b6a6d758652411b1efd1bd00e1f5aa1e214900308fec5346cfa302be17a225a7"},
+    "keep": true
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "result_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+  "route": "app-D141-pristine-receiver-0007",
+  "status": "fail",
+  "exit": 1,
+  "duration_seconds": 935,
+  "source": {
+    "repo": "app",
+    "metadata": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D141-pristine-receiver-0007/meta",
+    "required_head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "required_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "metadata_base": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "snapshot_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "snapshot_head_observed": "4bb696aceae83a3843df47ff1ff99c9717a3e0aa",
+    "snapshot_parent_observed": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "snapshot_clean_while_running": true,
+    "snapshot_post": "service removed /home/user/work/wt/.test-app-D141-pristine-receiver-0007-full-1026010029-23581 after completion",
+    "head_guard": "FAIL: synthetic service snapshot HEAD differs from required frozen HEAD; parent and tree match",
+    "package_hashes": {
+      "package.json": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6",
+      "package-lock.json": "89a3094c58bab686ca620fd239228627659ed19fdc9853b2a86ba42388216000",
+      "runtime.lock.json": "34afa8e41aad26c710944193797e96f1aea10accb868554969cedc2bacdd90e6"
+    },
+    "live_checkout_note": "/home/user/banodoco/reigh-app was not used and was not assumed to be the comparator"
+  },
+  "invocation": {
+    "request_argv": [
+      "PATH=/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "app-D141-pristine-receiver-0007",
+      "full",
+      "--no-cache"
+    ],
+    "wait_argv": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+      "app-D141-pristine-receiver-0007-full-1026010029-23581"
+    ],
+    "registered_suite_argv": ["npm", "test", "--", "--maxWorkers=3"],
+    "effective_shell": "npm run test:app && npm run test:node --maxWorkers=3",
+    "required_environment": {
+      "unset": ["ASTRID_PUBLIC_CHECKOUT", "ASTRID_APP_DIRECT_DIST", "NODE_PATH"],
+      "PATH": "/opt/node20/bin:/usr/local/bin:/usr/bin:/bin",
+      "node": "v20.20.0",
+      "npm": "10.8.2",
+      "TMPDIR": "/tmp/app-D141-pristine-receiver-0007-<result-id>",
+      "XDG_CACHE_HOME": "/tmp/app-D141-pristine-receiver-0007-<result-id>/xdg-cache",
+      "npm_config_cache": "/tmp/app-D141-pristine-receiver-0007-<result-id>/npm-cache",
+      "VITE_CACHE_DIR": "/tmp/app-D141-pristine-receiver-0007-<result-id>/vite-cache",
+      "VITEST_CACHE_DIR": "/tmp/app-D141-pristine-receiver-0007-<result-id>/vitest-cache",
+      "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers"
+    },
+    "private_service_env": "service did not emit a full environment manifest; required bindings are recorded from the pre-existing receiver recipe"
+  },
+  "counts": {
+    "vitest": {
+      "test_files": {"failed": 3, "passed": 1276, "total": 1279},
+      "tests": {"failed": 18, "passed": 17856, "total": 17874}
+    },
+    "node": {"status": "NOTRUN", "counts": null, "reason": "npm run test:app exited 1, so the &&-chained test:node phase did not start"},
+    "expected_failure_markers": 0
+  },
+  "failures": [
+    {
+      "file": "src/tools/video-editor/compositions/TimelineRenderer.public-host.qualification.test.tsx",
+      "tests": 5,
+      "test_names": [
+        "V009 public host behavior qualification > uses injected host values at typed effect, typed animation, legacy, and sequence helper callsites",
+        "V009 public host behavior qualification > renders canonical defaults and per-clip managed overrides through the installed local owner",
+        "V009 public host behavior qualification > rejects installed-only and unknown IDs without substitution and renders a loud typed placeholder",
+        "V009 public host behavior qualification > keeps a public owner mismatch unavailable instead of resolving another text-card owner",
+        "V009 public host behavior qualification > does not interpret another installed owner’s params as local end-spanning card assets"
+      ],
+      "detail": "TypeError at TimelineRenderer.tsx:1594: theme.visual is undefined; final test expected no throw but received Cannot read properties of undefined (reading color)"
+    },
+    {
+      "file": "src/tools/video-editor/compositions/TimelineRenderer.shots.test.tsx",
+      "tests": 11,
+      "test_names": [
+        "ShotClipSequence referenced-timeline cache > keeps explicit host B through two nested shot levels instead of switching to context host A",
+        "ShotClipSequence referenced-timeline cache > retains context host A through nested shots when there is no explicit override",
+        "ShotClipSequence referenced-timeline cache > renders nested content with explicit host B when the provider context has no host",
+        "ShotClipSequence referenced-timeline cache > updates the cached nested timeline when the explicit host changes without remounting",
+        "ShotClipSequence referenced-timeline cache > deduplicates repeated sequential mounts: one load, second mount synchronous",
+        "ShotClipSequence referenced-timeline cache > deduplicates concurrent mounts sharing one in-flight load",
+        "ShotClipSequence referenced-timeline cache > no loading placeholder when crossing a primed shot boundary (cached config reused synchronously)",
+        "ShotClipSequence referenced-timeline cache > sequences premount so the next shot mounts before the boundary",
+        "ShotClipSequence referenced-timeline cache > keeps nested child content mounted while hidden before a canonical shot boundary",
+        "ShotClipSequence referenced-timeline cache > invalidates a specific timeline after a save so the next mount reloads fresh data",
+        "ShotClipSequence referenced-timeline cache > a failed load falls back to the placeholder and retries on a later mount"
+      ],
+      "detail": "same TimelineRenderer.tsx:1594 theme.visual undefined root"
+    },
+    {
+      "file": "src/tools/video-editor/compositions/TimelineRenderer.test.tsx",
+      "tests": 2,
+      "test_names": [
+        "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > registry includes the four 2rp clip types",
+        "Sprint 5 EFFECT_REGISTRY dispatch (Phase 4d) > section-hook entry resolves to a component from @banodoco/timeline-theme-2rp"
+      ],
+      "detail": "THEME_PACKAGE_CLIP_TYPES is undefined and THEME_PACKAGE_REGISTRY['section-hook'] is undefined"
+    }
+  ],
+  "raw": {
+    "request": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/request", "sha256": "e927455374a659647bbc7cba222088640a6c8d2b6d044948a2e507874bb36036"},
+    "status": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/status", "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"},
+    "exit": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/exit", "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"},
+    "summary": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/summary", "sha256": "b022e07e50170bcf4be675a2c4c07b770cdb1fb603f646b66d5b87f5b304b118"},
+    "log": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/log.txt", "sha256": "636457440c919df79760fe2a9e5e5c008491e283b97ca2b10c475f2b1ffa9ba6"},
+    "snap": {"path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/snap", "sha256": "a0571d732f06fa0859e4358c77046925859d10ddcb6461998992528c46e5270d"},
+    "keep": true
+  }
+}

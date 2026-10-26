@@ -1,0 +1,76 @@
+{
+  "task": "D141 App full/pristine exact comparator",
+  "normal_result_id": "app-full-1026004326-12174",
+  "pristine_result_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+  "classification_rule": "classify only by actual normal-vs-pristine comparator; no Agent five-root rule copied; environment-type pristine failures require same-kind pristine rerun",
+  "source_applicability": {
+    "normal": "APPLICABLE: exact final integrated App head/tree and clean integration checkout",
+    "pristine": "PARTIAL: exact frozen tree and parent, clean snapshot while running, but service synthetic HEAD 4bb696aceae83a3843df47ff1ff99c9717a3e0aa differs from required 7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "overall": "comparator evidence is terminal but exact-commit proof credit is unavailable"
+  },
+  "finite_summary": {"REG": 0, "nonREG": 0, "UNKNOWN": 8},
+  "roots": [
+    {
+      "id": "normal-schema-digest",
+      "normal": "commitSession.genericPatch.test.ts failed: expected schema digest 4118b1e2..., received 867f3553...",
+      "pristine": "not applicable: this normal-only file/root did not fail in the pristine run",
+      "classification": "UNKNOWN",
+      "reason": "source-specific failure with no matching pristine failure; no REG claim"
+    },
+    {
+      "id": "normal-popup-fps",
+      "normal": "two ShotTimelinePreview.full-caller.a3 tests failed through popupAuthorityFixture.py typed-fps validation",
+      "pristine": "not applicable: no matching failure",
+      "classification": "UNKNOWN",
+      "reason": "normal-only final-source root; comparator does not establish upstream or environment causality"
+    },
+    {
+      "id": "normal-runtime-elements-selection",
+      "normal": "three VideoEditorProvider.runtime-elements tests observed unexpected PUT /v1/projects/selection",
+      "pristine": "not applicable: no matching failure",
+      "classification": "UNKNOWN",
+      "reason": "normal-only final-source root"
+    },
+    {
+      "id": "normal-outbox-draft",
+      "normal": "useTimelineSave prepared-video cases observed three rather than four clips and missing-selection cases found no alert",
+      "pristine": "not applicable: no matching failure",
+      "classification": "UNKNOWN",
+      "reason": "normal-only final-source root"
+    },
+    {
+      "id": "normal-undo-merge-mode",
+      "normal": "seven useTimelineSave Undo cases received merge mode fields instead of atomic",
+      "pristine": "not applicable: no matching failure",
+      "classification": "UNKNOWN",
+      "reason": "normal-only final-source root"
+    },
+    {
+      "id": "normal-shot-group-loads",
+      "normal": "shot-group-pack expected two runtime loads and received three",
+      "pristine": "not applicable: no matching failure",
+      "classification": "UNKNOWN",
+      "reason": "normal-only final-source root"
+    },
+    {
+      "id": "pristine-theme-host",
+      "normal": "no matching normal failure",
+      "pristine": "17 TimelineRenderer.public-host and TimelineRenderer.shots tests failed on theme.visual undefined",
+      "classification": "UNKNOWN",
+      "reason": "pristine-only root; no same-kind pristine rerun was authorized or performed, and exact HEAD guard is synthetic"
+    },
+    {
+      "id": "pristine-theme-registry",
+      "normal": "no matching normal failure",
+      "pristine": "two TimelineRenderer tests failed because THEME_PACKAGE_CLIP_TYPES and THEME_PACKAGE_REGISTRY section-hook were undefined",
+      "classification": "UNKNOWN",
+      "reason": "pristine-only root; no cross-environment REG verdict"
+    }
+  ],
+  "expected_failures": {
+    "normal": 0,
+    "pristine": 0,
+    "source_applicability": "both service logs ran check:known-failures and recorded zero expected-failure markers; no failure was reclassified as expected"
+  },
+  "rerun": "none; no environment-type failure was established, and D141 forbids broadening or adapting the two full runs"
+}

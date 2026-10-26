@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T01:18:58Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# app board, 2026-10-26T01:17Z
+<!-- app | 2026-10-26T01:23:47Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 3m -->
+# app board, 2026-10-26T01:20Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Historical source proofs; cut source below | 263b728f0140 |
@@ -13,11 +13,12 @@
 | D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime normal installation | merged | Notes 2354; review 0003; Runtime installer 0038 | Runtime 00:50 board: pair installed, App paragraphs exact, 568 outside files unchanged, render PASS | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full 2354; review 0003 | Exact recipes qualified; final tuple and MAIN GO required | Evidence only |
 | D141 journeys prep | Bind prepared journeys to final tuple | Luna | MAIN GO; existing recipe PASS | merged | Binding 0047; original review 0003 | All eight selectors and full source identities exact; unique plan paths required in controller | 867cb2737af1 |
-| D141 full | Run cut App full suite | Luna and test service | Pristine REG comparison | gated:D141-comparator | Controller 0043; actual 12174 | Terminal exit 1; Vitest 19734 PASS and 33 FAIL in 5 files; 961 s; REG verdict pending | 867cb2737af1 |
+| D141 full | Run cut App full suite | Luna and test service | Per ID REG comparison | review | Controller 0043; actual 12174 | Terminal exit 1; Vitest 19734 PASS and 33 FAIL, plus collection error; Node NOTRUN. Raw KEEP. | 867cb2737af1 |
 | D141 pristine | Run exact frozen full comparator | Luna and test service | Per ID comparison | review | Controller 0043; actual 23581 | Terminal exit 1; Vitest 17856 PASS and 18 FAIL in 3 files; per ID source and REG comparison active. | 7ca61bb3280b |
-| D141 P1 | Qualify original dependent chain | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
-| D141 P2 six | Qualify six original passing gestures | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
-| D141 P3 | Qualify original Gate 5 journey | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Original full tail preserved; NOTRUN on cut | Cut pending |
+| D141 REG join | Join 33 failed IDs and collection error | Luna | Both full results terminal | doing | app-F-D141-reg-join-return-0120 | First packet omitted per ID source presence; exact synthetic tree custody and pristine environment classification also owed. | Frozen cut |
+| D141 P1 | Qualify original dependent chain | Luna and test service | MAIN GO and admission 0119 | doing | app-P-D141-cut-journeys-controller-0117 | Queued at 5366943744 bytes after both fulls terminal; exact original two case route first. | 867cb2737af1 |
+| D141 P2 six | Qualify six original passing gestures | Luna and test service | Local heavy slot | ready | Controller 0117 after P1 | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
+| D141 P3 | Qualify original Gate 5 journey | Luna and test service | Local heavy slot | ready | Controller 0117 after P1 | Original full tail preserved; NOTRUN on cut | Cut pending |
 | D141 P4 | Receive CLI Python sheet cut proof | Agent and service | Independent operational review | review | Agent 0047; source 0055; review 0101 | Source controls 17 and poison control PASS; service 1347 zero body retained. Actual cut proof owed. | Frozen cut |
 | D141 P5 | Receive Runtime cut proof | Runtime and service | Independent receiver PASS and Main slot | blocked:runtime | Runtime Sol 0053; path reader 0054 | Source identity and exit repairs active; ten earlier controls PASS. MAIN GO clear; actual cut body owed. | Frozen cut |
 | D141 core | Receive ship core and REG comparison | Farm and Runtime | Final tuple binding and complete recipe | blocked:runtime | Runtime binding 0055; Farm core | Ordinary route review 0049 scoped PASS; frozen binding and complete note owed. No child or core receipt. | Cut pending |
@@ -39,8 +40,8 @@ D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Req
 
 Blockers: Runtime Farm handoff — ordinary route 0049 scoped PASS; binding 0055 must supply the exact frozen tuple and complete note. Farm owns child, import, preflight and core; no App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery and related qualification. Existing Runtime escalation owns disposition; no retry.
-Next ready: Pristine 23581 terminal -> finite per-ID REG verdict; then serial P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
-live 1 / cap 3 source; ready-undispatched 1 heavy controller waits fresh 5.2 GB admission. Pristine23581 terminal; controller0043 per ID comparison active. No independent ready source work.
+Next ready: Controller0117 serial P1, six P2 and P3; return0120 complete per ID REG evidence. Node phase on both heads follows journeys. Receive Agent P4 and Runtime P5 receipts.
+live 2 / cap 6 source and 1 heavy; ready-undispatched 0. Journeys0117 admitted at5366943744; source-only per ID return0120 admitted above5.0GB. Node waits serial journey slot.
 
 H6: Runtime 00:59:15, Agent 01:01 and Farm 01:10 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes independent 0032 PASS and installation 0038 merged; App paragraphs exact, notes handoff cleared. Farm waits binding 0055 and complete recipe; no body. No decision escalation owed.
 
@@ -81,3 +82,5 @@ H6 2026-10-26T01:05Z: Cleared Runtime notes handoff immediately from owner00:50 
 Pass 2026-10-26T01:12Z: Resumed PLAN first, current header and full contract shapes read. Only active App worker0043 has growing log; pristine23581 still running normally. Full12174 retained33 failures in5files; per-ID JOIN and REG verdict wait pristine. Sequence unchanged: finish comparator, P1/P2six/P3, then separate exact Node phases on both heads. Fresh free about4.95GB during admitted body, above4GBstop; no second heavy dispatch. Ten serviceKEEP and three workerKEEP guards PASS; compact kit exact SHA1f6926c6 verified. No eligible clean finished nonKEEP App worktree found; dirty old U3 excluded. No product edits, new investigation, duplicate peer body or safety route.
 
 Terminal 2026-10-26T01:17:43Z: Pristine23581 fail/exit1;17856PASS/18FAIL in3files;929.32s Vitest. Raw KEEP retained. Existing0043 actively compares per ID, including normal collection error. No REG yet. Fresh5190557696bytes is below5.2GB next admission; compact active, source controller worktree release expected on completion. Prepared journeys0117 undispatched until genuine floor and no other heavy request.
+
+Pass 2026-10-26T01:20:29Z: Fullcontroller0043 terminal. Both service outcomes qualified as receipts; initialclassification is incomplete: aggregate8UNKNOWN without actual33-ID source-presence JOIN and overstrict syntheticHEAD concern. ONE firstreturn0120 READONLY source/receipt qualification nowqueued; no productfix/tests. Six originalfull evidencefiles bytepublished unchanged0121. Journeycontroller0117 queuedimmediately on fresh5366943744bytes/noactualheavybody, exactD66bindings/uniqueplans; no source author waits. Maintenance sweep3removed0; compactpacked0scratch/0tests/gzipped8oldlogs. RawKEEPguards unchanged.
