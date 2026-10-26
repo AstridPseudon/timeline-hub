@@ -23,7 +23,13 @@ def installed_runtime(tmp_path, monkeypatch):
     project, schema, node, environment, reference, calls = _owned_validation_fixture(
         tmp_path, monkeypatch
     )
-    monkeypatch.setattr(runtime, "_owned_probe", owned_probe)
+    def admission_probe(argv, *, cwd, env, timeout):
+        assert argv == [str(node), "--version"]
+        assert cwd == project and timeout == 5
+        calls.append((argv, dict(env)))
+        return subprocess.CompletedProcess(argv, 0, "v20.19.4\n", ""), {}
+
+    monkeypatch.setattr(runtime, "_owned_probe", admission_probe)
     monkeypatch.setattr(runtime, "_UNRESOLVED_PROBE_CUSTODY", [])
     monkeypatch.setattr(runtime, "_UNRESOLVED_VALIDATION_PROBES", [])
     return SimpleNamespace(
@@ -55,9 +61,8 @@ def test_status_uses_explicit_server_environment_and_launch_reference(installed_
     assert status.node_executable == world.node
     assert status.remotion_cli == world.project / runtime.REMOTION_CLI_RELATIVE_PATH
     assert status.node_version == "v20.19.4"
-    # The explicit launch has already completed its three owned probes; status
-    # verifies the artifact and never launches a second readiness probe.
-    assert len(world.calls) == 3
+    # Admission retains the three-probe launch proof and freshly checks Node.
+    assert len(world.calls) == 4
 
 
 @pytest.mark.parametrize("defect", ["node", "cli", "cli_escape", "package", "schema"])
@@ -156,6 +161,7 @@ def test_unresolved_probe_custody_is_fatal_to_launch_and_host_preflight(
 
     world = installed_runtime
     _activate_server_environment(monkeypatch, world)
+    monkeypatch.setattr(runtime, "_owned_probe", world.owned_probe)
     child = SimpleNamespace(pid=12345, returncode=None)
 
     def timeout(*_args, **_kwargs):

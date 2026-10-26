@@ -835,7 +835,10 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         ASTRID_REMOTION_VALIDATION_ROLE,
         ASTRID_REMOTION_VALIDATION_SHA256,
     )
-    from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
+    from astrid.core.rendering.remotion_runtime import (
+        RemotionProbeCleanupError,
+        prepare_remotion_validation,
+    )
     from astrid.core.subprocess_env import build_child_subprocess_env
 
     for name in (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
@@ -866,14 +869,22 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         )
     else:
         workers = [build_child_subprocess_env(base=env, parent=env)]
-    # Preparation errors, especially unresolved probe custody, propagate and
-    # prevent spawning a host with an unbound render context.
-    reference = prepare_remotion_validation(
-        artifact_directory=Path(support_root) / "remotion-validation",
-        host_environment=env, python_executable=python_executable,
-        launch_id=launch_id, contexts={"host": dict(env), "worker": workers},
-        **({"installed_source": installed_source} if installed_source else {}),
-    )
+    try:
+        reference = prepare_remotion_validation(
+            artifact_directory=Path(support_root) / "remotion-validation",
+            host_environment=env, python_executable=python_executable,
+            launch_id=launch_id, contexts={"host": dict(env), "worker": workers},
+            **({"installed_source": installed_source} if installed_source else {}),
+        )
+    except RemotionProbeCleanupError:
+        raise
+    except Exception as exc:  # noqa: BLE001 - optional renderer setup must not stop unrelated host work
+        # A failed optional renderer must not stop unrelated host work. A
+        # retained original child (including a prior failed launch) stays fatal.
+        if (getattr(exc, "cleanup_error", None) is not None
+                or getattr(exc.__cause__, "cleanup_error", None) is not None):
+            raise
+        return None  # No reference: render admission reports unavailable.
     env.update(reference)
     return launch_id
 

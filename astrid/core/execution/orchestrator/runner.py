@@ -335,16 +335,24 @@ def _run_python_orchestrator_subprocess(
             argv = _captured_worker_argv([sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker",
                 "--external-source-fd", str(source_channel.fileno()), "--captured-command", command])
             launch_options["pass_fds"] = (source_channel.fileno(),)
-        completed = subprocess.run(
-            argv,
-            stdin=subprocess.DEVNULL,
-            cwd=str(root),
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-            **launch_options,
-        )
+        if source_channel is not None:
+            from runtime_protocol import platform
+
+            # The platform launcher translates inherited descriptors to an
+            # authenticated Windows handle handoff before Python starts.
+            with platform.spawn_tree(
+                argv, stdin=subprocess.DEVNULL, cwd=str(root), env=env,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                start_new_session=False,
+                **launch_options,
+            ) as process:
+                stdout, stderr = process.communicate()
+                completed = subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+        else:
+            completed = subprocess.run(
+                argv, stdin=subprocess.DEVNULL, cwd=str(root), env=env,
+                capture_output=True, text=True, check=False,
+            )
         if completed.returncode != 0:
             detail = (completed.stderr or completed.stdout).strip()
             raise OrchestratorRunnerError(

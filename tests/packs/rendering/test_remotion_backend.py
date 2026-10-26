@@ -92,18 +92,15 @@ def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         remotion_runtime,
         "_probe_node",
-        lambda node_executable, *, cwd: ("v20.19.4", None),
+        lambda node_executable, *, cwd, environment=None: ("v20.19.4", None),
     )
     monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", _available_runtime_status)
-    old_project = os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
+    # Register the original value before helpers change it directly. Teardown
+    # must restore it after the test's own monkeypatch entries are unwound.
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR",
+                       os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or str(ROOT / "remotion"))
     with _execution_env():
-        try:
-            yield
-        finally:
-            if old_project is None:
-                os.environ.pop("ASTRID_REMOTION_PROJECT_DIR", None)
-            else:
-                os.environ["ASTRID_REMOTION_PROJECT_DIR"] = old_project
+        yield
 
 
 

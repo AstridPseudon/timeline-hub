@@ -457,6 +457,12 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     assert not ambient_origin.is_relative_to(schema.parent.resolve())
     (runtime / "package-lock.json").write_text('{"lockfileVersion":3}\n')
     monkeypatch.setattr(remotion_run, "gen_effect_registry", None)
+    reference = remotion_runtime.prepare_remotion_validation(
+        artifact_directory=tmp_path / "owned-readiness", host_environment=dict(os.environ),
+        python_executable=sys.executable, launch_id="b" * 32,
+        contexts={"standalone": dict(os.environ)})
+    for name, value in reference.items():
+        monkeypatch.setenv(name, value)
     assert remotion_runtime_status().available
     # This simulates the installed wheel, where authoring-only
     # scripts/gen_effect_registry.py is deliberately not packaged.  The
@@ -756,7 +762,8 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
     (dep / 'resources.json').write_text('{}')
     calls = []
     def owned(argv, *, cwd, env, timeout):
-        assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
+        if argv[-1] != '--version':
+            assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
         calls.append((argv, dict(env)))
         receipt = {'original_wait_exit_code': 0, 'retained_set_final_census_complete': True,
                    'custody_admitted': True, 'original_child_pid': 500 + len(calls)}
@@ -882,10 +889,13 @@ def test_clean_probe_home_refuses_before_launch(home):
 @pytest.mark.parametrize('name', ['DYLD_INSERT_LIBRARIES', 'LD_PRELOAD', 'PYTHONHOME',
                                  'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'NODE_OPTIONS',
                                  'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'])
-def test_clean_probe_rejects_unsupported_consuming_overrides(tmp_path, name):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), name: 'override'},
-                                      python_executable=sys.executable)
+def test_clean_probe_ignores_ambient_but_rejects_consuming_overrides(tmp_path, name):
+    clean = {'HOME': str(tmp_path)}
+    ambient = {**clean, name: 'override'}
+    assert remotion_runtime.probe_context(environment=ambient, python_executable=sys.executable) == remotion_runtime.probe_context(
+        environment=clean, python_executable=sys.executable)
+    with pytest.raises(remotion_runtime.RemotionValidationError, match=name):
+        remotion_runtime._validate_remotion_worker_environment(ambient)
 
 
 def test_clean_probe_projection_preserves_values_absence_and_excludes_task_metadata(tmp_path):
@@ -1230,9 +1240,13 @@ def test_registry_generator_custody_refusal_preserves_primary_and_no_state_publi
 
 
 @pytest.mark.parametrize('control', sorted(remotion_runtime._UNSUPPORTED_PYTHON_STARTUP))
-def test_launch_validation_refuses_unqualified_ordinary_python_startup(tmp_path, control):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported loader/interpreter'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), control: ''}, python_executable=sys.executable)
+def test_launch_validation_projects_out_ambient_python_startup(tmp_path, control):
+    clean = {'HOME': str(tmp_path)}
+    ambient = {**clean, control: ''}
+    assert remotion_runtime.probe_context(environment=ambient, python_executable=sys.executable) == remotion_runtime.probe_context(
+        environment=clean, python_executable=sys.executable)
+    with pytest.raises(remotion_runtime.RemotionValidationError, match=control):
+        remotion_runtime._validate_remotion_worker_environment(ambient)
 
 
 @pytest.mark.parametrize('section', ['include', 'includeIf "gitdir:/any/"'])

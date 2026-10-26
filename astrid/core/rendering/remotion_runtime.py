@@ -266,13 +266,8 @@ def probe_context(*, environment: Mapping[str, str], python_executable: str) -> 
         home = environment.get("USERPROFILE")
     if not isinstance(home, str) or not home or not Path(home).is_absolute():
         raise RemotionValidationError("runtime validation needs an explicit absolute HOME")
-    forbidden = {k for k in environment if k.startswith(("DYLD_", "LD_"))}
-    forbidden.update(k for k in ("PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
-                                "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF")
-                     if k in environment)
-    forbidden.update(k for k in _UNSUPPORTED_PYTHON_STARTUP if k in environment)
-    if forbidden:
-        raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+    # Only these projections reach the owned Node/schema probes. Ambient
+    # loader and interpreter controls are neither child inputs nor key inputs.
     python = Path(python_executable)
     if not python.is_absolute():
         raise RemotionValidationError("runtime validation needs an absolute lexical interpreter")
@@ -295,8 +290,10 @@ def _file_binding(path: Path, *, digest_memo: dict | None = None) -> dict[str, A
         raise RemotionValidationError("runtime validation input is not a file")
     before = resolved.stat()
     def identity(facts):
-        return (facts.st_dev, facts.st_ino, facts.st_size, facts.st_mtime_ns,
-                facts.st_ctime_ns, facts.st_mode, facts.st_uid)
+        common = (facts.st_dev, facts.st_ino, facts.st_size, facts.st_mtime_ns, facts.st_ctime_ns)
+        # Windows stat/fstat synthesize different permission bits for paths
+        # and CRT descriptors. File identity and content timestamps still bind.
+        return common if sys.platform == "win32" else (*common, facts.st_mode, facts.st_uid)
     key = identity(before)
     cached = digest_memo.get(str(resolved)) if digest_memo is not None else None
     # Only reuse old, unchanged files within this held-lock launch. Recent
@@ -477,27 +474,41 @@ _INTERACTIVE_GIT_ENV = frozenset({
 })
 
 
+def _validate_remotion_worker_environment(environment: Mapping[str, str]) -> None:
+    """Check controls delivered to a worker, before its interpreter starts."""
+    forbidden = sorted(k for k in environment
+                       if k.startswith(('DYLD_', 'LD_'))
+                       or (k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV)
+                       or k in _UNSUPPORTED_PYTHON_STARTUP
+                       or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
+                                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'})
+    if forbidden:
+        raise RemotionValidationError(
+            f"Remotion worker environment refuses {', '.join(forbidden)}; "
+            "remove these variables from command.env, required_env and env_passthrough")
+
+
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
     if _installed_registry_profile(environment) and any(environment.get(name) for name in ('PYTHONPATH', ASTRID_PACKS_PATH)):
         raise RemotionValidationError('installed registry discovery refuses explicit import or pack roots')
-    probe_context(environment=environment, python_executable=sys.executable)
-    if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
-           for k in environment):
-        # Git overrides that redirect what Git reads (GIT_DIR, GIT_CONFIG*, ...) and startup
-        # hooks are outside this selected launch contract.
-        raise RemotionValidationError('registry validation refuses unsupported startup/Git overrides')
-    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
-        if environment.get(name) and not Path(environment[name]).is_absolute():
-            raise RemotionValidationError('registry selectors require absolute launch-known paths')
-    if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
-        raise RemotionValidationError('registry import paths require absolute launch-known locations')
-    keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    keys = set(_SAFE_BASE_ENV) | {'ASTRID_HOST_EXECUTION_PROFILE', 'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
     if sys.platform == 'win32':
         keys.update(_WINDOWS_BASE_ENV)
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     context = {k: environment[k] for k in sorted(keys) if k in environment}
+    # This mapping is the registry child's complete environment. Ambient
+    # Git/startup controls omitted here cannot influence that child.
+    probe_context(environment=context, python_executable=sys.executable)
+    for name, value in context.items():
+        if not isinstance(value, str):
+            raise RemotionValidationError(f'{name} must be a string')
+    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
+        if context.get(name) and not Path(context[name]).is_absolute():
+            raise RemotionValidationError(f'{name} must be an absolute launch-known path')
+    if context.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in context['PYTHONPATH'].split(os.pathsep)):
+        raise RemotionValidationError('PYTHONPATH must contain absolute paths; remove empty or relative entries')
     return _normalize_registry_selectors(context)
 
 
@@ -551,7 +562,12 @@ def _normalize_registry_selectors(context: dict[str, str]) -> dict[str, str]:
 
 def _registry_config_files(environment: Mapping[str, str]) -> list[Path]:
     import shutil
-    home = Path(environment['HOME'])
+    home_raw = environment.get('HOME')
+    if sys.platform == 'win32' and not home_raw:
+        home_raw = environment.get('USERPROFILE')
+    if not home_raw:
+        raise RemotionValidationError('registry validation needs an explicit home directory')
+    home = Path(home_raw)
     paths = [home / '.gitconfig', Path(environment.get('XDG_CONFIG_HOME', str(home / '.config'))) / 'git/config',
              Path('/etc/gitconfig')]
     git = shutil.which('git', path=environment.get('PATH', os.defpath))
@@ -952,7 +968,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
                                 python_executable: str, launch_id: str,
                                 contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]],
                                 installed_source: tuple[str, str] | None = None) -> dict[str, str]:
-    """Explicit launch-owner transaction; ordinary resolver calls never spawn."""
+    """Launch-owner transaction for the content, schema and registry proof."""
     project_raw = host_environment.get(REMOTION_PROJECT_DIR_ENV, "")
     if not project_raw or not Path(project_raw).is_absolute():
         raise RemotionValidationError("launch validation requires the explicit Remotion project")
@@ -1256,7 +1272,7 @@ def _probe_node(node_executable: Path, *, cwd: Path, environment: Mapping[str, s
         )
     except RemotionProbeCleanupError:
         raise
-    except (OSError, subprocess.SubprocessError, RemotionValidationError) as exc:
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return None, f"trusted Node version probe failed: {exc}"
     version = probe.stdout.strip().splitlines()[0] if probe.stdout.strip() else ""
     if probe.returncode != 0 or not re.fullmatch(r"v\d+\.\d+\.\d+(?:[-+].*)?", version):
@@ -1292,7 +1308,12 @@ def resolve_remotion_runtime_tools(
         raise
     except (RemotionValidationError, OSError) as exc:
         return None, str(exc)
-    node_version = validation['node_version']
+    node_version, reason = _probe_node(node_executable, cwd=project_dir, environment=environment)
+    if reason:
+        return None, reason
+    if node_version != validation['node_version']:
+        return None, 'trusted Node version differs from launch validation'
+    assert node_version is not None
     from astrid.core.rendering.node_pin import node_pin
 
     pin = node_pin(project_dir)

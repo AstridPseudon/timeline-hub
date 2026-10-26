@@ -92,6 +92,7 @@ _ASTRID_PROPAGATED_ENV = frozenset(
         ASTRID_HOME_ENV,
         ASTRID_ENV_FILE,
         "ASTRID_INSTALL_PROGRAM_ROOT",
+        "ASTRID_HOST_EXECUTION_PROFILE",
         TIMELINE_SCHEMA_PYTHONPATH_ENV,
         ASTRID_VIBECOMFY_CHECKOUT,
         PROJECTS_ROOT_ENV,
@@ -172,7 +173,7 @@ def build_child_subprocess_env(
                 env[key] = str(value)
 
     for key, value in (explicit_env or {}).items():
-        if key in {ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE}:
+        if key in {"ASTRID_HOST_EXECUTION_PROFILE", ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE}:
             raise SubprocessEnvPolicyError("launch validation references are parent-owned")
         if _is_secret_name(str(key)) and str(key) not in secret_names:
             raise SubprocessEnvPolicyError(f"secret env {key!r} must be supplied through secret_values")
