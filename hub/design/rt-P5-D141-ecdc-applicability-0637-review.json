@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.p5.d141.successor-applicability-review.v1",
+  "read_only": true,
+  "verdict": "PASS_SOURCE_APPLICABILITY",
+  "scope": "One bounded successor applicability review: Agent 8585ed9c0404d0187b2ce70242d25114a32747c2 to genuine normal Agent ecdc242ed9b673f641759ecf029f95e89a2c6f92, with Runtime 95d98f038320d5d46bd679ac000ab3e15825c935 and Composition 635f4de06fda22a85fc2e4cfc764d0153a4c9f40 held as the source tuple.",
+  "decision": {
+    "status": "PASS_SOURCE_APPLICABILITY",
+    "affected_executed_p5_boundary": false,
+    "production_caller_source_closure_unchanged": true,
+    "new_p5_receipt": false,
+    "automatic_retarget": false,
+    "semantic_review": false,
+    "tests_run": false,
+    "full_suite_go": false
+  },
+  "successor_delta": {
+    "command": "git -C /home/user/work/agent diff --name-status 8585ed9c0404d0187b2ce70242d25114a32747c2 ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "result": [
+      "M\truntime.lock.json",
+      "M\ttests/timeline/test_authoring_feedback.py",
+      "M\ttests/timeline/test_authoring_media.py"
+    ],
+    "stat": "3 files changed, 3 insertions(+), 3 deletions(-)",
+    "runtime_lock_change": "Only source_commit changed: 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d -> 95d98f038320d5d46bd679ac000ab3e15825c935; files, manifest, producer, and producer_version are byte/JSON-equal.",
+    "test_only_setup_changes": [
+      "tests/timeline/test_authoring_feedback.py: Session._bundle -> Session._capture_bundle",
+      "tests/timeline/test_authoring_media.py: Session._bundle -> Session._capture_bundle"
+    ]
+  },
+  "source_closure_finding": {
+    "agent_boundary": "The retained Agent provider/capture/commit and runtime-client modules have identical Git blob IDs and SHA-256 bytes at 8585 and ecdc; see source-manifest.json.",
+    "runtime_boundary": "The Runtime lock selects exact 95d. Runtime 6a -> 95d has exactly three changed paths: two generated TypeScript outputs not imported by P5 and runtime_protocol/upgrade.py, whose changed _validate_candidate hunk is called by upgrade_realm only. P5 calls migrate_canonical_to_current from tests/test_timeline_commit_crash.py:81; no retained P5 node calls upgrade_realm or _validate_candidate.",
+    "collection_resolution": "P5 is collected from Runtime tests/conftest.py and Runtime tests/lanes.py. Runtime tests/astrid_checkout.py only prepends ASTRID_CHECKOUT for the Agent package namespace; it does not prepend Agent/tests. Therefore the previously changed Agent tests/conftest.py and tests/lanes.py remain outside this P5 collection path.",
+    "provider_capture_imports": "P5 imports astrid.sdk.timeline.capture, astrid.sdk.timeline.commit, and runtime_protocol.timeline_commit_provider; those Agent boundary blobs and the Runtime provider blob are unchanged across the bounded successor. The retained source module-origin receipt is separately cited in source-manifest.json.",
+    "lock_artifact_selection": "The successor lock points to Runtime 95d. Its 15 consumer payload mappings are unchanged and every lock hash equals Runtime 95d contract/artifacts.json and the corresponding Runtime source bytes. Runtime contract/artifacts.json is byte-identical at 6a and 95d. These 15 mappings are source custody evidence, not a new P5 body or REG0 proof."
+  },
+  "retained_original": {
+    "request_id": "runtime-d141-p5-cut-1026013331-6934",
+    "summary": "38 passed in 31.02s",
+    "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d/ac5b862744bece65b2e30565db1777bacd60da28",
+    "agent": "28e56cacb42d3da85b02e5b3543895b44f3d0f70/2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "xml_sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688",
+    "case_set_sha256": "024cd7c2dd2f90c142727b1825bf5d6ee3ee72384547f6cfc925267586c5075c",
+    "counts": {"unique": 38, "passed": 38, "failed": 0, "errors": 0, "skipped": 0, "xfail": 0}
+  },
+  "limits": [
+    "No tests, typecheck, lint, import, collection, provider, preflight, or P5 body execution.",
+    "No source refresh, service/queue/registry/kit/CAS operation, package/environment/network acquisition, raw private export, cleanup/deletion, Store/hub/Git write, build/ZIP, credentials, D130 action, or stopped-investigation retry.",
+    "No product, test, fixture, input, assertion, generated, pin, DTO, or repository edit."
+  ],
+  "control_sources": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "commit_v2": "/home/user/timeline-hub/hub/design/commit-v2.md",
+    "board_header": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md",
+    "authoritative_home_receipt": "/home/user/timeline-hub/hub/design/agent-U4a-D141-postREG-home-0622.json",
+    "authoritative_peer": "/home/user/timeline-hub/hub/design/peer-agent-to-runtime-agent-lead-app-20261026T0622Z-U4a-HOME-stop-later-REG.md"
+  }
+}

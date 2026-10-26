@@ -1,0 +1,3 @@
+Ask: consume the requested D141w dry-run census for the owner; retain the real-repack approval gate / Owner: Main and owner / By: next owner headroom decision
+
+bin/hub-repack runtime --dry-run completed exit0. Actual free4613652480 bytes;30543 loose objects,1.40GiB loose;207329 packed objects in3 packs,971.61MiB packed;9 prune-packable;0 garbage. Full exact stdout in design/runtime-D141w-hub-repack-dry-run-0643.json. No pack, prune, real repack or hub data mutation. Real hub-repack still requires the owner's own approval typed in this machine session. D141x obsolete18617 is now the owning App lead's exact supported cancellation, not a Runtime kit dependency; other8912/19479 holds retained.

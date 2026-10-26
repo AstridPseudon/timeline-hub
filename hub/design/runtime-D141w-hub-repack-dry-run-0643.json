@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-26T06:44:28Z",
+  "command": "bin/hub-repack runtime --dry-run",
+  "exit": 0,
+  "free_bytes": 4613652480,
+  "loose_objects": 30543,
+  "loose_size": "1.40 GiB",
+  "packed_objects": 207329,
+  "packs": 3,
+  "packed_size": "971.61 MiB",
+  "prune_packable": 9,
+  "garbage": 0,
+  "real_repack": false,
+  "owner_approval_for_real_run": false,
+  "stdout": "hub-repack runtime: free 4613652480 B, loose objects 30543\ncount: 30543\nsize: 1.40 GiB\nin-pack: 207329\npacks: 3\nsize-pack: 971.61 MiB\nprune-packable: 9\ngarbage: 0\nsize-garbage: 0 bytes\ndry run: would pack in batches of 3000 while free >= 4300000000 B. Nothing done.\n"
+}
