@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:34:50Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
-# agent board, 2026-10-26T02:33:42Z
+<!-- agent | 2026-10-26T02:38:55Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
+# agent board, 2026-10-26T02:36:13Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -77,3 +77,5 @@ Pass02:24Z: Notes0217 independent PASS, zero actionable findings; all9 SAFE arti
 Pass02:29Z: MAIN D141i newly authorizes same-kind Agent-box cut measurement now; supersedes Farm-only plan for this measurement. Dispatched0227 immediately, exact frozen tuple and existingvenv-agent. No new child/launcher/admission change. Canonicalagent-core-full already admits4700000000 bytes. Fresh controls and required durable5s trace; one bounded review only for command changes beyond tuple. Farm remains definitive for environment-sensitive candidates. Historical no-Agent-body statements above describe pre-D141i scope.
 
 Pass02:33Z: D141i0227 terminal exit0, actualfreshcontrols PASS. Positive ec6c1f75 preflight0/stub17/onecall; poison69168652 changes onlyagent_sha, exit1/zerocalls. Current frozenlauncher9f668 unchanged. Command0486505a adds required durable5s trace/custody/stopwrapper beyondtuple substitution; dispatched ONE independent0232 immediately under MAIN conditionalrule. No body/collection/service request yet.
+
+Pass02:36Z: Command0232 active. Manager packet read notices manifestdeclaredJUnit lacks one directory relative to wrapper actualdestination; independent review already explicitly checks path equality plus entire wrapper. No source edited or body requested. Await complete finite review, then sole same-lineage author return if FAIL; no premature service installation. Controls remain genuine source-only positive17/one andpoison1/zero.
