@@ -8116,6 +8116,12 @@ class GenericPackHost:
         except BindingError as exc:
             raise HostError(f"capability {record.id!r}: {exc}") from exc
         argv = list(binding.argv)
+        # Astrid-owned Python commands may bypass executor_argv (including
+        # external pack manifests), so set UTF-8 at this exact interpreter
+        # boundary without rewriting arbitrary provider executables.
+        if (argv and Path(argv[0]).resolve() == Path(sys.executable).resolve()
+                and argv[1:3] != ["-X", "utf8"]):
+            argv[1:1] = ["-X", "utf8"]
         # Start from the canonical child environment: only safe process
         # variables and manifest-declared provider configuration cross the
         # boundary.  In particular, an unrelated ambient API key must never

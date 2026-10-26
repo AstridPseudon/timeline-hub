@@ -318,7 +318,7 @@ class RunPodPreparationTransport:
         )
         encoded_program = base64.b64encode(program.encode()).decode("ascii")
         command = (
-            f"{shlex.quote(python)} -c {shlex.quote(wrapper)} "
+            f"{shlex.quote(python)} -X utf8 -c {shlex.quote(wrapper)} "
             f"{shlex.quote(encoded_program)} {shlex.quote(payload)}"
         )
         code, stdout, stderr = await self.pod.exec_ssh(command, timeout=self.timeout_seconds)
