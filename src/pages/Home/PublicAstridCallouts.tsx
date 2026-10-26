@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import type { PublicAstridAudience } from './publicAstridMotion';
+import { RIDERS } from './publicAstridRiders';
 import { readPublicAstridPlayerHeight } from './usePublicAstridPlayerHeight';
 import {
   PublicAstridCalloutLayout,
@@ -441,7 +442,6 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
     if (!active || !stage || !svg) return undefined;
     const stageElement: HTMLDivElement = stage;
     const svgElement: SVGSVGElement = svg;
-    const trackTransport = appView;
     let frame = 0;
     let alive = true;
     let pointer: { x: number; y: number; leaving: boolean } | null = null;
@@ -498,17 +498,20 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
       const tiltChanged = !!tilt && tilt.style.transform !== transform;
       if (tiltChanged) setStyle(tilt!, 'transform', transform);
 
-      const outlet = stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet');
-      const player = stageElement.querySelector<HTMLElement>('.astrid-player-surface');
-      if (trackTransport && outlet && player) {
-        const box = player.getBoundingClientRect();
-        const pad = 10;
-        const height = Math.min(78, box.height * 0.24);
-        setAttribute(outlet, 'data-astrid-tracked', 'true');
-        setStyle(outlet, 'left', `${box.left - originX + pad}px`);
-        setStyle(outlet, 'top', `${box.bottom - originY - pad - height}px`);
-        setStyle(outlet, 'width', `${Math.max(0, box.width - pad * 2)}px`);
-        setStyle(outlet, 'height', `${height}px`);
+      // Riders (the transport) are glued to their host's rendered box on every frame, in both
+      // audiences: the host's CSS transition runs through the whole journey, so the sampled box is
+      // the one it is painting right now. Their fade is CSS (see publicAstridRiders.ts).
+      for (const rider of RIDERS) {
+        const overlay = stageElement.querySelector<HTMLElement>(rider.overlay);
+        const host = stageElement.querySelector<HTMLElement>(rider.host);
+        if (!overlay || !host) continue;
+        const box = host.getBoundingClientRect();
+        const placed = rider.place({ left: box.left, top: box.top, width: box.width, height: box.height });
+        setAttribute(overlay, 'data-astrid-tracked', 'true');
+        setStyle(overlay, 'left', `${placed.left - originX}px`);
+        setStyle(overlay, 'top', `${placed.top - originY}px`);
+        setStyle(overlay, 'width', `${placed.width}px`);
+        setStyle(overlay, 'height', `${placed.height}px`);
       }
 
       const launcher = stageElement.querySelector<HTMLElement>('[data-astrid-agent-launcher]');
@@ -977,7 +980,7 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
       phoneQuery.removeEventListener('change', schedule);
       tabletQuery.removeEventListener('change', schedule);
       stageElement.querySelector<HTMLElement>('.astrid-editor-tilt')?.style.removeProperty('transform');
-      releaseTracked(stageElement.querySelector<HTMLElement>('.astrid-preview-transport-outlet'));
+      for (const rider of RIDERS) releaseTracked(stageElement.querySelector<HTMLElement>(rider.overlay));
       // The outgoing launcher stays at its tracked box until the connector retargets.
     };
   }, [active, appView, audience, callouts, reducedMotion, stageRef]);

@@ -169,6 +169,7 @@ export function PublicAstridMountedEditor({
       </div>
       <div
         className="astrid-preview-transport-outlet"
+        data-astrid-rider="app"
         ref={bindTransportOutlet}
         aria-label="Preview playback controls"
         aria-hidden={!appView}
