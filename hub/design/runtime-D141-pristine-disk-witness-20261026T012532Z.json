@@ -1,0 +1,19 @@
+{
+  "at": "20261026T012532Z",
+  "kind": "D89d retained start/end bracket measurement",
+  "run": "runtime-full-d141-cut-1026005231-18778",
+  "start_free": 5190156288,
+  "stop_free": 4430635008,
+  "observed_growth": 759521280,
+  "floor": 4959521280,
+  "limit": "Only start/end bracket, not continuously sampled peak; owner01:15 expressly accepts max bracket delta with this disclosure",
+  "witnesses": {
+    "tests/runtime-full-d141-cut-1026005231-18778/d66/disk-start": "05e055a9dabfd8e8fe8fc12057dc344fc8232f63bd8c914afafd1b28d3a9e9f8",
+    "tests/runtime-full-d141-cut-1026005231-18778/d66/disk-stop": "642489fbb3dd00fa8e0259e3abac252854b26c654f4c52124056e2baf6fb0132"
+  },
+  "already_absent_pins": [
+    "agt-pin-070dfc5e",
+    "agt-pin-08e6b905"
+  ],
+  "unchanged_stop": 4000000000
+}

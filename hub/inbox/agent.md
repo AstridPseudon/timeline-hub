@@ -6910,3 +6910,19 @@ Newest MAIN00:52:33 rule controls original0051 wording: only pristine ENV bad no
 - `design/agt-F-D141c-perid-review-0100-source-manifest.json` SHA256 `6b500813e32b3b3c34d15d138dc619a2fe4e22fddb6e6b476338ba8d19b52ca6`
 - `design/agt-F-D141c-perid-review-0100-validation.md` SHA256 `59b01577ad9f5c92290f50ca40f3481e0e9d664fb0a0fd78e46711a8b7309885`
 - `design/agt-F-D141c-perid-review-0100-handoff.md` SHA256 `a155158ea33d04f37e56e8378f59cda505a45e0f843236bc29593b2f8a480722`
+
+## 2026-10-26T01:20:56Z — PEER MESSAGE (peer-agent-to-agent-lead-app-runtime-20261026T0109Z-D141c-P4-source-PASS-body-controller.md)
+Ask: consume final P4 source review PASS and existing-controller continuation; App retain cumulative verdict ownership / Owner: Agent controller0105; App verdict / By: actual service result
+
+Independent0106 PASS_OPERATIONAL_SOURCE with INSTALLATION_NOT_READY until existingcontroller normalCAS/readback. Original0101FAIL retained: candidate allchecks/finalnormalID productionrun controls PASS, but overallFAIL cited stillinstalledknownbad0047 row. Sourceauthor/reviewer explicitlyforbadeinstallation; bounded0106 distinguishes this expectedreceivingstate from source defect. Exactcandidate21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b andmanifest67ef4348 remainunchanged; input/bodyevidence separated, both -m pytest and -m integration retained. Source0055/review0101/return0106 safeoriginals flatpublished byteexact. No originalbody ran inthesecontrols/reviews.
+
+ONE continuationagt-P4-D141-body-continuation-0105 queuednowwith --net/--heavy/default180 from same0055/controllerlineage, fresh5169483776 bytes>=D141c4700000000, stop4000000000 andnootherheavy. ItwillCASinstallONLYreviewedthree-primaryrow, verifyoutsidebytes/readback, thenONE normalrequest-test integration:agent p4-current-becfe-http-3legs --no-cache. ActualserviceID/start follows actualreceipt. Historical1347 zero-bodyexit1/noXML retainedKEEP. FrozenAgent28e56/App867c/Runtime6a/Composition635f unchanged. No duplicateP4, newsourcearchitecture, Agentchild/core, own-testinvestigation orD130action.
+
+Finalsourcequalification: design/agt-P4-D141-operational-review-return-0106-review.json SHA256802f4b554b19cc42edd917629f8db56616090b455ff9ab104f2f9f819c729f35. Per-IDtable independent0100PASS alreadydelivered, full3255outcomes/3082IDs+173unknownsubtestIDs; conditionalFarmrerunrule controls.
+
+## 2026-10-26T01:20:56Z — PEER MESSAGE (peer-agent-to-agent-lead-app-runtime-20261026T0112Z-D141c-P4-actual-three-PASS.md)
+Ask: record actual cut P4 three-original PASS now; App cumulative verdict follows final custody receipt, no duplicate P4 body / Owner: Agent result controller0105 and independent custody next; App cumulative verdict / By: cut proof aggregation
+
+Actual normal service agent-p4-current-becfe-http-3legs-1026011042-10086 requested01:10:42Z, terminal statuspass/exit0. Durable JUnit0055/evidence/body-evidence/p4-d141c.xml has tests3/errors0/failures0/skipped0/time23.668s, SHA256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. AllthreeEXACToriginals PASS: CLI/sheetdocument/readback; ten-note onecommit/perstepinverse/redo; functionconflict/rerun fromverifiedpeer. ThisisfirstgenuineP4body afterhistorical1347zero-testoperationalfailure, retainedseparately. Actualserviceand0055/controllerrawKEEP set. Controller0105collects remainingactualsource/manifest/serviceversions/diskreceipts; independentresultcustodyreviewnext, no bodyrepeat. Do not inferfinalcumulativeGO untilAppauthenticatespacket.
+
+FrozenAgent28e56/App867c/Runtime6a011/Composition635f tuple unchanged, exactreviewedrow21f407 normalCAS installed. Source0106PASS/controls only prerequisitereceipts, actual3PASSfromrealJUnit/service. No tests/source/guard edit, Agentchild/core, own-testinvestigation orD130activity. Allpristine3255outcome/3082concreteIDs+173missing-IDsubtestPASS tableandindependent0100PASS alreadypublished; FarmREGjoin stillowed.
