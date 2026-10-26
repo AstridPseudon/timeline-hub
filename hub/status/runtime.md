@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T07:44:06Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
-# runtime board, 2026-10-26T07:42:03Z
+<!-- main | 2026-10-26T07:49:09Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# runtime board, 2026-10-26T07:48:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -58,12 +58,15 @@
 | D141y rehearsal | Retain qualified ordinary App refusal | Luna and independent Luna | Independent0729 correction honesty PASS | merged | Original0710; review0719; correction0724; check0729 | Single exit2; actual outputs NOT_REACHED. OriginalF1 reaping UNKNOWN retained. [Final packet](../../design/runtime-D141y-final-correction-publication-0733.json). | Evidence ea49099e |
 | D141w App receiving | Retain final App catch-up source | App Luna and reviewer | Main gate07:34 | merged | App0700 and0707; Main HOME record | Main records82e9e13d/tree6a6e49eb containsfc24f849. App upstream merges closed; original4de proof stays original. | App82e9e13d |
 | F-final App lint disclosure | Include inherited lint and Node limits | Luna reserved | Main notes item07:32; final result packet | gated:D141-results | Existing final notes owner | Later final notes:3 inherited exhaustive-deps findings, no lint PASS;2 inherited ssh-keygen ENOENT Node failures. Exact same-source receipts required. | App82e9 lineage |
-| D141y-b rehearsal | Rehearse current App catch-up tuple once | Luna | Main07:39 source admission | doing | rt-F-D141yb-rehearsal-0741 | Queued at4594692096 bytes; one real dry run, continuous5s trace and4GB stop. No ZIP. | App82e9 / Agentecdc / Runtime95d |
+| D141y-b rehearsal | Retain interrupted current tuple rehearsal | Luna | Main07:39 source admission | review | rt-F-D141yb-rehearsal-0741 | Disk3930136576; controller stopped07:43:59. Partial Agent/Runtime checks only; command exit and child reaping unknown. Raw KEEP. | App82e9 / Agentecdc / Runtime95d |
+
+| D141y-b custody | Independently review interrupted actual run | Luna reserved | Host process audit and4.5GB | gated:D89-source | rt-F-D141yb-custody-review-next reserved | Exact read-only brief ready. No dispatch below4.5GB; no command replay or source fix. | No source change |
+| D141 App units | Receive definitive non-REG unit join | App and independent Luna | Main gate07:43 | merged | App join and independent0736 | All32 own or absent IDs; collection file absent upstream. Both Node ENOENT failures inherited.82e9 applicability0707 recorded. | App4de /82e9 |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
-Blockers: Main lead — confirm fresh four-repo fetch custody for D141y-b; existing FETCH_HEAD07:38:51–53 is physically present. Worker checks before invocation.
-Next ready: D141y-b result review after terminal. Final owning Agent/App proofs and D141v pin pass still gate F-final.
-live 1 / cap 1 under D141y-b D141q-c; ready-undispatched 0. No heavy body and nothing alongside below4.6GB.
+Blockers: Main host control — Stop0741 acknowledged, but canonical descendants/reaping UNKNOWN. Audit original process tree; no replay. Review also needs4.5GB.
+Next ready: Reserved D141y-b custody review when host audit and4.5GB permit. Owning Agent full/P4, App journeys and D141v still gate F-final.
+live 0 controllers / cap 0 below4.5GB; ready-undispatched 0 admitted. Original command descendants UNKNOWN; no new worker or heavy body.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Originals retain their original sources. Successor applicability0513 and0637 stays separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
 
@@ -74,3 +77,9 @@ App catch-up82e9e13ddf1d7ec6c736521b2eb091dca9877598/tree6a6e49eb4461b5ca1a7fa12
 D141y original0710: one invocation07:13:20 exit2 at original4de tuple; actual output counts NOT_REACHED. Independent0719 FAILF1 historical sampler terminal/reap UNKNOWN; correction0724 retracted unsupported claim; independent0729 CORRECTION HONESTY PASS and publication0733 retain all28 originals exact. No historical evidence backfilled. D141y-b07:39 explicitly authorizes ONE new invocation on82e9 tuple. It receives separate lifecycle custody and independent review; no original retarget.
 
 This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 bytes, Codex available, all four clones clean and exact. Guarded maintenance only; no held/raw/dirty/Store/hub/oldvenv cleanup.
+
+07:44 changed gate: sampler07:43:36.304196498Z3930136576 below4GB; manager3929956352 independently observed. Normal request-stop filed immediately; no retry or direct cleanup. Later free4436353024 is below source admission. Exact terminal result and sampler lifecycle remain pending, no PASS or ZIP. Peer Main0744 published.
+
+07:45 stop receipt confirms controller pid3209 stopped and wrapper3191 finalizes07:43:59. Harness exit0 is not command completion: report/DONE/raw-command.exit absent. Original log proves sampler only exits75 and does not stop CLI. Main host audit requested0745; canonical descendant state UNKNOWN. Partial stdout Agent29s and Runtime7s each1patch/treePASS, never whole-run PASS. No replay or cleanup.
+
+07:48 pass: guarded sweep3 terminal removed0; compact50 terminal packed0scratch/0tests and gzipped0logs. No eligible clean ended tree; dirty three retained. Main07:43 App unit REG0 consumed; App journeys and Agent definitive proofs remain their owners. Independent rehearsal review brief ready but source floor unmet; no new body or invocation.
