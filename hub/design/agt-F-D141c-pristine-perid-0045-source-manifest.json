@@ -1,0 +1,167 @@
+{
+  "schema": "timeline.f.d141c.pristine.source-manifest.v1",
+  "request_id": "agent-d141b-pristine-comparator-2358-1026003644-27388",
+  "product_cut_base": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+    },
+    "app": {
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "note": "Frozen product cut; this packet does not grant ship credit."
+  },
+  "actual_test_source_authority": {
+    "agent": {
+      "path": "exact",
+      "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "clean_before": true,
+      "clean_after": true
+    },
+    "runtime": {
+      "path": "exact",
+      "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "clean_before": true,
+      "clean_after": true
+    },
+    "app": {
+      "path": "exact",
+      "commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "clean_before": true,
+      "clean_after": true
+    },
+    "composition": {
+      "path": "exact",
+      "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "clean_before": true,
+      "clean_after": true
+    }
+  },
+  "interpreter": {
+    "requested": "/home/user/work/venv-agent/bin/python",
+    "realpath": "/usr/bin/python3.13",
+    "version": "Python 3.13.16"
+  },
+  "source_witnesses": {
+    "before": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-before.txt",
+      "sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5"
+    },
+    "after": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt",
+      "sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5"
+    },
+    "after_errors": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after-errors.txt",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "before_after_byte_equal": true
+  },
+  "artifacts": {
+    "xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/pristine-comparator.xml",
+      "sha256": "ceeb66095a1e00929da0007639dd3d7c8267126b4541c0da2c86011dab63009a"
+    },
+    "raw_stdout": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/raw-stdout.log",
+      "sha256": "dfe9005382ebcea40cadc5cf0491751122bec6a703f39f484bade637019f0b4b"
+    },
+    "raw_stderr": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/raw-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pytest_log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/pytest.log",
+      "sha256": "8cd3ce2cb4000c383e61f2ca424a934cf3cc524f71e69f703dc925fe8190c22e"
+    },
+    "disk": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/disk.txt",
+      "sha256": "625eb32247a7fa81b96364b30f350a3d6849997295b9a5c7c3cb2055696a9255"
+    },
+    "status": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/status.txt",
+      "sha256": "cdcfa227624adb3eec5e2431d5c47b5347f1b47e2fe9e7ca5ecb27d90378645e"
+    },
+    "body_exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/body-exit.txt",
+      "sha256": "582a60451da88ff925502f62c9a0463ca0ca3b0d7121e658d02e694e6c79acbf"
+    },
+    "monitor_exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/monitor-exit.txt",
+      "sha256": "1236156448fc903e08f7760186c1ca6400cc2be0501f720c6c35b0e321f1eca4"
+    },
+    "command": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/command.txt",
+      "sha256": "a6763531e1858486dbf1df54dea7cb7db8f7b3cefcaa0aa4e465dfb5c70c3fdd"
+    },
+    "source_before": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-before.txt",
+      "sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5"
+    },
+    "source_after": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt",
+      "sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5"
+    },
+    "source_after_errors": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after-errors.txt",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    "controller_result": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-pristine-controller-0035/evidence/result.json",
+      "sha256": "7bc595f85a54dbd558158bae3c58937727d6b79e3d207bea3f45895e67007ae8"
+    }
+  },
+  "command": {
+    "captured_command_receipt_sha256": "a6763531e1858486dbf1df54dea7cb7db8f7b3cefcaa0aa4e465dfb5c70c3fdd",
+    "authored_command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+    "source_agent_commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+    "source_runtime_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "pytest_settings": [
+      "-q",
+      "-n",
+      "3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45"
+    ]
+  },
+  "terminal": {
+    "status": "FAIL",
+    "service_exit": 1,
+    "body_started": 1,
+    "body_exit": 1,
+    "monitor_exit": 0,
+    "source_before_exit": 0,
+    "source_after": "clean",
+    "finished_utc": "2026-10-26T00:42:31Z"
+  },
+  "disk": {
+    "source_admission_bytes": 5295308800,
+    "body_dispatch_bytes": 5295300608,
+    "minimum_observed_bytes": 5277556736,
+    "stop_floor_bytes": 4000000000,
+    "qualified": true
+  },
+  "central_service_log": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "empty": true,
+    "interpretation": "Wrapper redirected authored raw stdout to run-pristine-comparator/raw-stdout.log; central log emptiness is not raw-output absence."
+  },
+  "raw_output_retention": "Raw stdout/stderr, pytest log, XML, disk/status/exits, command, source witnesses, and controller result remain at their authored durable paths; this packet publishes hashes and safe summaries only."
+}

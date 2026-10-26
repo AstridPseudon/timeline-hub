@@ -1,0 +1,197 @@
+{
+  "schema": "timeline.f.d141c.pristine.bad-nodes.v1",
+  "scope": "Five non-passing XML testcase records; raw baseline only, no REG or behavior verdict",
+  "request_id": "agent-d141b-pristine-comparator-2358-1026003644-27388",
+  "environment_rule": "ENVIRONMENT classifications require matching Farm-child reruns before REG classification; timeout remains UNKNOWN unless proved.",
+  "nodes": [
+    {
+      "node_id": "tests/sdk/test_generation_publication_adapter.py::test_compose_is_deterministic_and_uses_real_capability_outputs",
+      "node_id_mapping": "classname_to_module_path",
+      "node_id_ambiguity": null,
+      "classname": "tests.sdk.test_generation_publication_adapter",
+      "name": "test_compose_is_deterministic_and_uses_real_capability_outputs",
+      "time": "45.000",
+      "status": "FAIL",
+      "original_testcase_attributes": {
+        "classname": "tests.sdk.test_generation_publication_adapter",
+        "name": "test_compose_is_deterministic_and_uses_real_capability_outputs",
+        "time": "45.000"
+      },
+      "xml_testcase_sha256": "c5372e4d113bd97f8974949f4f24388617fdc3832d5e0dd1c19126e11e206edc",
+      "classification": "RAW_BASELINE_OUTCOME_ONLY",
+      "reg_status": "UNCLASSIFIED_PENDING_FARM_PER_ID_DIFF",
+      "ship_credit": false,
+      "safe_error_class": "timeout",
+      "environment_classification": "UNKNOWN",
+      "first_our_codeframe": "astrid/sdk/generation_publication.py:280 (_capability_digest)",
+      "supported_cause": "The 45-second pytest-timeout fired while the second composition call was scanning a pack manifest through PyYAML; the retained trace does not prove whether this is product behavior or environment contention.",
+      "short_sanitized_cause": "timeout during pack-metadata YAML scan; cause unproved",
+      "unknown_missing_cause": "No retained evidence distinguishes a product scan hang from environment contention; timeout is UNKNOWN under D141c and is not an environment rerun candidate on this evidence.",
+      "trace_first_frames": [
+        "astrid/sdk/generation_publication.py:280",
+        "astrid/core/pack/discovery.py:399",
+        "astrid/core/pack/loader.py:163",
+        "astrid/core/pack/loader.py:128",
+        "astrid/core/pack/loader.py:241",
+        "astrid/core/pack/canonical.py:873",
+        "astrid/core/pack/canonical.py:806",
+        "astrid/core/pack/canonical.py:430",
+        "yaml/scanner.py:113"
+      ],
+      "rerun_required": false,
+      "original_result_type": "failure",
+      "original_result_attributes": {
+        "message": "[sanitized; see safe_error_class, first_our_codeframe, and short_sanitized_cause]"
+      },
+      "safe_record_sha256": "d7a481d389a03a80ebf1ab7793161a1e65d9deaf74b0a2fae294f115ee2baad0",
+      "original_result_message_sanitized": "timeout during pack-metadata YAML scan; cause unproved",
+      "original_result_message_private_traceback": true
+    },
+    {
+      "node_id": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+      "node_id_mapping": "classname_to_module_path",
+      "node_id_ambiguity": null,
+      "classname": "tests.packs.rendering.test_live_scene_composition",
+      "name": "test_real_render_scene_window_audio_and_overlay",
+      "time": "0.005",
+      "status": "ERROR",
+      "original_testcase_attributes": {
+        "classname": "tests.packs.rendering.test_live_scene_composition",
+        "name": "test_real_render_scene_window_audio_and_overlay",
+        "time": "0.005"
+      },
+      "xml_testcase_sha256": "1dcf8e79d0b09ea6ae373639c7b131d707b778a95bc37030de5fa5a02c9b48cd",
+      "classification": "RAW_BASELINE_OUTCOME_ONLY",
+      "reg_status": "UNCLASSIFIED_PENDING_FARM_PER_ID_DIFF",
+      "ship_credit": false,
+      "safe_error_class": "remotion_site_registry_absent",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "first_our_codeframe": "pytest setup precondition for tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay (no setup frame retained)",
+      "supported_cause": "Setup reported that the provisioned Remotion install was absent: @banodoco/timeline-composition, @banodoco/timeline-schema, @banodoco/timeline-theme-2rp, @remotion/cli, @remotion/three, @react-three/fiber, and three.",
+      "short_sanitized_cause": "provisioned Remotion packages and registry absent at pristine site",
+      "trace_first_frames": [
+        "pytest setup",
+        "tests/packs/rendering/test_live_scene_composition.py:259"
+      ],
+      "rerun_required": true,
+      "rerun_reason": "Matching Farm child may have the provisioned Remotion site; pristine venv-agent absence cannot be compared to Farm core until rerun.",
+      "original_result_type": "error",
+      "original_result_attributes": {
+        "message": "[sanitized; see safe_error_class, first_our_codeframe, and short_sanitized_cause]"
+      },
+      "safe_record_sha256": "b8a2a1bd2e52902dbfa1fe122a0332c02bbde255c8f36f2e4c04ceebf40464f9",
+      "original_result_message_sanitized": "provisioned Remotion packages and registry absent at pristine site",
+      "original_result_message_private_traceback": true
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "node_id_mapping": "classname_to_module_path",
+      "node_id_ambiguity": null,
+      "classname": "tests.packs.rendering.test_render_export_task_adapter",
+      "name": "test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "time": "3.579",
+      "status": "FAIL",
+      "original_testcase_attributes": {
+        "classname": "tests.packs.rendering.test_render_export_task_adapter",
+        "name": "test_render_export_adapter_writes_real_mp4_and_is_callable",
+        "time": "3.579"
+      },
+      "xml_testcase_sha256": "732ec7119c700b4a280801b2582e19111c9cde0088fad74ec0ffd73941d5f993",
+      "classification": "RAW_BASELINE_OUTCOME_ONLY",
+      "reg_status": "UNCLASSIFIED_PENDING_FARM_PER_ID_DIFF",
+      "ship_credit": false,
+      "safe_error_class": "runtime_publication_import_missing",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "first_our_codeframe": "astrid/core/execution/persistent_supervisor.py:17 (from runtime_protocol import platform)",
+      "actual_render_executor_first_cause": "astrid/packs/rendering/actions/render/run.py:9 -> astrid/core/execution/persistent_supervisor.py:17 -> ModuleNotFoundError: runtime_protocol",
+      "supported_cause": "The render executor child exited 1 because runtime_protocol was not importable in the pristine child environment.",
+      "short_sanitized_cause": "render executor child missing runtime_protocol import",
+      "trace_first_frames": [
+        "astrid/packs/rendering/actions/render/run.py:9",
+        "astrid/core/execution/persistent_supervisor.py:17"
+      ],
+      "rerun_required": true,
+      "rerun_reason": "Matching Farm child import/site evidence is required before treating this child-environment import failure as a REG comparison result.",
+      "original_result_type": "failure",
+      "original_result_attributes": {
+        "message": "[sanitized; see safe_error_class, first_our_codeframe, and short_sanitized_cause]"
+      },
+      "safe_record_sha256": "c61bbc8046dbedff3c1582952cdd47fddcdc0a5662c1ff9249642399b45afd0f",
+      "original_result_message_sanitized": "render executor child missing runtime_protocol import",
+      "original_result_message_private_traceback": true
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "node_id_mapping": "classname_to_module_path",
+      "node_id_ambiguity": null,
+      "classname": "tests.packs.rendering.test_render_export_task_adapter",
+      "name": "test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "time": "0.004",
+      "status": "FAIL",
+      "original_testcase_attributes": {
+        "classname": "tests.packs.rendering.test_render_export_task_adapter",
+        "name": "test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+        "time": "0.004"
+      },
+      "xml_testcase_sha256": "fc31eef37e0bb34af5f01df1076ca874e7fd53fa83143250efb976c5f238b5e5",
+      "classification": "RAW_BASELINE_OUTCOME_ONLY",
+      "reg_status": "UNCLASSIFIED_PENDING_FARM_PER_ID_DIFF",
+      "ship_credit": false,
+      "safe_error_class": "remotion_generated_registry_absent",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "first_our_codeframe": "tests/packs/rendering/test_render_export_task_adapter.py:271",
+      "supported_cause": "The test assertion found no pinned provisioned registry file at remotion/node_modules/@banodoco/timeline-composition/typescript/src/effects.generated.ts; the same test requires animations.generated.ts and transitions.generated.ts.",
+      "short_sanitized_cause": "pinned Remotion generated registry absent at pristine site",
+      "trace_first_frames": [
+        "tests/packs/rendering/test_render_export_task_adapter.py:271"
+      ],
+      "rerun_required": true,
+      "rerun_reason": "Matching Farm child Remotion package/site and generated-registry evidence is required before REG comparison.",
+      "original_result_type": "failure",
+      "original_result_attributes": {
+        "message": "[sanitized; see safe_error_class, first_our_codeframe, and short_sanitized_cause]"
+      },
+      "safe_record_sha256": "febd3906552448a821ea4baaacff857085ab7f6632e6d22c60d509222c5b5480",
+      "original_result_message_sanitized": "pinned Remotion generated registry absent at pristine site",
+      "original_result_message_private_traceback": true
+    },
+    {
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+      "node_id_mapping": "classname_to_module_path",
+      "node_id_ambiguity": null,
+      "classname": "tests.packs.video_editing.test_runtime_publication_chain",
+      "name": "test_daemon_backed_host_executes_authoring_and_final_render",
+      "time": "3.661",
+      "status": "FAIL",
+      "original_testcase_attributes": {
+        "classname": "tests.packs.video_editing.test_runtime_publication_chain",
+        "name": "test_daemon_backed_host_executes_authoring_and_final_render",
+        "time": "3.661"
+      },
+      "xml_testcase_sha256": "00eb06e4956ad67520d30aa75a57244d598885dcc41795720f2e148f08953d07",
+      "classification": "RAW_BASELINE_OUTCOME_ONLY",
+      "reg_status": "UNCLASSIFIED_PENDING_FARM_PER_ID_DIFF",
+      "ship_credit": false,
+      "safe_error_class": "runtime_publication_import_missing",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "first_our_codeframe": "astrid/core/foundation/atomic_io.py:16 (from runtime_protocol import platform)",
+      "actual_render_executor_first_cause": "astrid/packs/rendering/actions/assemble_timeline/run.py:29 -> astrid/core/foundation/atomic_io.py:16 -> ModuleNotFoundError: runtime_protocol",
+      "supported_cause": "The assemble_timeline render/publication child exited 1 because runtime_protocol was not importable in the pristine child environment.",
+      "short_sanitized_cause": "assemble_timeline child missing runtime_protocol import",
+      "trace_first_frames": [
+        "astrid/packs/rendering/actions/assemble_timeline/run.py:29",
+        "astrid/core/foundation/atomic_io.py:16"
+      ],
+      "rerun_required": true,
+      "rerun_reason": "Matching Farm child import/site evidence is required before treating this child-environment import failure as a REG comparison result.",
+      "original_result_type": "failure",
+      "original_result_attributes": {
+        "message": "[sanitized; see safe_error_class, first_our_codeframe, and short_sanitized_cause]"
+      },
+      "safe_record_sha256": "9d440d77dcf06a57496120892033cc93131b56d16d34e533a828e2ae4a1977de",
+      "original_result_message_sanitized": "assemble_timeline child missing runtime_protocol import",
+      "original_result_message_private_traceback": true
+    }
+  ],
+  "privacy_note": "No raw traceback or private payload is published."
+}

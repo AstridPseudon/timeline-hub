@@ -1,0 +1,211 @@
+{
+  "schema": "timeline.f.d141c.pristine.env-rerun.v1",
+  "scope": "Only the four environment-type bad nodes; timeout UNKNOWN is excluded.",
+  "source_authority": "Actual pristine XML 27388; no rerun performed here.",
+  "nodes": [
+    {
+      "node_id": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+      "status": "ERROR",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "safe_error_class": "remotion_site_registry_absent",
+      "rerun_status": "REQUIRED_BEFORE_REG_CLASSIFICATION",
+      "farm_owner": "Farm",
+      "matching_environment_kind": "Farm child matching the cut-core rendering/publication environment",
+      "required_genuine_evidence": {
+        "profile": [
+          "Farm-owned child interpreter path and version",
+          "Farm child environment variables used for Remotion/runtime/schema",
+          "matching source commit/tree identity"
+        ],
+        "import": [
+          "Farm child Node executable and version",
+          "package resolution for every missing Remotion package"
+        ],
+        "site": [
+          "actual ASTRID_REMOTION_PROJECT_DIR",
+          "actual ASTRID_TEST_NODE_MODULES",
+          "package.json and generated-registry existence/readback for @banodoco/timeline-composition, @banodoco/timeline-schema, @banodoco/timeline-theme-2rp, @remotion/cli, @remotion/three, @react-three/fiber, and three"
+        ]
+      },
+      "rerun_input": {
+        "selector": "tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay",
+        "source_agent": {
+          "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+          "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+        },
+        "source_runtime": {
+          "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+          "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+        },
+        "original_settings": [
+          "-q",
+          "-n",
+          "3",
+          "-o",
+          "addopts=",
+          "-p",
+          "no:cacheprovider",
+          "--timeout=45"
+        ],
+        "matching_kind_required": true,
+        "farm_environment_receipt_required": true,
+        "no_overlay": true,
+        "no_acquisition": true,
+        "no_bypass": true,
+        "not_run_by_this_worker": true
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "status": "FAIL",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "safe_error_class": "runtime_publication_import_missing",
+      "rerun_status": "REQUIRED_BEFORE_REG_CLASSIFICATION",
+      "farm_owner": "Farm",
+      "matching_environment_kind": "Farm child matching the cut-core rendering/publication environment",
+      "required_genuine_evidence": {
+        "profile": [
+          "Farm-owned child interpreter path and version",
+          "actual Farm child PYTHONPATH and runtime checkout identity",
+          "matching source commit/tree identity"
+        ],
+        "import": [
+          "Farm child runtime_protocol import success and module origin",
+          "runtime_protocol package/version or source identity"
+        ],
+        "site": [
+          "actual child site-packages/runtime package availability",
+          "actual render/publication executor command and child environment"
+        ]
+      },
+      "rerun_input": {
+        "selector": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+        "source_agent": {
+          "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+          "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+        },
+        "source_runtime": {
+          "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+          "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+        },
+        "original_settings": [
+          "-q",
+          "-n",
+          "3",
+          "-o",
+          "addopts=",
+          "-p",
+          "no:cacheprovider",
+          "--timeout=45"
+        ],
+        "matching_kind_required": true,
+        "farm_environment_receipt_required": true,
+        "no_overlay": true,
+        "no_acquisition": true,
+        "no_bypass": true,
+        "not_run_by_this_worker": true
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "status": "FAIL",
+      "environment_classification": "ENVIRONMENT_SITE_REGISTRY_ABSENCE",
+      "safe_error_class": "remotion_generated_registry_absent",
+      "rerun_status": "REQUIRED_BEFORE_REG_CLASSIFICATION",
+      "farm_owner": "Farm",
+      "matching_environment_kind": "Farm child matching the cut-core rendering/publication environment",
+      "required_genuine_evidence": {
+        "profile": [
+          "Farm-owned child interpreter path and version",
+          "matching source commit/tree identity"
+        ],
+        "import": [
+          "Farm child Node executable and version",
+          "actual package resolution for @banodoco/timeline-composition"
+        ],
+        "site": [
+          "actual ASTRID_REMOTION_PROJECT_DIR and ASTRID_TEST_NODE_MODULES",
+          "readback of effects.generated.ts, animations.generated.ts, and transitions.generated.ts in the provisioned registry"
+        ]
+      },
+      "rerun_input": {
+        "selector": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+        "source_agent": {
+          "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+          "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+        },
+        "source_runtime": {
+          "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+          "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+        },
+        "original_settings": [
+          "-q",
+          "-n",
+          "3",
+          "-o",
+          "addopts=",
+          "-p",
+          "no:cacheprovider",
+          "--timeout=45"
+        ],
+        "matching_kind_required": true,
+        "farm_environment_receipt_required": true,
+        "no_overlay": true,
+        "no_acquisition": true,
+        "no_bypass": true,
+        "not_run_by_this_worker": true
+      }
+    },
+    {
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+      "status": "FAIL",
+      "environment_classification": "ENVIRONMENT_IMPORT_RUNTIME_PUBLICATION",
+      "safe_error_class": "runtime_publication_import_missing",
+      "rerun_status": "REQUIRED_BEFORE_REG_CLASSIFICATION",
+      "farm_owner": "Farm",
+      "matching_environment_kind": "Farm child matching the cut-core rendering/publication environment",
+      "required_genuine_evidence": {
+        "profile": [
+          "Farm-owned child interpreter path and version",
+          "actual Farm child PYTHONPATH and runtime checkout identity",
+          "matching source commit/tree identity"
+        ],
+        "import": [
+          "Farm child runtime_protocol import success and module origin",
+          "runtime_protocol package/version or source identity"
+        ],
+        "site": [
+          "actual child site-packages/runtime package availability",
+          "actual render/publication executor command and child environment"
+        ]
+      },
+      "rerun_input": {
+        "selector": "tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render",
+        "source_agent": {
+          "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+          "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+        },
+        "source_runtime": {
+          "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+          "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+        },
+        "original_settings": [
+          "-q",
+          "-n",
+          "3",
+          "-o",
+          "addopts=",
+          "-p",
+          "no:cacheprovider",
+          "--timeout=45"
+        ],
+        "matching_kind_required": true,
+        "farm_environment_receipt_required": true,
+        "no_overlay": true,
+        "no_acquisition": true,
+        "no_bypass": true,
+        "not_run_by_this_worker": true
+      }
+    }
+  ]
+}

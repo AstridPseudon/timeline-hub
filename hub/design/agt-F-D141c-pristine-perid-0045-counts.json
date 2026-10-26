@@ -1,0 +1,33 @@
+{
+  "schema": "timeline.f.d141c.pristine.counts.v1",
+  "request_id": "agent-d141b-pristine-comparator-2358-1026003644-27388",
+  "xml_suite_attributes": {
+    "tests": 3255,
+    "failures": 4,
+    "errors": 1,
+    "skipped": 0
+  },
+  "xml_concrete_testcase_elements": 3082,
+  "xml_concrete_pass_testcases": 3077,
+  "xml_concrete_failures": 4,
+  "xml_concrete_errors": 1,
+  "xml_concrete_skips": 0,
+  "raw_summary_subtests_passed": 173,
+  "computed_total": 3255,
+  "computed_pass": 3250,
+  "computed_nonpass": 5,
+  "duplicate_concrete_node_ids": 0,
+  "duplicate_basis": "(classname,name) pairs from XML testcase elements",
+  "accounting_check": "PASS: 3255 = 3082 XML testcase elements + 173 subtests; 3250 = 3077 concrete PASS + 173 subtest PASS; 5 non-pass = 4 FAIL + 1 ERROR.",
+  "body": {
+    "started": 1,
+    "body_exit": 1,
+    "monitor_exit": 0,
+    "service_exit": 1
+  },
+  "credits": {
+    "behavior_pass": false,
+    "reg_credit": false,
+    "ship_credit": false
+  }
+}
