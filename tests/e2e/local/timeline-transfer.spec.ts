@@ -1,4 +1,5 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { chromium, expect, type Page, type TestInfo } from '@playwright/test';
 import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
@@ -9,6 +10,7 @@ import { test as base } from './support/app.ts';
 // An ephemeral (incognito-style) browser context caps OPFS writes near 0.5 GiB, far below the 2.2 GB large archive. A
 // persistent profile gets the real quota, so this case drives its own persistent Chrome instead of the shared fixture context.
 let pageCrashed = false;
+const cleanups: Array<() => void> = [];
 const test = base.extend({
   page: async ({ harness }, use) => {
     const userDataDir = mkdtempSync(path.join(process.env.TMPDIR ?? '/private/tmp', 'n4-profile-'));
@@ -58,6 +60,7 @@ async function settleTransfer(page: Page, testInfo: TestInfo, label: 'Export' | 
 test.describe.configure({ mode: 'serial' });
 
 test.afterEach(async ({ page }) => {
+  for (const cleanup of cleanups.splice(0)) cleanup();
   await page.evaluate(async () => {
     const saved = (window as any).__n4Archive;
     if (saved?.name) await (await navigator.storage.getDirectory()).removeEntry(saved.name).catch(() => {});
@@ -96,16 +99,33 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   const appOrigin = appMode === 'hosted' ? harness.origin : process.env.N4_LOCAL_APP_ORIGIN;
   expect(appOrigin, 'local flow requires N4_LOCAL_APP_ORIGIN').toBeTruthy();
   const allowedOrigins = new Set([appOrigin!, harness.origin, sandboxDoor.origin]);
-  // Observation never pauses a request: a catch-all route would push every multi-hundred-MB media body through the Node driver.
-  // Only requests that leave the allowed origins (or hit :17340 / :2222) match the blocking route; the rest flow straight through.
-  const isForbidden = (url: URL) => blockedPorts.has(url.port) || !allowedOrigins.has(url.origin);
+  // Observation never pauses a request, and the blocking route uses a RegExp matcher: Playwright serializes a RegExp for
+  // server-side matching, but a function matcher means "intercept everything" and would push every multi-hundred-MB media
+  // body through the Node worker (the stall seen on the large case). Only forbidden origins / ports match the blocking route.
+  const escapeRe = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  const allowedAlternatives = [...allowedOrigins].map(escapeRe).join('|');
+  const forbiddenUrl = new RegExp(
+    `^(?:https?|wss?):\\/\\/[^/?#]*:(?:${[...blockedPorts].join('|')})(?:[/?#]|$)|^(?!(?:${allowedAlternatives})(?:[/?#]|$))(?:https?|wss?):\\/\\/`,
+  );
   let observedCount = 0;
   page.on('request', (request) => {
     observedCount += 1;
     if (observedRequests.length < 5000) observedRequests.push(`${request.method()} ${request.url()}`);
-    if (isForbidden(new URL(request.url())) && !request.url().startsWith('data:') && !request.url().startsWith('blob:')) forbiddenRequests.push(request.url());
+    if (forbiddenUrl.test(request.url())) forbiddenRequests.push(request.url());
   });
-  await page.route((url) => isForbidden(url) && !['data:', 'blob:'].includes(url.protocol), (route) => route.abort('blockedbyclient'));
+  await page.route(forbiddenUrl, (route) => route.abort('blockedbyclient'));
+
+  // Memory evidence for the Node side: the Playwright worker and its driver parent, every 10 s.
+  const rssFile = browserEvidencePath(testInfo, 'timeline-transfer/node-rss.csv');
+  writeFileSync(rssFile, 'time,worker_rss_bytes,driver_rss_bytes\n');
+  const sampleRss = () => {
+    let driver = 0;
+    try { driver = Number(execFileSync('/bin/ps', ['-o', 'rss=', '-p', String(process.ppid)], { encoding: 'utf8' }).trim()) * 1024; } catch { /* sample is best effort */ }
+    appendFileSync(rssFile, `${new Date().toISOString()},${process.memoryUsage().rss},${driver}\n`);
+  };
+  sampleRss();
+  const rssTimer = setInterval(sampleRss, 10_000);
+  cleanups.push(() => clearInterval(rssTimer));
 
   // Use a real OPFS-backed file handle so the product exercises its streaming File System Access path.
   // This keeps the archive file-backed in Chromium instead of materializing a multi-gigabyte Blob.
