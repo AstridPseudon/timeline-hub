@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, Loader2, Search, Terminal } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Copy, Loader2, Search, Terminal } from 'lucide-react';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { isAgentSetupError } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
@@ -12,8 +12,9 @@ import { Input } from '@/shared/components/ui/input.tsx';
 import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
 import { CommandLine, CommandStep } from './CommandLine';
 import { readNewChatChoice, rememberNewChatChoice } from './newChatThinkingSelection';
+import { AstridOpenRouterKeyForm } from './AstridOpenRouterKeyForm';
 
-// Saving a key validates it with OpenRouter and lists models afterwards, which can take longer than a read.
+// The model catalog is separate from the shared key entry form and can take longer than a read.
 const client = new AstridLocalClient({ projectSlug: 'astrid-acp', timeoutMs: 120_000 });
 // ACP model ids are provider/model selectors; the catalog lists bare ids per provider.
 const selectorOf = (providerId: string, modelId: string) => `${providerId}/${modelId}`;
@@ -58,10 +59,6 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const [showStartingBack, setShowStartingBack] = useState(false);
   const [search, setSearch] = useState('');
   const [chosenModel, setChosenModel] = useState<string | null>(null);
-  const [checkingKey, setCheckingKey] = useState(false);
-  const [keyError, setKeyError] = useState<string | null>(null);
-  const keyInput = useRef<HTMLInputElement>(null);
-  const keyId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const shownStep = useRef(step);
   const rows = useRef<Partial<Record<SetupChoice, HTMLDivElement | null>>>({});
@@ -116,7 +113,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
     } finally { inFlight.current = false; }
   }, [models.refetch, onComplete, refreshAgents, selected, startChatWith]);
 
-  const back = () => { attempt.current += 1; setStep('choose'); };
+  const back = () => {
+    attempt.current += 1;
+    setStep('choose');
+  };
   useEffect(() => {
     setShowStartingBack(false);
     if (step !== 'starting') return;
@@ -150,6 +150,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
 
   const providers = [...(models.data?.providers ?? [])].sort((a, b) => Number(b.signedIn) - Number(a.signedIn));
   const hasModels = providers.some(provider => provider.signedIn && provider.models.length > 0);
+  const openRouterKeySaved = Boolean(models.data?.providers.some(provider => provider.id === 'openrouter' && provider.signedIn));
   const availableModels = providers.filter(provider => provider.signedIn)
     .flatMap(provider => provider.models.filter(item => `${provider.name} ${item.name} ${item.id}`.toLowerCase().includes(search.toLowerCase()))
       .map(item => ({ ...item, selector: selectorOf(provider.id, item.id) })));
@@ -277,33 +278,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
         </> : <>
           {models.error && alertBox(copy.modelsFailed)}
           <p>{copy.openRouterRecommendation}</p>
-          <form className="space-y-1.5" onSubmit={event => {
-            event.preventDefault();
-            if (checkingKey) return;
-            if (!keyInput.current?.value.trim()) { setKeyError(copy.emptyKey); keyInput.current?.focus(); return; }
-            const request = client.acp.saveAstridApiKey('openrouter', keyInput.current.value.trim());
-            keyInput.current.value = '';
-            setCheckingKey(true); setKeyError(null);
-            void request.then(async () => { setChosenModel(null); await Promise.all([models.refetch(), refreshAgents()]); }).catch(error => {
-              if (!mounted.current) return;
-              setKeyError(error.code === 'invalid_key' ? copy.invalidKey
-                : error.code === 'provider_unreachable' ? copy.providerUnreachable
-                  : error.status === 403 || error.status === 404 || error.code === 'not_found' ? copy.keyServiceOutdated
-                    : error.detail || error.message || copy.keySaveFailed);
-            }).finally(() => { if (mounted.current) setCheckingKey(false); });
-          }}>
-            <label htmlFor={keyId} className="block text-xs font-medium text-muted-foreground">{copy.openRouterKey}</label>
-            <div className="flex flex-col gap-2 @[17rem]:flex-row">
-              <div className="min-w-0 flex-1"><Input id={keyId} ref={keyInput} type="password" placeholder={copy.openRouterPlaceholder} autoComplete="off" spellCheck={false} className="h-9 font-mono text-sm focus-visible:ring-offset-0 [@media(pointer:coarse)]:h-11" /></div>
-              <Button type="submit" aria-disabled={checkingKey || undefined} className="h-9 shrink-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 [@media(pointer:coarse)]:h-11">{copy.connect}</Button>
-            </div>
-            {checkingKey && waiting(copy.checkingKey)}
-            {keyError && alertBox(keyError)}
-          </form>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p><a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-border underline-offset-2 hover:text-foreground">{copy.getOpenRouterKey}<ExternalLink aria-hidden="true" className="h-3 w-3" /></a></p>
-            <p>{copy.keyPrivacy}</p>
-          </div>
+          <AstridOpenRouterKeyForm keySaved={openRouterKeySaved} onSaved={async () => {
+            setChosenModel(null);
+            await Promise.all([models.refetch(), refreshAgents()]);
+          }} />
           <details className="group rounded-lg border border-border/70">
             <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring [@media(pointer:coarse)]:min-h-11 [&::-webkit-details-marker]:hidden">
               <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />{copy.alternativeSignIn}

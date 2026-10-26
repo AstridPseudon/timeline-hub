@@ -342,6 +342,14 @@ describe('collapsed action groups', () => {
     fireEvent.click(toggle);
     expect(screen.queryByRole('region')).toBeNull();
   });
+  it('shows cancelled tool calls as stopped instead of running', () => {
+    render(<AgentChatToolGroup pairs={[pair('stopped', 'cancelled')]} />);
+    const toggle = screen.getByRole('button', { name: '[1 action]' });
+    expect(within(toggle).getByText('1 stopped')).toBeInTheDocument();
+    expect(within(toggle).queryByText('1 running')).toBeNull();
+    fireEvent.click(toggle);
+    expect(within(screen.getByRole('region', { name: 'Action details' })).getByText('Stopped')).toBeInTheDocument();
+  });
   it('shows native child failure in the disclosure and expanded details despite a completed transport', () => {
     const native = { ...pair('review'), result: { ...pair('review').result, tool_output_details: { projectAgentsDir: null, totalDurationMs: 50, results: [{ id: 'Review', agent: 'reviewer', exitCode: 1 }] } } };
     render(<AgentChatToolGroup pairs={[native]} />);
