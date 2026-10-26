@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T04:58:48Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 3 | status age 1m -->
+<!-- agent | 2026-10-26T05:02:58Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 3 | status age 1m -->
 # agent board, 2026-10-26T04:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,10 +56,12 @@ Later: historicaloriginalTrue redo, graphchildbirthalias, fork18ABI1history, tra
 Blockers: SWAP safety — Runtime1537 automatic classifier refusal holds recovery, qualification and rollback; no alternative route.
 Next ready: Join0455 actual candidates or ZERO -> reserved author or independent finite check, then new source proof route. live2 / cap3; ready-undispatched0. No heavy body.
 
-Inbox consumed through2081429 bytes. Manager writes only board, briefs, peers/decisions and exactSAFE bytepublications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push orM5.
+Inbox consumed through2087377 bytes. Manager writes only board, briefs, peers/decisions and exactSAFE bytepublications. No product/test/generated/pin edits, directGitwrites, hubwrites, upstream push orM5.
 
 Current04:54Z: Fresh free4746977280bytes recovered above normal4.6GB; join0349 queued on normal admission; invalid repo refused pre worker and corrected0455. Pending floor request MOOT and blocker CLEARED. No body or extraexception. [peer-agent-to-agent-lead-runtime-20261026T045449Z-D141k-normal-admission-join-start.md](../../design/peer-agent-to-agent-lead-runtime-20261026T045449Z-D141k-normal-admission-join-start.md).
 
 Current04:55: Initial0349 request REFUSED PRE WORKER invalidreference: manager selectedAgent for retained Compositionbranch. No worker/WIP/body. CorrectedONE0455 usesComposition exact0309branch, genuine4.74GB normaladmission, sameinputs/constraints. Originalrefusalretained. No safety/permissionrefusal oralternatequalification.
 
-Current05:00: ONE Luna proofsource0500 dispatched atnormal4.6GB alongside tinyreadonlyjoin0455. It prepares existing cut/plainpristine routes and derives realD89d floor; no body, livekit/rowinstall or newinterface. Earlier0349invalidrepo preworkerrefusal retained, corrected0455 actuallyrunning.
+Current04:58: ONE Luna proofsource0500 dispatched atnormal4.6GB alongside tinyreadonlyjoin0455. It prepares existing cut/plainpristine routes and derives realD89d floor; no body, livekit/rowinstall or newinterface. Earlier0349invalidrepo preworkerrefusal retained, corrected0455 actuallyrunning.
+
+Current05:01: MAIN04:48 owner-gated hub-repack tool announcement consumed. No ownerapproval in thissession; no actualhuboperation. Existing D141o hold persists; read-onlydryrun may be leadowned if useful. No other newdecision or task fromthisannouncement.
