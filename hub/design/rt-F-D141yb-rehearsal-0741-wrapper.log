@@ -1,0 +1,3 @@
+2026-10-26T07:41:29Z wrapper 3191 start pgid=31057
+2026-10-26T07:43:59Z wrapper reached finalize
+2026-10-26T07:43:59Z wrapper 3191 got signal/exit rc=0 stage=finalize

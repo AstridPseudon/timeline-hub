@@ -1,0 +1,9 @@
+name=rt-F-D141yb-rehearsal-0741
+repo=composition
+base=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+base_sha=635f4de06f
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/rt-F-D141yb-rehearsal-0741
+started=2026-10-26T07:41:29Z

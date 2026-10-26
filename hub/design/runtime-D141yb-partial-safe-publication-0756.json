@@ -1,0 +1,85 @@
+{
+  "at": "2026-10-26T07:56:52.952992+00:00",
+  "scope": "Byte transport of SAFE original partial artifacts and exact original toolcall slice only; interrupted no complete result, no replay",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/source-tuple.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-source-tuple.json",
+      "bytes": 675,
+      "sha256": "63cd645e36569256fad04837b4f32927e1d84ca81186b49315cc18e91c294643"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/disk-trace.txt",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-disk-trace.txt",
+      "bytes": 629,
+      "sha256": "3296c2f20bd5942431387caf59d3754c6a9ab9a376617f77b9628fdb0865bc6a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/raw-command.stdout",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-raw-command.stdout",
+      "bytes": 165,
+      "sha256": "9dca8647b52b5d09c4eb5b6253fa8c8bbc1494070cca3a01165276763ea57350"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/raw-command.stderr",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-raw-command.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/disk-trace.sampler.stderr",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-disk-trace.sampler.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence/sampler.pid",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-sampler.pid",
+      "bytes": 3,
+      "sha256": "917df3320d778ddbaa5c5c7742bc4046bf803c36ed2b050f30844ed206783469"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/log.txt",
+      "parent_bytes": 302836,
+      "parent_sha256": "03c2b022a872d47321753e23652bb60a17916f59458240d315a7169028560815",
+      "byte_start": 297154,
+      "byte_end_exclusive": 302506,
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-original-command-extract.txt",
+      "bytes": 5352,
+      "sha256": "0991fa80f48825250a56cc2bc652f4e420d115eb4f28ec251c9643a92e1155c8",
+      "scope": "Exact original tool-call bytes, no rewriting. Parent remains INPLACE/KEEP; extraction is not proof of completion."
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/meta",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-meta",
+      "bytes": 238,
+      "sha256": "d17d4ab0c3b63b526eedb2d1f1b3969570457f9d21fc3c87fda9e8d0371e06c0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/wrapper.log",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-wrapper.log",
+      "bytes": 167,
+      "sha256": "415f4cd65710ab71990137b9a9e25e5527916643d576022e56d88c7cb59ce7eb"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/stop-rt-F-D141yb-rehearsal-0741",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141yb-rehearsal-0741-stop-receipt.txt",
+      "bytes": 89,
+      "sha256": "f54080fd3021351eda94401d9df33b5aea8b05161d47f1269f32b03722353e4e"
+    }
+  ],
+  "original_missing_at_publication": [
+    "report.md",
+    "DONE",
+    "evidence/raw-command.exit",
+    "evidence/command.json",
+    "evidence/results.json",
+    "evidence/sampler-lifecycle.json"
+  ],
+  "unknown": [
+    "canonical command exit",
+    "original child reaping",
+    "App and Composition full outcomes"
+  ],
+  "source_worker_keep": true
+}

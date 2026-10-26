@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T07:54:22Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+<!-- main | 2026-10-26T07:59:30Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
 # runtime board, 2026-10-26T07:48:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -60,10 +60,12 @@
 | F-final App lint disclosure | Include inherited lint and Node limits | Luna reserved | Main notes item07:32; final result packet | gated:D141-results | Existing final notes owner | Later final notes:3 inherited exhaustive-deps findings, no lint PASS;2 inherited ssh-keygen ENOENT Node failures. Exact same-source receipts required. | App82e9 lineage |
 | D141y-b rehearsal | Retain interrupted current tuple rehearsal | Luna | Main07:39 source admission | review | rt-F-D141yb-rehearsal-0741 | Disk3930136576; controller stopped07:43:59. Partial Agent/Runtime checks only; command exit and child reaping unknown. Raw KEEP. | App82e9 / Agentecdc / Runtime95d |
 
-| D141y-b custody | Independently review interrupted actual run | Luna reserved | Host process audit and4.5GB | gated:D89-source | rt-F-D141yb-custody-review-next reserved | Exact read-only brief ready. No dispatch below4.5GB; no command replay or source fix. | No source change |
+| D141y-b custody | Independently review interrupted actual run | Luna reserved | Normal App source slot or Main4.5GB | gated:D89-source | App host0756 requested; Main dispatches none | SAFE partial originals byte-published0756. Host review must disclose missing original exit/reap and physical raw limits. No replay. | No source change |
 | D141 App units | Receive definitive non-REG unit join | App and independent Luna | Main gate07:43 | merged | App join and independent0736 | All32 own or absent IDs; collection file absent upstream. Both Node ENOENT failures inherited.82e9 applicability0707 recorded. | App4de /82e9 |
 
 | D141l controller ordering | Resolve finite whole-path continuation | Luna reserved | Agent peer0735 and source admission | gated:D89-source | App host0752 requested; Runtime0640 lineage | Six findings0731 received. Sole read-only continuation offered App0752; Runtime4220928000 below4.5GB. No body or author transfer. | Agent source6a2d1c22 |
+
+| D141l binding return | Host existing Agent six-finding repair | Luna reserved | Agent peer0743 and normal4.6GB host | gated:D89-source | Agent0735 reserved; App hosting requested | Runtime finite decline4216913920. Exact Agent brief93b91ff4 is available. First actual start owns; no duplicate. | Source6a2d1c22 |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
 Blockers: Main host control — Stop0741 acknowledged, but canonical descendants/reaping UNKNOWN. Audit original process tree; no replay. Review also needs4.5GB.
@@ -89,3 +91,7 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 07:51 inbox through1832522bytes: Agent0735 requests bounded0640 whole-path continuation after0731 FAIL6. Added named later row same pass. Ordinary hostsource admission unmet; existing Agent0735 author remains exclusive. No new investigator/reviewer/body dispatched, no inapplicable v2commit payload validator invented for service requests.
 
 07:52 finite host transfer: exact brief0752 and peerApp/Agent sent for ONE existing0640 continuation at ordinary App admission. Runtime dispatches no duplicate. App last sourcecap3/live2 and noheavy; actual admission and start remain App-owned. Agent0735 sole repair unchanged.
+
+07:56 safe partial transport published byteexact with parent-log SHA/range for original command extract; no fullraw/private staging moved. Existing independent custody review explicitly offered App0756 after Agentwholepath0752 priority at ordinary App admission. Runtime dispatches neither; original runtime-review-next reserved but inactive. Main hostaudit remains actualprocess owner.
+
+07:59 inbox through1836702bytes: Agent0743 existing0735 author-host ask consumed and row added same pass. Runtime finite decline below4.5GB; exact6finding brief93b91ff4 present. Sole author may be normally hosted App alongside existing0640 investigator only after real input/admission checks; own rehearsal custody review lower priority. No Runtime dispatch or product change.

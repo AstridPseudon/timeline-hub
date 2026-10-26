@@ -1,0 +1,91 @@
+exec
+/bin/bash -lc 'set +e
+E=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741/evidence
+W=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141yb-rehearsal-0741
+mkdir -p "$E" "$E/delivery" "$E/work"
+touch "$W/KEEP"
+CLI=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build
+TUPLE="$E/source-tuple.json"
+python3 - "$TUPLE" <<'"'PY'
+import json, sys
+out = {
+  \"agent\": {\"root\": \"/home/user/work/agent\", \"sha\": \"ecdc242ed9b673f641759ecf029f95e89a2c6f92\", \"tree\": \"d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735\"},
+  \"runtime\": {\"root\": \"/home/user/work/runtime\", \"sha\": \"95d98f038320d5d46bd679ac000ab3e15825c935\", \"tree\": \"78df31d62c5b9ba4c84dee4ea346e43a767718c1\"},
+  \"app\": {\"root\": \"/home/user/work/app\", \"sha\": \"82e9e13ddf1d7ec6c736521b2eb091dca9877598\", \"tree\": \"6a6e49eb4461b5ca1a7fa1247653bc794f26d710\"},
+  \"composition\": {\"root\": \"/home/user/work/composition\", \"sha\": \"635f4de06fda22a85fc2e4cfc764d0153a4c9f40\", \"tree\": \"5ab5191a296980a0a6bcd1178ab6902d6478a148\"},
+}
+with open(sys.argv[1], \"w\", encoding=\"utf-8\") as f:
+    json.dump(out, f, indent=2)
+    f.write(\"\\n\")
+PY
+TUPLE_SHA="'$(sha256sum "$TUPLE" | awk '"'{print "'$1}'"')
+STOP=4000000000
+SAMPLER_STARTED="'$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+(
+  sampler_pid=$BASHPID
+  printf '"'SAMPLER_START utc=%s pid=%s stop_bytes=%s interval_seconds=5\\n' \""'$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)" "$sampler_pid" "$STOP"
+  while :; do
+    now=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+    avail=$(df -B1 --output=avail "$E" | awk '"'NR==2 {print "'$1}'"')
+    printf 'SAMPLE utc=%s available_bytes=%s\\n' \""'$now" "$avail"
+    if [ -z "$avail" ] || [ "$avail" -lt "$STOP" ]; then
+      printf '"'SAMPLER_TERMINAL utc=%s pid=%s reason=%s available_bytes=%s\\n' \""'$now" "$sampler_pid" "below_stop_or_unreadable" "$avail"
+      exit 75
+    fi
+    sleep 5
+  done
+) > "$E/disk-trace.txt" 2> "$E/disk-trace.sampler.stderr" &
+SAMPLER_PID=$!
+printf '"'%s\\n' \""'$SAMPLER_PID" > "$E/sampler.pid"
+printf '"'SAMPLER_PID=%s START=%s\\n' \""'$SAMPLER_PID" "$SAMPLER_STARTED"
+# Preserve the exact argv and execute the canonical CLI exactly once.
+argv=("$CLI" --dry-run --source-tuple "$TUPLE" --source-tuple-sha "$TUPLE_SHA" --delivery-root "$E/delivery" --work-root "$E/work" --template /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md --gate-results /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md)
+CMD_STARTED=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+"${argv[@]}" > "$E/raw-command.stdout" 2> "$E/raw-command.stderr"
+CLI_RC=$?
+CMD_FINISHED=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+printf '"'%s\\n' \""'$CLI_RC" > "$E/raw-command.exit"
+printf '"'CLI_RC=%s START=%s FINISH=%s\\n' \""'$CLI_RC" "$CMD_STARTED" "$CMD_FINISHED"
+# Finalize evidence while the sampler is still live, then stop and reap it explicitly.
+FINAL_AVAIL=$(df -B1 --output=avail "$E" | awk '"'NR==2 {print "'$1}'"')
+FINAL_SAMPLE_UTC="'$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+printf '"'FINAL_SAMPLE utc=%s available_bytes=%s stop_bytes=%s\\n' \""'$FINAL_SAMPLE_UTC" "$FINAL_AVAIL" "$STOP" >> "$E/disk-trace.txt"
+STOP_REQUESTED=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+kill -TERM "$SAMPLER_PID" 2> "$E/sampler-kill.stderr"
+KILL_RC=$?
+wait "$SAMPLER_PID"
+WAIT_RC=$?
+REAP_UTC=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+if kill -0 "$SAMPLER_PID" 2>/dev/null; then REAPED=false; else REAPED=true; fi
+python3 - "$E/sampler-lifecycle.json" "$SAMPLER_PID" "$SAMPLER_STARTED" "$FINAL_SAMPLE_UTC" "$FINAL_AVAIL" "$STOP_REQUESTED" "$KILL_RC" "$WAIT_RC" "$REAP_UTC" "$REAPED" <<'"'PY'
+import json, sys
+out, pid, started, final_utc, final_avail, stop_utc, kill_rc, wait_rc, reap_utc, reaped = sys.argv[1:]
+data = {
+  \"schema\": \"timeline.f.d141y.sampler-lifecycle.v1\",
+  \"pid\": int(pid), \"started_at_utc\": started,
+  \"final_sample\": {\"at_utc\": final_utc, \"available_bytes\": int(final_avail), \"stop_bytes\": 4000000000},
+  \"stop\": {\"signal\": \"TERM\", \"requested_at_utc\": stop_utc, \"kill_return\": int(kill_rc)},
+  \"wait_return\": int(wait_rc), \"reaped_at_utc\": reap_utc, \"reaped\": reaped == \"true\",
+}
+with open(out, \"w\", encoding=\"utf-8\") as f:
+    json.dump(data, f, indent=2)
+    f.write(\"\\n\")
+PY
+python3 - \""'$E/command.json" "$CLI" "${argv[@]}" "$CMD_STARTED" "$CMD_FINISHED" "$CLI_RC" "$TUPLE_SHA" <<'"'PY'
+import json, sys
+out, cli, *rest = sys.argv[1:]
+started, finished, rc, tuple_sha = rest[-4:]
+args = rest[:-4]
+data = {
+  \"schema\": \"timeline.f.d141yb.command.v1\", \"task\": \"rt-F-D141yb-rehearsal-0741\",
+  \"invocation_count\": 1, \"argv\": [cli, *args],
+  \"timing\": {\"started_at_utc\": started, \"finished_at_utc\": finished, \"basis\": \"raw stdout redirection and raw exit timestamps\"},
+  \"exit_code\": int(rc), \"source_tuple_sha256\": tuple_sha,
+  \"raw\": {\"stdout\": \"raw-command.stdout\", \"stderr\": \"raw-command.stderr\", \"exit\": \"raw-command.exit\"},
+  \"zip_written\": False, \"publication\": False,
+}
+with open(out, \"w\", encoding=\"utf-8\") as f:
+    json.dump(data, f, indent=2)
+    f.write(\"\\n\")
+PY
+printf 'postprocess_ready sampler_wait=%s reaped=%s\\n' \""'$WAIT_RC" "$REAPED"'
