@@ -57,11 +57,11 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   const reducedMotion = useEditorTour((state) => state.reducedMotion);
   const instant = useEditorTour((state) => state.instant);
   const skipAnimation = useEditorTour((state) => state.skipAnimation);
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const script = EDITOR_TOUR_SCRIPT.acts[act];
   const [coarsePointer] = useState(() => window.matchMedia?.('(pointer: coarse)').matches === true);
 
-  useEffect(() => { setIsTasksPaneOpen(true); }, [setIsTasksPaneOpen]);
+  useEffect(() => { setIsTasksPaneLocked(true); }, [setIsTasksPaneLocked]);
 
   // Each run (and replay) starts from an empty transcript with its own clock for the message times.
   const [clock, setClock] = useState(() => ({ runId, ms: Date.now() }));

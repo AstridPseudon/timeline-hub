@@ -8,15 +8,17 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
   useProjectSelectionContext: () => ({ selectedProjectId: 'test-project-id' }),
 }));
 
+const queryMock = vi.hoisted(() => ({ response: undefined as unknown }));
+
 vi.mock('@/shared/hooks/projects/useProjectGenerations', () => ({
-  useProjectGenerations: vi.fn().mockReturnValue({
-    data: { items: [], total: 0 },
+  useProjectGenerations: vi.fn(() => ({
+    data: queryMock.response,
     isLoading: false,
     isFetching: false,
     isError: false,
     error: null,
     isPlaceholderData: false,
-  }),
+  })),
 }));
 
 vi.mock('@/shared/hooks/shots', () => ({
@@ -47,11 +49,13 @@ vi.mock('@/shared/components/ui/runtime/sonner', () => ({
   toast: { error: vi.fn() },
 }));
 
+const filterMock = vi.hoisted(() => ({ searchTerm: '' }));
+
 vi.mock('@/shared/hooks/gallery/useGalleryFilterState', () => ({
   useGalleryFilterState: () => ({
     selectedShotFilter: null,
     excludePositioned: false,
-    searchTerm: '',
+    searchTerm: filterMock.searchTerm,
     starredOnly: false,
     filters: {},
     expectedItemCount: 0,
@@ -76,6 +80,8 @@ function createWrapper() {
 describe('useGalleryPageState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryMock.response = { items: [], total: 0, hasMore: false };
+    filterMock.searchTerm = '';
   });
 
   it('returns initial page state', () => {
@@ -158,6 +164,7 @@ describe('useGalleryPageState', () => {
   });
 
   it('updates page when handleServerPageChange is called', () => {
+    queryMock.response = { items: [], total: 135, hasMore: false };
     const { result } = renderHook(
       () => useGalleryPageState(),
       { wrapper: createWrapper() }
@@ -197,5 +204,86 @@ describe('useGalleryPageState', () => {
 
     // When data loading is disabled, we should still get a valid structure
     expect(result.current.paginatedData).toBeDefined();
+  });
+
+  describe('filter resets and page clamping', () => {
+    const items = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `g-${i}` }));
+    const response = (total: number, hasMore: boolean) => ({ items: items(45), total, hasMore });
+
+    it('resets page to 1 when mediaType changes after paging to page 2', () => {
+      queryMock.response = response(100, true);
+      const { result, rerender } = renderHook(
+        ({ mediaType }: { mediaType: 'image' | 'video' }) => useGalleryPageState({ mediaType }),
+        { initialProps: { mediaType: 'image' as 'image' | 'video' }, wrapper: createWrapper() },
+      );
+
+      act(() => {
+        result.current.handleServerPageChange(2);
+      });
+      expect(result.current.page).toBe(2);
+      expect(result.current.paginatedData.items).toHaveLength(45);
+
+      rerender({ mediaType: 'video' });
+
+      expect(result.current.page).toBe(1);
+      expect(result.current.paginatedData.items).toHaveLength(45);
+    });
+
+    it('resets page to 1 when the search term changes', () => {
+      queryMock.response = response(100, true);
+      const { result, rerender } = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+
+      act(() => {
+        result.current.handleServerPageChange(2);
+      });
+      expect(result.current.page).toBe(2);
+
+      filterMock.searchTerm = 'cat';
+      rerender();
+
+      expect(result.current.page).toBe(1);
+    });
+
+    it('clamps page to the last page when the total shrinks', () => {
+      queryMock.response = response(135, true);
+      const { result, rerender } = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+
+      act(() => {
+        result.current.handleServerPageChange(3);
+      });
+      expect(result.current.page).toBe(3);
+
+      queryMock.response = { items: items(5), total: 50, hasMore: false };
+      rerender();
+
+      expect(result.current.page).toBe(2);
+    });
+
+    it('does not clamp while there is no response', () => {
+      queryMock.response = undefined;
+      const { result } = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+
+      act(() => {
+        result.current.handleServerPageChange(3);
+      });
+
+      expect(result.current.page).toBe(3);
+    });
+
+    it('reports totalIsExact true only when hasMore is false', () => {
+      queryMock.response = response(45, false);
+      const exact = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+      expect(exact.result.current.totalIsExact).toBe(true);
+
+      queryMock.response = response(46, true);
+      const lookAhead = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+      expect(lookAhead.result.current.totalIsExact).toBe(false);
+    });
+
+    it('reports totalIsExact false when there is no response', () => {
+      queryMock.response = undefined;
+      const { result } = renderHook(() => useGalleryPageState(), { wrapper: createWrapper() });
+      expect(result.current.totalIsExact).toBe(false);
+    });
   });
 });

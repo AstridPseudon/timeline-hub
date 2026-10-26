@@ -38,13 +38,34 @@ describe('TimelineEditorShellToolbar', () => {
           onDividerLostPointerCapture={() => {}}
           isTimelineMaximized={false}
           setIsTimelineMaximized={() => {}}
-          onOpenElements={() => {}}
         />
       </TimelineStoreProvider>,
     );
 
     fireEvent.click(screen.getByTitle('History'));
     await waitFor(() => expect(refreshCanonicalHistory).toHaveBeenCalledTimes(1));
+  });
+
+  it('has no Elements button', () => {
+    const store = createTimelineStore();
+    render(
+      <TimelineStoreProvider store={store}>
+        <TimelineEditorShellToolbar
+          touchChrome={false}
+          condensed={false}
+          onDividerPointerDown={() => {}}
+          onDividerPointerMove={() => {}}
+          onDividerPointerUp={() => {}}
+          onDividerPointerCancel={() => {}}
+          onDividerLostPointerCapture={() => {}}
+          isTimelineMaximized={false}
+          setIsTimelineMaximized={() => {}}
+        />
+      </TimelineStoreProvider>,
+    );
+    expect(screen.queryByRole('button', { name: 'Elements' })).toBeNull();
+    expect(screen.queryByTitle('Elements')).toBeNull();
+    expect(screen.getByTitle('History')).toBeTruthy();
   });
 
   describe('the save badge', () => {
@@ -63,7 +84,6 @@ describe('TimelineEditorShellToolbar', () => {
             onDividerLostPointerCapture={() => {}}
             isTimelineMaximized={false}
             setIsTimelineMaximized={() => {}}
-            onOpenElements={() => {}}
           />
         </TimelineStoreProvider>,
       );

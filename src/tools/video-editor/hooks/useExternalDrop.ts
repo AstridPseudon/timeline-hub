@@ -35,7 +35,6 @@ import {
   handleFileDrop,
   handleMultiGenerationDrop,
   handleSingleGenerationDrop,
-  handleTextToolDrop,
   isGenerationDragType,
   type TimelineDropPosition,
 } from '@/tools/video-editor/lib/external-drop-utils.ts';
@@ -83,7 +82,6 @@ async function dispatchTimelineDrop({
   directAssetUploadAllFiles,
   mediaImportForImageVideo,
   onAssetDropError,
-  handleAddTextAt,
   shots,
   finalVideoMap,
   onPanelClipDrop,
@@ -105,7 +103,6 @@ async function dispatchTimelineDrop({
   directAssetUploadAllFiles: boolean;
   mediaImportForImageVideo: boolean;
   onAssetDropError?: (error: unknown) => void;
-  handleAddTextAt?: (trackId: string, time: number) => void;
   shots: Shot[] | undefined;
   finalVideoMap: Map<string, { id: string; location: string; thumbnailUrl: string | null; durationSeconds?: number | null }>;
   onPanelClipDrop?: (dropPosition: TimelineDropPosition) => Promise<void>;
@@ -114,11 +111,6 @@ async function dispatchTimelineDrop({
 
   if (isPanelClipDrag(event.dataTransfer.types)) {
     await onPanelClipDrop?.(dropPosition);
-    return;
-  }
-
-  if (event.dataTransfer.types.includes('text-tool')) {
-    handleTextToolDrop({ dataRef, dropPosition, insertAtTop, handleAddTextAt });
     return;
   }
 
@@ -484,7 +476,6 @@ export interface UseExternalDropArgs {
   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
   handleAssetDrop: UseAssetManagementResult['handleAssetDrop'];
-  handleAddTextAt?: (trackId: string, time: number) => void;
   onSeekToTime?: (time: number) => void;
   shots?: Shot[] | undefined;
   finalVideoMap: Map<string, ShotFinalVideo>;
@@ -511,7 +502,6 @@ export function useExternalDrop({
   uploadImageGeneration,
   uploadVideoGeneration,
   handleAssetDrop: dropAsset,
-  handleAddTextAt,
   onSeekToTime,
   shots,
   finalVideoMap,
@@ -597,7 +587,6 @@ export function useExternalDrop({
     const types = Array.from(event.dataTransfer.types);
     if (!types.includes('asset-key')
       && !isPanelClipDrag(types)
-      && !types.includes('text-tool')
       && !types.includes('effect-layer')
       && dragType !== 'file'
       && dragType !== 'shot'
@@ -701,7 +690,6 @@ export function useExternalDrop({
           ...(error instanceof Error && error.message ? { description: error.message } : {}),
         });
       },
-      handleAddTextAt,
       shots,
       finalVideoMap,
       onPanelClipDrop: panelClip ? (position) => placePanelClip(position, panelClip) : undefined,
@@ -727,7 +715,6 @@ export function useExternalDrop({
     runtime.toast,
     shots,
     finalVideoMap,
-    handleAddTextAt,
     onSeekToTime,
     uploadImageGeneration,
     uploadVideoGeneration,

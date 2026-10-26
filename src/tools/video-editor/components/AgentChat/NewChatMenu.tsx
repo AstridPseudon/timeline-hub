@@ -1,9 +1,11 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
+import { Blocks, Check, ChevronDown, ChevronRight, Copy, Plus } from 'lucide-react';
+import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY as copy, AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
+import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { PICKER_GROUP, PICKER_PANEL, PickerSearch, ROW_BUTTON, matches } from '@/shared/components/ui/picker-menu.tsx';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
@@ -40,10 +42,14 @@ interface NewChatMenuProps {
   disabled?: boolean;
   /** A new chat is being created; the buttons wait for it. */
   newChatDisabled?: boolean;
+  /** Whether Astrid has a usable configured model/key. */
+  astridKeyConfigured?: boolean;
   /** Start a chat: no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
   /** Opens setup for an agent that is not ready. */
   onSetupAgent?: (agent: LocalAgentId) => void;
+  /** Refreshes Astrid's model list after a key is saved. */
+  onAstridKeySaved?: () => Promise<unknown> | unknown;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
@@ -51,21 +57,23 @@ interface NewChatMenuProps {
 }
 
 /**
- * The chat header's new-chat split button, like a split Merge button: + starts a chat, and ▾ opens a chooser for what + starts
- * (an agent, → drills into that agent's models and thinking levels). The chooser never starts a chat itself.
+ * The chat header's new-chat split button, like a split Merge button: + starts a chat, and ▾ chooses its agent/model or opens setup.
+ * Choosing a row never starts a chat; → drills into that agent's models and thinking levels.
  */
 export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(function NewChatMenu({
-  current = null, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null,
-  disabled = false, newChatDisabled = false, onNewChat, onSetupAgent, onBrowseAgent, agentModels = null, onOpenChange,
+  current = null, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, astridKeyConfigured,
+  disabled = false, newChatDisabled = false, onNewChat, onSetupAgent, onAstridKeySaved, onBrowseAgent, agentModels = null, onOpenChange,
 }, ref) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
+  const [keySavedInMenu, setKeySavedInMenu] = useState(false);
   const [openLevelSelector, setOpenLevelSelector] = useState<string | null>(null);
   const [levelSelections, setLevelSelections] = useState(() => Object.fromEntries(
     AGENT_IDS.map(agent => [agent, readModelThoughtSelections(agent)]),
   ) as Record<LocalAgentId, Record<string, string>>);
   const [highlighted, setHighlighted] = useState('');
   const [query, setQuery] = useState('');
+  const [otherExpanded, setOtherExpanded] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const landOnModel = useRef(false);
@@ -85,12 +93,19 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const choice = stored && availability(stored.agent).usable ? stored : null;
   const effective: NewChatLike = choice ?? current ?? { agent: defaultAgent };
   const homeValue = `agent:${effective.agent}`;
-  const canBrowse = (id: LocalAgentId) => Boolean(agents?.some(choice => choice.id === id)) && availability(id).usable && agentCanBrowse?.[id] !== false;
+  const astridKeyMissing = astridKeyConfigured === false && !keySavedInMenu;
+  const keyIsConfigured = astridKeyConfigured === true || keySavedInMenu;
+  const canBrowse = (id: LocalAgentId) => Boolean(agents?.some(choice => choice.id === id))
+    && (availability(id).usable || (id === 'astrid' && astridKeyMissing))
+    && (id === 'astrid' && astridKeyMissing || agentCanBrowse?.[id] !== false);
   const astridSignInLine = agents?.find(choice => choice.id === 'astrid')?.signInLine;
   const updateNeeded = agentsError && isChatUpdateError(agentsError) ? agentsError : null;
   const quickAgent = effective.agent;
   const quickModel = choice ? choice.modelName ?? agentModelNames?.[choice.agent] : current ? current.modelName : agentModelNames?.[defaultAgent];
   const quickLabel = `New chat · ${[agentNames[quickAgent], quickModel].filter(Boolean).join(' · ')}`;
+  const instruction = copy.anotherAgentInstruction(agents?.find(agent => agent.id === 'astrid')?.terminal?.command || 'astrid');
+  const instructionCopy = useCopyAction(instruction);
+  const integrationCopy = useCopyAction(AGENT_INTEGRATION_PROMPT);
 
   const browse = (agent: LocalAgentId | null) => {
     landOnModel.current = agent !== null;
@@ -106,7 +121,10 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const changeOpen = (next: boolean) => {
     setOpen(next);
     if (next) { setHighlighted(homeValue); setQuery(''); }
-    else if (browsing) browse(null);
+    else {
+      setOtherExpanded(false);
+      if (browsing) browse(null);
+    }
     onOpenChange?.(next);
   };
   useImperativeHandle(ref, () => ({
@@ -120,8 +138,14 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     rememberNewChatChoice(next);
     changeOpen(false);
   };
+  const requestSetup = (agent: LocalAgentId) => { changeOpen(false); onSetupAgent?.(agent); };
+  const openAstridKeyPanel = () => {
+    if (!open) changeOpen(true);
+    browse('astrid');
+  };
   const startQuick = () => {
     const source = choice ?? current;
+    if ((source?.agent ?? defaultAgent) === 'astrid' && astridKeyMissing) { openAstridKeyPanel(); return; }
     if (source?.thoughtLevel === undefined) onNewChat(source?.agent, source?.model);
     else onNewChat(source.agent, source.model, source.thoughtLevel);
   };
@@ -195,7 +219,12 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     const model = state.usable ? agentModelNames?.[id] : null;
     return (
       <CommandItem key={id} value={`agent:${id}`} disabled={newChatDisabled}
-        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (canBrowse(id)) { startedFromRow.current = true; browse(id); } else if (state.usable) choose(id); else { changeOpen(false); onSetupAgent?.(id); } }}>
+        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => {
+          if (id === 'astrid' && astridKeyMissing) { startedFromRow.current = true; browse('astrid'); }
+          else if (canBrowse(id)) { startedFromRow.current = true; browse(id); }
+          else if (state.usable) choose(id);
+          else requestSetup(id);
+        }}>
         <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', effective.agent === id ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
         <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -222,7 +251,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   return (
     <Popover open={open} onOpenChange={changeOpen}>
       <div role="group" aria-label="New chat" className="flex shrink-0 items-center rounded-md transition-colors hover:has-[:enabled]:bg-accent/50 has-[[aria-expanded=true]]:bg-accent/50">
-        <button type="button" disabled={disabled || newChatDisabled || !availability(quickAgent).usable} aria-label={quickLabel} title={quickLabel}
+        <button type="button" disabled={disabled || newChatDisabled || (!availability(quickAgent).usable && !(quickAgent === 'astrid' && astridKeyMissing))} aria-label={quickLabel} title={quickLabel}
           className={cn(SPLIT_BUTTON, 'w-6 rounded-l-md [@media(pointer:coarse)]:w-11')}
           onClick={startQuick}>
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -247,8 +276,14 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
             {browsing ? (
               <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
                 returnFocus={search} onBack={() => browse(null)} selectedModel={effective.agent === browsing ? effective.model : undefined}
-                onStartNow={(model, level, name) => { choose(browsing, model, level, name); if (level === undefined) onNewChat(browsing, model); else onNewChat(browsing, model, level); }}
+                onStartNow={(model, level, name) => {
+                  choose(browsing, model, level, name);
+                  if (level === undefined) onNewChat(browsing, model);
+                  else onNewChat(browsing, model, level);
+                }}
                 onPick={(model, level) => choose(browsing, model, level, submenu?.models.find(item => item.id === model)?.name)}
+                astridKeyConfigured={keyIsConfigured}
+                onAstridKeySaved={async () => { await onAstridKeySaved?.(); setKeySavedInMenu(true); }}
                 onLevelSelectorOpenChange={(modelId, next) => {
                   setOpenLevelSelector(next ? modelId : null);
                   setHighlighted(`model:${modelId}`);
@@ -261,11 +296,54 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
                   <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <CommandLine line={astridSignInLine} /></p>
                 )} />
             ) : (
-              <CommandGroup heading="Use for new chats" className={PICKER_GROUP}>
-                {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
-                {agentsError && !updateNeeded && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>}
-                {agentRows}
-              </CommandGroup>
+              <>
+                <CommandGroup heading="Use for new chats" className={PICKER_GROUP}>
+                  {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
+                  {agentsError && !updateNeeded && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>}
+                  {agentRows}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup className={PICKER_GROUP}>
+                  <CommandItem value="setup:other" disabled={newChatDisabled} aria-expanded={otherExpanded}
+                    className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]"
+                    onSelect={() => setOtherExpanded(expanded => !expanded)}>
+                    <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 opacity-0" aria-hidden="true" />
+                    <Blocks className="mt-[3px] h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="flex items-baseline gap-2">
+                        <span>Another agent</span>
+                        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">Gemini CLI, OpenCode…</span>
+                      </span>
+                      {otherExpanded && <div className="mt-1 flex flex-col gap-0.5 text-[11px] leading-4 text-muted-foreground">
+                        <span className="flex items-center justify-between gap-2">
+                          <span>{copy.anotherAgentTerminal}</span>
+                          <button type="button" tabIndex={0} aria-label={instructionCopy.status === 'copied' ? 'Instruction copied' : copy.copyAgentInstruction} title={copy.copyAgentInstruction}
+                            className="inline-flex shrink-0 items-center gap-1 rounded-sm whitespace-nowrap text-foreground/80 underline decoration-border underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
+                            onClick={event => { event.preventDefault(); event.stopPropagation(); void instructionCopy.copy(); }}>
+                            {instructionCopy.status === 'copied' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+                            {instructionCopy.status === 'copied' ? 'Copied' : copy.copyAgentInstructionShort}
+                          </button>
+                        </span>
+                        <span className="flex items-center justify-between gap-2">
+                          <span>{copy.anotherAgentIntegrationShort}</span>
+                          <button type="button" tabIndex={0} aria-label={integrationCopy.status === 'copied' ? copy.integrationPromptCopied : 'Copy integration prompt'} title="Copy integration prompt"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-sm whitespace-nowrap text-foreground/80 underline decoration-border underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
+                            onClick={event => { event.preventDefault(); event.stopPropagation(); void integrationCopy.copy(); }}>
+                            {integrationCopy.status === 'copied' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+                            {integrationCopy.status === 'copied' ? copy.integrationPromptCopied : copy.copyIntegrationPromptShort}
+                          </button>
+                        </span>
+                        {instructionCopy.status === 'failed' && <CopyFallback text={instruction} label={copy.copyAgentInstruction} />}
+                        {integrationCopy.status === 'failed' && <CopyFallback text={AGENT_INTEGRATION_PROMPT} label="Copy integration prompt" />}
+                      </div>}
+                    </div>
+                  </CommandItem>
+                </CommandGroup>
+              </>
             )}
           </CommandList>
           <p className="border-t border-border px-3 py-2 text-[10px] text-muted-foreground/80">

@@ -57,6 +57,8 @@ class HostTransport {
   onPrompt: (() => Promise<void>) | null = null;
   onCreate: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
+  onDraft: (() => Promise<void>) | null = null;
+  draftFailure: number | null = null;
   assistant = 'Done.';
   private sequence = 0;
   chat(project: string) {
@@ -130,6 +132,8 @@ class HostTransport {
       return response({ ...chat, operation_session_id: chat.selected_session_id });
     }
     if (action === 'draft') {
+      if (this.onDraft) await this.onDraft();
+      if (this.draftFailure) return response({ error: 'internal_error', detail: 'Disk is full' }, this.draftFailure);
       if (body.expected_revision !== chat.draft.revision) return response({ error: 'draft_conflict', detail: 'Draft changed' }, 409);
       chat.draft = { text: body.text, revision: chat.draft.revision + 1, queued_messages: body.queued_messages };
       return response(chat);
@@ -491,18 +495,33 @@ describe('real panel → real hooks → owned ACP transport', () => {
       expect(screen.getByText('Restored instruction')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Send now' })).toBeInTheDocument();
     });
-    it('says so inline when the queue could not be saved', async () => {
+    it('says plainly that a queued message could not be saved, with Retry and no either/or choice', async () => {
       seedRestoredRow();
       mount();
       await screen.findByRole('button', { name: 'Send now' });
       await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
-      fixture.chat('p1').draft = { ...fixture.chat('p1').draft, revision: 9 };
+      fixture.draftFailure = 500;
       fireEvent.change(screen.getByRole('textbox'), { target: { value: 'edit that cannot save' } });
-      expect(await screen.findByText(/Couldn't save the queue/)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+      expect(await screen.findByText(/A queued message could not be saved to Astrid \(Disk is full\)/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /overwrite|Load saved/ })).not.toBeInTheDocument();
+      fixture.draftFailure = null;
+      fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+      await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('edit that cannot save'));
+      await waitFor(() => expect(screen.queryByText(/could not be saved/)).not.toBeInTheDocument());
+    });
+    it('never interrupts for a draft that could not be saved when nothing is queued', async () => {
+      fixture.seed('p1');
+      mount();
+      await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
+      fixture.draftFailure = 500;
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'unsaved words' } });
+      await waitFor(() => expect(fixture.calls.some(call => call.route.endsWith('/draft'))).toBe(true));
+      await act(async () => { await Promise.resolve(); });
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox')).toHaveValue('unsaved words');
     });
   });
-  it('does not bless newer draft CAS when accepted delivery is recovered over a divergent local draft', async () => {
+  it('rebases silently onto a newer draft revision when accepted delivery is recovered over a divergent local draft', async () => {
     const id = fixture.seed('p1');
     fixture.chat('p1').draft = { text: 'Original', revision: 4, queued_messages: [
       { id: 'accepted-conflict', text: 'Accepted', session_id: id, attachments: [] },
@@ -514,11 +533,11 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'My local draft' } });
     fixture.chat('p1').draft = { ...fixture.chat('p1').draft, text: 'Other client draft', revision: 5 };
     await act(async () => gate.resolve());
-    await screen.findByText(/Draft or queued messages could not be saved/);
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('My local draft'));
     expect(screen.getByRole('textbox')).toHaveValue('My local draft');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
-    expect(fixture.chat('p1').draft.text).toBe('Other client draft');
-    expect(fixture.chat('p1').draft.queued_messages).toHaveLength(1);
+    expect(fixture.chat('p1').draft.queued_messages).toEqual([]);
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
   });
 
@@ -554,7 +573,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toEqual([]);
   });
 
-  it('retains local text and its original CAS base when reopened after a divergent saved draft', async () => {
+  it('keeps local text over a divergent saved draft when reopened, rebasing silently and keeping the other client queue', async () => {
     fixture.seed('p1');
     fixture.chat('p1').draft = { text: 'Original draft', revision: 4, queued_messages: [] };
     const first = mount();
@@ -565,15 +584,14 @@ describe('real panel → real hooks → owned ACP transport', () => {
     ] };
     fixture.chat('p1').draft = structuredClone(otherSaved);
     first.unmount();
-    await waitFor(() => expect(fixture.calls.filter(call => call.route.endsWith('/draft'))).toHaveLength(1));
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('My unsaved edit'));
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     mount();
     await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('My unsaved edit'));
-    await screen.findByText(/Draft or queued messages could not be saved/);
-    expect(screen.getByRole('button', { name: 'Keep local and overwrite saved draft' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Load saved draft' })).toBeInTheDocument();
-    expect(fixture.chat('p1').draft).toEqual(otherSaved);
-    expect(fixture.calls.filter(call => call.route.endsWith('/draft')).every(call => call.body.expected_revision === 4)).toBe(true);
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('My unsaved edit'));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(fixture.chat('p1').draft.queued_messages.map(row => row.id)).toEqual(['other-q']);
+    expect(fixture.calls.filter(call => call.route.endsWith('/draft')).map(call => call.body.expected_revision)).toContain(5);
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toEqual([]);
   });
 
@@ -844,4 +862,113 @@ describe('real panel → real hooks → owned ACP transport', () => {
     expect(prompts[1].route).toBe('/acp/projects/p1/chat/prompt');
   });
 
+});
+
+describe('project chat draft sync across clients', () => {
+  const key = ['project-agent-chat', 'p1'];
+  const alerts = () => screen.queryAllByRole('alert');
+  const boxes = () => screen.getAllByRole('textbox') as HTMLTextAreaElement[];
+  const refetchAll = async () => { for (const client of clients) await client.refetchQueries({ queryKey: key }); };
+  async function twoClients() {
+    fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Original', revision: 4, queued_messages: [] };
+    mount(); mount();
+    await waitFor(() => expect(boxes().map(box => box.value)).toEqual(['Original', 'Original']));
+    await waitFor(() => expect(boxes().every(box => !box.disabled)).toBe(true));
+  }
+  const drafts = () => fixture.calls.filter(call => call.route.endsWith('/draft'));
+
+  it('lets the text in front of the user win when two clients type: no prompt, no banner', async () => {
+    await twoClients();
+    fireEvent.change(boxes()[0], { target: { value: 'typed in A' } });
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('typed in A'));
+    // B still holds its old base (revision 4) and types: the Runtime refuses revision 4, the App rebases silently.
+    fireEvent.change(boxes()[1], { target: { value: 'typed in B' } });
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('typed in B'));
+    expect(boxes()[1]).toHaveValue('typed in B');
+    expect(alerts()).toEqual([]);
+    expect(screen.queryByText(/another client/i)).not.toBeInTheDocument();
+  });
+
+  it('adopts another client draft only when this composer is idle, and ignores it while focused or edited', async () => {
+    await twoClients();
+    fireEvent.change(boxes()[0], { target: { value: 'from A' } });
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('from A'));
+    // B is focused: ignored.
+    act(() => boxes()[1].focus());
+    await act(async () => { await clients[1].refetchQueries({ queryKey: key }); });
+    expect(boxes()[1]).toHaveValue('Original');
+    // B blurred and unedited: adopted.
+    act(() => boxes()[1].blur());
+    await act(async () => { await clients[1].refetchQueries({ queryKey: key }); });
+    await waitFor(() => expect(boxes()[1]).toHaveValue('from A'));
+    // Now A edits again while B has local edits (unsaved, save refused): B keeps its text.
+    fixture.draftFailure = 500;
+    fireEvent.change(boxes()[1], { target: { value: 'B local edit' } });
+    await waitFor(() => expect(drafts().length).toBeGreaterThan(1));
+    fixture.chat('p1').draft = { text: 'A again', revision: fixture.chat('p1').draft.revision + 1, queued_messages: [] };
+    await act(async () => { await clients[1].refetchQueries({ queryKey: key }); });
+    expect(boxes()[1]).toHaveValue('B local edit');
+    expect(alerts()).toEqual([]);
+  });
+
+  it('keeps a cleared draft empty against a stale echo, and the empty value is really saved', async () => {
+    fixture.seed('p1');
+    fixture.chat('p1').draft = { text: 'Old content', revision: 4, queued_messages: [] };
+    mount();
+    await waitFor(() => expect(boxes()[0]).toHaveValue('Old content'));
+    fireEvent.change(boxes()[0], { target: { value: '' } });
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe(''));
+    const clearedRevision = fixture.chat('p1').draft.revision;
+    // A slow read that started before the clear lands now, carrying the old text and an older revision.
+    await act(async () => { clients[0].setQueryData(key, { ...structuredClone(fixture.chat('p1')), draft: { text: 'Old content', revision: clearedRevision - 1, queued_messages: [] } }); });
+    await act(async () => { await Promise.resolve(); });
+    expect(boxes()[0]).toHaveValue('');
+    // Even a newer echo of the old text from elsewhere is not adopted while the composer is focused.
+    act(() => boxes()[0].focus());
+    await act(async () => { clients[0].setQueryData(key, { ...structuredClone(fixture.chat('p1')), draft: { text: 'Old content', revision: clearedRevision + 1, queued_messages: [] } }); });
+    expect(boxes()[0]).toHaveValue('');
+    expect(fixture.chat('p1').draft.text).toBe('');
+  });
+
+  it('keeps the latest text when debounced saves are slow and land out of order', async () => {
+    fixture.seed('p1');
+    mount();
+    await waitFor(() => expect(boxes()[0]).not.toBeDisabled());
+    const gate = deferred(); let first = true;
+    fixture.onDraft = async () => { if (first) { first = false; await gate.promise; } };
+    fireEvent.change(boxes()[0], { target: { value: 'one' } });
+    await waitFor(() => expect(drafts()).toHaveLength(1));
+    fireEvent.change(boxes()[0], { target: { value: 'one two' } });
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 450)); });
+    expect(drafts()).toHaveLength(1);
+    await act(async () => gate.resolve());
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('one two'));
+    expect(boxes()[0]).toHaveValue('one two');
+    expect(drafts().map(call => call.body.text)).toEqual(['one', 'one two']);
+    expect(alerts()).toEqual([]);
+  });
+
+  it('merges queued messages by id when clients conflict, losing none and not resurrecting removed rows', async () => {
+    const id = fixture.seed('p1');
+    fixture.chat('p1').draft = { text: '', revision: 4, queued_messages: [
+      { id: 'mine', text: 'Mine', session_id: id, attachments: [] },
+      { id: 'gone', text: 'Sent elsewhere', session_id: id, attachments: [] },
+    ] };
+    mount();
+    await screen.findByText('Mine');
+    await waitFor(() => expect(boxes()[0]).not.toBeDisabled());
+    // Another client adds a row and sends 'gone'.
+    fixture.chat('p1').draft = { text: '', revision: 5, queued_messages: [
+      { id: 'mine', text: 'Mine', session_id: id, attachments: [] },
+      { id: 'theirs', text: 'Theirs', session_id: id, attachments: [] },
+    ] };
+    fireEvent.change(boxes()[0], { target: { value: 'typing now' } });
+    await waitFor(() => expect(fixture.chat('p1').draft.text).toBe('typing now'));
+    expect(fixture.chat('p1').draft.queued_messages.map(row => row.id)).toEqual(['mine', 'theirs']);
+    expect(await screen.findByText('Theirs')).toBeInTheDocument();
+    expect(screen.queryByText('Sent elsewhere')).not.toBeInTheDocument();
+    expect(alerts()).toEqual([]);
+    expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toEqual([]);
+  });
 });

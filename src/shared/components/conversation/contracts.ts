@@ -19,6 +19,8 @@ export type ConversationTurn = {
   tool_status?: string;
   /** Structured ACP rawOutput.details; never inferred from rendered tool text. */
   tool_output_details?: Record<string, unknown>;
+  /** Complete ACP rawOutput, preserved independently of its optional details. */
+  tool_output?: unknown;
   tool_args?: Record<string, unknown>;
   timestamp: string;
 };

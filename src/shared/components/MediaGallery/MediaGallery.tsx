@@ -106,6 +106,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     onBackfillRequest,
     onImageClick,
     onContextMenu,
+    onAddToTimeline,
+    addToTimelineDisabledReason,
     config: configOverrides,
   } = props;
   const config: GalleryConfig = React.useMemo(() => ({
@@ -333,6 +335,8 @@ const MediaGallery: React.FC<MediaGalleryProps> = React.memo((props) => {
     onApplySettings,
     onImageClick,
     onContextMenu,
+    onAddToTimeline,
+    addToTimelineDisabledReason,
     isDeleting,
     currentViewingShotId,
     activeLightboxMediaId: stateHook.state.activeLightboxMedia?.id,

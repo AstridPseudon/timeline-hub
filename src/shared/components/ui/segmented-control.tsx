@@ -14,6 +14,8 @@ const segmentedControlVariants = cva(
         "retro-dark": "bg-[#3a4a4a] rounded-sm border-2 border-[#6a7a7a] shadow-[-2px_2px_0_0_rgba(20,30,30,0.3)]",
         // Zinc - for dark panes
         zinc: "bg-zinc-800 rounded-sm border border-zinc-700",
+        // Dark pane track: hairline ring, used by the gallery pane bar
+        pane: "rounded-lg bg-white/[0.04] ring-1 ring-inset ring-white/10 p-0.5",
         // Pill with inner shadow (like generation method toggle)
         pill: "bg-gray-200 dark:bg-gray-700 rounded-full shadow-inner",
       },
@@ -39,6 +41,7 @@ const segmentedControlItemVariants = cva(
         retro: "rounded-sm px-3 py-1 font-heading tracking-wide data-[state=active]:bg-[#f5f3ed] data-[state=active]:dark:bg-[#3d4d4d] data-[state=active]:text-[#4a6a6a] data-[state=active]:dark:text-[#e8e4db] data-[state=active]:shadow-sm data-[state=inactive]:text-[#7a9a9a] data-[state=inactive]:dark:text-[#8a9a9a] data-[state=inactive]:hover:text-[#5a7a7a] data-[state=inactive]:dark:hover:text-[#c8c4bb]",
         "retro-dark": "rounded-sm px-3 py-1 font-heading tracking-wide data-[state=active]:bg-[#4a5a5a] data-[state=active]:text-[#e8e4db] data-[state=active]:shadow-sm data-[state=inactive]:text-[#8a9a9a] data-[state=inactive]:hover:text-[#c8c4bb]",
         zinc: "rounded-sm px-3 py-1 data-[state=active]:bg-zinc-700 data-[state=active]:text-zinc-100 data-[state=active]:shadow-sm data-[state=inactive]:text-zinc-400 data-[state=inactive]:hover:text-zinc-300",
+        pane: "h-6 rounded-md px-2.5 text-[12px] font-medium text-zinc-400 transition-colors hover:text-zinc-200 data-[state=active]:bg-zinc-700/90 data-[state=active]:text-zinc-50 data-[state=active]:shadow-sm",
         pill: "rounded-full px-4 py-2 text-sm font-light data-[state=active]:bg-white data-[state=active]:dark:bg-gray-800 data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground",
       },
       // Color schemes for active state - semantic colors
@@ -85,7 +88,22 @@ interface SegmentedControlProps
 }
 
 const SegmentedControl = React.forwardRef<HTMLDivElement, SegmentedControlProps>(
-  ({ className, variant, size, value, onValueChange, disabled, children, ...props }, ref) => {
+  ({ className, variant, size, value, onValueChange, disabled, children, onKeyDown, ...props }, ref) => {
+    // Arrow keys move through the radios and select, as a radiogroup should.
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+      onKeyDown?.(event)
+      const step = ({ ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 } as Record<string, number>)[event.key]
+      if (!step || event.defaultPrevented) return
+      const radios = Array.from(
+        event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="radio"]:not(:disabled)')
+      )
+      const current = radios.indexOf(document.activeElement as HTMLButtonElement)
+      if (current === -1) return
+      event.preventDefault()
+      const next = radios[(current + step + radios.length) % radios.length]
+      next.focus()
+      next.click()
+    }
     return (
       <SegmentedControlContext.Provider value={{ value, onValueChange, variant, size }}>
         <div
@@ -97,6 +115,7 @@ const SegmentedControl = React.forwardRef<HTMLDivElement, SegmentedControlProps>
             disabled && "opacity-50 pointer-events-none",
             className
           )}
+          onKeyDown={handleKeyDown}
           {...props}
         >
           {children}

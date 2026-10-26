@@ -1,6 +1,4 @@
 import React from 'react';
-import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget';
-import { cn } from '@/shared/components/ui/contracts/cn';
 import type { Shot } from '@/domains/generation/types';
 import { MediaGallery, type GalleryFilterState } from '@/shared/components/MediaGallery';
 import type { GalleryConfig } from '@/shared/components/MediaGallery/types';
@@ -10,6 +8,7 @@ import { SkeletonGallery } from '@/shared/components/ui/composed/skeleton-galler
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
 import { VideoGenerationModal } from '@/tools/travel-between-images/components/VideoGenerationModal';
 import { useLassoSelection } from '../hooks/useLassoSelection';
+import { GenerationsPaneEmptyState } from './GenerationsPaneEmptyState';
 import { useRenderBudget } from '@/shared/dev/useRenderBudget';
 import { RuntimeAuthorityProvider } from '@/app/runtime/RuntimeAuthorityProvider';
 import {
@@ -20,14 +19,18 @@ import {
 
 type MediaGalleryProps = React.ComponentProps<typeof MediaGallery>;
 
+const ADD_TO_TIMELINE_MISMATCH_REASON = "This gallery's project is not the selected editor's project";
+
 interface GenerationsPaneLayoutModel {
-  columns: number;
+  cols: number;
+  rows: number;
   itemsPerPage: number;
+  /** Grid width when tiles were shrunk to fit the pane cap; undefined fills the container. */
+  gridWidth?: number;
 }
 
 interface GenerationsPaneLoadingModel {
   isLoading: boolean;
-  expectedItemCount?: number;
 }
 
 interface GenerationsPanePageModel {
@@ -55,7 +58,7 @@ interface GenerationsPaneGalleryModel {
   addTargetProjectMismatch?: boolean;
   config?: Partial<GalleryConfig>;
   readOnly?: boolean;
-  emptyStateMessage?: string;
+  emptyState: { message: string; onShowEverything?: () => void };
 }
 
 interface GenerationsPaneGalleryProps {
@@ -117,7 +120,6 @@ export function GenerationsPaneGallery({
   ), [gallerySelectionMap]);
 
   const selectedGenerationIds = React.useMemo(() => resolveSelectedGenerationIds(), [resolveSelectedGenerationIds]);
-  const selectedGenerationId = selectedGenerationIds[0];
 
   const existingShotsForSelection = React.useMemo(() => {
     if (selectedGenerationIds.length === 0 || !shots?.length) {
@@ -161,48 +163,31 @@ export function GenerationsPaneGallery({
     <>
       <div
         ref={containerRef}
-        className="flex-grow px-1 sm:px-3 overflow-y-auto overscroll-contain flex flex-col"
+        className="flex-grow px-1 sm:px-3 pt-2 pb-2 overflow-y-auto overscroll-contain flex flex-col"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {loading.isLoading && gallery.items.length === 0 && (
-          <SkeletonGallery
-            count={loading.expectedItemCount ?? layout.itemsPerPage}
-            fixedColumns={layout.columns}
-            gapClasses="gap-2 sm:gap-4"
-            darkSurface
-            showControls={false}
-            projectAspectRatio={projectAspectRatio}
-            className="space-y-0 pb-4 pt-2"
-          />
+          <div style={{ width: layout.gridWidth, marginInline: 'auto' }}>
+            <SkeletonGallery
+              count={layout.cols * layout.rows}
+              fixedColumns={layout.cols}
+              gapClasses="gap-2 sm:gap-4"
+              darkSurface
+              showControls={false}
+              projectAspectRatio={projectAspectRatio}
+              className="space-y-0"
+            />
+          </div>
         )}
 
         {error && <p className="text-red-500 text-center">Error: {error.message}</p>}
 
         {gallery.items.length > 0 && (
           <div className={loading.isLoading ? 'opacity-60 pointer-events-none transition-opacity duration-200' : ''}>
-            {gallery.onAddGenerationToTimeline && selectedGenerationId && (
-              <div className="flex justify-end px-1 pt-2">
-                <button
-                  type="button"
-                  className={cn(
-                    'rounded border border-sky-400/60 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/15',
-                    // On touch it is the way a tapped item reaches the timeline: a full-size target.
-                    '[@media(pointer:coarse)]:px-4 [@media(pointer:coarse)]:text-sm',
-                    COARSE_TOUCH_TARGET,
-                    'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
-                  )}
-                  onClick={() => gallery.onAddGenerationToTimeline?.(selectedGenerationId)}
-                  disabled={gallery.addTargetProjectMismatch}
-                  title={gallery.addTargetProjectMismatch ? "This gallery's project is not the selected editor's project" : undefined}
-                  data-testid="add-selected-generation-to-timeline"
-                >
-                  Add selected to timeline
-                </button>
-              </div>
-            )}
             <div
               ref={gallerySurfaceRef}
               className="relative"
+              style={{ width: layout.gridWidth, marginInline: 'auto' }}
               onMouseDown={handleMouseDown}
             >
               <RuntimeAuthorityProvider value={{
@@ -215,12 +200,14 @@ export function GenerationsPaneGallery({
                   lastShotId={gallery.lastShotId}
                   filters={gallery.filters}
                   onFiltersChange={gallery.onFiltersChange}
-                  columnsPerRow={layout.columns}
+                  columnsPerRow={layout.cols}
                   onImageClick={handleImageClick}
                   onContextMenu={gallery.readOnly ? undefined : handleContextMenu}
+                  onAddToTimeline={gallery.onAddGenerationToTimeline}
+                  addToTimelineDisabledReason={gallery.addTargetProjectMismatch ? ADD_TO_TIMELINE_MISMATCH_REASON : undefined}
                   onAddToLastShot={gallery.onAddToShot}
                   onAddToLastShotWithoutPosition={gallery.onAddToShotWithoutPosition}
-                  className="space-y-0 pb-8"
+                  className="space-y-0"
                   selectedIds={selectedGalleryIds}
                   config={{
                     darkSurface: true,
@@ -257,12 +244,15 @@ export function GenerationsPaneGallery({
         )}
 
         {gallery.items.length === 0 && !loading.isLoading && !error && (
-          <div className="flex-1 flex items-center justify-center text-zinc-500">
-            {gallery.emptyStateMessage}
-          </div>
+          <GenerationsPaneEmptyState
+            message={gallery.emptyState.message}
+            onShowEverything={gallery.emptyState.onShowEverything}
+          />
         )}
       </div>
 
+      {/* Several rapid timeline adds would overwrite each other's ADD_GENERATION_QUERY_PARAM navigation,
+          so the menu adds only a single selected item. */}
       {!gallery.readOnly && (
         <SelectionContextMenu
           position={contextMenuPosition}
@@ -270,6 +260,10 @@ export function GenerationsPaneGallery({
           onNavigateToShot={handleNavigateToShot}
           onOpenGenerateVideo={handleOpenGenerateVideo}
           existingShots={existingShotsForSelection}
+          onAddToTimeline={gallery.onAddGenerationToTimeline && selectedGenerationIds.length === 1
+            ? () => gallery.onAddGenerationToTimeline?.(selectedGenerationIds[0])
+            : undefined}
+          addToTimelineDisabledReason={gallery.addTargetProjectMismatch ? ADD_TO_TIMELINE_MISMATCH_REASON : undefined}
         />
       )}
 

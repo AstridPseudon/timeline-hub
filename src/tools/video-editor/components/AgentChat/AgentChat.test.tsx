@@ -3,13 +3,24 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentProps } from 'react';
+import { useSyncExternalStore, type ComponentProps } from 'react';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import type { LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
 import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
+
+// A tiny store standing in for the bridge's pending composer prompt, so a test can click a draft button twice.
+const composerPrompt = vi.hoisted(() => {
+  let value: string | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set(next: string | null) { value = next; listeners.forEach((listener) => listener()); },
+    subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+  };
+});
 
 const mocks = vi.hoisted(() => ({
   useAgentChatBridge: vi.fn(),
@@ -38,7 +49,7 @@ const mocks = vi.hoisted(() => ({
   loadGenerationForLightbox: vi.fn(),
   // Mutable so individual tests can flip isTasksPaneLocked to satisfy the
   // engagement gate that drives auto-create.
-  panesState: { isTasksPaneLocked: false, setIsTasksPaneOpen: vi.fn() },
+  panesState: { isTasksPaneLocked: false, setIsTasksPaneLocked: vi.fn() },
 }));
 
 
@@ -204,6 +215,8 @@ function mockFromState(state: ReturnType<typeof createState>) {
   mocks.useAgentChatBridge.mockImplementation(() => ({
     timelineId: state.timelineId,
     editorContext: state.projectId ? { tool: 'video-editor', projectId: state.projectId, projectSlug: 'project-one', timelineId: state.timelineId, timelineName: null } : null,
+    pendingComposerPrompt: useSyncExternalStore(composerPrompt.subscribe, composerPrompt.get),
+    clearPendingComposerPrompt: () => composerPrompt.set(null),
   }));
   mocks.useAgentChatActionsRegistry.mockImplementation(() => ({
     registerHandlers: vi.fn(),
@@ -313,6 +326,54 @@ describe('AgentChat', () => {
       primary_variant_id: null,
       name: 'Shared image',
     });
+  });
+
+  it('focuses the composer with the cursor at the end on every draft click', async () => {
+    mockFromState(createState());
+    const prompt = 'Build a new extension that ';
+    render(
+      <>
+        <button type="button" onClick={() => composerPrompt.set(prompt)}>Draft extension</button>
+        <AgentChatPanel isExpanded />
+      </>,
+    );
+    const draftButton = screen.getByRole('button', { name: 'Draft extension' });
+    const composer = screen.getByRole('textbox') as HTMLTextAreaElement;
+    for (let click = 1; click <= 2; click += 1) {
+      // A real click moves focus onto the button before the handler runs.
+      act(() => { draftButton.focus(); });
+      await userEvent.click(draftButton);
+      await waitFor(() => expect(composer).toHaveFocus());
+      expect(composer.value).toContain(prompt);
+      expect(composer.selectionStart).toBe(composer.value.length);
+    }
+  });
+
+  it('focuses the composer once it unlocks, when a draft click landed while it was locked', async () => {
+    const prompt = 'Create a custom effect or animation that ';
+    const locked = createState();
+    locked.activeSessionData.status = 'cancelled';
+    mockFromState(locked);
+    const panel = () => (
+      <>
+        <button type="button" onClick={() => composerPrompt.set(prompt)}>Draft effect</button>
+        <AgentChatPanel isExpanded />
+      </>
+    );
+    const view = render(panel());
+    const draftButton = screen.getByRole('button', { name: 'Draft effect' });
+    act(() => { draftButton.focus(); });
+    await userEvent.click(draftButton);
+    const composer = screen.getByRole('textbox') as HTMLTextAreaElement;
+    await waitFor(() => expect(composer.value).toContain(prompt));
+    expect(composer).toBeDisabled();
+    expect(composer).not.toHaveFocus();
+
+    mockFromState(createState());
+    view.rerender(panel());
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).selectionStart).toBe(composer.value.length);
   });
 
   describe('setup recovery', () => {
@@ -880,7 +941,7 @@ describe('AgentChat', () => {
       expect(text).toContain('A later follow-up');
       expect(text).toContain('Project notes content');
       expect(text).toContain('The later answer');
-      expect(text).toContain('Turn count: 7');
+      expect(text).toContain('Turn count: 6');
       expect(text).toContain('In progress at capture: Yes');
       expect(text).toContain('Assistant response in progress');
       expect(text).toContain('Assistant (in progress at capture)');
@@ -1213,12 +1274,21 @@ describe('AgentChat', () => {
     expect(screen.getByText('queued while processing')).toBeInTheDocument();
   });
 
-  it('shows Stop beside Send in the composer and cancels the running turn', async () => {
+  it('stops one turn, clears queued messages, and keeps the same chat ready for the next turn', async () => {
     const state = createState();
     state.activeSessionData.status = 'processing';
+    state.activeSessionData.turns = [{
+      role: 'tool_call', content: 'Read a file', tool_call_id: 'running-tool', tool_status: 'in_progress', timestamp: iso(1_000),
+    }];
+    state.cancelSession.mutate = vi.fn(() => {
+      state.activeSessionData.status = 'waiting_user';
+      state.activeSessionData.turns.push({
+        role: 'tool_result', content: 'Stopped.', tool_call_id: 'running-tool', tool_status: 'cancelled', timestamp: iso(2_000),
+      });
+    });
     mockFromState(state);
 
-    renderAgentChat();
+    const view = renderAgentChat();
 
     const textbox = await getInput();
     await queueMessage(textbox, 'queued while the turn runs');
@@ -1229,6 +1299,19 @@ describe('AgentChat', () => {
     expect(state.cancelSession.mutate).toHaveBeenCalledTimes(1);
     expect(screen.queryByTitle('Stop agent')).toBeNull();
     await waitFor(() => expect(getQueuedTexts()).toEqual([]));
+    rerenderAgentChat(view.rerender);
+
+    expect(await getInput()).toBeEnabled();
+    expect(screen.queryByText('Session stopped. Start a new conversation to continue.')).toBeNull();
+    expect(state.activeSessionData.id).toBe('session-1');
+    expect(state.activeSessionData.turns.find(turn => turn.role === 'tool_result')?.tool_status).toBe('cancelled');
+
+    await queueMessage(await getInput(), 'continue in the same chat');
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ message: 'continue in the same chat' }),
+      sessionId: 'session-1',
+      projectId: 'project-1',
+    })));
   });
 
   it('keeps a message in the transcript and out of queue rows while its optimistic send is in flight', async () => {
@@ -1691,6 +1774,22 @@ describe('AgentChat', () => {
       fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
       await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ agent: 'astrid' })));
     });
+
+    it('keeps no-key Astrid setup inside the open new-chat model panel', async () => {
+      const state = createState();
+      mockFromState(state);
+      mocks.useLocalAgents.mockReturnValue({
+        data: { defaultAgent: 'astrid', agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', signIn: 'signed-in', line: null, models: [], defaultModel: null }] },
+        isLoading: false, error: null, refetch: vi.fn().mockResolvedValue(undefined),
+      });
+      renderAgentChat();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
+      expect(await screen.findByLabelText('OpenRouter key')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'New chat' })).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
+    });
   });
 });
 
@@ -1773,7 +1872,7 @@ describe('project draft consumer ownership', () => {
     const state = createState();
     mockFromState(state);
     const openPane = vi.fn();
-    mocks.panesState.setIsTasksPaneOpen = openPane;
+    mocks.panesState.setIsTasksPaneLocked = openPane;
     state.projectChats['project-1'] = { ...state.projectChats['project-1'], main_session_id: 'session-1' } as typeof state.projectChats['project-1'];
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const key = ['project-agent-chat', 'project-1'];
@@ -1837,7 +1936,7 @@ describe('project draft consumer ownership', () => {
     const state = createState();
     mockFromState(state);
     const openPane = vi.fn();
-    mocks.panesState.setIsTasksPaneOpen = openPane;
+    mocks.panesState.setIsTasksPaneLocked = openPane;
     mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
     let finish!: (value: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
@@ -1905,4 +2004,5 @@ describe('local Astrid update flag', () => {
     view.rerender(page());
     await waitFor(() => expect(screen.getByTestId('out-of-date')).toHaveTextContent('false'));
   });
+
 });

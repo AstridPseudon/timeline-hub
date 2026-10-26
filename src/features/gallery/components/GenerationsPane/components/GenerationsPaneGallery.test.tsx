@@ -130,8 +130,8 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
   return {
     containerRef: { current: null },
     projectAspectRatio: '16:9',
-    layout: { columns: 3, itemsPerPage: 12 },
-    loading: { isLoading: false, expectedItemCount: 12 },
+    layout: { cols: 3, rows: 4, itemsPerPage: 12 },
+    loading: { isLoading: false },
     pagination: { page: 2, totalCount: 25 },
     error: null,
     gallery: {
@@ -147,7 +147,7 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
       onServerPageChange: vi.fn(),
       generationFilters: undefined,
       currentViewingShotId: undefined,
-      emptyStateMessage: 'No generations yet.',
+      emptyState: { message: 'No generations yet.' },
     },
     ...overrides,
   };
@@ -236,11 +236,12 @@ describe('GenerationsPaneGallery', () => {
     expect(mocks.legacyFetchTask).not.toHaveBeenCalled();
   });
 
-  it('renders loading skeleton when loading and no items exist', () => {
+  it('renders a loading skeleton with one tile per grid cell when loading and no items exist', () => {
     render(
       <GenerationsPaneGallery
         {...buildProps({
-          loading: { isLoading: true, expectedItemCount: 9 },
+          layout: { cols: 3, rows: 2, itemsPerPage: 6 },
+          loading: { isLoading: true },
         })}
       />,
     );
@@ -248,7 +249,7 @@ describe('GenerationsPaneGallery', () => {
     expect(screen.getByTestId('skeleton-gallery')).toBeInTheDocument();
     expect(mocks.SkeletonGallery).toHaveBeenCalledWith(
       expect.objectContaining({
-        count: 9,
+        count: 6,
         fixedColumns: 3,
         projectAspectRatio: '16:9',
       }),
@@ -474,16 +475,25 @@ describe('GenerationsPaneGallery', () => {
     expect(screen.queryByText(/^Error:/)).not.toBeInTheDocument();
   });
 
-  it('uses a view-specific empty message when the selected tab has no items', () => {
+  it('shows the empty state message and a Show everything action that calls the handler', () => {
+    const onShowEverything = vi.fn();
     render(<GenerationsPaneGallery {...buildProps({
       gallery: {
         ...buildProps().gallery,
-        emptyStateMessage: 'No videos in this view.',
+        emptyState: { message: 'No videos in this shot', onShowEverything },
       },
     })} />);
 
-    expect(screen.getByText('No videos in this view.')).toBeInTheDocument();
-    expect(screen.queryByText('No generations yet.')).not.toBeInTheDocument();
+    expect(screen.getByText('No videos in this shot')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show everything' }));
+    expect(onShowEverything).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the Show everything action when the empty state has no handler', () => {
+    render(<GenerationsPaneGallery {...buildProps()} />);
+
+    expect(screen.getByText('No generations yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show everything' })).not.toBeInTheDocument();
   });
 
   it('passes only full-match existing shots to the selection context menu using gallery selection generation ids', () => {
@@ -529,5 +539,89 @@ describe('GenerationsPaneGallery', () => {
         ],
       }),
     );
+  });
+
+  it('shows no bar button after selection and passes the timeline add to the tiles', () => {
+    const onAddGenerationToTimeline = vi.fn();
+    const items = [{ id: 'g2', url: 'https://example.com/2.mp4', isVideo: true, generation_id: 'gen-2' }];
+
+    render(
+      <GenerationsPaneGallery
+        {...buildProps({
+          gallery: { ...buildProps().gallery, items, onAddGenerationToTimeline } as never,
+        })}
+      />,
+    );
+
+    expect(screen.queryByTestId('add-selected-generation-to-timeline')).not.toBeInTheDocument();
+    expect(screen.queryByText('Add selected to timeline')).not.toBeInTheDocument();
+    expect(mocks.MediaGallery).toHaveBeenCalledWith(
+      expect.objectContaining({ onAddToTimeline: onAddGenerationToTimeline, addToTimelineDisabledReason: undefined }),
+    );
+  });
+
+  it('gives the tiles the mismatch reason when the selected editor is another project', () => {
+    const items = [{ id: 'g2', url: 'https://example.com/2.mp4', isVideo: true, generation_id: 'gen-2' }];
+
+    render(
+      <GenerationsPaneGallery
+        {...buildProps({
+          gallery: {
+            ...buildProps().gallery,
+            items,
+            onAddGenerationToTimeline: vi.fn(),
+            addTargetProjectMismatch: true,
+          } as never,
+        })}
+      />,
+    );
+
+    expect(mocks.MediaGallery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addToTimelineDisabledReason: "This gallery's project is not the selected editor's project",
+      }),
+    );
+  });
+
+  it('offers the context menu timeline item only for a single selected item, adding that generation', () => {
+    const onAddGenerationToTimeline = vi.fn();
+    const items = [{ id: 'g2', url: 'https://example.com/2.mp4', isVideo: true, generation_id: 'gen-2' }];
+
+    render(
+      <GenerationsPaneGallery
+        {...buildProps({
+          gallery: { ...buildProps().gallery, items, onAddGenerationToTimeline } as never,
+        })}
+      />,
+    );
+    const menuProps = mocks.SelectionContextMenu.mock.calls.at(-1)?.[0] as { onAddToTimeline?: () => void };
+    expect(menuProps.onAddToTimeline).toBeTypeOf('function');
+    menuProps.onAddToTimeline?.();
+    expect(onAddGenerationToTimeline).toHaveBeenCalledWith('gen-2');
+  });
+
+  it('withholds the context menu timeline item when several items are selected', () => {
+    mocks.useGallerySelection.mockReturnValue({
+      selectedGalleryIds: new Set(['g1', 'g2']),
+      gallerySelectionMap: new Map([
+        ['g1', { url: 'https://example.com/1.png', mediaType: 'image', generationId: 'gen-1' }],
+        ['g2', { url: 'https://example.com/2.png', mediaType: 'image', generationId: 'gen-2' }],
+      ]),
+    });
+    const items = [
+      { id: 'g1', url: 'https://example.com/1.png', type: 'image/png', generation_id: 'gen-1' },
+      { id: 'g2', url: 'https://example.com/2.png', type: 'image/png', generation_id: 'gen-2' },
+    ];
+
+    render(
+      <GenerationsPaneGallery
+        {...buildProps({
+          gallery: { ...buildProps().gallery, items, onAddGenerationToTimeline: vi.fn() } as never,
+        })}
+      />,
+    );
+
+    const menuProps = mocks.SelectionContextMenu.mock.calls.at(-1)?.[0] as { onAddToTimeline?: () => void };
+    expect(menuProps.onAddToTimeline).toBeUndefined();
   });
 });

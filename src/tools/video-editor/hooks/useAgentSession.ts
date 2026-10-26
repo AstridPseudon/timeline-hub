@@ -171,6 +171,21 @@ function textFromContent(value: unknown): string {
   return '';
 }
 
+function textFromToolOutput(value: unknown): string {
+  const content = textFromContent(value);
+  if (content) return content;
+  const record = asRecord(value);
+  if (!record) return '';
+
+  const outputFields = ['formatted_output', 'stdout', 'stderr', 'output', 'result', 'text'];
+  return outputFields.flatMap((key) => {
+    const field = record[key];
+    if (typeof field === 'string' && field) return [field];
+    const nested = textFromContent(field);
+    return nested ? [nested] : [];
+  }).join('\n');
+}
+
 /** Keep the transport context model-visible but hide it from the chat UI. */
 export function stripAstridEditorContext(content: string): string {
   if (content.startsWith('<astrid_element_result>')) return '';
@@ -299,6 +314,9 @@ export class AstridAgentSessionStore {
   private readonly loading = new Map<string, { connectionId: string; promise: Promise<void> }>();
   private readonly activePrompts = new Set<string>();
   private readonly dispatchedPrompts = new Set<string>();
+  private readonly activePromptTurnStarts = new Map<string, number>();
+  /** Start index of a stopped turn, retained to fence late partial tool updates until the next prompt. */
+  private readonly cancelledPromptTurnStarts = new Map<string, number>();
   private readonly activePromptTexts = new Map<string, string>();
   private readonly promptControllers = new Map<string, AbortController>();
   private readonly sessionProjects = new Map<string, string>();
@@ -611,6 +629,7 @@ export class AstridAgentSessionStore {
     session.status = 'processing';
     session.assistantDraft = undefined;
     session.assistantDraftMessageId = undefined;
+    this.cancelledPromptTurnStarts.delete(sessionId);
     this.activePrompts.add(sessionId);
     this.promptControllers.set(sessionId, controller);
     this.activePromptTexts.set(sessionId, input.message);
@@ -687,6 +706,7 @@ export class AstridAgentSessionStore {
         { type: 'text', text: context },
         ...(liveSceneAcp && sceneScope ? [{ type: 'text' as const, text: liveSceneAcp.liveScenePromptContract(sceneScope) }] : []),
       ];
+      this.activePromptTurnStarts.set(sessionId, session.turns.length);
       session.turns.push({
         role: 'user',
         content: input.message,
@@ -766,6 +786,7 @@ export class AstridAgentSessionStore {
         this.promptControllers.delete(sessionId);
         this.activePrompts.delete(sessionId);
         this.dispatchedPrompts.delete(sessionId);
+        this.activePromptTurnStarts.delete(sessionId);
         this.activePromptTexts.delete(sessionId);
         session.assistantDraft = undefined;
         session.assistantDraftMessageId = undefined;
@@ -773,7 +794,9 @@ export class AstridAgentSessionStore {
         // concurrent polling request may have drained the final assistant chunk
         // after the response arrived, so do not let that replay mark a completed
         // turn as "thinking" again.
-        session.status = session.control?.active ? 'processing' : signal.aborted && dispatchStarted ? 'cancelled' : 'waiting_user';
+        // ACP session/cancel stops the current prompt. The ACP session itself remains
+        // usable, so an aborted turn returns to the same idle state as a completed one.
+        session.status = session.control?.active ? 'processing' : 'waiting_user';
       }
     }
   }
@@ -793,11 +816,47 @@ export class AstridAgentSessionStore {
   async cancel(sessionId: string): Promise<void> {
     this.assertWriter(sessionId);
     const cancelledBeforeDispatch = this.activePrompts.has(sessionId) && !this.dispatchedPrompts.has(sessionId);
+    const turnStart = this.activePromptTurnStarts.get(sessionId);
+    if (!cancelledBeforeDispatch && this.dispatchedPrompts.has(sessionId) && turnStart !== undefined) {
+      this.cancelledPromptTurnStarts.set(sessionId, turnStart);
+    }
     this.promptControllers.get(sessionId)?.abort();
     const connectionId = await this.connection(this.agentForSession(sessionId));
     await this.client.acp.cancelSession(connectionId, sessionId);
-    this.state(sessionId).status = cancelledBeforeDispatch ? 'waiting_user' : 'cancelled';
     await this.pullEvents();
+    const session = this.state(sessionId);
+    if (turnStart !== undefined && !cancelledBeforeDispatch) this.markUnfinishedToolCallsStopped(session, turnStart);
+    session.status = session.control?.active ? 'processing' : 'waiting_user';
+  }
+
+  private markUnfinishedToolCallsStopped(session: AgentSessionView, turnStart: number): void {
+    const calls = session.turns.slice(turnStart).filter((turn): turn is AgentTurn & { role: 'tool_call' } => turn.role === 'tool_call');
+    for (const call of calls) {
+      const callIndex = session.turns.indexOf(call);
+      const result = call.tool_call_id
+        ? session.turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === call.tool_call_id)
+        : session.turns[callIndex + 1]?.role === 'tool_result' && !session.turns[callIndex + 1].tool_call_id
+          ? session.turns[callIndex + 1]
+          : null;
+      const status = result?.tool_status ?? call.tool_status ?? (result ? 'completed' : 'in_progress');
+      if (status !== 'in_progress' && !(status === 'cancelled' && !result)) continue;
+
+      call.tool_status = 'cancelled';
+      if (result) {
+        result.tool_status = 'cancelled';
+        result.content = result.content || 'Stopped.';
+      } else {
+        const stoppedResult: AgentTurn = {
+          role: 'tool_result',
+          content: 'Stopped.',
+          timestamp: timestamp(),
+          tool_status: 'cancelled',
+          ...(call.tool_call_id ? { tool_call_id: call.tool_call_id } : {}),
+        };
+        if (call.tool_call_id) session.turns.push(stoppedResult);
+        else session.turns.splice(callIndex + 1, 0, stoppedResult);
+      }
+    }
   }
 
   /** Renew the browser lease even when a transcript load needs explicit retry. */
@@ -906,10 +965,10 @@ export class AstridAgentSessionStore {
     }
 
     if (updateType === 'tool_call') {
-      // Any assistant text before a tool call is progress narration, not the
-      // completed answer. The next assistant segment becomes the candidate
-      // final response for this turn.
+      // Preserve assistant narration that preceded this action in the visible
+      // transcript. A later assistant chunk starts a separate response.
       if (this.activePrompts.has(notification.sessionId)) {
+        this.commitAssistantDraft(session);
         session.assistantDraft = undefined;
         session.assistantDraftMessageId = undefined;
       }
@@ -929,6 +988,8 @@ export class AstridAgentSessionStore {
         timestamp: at,
         ...(toolCallId ? { tool_call_id: toolCallId } : {}),
       });
+      const cancelledTurnStart = this.cancelledPromptTurnStarts.get(notification.sessionId);
+      if (cancelledTurnStart !== undefined) this.markUnfinishedToolCallsStopped(session, cancelledTurnStart);
       if (this.activePrompts.has(notification.sessionId)) session.status = 'processing';
       return;
     }
@@ -936,23 +997,35 @@ export class AstridAgentSessionStore {
     if (updateType === 'tool_call_update') {
       const toolCallId = stringValue(notification.update.toolCallId);
       if (toolCallId) {
+        const rawOutput = notification.update.rawOutput;
+        const outputContent = textFromToolOutput(rawOutput);
+        const resultContent = content || outputContent;
         const projectId = this.sessionProjects.get(notification.sessionId);
         const refs = projectId ? readAstridTaskRefs(notification.update.rawOutput, projectId) : [];
         const existing = session.turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === toolCallId);
         const merged = mergeAstridTaskRefs(existing?.task_refs, refs);
-        const status = stringValue(notification.update.status) ?? undefined;
+        const call = session.turns.find(turn => turn.role === 'tool_call' && turn.tool_call_id === toolCallId);
+        const callIndex = call ? session.turns.indexOf(call) : -1;
+        const cancelledTurnStart = this.cancelledPromptTurnStarts.get(notification.sessionId);
+        const incomingStatus = stringValue(notification.update.status) ?? undefined;
+        const status = cancelledTurnStart !== undefined && callIndex >= cancelledTurnStart && incomingStatus === 'in_progress'
+          ? 'cancelled'
+          : incomingStatus;
         if (existing) {
-          const stalePartial = ['completed', 'failed'].includes(existing.tool_status ?? '') && status === 'in_progress';
-          if (content && !stalePartial) existing.content = content;
+          const stalePartial = ['completed', 'failed', 'cancelled'].includes(existing.tool_status ?? '') && incomingStatus === 'in_progress';
+          if (resultContent && !stalePartial) existing.content = resultContent;
           existing.task_refs = merged;
           if (status && !stalePartial) existing.tool_status = status;
-          if (!stalePartial) existing.tool_output_details = asRecord(asRecord(notification.update.rawOutput)?.details) ?? existing.tool_output_details;
+          if (!stalePartial) {
+            existing.tool_output_details = asRecord(asRecord(rawOutput)?.details) ?? existing.tool_output_details;
+            if (rawOutput !== undefined) existing.tool_output = rawOutput === null ? undefined : rawOutput;
+          }
         } else {
-          session.turns.push({ role: 'tool_result', content, timestamp: at, tool_call_id: toolCallId,
+          session.turns.push({ role: 'tool_result', content: resultContent, timestamp: at, tool_call_id: toolCallId,
             tool_status: status, task_refs: merged,
-            tool_output_details: asRecord(asRecord(notification.update.rawOutput)?.details) ?? undefined });
+            tool_output_details: asRecord(asRecord(rawOutput)?.details) ?? undefined,
+            tool_output: rawOutput === null ? undefined : rawOutput });
         }
-        const call = session.turns.find(turn => turn.role === 'tool_call' && turn.tool_call_id === toolCallId);
         if (call) { call.task_refs = mergeAstridTaskRefs(call.task_refs, refs); call.tool_status = existing?.tool_status ?? status; }
         for (const ref of refs) {
           if (!session.taskLinks.some(link => link.toolCallId === toolCallId && link.task_id === ref.task_id && link.project_id === ref.project_id)) {
@@ -960,6 +1033,7 @@ export class AstridAgentSessionStore {
               liveObserved: this.activePrompts.has(notification.sessionId) && !this.loading.has(notification.sessionId) });
           }
         }
+        if (cancelledTurnStart !== undefined) this.markUnfinishedToolCallsStopped(session, cancelledTurnStart);
       } else if (content) session.turns.push({ role: 'tool_result', content, timestamp: at });
       if (this.activePrompts.has(notification.sessionId)) session.status = 'processing';
     }

@@ -111,11 +111,12 @@ function buildController() {
       page: 1,
       handleServerPageChange: vi.fn(),
       isLoading: false,
-      expectedItemCount: 0,
       error: null,
       paginatedData: {
         items: [],
       },
+      totalIsExact: true,
+      emptyState: { message: 'No generations yet.' },
       shotsData: [],
       lastAffectedShotId: null,
       handleAddToShot: vi.fn(),
@@ -124,8 +125,11 @@ function buildController() {
     layout: {
       isMobile: false,
       paneLayout: {
-        columns: 4,
+        cols: 4,
+        rows: 5,
         itemsPerPage: 20,
+        gridWidth: undefined,
+        paneHeight: 300,
       },
       galleryContainerRef: { current: null },
       projectAspectRatio: '1:1',

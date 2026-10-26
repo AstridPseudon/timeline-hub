@@ -10,6 +10,7 @@ import { AudioContent } from "./MediaGalleryItem/components/AudioContent";
 import { isAudioMedia, isVideoMedia } from '@/shared/lib/media/mediaTypeFilters';
 import { ShotActions } from "./MediaGalleryItem/components/ShotActions";
 import { ActionButtons } from "./MediaGalleryItem/components/ActionButtons";
+import { AddToTimelineButton } from "./MediaGalleryItem/components/AddToTimelineButton";
 import { ItemShotBadges } from "./MediaGalleryItem/components/ItemShotBadges";
 import { ItemMetadataBar } from "./MediaGalleryItem/components/ItemMetadataBar";
 import { useMediaGalleryItemShotActions } from "./MediaGalleryItem/hooks/useShotActions";
@@ -160,6 +161,8 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     onImageClick,
     onContextMenu,
     onImageLoaded,
+    onAddToTimeline,
+    addToTimelineDisabledReason,
   } = actions;
   const {
     shouldLoad = true,
@@ -497,9 +500,20 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
             createdAt={image.createdAt}
             position="top-right"
             showOnHover={false}
-            hideOnHover={!isVideoContent}
+            hideOnHover={!isVideoContent || Boolean(onAddToTimeline)}
             className=""
           />
+          {/* Add to Timeline - Top Right, in place of the timestamp when it is shown on hover */}
+          {onAddToTimeline && actualGenerationId && (
+            <div className="absolute top-1.5 right-1.5">
+              <AddToTimelineButton
+                generationId={generationIdForActions}
+                onAddToTimeline={onAddToTimeline}
+                disabledReason={addToTimelineDisabledReason}
+                isSelected={isSelected}
+              />
+            </div>
+          )}
           <ItemMetadataBar
             image={image}
             isVideoContent={isVideoContent}

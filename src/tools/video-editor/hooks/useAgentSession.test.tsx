@@ -173,25 +173,43 @@ describe('timeline agent ACP chat', () => {
   it('allows the active writer to cancel and lets its prompt finish across active control updates', async () => {
     const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-active', sessions: [{ id: 'chat-active' }], draft: { text: '', revision: 1, queued_messages: [] } };
     let releasePrompt!: () => void;
-    let notification: unknown;
+    let notifications: unknown[] = [];
     const promptWait = new Promise<void>(resolve => { releasePrompt = resolve; });
     const acp = {
       connect: vi.fn(async () => ({ connection_id: 'active-connection' })),
       projectChat: vi.fn(async () => projectChat),
       loadSession: vi.fn(async () => ({ _astridSession: { role: 'writer', active: false, activeRequestId: null } })),
-      events: vi.fn(async () => ({ disconnected: false, notifications: notification ? [notification] : [] })),
+      events: vi.fn(async () => ({ disconnected: false, notifications: notifications.splice(0) })),
       promptProjectSession: vi.fn(async () => { await promptWait; return {}; }),
-      cancelSession: vi.fn(async () => ({})),
+      cancelSession: vi.fn(async () => {
+        notifications.push({ jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: false, activeRequestId: null } } });
+        releasePrompt();
+        return {};
+      }),
     };
     const store = new AstridAgentSessionStore({ acp } as never);
     const prompt = store.prompt('chat-active', { message: 'hello', requestId: 'local-request' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null });
     await vi.waitFor(() => expect(acp.promptProjectSession).toHaveBeenCalled());
-    notification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: true, activeRequestId: 'local-request' } } };
+    notifications.push(
+      { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: true, activeRequestId: 'local-request' } } },
+      { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'tool_call', toolCallId: 'stopped-tool', title: 'Read a file', content: 'Read a file' } } },
+      { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'tool_call_update', toolCallId: 'stopped-tool', status: 'in_progress' } } },
+    );
     await store.get('p', 'chat-active');
     await expect(store.cancel('chat-active')).resolves.toBeUndefined();
-    notification = { jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'astrid_session_control', role: 'writer', active: false, activeRequestId: null } } };
-    releasePrompt();
     await expect(prompt).resolves.toBeUndefined();
+
+    notifications.push({ jsonrpc: '2.0', method: 'session/update', params: { sessionId: 'chat-active', update: { sessionUpdate: 'tool_call_update', toolCallId: 'stopped-tool', status: 'in_progress' } } });
+    const stopped = await store.get('p', 'chat-active');
+    expect(stopped.status).toBe('waiting_user');
+    expect(stopped.turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === 'stopped-tool')).toMatchObject({
+      tool_status: 'cancelled',
+      content: 'Stopped.',
+    });
+
+    await expect(store.prompt('chat-active', { message: 'continue', requestId: 'next-request' }, { tool: 'video-editor', projectId: 'p', projectSlug: null, timelineId: null, timelineName: null })).resolves.toBeUndefined();
+    expect(acp.promptProjectSession).toHaveBeenCalledTimes(2);
+    expect((await store.get('p', 'chat-active')).status).toBe('waiting_user');
   });
 
   it('returns quietly when takeover arrives during an in-flight writer prompt', async () => {

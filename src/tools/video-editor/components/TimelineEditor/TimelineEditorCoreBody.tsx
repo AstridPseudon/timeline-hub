@@ -397,13 +397,11 @@ function TimelineEditorCoreComponent({
   }), shallow);
   const {
     handleAddTrack,
-    handleAddTextAt,
     handleClearUnusedTracks,
     setScaleWidth,
     unusedTrackCount,
   } = useTimelineChromeSelector((chrome) => ({
     handleAddTrack: chrome.handleAddTrack,
-    handleAddTextAt: chrome.handleAddTextAt,
     handleClearUnusedTracks: chrome.handleClearUnusedTracks,
     setScaleWidth: chrome.setScaleWidth,
     unusedTrackCount: chrome.unusedTrackCount,
@@ -954,9 +952,7 @@ function TimelineEditorCoreComponent({
           marqueeRect={marqueeRect}
           onEditAreaPointerDown={onMarqueePointerDown}
           onAddTrack={readOnly ? undefined : handleAddTrack}
-          onAddTextAt={readOnly ? undefined : handleAddTextAt}
           onAddEffectLayerAt={readOnly ? undefined : handleAddEffectLayerAt}
-          onOpenSequenceCreator={readOnly ? undefined : onOpenSequenceCreator}
           onOpenElementCreationPrompt={readOnly ? undefined : onOpenElementCreationPrompt}
           onScaleWidthChange={setScaleWidth}
           unusedTrackCount={unusedTrackCount}

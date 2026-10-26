@@ -40,7 +40,7 @@ const mocks = vi.hoisted(() => ({
   composerRemoveAttachment: vi.fn(),
   composerClearAttachments: vi.fn(),
   loadGenerationForLightbox: vi.fn(),
-  setIsTasksPaneOpen: vi.fn(),
+  setIsTasksPaneLocked: vi.fn(),
 }));
 
 
@@ -89,8 +89,8 @@ vi.mock('@/shared/state/currentAttachmentSet', () => ({
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
-  usePanesStore: (selector: (state: { isTasksPaneLocked: boolean; setIsTasksPaneOpen: typeof mocks.setIsTasksPaneOpen }) => unknown) =>
-    selector({ isTasksPaneLocked: false, setIsTasksPaneOpen: mocks.setIsTasksPaneOpen }),
+  usePanesStore: (selector: (state: { isTasksPaneLocked: boolean; setIsTasksPaneLocked: typeof mocks.setIsTasksPaneLocked }) => unknown) =>
+    selector({ isTasksPaneLocked: false, setIsTasksPaneLocked: mocks.setIsTasksPaneLocked }),
 }));
 
 vi.mock('@/domains/media-lightbox/MediaLightbox', () => ({
@@ -263,7 +263,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     render(<AgentChatPanel />);
 
     for (const spy of SESSION_HOOK_SPIES) expect(spy).not.toHaveBeenCalled();
-    expect(mocks.setIsTasksPaneOpen).toHaveBeenCalledWith(true);
+    expect(mocks.setIsTasksPaneLocked).toHaveBeenCalledWith(true);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(requestJsonSpy).not.toHaveBeenCalled();
     expect(requestRawSpy).not.toHaveBeenCalled();
