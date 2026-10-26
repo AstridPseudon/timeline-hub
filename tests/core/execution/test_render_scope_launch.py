@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from io import BytesIO
 from pathlib import Path
 
@@ -32,14 +33,11 @@ def test_render_command_keeps_inherited_group_and_observes_until_cleanup(tmp_pat
         def poll(self):
             self.polls += 1
             if self.polls > 1:
+                events.append("completed")
+                (output / "answer.txt").write_text("render finished")
+                (attempt / ".astrid-capability-result.json").write_text(json.dumps({"ok": True, "returncode": 0, "outputs": []}))
                 self.returncode = 0
             return self.returncode
-
-        def communicate(self):
-            events.append("collected")
-            (output / "answer.txt").write_text("render finished")
-            (attempt / ".astrid-capability-result.json").write_text(json.dumps({"ok": True, "returncode": 0, "outputs": []}))
-            return "", ""
 
     process = RenderProcess()
 
@@ -75,8 +73,43 @@ def test_render_command_keeps_inherited_group_and_observes_until_cleanup(tmp_pat
         assert result.returncode == 0
         if entrypoint == "command":
             assert result.outputs
-        assert events == ["owned launch", "observed", "collected", "contained"]
+        assert events == ["owned launch", "observed", "completed", "contained"]
     assert not host._active_processes
+
+
+@pytest.mark.parametrize("entrypoint", ["command", "capability"])
+def test_native_render_scope_collects_completed_child(tmp_path, monkeypatch, entrypoint):
+    manifest_path = _write_manifest(tmp_path / "render", capability_id="rendering.render")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["command"]["argv"][2] += "; print('render finished')"
+    manifest_path.write_text(json.dumps(manifest))
+    host = GenericPackHost(pack_roots=[tmp_path])
+    record = host.discover()[0]
+    attempt = tmp_path / "attempt"
+    output = attempt / "outputs"
+    output.mkdir(parents=True)
+    monkeypatch.setattr(generic_host, "_network_sandbox_argv", lambda argv, *_a: argv)
+
+    try:
+        if entrypoint == "command":
+            result = host._run_command_definition(record, {}, output, attempt)
+        else:
+            definition, admission = host.admit("executor", "rendering.render")
+            result = host.invoke_capability(
+                capability_kind="executor", capability_id="rendering.render",
+                request={
+                    "out": str(output), "python_exec": sys.executable, "invocation": "runtime",
+                    "project": "demo", "project_was_auto_resolved": True,
+                },
+                attempt=attempt, definition=definition, admission=admission,
+            )
+            assert result.outputs
+        assert result.returncode == 0
+        assert (output / "answer.txt").read_text() == "ok"
+        assert "render finished" in (attempt / "task-stdout-tail.log").read_text()
+        assert not host._active_processes
+    finally:
+        host.shutdown()
 
 
 def test_render_cleanup_failure_keeps_original_execution_reason(tmp_path, monkeypatch):

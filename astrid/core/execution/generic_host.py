@@ -9342,6 +9342,7 @@ class GenericPackHost:
         pump_stop: threading.Event | None = None
         pump_thread: threading.Thread | None = None
         evidence_root: Path | None = None
+        output_capture_paths = tuple(root / name for name in _TASK_OUTPUT_DIAGNOSTIC_NAMES)
         immutable_input_baseline: dict[str, tuple[int, str]] = {}
         evidence_cap_exceeded = False
         evidence_failure_message: str | None = None
@@ -9457,7 +9458,9 @@ class GenericPackHost:
                         evidence_root,
                         immutable_inputs=immutable_input_baseline,
                         cap_bytes=attempt_evidence_cap,
-                        excluded_roots=_render_media_roots(root) if capability_id == "rendering.render" else (),
+                        excluded_roots=output_capture_paths + (
+                            _render_media_roots(root) if capability_id == "rendering.render" else ()
+                        ),
                     )
                 except EvidenceCapError as exc:
                     evidence_cap_exceeded = True
@@ -10079,7 +10082,9 @@ class GenericPackHost:
                     root,
                     immutable_inputs=immutable_input_baseline,
                     cap_bytes=attempt_evidence_cap,
-                    excluded_roots=_render_media_roots(root) if capability_id == "rendering.render" else (),
+                    excluded_roots=output_capture_paths + (
+                        _render_media_roots(root) if capability_id == "rendering.render" else ()
+                    ),
                 )
                 self._publish_evidence_status()
                 lifetime.assert_deadline()

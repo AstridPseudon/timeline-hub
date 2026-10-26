@@ -2199,6 +2199,40 @@ def test_structure_pack_members_survive_harvest_cleanup_and_reopen(tmp_path):
     assert (reopened / "PG001.png").read_bytes() == b"PNG fixture bytes"
 
 
+def test_output_capture_diagnostics_do_not_exhaust_task_evidence(tmp_path):
+    manifest_path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["command"]["argv"][2] += "; import sys; print('stdout log'); print('stderr log', file=sys.stderr)"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    runtime = FakeRuntime()
+    host = GenericPackHost(
+        pack_roots=[tmp_path], client=runtime,
+        execution_policy=ExecutionGuardPolicy(evidence_cap_bytes=2),
+    )
+    host.discover()
+    task = {
+        "task": {
+            "id": "task-output-capture",
+            "capability": "test.echo",
+            "project_id": "demo",
+            "attempt_id": "attempt-output-capture",
+            "fence": 1,
+            "spec": {"spec": {"inputs": {}}},
+        }
+    }
+    runtime.tasks["task-output-capture"] = task
+
+    result = host.run_task(task, lease_token="lease-output-capture")
+
+    assert result["task"]["status"] == "completed"
+    assert runtime.failures == []
+    evidence = runtime.settlements[0][2]["result"]["execution_guards"]["evidence"]
+    assert evidence["observed_bytes"] == 2
+    assert evidence["largest_paths"] == [
+        {"path": "outputs/answer.txt", "bytes": 2, "classification": "generated"}
+    ]
+
+
 def test_mid_render_evidence_abort_keeps_measurement_on_runtime_failure(tmp_path):
     manifest_path = _write_manifest(tmp_path / "echo")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
