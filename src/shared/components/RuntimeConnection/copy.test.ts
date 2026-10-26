@@ -137,6 +137,6 @@ describe('failure diagnostics', () => {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Windows');
     const windowsBrief = agentInstructions('install', 'https://astrid.haus');
-    expect(windowsBrief).toContain("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health' -Headers @{ Origin = 'https://astrid.haus' }");
+    expect(windowsBrief).toContain("Invoke-RestMethod -Uri 'https://astrid.haus/api/runtime/v1/health' -Headers @{ Origin = 'https://astrid.haus' }");
   });
 });

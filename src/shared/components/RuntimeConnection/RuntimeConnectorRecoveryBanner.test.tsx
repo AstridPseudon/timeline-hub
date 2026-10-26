@@ -59,7 +59,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
 
     expect(screen.getByRole('heading', { name: 'Workspace Runtime is unavailable' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Retry Runtime connection' })).toHaveFocus());
-    expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('The editor could not complete workspace discovery.');
+    expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');
     fireEvent.click(screen.getByText('Show full connection error'));
