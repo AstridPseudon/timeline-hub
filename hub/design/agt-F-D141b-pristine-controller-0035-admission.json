@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.f.d141b.pristine-controller.v1",
+  "controller": "agt-F-D141b-pristine-controller-0035",
+  "status": "PASS_COMMAND_AND_SOURCE_FREEZE_ADMITTED",
+  "body_status": "TERMINAL_FAIL",
+  "command_source": {
+    "author_commit": "0710897c87834550d1ee68b3f120405a9c81fe8f",
+    "author_tree": "1861d3e9f3b6fa5cc87660952add8042cabc3227",
+    "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+    "service_row_sha256": "c3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7",
+    "publication_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence"
+  },
+  "independent_review": {
+    "worker": "agt-F-D141b-sol-command-review-0030",
+    "verdict": "PASS_COMMAND",
+    "review_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-sol-command-review-0030/evidence/review.json",
+    "reviewed_commit": "0710897c87834550d1ee68b3f120405a9c81fe8f",
+    "reviewed_tree": "1861d3e9f3b6fa5cc87660952add8042cabc3227",
+    "receipt_exit": "0",
+    "receipt_done": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-sol-command-review-0030/DONE"
+  },
+  "frozen_product_base": {
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "agent_path": "/home/user/work/agent",
+    "agent_clean": true,
+    "receiving_peer": "0023",
+    "receiving_review": "PASS_SOURCE_QUALIFICATION"
+  },
+  "source_admission": {
+    "agent": {"commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "clean": true},
+    "runtime": {"commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "clean": true},
+    "app": {"commit": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "clean": true},
+    "composition": {"commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "clean": true}
+  },
+  "gates": {
+    "u2_final_freeze": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/gates/U2_FINAL_FREEZE_PASS", "value": "PASS"},
+    "independent_command": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/gates/INDEPENDENT_COMMAND_PASS", "value": "PASS"},
+    "bound_utc": "2026-10-26T00:36:35Z"
+  },
+  "policy": {"comparator_only": true, "reg_credit": false, "ship_credit": false, "new_policy_gate": false}
+}

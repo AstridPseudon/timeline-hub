@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.f.d141b.pristine-controller.source-manifest.v1",
+  "status": "TERMINAL_SOURCE_RECEIPT",
+  "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+  "agent": {"path": "/home/user/work/wt/agt-pin-8b6ed211", "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "clean_before": true, "clean_after": true},
+  "runtime": {"path": "/home/user/work/wt/rt-pin-fa9cd546", "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "clean_before": true, "clean_after": true},
+  "app": {"path": "/home/user/work/wt/app-pin-7ca61bb3", "commit": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "clean_before": true, "clean_after": true},
+  "composition": {"path": "/home/user/work/wt/vw-pin-67b8aa3d", "commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "clean_before": true, "clean_after": true},
+  "interpreter": {"requested": "/home/user/work/venv-agent/bin/python", "realpath": "/usr/bin/python3.13", "version": "Python 3.13.16"},
+  "settings": {"roots": 17, "project_only_roots_absent": 5, "pytest": ["-q", "-n", "3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"], "source_floor_bytes": 4600000000, "body_dispatch_bytes": 4700000000, "continuous_stop_bytes": 4000000000},
+  "run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator",
+  "body_executed": true,
+  "source_before_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-before.txt",
+  "source_after_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt",
+  "source_before_sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5",
+  "source_after_sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5",
+  "body_exit": 1,
+  "monitor_exit": 0
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "timeline.f.d141b.pristine-controller.receiving.v1",
+  "source_freeze": {
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "normal_ref": "timeline/agent/tl/integration",
+    "worktree": "/home/user/work/agent",
+    "clean": true,
+    "freeze_doc": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-agent-lead-runtime-20261026T0023Z-D141-FROZEN-receiving-inputs.md",
+    "freeze_doc_sha256": "9e13bced03328399aef90eacb4932db76b45b8d5bcf93b68fe185566d46d5a45"
+  },
+  "official_receiving_peer": {
+    "worker": "agt-U2-D141-source-receiving-review-0015",
+    "label": "0023",
+    "verdict": "PASS_SOURCE_QUALIFICATION",
+    "review_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141-source-receiving-review-0015/evidence/review.json",
+    "done_marker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-U2-D141-source-receiving-review-0015/DONE"
+  },
+  "normal_merge": {
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-agt-U4a-D141-final-provenance-0005",
+    "receipt_sha256": "10ada0a1bc188dc001d234970db5876d5615e7540d7d853c23f95042b47493f5",
+    "text": "merged tl/agt-U4a-D141-final-provenance-0005 into agent tl/integration -> 28e56cacb4"
+  },
+  "manager_dispatch_witness": {
+    "utc": "2026-10-26T00:34:37.255841+00:00",
+    "free_bytes": 5555838976,
+    "floor_bytes": 4700000000,
+    "independent_review": "PASS_COMMAND"
+  }
+}
