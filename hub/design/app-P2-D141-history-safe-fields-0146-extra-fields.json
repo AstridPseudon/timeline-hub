@@ -1,0 +1,56 @@
+{
+  "task": "D141",
+  "scope": "historyentry/records",
+  "source": {
+    "run_id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+    "result_status": "FAIL",
+    "diff_attachment": "d66/p2-automatic-child-placement/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo/error-context.md",
+    "diff_attachment_sha256": "091f8c179f1a52f60c1aa0d06e32780ffd8ae3a436180944739cc2d98498269d",
+    "assertion_source_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "assertion_source_line": 757,
+    "assertion_source_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "assertion_source_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "assertion_source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "raw_original_sha256": {
+      "manifest": "76b88bd3f1e2e6723f5252fc36edb935ef55142698f49a1f10d62c0e6065b722",
+      "junit": "3454b97cddc283e0c2ce77f0a2233f01401c355919865e02cb17851c91e35c58",
+      "readiness_junit": "ca6a3ee50d7be0039210b3d5fbc10079936c9c7581ad43665ec9fe8d50ba2a9e",
+      "log": "3dadd574be15ee19c01ee5f4aaaac4d1360dc44aa46de46c1e0903fd410e1cc5"
+    }
+  },
+  "comparison": {
+    "actual": "retained received side of strict assertNativeHistoryEntry diff",
+    "expected": "strict expected side constructed by nativeUndoExpected",
+    "diff_shape": "actual-only additions; no expected-side additions shown",
+    "unknown_paths": []
+  },
+  "added_keys": [
+    {"path": "commands[*].bindings[*].boundary", "field_name": "boundary", "kind": "object"},
+    {"path": "commands[*].bindings[*].boundary.base_publication_id", "field_name": "base_publication_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.base_revision_id", "field_name": "base_revision_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.command_ordinal", "field_name": "command_ordinal", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head", "field_name": "evaluated_head", "kind": "object"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head.publication_id", "field_name": "publication_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head.revision_id", "field_name": "revision_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.phase", "field_name": "phase", "kind": "field"},
+    {"path": "commands[*].bindings[*].boundary.step_id", "field_name": "step_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].content_digest", "field_name": "content_digest", "kind": "field"},
+    {"path": "commands[*].bindings[*].dependencies", "field_name": "dependencies", "kind": "array"},
+    {"path": "commands[*].bindings[*].edge_after", "field_name": "edge_after", "kind": "field"},
+    {"path": "commands[*].bindings[*].edge_before", "field_name": "edge_before", "kind": "field"},
+    {"path": "commands[*].bindings[*].key", "field_name": "key", "kind": "field"},
+    {"path": "commands[*].bindings[*].owner", "field_name": "owner", "kind": "field"},
+    {"path": "commands[*].bindings[*].owners", "field_name": "owners", "kind": "array"},
+    {"path": "commands[*].bindings[*].physical_ref", "field_name": "physical_ref", "kind": "field"},
+    {"path": "commands[*].bindings[*].policy", "field_name": "policy", "kind": "field"},
+    {"path": "commands[*].bindings[*].ref", "field_name": "ref", "kind": "field"},
+    {"path": "commands[*].bindings[*].revision_id", "field_name": "revision_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].step_id", "field_name": "step_id", "kind": "field"},
+    {"path": "commands[*].bindings[*].successor", "field_name": "successor", "kind": "field"}
+  ],
+  "observed_counts": {
+    "actual_added_binding_objects": 2,
+    "expected_added_binding_objects": 0,
+    "actual_added_key_paths": 22
+  }
+}

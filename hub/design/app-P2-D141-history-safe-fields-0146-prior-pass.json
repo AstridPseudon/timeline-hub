@@ -1,0 +1,61 @@
+{
+  "task": "D141",
+  "qualification": "PRE-CUT exact automatic-placement case PASS within retained original run",
+  "run": {
+    "full_run_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "service_target": "app-pin-96d4754b",
+    "suite": "p2",
+    "service_suite": "d73-p2-96d4754b-submit",
+    "overall_status": "FAIL",
+    "overall_exit": 1,
+    "central_duration_seconds": 605,
+    "d66_duration_seconds": 600.974,
+    "original_xml_total_seconds": 461.379028,
+    "original_title": "p2",
+    "expected_case_count": 8,
+    "actual_passed_count": 2,
+    "original_counts": {"pass": 2, "fail": 2, "error": 1, "notrun": 3},
+    "raw_receipts": {
+      "d66_archive_sha256": "8d655157f6e1040c9c2d35fed9a604d2887158d28baf2fa9504233ce6e3020d7",
+      "original_junit_sha256": "360e4f07926cfe952f95e48e034d1246dbdde9eb8b3b9290a540abd5aeb3b54d",
+      "readiness_junit_sha256": "a578a9c8c6affeacefec3675b864eaa9430acacb6840a1355d9345f3965c66fc",
+      "manifest_sha256": "9c97027b9e3ee8057638a8d54d7587a8afec088fea2ffcddf77fb6f760752aec",
+      "request_artifact_sha256": "3025043e372a6c6b72351cb8cc18b035f5c57819c64bcd9a0d04bec17607639c",
+      "source_plan_sha256": "4d0df1eaac72777a9c6da15252e3db1bcf21079aa9a3fcd450e41d20629fe688",
+      "checkout_receipts_sha256": {
+        "app": "ca84030e1a52858d6b5dd5366931b29d3719188a2b765c9185652f9bca4dc6e4",
+        "agent": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05",
+        "runtime": "95b035def5442571264156640456d2764fbc1449e585357e10bd1d11c0bf28ad",
+        "composition": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+      }
+    }
+  },
+  "passing_case": {
+    "title": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+    "status": "PASS",
+    "exit": 0,
+    "test_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "test_line": 1214,
+    "duration_seconds": 88.78,
+    "tail_reachable": true,
+    "existing_retry": "PASS",
+    "source_identity": {
+      "app_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+      "app_tree": "3f9da34c4f116026ec21022421850e0608ba653b",
+      "app_checkout": "/home/user/work/wt/app-pin-96d4754b",
+      "spec_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "spec_git_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+      "spec_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "spec_lookup": "git show 96d4754b4eef0591a208d6b51b60c30fc44b6915:tests/e2e/local/three-products.p2-elements-assets.spec.ts"
+    },
+    "source_tuple": {
+      "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "runtime_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "runtime_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+      "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "missing_fields": []
+}

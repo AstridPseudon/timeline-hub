@@ -1,0 +1,36 @@
+{
+  "worker": "app-P2-D141-history-safe-fields-0146",
+  "independent_review": "pending disk; author evidence only",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+      "sha256": "a00e133b60427cba8ec35bdebd792c962629f1edafee8013b0e2d891dce287d1",
+      "bytes": 3862,
+      "source": "tl/app-P2-D141-history-safe-fields-0146:evidence/extra-fields.json"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-prior-pass.json",
+      "sha256": "cfaabe6a29a3cde6e441d4a200768a3c93065889a318512050a8995e4f64fd72",
+      "bytes": 3076,
+      "source": "tl/app-P2-D141-history-safe-fields-0146:evidence/prior-pass.json"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-source-manifest.json",
+      "sha256": "17ade1f2838e075726edd7457bc95e65dbbc6c46ab5193359257ff5769b260c6",
+      "bytes": 2909,
+      "source": "tl/app-P2-D141-history-safe-fields-0146:evidence/source-manifest.json"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-validation.md",
+      "sha256": "78d1ea32453f025a84b6cf5460659db4480fa64f9aadd5c1f463993564099ac6",
+      "bytes": 1173,
+      "source": "tl/app-P2-D141-history-safe-fields-0146:evidence/validation.md"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-handoff.md",
+      "sha256": "385da7fc43da924b745b30dc199547874d5037554a30643fa1f26afc1b0d3020",
+      "bytes": 1180,
+      "source": "tl/app-P2-D141-history-safe-fields-0146:evidence/handoff.md"
+    }
+  ]
+}
