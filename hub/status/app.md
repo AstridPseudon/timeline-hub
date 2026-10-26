@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T05:09:49Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
-# app board, 2026-10-26T05:08:44Z
+<!-- app | 2026-10-26T05:15:13Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 4m -->
+# app board, 2026-10-26T05:11:04Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -52,6 +52,7 @@
 | D141m REG owner | Reserve author for newly proved REG only | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Existing approved0149 lineage | Named app-A2-D141l-proved-REG-sol; no speculative writer or test weakening. | Not dispatched |
 | U3 catch up | Merge latest tip once before F final | Luna and independent review | MAIN04:39 build time step | gated:F-final | Reserved ordinary U3 route | No chase now. One then current full tip, both sides retained, affected AgentChat delta tests/types/lint and one review. | Later |
 | D141 old queue | Preserve obsolete18617 unstarted | Runtime kit owner | Existing exact held ID guard | blocked:runtime | Peer0506; Runtime sole kit owner | Actual18617 queued on867, only5GB floor holds it. Preserve request/queue unchanged; no cancellation or App kit edit. | Historical867 |
+| D141s review host | Offer one sole critical review host | Luna | Runtime exclusive owner assignment | blocked:runtime | Peer0510; no worker allocated | App4.628GB and no heavy can host one ordinary source review if Runtime disk held. Existing active review takes precedence; no duplicate. | No source change |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP claim. F-final binds actual receipted post-fix heads. | Cut pending |
 
 Integration: Current clean HOME App5344c53e3063001bb3255bd0c9cd32cc5e77967f/treedd989783046aeff652486a1ba39db42aea86e201 equals independent0454-revieweddc1a exactly. Parents520d anddc1a; frozen d822 and reviewed8f ancestors. Actual qualified Agent8585/tree92a3 now normally adopted via manifest and provenance tools; all160 payloads exact. Source home receipt design/app-D141p-freeze2-source-home-0459.json. Latest MAIN04:39 reserves one later catch-up only before F-final; no chase now.
