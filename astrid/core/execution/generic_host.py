@@ -7651,10 +7651,12 @@ class GenericPackHost:
         if policy is not None:
             hook_root = attempt / ".astrid-network-hook"
             hook_root.mkdir(parents=True, exist_ok=True)
-            (hook_root / "sitecustomize.py").write_text(
-                _STRICT_NETWORK_HOOK_SOURCE if not allow_runtime_connection else
-                "from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n",
-                encoding="utf-8",
+            (hook_root / "sitecustomize.py").write_bytes(
+                (
+                    _STRICT_NETWORK_HOOK_SOURCE
+                    if not allow_runtime_connection
+                    else "from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n"
+                ).encode("utf-8")
             )
             evidence_path = attempt / "network-evidence.json"
             env["ASTRID_NETWORK_POLICY"] = json.dumps(policy, sort_keys=True, separators=(",", ":"))

@@ -251,7 +251,7 @@ def _ts_property_key(value: str) -> str:
 def _write_generated_registry(path: Path, content: str) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content.encode("utf-8"))
     except PermissionError:
         return False
     return True
