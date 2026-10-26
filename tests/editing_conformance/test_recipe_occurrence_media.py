@@ -87,8 +87,9 @@ def captured(operation, kind='image', *, clip_type=None):
     return document, bundle, command, verified
 
 
-def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields():
-    document, old, new, verified = inputs()
+@pytest.mark.parametrize('kind', ['image', 'video'])
+def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry_fields(kind):
+    document, old, new, verified = inputs(kind)
     bundle = bundle_from_document(document)
     old = copy.deepcopy(old)
     new = {**copy.deepcopy(new), 'asset': old['asset']}
@@ -99,6 +100,12 @@ def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry
     ]
     State(bundle).config(OWNER)['registry']['assets'][old['asset']]['label'] = 'keep-label'
     State(bundle).config(OWNER)['registry']['assets'][old['asset']]['opaque'] = {'keep': [1, None]}
+    if kind == 'video':
+        State(bundle).registry(OWNER)['assets'][old['asset']]['duration'] = 6
+        verified[-1]['duration_seconds'] = 8
+        for row in State(bundle).config(OWNER)['clips']:
+            if row.get('asset') == old['asset'] and 'from' not in row:
+                row.update({'from': 0, 'to': row['hold']})
     State(bundle).entity(TARGET)['asset'] = old['asset']
     State(bundle).occurrence(OWNER).update(source_offset=0, speed=1)
     before = copy.deepcopy(bundle)
@@ -111,6 +118,8 @@ def test_same_alias_rebind_updates_known_consumers_and_preserves_opaque_registry
     assert entry['variantId'] == new['variant_id']
     assert entry['label'] == 'keep-label'
     assert entry['opaque'] == {'keep': [1, None]}
+    if kind == 'video':
+        assert entry['duration'] == 8
     assert State(plan.bundle).entity(TARGET)['asset'] == old['asset']
     assert plan.bundle['shots'][State(plan.bundle).occurrence(OWNER)['shot_id']]['payload']['items'][0]['media_id'] == NEW
     assert inverse(plan.bundle, plan.records).bundle == before

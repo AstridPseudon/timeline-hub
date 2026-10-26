@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,7 @@ def run(world, capsys, *args):
     parsed = build_parser(world.client()).parse_args([*args, '--project', world.project, '--json'])
     code = parsed.handler(parsed)
     output = capsys.readouterr()
-    return code, json.loads(output.out)
+    return code, json.loads(output.out or output.err)
 
 
 @pytest.mark.parametrize('track', ['V1', 'V2'])
@@ -147,3 +148,64 @@ def test_first_video_preserves_verified_source_window(runtime, capsys):  # noqa:
     assert {key: clips[0][key] for key in ('id', 'from', 'to', 'hold', 'speed')} == {
         'id': 'opening', 'from': 0, 'to': 3, 'hold': 3, 'speed': 1}
     assert json.loads(world.calls[-1][0])['source'] == {'via': 'cli'}
+
+
+@pytest.mark.ffmpeg
+@pytest.mark.parametrize('entry', ['cli', 'sdk'])
+def test_added_video_can_be_trimmed_and_shown(runtime, tmp_path, capsys, entry):  # noqa: F811
+    world = runtime
+    video = tmp_path / 'source.mp4'
+    subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi',
+                    '-i', 'color=c=blue:s=16x16:r=30:d=4', '-c:v', 'libx264',
+                    '-pix_fmt', 'yuv420p', str(video)], check=True, capture_output=True)
+    if entry == 'cli':
+        code, added = run(world, capsys, 'edit', 'film', '--add-layer', 'media',
+                          '--layer-asset', str(video), '--on', '0', '--for', '3',
+                          '--id', 'opening', '--idempotency-key', 'add-video')
+        assert code == 0 and added['ok'], added
+    else:
+        added = world.session().add_media(video, on=0, duration=3, clip_id='opening',
+                                          idempotency_key='add-video')
+    before = len(world.history()['items'])
+    code, trimmed = run(world, capsys, 'edit', 'film', '--clip', 'opening',
+                        '--trim-in', '0.5', '--trim-out', '2.5',
+                        '--idempotency-key', 'trim-video')
+    assert code == 0 and trimmed['ok'], trimmed
+    assert len(world.history()['items']) == before + 1
+    request = json.loads(world.calls[-1][0])
+    assert request['source'] == {'via': 'cli'}
+    assert [command['op'] for command in request['commands']] == ['clip.trim']
+    payload = trimmed['data']['canonical_document']['parent_revision']['payload']
+    clip = payload['clips'][0]
+    assert {key: clip[key] for key in ('from', 'to', 'hold')} == {
+        'from': 0.5, 'to': 2.5, 'hold': 2}
+    assert payload['registry']['assets'][clip['asset']]['duration'] == 4
+    code, shown = run(world, capsys, 'show', 'film', '--published', '--layers', '--clip', 'opening')
+    assert code == 0 and shown['ok'], shown
+    shown_clip = shown['data']['clips'][0]
+    assert (shown_clip['source_from'], shown_clip['source_to']) == (0.5, 2.5)
+
+
+def test_added_image_refuses_source_trim_with_clear_error(runtime, tmp_path, capsys):  # noqa: F811
+    world = runtime
+    image = tmp_path / 'image.png'
+    Image.new('RGB', (16, 16), 'blue').save(image)
+    code, added = run(world, capsys, 'edit', 'film', '--add-layer', 'media',
+                      '--layer-asset', str(image), '--on', '0', '--for', '3',
+                      '--id', 'still', '--idempotency-key', 'add-image')
+    assert code == 0 and added['ok'], added
+    before = world.history()
+    code, refused = run(world, capsys, 'edit', 'film', '--clip', 'still',
+                        '--trim-in', '0.5', '--trim-out', '2.5',
+                        '--idempotency-key', 'trim-image')
+    assert code == 1 and not refused['ok']
+    assert 'images have no source window' in refused['error']['message']
+    assert world.history() == before
+    parsed = build_parser(world.client()).parse_args([
+        'edit', 'film', '--project', world.project, '--clip', 'still',
+        '--trim-in', '0.5', '--trim-out', '2.5',
+    ])
+    assert parsed.handler(parsed) == 1
+    output = capsys.readouterr()
+    assert 'images have no source window' in (output.out or output.err).splitlines()[0]
+    assert world.history() == before

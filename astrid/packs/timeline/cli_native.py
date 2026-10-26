@@ -393,8 +393,8 @@ def commit_trim(session, parsed, options):
     if not state['pending']:
         try:
             capture_clip_trim(bundle, select, in_s=parsed.trim_in, out_s=parsed.trim_out)
-        except CommandError:
-            if parsed.clip == select:  # Explicit native identities report native errors.
+        except CommandError as exc:
+            if parsed.clip == select or exc.kind == 'unsupported_media':
                 raise
             return NotImplemented
     return session.trim(select, in_s=parsed.trim_in, out_s=parsed.trim_out, **options)
