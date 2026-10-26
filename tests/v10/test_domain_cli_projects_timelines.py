@@ -635,6 +635,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     from astrid.packs.timeline.cli import COMMANDS, build_parser
 
     assert tuple(spec.name for spec in COMMANDS) == (
+        "import",
+        "export",
         "checkout",
         "commit",
         "edit",
@@ -673,6 +675,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     # manifest-declared nested ``shots`` mount (task T29) and the nested
     # ``transcripts`` mount (narration transcript sync).
     assert _subparser_choices(build_parser(_FakeClient())) == {
+        "import",
+        "export",
         "checkout",
         "commit",
         "edit",
@@ -2566,3 +2570,51 @@ def test_timelines_visualize_forwards_filmstrip_options(capsys) -> None:
         'columns': 4, 'page_size': 40, 'range': '10..20',
     }
     capsys.readouterr()
+
+
+def test_timelines_import_non_zip_file_is_a_clean_failure_envelope(capsys, tmp_path) -> None:
+    junk = tmp_path / "not-a-zip.astrid"
+    junk.write_text("this is not a zip archive")
+    rc = _run("timelines", ["import", str(junk), "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    error = json.loads(captured.out)["error"]
+    assert error["code"] == "validation_error"
+    assert "cannot read timeline archive" in error["message"]
+    assert "Traceback" not in captured.err
+
+
+def test_timelines_import_damaged_archive_midway_is_a_clean_failure_envelope(
+    capsys, monkeypatch, tmp_path
+) -> None:
+    import zipfile
+
+    def _damaged(*_args, **_kwargs):
+        raise zipfile.BadZipFile("Bad CRC-32 for file 'media/abc'")
+
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.import_timeline", _damaged)
+    rc = _run("timelines", ["import", str(tmp_path / "x.astrid"), "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert json.loads(captured.out)["error"]["code"] == "validation_error"
+
+
+@pytest.mark.parametrize("verb_args", [["import", "x.astrid"], ["export", "film", "--out", "x.astrid"]])
+def test_timelines_transfer_runtime_conflict_is_a_clean_failure_envelope(
+    capsys, monkeypatch, tmp_path, verb_args
+) -> None:
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    def _conflict(*_args, **_kwargs):
+        raise WorkspaceClientError(409, "conflict", "timeline slug already exists", {"slug": "film"})
+
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.import_timeline", _conflict)
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.export_timeline", _conflict)
+    args = [str(tmp_path / a) if a.endswith(".astrid") else a for a in verb_args]
+    rc = _run("timelines", [*args, "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    error = json.loads(captured.out)["error"]
+    assert error["code"] == "conflict"
+    assert error["message"] == "timeline slug already exists"
+    assert "Traceback" not in captured.err

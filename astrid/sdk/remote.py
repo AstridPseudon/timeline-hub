@@ -380,6 +380,7 @@ class _RemoteFamily:
             elif operation == "get_project_shot_revision": value = self._client.get_project_shot_revision(*args, **kwargs)
             elif operation == "get_project_timeline_revision": value = self._client.get_project_timeline_revision(*args, **kwargs)
             elif operation == "get_project_parent_composition_revision": value = self._client.get_project_parent_composition_revision(*args, **kwargs)
+            elif operation == "import_timeline": value = self._client.import_timeline(*args, **kwargs)
             elif operation == "get_source_frame_thumbnail":
                 value = self._client.get_source_frame_thumbnail(*args, **kwargs)
             elif operation == "get_project_shot_text_binding": value = self._client.get_project_shot_text_binding(*args, **kwargs)
@@ -395,6 +396,7 @@ class _RemoteFamily:
             elif operation == "ensure_source_frame_thumbnail":
                 value = self._client.ensure_source_frame_thumbnail(*args, **kwargs)
             elif operation == "ingest_project_object": value = self._client.ingest_project_object(*args, **kwargs)
+            elif operation == "ingest_project_object_stream": value = self._client.ingest_project_object_stream(*args, **kwargs)
             elif operation == "link_references": value = self._client.link_references(*args, **kwargs)
             elif operation == "list_events": value = self._client.list_events(*args, **kwargs)
             elif operation == "list_generations": value = self._client.list_generations(*args, **kwargs)
@@ -1680,6 +1682,10 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
             return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
         return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
 
+    def import_timeline(self, project_id: str, prepared: Mapping[str, Any], *, idempotency_key: str):
+        return self._typed("import_timeline", project_id, prepared, key=idempotency_key,
+                           idempotency_key=idempotency_key)
+
 
 class RemoteMedia(_RemoteFamily):
     def open(
@@ -1728,12 +1734,20 @@ class RemoteMedia(_RemoteFamily):
         realm_error = self._managed_realm_error(realm, idempotency_key=idempotency_key)
         if realm_error is not None:
             return realm_error
-        try: data = path.read_bytes()
-        except OSError: return DomainResult.failure(ErrorObject("not_found", "media source is unavailable", {}), idempotency_key=idempotency_key or "")
-        if project is None: return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        if project is None:
+            return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        try:
+            size = path.stat().st_size
+            source = path.open("rb")
+        except OSError:
+            return DomainResult.failure(ErrorObject("not_found", "media source is unavailable", {}), idempotency_key=idempotency_key or "")
         key = idempotency_key or uuid.uuid4().hex
         media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-        result = self._typed("ingest_project_object", project, data, key=key, media_type=media_type, idempotency_key=key, filename=path.name)
+        with source:
+            result = self._typed(
+                "ingest_project_object_stream", project, source, key=key, size=size,
+                media_type=media_type, idempotency_key=key, filename=path.name,
+            )
         if not result.ok or not isinstance(result.data, Mapping):
             return result
         object_id = result.data.get("object_id")
@@ -1751,7 +1765,7 @@ class RemoteMedia(_RemoteFamily):
                 self._client,
                 project_id=str(project),
                 source_object_id=object_id,
-                source_bytes=data,
+                source_path=path,
                 media_type=media_type,
                 idempotency_key=key,
             )
@@ -1771,6 +1785,23 @@ class RemoteMedia(_RemoteFamily):
         if thumbnail_error:
             payload["thumbnail_diagnostics"] = [{"code": "thumbnail_extraction_failed", "message": thumbnail_error[:240]}]
         return DomainResult.success(payload, receipt=result.receipt, idempotency_key=result.idempotency_key)
+
+    def import_stream(
+        self, *, project: str, stream: Any, size: int, filename: str,
+        media_type: str = "application/octet-stream", expected_digest: str | None = None,
+        idempotency_key: str | None = None, realm: str = "managed_local",
+    ) -> DomainResult[Any]:
+        realm_error = self._managed_realm_error(realm, idempotency_key=idempotency_key)
+        if realm_error is not None:
+            return realm_error
+        if project is None:
+            return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        key = idempotency_key or uuid.uuid4().hex
+        return self._typed(
+            "ingest_project_object_stream", project, stream, key=key, size=size,
+            media_type=media_type, idempotency_key=key, filename=Path(filename).name,
+            expected_digest=expected_digest,
+        )
     def import_bytes(self, *, project: str, data: bytes, filename: str, media_type: str = "application/octet-stream", idempotency_key=None):
         """Import in-memory bytes (an SDK-built document) as one managed project object."""
         if project is None:

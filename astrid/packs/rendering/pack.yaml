@@ -14,15 +14,18 @@ permissions:
   reason: Reads timeline, asset, and theme files; writes rendered video.
 - id: network
   reason: Sprite sheet executor calls OpenAI GPT Image API.
-description: Author, inspect, preview, and render runtime-owned timelines; visualize
-  them as deterministic evidence packs; generate GPT-Image sprite sheets; and supply
-  render-time animation/transition/effect elements.
+description: Author, inspect, preview, and render runtime-owned timelines; plan
+  timeline exports and prepare imports; visualize deterministic evidence packs; generate
+  GPT-Image sprite sheets; and supply render-time animation/transition/effect elements.
 keywords:
 - render
 - remotion
 - video
 - mp4
 - timeline
+- transfer
+- export
+- import
 - visualize
 - evidence
 - sprite-sheet
@@ -32,15 +35,20 @@ capabilities:
 - render_timeline
 - generate_sprite_sheet
 - scaffold_html_canvas_effect
+- timeline_export_plan
+- timeline_prepare_import
 agent:
   purpose: Choose this pack for runtime-owned timeline authoring and inspection, candidate
-    preview/publication, finished video rendering, deterministic visual evidence,
-    GPT Image sprite sheets, canvas/WebGL post-processing effects, or explorable
-    Three.js worlds (live scenes) and their shots.
-  do_not_use_for: Publishing rendered output to external services.
+    preview/publication, timeline transfer export planning and import preparation,
+    finished video rendering, deterministic visual evidence, GPT Image sprite sheets,
+    canvas/WebGL post-processing effects, or explorable Three.js worlds (live scenes)
+    and their shots.
+  do_not_use_for: Publishing rendered output to external services; uploading media or committing timeline imports.
   normal_entrypoints:
   - rendering.render
   - rendering.sprite_sheet
+  - rendering.timeline_export_plan
+  - rendering.timeline_prepare_import
 documentation:
   kind: skill
   path: docs/SKILL.md
@@ -831,6 +839,151 @@ actions:
       path: actions/timeline_storyboard/__init__.py
     - kind: implementation
       path: actions/timeline_storyboard/run.py
+  timeline_export_plan:
+    name: Timeline Export Plan
+    version: "1.0.0"
+    short_description: Build a read-only timeline export plan and staged artifact.
+    description: Read a saved timeline and its transcript/media closure from Runtime, then emit the complete plan as a task artifact.
+    invocation:
+      kind: command
+      command:
+        argv:
+          - "{python_exec}"
+          - -m
+          - astrid.packs.rendering.actions.timeline_export_plan.run
+          - --project
+          - "{project}"
+          - --timeline
+          - "{timeline}"
+          - --out
+          - "{out}"
+    inputs:
+      - name: project
+        type: string
+        required: true
+        description: Runtime project id or immutable slug.
+      - name: timeline
+        type: string
+        required: true
+        description: Runtime timeline id or immutable slug.
+    outputs:
+      - name: plan
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/plan.json"
+        artifact_type: timeline/export-plan
+        description: Complete export plan JSON, including manifest, saved timeline, transcripts, and media metadata.
+      - name: result
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/result.json"
+        artifact_type: application/json
+        description: Small summary with timeline name and media/transcript counts and bytes.
+    resources:
+      - kind: implementation
+        path: actions/timeline_export_plan/run.py
+      - kind: support
+        path: actions/timeline_transfer_common.py
+    cache:
+      mode: none
+    isolation:
+      mode: subprocess
+      network: false
+    metadata:
+      runtime_entrypoint: main
+      runtime_file: actions/timeline_export_plan/run.py
+      runtime_module: astrid.packs.rendering.actions.timeline_export_plan.run
+      output_result_manifest: true
+      estimated_scratch_bytes: 67108864
+      estimated_output_bytes: 67108864
+  timeline_prepare_import:
+    name: Prepare Timeline Import
+    version: "1.0.0"
+    short_description: Validate and prepare timeline import data without Runtime writes.
+    description: Preflight element compatibility before upload or compile an uploaded timeline payload into a Runtime commit body artifact.
+    invocation:
+      kind: command
+      command:
+        argv:
+          - "{python_exec}"
+          - -m
+          - astrid.packs.rendering.actions.timeline_prepare_import.run
+          - --project
+          - "{project}"
+          - --out
+          - "{out}"
+        input_args:
+          - input: name
+            flag: --name
+            optional: true
+          - input: manifest
+            flag: --manifest
+            optional: true
+          - input: manifest_file
+            flag: --manifest-file
+            optional: true
+          - input: payload
+            flag: --payload
+            optional: true
+          - input: check_only
+            flag: --check-only
+            optional: true
+    inputs:
+      - name: project
+        type: string
+        required: true
+        description: Resolved target Runtime project id.
+      - name: name
+        type: string
+        required: false
+        description: Optional imported timeline name.
+      - name: manifest
+        type: json
+        required: false
+        description: Bounded timeline manifest JSON. Use manifest_file when this exceeds 256 KiB encoded.
+      - name: manifest_file
+        type: file
+        required: false
+        description: Runtime-managed JSON manifest file fallback for large manifests; mutually exclusive with manifest.
+      - name: payload
+        type: file
+        required: false
+        description: Runtime-managed JSON file containing {timeline, transcripts}; required outside check_only mode.
+      - name: check_only
+        type: boolean
+        required: false
+        default: false
+        description: Validate manifest/elements only; do not read payload or generate a target timeline id.
+    outputs:
+      - name: prepared
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/prepared.json"
+        artifact_type: timeline/prepared-import
+        description: Complete Runtime commit body; omitted for check_only.
+      - name: result
+        type: file
+        mode: create_or_replace
+        path_template: "{out}/result.json"
+        artifact_type: application/json
+        description: Small summary with compatibility differences and dependency counts.
+    resources:
+      - kind: implementation
+        path: actions/timeline_prepare_import/run.py
+      - kind: support
+        path: actions/timeline_transfer_common.py
+    cache:
+      mode: none
+    isolation:
+      mode: subprocess
+      network: false
+    metadata:
+      runtime_entrypoint: main
+      runtime_file: actions/timeline_prepare_import/run.py
+      runtime_module: astrid.packs.rendering.actions.timeline_prepare_import.run
+      output_result_manifest: true
+      estimated_scratch_bytes: 67108864
+      estimated_output_bytes: 67108864
   render:
     cache:
       always_run: false

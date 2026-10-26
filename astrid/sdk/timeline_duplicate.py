@@ -12,8 +12,10 @@ Pure parts (``id_map``, ``copy_content``) take and return plain dicts; only
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 from astrid.core.timeline.astrid_ns import migrate_bundle
@@ -125,12 +127,27 @@ def _remap_values(value: Any, mapping: Mapping[str, str]) -> Any:
     return value
 
 
-def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_slug: str) -> tuple[dict[str, Any], list[str]]:
+def _copy_source(source: Mapping[str, Any] | str | Path) -> dict[str, Any]:
+    """Normalize the shared copy path's source bundle, including an archive JSON file."""
+    if isinstance(source, Mapping):
+        return copy.deepcopy(dict(source))
+    path = Path(source)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise TimelineEditError(f"cannot read timeline bundle {path}: {exc}") from exc
+    if not isinstance(value, Mapping):
+        raise TimelineEditError(f"timeline bundle {path} must contain a JSON object")
+    return copy.deepcopy(dict(value))
+
+
+def copy_content(source: Mapping[str, Any] | str | Path, target: Mapping[str, Any], *, new_slug: str) -> tuple[dict[str, Any], list[str]]:
     """Return a copy of ``target`` (keeping its provenance and identity) holding ``source``'s content.
 
     Shots, placements and occurrences get new ids (``id_map``). Returns ``(bundle, notes)``
     where notes say what was not carried over.
     """
+    source = _copy_source(source)
     notes: list[str] = []
     placements = [dict(row) for row in source.get("placements") or []]
     shot_ids = [str(row["shot_id"]) for row in placements]
@@ -141,12 +158,14 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
 
     out = copy.deepcopy(dict(target))
     src_parent = source.get("parent") or {}
-    out["parent"] = {
-        **dict(out.get("parent") or {}),
-        "config": copy.deepcopy(src_parent.get("config") or {}),
-        "registry": _remap_values(copy.deepcopy(src_parent.get("registry") or {}), ids),
-        "clips": _remap_values(copy.deepcopy(src_parent.get("clips") or []), ids),
-    }
+    if not isinstance(src_parent, Mapping):
+        raise TimelineEditError("source parent must be an object")
+    # Parent revision payloads may contain authored extension fields beyond
+    # config/registry/clips. Preserve those fields too, remapping any exact
+    # shot/occurrence references. Occurrences themselves are compiler-derived.
+    copied_parent = copy.deepcopy(dict(src_parent))
+    copied_parent.pop("occurrences", None)
+    out["parent"] = _remap_values(copied_parent, ids)
     out["shots"] = {}
     out["placements"] = []
     out["source_mapping"] = {"placements": {}, "shots": {}}
@@ -169,6 +188,22 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
         shot = add_authoring_shot(out, shot_id=new_shot, occurrence_id=occ_map[str(row["occurrence_id"])],
                                   start_ms=(row.get("placement") or {}).get("start_ms", 0))
         payload = copy.deepcopy(dict(src_shot.get("payload") or src_shot.get("base_payload") or {}))
+        # Item ids are globally unique inside a compiled authoring bundle.
+        # Reuse the compiler's canonical placement remapper so copied shots
+        # get fresh item identities and known item references stay coherent.
+        try:
+            from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement
+
+            payload, _item_ids = _copy_shot_for_placement(
+                payload,
+                project_id=str(out.get("project_id") or ""),
+                timeline_id=str(out.get("timeline_id") or new_slug),
+                occurrence_id=occ_map[str(row["occurrence_id"])],
+                authoring_shot_id=new_shot,
+                source_shot_id=old_shot,
+            )
+        except Exception as exc:
+            raise TimelineEditError(f"cannot remap copied shot item identities for {old_shot!r}: {exc}") from exc
         text_bindings += len(payload.get("text_bindings") or [])
         for key in _SOURCE_BOUND_PAYLOAD_KEYS:
             payload.pop(key, None)
@@ -225,7 +260,7 @@ def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, An
             raise TimelineEditError(f"shot {old!r} was not copied faithfully into {new!r} (its clips differ)")
 
 
-def duplicate_timeline(project: str, source: str, *, slug: str | None = None, name: str | None = None,
+def duplicate_timeline(project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None = None, name: str | None = None,
                        revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
     """Create a timeline with a copy of ``source``'s head (new shot ids) and publish it.
 
@@ -240,10 +275,41 @@ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, na
         return _duplicate(opened, project, source, slug=slug, name=name, revision_id=revision_id)
 
 
-def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
+def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None, name: str | None,
                revision_id: str | None) -> dict[str, Any]:
-    src = Checkout.open(project, source, revision_id=revision_id, client=client)
-    report = src._check_core()  # all or nothing: refuse an invalid head BEFORE creating anything
+    is_file_source = isinstance(source, (Mapping, Path))
+    if isinstance(source, str):
+        try:
+            is_file_source = Path(source).is_file()
+        except OSError:
+            is_file_source = False
+    if is_file_source:
+        if revision_id is not None:
+            raise TimelineEditError("a file-backed timeline source cannot select a Runtime revision")
+        # A detached source has no authenticated publication for timeline.copy.
+        # Use the same atomic import bootstrap as archive transfers instead.
+        from astrid.sdk.timeline_export import _list_transcript_documents, inventory_elements
+        from astrid.sdk.timeline_import import _project_id, _result_data
+        from astrid.sdk.timeline_import_prepare import prepare_import
+
+        source_bundle = _copy_source(source)
+        target_project = _project_id(client, project)
+        source_project = str(source_bundle.get("project_id") or target_project)
+        transcripts = _list_transcript_documents(client, source_project)
+        prepared = prepare_import(
+            source_bundle,
+            {"format": "astrid.timeline/1", "name": name or "Copied timeline",
+             "elements": inventory_elements(source_bundle)},
+            transcripts, target_project, name=name, timeline_id=slug,
+        )
+        imported = _result_data(client.timelines.import_timeline(
+            target_project, {**prepared, "source": {"via": "python"}},
+            idempotency_key=f"dup-{uuid.uuid4().hex}"), "timeline copy")
+        return {**dict(imported), "slug": slug or prepared["timeline_id"], "source": str(source),
+                "shots": len(prepared["publication"].get("shot_revisions", [])),
+                "old_head": None, "notes": []}
+    src = Checkout.open(project, str(source), revision_id=revision_id, client=client)
+    report = src._check_core()  # refuse an invalid head before creating anything
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
