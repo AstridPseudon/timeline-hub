@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c operational source return",
+  "status": "PASS_OPERATIONAL_SOURCE",
+  "product_base": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "path": "/home/user/work/wt/agt-pin-28e56cac"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "path": "/home/user/work/wt/rt-pin-6a011d58"},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "path": "/home/user/work/wt/app-pin-867cb273"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "path": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "ordinary_receiving": {
+    "all_four_checkouts_clean": true,
+    "main_go_recorded_at": "2026-10-26T00:42:08Z",
+    "source_floor_bytes": 4600000000,
+    "stop_bytes": 4000000000,
+    "candidate_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-original-final.manifest",
+    "candidate_body_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence"
+  },
+  "historical_failure_retained": {
+    "service_id": "agent-p4-current-becfe-http-3legs-1026005145-1347",
+    "exit_code": 1,
+    "selectors_executed": 0,
+    "junit_present": false,
+    "reason": "cp reported the normal manifest and destination were the same file before selector execution",
+    "raw_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026005145-1347/log.txt",
+    "prior_receipts": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence"
+  },
+  "scope": "operational source and argv correction only; no original body, suite installation, or behavior credit"
+}
