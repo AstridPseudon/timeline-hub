@@ -1,0 +1,25 @@
+{
+  "format": "timeline-d141z-wholepath-sampler-lifecycle-v1",
+  "required_start": "before source reads through terminal",
+  "trace": {
+    "pid": 5,
+    "started": "2026-10-26T08:56:15Z",
+    "command": "setsid bash -c 'ulimit -v 4194304; sample ps every 5 seconds'",
+    "path": "evidence/disk-trace.txt",
+    "keepalive": "workerKEEP",
+    "started_before_reads": true,
+    "memory_limit": "4194304 KiB virtual memory for tracer"
+  },
+  "observed": {
+    "trace_file_bytes_at_check": 44023,
+    "trace_samples_started": true,
+    "persistent_across_terminal_calls": false,
+    "reason": "the terminal sandbox reaped or detached the background process; kill -0 for recorded pid was false after reads"
+  },
+  "explicit_stop_wait_reap": {
+    "stop": "SIGTERM sent to recorded pid after reads",
+    "wait": "wait attempted; shell reported the detached pid was not its child",
+    "final_alive_check": "not alive"
+  },
+  "honesty": "This investigation does not claim a continuous 5-second trace PASS; disk-trace.txt is retained as the trace of the attempted worker-local sampler."
+}

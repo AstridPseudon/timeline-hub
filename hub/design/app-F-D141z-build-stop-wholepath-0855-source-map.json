@@ -1,0 +1,94 @@
+{
+  "format": "timeline-d141z-wholepath-source-map-v1",
+  "candidate": {
+    "base": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+    "files": {
+      "ops-d141z-build-stop/run-final-delivery.py": "51bd31303eaab1cb91e0ff9af51b74cd55bca0b08a3a208602c96dc69f00fdec",
+      "ops-d141z-build-stop/delivery_lifecycle.py": "84f3e18e56b295f6e751428c929775c7dfccd01a5d2f9230be636beba8227658",
+      "ops-d141z-build-stop/check.sh": "9626a89385b06768ca3f445354964a8cc09493da7dbca65ba71730f026dd6525",
+      "ops-d141z-build-stop/install-map.json": "454fe0e6caf953ff89844b299791010df547d14336f163006a45289b9df8af10"
+    },
+    "tracked_unmanifested": {
+      "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc": "786f59b7a9745dcef0e434311f098a9c7aa60156d01e7803e4d6db438ec96344",
+      "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc": "9e1c4f67cfb38b5220acc2d07418929dae65ab3a9f7df8933a8ede0d830e0cba"
+    }
+  },
+  "original_and_donors": {
+    "original_final_caller": {
+      "path": "design/runtime-D141z-input-0812-run-final-delivery.py",
+      "sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191"
+    },
+    "d68_wrapper_safe_publication": {
+      "path": "design/runtime-D141z-input-0812-delivery_gate_build.py",
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+      "candidate_canonical_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+      "candidate_canonical_path_state": "absent"
+    },
+    "builder": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+      "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "state": "present_at_donor_coordinate; not_in_App_source_tree"
+    },
+    "normal_service": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300"
+    },
+    "trace_donors": {
+      "append_final": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-append-final.py", "sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398"},
+      "sampler": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-disk-trace.py", "sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222"},
+      "validator": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-validate-trace.py", "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"}
+    }
+  },
+  "route": {
+    "compatible_existing_heavy_ownership": [
+      "test-run:50-59 classifies full* as heavy, rejects when alive heavy exists, applies the settled disk floors, writes D/heavy and C/key.running, then starts the body through setsid/nohup --run",
+      "test-run:61-121 starts the donor sampler as the exact body child, retains the ready binding, and finalizes through d141-append-final.py",
+      "test-run:123-159 enters the existing bench-store suite lease when present; it binds the registered suite command bytes and acquires the existing lease entries before the body",
+      "test-run:161-249 enables PR_SET_CHILD_SUBREAPER and PR_SET_PDEATHSIG, uses BENCH_CONTROL_FD to learn child process groups, sends TERM then KILL, waitpids children, and returns mounted cancellation as 130",
+      "test-run:294-312 finalizes the trace before terminal status and only then removes running markers"
+    ],
+    "candidate_to_d68_to_builder": [
+      "run-final-delivery.py:171-191 calls delivery_lifecycle.run_delivery from run_wrapper",
+      "run-final-delivery.py:220-233 main first checks the core runner, core inventory, D68 wrapper and builder, then constructs python D68 --builder ... and passes builder_args unchanged",
+      "delivery_lifecycle.py:229-250 starts the D68 command in a new session; D68:308-328 stages each repo, imports the builder, and calls main_with_args/main in the D68 process (it does not provide the normal service supervisor)",
+      "delivery_lifecycle.py:261-317 discovers descendant PIDs/groups, sends TERM/KILL, and waits for process completion; delivery_lifecycle.py:321-346 validates a path and records the lifecycle"
+    ],
+    "candidate_admission_mismatch": "delivery_lifecycle.py:31,203-222 uses only /tmp/timeline-final-delivery-heavy.lock and does not inspect test-run alive state, bench-store leases, D/heavy, or C/key.running. It cannot be the normal one-heavy ownership route."
+  },
+  "custody": {
+    "passing_donor": [
+      "d141-disk-trace.py:42-67 opens each parent directory with O_NOFOLLOW, records device/inode/owner/mode, and returns a parent hash",
+      "d141-disk-trace.py:98-107 creates disk-trace.tsv with O_EXCL/O_NOFOLLOW, requires owned regular mode 0600 and one link, and publishes the complete ready binding",
+      "d141-append-final.py:97-123 reopens the physical parent, checks parent hash, opens the trace descriptor with O_NOFOLLOW/O_APPEND, checks device/inode/owner/mode/link count, appends final, and invokes validator --fd with pass_fds and the binding",
+      "d141-validate-trace.py:123-132 --fd mode fstats the already-bound descriptor and validates the descriptor contents; path mode exists for ordinary validation but is not the donor terminal custody path"
+    ],
+    "failed_candidate": [
+      "delivery_lifecycle.py:156-165 accepts any stdout line beginning ready\\t and stores it as an opaque string",
+      "delivery_lifecycle.py:275-292 reads the pathname for monitoring and checks only the last row's shape/value/kind and mtime",
+      "delivery_lifecycle.py:331-335 invokes d141-validate-trace.py in path mode without --fd or the binding; it does not call d141-append-final.py",
+      "check.sh:60-67 replaces the real validator with a stub and check.sh:125-126 uses that stub for every lifecycle case; check.sh:205-211 uses the real sampler only for the direct helper case"
+    ],
+    "conclusion": "The candidate does not preserve donor-level immutable descriptor custody. A pathname replacement can be read by the candidate's monitor and path-mode terminal validator; this is intrinsic F2, not an App host gap."
+  },
+  "harmless_seams": {
+    "existing": [
+      "check.sh:189 calls candidate.run_wrapper once for the normal case with a local stub wrapper/builder/child",
+      "check.sh:190-206 calls delivery_lifecycle.run_delivery directly for all stop, timeout, signal, cancel, low-disk, sampler and trace cases",
+      "check.sh:144-161 checks only selected run_wrapper names and source guards; no case invokes candidate.main"
+    ],
+    "reachability": "There is no existing harmless source fixture that reaches candidate.main on App: main's first checks at run-final-delivery.py:220-223 require the absent genuine core runner/inventory and canonical D68 path. The normal helper seam therefore cannot prove main, the actual D68 construction, or the genuine builder route.",
+    "process_control_gap": "check.sh:76-83 makes the stub builder wait for its child; its cancel case at :176-187 is a timer-created local cancel file. Neither is the installed mounted stop/control-pipe path or an early leader exit with a live descendant."
+  },
+  "genuine_dependencies_absent_on_app": [
+    {"coordinate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py", "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7", "state_on_App": "absent"},
+    {"coordinate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json", "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14", "state_on_App": "absent"},
+    {"coordinate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py", "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779", "state_on_App": "absent_at_canonical_coordinate; exact safe copy exists under design/"},
+    {"coordinate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build", "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca", "state_on_App": "not in App source tree; present at donor bin coordinate"}
+  ],
+  "classification": {
+    "intrinsic": ["F2 donor binding/descriptor custody", "F3 private lock versus normal heavy ownership", "F4 check bypasses candidate.main/D68 construction", "F5 missing mounted parent-death/control-pipe/early-leader qualification", "F6 tracked pyc outside author manifest"],
+    "host_input_gaps": ["F1 three exact canonical dependency paths are absent at this App source venue; safe publication and Runtime lineage identify, but do not install, the genuine inputs"],
+    "unknown": ["historical 0741 exit/reaping outcome remains unknown; no replay or backfill was performed", "no delivery build, rehearsal, install, service request, or live final caller was run here"],
+    "acceptance": "Existing independent0847 FAIL6 remains controlling. This source map makes no new acceptance claim and does not change C0 or Runtime wire shapes."
+  }
+}

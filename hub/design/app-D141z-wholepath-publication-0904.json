@@ -1,0 +1,47 @@
+{
+  "utc": "2026-10-26T09:03:24.209711+00:00",
+  "safe_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-report.md",
+      "sha256": "d2f822e9a721de6f33d407e50e8a921689d4984b04661e1e57cadbb779424027",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-findings.md",
+      "sha256": "63caa99d61c668ce3c31f5adbc07d44ed3fe3be97cfb8cba7aabaefd22353baf",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-source-map.json",
+      "sha256": "3ffd4490314c6cd096a0ee1afed33e65119d5d883c480cb9699831008bdc437f",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-validation.md",
+      "sha256": "d84ab48f5cc83987a5f9724387812ab79790c1b703a3454b0ed3115177d70ff6",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-handoff.md",
+      "sha256": "080b4a7e590d7d2017d69f502f044db06ac8908a569d74445f0c92fd068a4ab9",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-wholepath-0855/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-wholepath-0855-sampler-lifecycle.json",
+      "sha256": "e9a16e3ff7b34177ae2e4a608d8828c14099524a60995663f168be60da9c3b03",
+      "mode": "0o644"
+    }
+  ],
+  "source_result": "Existing0847 FAIL remains controlling; finite source map only",
+  "excluded_private": [
+    "disk-trace.txt: process-list output, not disk availability; retained original under worker KEEP"
+  ],
+  "no_disk_trace_pass": true,
+  "actual_build": false
+}
