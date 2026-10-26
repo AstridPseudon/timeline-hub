@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T04:05:57Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 9m -->
-# agent board, 2026-10-26T03:56Z
+<!-- agent | 2026-10-26T04:09:52Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 2 | status age 0m -->
+# agent board, 2026-10-26T04:09Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -19,7 +19,7 @@
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
 | D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 PASS | merged | Author0213; reviewer0217 | Flat table and template published. All370 IDs and52 roots conserved; media48 nested. Cut outcomes and verdicts PENDING; no behavior credit. | Evidence only |
 | D141i cut measurement | Run same kind cut core on Agent | Luna and HARD Sol | Review0318 PASS | review | Controller0321 terminal | Actual26496 fail1. XML9561 declared,9388 concrete,173 subtests;204 FAIL196 ERROR. Sources clean and monitor0. Join must qualify accounting. | Frozen28e and6a |
-| D141 REG join | Compare cut and pristine per ID | Luna | Actual26496 retained XML | ready | Prepared agt-F-D141k-perid-join-0349 | Source dispatch waits4.6GB. Include all candidates by cluster and env_sensitive_undecidable y/n with reason. No verdict before join. | Pending |
+| D141 REG join | Compare cut and pristine per ID | Luna | D141p Sol first or4.6GB | ready | Prepared join0349 | Actual26496 retained. Wait behind Sol below4.6GB; all candidate IDs and env_sensitive_undecidable reasons required. | Pending |
 | D139 Farm core | Conditional custody for undecidable candidates | Farm and Runtime | D141k per ID join | gated:D141k-candidates | Runtime Group A0300 | Only env sensitive candidates undecidable in venv go to Farm. Zero such candidates skips child. Original census retained. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
 | P4 JUnit source | Bind one durable proof destination | Luna | Independent0124 PASS | merged | Author0119; wholepath0119; review0124 | Only normal manifest junit_paths changed. Manifest95f5ce and row630bb exact; guards and original selectors conserved. | 271095 source |
@@ -35,7 +35,7 @@
 | D130 SWAP safety | Preserve absolute refusal hold | Runtime owner | Owner safety disposition | blocked:orchestrator | WAL1537 ended; related1545 stopped | Automatic classifier refusal retained. No retry, transfer, alternate qualification, source adoption or D112 rollback. | Runtime1537 held |
 | D141 stopped scope | Preserve listed known gaps and unknowns | Existing owners | D141 stop | gated:D141-stop | No new worker | Stop original9/B022,Gate3,D118,Element,cost,D77 and own-test investigations. No skip, xfail, weakening or retirement. | Retained sources |
 | Store and staging | Preserve deferred unsafe candidates | Runtime | D140 and D141 | gated:deferred | Existing stopped owners | No installation or cleanup. Old child3e163 stays; failed source and refusal evidence retained. | Held candidates |
-| D141l U2 | Merge upstream sandbox and custody changes | HARD Sol | Completed26496 and D141k join | gated:D141k | Prepared Sol merge brief | 64197 object local. Header03:43 requires lead merge-time upstream reread. Keep both sides; independent review and delta proof follow. | Pending |
+| D141l U2 | Merge upstream sandbox and custody changes | HARD Sol | MAIN D141p and D141q | doing | agt-U2-D141m-upstream-merge-sol-0408 | Queued at4564MB under ONE4.5GB exception;5s trace and4GBstop. Lead fresh tip read needed before sanctioned merge. | Pending |
 | D141m delta | Compare merged source and pristine freeze2 | Luna and service | Reviewed U2 merge | gated:D141m-U2 | Prepared scope owner is Sol merge | D89d measured floor; current wrapper needs source change. Lead notified before author. Samevenv-agent; noFarm fallback. | Pending |
 | D141 REG fix | Fix only a demonstrated regression | Luna; Sol after failure | Actual D141k candidates | gated:D141k-candidates | Reserved agt-F-D141k-REG-fix-next | No author dispatched until join proves a finite candidate. No speculative product fix. | None |
 
@@ -49,10 +49,10 @@ Prior24049 is REFUSED-PRE-BODY exit78,body0,never a test result. Original0238/02
 
 D141k: actual26496XML -> one mechanical per-ID join is sole Agent REG evidence on critical path. Over17 upstream-present roots, fail-cut/pass-pristine samekind yields REG CANDIDATE;5 project-only roots N/A. Join output must include env_sensitive_undecidable y/n+reason and exactIDs by rootcluster. Only candidates venv-agent cannot decide go to Farm; ZERO such candidates skips Farm child. No unconditional Farm gate or new Agent child. Prepared brief managers/agent/briefs/agt-F-D141k-perid-join.md waits actualXML; no reader or own-test investigation before result.
 
-Blockers: Agent disk — D141k reader ready but free bytes below4600000000; compact0 and sweep3 complete with zero recovery. Farm work stays conditional on the join.
+Blockers: Agent source transport — lead fresh upstream reread owed before merge-forward; manager ls-remote failed ordinary proxy connectivity. Join waits below4.6GB or until Sol ends under D141q.
 Blockers: SWAP safety — D130 automatic classifier refusal holds recovery, qualification and rollback; existing Runtime escalation owns disposition. No retry, transfer or alternate route.
 
-Next ready: D141k per ID join0349 -> source review -> HARD Sol U2. live0 / cap0 below4.6GB; ready-undispatched1 disk held. Service24049 REFUSED PRE BODY;19479 HELD unstarted.
+Next ready: Lead tip receipt -> sanctioned Sol merge-forward0408 -> independent review -> normal merge and App+lead head handoff. Join0349 follows or runs at4.6GB. live1 / cap1 below4.6GB; ready-undispatched1 join held by D141q.
 
 P4 complete: authentic10086=3PASS23.668s, XMLafca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest/runmanifest wrongpath findings retained. Immutable0159 correctionb7be6965 + independent0202PASS bind actualXML andfulltuple without rewriting originals. Exact SAFE originalXML flatdesign/agt-P4-D141-retained-10086-p4-d141c.xml. App0254 cumulative scopedGO plus independent0226 path analysis confirms final520d outside executedpath. Delayed App0304 ack consumed03:27; repeated custody ask CLEARED. NO SECOND P4 BODY/kit change; original19479 heldunstarted, no manual cancellation/release. Superseded source0119/admission6c00/0146 remain uninstalled. Canonicaltest-run0be17b unchanged. AllrawKEEP retained.
 
@@ -66,7 +66,7 @@ Later and holds: D141 stops original9/B022,Gate3,D118,Element,cost,D77 andown-te
 
 Disk: fresh4437217280 bytes03:34:20 duringbody, above4GB stop. Prebody4826488832. Ordinary compact3 terminal0 packed2scratchdirs/gzipped1log/0tests; sweep3terminal0 removed0. Fresh endednonKEEP worktree census inpreviouspass foundnone; normal0309recycle saysalreadyabsent. DirtyG2,KEEP0816,currentcutpins,d22/f1012,allreferencedraw/selectorKEEP andchild3e163 protected. No KEEP release, handdeletion, Storeoperation or guardrefusal.
 
-Inbox consumed through2050440 bytes. Manager writes only board, briefs, peer notes and exact SAFE bytepublications; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+Inbox consumed through2058617 bytes. Manager writes only board, briefs, peer notes and exact SAFE bytepublications; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Latest D141l/m/n: full decision file received. Exact64197 local; normal4.6GB source floor after body+join; delta max(4.6,4.0+X+0.2) GB from actual26496trace; samevenv-agent, noFarm fallback. Current wrapper floor seam must be reported before any source author. KEEP packing item3WITHDRAWN; no KEEP packing/removal. Sol brief prepared, dispatch only after26496 and join. Guarded recycle03:42:40 pre/post4351655936 released0;0309 and0253 exact KEEP marker refusals STOP those targets, no retry or alternate. Every remaining home pin KEEP/protected/live. No Agent body interrupted or new heavy started.
 
@@ -74,3 +74,7 @@ Current pass 03:54:52Z: actual26496 and controller0321 terminal custody read. Pr
 D141n wrapper seam reported to lead before any source author: current0309 command hardcodes4.7GB and exact historical0249 receipt/brief/controller/service, plus old tuple/full22. It cannot run a new delta or D89d floor unchanged. Header03:43 merge-time upstream reread requires lead normal source transport after join. [Blocking handoff](../../design/peer-agent-to-agent-lead-runtime-20261026T0357Z-D141n-wrapper-and-source-floor.md). Reserved REG author agt-F-D141k-REG-fix-next; dispatch only on finite join candidate.
 
 Headroom pass03:56:18Z: free4573937664 bytes; ordinary compact0 packed0 scratch/test dirs and gzipped0 logs; sweep3 removed0. Fresh entire worktree static census found zero eligible ended nonKEEP tree. No previously refused target retried. Lead03:55 read-only upstream receipt confirms64197afa297f/tree6c0488b3, zero newer commits; repeat reread at actual U2 dispatch if later. Source floor holds; no new source author.
+
+H6 receiving04:06Z: Runtime03:58 has sole trace firstreturn0349 and App pair review0344; P56934 and target15 still await reviewed installed kit,8912/P419479 unstarted. Farm04:00 cheap schema verified by lead; packaging smoke blocked on actual allowlist refusal and Runtime transfer hold, no Agent fallback. App03:59 has sole freeze2 review0358 on8f278/d822; App final Agent receiving remains gated on our reviewed new source. No crosslane source wait clears Agent disk. Fresh free4564283392 bytes below4600000000; ready join0349 stays disk held, live0/cap0. D141n item3 withdrawal applied; all KEEP unchanged. Independent join review brief prepared, no worker yet.
+
+D141p/q04:07 received: Sol merge FIRST, source-only ONE exception>=4500000000; trace5s/stop4000000000, nothing else alongside below4.6GB. Actualrequest0408 queued. Manager currentbase28e/tree2ebe exact,64197/tree6c04 object local. Fresh network tip reread failed ordinaryproxyconnectivity; peer040848 asks lead supported transport before actualmerge. D141o WAIT: hublooseobjects known cause but no hubrepack or deletion authorized. [Active brief](briefs/agt-U2-D141m-upstream-merge-sol-0408.md).
