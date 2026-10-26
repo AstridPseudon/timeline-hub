@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T16:18:16Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-26T16:11:17.113834+00:00
+<!-- main | 2026-10-26T16:23:56Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 5m -->
+# runtime board, 2026-10-26T16:18:57.667026+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -83,7 +83,7 @@
 
 | OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
-| F D141jj App base | Retain independently closed source findings | Luna | Positive controls need4960MB | blocked:orchestrator | Source firstreturn and independent1450 | [Static PASS; positive NOTREADY](../../design/runtime-D141jj-source-static-review-publication-1450.json). F1 toF4 closed; no new findings. | Private proposal |
+| F D141jj App base | Execute unchanged positive source controls | Luna | Main 16:18 GO and genuine headroom | review | rt-F-D141jj-base-positive-review-next | Static F1 to F4 PASS retained; same positive controls now queued at 5240487936 bytes. | Same private source |
 | F D141jj notes | Retain qualified App base note installation | Luna and independent Luna | Bounded clarification PASS | merged | CAS resume; review and clarification next | [Receipt](../../design/runtime-D141jj-notes-installed-publication-1428.json). Exact pair and568 conserved. Original FAIL and reviewer monitor gap retained. | Actual60b938 /7cacdb |
 
 | P5 final Agent applicability | Qualify ec0a source boundaries | Luna | Final Agent ec0a HOME | merged | rt-P5-D141-ec0-applicability-next | [PASS source applicability](../../design/runtime-P5-ec0-applicability-publication-1437.json). Original 38-case receipt unchanged; relative-output gap disclosed. | Agent ec0a / Runtime95d |
@@ -95,10 +95,9 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Blockers: Main owner decision — H90 three-pin approval pending. Source pre-stage needs 4960000000; free 4862767104, gap 97232896. [Existing request](../../escalations/runtime-20261026T1450Z-final-source-headroom-decision.md). No activation or ZIP.
-Next ready: Dispatch unchanged positive-review continuation at genuine4960MB; then existing final installer, independent installation check and one MainGO final heavy build.
-live 0 / cap 3; ready-undispatched 0. Census review complete; unchanged positive source controls held by genuine4960MB guard.
-Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives held. Raw KEEP, refused smoke and8912/19479 unchanged. No repeat hub operation.
+Next ready: After actual positive PASS, dispatch existing final installer, independent installation check and one Main GO final heavy build.
+live 1 / cap 1; ready-undispatched 0. One heavy positive-control continuation queued at genuine 5.24 GB; dependent installation and build remain gated.
+Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
 
@@ -116,4 +115,5 @@ F-final remains original Main venue and recordedorder: actual final proofs andal
 
 Prior watch receipts: [15:30](rounds/20261026T1530Z-pass.json), [15:50](rounds/20261026T1550Z-pass.json). Historical proofs, refusals and KEEP remain unchanged.
 
-Current pass 2026-10-26T16:11:17.113834+00:00: PLAN and common read first; INBOX 1932362 and HEADER 254322 consumed, unchanged. Normal workers exit 0: 2694 records, zero running. App 15:58 and Agent 15:59 boards read; all cross-lane source, proofs and metadata needs are clear. Supported recycle refused five dirty Runtime trees; sweep 3 and compact exit 0, removed 0, packed 0, gzipped 0. No safety-held target was touched. [Pass receipt](rounds/20261026T1605Z/pass.json). Free 4862767104; positive source guard gap 97232896. The sole source candidate and unchanged scripts are present; positive continuation, final installer, independent installation review, sole build and artifact review briefs are all pre-staged. Owner three-pin approval remains pending. No worker, source mutation, canonical activation, ZIP or repeat hub action.
+
+Current pass 2026-10-26T16:18:57.667026+00:00: Main 16:18 owner-approved three-pin removal is DONE and the headroom escalation is resolved. INBOX 1933303 and HEADER 254529 consumed. Actual free 5240487936 at dispatch; zero existing workers or test bodies. Same-source independent positive continuation requested immediately with Luna high, net, HEAVY and default 180-minute timeout. [Dispatch receipt](rounds/20261026T1618Z-source-dispatch.json). No extra author or source round. Main final tuple and exact App fc24, Agent 64197, Runtime fa9, Composition 67b8 upstream bases remain. Following actual PASS: pre-staged guarded installer, independent installation review, one final body, independent artifact review. No cleanup further; a floor trip stops and is reported.
