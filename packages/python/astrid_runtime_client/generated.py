@@ -5,17 +5,18 @@ from __future__ import annotations
 import io
 import json
 import math
+import re
 import urllib.error
 import urllib.request
 import uuid
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Mapping
+from typing import Any, BinaryIO, Callable, Literal, Mapping
 from urllib.parse import urlsplit
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47"
-OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'getUserAppState', 'updateUserAppState', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:a52f6c23f0b97a58626e48f385bd509c8c0977386289fbbd902c5a81c8497ef9"
+OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'getUserAppState', 'updateUserAppState', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'importTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
@@ -643,7 +644,7 @@ class WorkspaceClient:
             raise ValueError("timeout must be finite and positive")
         self.handshake_info: Handshake | None = None
 
-    def _request(self, method: str, path: str, *, body: bytes | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
+    def _request(self, method: str, path: str, *, body: bytes | BinaryIO | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
         request_headers = {"Accept": "application/json", **dict(headers or {})}
         request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
         if self.token:
@@ -906,6 +907,10 @@ class WorkspaceClient:
         payload["timeline_id"] = timeline_id
         return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/composition-revisions", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
 
+    def import_timeline(self, project_id: str, prepared: Mapping[str, Any], *, idempotency_key: str) -> MutationResult:
+        payload = json.dumps(dict(prepared), separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return self._mutation_json(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/import", body=payload, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(201,))[2])
+
     def replace_parent_composition_media(self, project_id: str, timeline_id: str, *, occurrence_id: str, clip_id: str, source_object_id: str, expected_head: str, idempotency_key: str, timing: str = "preserve-duration") -> MutationResult:
         payload = {
             "occurrence_id": occurrence_id,
@@ -1160,6 +1165,25 @@ class WorkspaceClient:
         headers = {"Content-Type": media_type, "Idempotency-Key": idempotency_key}
         if filename: headers["X-Original-Name"] = filename
         _, _, body = self._request("POST", f"/v1/projects/{_path_part(project_id)}/objects", body=bytes(data), headers=headers, expected=(200, 201))
+        return self._mutation_json(body)
+
+    def ingest_project_object_stream(self, project_id: str, stream: BinaryIO, *, size: int, media_type: str, idempotency_key: str, filename: str | None = None, expected_digest: str | None = None) -> MutationResult:
+        """Upload a readable stream with a known length without buffering or closing it."""
+        if isinstance(size, bool) or not isinstance(size, int) or size < 0:
+            raise ValueError("size must be a non-negative integer")
+        if not callable(getattr(stream, "read", None)):
+            raise TypeError("stream must provide read(size)")
+        if not isinstance(media_type, str) or not media_type.strip():
+            raise ValueError("media_type must be a non-empty string")
+        headers = {"Content-Type": media_type, "Idempotency-Key": idempotency_key, "Content-Length": str(size)}
+        if filename is not None:
+            headers["X-Original-Name"] = filename
+        if expected_digest is not None:
+            bare = expected_digest.removeprefix("sha256:")
+            if not re.fullmatch(r"[0-9a-f]{64}", bare):
+                raise ValueError("expected_digest must be a SHA-256 digest")
+            headers["X-Expected-Digest"] = bare
+        _, _, body = self._request("POST", f"/v1/projects/{_path_part(project_id)}/objects", body=stream, headers=headers, expected=(200, 201))
         return self._mutation_json(body)
 
     def import_project_media(self, project_id: str, data: bytes, *, media_type: str, idempotency_key: str, filename: str | None = None, expected_digest: str | None = None, width: int | None = None, height: int | None = None, duration_seconds: float | None = None) -> MutationResult:

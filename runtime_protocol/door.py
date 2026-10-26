@@ -157,6 +157,7 @@ WORKSPACE_ROUTES = (
     _entry("PUT", "/v1/projects/selection"),
     _entry("GET,PATCH", "/v1/projects/:"),
     _entry("GET", "/v1/projects/:/timelines"),
+    _entry("POST", "/v1/projects/:/timelines/import"),
     _entry("GET,PATCH", "/v1/projects/:/timelines/:"),
     _entry("GET", "/v1/projects/:/timelines/:/revisions/:"),
     _entry("GET,POST", "/v1/projects/:/timelines/:/composition-revisions"),
