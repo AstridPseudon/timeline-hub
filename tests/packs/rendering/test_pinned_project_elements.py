@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -85,6 +86,71 @@ def admitted(configured_project_pack):
 
 def _snapshot(runtime):
     return managed.resolve_managed_render_snapshot(project_ref="demo", timeline_ref="main", client=runtime)
+
+
+def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source"):
+    """Model an installed/local owner whose current catalog lacks this pin."""
+    from astrid.core.pack import discovery
+
+    monkeypatch.setattr(
+        discovery,
+        "discover_pack_metadata",
+        lambda **_: (SimpleNamespace(id=ref["packId"], source_kind=source_kind),),
+    )
+    current_revision = "sha256:" + "0" * 64
+    monkeypatch.setattr(
+        catalog,
+        "list_element_descriptors",
+        lambda *args, **kwargs: (
+            {**ref, "revision": current_revision},
+            {**ref, "id": "current-only", "revision": current_revision},
+        ),
+    )
+
+
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_colliding_installed_owner_uses_exact_retained_snapshot(
+    admitted, tmp_path, monkeypatch, source_kind,
+):
+    runtime, refs, reads = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind)
+        snapshot = _snapshot(runtime)
+    assert selections(snapshot.config)[0]["reference"] == ref
+    assert len(reads["documents"]) == 1
+    assert len(reads["objects"]) == 1
+    registry, _ = stage_project_elements(
+        json.loads(json.dumps(snapshot.config)), tmp_path / "selected", registry=ElementRegistry()
+    )
+    element = registry.get("effects", ref["id"], pack_id=ref["packId"], revision=ref["revision"])
+    assert "first" in element.component.read_text()
+
+
+@pytest.mark.parametrize("failure", ["missing", "corrupt"])
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_colliding_installed_owner_snapshot_failure_is_fail_closed(
+    admitted, monkeypatch, failure, source_kind,
+):
+    runtime, refs, _ = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind)
+        if failure == "missing":
+            runtime.documents.rows.clear()
+        else:
+            original = runtime.get_project_verified_document_object
+
+            def corrupt_snapshot(*args):
+                snapshot = original(*args)
+                return {**snapshot, "bytes_base64": base64.b64encode(b"corrupt").decode("ascii")}
+
+            runtime.get_project_verified_document_object = corrupt_snapshot
+        with pytest.raises(ValueError, match="snapshot (missing|digest mismatch)") as error:
+            _snapshot(runtime)
+    assert ref["revision"] in str(error.value)
 
 
 def test_two_revisions_keep_source_dispatch_aliases_and_assets(admitted, tmp_path):

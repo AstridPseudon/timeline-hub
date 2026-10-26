@@ -7,7 +7,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Mapping
 
-from astrid.core.element import project_packs
+from astrid.core.element import catalog, project_packs
 from astrid.core.element.registry import ElementRegistry, load_default_registry, load_pack_elements
 
 CARRIER = "astrid_project_element_snapshots"
@@ -32,10 +32,21 @@ def render_key(selection: Mapping[str, Any]) -> str:
     return f"pinned_{scope}_{ref['revision'].removeprefix('sha256:')}"
 
 
-def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, str], dict[str, str]]:
-    from astrid.core.foundation.paths import REPO_ROOT
-    from astrid.core.pack.discovery import discover_pack_metadata
+def _is_builtin_reference(reference: Mapping[str, str]) -> bool:
+    """Keep genuine installed pins on the built-in registry path.
 
+    A ref carries no source-layer marker, so pack ID alone cannot distinguish
+    an installed element from a project-pack admission that happens to reuse
+    that ID. The complete catalog identity is the only safe built-in signal.
+    """
+    return any(
+        all(descriptor.get(key) == reference[key]
+            for key in ("packId", "kind", "id", "revision"))
+        for descriptor in catalog.list_element_descriptors(include_shadowed=True)
+    )
+
+
+def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, str], dict[str, str]]:
     refs = {}
     for clip in config.get("clips", []):
         ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
@@ -46,9 +57,7 @@ def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, 
             refs[selection_key(ref)] = dict(ref)
     if not refs:
         return refs
-    installed_owners = {row.id for row in discover_pack_metadata(project_root=REPO_ROOT)
-                        if row.source_kind in {"source", "local"}}
-    return {key: ref for key, ref in refs.items() if ref["packId"] not in installed_owners}
+    return {key: ref for key, ref in refs.items() if not _is_builtin_reference(ref)}
 
 
 def require_project_snapshots(config: Mapping[str, Any]) -> None:
@@ -59,11 +68,12 @@ def require_project_snapshots(config: Mapping[str, Any]) -> None:
 
 
 def resolve_project_elements(config: Mapping[str, Any], *, project: str, client: Any) -> dict[str, Any]:
-    """Fetch each exact admission once; never use authoring files or the catalog.
+    """Fetch each exact admission once; never use authoring files or the catalog as source.
 
     The mutable document locates a retained admission, selected by the complete
-    element ref. The scoped verified-document/object ports authenticate its
-    portable source, which then travels with this render's frozen inputs.
+    element ref. The installed catalog only identifies genuine built-in refs;
+    scoped verified-document/object ports authenticate project-pack source,
+    which then travels with this render's frozen inputs.
     """
     result = copy.deepcopy(dict(config))
     app = result.get("app")
