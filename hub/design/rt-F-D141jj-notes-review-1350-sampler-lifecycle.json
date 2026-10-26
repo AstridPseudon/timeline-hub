@@ -1,0 +1,19 @@
+{
+  "schema": "d141jj-protected-review-sampler-v1",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/disk-trace.txt",
+  "interval_seconds": 5,
+  "stop_free_bytes": 4000000000,
+  "sample_count": 2,
+  "minimum_available_bytes": 5496217600,
+  "sampler_pid": 5,
+  "exit_code": 0,
+  "waited": true,
+  "reaped": true,
+  "stop_reached": false,
+  "worker_first_tool_trace": false,
+  "first_tool_gap": {
+    "status": "DISCLOSED",
+    "reason": "The review worker's first tool preceded sampler launch; the later durable trace is not backfilled as first-tool coverage."
+  },
+  "tmpdir_metadata": "regular file pointer; no mkdir performed"
+}

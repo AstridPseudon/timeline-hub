@@ -1,0 +1,105 @@
+{
+  "schema": "d141jj-protected-documentary-review-v1",
+  "task": "F D141jj",
+  "worker": "rt-F-D141jj-notes-review-1350",
+  "author": "rt-F-D141jj-notes-1345",
+  "verdict": "PASS",
+  "scope": "Private documentary successors only; no product or canonical merge.",
+  "base": {
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "candidate_checks": {
+    "candidate-README.template.md": {
+      "immutable_prefix_sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "prefix_bytes": 47478,
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "full_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "candidate-gate-results.md": {
+      "immutable_prefix_sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "prefix_bytes": 43666,
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "full_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    },
+    "all32_app_failure_ids": "preserved and source-checker resolved",
+    "prior_gaps_ledgers_witnesses_and_monitor_paragraphs": "byte-exact through immutable prefixes",
+    "c0_examples": "request, replies, guarded undo, and dry-run preview retained"
+  },
+  "source_and_owner_checks": {
+    "author_source_publication": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-notes-source-publication-1350.json",
+      "status": "10/10 source and published files byte/hash exact"
+    },
+    "board_header_sha256": "e857328b6726baf4a0d6cefdc6da757f57a5a30062f6553f49fe1f923fe85b1a",
+    "runtime_inbox_sha256": "705adbb47b220b1d0c31ed078ba67f0ce0c85f4d42d06d64fe0550189e045591",
+    "decision": "option B",
+    "app_upstream": {
+      "head": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+      "tree": "faf477adef3ec24c9cc359486ac16866500ab219",
+      "git_object_verified": true
+    },
+    "app_proven": {
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "git_object_verified": true
+    },
+    "catchup": {
+      "head": "eac97ea5",
+      "onto": "00a014e2a393",
+      "merged_into_zip": false,
+      "git_head_object_verified": true
+    },
+    "later_conflicts": ["Elements panel removal", "AgentChat test", "Runtime pin"]
+  },
+  "qualified_predecessor": {
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-notes-installed-publication-1332.json",
+    "publication_sha256": "d32786f04bbef67f31a49c1fbd3b7030e13e710eefe8e72da2586fa9d6433038",
+    "status": "PASS_BOUNDED_CAS",
+    "outside_tuples": 568,
+    "all_outside_tuples_conserved": true,
+    "all32_ids": true,
+    "renderer": {
+      "function": "render_readme",
+      "function_only": true,
+      "controlled_four_repo_and_fallback": true,
+      "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+    }
+  },
+  "findings": [
+    {
+      "id": "D141JJ-001",
+      "status": "PASS",
+      "finding": "The author publication and both private candidates are byte/hash exact; each candidate conserves its immutable D141hh prefix and appends exactly one bounded suffix."
+    },
+    {
+      "id": "D141JJ-002",
+      "status": "PASS",
+      "finding": "The inherited 32 App failure IDs, prior gap/ledger/witness/P1/P3/single/parent/monitor text, C0 examples, JSON/fences, and placeholders remain preserved by the source checker and independent prefix recomputation."
+    },
+    {
+      "id": "D141JJ-003",
+      "status": "PASS",
+      "finding": "Every new D141jj claim matches the 13:42 owner decision and genuine available App Git objects. The catch-up is explicitly uninstalled and deferred after ZIP; the exact later conflicts are retained."
+    },
+    {
+      "id": "D141JJ-004",
+      "status": "PASS",
+      "finding": "No suffix invents a final head, current pin, GO, build, ZIP, catch-up qualification, or new full-pair/journey requirement; remaining Agent REG0 and D141v gates stay explicit."
+    },
+    {
+      "id": "D141JJ-005",
+      "status": "DISCLOSED_LIMIT",
+      "finding": "The author and reviewer sampler traces have PID/exit/wait/reap and remain above the 4 GB stop, but neither worker claims first-tool or continuous whole-worker coverage. The review began with source inspection before sampler launch; this gap is not backfilled."
+    }
+  ],
+  "side_effects": {
+    "product_changes": false,
+    "canonical_changes": false,
+    "build_or_zip": false,
+    "service_or_test_body": false,
+    "merge_request": false
+  }
+}

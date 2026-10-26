@@ -1,0 +1,93 @@
+{
+  "schema": "d141jj-protected-review-source-manifest-v1",
+  "status": "PASS",
+  "author": {
+    "worker": "rt-F-D141jj-notes-1345",
+    "source_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-notes-source-publication-1350.json",
+    "source_publication_sha256": "f1212e5146ad69b53e3f286e8ad46a82a0f5a9f8580a142fab520c7bd3dd2e76",
+    "source_and_published_files_byte_hash_exact": true,
+    "file_count": 10
+  },
+  "immutable_inputs": {
+    "candidate-README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-README.template.md",
+      "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4"
+    },
+    "candidate-gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-gate-results.md",
+      "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb"
+    }
+  },
+  "recomputed_candidates": {
+    "candidate-README.template.md": {
+      "bytes": 48811,
+      "prefix_bytes": 47478,
+      "suffix_bytes": 1333,
+      "suffix_sha256": "7c74c4d5eaae1bc1fe5d04dfc852dd59549d3bb4639f39be84a80de7ac0676c5",
+      "suffix_occurrences": 1,
+      "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "candidate-gate-results.md": {
+      "bytes": 44999,
+      "prefix_bytes": 43666,
+      "suffix_bytes": 1333,
+      "suffix_sha256": "7c74c4d5eaae1bc1fe5d04dfc852dd59549d3bb4639f39be84a80de7ac0676c5",
+      "suffix_occurrences": 1,
+      "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    }
+  },
+  "qualified_predecessor": {
+    "publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-notes-installed-publication-1332.json",
+    "sha256": "d32786f04bbef67f31a49c1fbd3b7030e13e710eefe8e72da2586fa9d6433038",
+    "status": "PASS_BOUNDED_CAS",
+    "outside_conservation": {
+      "before": 568,
+      "after": 568,
+      "recomputed_current": 568,
+      "maps_equal": true,
+      "all_current_outside_tuples_equal_before_and_after": true
+    },
+    "all32_ids": true,
+    "prefixes_exact": true,
+    "suffix_once_each": true
+  },
+  "owner_facts": {
+    "board_header_sha256": "e857328b6726baf4a0d6cefdc6da757f57a5a30062f6553f49fe1f923fe85b1a",
+    "runtime_inbox_sha256": "705adbb47b220b1d0c31ed078ba67f0ce0c85f4d42d06d64fe0550189e045591",
+    "decision": "option B",
+    "app_upstream_head": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "app_upstream_tree": "faf477adef3ec24c9cc359486ac16866500ab219",
+    "app_proven_head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "app_proven_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "catchup_head": "eac97ea5",
+    "catchup_onto": "00a014e2a393",
+    "catchup_merged_into_zip": false,
+    "later_conflicts": ["Elements panel removal", "AgentChat test", "Runtime pin"],
+    "claims_excluded": ["final head", "current pin", "build", "ZIP"]
+  },
+  "production_renderer": {
+    "function": "render_readme",
+    "function_only": true,
+    "controlled_four_repo_and_fallback": true,
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  },
+  "monitor": {
+    "trace": "disk-trace.txt",
+    "samples": 2,
+    "minimum_available_bytes": 5496217600,
+    "stop_free_bytes": 4000000000,
+    "sampler_pid": 5,
+    "exit_code": 0,
+    "waited": true,
+    "reaped": true,
+    "worker_first_tool_trace": false,
+    "tmpdir_metadata": "regular file pointer; no mkdir performed"
+  },
+  "side_effects": {
+    "product": false,
+    "canonical": false,
+    "tests_or_build": false,
+    "service": false,
+    "merge": false
+  }
+}

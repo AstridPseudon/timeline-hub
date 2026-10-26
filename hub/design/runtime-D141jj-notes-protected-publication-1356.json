@@ -1,0 +1,75 @@
+{
+  "utc": "2026-10-26T13:54:32.230648+00:00",
+  "status": "PASS",
+  "worker": "rt-F-D141jj-notes-review-1350",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-report.md",
+      "bytes": 884,
+      "sha256": "5e6d7724473e2446ffdffebc5f13dbd81864479e85cf36065ce6e6e88717fc0b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-disk-trace.txt",
+      "bytes": 179,
+      "sha256": "6c965bc241fcb5ed5057dcfa3e065a1e7dd9b108875de818ec945455c54a1297"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-findings.md",
+      "bytes": 1235,
+      "sha256": "29161c3d07c369c910a4c1f5ed3b33997a3019c30d0d4a8527be7907dc9bd155"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-handoff.md",
+      "bytes": 775,
+      "sha256": "68d6afc6541ee792c62fdb34b5f2591b6afbdedee7e8819e70fb836a7d9658fe"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-review.json",
+      "bytes": 4731,
+      "sha256": "b2a2a0f343107ee0f3edff31fce6ef3711f46893a48a6da27ae88c95bee06982"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-sampler-lifecycle.json",
+      "bytes": 729,
+      "sha256": "7b7c2785f9e107c54b4872404236987fa6330a8e06b571170377992f9f06f209"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-source-manifest.json",
+      "bytes": 3883,
+      "sha256": "8d4684e34885e01441b14ce1be85fd40c5856fadf046d2a08b53be646f1a13e6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-review-1350-validation.md",
+      "bytes": 1705,
+      "sha256": "cb2a736aa3e6636ddfd142cbbdb6091e0df1c36147f736f344365df740cdf184"
+    }
+  ],
+  "candidates": {
+    "candidate-README.template.md": {
+      "immutable_prefix_sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "prefix_bytes": 47478,
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "full_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "candidate-gate-results.md": {
+      "immutable_prefix_sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "prefix_bytes": 43666,
+      "suffix_bytes": 1333,
+      "suffix_occurrences": 1,
+      "full_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    },
+    "all32_app_failure_ids": "preserved and source-checker resolved",
+    "prior_gaps_ledgers_witnesses_and_monitor_paragraphs": "byte-exact through immutable prefixes",
+    "c0_examples": "request, replies, guarded undo, and dry-run preview retained"
+  },
+  "scope": "Protected documentary source qualification only; author and reviewer first-tool/whole-worker monitor gaps retained."
+}
