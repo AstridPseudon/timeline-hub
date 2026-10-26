@@ -53,6 +53,17 @@ STARTUP_WAIT_MARGIN_SECONDS = 5.0
 SERVICE_OWNER_STOP_GRACE_SECONDS = 20.0
 
 
+def _authoring_profile(source: SourceProfile) -> str:
+    """Resolve the trusted provider profile for either Runtime launch route."""
+    profile = {"astrid": "astrid"}.get(source.profile)
+    if profile is None:
+        raise BootstrapError(
+            "Source profile has no supported Runtime authoring profile: "
+            f"{source.profile!r}"
+        )
+    return profile
+
+
 def _admission_timeout_from_environment() -> float:
     """Read the bounded startup integrity budget from the install environment."""
     raw = os.environ.get(ADMISSION_TIMEOUT_ENV)
@@ -255,12 +266,7 @@ class LocalRuntimeBoundary:
                         f"{candidate}"
                     )
                 python = str(candidate)
-            authoring_profile = {"astrid": "astrid"}.get(source.profile)
-            if authoring_profile is None:
-                raise BootstrapError(
-                    "Source profile has no supported Runtime authoring profile: "
-                    f"{source.profile!r}"
-                )
+            authoring_profile = _authoring_profile(source)
             argv = [python, "-X", "utf8", "-m", "runtime_protocol", "start", "--authoring-profile", authoring_profile]
         replacements = {
             "{realm_id}": realm_id,
@@ -1152,6 +1158,7 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
         if (source_profile.runtime_environment
                 and Path(source_profile.runtime_environment).resolve() != Path(sys.prefix).resolve()):
             raise BootstrapError("run must execute inside the selected runtime_environment")
+        authoring_profile = _authoring_profile(source_profile)
         root = self._validate_path(Path(realm_root), "realm root").resolve()
         support = self._validate_path(Path(owner_lock).parent, "runtime support root").resolve()
         token = os.urandom(32).hex()
@@ -1174,7 +1181,8 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
                 local_worker_profiles=composition.profiles if composition else None,
                 local_worker_preparer=composition.preparer if composition else None,
                 local_worker_inspector=composition.inspector if composition else None, door=door,
-                services=services, log_directory=self._log_directory)
+                services=services, log_directory=self._log_directory,
+                authoring_profile=authoring_profile)
             self.daemon = daemon
             cancellation.check()
             daemon.start()

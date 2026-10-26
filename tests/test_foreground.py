@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid_runtime import cli
-from astrid_runtime.bootstrap import BootstrapError, BootstrapResult, DoorSettings
+from astrid_runtime.bootstrap import BootstrapError, BootstrapResult, DoorSettings, SourceProfile
 from astrid_runtime.io import atomic_write_json
 from astrid_runtime.paths import RuntimePaths
 
@@ -356,7 +356,7 @@ def test_foreground_constructor_failure_removes_private_bootstrap_token(tmp_path
     monkeypatch.setattr(boundary, "_validate_source", lambda _source: None)
     monkeypatch.setattr(daemon, "RuntimeDaemon", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("bad daemon config")))
     support = tmp_path / "support"
-    source = SimpleNamespace(runtime_command=None, runtime_environment=None, worker_profile=None)
+    source = SimpleNamespace(profile="astrid", runtime_command=None, runtime_environment=None, worker_profile=None)
     with pytest.raises(OSError, match="bad daemon config"):
         boundary.start(realm_id="realm", realm_root=tmp_path / "realm", owner_lock=support / "instance.lock", source_profile=source)
     assert not list(support.glob(".bootstrap-token-*"))
@@ -366,3 +366,38 @@ def test_foreground_constructor_failure_removes_private_bootstrap_token(tmp_path
 def test_run_reports_invalid_data_root_without_traceback(capsys):
     assert cli.main(["run", "--data-root", "relative"]) == 1
     assert "absolute" in json.loads(capsys.readouterr().out)["error"]
+
+
+@pytest.mark.parametrize("profile", ["astrid", "unmapped"])
+def test_both_boundaries_resolve_the_same_authoring_profile(tmp_path, monkeypatch, profile):
+    from astrid_runtime.runtime_boundary import ForegroundRuntimeBoundary, LocalRuntimeBoundary
+    from runtime_protocol import daemon
+
+    source = SourceProfile(profile=profile, runtime_checkout=str(tmp_path), source_checkout=str(tmp_path))
+    support = tmp_path / "support"
+    arguments = dict(realm_id="realm", realm_root=tmp_path / "realm", owner_lock=support / "instance.lock")
+    captured = {}
+
+    def capture(*_args, **kwargs):
+        captured.update(kwargs)
+        raise OSError("captured daemon configuration")
+
+    monkeypatch.setattr(daemon, "RuntimeDaemon", capture)
+    foreground = ForegroundRuntimeBoundary()
+    local = LocalRuntimeBoundary()
+    if profile == "unmapped":
+        for start in (
+            lambda: local._argv(source, **arguments, support_root=support,
+                                display_name="Workspace", token_file=support / "token"),
+            lambda: foreground.start(**arguments, source_profile=source),
+        ):
+            with pytest.raises(BootstrapError, match="no supported Runtime authoring profile: 'unmapped'"):
+                start()
+        assert captured == {}
+        assert not support.exists()
+    else:
+        argv = local._argv(source, **arguments, support_root=support,
+                           display_name="Workspace", token_file=support / "token")
+        with pytest.raises(OSError, match="captured daemon configuration"):
+            foreground.start(**arguments, source_profile=source)
+        assert captured["authoring_profile"] == argv[argv.index("--authoring-profile") + 1] == "astrid"
