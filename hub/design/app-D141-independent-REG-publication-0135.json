@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-26T01:36:04Z",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-shot-group-wholepath-0126/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-shot-group-wholepath-0126-validation.md",
+      "sha256": "b5f57a26ebc1474e5f9a7d3a0f041bf223578a8ca1beb47be037fe66db485e3a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-shot-group-wholepath-0126/evidence/source-map.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-shot-group-wholepath-0126-source-map.json",
+      "sha256": "0da9947fb76cbefbfde26e6b3c55160f4b7222f30dbfcce77e4af0b2cde9d486"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-shot-group-wholepath-0126/evidence/findings.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-shot-group-wholepath-0126-findings.md",
+      "sha256": "817c83aaa7480a0709dfca4efbfef655529ae29604976cacf5a532bab9a3804c"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-shot-group-wholepath-0126/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-shot-group-wholepath-0126-handoff.md",
+      "sha256": "9c988265e3a83312b96d26edd5871e5ba849068e89a710428367bece5fdce24b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-shot-group-wholepath-0126/evidence/verdict.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-shot-group-wholepath-0126-verdict.json",
+      "sha256": "fc27b52fca9260626b228852643eef94ed3f8fdaf16a6c8c4158fdcd858993b3"
+    }
+  ]
+}

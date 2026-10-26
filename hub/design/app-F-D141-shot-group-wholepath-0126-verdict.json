@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task": "D141 SECOND-FAILURE WHOLE-PATH INDEPENDENT READ ONLY",
+  "case_id": "normal-033-shot-group-pack",
+  "verdict": "productREG",
+  "confidence": "finite-source-proven",
+  "decision_basis": "The preserved upstream-present case passes on pristine and fails on cut at an exact production-path load count. The production caller is byte-identical; the cut-only placement service adds a real command-basis re-read. The mock's commit-side load is explicitly cancelled and is not the observed delta.",
+  "normal": {
+    "head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "result_id": "app-full-1026004326-12174",
+    "status": "FAIL",
+    "case_result": "FAIL",
+    "failure": "expected runtime.loads 2, received 3",
+    "failure_location": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts:397"
+  },
+  "pristine": {
+    "head": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+    "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+    "result_id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+    "status": "FAIL",
+    "case_result": "PASS",
+    "receipt": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts (6 tests) passed; the file is absent from the 18-failure list",
+    "source_execution_note": "The service used synthetic commit 4bb696aceae83a3843df47ff1ff99c9717a3e0aa with the exact pristine tree and required pristine parent; source bytes are joined, commit identity is not claimed equal."
+  },
+  "classification": {
+    "preserved_case": true,
+    "preserved_caller": true,
+    "failing_production_path": true,
+    "test_mock_sideeffect_only": false,
+    "changed_own_setup_only": false,
+    "unknown_record": null
+  },
+  "scope": {
+    "source_presence": "Consumed from 0120 qualified source-presence row; no complete 32-case membership repeat.",
+    "purpose_preserved": "active-non-default timeline and no relational-storage access remain exact in both committed tests.",
+    "no_source_or_test_changes": true,
+    "no_tests_run_by_this_worker": true
+  }
+}

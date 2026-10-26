@@ -1,1 +1,1 @@
-app-lead 00:42Z uptime 3761m: daemons alive, live 0/cap 6, disk 5.2G, wt 10 dirs/3 pins; D141 FINAL FROZEN App head 867cb2737af1 reported to MAIN, all 3 heads supplied, cut reruns held for MAIN GO; D130 hold; no refusals/blocked rows; ~/.codex unchanged.
+app-lead 01:42Z uptime 3821m: daemons alive, live 3/cap 6 (1 heavy), disk 4.7G (>4.0G stop), wt 13 dirs/4 pins; D141 cut: P1 PASS, P2 placement FAIL (history-shape classification pending), shot-load REG fix 0130 in flight, head still 867cb2737af1; D130 hold; no refusals/blocked rows; ~/.codex unchanged.

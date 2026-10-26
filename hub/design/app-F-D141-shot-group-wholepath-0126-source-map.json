@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "case_id": "normal-033-shot-group-pack",
+  "repos": {
+    "source_repo": "/home/user/work/app",
+    "composition_worktree": "hosting checkout only; not used as target source"
+  },
+  "heads": {
+    "cut": {
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"
+    },
+    "pristine": {
+      "commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab"
+    }
+  },
+  "test": {
+    "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+    "cut_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+    "pristine_blob": "02589a19ca936e7cac35ee6b59c274ecafbe027f",
+    "cut_title_line": 377,
+    "pristine_title_line": 320,
+    "title": "shot-group pack commands > duplicates only the explicitly active non-default timeline and never touches relational storage",
+    "input": {
+      "timelineRef": "active-non-default",
+      "configVersion": 7,
+      "source": { "shotId": "shot-source", "trackId": "V1" },
+      "destinationShotId": "shot-copy",
+      "final_video": "absent; seed final-video key is deleted"
+    },
+    "preserved_assertions": {
+      "derivedFrom": { "shotId": "shot-source", "trackId": "V1" },
+      "pinnedShotGroups": ["shot-source", "shot-copy"],
+      "runtime_loads": 2,
+      "publishes": ["rev-2"],
+      "router_paths": [],
+      "forbidden_relational_surface": "not present in request paths"
+    }
+  },
+  "mock": {
+    "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+    "cut_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+    "pristine_blob": "02589a19ca936e7cac35ee6b59c274ecafbe027f",
+    "cut_behavior": [
+      "loadTimelineCommandBasis increments runtime.loads at lines 48-63",
+      "commitTimeline calls loadTimelineCommandBasis at line 70",
+      "the mock immediately decrements runtime.loads at line 73 to exclude local response assembly",
+      "the mock applies request.commands[0].args.changes and returns accepted/canonical_document/receipt"
+    ],
+    "pristine_behavior": [
+      "saveTimelineAtHead directly persists config/registry and increments the publish counter",
+      "there is no command-basis commit-side load"
+    ],
+    "seam_classification": "The cut mock has a different Runtime API model, but its commit-side load is net-zero by explicit decrement. It does not explain the observed +1."
+  },
+  "production_caller": {
+    "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+    "cut_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+    "pristine_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+    "identical": true,
+    "lines": "378-418",
+    "flow": [
+      "loadTimelineDocument(projectSlug, timelineRef)",
+      "check expected configVersion",
+      "read source final-video entry",
+      "because final video is absent, skip task admission",
+      "mutateTimelineDocument with deepCopyShotGroupInDocument",
+      "return the mutated result"
+    ],
+    "caller_uses_runtime_commit": "The cut placement service's LocalSaveSession sends through provider.commitTimeline at placementService.ts:273-279; no caller adaptation was added for this case."
+  },
+  "changed_production_seam": {
+    "path": "src/shared/lib/placement/placementService.ts",
+    "cut_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99",
+    "pristine_blob": "49cdf488ec4037e5c069459a9b4266b2003c7c31",
+    "cut_lines": "233-245, 247-329",
+    "pristine_lines": "78-109",
+    "cut_read_sequence": [
+      "duplicate's initial loadTimelineDocument: one loadTimeline call",
+      "mutateTimelineDocument store.load: loadTimelineCommandBasis",
+      "authoringBundleFromDocument validates the closure",
+      "store.load re-reads loadTimelineCommandBasis as current before authoring"
+    ],
+    "pristine_read_sequence": [
+      "duplicate's initial loadTimelineDocument: one loadTimeline call",
+      "mutateTimelineDocument store.load: one loadTimelineDocument call"
+    ],
+    "observed_delta": "The cut authoring path therefore has one additional real provider read for this no-final-video case: 3 versus pristine's 2."
+  },
+  "purpose_and_contract": {
+    "timeline_selection": "exact active-non-default timelineRef preserved",
+    "relational_storage": "paths remains [] and forbidden relational surface assertion remains exact",
+    "request_route": "cut production path routes the save through RuntimeDataProvider.commitTimeline via the durable LocalSaveSession",
+    "reply_shape_in_case": "mock returns accepted, canonical_document, accepted head, graph, and receipt; conflict/invalid/preview branches are not exercised by this one case",
+    "full_contract_matrix": "not requalified here; no contract/source adaptation was made"
+  }
+}
