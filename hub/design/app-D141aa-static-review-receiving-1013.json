@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-26T10:12:42.730182+00:00",
+  "source_publication": "design/agent-D141aa-final-review-publication-0957.json",
+  "files": [
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-review.json",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-findings.md",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-source-map.json",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-source-manifest.json",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-validation.md",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-handoff.md",
+      "bytes_match": true,
+      "sha_match": true
+    },
+    {
+      "file": "design/agt-F-D141l-binding-final-review-next-disk-trace.txt",
+      "bytes_match": true,
+      "sha_match": true
+    }
+  ],
+  "scope": "Static SOURCE PASS only. Fresh independent same checker completion remains owning Agent; no body, REG or pin release."
+}
