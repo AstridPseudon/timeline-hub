@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T02:57:11Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
-# app board, 2026-10-26T02:55Z
+<!-- app | 2026-10-26T03:01:58Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+# app board, 2026-10-26T02:59Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,7 @@
 | D141f admission | Retain honest missing measurement | Luna and independent Luna | Independent0216 PASS | merged | Reader0209; independent0216 | No paired/continuous same-kind samples; X null. FiveGB fallback retained. D141g first-witness exception awaits reviewed Runtime seam. | No kit edit |
 | D141 P4 | Retain scoped original three-leg GO | Agent and App custody | Own original XML and path checks PASS | merged | Actual10086; Agent0202; App0226 and0254 | Exact XMLafca45b7,3 original identities PASS. Final App520d outside executed path; historical tuple retained. No second body. | Actual28e6a867 tuple |
 | D141 P5 | Receive Runtime cut proof | Runtime and service | Normal service admission | blocked:runtime | Review0116 PASS; service6934 queued | Fourteen controls PASS; exact38-case body queued. No actual cut P5 GO. | Frozen cut |
-| D141 core | Receive ship core and REG comparison | Farm and Runtime | Farm missing-input packet | blocked:farm | Farm census0140; Runtime0101 PASS | Census NOT READY22 checks; full packet sent lead. No child/import/preflight/core body. | Frozen cut |
+| D141 core | Receive ship core and REG comparison | Farm and Runtime | Farm missing-input packet | blocked:farm | Farm census0140; Runtime artifact0245 | Census NOT READY22; Farm local receipt correction done. Runtime Group A packet0245 still owed. No child/core body. | Frozen cut |
 | D141 Node | Complete coverage on both heads | Luna and service | Journey sequence and admission | gated:D141-heavy-slot | Prepared Node controller | Registered App phase short-circuited Node on both. Exact standalone Node command equal; both actual phases NOTRUN. | Cut and frozen7ca |
 | D141 pristine env | Qualify renderer dependency environment | Luna and service | Journey sequence and Node | gated:D141-heavy-slot | Sol0126 targeted recipe | Three exact files cover18 failed IDs. Same-kind targeted qualification and isolated dependency custody owed. | Frozen7ca |
 | D141 SWAP | Retain documented known gap | Service and Luna | D130 safety disposition | gated:safety-D130 | Actual3250; refusal1537 | Original NO GO. No recovery retry, transfer or alternative qualification. | Historical tuple |
@@ -46,14 +46,14 @@ Integration: FINAL App520d7e4fc12a03392afaed3f486aba34a2b5c319 / tree70ad390c56b
 
 D141 controls: MAIN GO D141c; D141e bounded read fix and protected mock support; D141d exact placement family expected-records migration; D141g next placement4600000000 admission plus5s continuous trace ONLY through reviewed installed Runtime seam, stop4GB/one heavy. D141j popup unchanged planned final-head reproof, PASS not reproduced/cause unknown; second FAIL needs tested visible four-field diagnostics. Required P1/P3/P4/P5 GO, six P2 and zero REG. P4 scoped GO0254 complete; remaining receipts owed. SWAP/Element/B022/Gate3/D77/own investigations stopped, D130 absolute.
 
-Blockers: Runtime kit — D141g4.6GB first placement with5s continuous disk witness awaits Runtime reviewed installed receipt seam. Normal5GB holds; existing18617 original867 unchanged. Current about4.69GB, no actual heavy.
+Blockers: Runtime kit — D141g4.6GB first placement with5s continuous disk witness awaits Runtime reviewed installed receipt seam. Normal5GB holds; existing18617 original867 unchanged. Runtime02:47 board says source0220 active; no installed kit. Current about4.81GB; no actual heavy.
 Blockers: Runtime P5 — source0116 PASS, same normal request6934 queued for admission. No App duplicate or GO credit.
-Blockers: Farm core — complete Runtime handoff received; Farm0140 census NOT READY22 checks, full owner packet sent lead. Child/core NOTRUN.
+Blockers: Farm core — Farm02:36 board confirms local composition receipt correction complete; Runtime artifact0245 owns Group A publication. Census0140 NOT READY22 retained; no new child/core.
 Blockers: SWAP safety — automatic refusal1537/D130 held; existing Runtime disposition owns it. No retry, transfer or alternative qualification.
 Next ready: Runtime kit0220 reviewed installed seam -> genuine final520d controller and one traced placement -> measured later six P2 plus P1/P3. Popup D141j scope clear. P4 scoped GO0254 is complete; Node and pristine env remain after journeys.
 live 0 / cap 3; ready-undispatched 0. All critical authors and reviews ended and auto-recycled. Source HOME520d is ready; its body is blocked only on Runtime reviewed installed D141g seam. No unrelated source work started.
 
-H6: Runtime kit0220 source and independent0235 own real smoke/review/install/publication; no App kit writer. Runtime notes0215/0225 installed mock note PASS; placement note0251 reserved after final home. P4 original XML/hash/3 identities verified App0254, scoped GO unaffected by final App source. P56934 and pristine8912 remain original queued requests. Farm missing-input metadata0219 has its existing Runtime review; actual core still Farm owned and NOTRUN here. History final0213/Main D141d closed; popup D141j reproof scope clear.
+H6: Runtime02:47 board keeps kit0220 doing; independent0235 owns smoke/review/install qualification. Peer0259 confirms App ready immediately on publication; no App kit writer. Runtime notes0215/0225 installed mock note PASS; placement note0251 reserved after final home. P4 original XML/hash/3 identities verified App0254, scoped GO unaffected by final App source. P56934 and pristine8912 remain original queued requests. Farm missing-input metadata0219 has its existing Runtime review; actual core still Farm owned and NOTRUN here. History final0213/Main D141d closed; popup D141j reproof scope clear.
 
 Disk: sweep3 removed0, compact0scratch/0tests and1oldlog gzipped this pass. Full actual worktree inventory [0202](../../design/app-D141-full-worktree-sweep-0202.json): only current/live, known dirty/refused/locked, or missing-metadata old bundles remain; no invented metadata/manual Git. Host0156 CLEAR did not override file guard: old-v1 cache hardlink STOP before any deletion, [0157](../../design/app-D141-old-v1-cache-stop-0157.json). Earlier112 obsolete v1 single-link files214424739 bytes released0133. All v2 raw/private/current pins/dirty/orphan/refused targets retained.
 
@@ -72,24 +72,6 @@ Retained raw inputs: complete directories, private modes and KEEP remain unchang
 - app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856
 Current full12174, pristine23581, P1preflight3972/body17879 and placement10335/body3118 all retain raw KEEP. New paired routes receive KEEP while open. Diagnostic worker2331/2330/2136 KEEP and private0700/files0600 remain. Original2330 XML SHA2564cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88. No diagnostic rerun or second body.
 
+Current pass 2026-10-26T02:59Z: No new INBOX bytes beyond2704736. Actual clean HOME520d/tree70ad verified. Runtime02:47 kit0220 not installed, P56934 still queued; Farm02:36 local composition receipt corrected, Runtime Group A0245 still owed. Peer0259 sends exact final source and immediate controller readiness plus existing placement note installation. No ready source task waits, no heavy admission invented. Maintenance sweep3 removed0; compact20 packed0scratch/0tests and gzipped2oldlogs. All28 KEEP hashes unchanged; actual receipt design/app-D141-maintenance-result-0300.json. Full inventory has only protected/current/dirty/refused/no-metadata targets; no eligible normal recycle.
 
-
-
-Pass 2026-10-26T02:28Z: D141d intended contract ruling consumed; source and independent path work dispatched immediately. D141f independent0216 PASS_NOT_QUALIFIED and exact source prep0213 published. D141g helper SHA1f6926c6 verified; helper20 zero reclaimed, concurrent App checkout accounts for lower free bytes. Recent17 archives all nonKEEP/unreferenced and match prior manager0146 sweep11scratch/6tests. No protected compression found under current references; no historic raw baseline invented. Main and Runtime notified by peers0228. P4 original XML remains absent here. No source merge or new heavy body this pass.
-
-
-Pass 2026-10-26T02:36Z: Protected placement review0231 FAIL on shared-helper scope, candidate not merged. First same-branch Luna return0235 restores shared helpers and must isolate the exact approved expectation. Popup independent0232 incorporates MAIN exact-change classification request; no second author or body. P4 source0219 and independent0226 qualify path separation, XML remains absent; existing Agent peer request retained. Runtime owns kit0215 same-branch D141g continuation and notes0215; no App kit edits.
-
-
-Pass 2026-10-26T02:44Z: Runtime App mock-note installation0215 received and source wait cleared. Popup evidence correction0239 PASS; manager checked all12 full Git commit/tree pairs. Final causal result UNKNOWN sent lead with exact missing structural records and scope escalation0243; no unproved product gap or test adaptation credited. Placement first return0235 terminal types/lint PASS, shared helpers restored; final protected0243 active. No merge/head move/body. Helper sweep3 terminal removed0; all protected targets retained.
-
-
-Pass 2026-10-26T02:46Z: MAIN D141j resolves popup escalation0243: no collector now; unchanged popup in final-head P2-six. PASS is NOT REPRODUCED/cause unknown with explicit receipt and ZIP disclosure. A second FAIL permits bounded four-field diagnostic only after retained-output visibility is tested. Prepared controller updated, no body early. Runtime independent0225 PASS confirms existing mock-note installation. Final placement0243 still active; no head movement.
-
-
-Pass 2026-10-26T02:52Z: Final protected0243 PASS. Premerge full candidate notice0249 sent; normal queue merged source0235 at520d, clean and whole-tree exact to reviewed65db. Only approved placement test differs from5fe. Exact worker ledger line installed; Runtime/lead/Agent sent final full head and reviewed ZIP line0251. D141j popup planned reproof allowed, no diagnostic now. Source and review worktrees recycled, free about4.82GB. No new body before reviewed kit publication; no manual floor, queue retarget or extra head movement.
-
-
-Pass 2026-10-26T02:55Z: App own P4 custody check complete: exact original XMLafca45b7 and correctionb7be6965; three exact selector identities PASS and zero fail/error/skip. Independent path0226 plus sole final App e2e-only delta proves P4 execution unaffected through520d; scoped P4 GO recorded and sent lead/Agent/Runtime0254. No receipt retarget or second body. All App critical workers ended; final controller source bound but awaits Runtime installed admission seam. Current kit remains0be17b74, normal5GB still holds at about4.82GB. No new source workers, raw deletions, kit edits or queue changes.
-
-INBOX consumed through 2704736 bytes. Board overwritten 2026-10-26T02:55Z.
+INBOX consumed through 2704736 bytes. Board overwritten 2026-10-26T02:59Z.

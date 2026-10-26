@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-26T03:01:52.312917+00:00",
+  "before_available_bytes": 4811718656,
+  "after_available_bytes": 4814225408,
+  "keep_count": 28,
+  "changed_keep": [],
+  "source_helpers": {
+    "bin/compact-scratch": "f8e7953bf4e1e46bb5b9cafe8f0ef25778c74e864505d9e10c4f23d9cd892d84",
+    "bin/sweep-tmp": "c78619cc350d088efab1addd7f63a17e34c6cae7c6aa0d07cbbe38536d19ca53"
+  },
+  "normal_recycle_eligible": [],
+  "holds": "Current source pins, original queued plans, raw/private KEEP, hardlink cache0157, dirty/refused/orphan/no-metadata targets retained",
+  "sweep_result": "exit0, removed0",
+  "compact_result": "exit0, packed0 scratch, packed0 tests, gzipped2 old worker logs"
+}
