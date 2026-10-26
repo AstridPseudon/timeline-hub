@@ -101,6 +101,26 @@ class EffectsCatalogTest(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
 
+    def test_registry_writer_preserves_exact_utf8_bytes_on_windows(self) -> None:
+        write_text = Path.write_text
+
+        def crlf_translating_write_text(path: Path, content: str, *args, **kwargs) -> int:
+            return write_text(path, content.replace("\n", "\r\n"), *args, **kwargs)
+
+        content = "// generated registry\néffects: ['x']\n"
+        with mock.patch.object(Path, "write_text", crlf_translating_write_text):
+            for path in GENERATED_FILES:
+                self.assertTrue(gen_effect_registry._write_generated_registry(path, content))
+                self.assertEqual(path.read_bytes(), content.encode("utf-8"))
+
+    def test_registry_writer_keeps_permission_error_behavior(self) -> None:
+        with mock.patch.object(Path, "write_bytes", side_effect=PermissionError):
+            self.assertFalse(
+                gen_effect_registry._write_generated_registry(
+                    GENERATED_FILES[0], "registry\n"
+                )
+            )
+
     def test_generator_is_idempotent_for_package_outputs(self) -> None:
         self._run_generator()
         first = {path: path.read_bytes() for path in GENERATED_FILES}

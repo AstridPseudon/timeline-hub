@@ -138,6 +138,7 @@ def run_subprocess_with_capture(
 
     process = subprocess.Popen(
         list(argv),
+        stdin=subprocess.DEVNULL,
         cwd=cwd,
         env=None if env is None else dict(env),
         stdout=subprocess.PIPE,

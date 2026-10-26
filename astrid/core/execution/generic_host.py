@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import codecs
 import copy
 import faulthandler
 import hashlib
@@ -36,15 +37,21 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
+from typing import IO, TYPE_CHECKING, Any, Callable, Literal, Mapping, Sequence
 from urllib.parse import quote, urlsplit
 
 from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem as os
+from runtime_protocol.errors import ConflictError
 from runtime_protocol.storage import free_disk_floor_bytes
 
 from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
-from astrid.core.execution.platform_helpers import owned_by_current_user
+from astrid.core.execution.platform_helpers import (
+    PROCESS_CONTROL_SUPPORT_ENV,
+    configure_process_control,
+    owned_by_current_user,
+    process_control_support,
+)
 
 # Startup observations use only the existing private stderr sink. Regular-file
 # latency is not bounded; this diagnostic never changes descriptor flags.
@@ -57,6 +64,10 @@ _STARTUP_OBSERVATION_PHASES = frozenset({
     "discovery_done", "preflight_begin", "preflight_done",
     "registration_begin", "registration_done", "ready_written",
 })
+
+
+def _is_posix() -> bool:
+    return os.name == "posix"
 
 
 def _emit_startup_phase(phase: str) -> None:
@@ -101,8 +112,8 @@ from astrid.core.env_vars import (
     ASTRID_PACKS_PATH,
     ASTRID_VIBECOMFY_CHECKOUT,
 )
+from astrid.core.execution import task_scope as _task_scope
 from astrid.core.execution.capability_ledger import load_capability_ledger
-from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.guards import (
     EVIDENCE_STATUS_NAME,
     EvidenceCapError,
@@ -110,16 +121,16 @@ from astrid.core.execution.guards import (
     ExecutionGuardPolicy,
     write_evidence_status,
 )
+from astrid.core.execution.host_log import start_stdio_rotator
 from astrid.core.execution.managed_inputs import managed_file_digest
 from astrid.core.execution.managed_tool_session import (
-    SessionCapacityError,
-    CapabilityDescriptor,
     AdmissionToken,
-    StaleAdmissionError,
+    CapabilityDescriptor,
     ManagedToolSession,
     SessionBinding,
+    SessionCapacityError,
+    StaleAdmissionError,
 )
-from astrid.core.execution.warm_hold import DEFAULT_IDLE_SECONDS, WarmHolds, WarmLease, idle_seconds
 from astrid.core.execution.process_group import (
     CLEANUP_LATCH_NAME,
     CleanupUncertainError,
@@ -142,21 +153,18 @@ from astrid.core.execution.process_group import (
 from astrid.core.execution.process_group import (
     signal_group as _signal_owned_group,
 )
-from astrid.core.execution.process_group import (
-    terminate_group as _terminate_owned_group,
-)
-from astrid.core.execution import task_scope as _task_scope
-from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn as spawn_task_scope
 from astrid.core.execution.provider_route_grant import (
     ProviderRouteGrantAuthority,
     ProviderRouteGrantError,
 )
+from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn as spawn_task_scope
 from astrid.core.execution.thumbnails import (
     THUMBNAIL_RECIPE_VERSION,
     ThumbnailError,
     extract_thumbnail,
     is_visual_media_type,
 )
+from astrid.core.execution.warm_hold import DEFAULT_IDLE_SECONDS, WarmHolds, WarmLease, idle_seconds
 from astrid.core.generation.model_root import (
     MODEL_ROOT_BINDING_ENV,
     MODEL_ROOT_ENV,
@@ -190,17 +198,12 @@ if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
 
-def _remotion_readiness_message(exc: BaseException) -> str:
-    """Plain-language readiness failure that keeps the underlying reason."""
-    reason = str(exc).strip() or type(exc).__name__
-    message = f"worker Remotion readiness context is unavailable: {reason}"
-    if "registry corpus changed" in reason:
-        message += "; restart Astrid to re-bind it"
-    return message
-
-
 class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
+
+    def __init__(self, message: str, *, safe_message: str | None = None) -> None:
+        super().__init__(message)
+        self.safe_message = safe_message
 
 
 class CommandCleanupUnresolved(HostError):
@@ -722,7 +725,7 @@ class _ManagedWanChildAdapter:
         self.spec["init"]["output_dir"] = str(spool)
         # Inherited by the child: a host crash cannot unlock a live orphan.
         # Never read a PID file, adopt an orphan, or terminate a foreign child.
-        fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        fd = os.open(owner_dir / "wan-child.lock", os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
         self._owner_lock = os.fdopen(fd, "a+b")
         try:
             platform.lock_file(fd, blocking=False)
@@ -735,7 +738,7 @@ class _ManagedWanChildAdapter:
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
         environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[3])
         self.process = popen_owned_group(
-            [self.spec["python"], "-m", "astrid.core.execution.generic_host_worker", "--wan-session"],
+            [self.spec["python"], "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker", "--wan-session"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self._diagnostic,
             env=environment, pass_fds=(fd,), cwd=owner_dir,
         )
@@ -960,7 +963,8 @@ class _ManagedWanChildAdapter:
                     # Darwin. A second ps process creates an avoidable descendant.
                     group_live = any(info.pgid == process.pid for info in snapshot.values())
                 else:
-                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], capture_output=True, timeout=1, check=False)
+                    ps = subprocess.run(["/bin/ps", "-axo", "pid=,pgid="], stdin=subprocess.DEVNULL,
+                                        capture_output=True, timeout=1, check=False)
                     if ps.returncode != 0:
                         raise HostError("Wan child release census failed")
                     members = [row.split() for row in ps.stdout.decode().splitlines()]
@@ -1301,12 +1305,12 @@ def _prepare_vibecomfy_execution_identity(
     readiness_profile: Mapping[str, Any] | None,
 ) -> tuple[str, str, str, Mapping[str, Any]]:
     """Select and identify the exact VibeComfy input form before launch."""
-    from astrid.packs.vibecomfy.shared.bundle_inputs import staged_workflow_path
     from astrid.packs.vibecomfy.production_engine import (
         load_workflow_path,
         loaded_workflow_execution_identity,
         loaded_workflow_session_requirements,
     )
+    from astrid.packs.vibecomfy.shared.bundle_inputs import staged_workflow_path
 
     previous_headless = os.environ.get("VIBECOMFY_HEADLESS")
     os.environ["VIBECOMFY_HEADLESS"] = "1"
@@ -1482,9 +1486,14 @@ class AdapterRegistry:
     @classmethod
     def resolve(cls, definition: ExecutorDefinition) -> AdapterSpec:
         metadata = definition.metadata
+        for field_name in ("adapter_family", "adapter"):
+            if field_name in metadata and (
+                not isinstance(metadata[field_name], str) or not metadata[field_name].strip()
+            ):
+                raise HostError(f"{definition.id}: adapter {field_name} must be a non-empty string")
         explicit = metadata.get("adapter_family") or metadata.get("adapter")
-        if explicit:
-            family = str(explicit)
+        if explicit is not None:
+            family = explicit
         elif definition.id.startswith("rendering.") or "render" in definition.id:
             family = "render"
         elif definition.id.startswith(("vibecomfy.", "comfy_wrap.")) or metadata.get("vibecomfy_command"):
@@ -1512,10 +1521,19 @@ class AdapterRegistry:
     def from_matrix(cls, definition: ExecutorDefinition, entry: Mapping[str, Any] | None = None) -> AdapterSpec:
         base = cls.resolve(definition)
         entry = entry or {}
+        if "adapter_family" in entry and (
+            not isinstance(entry["adapter_family"], str) or not entry["adapter_family"].strip()
+        ):
+            raise HostError(f"{definition.id}: adapter adapter_family must be a non-empty string")
         family = str(entry.get("adapter_family") or base.family)
         if family not in cls._specs:
             raise HostError(f"unknown adapter family {family!r} for {definition.id!r}")
         builtin = cls._specs[family]
+        for field_name in ("resource_keys", "required_binaries", "required_packages"):
+            if field_name in entry:
+                values = entry[field_name]
+                if not isinstance(values, (list, tuple)) or any(not isinstance(value, str) for value in values):
+                    raise HostError(f"{definition.id}: adapter {field_name} must be a list of strings")
         return AdapterSpec(
             family,
             tuple(entry["resource_keys"] if "resource_keys" in entry else builtin.resource_keys),
@@ -1579,6 +1597,7 @@ def _terminate_process_group(process: subprocess.Popen, *, grace_seconds: float 
 
 
 _REVIEW_SESSION_NAME = ".astrid-human-review-session.json"
+_REVIEW_LAUNCH_NONCE_ENV = "ASTRID_HUMAN_REVIEW_LAUNCH_NONCE"
 
 
 def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
@@ -1589,7 +1608,7 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     if attempt != attempt.resolve(strict=False):
         raise HostError("review receiver attempt alias")
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | os.O_NONBLOCK)
     except FileNotFoundError:
         return previous
     with os.fdopen(fd, "rb") as stream:
@@ -1605,12 +1624,19 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     try:
         row = json.loads(raw)
         url = urlsplit(row["receiver_url"])
-        valid = (set(row) == {"schema", "receiver_url", "process_pid", "process_birth_id"}
-                 and row["schema"] == "astrid.human-review-session/v1"
-                 and type(row["process_pid"]) is int and row["process_pid"] == process.pid
-                 and row["process_birth_id"] == getattr(process, "_astrid_process_birth", None)
-                 and bool(row["process_birth_id"])
-                 and _process_birth_identity(process.pid) == row["process_birth_id"]
+        expected_nonce = getattr(process, "_astrid_review_launch_nonce", None)
+        nonce = row.get("launch_nonce")
+        receiver_pid = row.get("process_pid")
+        receiver_birth = row.get("process_birth_id")
+        valid = (set(row) == {"schema", "receiver_url", "process_pid", "process_birth_id", "launch_nonce"}
+                 and row["schema"] == "astrid.human-review-session/v2"
+                 and type(receiver_pid) is int and receiver_pid > 0
+                 and isinstance(receiver_birth, str) and bool(receiver_birth)
+                 and _process_birth_identity(receiver_pid) == receiver_birth
+                 and isinstance(expected_nonce, str) and isinstance(nonce, str)
+                 and re.fullmatch(r"[0-9a-f]{64}", expected_nonce) is not None
+                 and re.fullmatch(r"[0-9a-f]{64}", nonce) is not None
+                 and hmac.compare_digest(nonce, expected_nonce)
                  and url.scheme == "http" and url.hostname == "127.0.0.1" and bool(url.port)
                  and url.path == "/" and not url.fragment and not url.username and not url.password
                  and re.fullmatch(r"token=[0-9a-f]{32}", url.query) is not None)
@@ -1625,7 +1651,7 @@ def _retire_owned_review_session(attempt: Path, snapshot: tuple[int, int, bytes]
     """Use only a previously retained observation, after positive child cleanup."""
     path = attempt / _REVIEW_SESSION_NAME
     try:
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | os.O_NONBLOCK)
     except FileNotFoundError:
         return  # The action completed its own server-close finalizer.
     with os.fdopen(fd, "rb") as stream:
@@ -1816,124 +1842,6 @@ def _fixed_worker_environment(record: "CapabilityRecord", explicit_env: Mapping[
     return explicit
 
 
-def _record_may_render(record: 'CapabilityRecord') -> bool:
-    """True when a capability can run Remotion (so its worker context needs validation)."""
-    if str(record.definition.metadata.get('source_pack') or '') == 'rendering':
-        return True
-    try:
-        return AdapterRegistry.from_matrix(record.definition, record.matrix).remotion != 'never'
-    except HostError:
-        return True  # Unknown adapter: stay strict rather than skip validation.
-
-
-def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
-                                     capability_matrix: Path | None = None,
-                                     *, remotion_only: bool = False) -> list[dict[str, str]]:
-    """Project only fixed launch-known inputs; never expand task placeholders.
-
-    With ``remotion_only`` just the worker environments of capabilities that
-    can render are kept (matrix/metadata ``requires_remotion`` or the
-    rendering pack itself); the host baseline variant is always present.
-    A render in any other context is refused by ``_validated_runtime``.
-    """
-    from astrid.core.rendering.remotion_runtime import (
-        _NODE_ENV_KEYS, _UNSUPPORTED_PYTHON_STARTUP, _REGISTRY_SELECTORS,
-        _validate_remotion_worker_environment,
-    )
-    from astrid.core.subprocess_env import (
-        _SAFE_BASE_ENV,
-        _WINDOWS_BASE_ENV,
-        _is_secret_name,
-        _normalize_secret_names,
-    )
-    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
-    from astrid.core.execution.executor.schema import ExecutorValidationError
-    matrix = GenericPackHost._load_matrix(capability_matrix)
-    safe_base_env = set(_SAFE_BASE_ENV)
-    if sys.platform == "win32":
-        safe_base_env.update(_WINDOWS_BASE_ENV)
-    records: dict[str, CapabilityRecord] = {}
-    for root in pack_roots:
-        for executor_root in discover_folder_executor_roots(root):
-            try:
-                definition = load_folder_executor(executor_root)
-            except (ExecutorValidationError, OSError, ValueError):
-                continue  # Same unavailable optional definition as host discovery.
-            definition = _attach_pack_metadata(definition, executor_root)
-            records[definition.id] = CapabilityRecord(
-                definition=definition, capability_digest='', source_digest='',
-                source_root=executor_root, matrix=matrix.get(definition.id, {}))
-    # Match host discovery's strict V3 projection and exact source roots. A
-    # local orchestration action is deliberately not a host worker definition.
-    from astrid.core.pack.discovery import discover_pack_metadata
-    from astrid.sdk.actions import action_executor_definition
-    for discovered_pack in discover_pack_metadata(
-        project_root=pack_roots[0] if pack_roots else Path.cwd(),
-        extra_pack_roots=tuple(str(root) for root in pack_roots),
-    ):
-        pack = discovered_pack.pack
-        pack_root = pack.root.resolve()
-        if not any(pack_root == root or pack_root.is_relative_to(root) for root in pack_roots):
-            continue
-        for local_id, declaration in pack.actions.items():
-            try:
-                definition = action_executor_definition(discovered_pack, local_id, declaration)
-            except (ExecutorValidationError, OSError, ValueError):
-                continue  # Same unavailable optional action as host discovery.
-            records[definition.id] = CapabilityRecord(
-                definition=definition, capability_digest='', source_digest='',
-                source_root=pack_root, matrix=matrix.get(definition.id, {}))
-    # The SDK caller can carry import paths removed from the installed host
-    # launch. Qualify the explicit host mapping, not that caller's ambient env.
-    dependencies = dependency_pythonpath(environment)
-    baseline = build_child_subprocess_env(base=environment, parent=environment)
-    variants = [baseline]
-    for record in records.values():
-        if remotion_only and not _record_may_render(record):
-            continue
-        # Startup validation has no task credential channel. Legacy manifests
-        # can still list credentials in passthrough: omit those names entirely,
-        # while retaining their syntax checks without declaring any authority.
-        passthrough = record.definition.isolation.env_passthrough
-        omitted = tuple(name for name in passthrough if _is_secret_name(name))
-        _normalize_secret_names(omitted, 'probe_omitted_secrets')
-        public_passthrough = tuple(name for name in passthrough if not _is_secret_name(name))
-        command = record.definition.command
-        fixed = {str(k): str(v) for k, v in (getattr(command, 'env', {}) or {}).items()
-                 if '{' not in str(v) and '}' not in str(v)} if command is not None else {}
-        fixed = _fixed_worker_environment(record, fixed, environment)
-        relevant = {k: v for k, v in fixed.items()
-                    if k in set(_NODE_ENV_KEYS) | safe_base_env | set(_REGISTRY_SELECTORS) | set(_UNSUPPORTED_PYTHON_STARTUP) | {'XDG_CONFIG_HOME', 'PYTHONPATH'}
-                    or k.startswith(('DYLD_', 'LD_', 'GIT_'))
-                    or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
-                             'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'}}
-        projected = build_child_subprocess_env(
-            base=environment, parent=environment, explicit_env=relevant,
-            passthrough=public_passthrough,
-            declared_passthrough=public_passthrough)
-        if _record_may_render(record):
-            _validate_remotion_worker_environment(projected)
-        native = dict(projected)
-        native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
-        native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-            str(Path(__file__).resolve().parents[3]), *dependencies,
-            *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
-        variants.append(native)
-        # The command builder supplies a canonical default, then command/env
-        # and required nonsecret configuration override it, in the real order.
-        command_fixed = _fixed_worker_environment(record, {
-            'PYTHONPATH': os.pathsep.join((str(Path(__file__).resolve().parents[3]), *dependencies)),
-            **fixed}, environment)
-        command_relevant = {**relevant, 'PYTHONPATH': command_fixed['PYTHONPATH']}
-        command_variant = build_child_subprocess_env(
-            base=environment, parent=environment, explicit_env=command_relevant,
-            passthrough=public_passthrough,
-            declared_passthrough=public_passthrough)
-        command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
-        variants.append(command_variant)
-    return variants
-
-
 def _command_worker_pythonpath(record: 'CapabilityRecord', existing: str) -> str:
     source_pack = str(record.definition.metadata.get('source_pack') or '')
     raw = record.definition.metadata.get('pack_root')
@@ -2119,8 +2027,14 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
     """Host-selected strict startup, independent of action environment flags."""
     arguments = list(argv[1:])
     flags = []
-    while arguments and arguments[0] in {"-u", "-B"}:
-        flags.append(arguments.pop(0))
+    while arguments:
+        if arguments[0] in {"-u", "-B"}:
+            flags.append(arguments.pop(0))
+        elif arguments[:2] == ["-X", "utf8"]:
+            flags.extend(arguments[:2])
+            del arguments[:2]
+        else:
+            break
     if len(arguments) < 2 or arguments[0] != "-m" or arguments[1] != "astrid.core.execution.generic_host_worker":
         raise HostError("strict network startup requires the host Python worker")
     policy_path = Path(__file__).with_name("network_policy.py").resolve()
@@ -2219,6 +2133,7 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
     try:
         status = subprocess.run(
             ["git", "-C", str(checkout), "status", "--porcelain=v1"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -2228,6 +2143,7 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
         )
         revision = subprocess.run(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -2252,11 +2168,16 @@ def _source_digest(root: Path) -> str:
     entries: list[tuple[str, str]] = []
     if root.is_file():
         return hashlib.sha256(root.read_bytes()).hexdigest()
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda path: path.parts):
         if not path.is_file() or "__pycache__" in path.parts:
             continue
-        entries.append((str(path.relative_to(root)), hashlib.sha256(path.read_bytes()).hexdigest()))
+        entries.append((path.relative_to(root).as_posix(), hashlib.sha256(path.read_bytes()).hexdigest()))
     return _canonical_digest(entries)
+
+
+_TASK_OUTPUT_TAIL_BYTES = 64 * 1024
+_TASK_OUTPUT_TAIL_NAMES = {"stdout": "task-stdout-tail.log", "stderr": "task-stderr-tail.log"}
+_TASK_OUTPUT_METADATA_NAME = "task-output-capture.json"
 
 
 def _attempt_tree_bytes(root: Path) -> int:
@@ -2786,8 +2707,9 @@ def _interactive_review_authority(
     Private lineage stays in this closure. No worker input or environment carries
     it, and no authority issuance or parent heartbeat is needed by a child.
     """
-    from ._child_bridge import _snapshot_grant, task_resource
     from astrid.sdk._child_bridge import _validate_child_policy
+
+    from ._child_bridge import _snapshot_grant, task_resource
 
     parent_id = "iteration.experiment_review_session"
     child_id = "editorial.human_review"
@@ -3784,8 +3706,9 @@ def _training_review_authority(
     attempt_id: str, lease_id: str, fence: int, runtime_epoch: int,
 ) -> _ReviewIntervalAccounting | None:
     """Observe only this bridge's exact Training admissions through public reads."""
-    from ._child_bridge import _child_wire_id, _snapshot_grant, task_resource
     from astrid.sdk._child_bridge import _validate_child_policy
+
+    from ._child_bridge import _child_wire_id, _snapshot_grant, task_resource
 
     if record.id != "training.dataset_build" or bridge is None:
         return None
@@ -4402,6 +4325,7 @@ def _vcs_revision(root: Path) -> str:
     try:
         result = subprocess.run(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -4482,6 +4406,18 @@ class CapabilityRecord:
     # Such a capability is registered as unavailable with this reason; it is
     # never admitted for execution. Other capabilities are unaffected.
     approval_reason: str | None = None
+    adapter_spec: AdapterSpec | None = None
+    adapter_error: str | None = None
+
+    def __post_init__(self) -> None:
+        # Cloned records pass through __dict__, so derive this from the current
+        # definition and matrix rather than retaining stale parse state.
+        object.__setattr__(self, "adapter_spec", None)
+        object.__setattr__(self, "adapter_error", None)
+        try:
+            object.__setattr__(self, "adapter_spec", AdapterRegistry.from_matrix(self.definition, self.matrix))
+        except (HostError, TypeError, ValueError) as exc:
+            object.__setattr__(self, "adapter_error", str(exc) or type(exc).__name__)
 
     @property
     def id(self) -> str:
@@ -4489,17 +4425,27 @@ class CapabilityRecord:
 
     @property
     def resource_keys(self) -> tuple[str, ...]:
+        adapter, error = self._adapter_result()
+        if error:
+            return ()
         metadata = self.definition.metadata
         values = metadata.get("resource_keys", metadata.get("resources", ()))
         if isinstance(values, str):
             values = (values,)
         declared = tuple(str(value) for value in (values or ()))
-        adapter = AdapterRegistry.from_matrix(self.definition, self.matrix)
+        assert adapter is not None
         return tuple(dict.fromkeys((*adapter.resource_keys, *declared)))
+
+    def _adapter_result(self) -> tuple[AdapterSpec | None, str | None]:
+        return self.adapter_spec, self.adapter_error
 
     @property
     def adapter(self) -> AdapterSpec:
-        return AdapterRegistry.from_matrix(self.definition, self.matrix)
+        adapter, error = self._adapter_result()
+        if error:
+            raise HostError(error)
+        assert adapter is not None
+        return adapter
 
     @property
     def estimated_scratch_bytes(self) -> int:
@@ -4511,6 +4457,7 @@ class CapabilityRecord:
 
     def manifest(self) -> dict[str, Any]:
         source_roots = _admitted_source_roots(self.source_root, self.definition)
+        adapter, adapter_error = self._adapter_result()
         return {
             "id": self.id,
             "definition": self.definition.to_dict(),
@@ -4527,7 +4474,8 @@ class CapabilityRecord:
             "resource_keys": list(self.resource_keys),
             "estimated_scratch_bytes": self.estimated_scratch_bytes,
             "estimated_output_bytes": self.estimated_output_bytes,
-            "adapter_family": self.adapter.family,
+            "adapter_family": adapter.family if adapter is not None else None,
+            **({"adapter_error": adapter_error} if adapter_error else {}),
             "disposition": self.matrix.get("disposition", "unclassified"),
             "evidence_reason": self.matrix.get("evidence_reason", ""),
             "preflight": dict(self.preflight),
@@ -4544,7 +4492,12 @@ def _prepare_review_resume_input(client: Any, *, source_task_id: str, source_att
     No lease or inherited bridge is used or returned. Failure returns no descriptor.
     """
     from ._child_bridge import (
-        ChildBridgeError, _DIGEST, _snapshot_grant, _verify_snapshot_row, resource, task_resource,
+        _DIGEST,
+        ChildBridgeError,
+        _snapshot_grant,
+        _verify_snapshot_row,
+        resource,
+        task_resource,
     )
 
     if (any(type(value) is not str or not value for value in (
@@ -5165,8 +5118,14 @@ def component_load_failures(pack_roots: Any = None) -> list[dict[str, Any]]:
     discovery, so the doctor section and the pack validator cannot disagree with
     what discovery drops. Read-only and never raises for one bad manifest.
     """
-    from astrid.core.execution.executor.folder import discover_folder_executor_roots, load_folder_executor
-    from astrid.core.execution.orchestrator.folder import discover_folder_orchestrator_roots, load_folder_orchestrator
+    from astrid.core.execution.executor.folder import (
+        discover_folder_executor_roots,
+        load_folder_executor,
+    )
+    from astrid.core.execution.orchestrator.folder import (
+        discover_folder_orchestrator_roots,
+        load_folder_orchestrator,
+    )
     from astrid.core.pack.loader import _default_pack_roots
 
     roots = tuple(pack_roots) if pack_roots is not None else _default_pack_roots()
@@ -5328,6 +5287,181 @@ def _publish_busy(path: Path | None, delta: int) -> None:
             os.replace(tmp, path)
         except OSError:
             pass  # A missing record only makes replacement more cautious.
+
+
+class _TaskOutputCapture:
+    """Drain child pipes continuously and retain only scrubbed bounded tails."""
+
+    def __init__(self, attempt: Path, secrets: Mapping[str, str], scrub):
+        self._paths = {name: attempt / filename for name, filename in _TASK_OUTPUT_TAIL_NAMES.items()}
+        self._metadata_path = attempt / _TASK_OUTPUT_METADATA_NAME
+        self._secrets = tuple(value for value in secrets.values() if isinstance(value, str) and value)
+        self._secret_trie: dict[str, Any] = {}
+        for secret in set(self._secrets):
+            node = self._secret_trie
+            for char in secret:
+                node = node.setdefault(char, {})
+            node[""] = True
+        self._scrub = scrub
+        self._lock = threading.Lock()
+        self._tails = {name: b"" for name in self._paths}
+        self._total_bytes = {name: 0 for name in self._paths}
+        self._available = {name: False for name in self._paths}
+        self._reader_errors: dict[str, str | None] = {name: None for name in self._paths}
+        self._diagnostic_errors: dict[str, str | None] = {name: None for name in self._paths}
+        self._written = {name: -1 for name in self._paths}
+        self._streams: dict[str, IO[bytes]] = {}
+        self._readers: dict[str, PipeReader] = {}
+        self._decoders = {name: codecs.getincrementaldecoder("utf-8")(errors="replace") for name in self._paths}
+        self._pending = {name: "" for name in self._paths}
+        self._finalized: set[str] = set()
+
+    @property
+    def error(self) -> str | None:
+        with self._lock:
+            for name, reader in self._readers.items():
+                if reader.error is not None:
+                    self._reader_errors[name] = type(reader.error).__name__
+            return next((f"{name}:{value}" for name, value in self._reader_errors.items() if value), None)
+
+    def start(self, process: subprocess.Popen) -> None:
+        for name in self._paths:
+            stream = getattr(process, name, None)
+            if stream is None:
+                with self._lock:
+                    self._reader_errors[name] = "pipe_unavailable"
+                continue
+            try:
+                self._streams[name] = stream
+                self._readers[name] = PipeReader(
+                    stream, chunk_size=4096, sink=lambda chunk, stream_name=name: self._receive(stream_name, chunk),
+                )
+                self._available[name] = True
+            except BaseException as exc:
+                with self._lock:
+                    self._reader_errors[name] = type(exc).__name__
+        self.persist(force=True)
+
+    def _receive(self, name: str, chunk: bytes) -> None:
+        decoded = self._pending[name] + self._decoders[name].decode(chunk)
+        safe, pending = self._redact_prefix(decoded, final=False)
+        self._append(name, safe)
+        self._pending[name] = pending
+
+    def _redact_prefix(self, decoded: str, *, final: bool) -> tuple[str, str]:
+        output: list[str] = []
+        offset = 0
+        while offset < len(decoded):
+            node = self._secret_trie
+            cursor = offset
+            last_match = None
+            while cursor < len(decoded) and decoded[cursor] in node:
+                node = node[decoded[cursor]]
+                cursor += 1
+                if "" in node:
+                    last_match = cursor
+            if cursor == len(decoded) and not final and any(key for key in node):
+                break
+            if last_match is not None:
+                output.append("<redacted>")
+                offset = last_match
+                continue
+            output.append(decoded[offset])
+            offset += 1
+        return "".join(output), decoded[offset:]
+
+    def _append(self, name: str, text: str) -> None:
+        if not text:
+            return
+        scrubbed = self._scrub(text, dict(enumerate(self._secrets)))
+        data = scrubbed.encode("utf-8")
+        with self._lock:
+            combined = self._tails[name] + data
+            if len(combined) > _TASK_OUTPUT_TAIL_BYTES:
+                combined = combined[-_TASK_OUTPUT_TAIL_BYTES:]
+            self._tails[name] = combined.decode("utf-8", errors="ignore").encode("utf-8")
+            self._total_bytes[name] += len(data)
+
+    def tails(self) -> tuple[str, str]:
+        with self._lock:
+            stdout = self._tails["stdout"].decode("utf-8", errors="replace")
+            stderr = self._tails["stderr"].decode("utf-8", errors="replace")
+            return stdout, stderr
+
+    def wait_for_readers(self, timeout: float = 1.0) -> None:
+        deadline = time.monotonic() + timeout
+        for name, reader in self._readers.items():
+            try:
+                reader.close(timeout=max(0.0, deadline - time.monotonic()))
+            except BaseException as exc:
+                with self._lock:
+                    self._reader_errors[name] = type(exc).__name__
+            if not reader.alive:
+                try:
+                    self._streams[name].close()
+                except OSError:
+                    pass
+                self._finalize(name)
+            else:
+                with self._lock:
+                    self._reader_errors[name] = "reader_did_not_stop"
+        for name, stream in self._streams.items():
+            if name in self._readers:
+                continue
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+    def _finalize(self, name: str) -> None:
+        if name in self._finalized:
+            return
+        decoded = self._pending[name] + self._decoders[name].decode(b"", final=True)
+        safe, pending = self._redact_prefix(decoded, final=True)
+        self._append(name, safe + pending)
+        self._pending[name] = ""
+        self._finalized.add(name)
+
+    def persist(self, *, force: bool = False) -> None:
+        with self._lock:
+            rows = {
+                name: (
+                    self._tails[name], self._total_bytes[name], self._available[name],
+                    self._reader_errors[name], self._diagnostic_errors[name],
+                )
+                for name in self._paths
+            }
+        for name, (tail, total, available, reader_error, diagnostic_error) in rows.items():
+            if not force and total == self._written[name]:
+                continue
+            try:
+                self._paths[name].write_bytes(tail)
+                self._written[name] = total
+            except OSError as exc:
+                with self._lock:
+                    self._diagnostic_errors[name] = type(exc).__name__
+        metadata = {
+            "schema_version": 1,
+            "streams": {
+                name: {
+                    "file": self._paths[name].name,
+                    "available": available,
+                    "byte_count": len(tail),
+                    "truncated": total > len(tail),
+                    "error": reader_error or diagnostic_error,
+                }
+                for name, (tail, total, available, reader_error, diagnostic_error) in rows.items()
+            },
+        }
+        try:
+            self._metadata_path.write_text(json.dumps(metadata, sort_keys=True) + "\n", encoding="utf-8")
+        except OSError as exc:
+            with self._lock:
+                self._diagnostic_errors["stdout"] = type(exc).__name__
+
+    def finish(self) -> None:
+        self.wait_for_readers(timeout=2.0)
+        self.persist(force=True)
 
 
 class GenericPackHost:
@@ -5997,20 +6131,38 @@ class GenericPackHost:
         try:
             payload = load_capability_ledger(path)
         except ValueError as exc:
-            raise HostError(str(exc)) from exc
+            raise HostError(
+                "capability matrix could not be loaded",
+                safe_message=f"capability matrix could not be loaded; field=capability_matrix path={path}",
+            ) from exc
         if payload.get("schema_version") != 1 or not isinstance(payload.get("capabilities"), list):
-            raise HostError("capability matrix requires schema_version 1 and a capabilities list")
+            raise HostError(
+                "capability matrix requires schema_version 1 and a capabilities list",
+                safe_message=f"capability matrix schema or capabilities list is invalid; field=capability_matrix path={path}",
+            )
         allowed = {"required", "optional", "unsupported", "retired"}
         result = {}
         for entry in payload["capabilities"]:
             if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
-                raise HostError("capability matrix entries require an id")
+                raise HostError(
+                    "capability matrix entries require an id",
+                    safe_message=f"capability matrix entry is missing an id; field=capabilities path={path}",
+                )
             if entry.get("disposition") not in allowed:
-                raise HostError(f"invalid capability disposition for {entry.get('id')!r}")
+                raise HostError(
+                    f"invalid capability disposition for {entry.get('id')!r}",
+                    safe_message=f"capability disposition is invalid; field=disposition path={path}",
+                )
             if not entry.get("evidence_reason"):
-                raise HostError(f"capability matrix entry {entry['id']!r} needs evidence_reason")
+                raise HostError(
+                    f"capability matrix entry {entry['id']!r} needs evidence_reason",
+                    safe_message=f"capability evidence reason is missing; field=evidence_reason path={path}",
+                )
             if entry["id"] in result:
-                raise HostError(f"duplicate capability matrix entry {entry['id']!r}")
+                raise HostError(
+                    f"duplicate capability matrix entry {entry['id']!r}",
+                    safe_message=f"capability matrix has a duplicate id; field=id path={path}",
+                )
             result[entry["id"]] = entry
         return result
 
@@ -6132,6 +6284,13 @@ class GenericPackHost:
                 raise HostError(f"capability not discovered: {capability_id}")
             if record.approval_reason:
                 raise HostError(f"capability {capability_id!r} is unavailable: {record.approval_reason}")
+            _adapter, adapter_error = record._adapter_result()
+            if adapter_error:
+                raise HostError(f"capability {capability_id!r} is unavailable: adapter:reason={adapter_error}")
+            try:
+                _network_policy(record)
+            except (HostError, TypeError, ValueError) as exc:
+                raise HostError(f"capability {capability_id!r} is unavailable: network:reason={exc}") from exc
             return record.definition.to_dict(), {
                 "capability_digest": record.capability_digest,
                 "source_digest": record.source_digest,
@@ -6188,58 +6347,19 @@ class GenericPackHost:
                     owner._registration_refresh_blocked or self._registration_refresh_blocked else None))
 
     def _remotion_idle_context(self) -> str | None:
-        """Bind idle observation reuse, without walking the native installation.
+        """Key the last readiness observation by server-owned configuration.
 
-        This is not a validation receipt or execution admission. The small
-        launch-reference file and exact effective probe/registry context must
-        still match the successful full observation. Tasks always validate
-        all installed inputs again.
+        Idle renewal does not probe executables; task admission checks them again.
         """
-        from astrid.core.rendering import remotion_runtime as runtime
-
-        env = os.environ
-        try:
-            context = runtime.probe_context(environment=env, python_executable=sys.executable)
-            context["registry_context"] = runtime._registry_context(env, generator=False)
-            names = (runtime.REMOTION_PROJECT_DIR_ENV, runtime.NODE_EXECUTABLE_ENV,
-                     runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV, *runtime._REF_ENV_KEYS)
-            configuration = {name: env[name] for name in names}
-            if any(not value for value in configuration.values()):
-                return None
-            # Constant-size filesystem checks only: no node_modules/schema
-            # tree enumeration, imports, subprocess probes, or registry writes.
-            selected = {}
-            for name in names[:3]:
-                path = Path(configuration[name]).expanduser()
-                if not path.is_absolute():
-                    return None
-                resolved = path.resolve(strict=True)
-                facts = resolved.stat()
-                selected[name] = (str(resolved), facts.st_dev, facts.st_ino,
-                                  facts.st_mode, facts.st_uid)
-            reference = Path(configuration[runtime.ASTRID_REMOTION_VALIDATION_PATH])
-            before = reference.stat()
-            if (not reference.is_absolute() or reference.is_symlink()
-                    or not stat.S_ISREG(before.st_mode) or not owned_by_current_user(reference, before, mode=0o600)
-                    or before.st_size > runtime._VALIDATION_MAX_BYTES):
-                return None
-            raw = reference.read_bytes()
-            after = reference.stat()
-            def identity(facts):
-                return (facts.st_dev, facts.st_ino, facts.st_mode, facts.st_uid,
-                        facts.st_size, facts.st_mtime_ns, facts.st_ctime_ns)
-            if (identity(before) != identity(after)
-                    or hashlib.sha256(raw).hexdigest() != configuration[runtime.ASTRID_REMOTION_VALIDATION_SHA256]):
-                return None
-            context.update(configuration=configuration, selected=selected,
-                           reference_identity=identity(after),
-                           interpreter=(sys.prefix, sys.exec_prefix, sys.base_prefix,
-                                        sys.base_exec_prefix, sys.version,
-                                        sys.implementation.cache_tag, sys.platform,
-                                        getattr(sys, "abiflags", "")))
-            return _canonical_digest(context)
-        except (OSError, KeyError, ValueError, runtime.RemotionValidationError):
-            return None
+        from astrid.core.rendering.remotion_runtime import (
+            NODE_EXECUTABLE_ENV,
+            REMOTION_PROJECT_DIR_ENV,
+            TIMELINE_SCHEMA_PYTHONPATH_ENV,
+        )
+        values = [os.environ.get(name) for name in (
+            REMOTION_PROJECT_DIR_ENV, NODE_EXECUTABLE_ENV, TIMELINE_SCHEMA_PYTHONPATH_ENV,
+        )]
+        return _canonical_digest(values) if all(values) else None
 
     def _forget_failed_remotion_observation(self, capability_id: str, context: str | None) -> None:
         owner = self._handoff_accounting_owner
@@ -6260,16 +6380,30 @@ class GenericPackHost:
         selected = [self.capabilities[capability_id]] if capability_id else list(self.capabilities.values())
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
         gpu_detection = None
-        remotion_context = self._remotion_idle_context() if any(record.adapter.remotion != "never" for record in selected) else None
+        remotion_status = None
+        remotion_context = self._remotion_idle_context() if any(
+            adapter is not None and adapter.remotion != "never"
+            for record in selected for adapter, _error in (record._adapter_result(),)
+        ) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
+            adapter, adapter_error = record._adapter_result()
+            if adapter_error:
+                checks["adapter"] = {"ok": False, "reason": adapter_error}
+                updated[record.id] = CapabilityRecord(
+                    **{**record.__dict__, "preflight": checks, "ready": False}
+                )
+                continue
+            assert adapter is not None
             gpu = windows_gpu_status(record.id, detection=gpu_detection)
             if gpu is not None:
                 checks["gpu"] = gpu
                 gpu_detection = gpu["device"]
-            adapter = record.adapter
             matrix_binaries = tuple(str(binary) for binary in record.matrix.get("required_binaries", ()))
-            binary_requirements = tuple(dict.fromkeys((*record.definition.isolation.binaries, *matrix_binaries, *adapter.required_binaries)))
+            binary_requirements = tuple(dict.fromkeys((
+                *record.definition.isolation.binaries, *matrix_binaries,
+                *adapter.required_binaries,
+            )))
             missing = list(dict.fromkeys(binary for binary in binary_requirements if shutil.which(binary) is None))
             if missing:
                 checks["binaries"] = {"ok": False, "missing": missing}
@@ -6292,7 +6426,9 @@ class GenericPackHost:
             # Credentials are diagnostic here; the selected cloud provider
             # resolves its key only when a call actually needs it.
             checks["credentials"] = {"ok": True, "missing": missing_env}
-            required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
+            required_packages = record.matrix.get("required_packages") or record.definition.metadata.get(
+                "required_packages", adapter.required_packages
+            )
             missing_packages = [package for package in (required_packages or ()) if importlib.util.find_spec(str(package)) is None]
             checks["packages"] = {"ok": not missing_packages, "missing": missing_packages}
             # Only the final Remotion compositor needs the JavaScript render
@@ -6304,21 +6440,42 @@ class GenericPackHost:
                     with owner._handoff_condition:
                         self._remotion_full_preflight.pop(record.id, None)
                     try:
-                        from astrid.core.rendering.remotion_runtime import remotion_runtime_status
-                        status = remotion_runtime_status(require_explicit_project=True)
-                    except BaseException:
+                        from astrid.core.rendering.remotion_runtime import (
+                            RemotionProbeCleanupError,
+                            remotion_runtime_status,
+                        )
+                        if remotion_status is None:
+                            remotion_status = remotion_runtime_status(require_explicit_project=True)
+                        status = remotion_status
+                    except RemotionProbeCleanupError as exc:
+                        self._forget_failed_remotion_observation(record.id, remotion_context)
+                        raise HostError(
+                            "Remotion probe cleanup is unproved; host preflight cannot continue"
+                        ) from exc
+                    except HostError:
                         self._forget_failed_remotion_observation(record.id, remotion_context)
                         raise
-                    checks["remotion"] = {
-                        "ok": status.available,
-                        "project_dir": str(status.project_dir) if status.project_dir else None,
-                        "node_executable": str(status.node_executable) if status.node_executable else None,
-                        "node_version": status.node_version,
-                        "remotion_cli": str(status.remotion_cli) if status.remotion_cli else None,
-                        "reason": status.reason,
-                    }
+                    except Exception as exc:  # noqa: BLE001 - optional Remotion checks only disable rendering
+                        self._forget_failed_remotion_observation(record.id, remotion_context)
+                        status = None
+                        checks["remotion"] = {
+                            "ok": False,
+                            "reason": (
+                                "Remotion validation failed: "
+                                f"{str(exc)[:512] or type(exc).__name__}; check the server-owned Node and Remotion installation"
+                            ),
+                        }
+                    if status is not None:
+                        checks["remotion"] = {
+                            "ok": status.available,
+                            "project_dir": str(status.project_dir) if status.project_dir else None,
+                            "node_executable": str(status.node_executable) if status.node_executable else None,
+                            "node_version": status.node_version,
+                            "remotion_cli": str(status.remotion_cli) if status.remotion_cli else None,
+                            "reason": status.reason,
+                        }
                     after_context = self._remotion_idle_context()
-                    if status.available and remotion_context is not None and after_context == remotion_context:
+                    if status is not None and status.available and remotion_context is not None and after_context == remotion_context:
                         with owner._handoff_condition:
                             self._remotion_full_preflight[record.id] = (remotion_context, dict(checks["remotion"]))
                     else:
@@ -6336,8 +6493,15 @@ class GenericPackHost:
                     )
                 if adapter.remotion == "selected":
                     checks["remotion"] = {**checks["remotion"], "gates": REMOTION_GATE_DESCRIPTION}
-            policy = _network_policy(record)
-            if adapter.requires_network and not record.definition.isolation.network:
+            network_error = None
+            try:
+                policy = _network_policy(record)
+            except (HostError, TypeError, ValueError) as exc:
+                policy = None
+                network_error = str(exc)
+            if network_error is not None:
+                checks["network"] = {"ok": False, "reason": network_error}
+            elif adapter.requires_network and not record.definition.isolation.network:
                 checks["network"] = {"ok": False, "reason": "adapter_requires_network"}
             elif record.definition.isolation.network and adapter.family == "provider" and policy is None:
                 # Provider capabilities must declare their concrete egress
@@ -7677,7 +7841,6 @@ class GenericPackHost:
         admission: Mapping[str, Any] | None = None,
         network_broker: _NetworkBrokerContext | None = None,
         network_policy: Mapping[str, Any] | None = None,
-        readiness_worker_kind: str = 'native',
         allow_runtime_connection: bool = True,
     ) -> tuple[dict[str, str], dict[str, str]]:
         """Build a redacted, manifest-scoped child environment.
@@ -7773,6 +7936,9 @@ class GenericPackHost:
                 explicit["ASTRID_TIMELINE_VISUALIZE_AUTHORITY_CONTEXT"] = str(authority_path)
             else:
                 explicit["ASTRID_TIMELINE_VISUALIZE_AUTHORITY_CONTEXT"] = authority_json
+        support = process_control_support()
+        if support is not None:
+            explicit[PROCESS_CONTROL_SUPPORT_ENV] = support
         env = build_child_subprocess_env(
             explicit_env=explicit,
             passthrough=record.definition.isolation.env_passthrough,
@@ -7780,16 +7946,6 @@ class GenericPackHost:
             secret_values=secrets,
             declared_secrets=declared_secrets,
         )
-        if _record_may_render(record):
-            from astrid.core.rendering.remotion_runtime import (
-                RemotionValidationError,
-                _validate_remotion_worker_environment,
-            )
-            try:
-                _validate_remotion_worker_environment(env)
-            except RemotionValidationError as exc:
-                secrets.clear()
-                raise HostError(str(exc)) from exc
         if not allow_runtime_connection:
             # A parent has only its inherited three-operation channel.
             # Also remove manifest passthrough aliases of the worker secret.
@@ -7806,10 +7962,12 @@ class GenericPackHost:
         if policy is not None:
             hook_root = attempt / ".astrid-network-hook"
             hook_root.mkdir(parents=True, exist_ok=True)
-            (hook_root / "sitecustomize.py").write_text(
-                _STRICT_NETWORK_HOOK_SOURCE if not allow_runtime_connection else
-                "from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n",
-                encoding="utf-8",
+            (hook_root / "sitecustomize.py").write_bytes(
+                (
+                    _STRICT_NETWORK_HOOK_SOURCE
+                    if not allow_runtime_connection
+                    else "from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n"
+                ).encode("utf-8")
             )
             evidence_path = attempt / "network-evidence.json"
             env["ASTRID_NETWORK_POLICY"] = json.dumps(policy, sort_keys=True, separators=(",", ":"))
@@ -7850,46 +8008,6 @@ class GenericPackHost:
             broker = policy.get("broker")
             if allow_runtime_connection and isinstance(broker, Mapping) and broker.get("evidence_path"):
                 env["ASTRID_NETWORK_BROKER_EVIDENCE"] = str(broker["evidence_path"])
-        from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_ROLE, ASTRID_REMOTION_PROJECT_DIR
-        if ASTRID_REMOTION_VALIDATION_ROLE in env and not _record_may_render(record):
-            # Launch validated only render-capable workers; any other worker
-            # carries no Remotion readiness, so it must not claim (or check) one.
-            from astrid.core.env_vars import (
-                ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_PATH,
-                ASTRID_REMOTION_VALIDATION_SHA256,
-            )
-            for name in (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
-                         ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE):
-                env.pop(name, None)
-        if ASTRID_REMOTION_VALIDATION_ROLE in env:
-            env[ASTRID_REMOTION_VALIDATION_ROLE] = "worker"
-            # Verify the launch-known import context without replacing the
-            # actual command environment's host-installed network-policy hook.
-            readiness_env = dict(env)
-            readiness_path = env.get('PYTHONPATH', '')
-            if policy is not None:
-                installed_hook = str(hook_root)
-                if readiness_path == installed_hook:
-                    readiness_path = ''
-                elif readiness_path.startswith(installed_hook + os.pathsep):
-                    readiness_path = readiness_path[len(installed_hook) + 1:]
-                else:
-                    raise HostError('host network hook context differs before readiness validation')
-            if readiness_worker_kind == 'command':
-                readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
-            elif readiness_worker_kind == 'native':
-                readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
-                readiness_env['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-                    str(Path(__file__).resolve().parents[3]), *_dependency_pythonpath(),
-                    *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
-            else:
-                raise HostError('unknown internal readiness worker projection')
-            from astrid.core.rendering.remotion_runtime import _validated_runtime
-            try:
-                _validated_runtime(Path(env[ASTRID_REMOTION_PROJECT_DIR]), environment=readiness_env)
-            except Exception as exc:
-                secrets.clear()
-                raise HostError(_remotion_readiness_message(exc)) from exc
         return env, secrets
 
     @staticmethod
@@ -8225,6 +8343,12 @@ class GenericPackHost:
         except BindingError as exc:
             raise HostError(f"capability {record.id!r}: {exc}") from exc
         argv = list(binding.argv)
+        # Astrid-owned Python commands may bypass executor_argv (including
+        # external pack manifests), so set UTF-8 at this exact interpreter
+        # boundary without rewriting arbitrary provider executables.
+        if (argv and Path(argv[0]).resolve() == Path(sys.executable).resolve()
+                and argv[1:3] != ["-X", "utf8"]):
+            argv[1:1] = ["-X", "utf8"]
         # Start from the canonical child environment: only safe process
         # variables and manifest-declared provider configuration cross the
         # boundary.  In particular, an unrelated ambient API key must never
@@ -8236,7 +8360,6 @@ class GenericPackHost:
             authority_context=authority_context,
             admission=admission,
             network_broker=network_broker,
-            readiness_worker_kind='command',
             network_policy=(
                 _network_policy(record, inputs)
                 if record.id == "vibecomfy.run" and inputs.get("comfy_url") else None
@@ -8249,6 +8372,13 @@ class GenericPackHost:
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),
             },
         )
+        review_session = record.id == "editorial.human_review" and child_bridge is not None
+        review_nonce = secrets_module.token_hex(32) if review_session else None
+        if review_nonce is not None:
+            # This is launch-scoped observation authority, never process cleanup
+            # authority. Keep it out of diagnostics emitted from child output.
+            env[_REVIEW_LAUNCH_NONCE_ENV] = review_nonce
+            secrets[_REVIEW_LAUNCH_NONCE_ENV] = review_nonce
         # Pack runtime modules reserve their direct module entry points for
         # the canonical runner.  GenericPackHost is that runner's process
         # boundary, so mark the child invocation just as executor_runner does.
@@ -8275,13 +8405,23 @@ class GenericPackHost:
                 raise HostError("delegating commands require the admitted Python interpreter")
             arguments = argv[1:]
             flags = []
-            while arguments and arguments[0] in {"-u", "-B"}:
-                flags.append(arguments[0])
-                arguments = arguments[1:]
+            utf8_flag = False
+            while arguments:
+                if arguments[0] in {"-u", "-B"}:
+                    flags.append(arguments[0])
+                    arguments = arguments[1:]
+                elif arguments[:2] == ["-X", "utf8"]:
+                    flags.extend(arguments[:2])
+                    arguments = arguments[2:]
+                    utf8_flag = True
+                else:
+                    break
             if (not arguments or arguments[0].startswith("-") and arguments[0] not in {"-c", "-m"}
                     or arguments[0] in {"-c", "-m"} and len(arguments) < 2):
                 raise HostError("unsupported delegating Python command flags")
             inherited_fds = (child_bridge.inherited_fd(),)
+            if not utf8_flag:
+                flags = ["-X", "utf8", *flags]
             argv = [sys.executable, *flags, "-m", "astrid.core.execution.generic_host_worker",
                     "--child-command", str(inherited_fds[0]), json.dumps(arguments)]
         remotion_lease = None
@@ -8292,7 +8432,7 @@ class GenericPackHost:
         try:
             if remotion_lease is not None:
                 inherited_fds += (remotion_lease.inherited_fd(),)
-                argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
+                argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker",
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
@@ -8305,8 +8445,7 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt, broker_endpoint), cwd=str(cwd), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
-                errors="replace", pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8317,17 +8456,64 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
-        if remotion_lease is not None:
-            remotion_lease.launched()
         self._track_process(process)
-        review_session = record.id == "editorial.human_review" and child_bridge is not None
+        stream_secrets = dict(secrets)
+        stream_secrets.update({
+            key: value for key, value in env.items()
+            if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIAL"))
+        })
+        output_capture = _TaskOutputCapture(attempt, stream_secrets, self._scrub_secret_text)
+        output_capture.start(process)
         review_snapshot = None
         execution_error = None
-        if review_session:
-            process._astrid_process_birth = process_birth_identity(process.pid)
+        cleanup_attempted = False
+        teardown_complete = False
+        process_proven_gone = False
+        output_finished = False
+
+        def cleanup_once() -> None:
+            nonlocal cleanup_attempted, teardown_complete, process_proven_gone, review_snapshot
+            if cleanup_attempted:
+                return
+            cleanup_attempted = True
+            try:
+                # Observe before terminating the original owner, never adopt a
+                # post-exit PID. A force-killed action cannot run its finally.
+                observation_error = None
+                if review_session:
+                    try:
+                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
+                    except Exception as exc:
+                        observation_error = exc
+                _terminate_process_group(process)
+                process_proven_gone = True
+                if observation_error is not None:
+                    raise observation_error
+                if review_session:
+                    _retire_owned_review_session(attempt, review_snapshot)
+                teardown_complete = True
+            except TaskScopeUnresolved as exc:
+                teardown_complete = True
+                self._unresolved_task_scopes.append(exc.report.describe())
+                detail = f"task scope cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+            except BaseException as exc:
+                self._latch_cleanup_uncertainty(str(exc))
+                detail = f"owned command cleanup uncertain: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
+                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+
         try:
+            if child_bridge is not None:
+                child_bridge.launched()
+            if remotion_lease is not None:
+                remotion_lease.launched()
+            if review_session:
+                process._astrid_process_birth = process_birth_identity(process.pid)
+                process._astrid_review_launch_nonce = review_nonce
             guards_due = 0.0
             while process.poll() is None:
                 if render_scope:
@@ -8338,12 +8524,21 @@ class GenericPackHost:
                 # tree and call the Runtime; sample them at a bounded rate.
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
+                    output_capture.persist()
+                    if output_capture.error:
+                        raise HostError(f"capability {record.id!r} output capture failed: {output_capture.error}")
                     _assert_live_storage_envelope(storage_estimate, attempt, output_root)
                     if cancelled is not None and cancelled():
                         # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {record.id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            cleanup_once()
+            output_capture.finish()
+            output_finished = True
+            output_capture.persist()
+            stdout, stderr = output_capture.tails()
+            if output_capture.error:
+                raise HostError(f"capability {record.id!r} output capture failed: {output_capture.error}")
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {record.id!r} cancelled")
             returncode = process.returncode
@@ -8398,43 +8593,11 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
             raise
         finally:
-            teardown_complete = False
-            process_proven_gone = False
             try:
-                # Observe before terminating the original owner, never adopt a
-                # post-exit PID. A force-killed action cannot run its finally.
-                observation_error = None
-                if review_session:
-                    try:
-                        review_snapshot = _observe_owned_review_session(process, attempt, review_snapshot)
-                    except Exception as exc:
-                        observation_error = exc
-                _terminate_process_group(process)
-                # terminate_tree + verify_tree_absent returned without raising:
-                # the child is reaped and its session is provably empty, so it
-                # is no longer custody-relevant even if the review-session
-                # observation/retirement below fails and the attempt is kept.
-                process_proven_gone = True
-                if observation_error is not None:
-                    raise observation_error
-                if review_session:
-                    _retire_owned_review_session(attempt, review_snapshot)
-                teardown_complete = True
-            except TaskScopeUnresolved as exc:
-                # Fails this task only; the host is not latched. Keep a note.
-                teardown_complete = True
-                self._unresolved_task_scopes.append(exc.report.describe())
-                detail = f"task scope cleanup unresolved: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
-                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
-            except BaseException as exc:
-                self._latch_cleanup_uncertainty(str(exc))
-                detail = f"owned command cleanup uncertain: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}: {self._scrub_secret_text(str(execution_error), secrets)}"
-                raise CommandCleanupUnresolved(self._scrub_secret_text(detail, secrets), execution_error=execution_error) from exc
+                cleanup_once()
             finally:
+                if not output_finished:
+                    output_capture.finish()
                 if teardown_complete or process_proven_gone:
                     self._untrack_process(process)
                 if remotion_lease is not None:
@@ -8539,8 +8702,12 @@ class GenericPackHost:
             dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
         )
         env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+        secret_values = {
+            key: value for key, value in env.items()
+            if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIAL"))
+        }
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
-        argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
+        argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()
         try:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
@@ -8560,8 +8727,7 @@ class GenericPackHost:
             launch = popen_owned_group if render_scope else spawn_task_scope
             process = launch(
                 _network_sandbox_argv(argv, attempt_path, broker_endpoint), cwd=str(attempt_path), env=env,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
-                errors="replace", pass_fds=inherited_fds,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=inherited_fds,
             )
         except BaseException as exc:
             if remotion_lease is not None:
@@ -8572,32 +8738,67 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
-        if child_bridge is not None:
-            child_bridge.launched()
-        if remotion_lease is not None:
-            remotion_lease.launched()
         self._track_process(process)
+        output_capture = _TaskOutputCapture(attempt_path, secret_values, self._scrub_secret_text)
+        output_capture.start(process)
         execution_error = None
+        cleanup_attempted = False
+        teardown_complete = False
+        process_proven_gone = False
+        output_finished = False
+
+        def cleanup_once() -> None:
+            nonlocal cleanup_attempted, teardown_complete, process_proven_gone
+            if cleanup_attempted:
+                return
+            cleanup_attempted = True
+            try:
+                _terminate_process_group(process)
+                process_proven_gone = True
+                teardown_complete = True
+            except TaskScopeUnresolved as exc:
+                teardown_complete = True
+                self._unresolved_task_scopes.append(exc.report.describe())
+                detail = f"capability {capability_id!r}: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+            except BaseException as exc:
+                self._latch_cleanup_uncertainty(str(exc))
+                detail = f"capability {capability_id!r} cleanup unresolved: {exc}"
+                if execution_error is not None:
+                    detail += f"; original execution failure: {type(execution_error).__name__}"
+                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+
         try:
+            if child_bridge is not None:
+                child_bridge.launched()
+            if remotion_lease is not None:
+                remotion_lease.launched()
             guards_due = 0.0
             while process.poll() is None:
                 if render_scope:
                     observe_tree(process)
                 if time.monotonic() >= guards_due:
                     guards_due = time.monotonic() + _LIVE_GUARD_INTERVAL_SECONDS
+                    output_capture.persist()
+                    if output_capture.error:
+                        raise HostError(f"capability {capability_id!r} output capture failed: {output_capture.error}")
                     _assert_live_storage_envelope(storage_estimate, attempt_path, attempt_path / "outputs")
                     if cancelled is not None and cancelled():
                         # The finally block signals the still-live group.
                         raise HostCancelled(f"capability {capability_id!r} cancelled")
                 time.sleep(0.05)
-            stdout, stderr = process.communicate()
+            cleanup_once()
+            output_capture.finish()
+            output_finished = True
+            output_capture.persist()
+            stdout, stderr = output_capture.tails()
+            if output_capture.error:
+                raise HostError(f"capability {capability_id!r} output capture failed: {output_capture.error}")
             if cancelled is not None and cancelled():
                 raise HostCancelled(f"capability {capability_id!r} cancelled")
             if process.returncode != 0:
-                secret_values = {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }
                 detail = self._scrub_secret_text((stderr or stdout).strip(), secret_values)
                 raise HostError(
                     f"capability {capability_id!r} child exited {process.returncode}"
@@ -8620,43 +8821,27 @@ class GenericPackHost:
             child_payload = dict(result.get("payload") or {})
             child_payload.setdefault("process_id", process_id)
             child_payload.setdefault("returncode", returncode)
-            return SimpleNamespace(
+            result_object = SimpleNamespace(
                 ok=True,
                 returncode=returncode,
                 outputs=result.get("outputs") or [],
                 payload=child_payload,
-                stdout=self._scrub_secret_text(stdout, {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }),
-                stderr=self._scrub_secret_text(stderr, {
-                    key: value for key, value in env.items()
-                    if key.upper().endswith(("_KEY", "_TOKEN", "_SECRET", "_PASSWORD"))
-                }),
+                stdout=stdout,
+                stderr=stderr,
                 process_id=process_id,
             )
+            return result_object
         except BaseException as exc:
             execution_error = exc
             raise
         finally:
             try:
-                _terminate_process_group(process)
-                self._untrack_process(process)
-            except TaskScopeUnresolved as exc:
-                # Fails this task only; the host is not latched. Keep a note.
-                self._untrack_process(process)
-                self._unresolved_task_scopes.append(exc.report.describe())
-                detail = f"capability {capability_id!r}: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}"
-                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
-            except BaseException as exc:
-                self._latch_cleanup_uncertainty(str(exc))
-                detail = f"capability {capability_id!r} cleanup unresolved: {exc}"
-                if execution_error is not None:
-                    detail += f"; original execution failure: {type(execution_error).__name__}"
-                raise CommandCleanupUnresolved(detail, execution_error=execution_error) from exc
+                cleanup_once()
             finally:
+                if not output_finished:
+                    output_capture.finish()
+                if teardown_complete or process_proven_gone:
+                    self._untrack_process(process)
                 if remotion_lease is not None:
                     remotion_lease.close()
                 env.clear()
@@ -9063,7 +9248,10 @@ class GenericPackHost:
             self.preflight(capability_id)
             record = self.capabilities[capability_id]
             if not record.ready:
-                raise HostError(f"capability {capability_id!r} is unavailable: {record.preflight}")
+                raise HostError(
+                    f"capability {capability_id!r} is unavailable: "
+                    f"{_preflight_unavailable_reason(record)}"
+                )
             registration_error = self._registration_admission_reason()
             if registration_error:
                 raise HostError(registration_error)
@@ -12192,11 +12380,12 @@ class LocalExecutionPreparation:
             os.close(descriptor)
             descriptor = None
             os.replace(temporary, path)
-            directory_fd = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
+            if _is_posix():
+                directory_fd = os.open(parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
             return True
         except OSError:
             if descriptor is not None:
@@ -12411,7 +12600,6 @@ class LocalExecutionPreparation:
             raise HostError("host-only concurrency must be explicitly bounded")
         if _handoff_digest(launch) != profile["session_config_digest"]:
             raise HostError("host-only launch configuration digest differs")
-        from astrid.core.execution import custody_broker as custody_module
         peer = self._retained_relay_actor
         if peer is None or any(peer.verify().get(k) != request["runtime_owner"].get(k) for k in ("pid", "uid", "birth_id")):
             raise HostError("host-only preparation is not from original Runtime peer")
@@ -12422,7 +12610,10 @@ class LocalExecutionPreparation:
         if not interpreter.is_absolute() or not interpreter.is_file() or "sha256:" + hashlib.sha256(interpreter.read_bytes()).hexdigest() != profile["host_artifact_digest"]:
             raise HostError("host-only selected interpreter differs")
         boot = Path(launch["boot_manifest_path"])
-        from astrid.core._shared.boot_manifest import load_boot_manifest_hash, normalize_sha256_digest
+        from astrid.core._shared.boot_manifest import (
+            load_boot_manifest_hash,
+            normalize_sha256_digest,
+        )
         try:
             stamped_boot_hash = load_boot_manifest_hash(boot, support_root=profile["support_root"])
             selected_boot_hash = normalize_sha256_digest(launch["boot_manifest_hash"], label="host-only boot pin")
@@ -12446,7 +12637,8 @@ class LocalExecutionPreparation:
         with self._lock:
             if self._aborted or (self._intent is not None and self._intent != intent):
                 raise HostError("host-only preparation replay conflicts")
-            self._intent = intent; self._request = json.loads(json.dumps(dict(request)))
+            self._intent = intent
+            self._request = json.loads(json.dumps(dict(request)))
             result = {"version": _LOCAL_PREPARATION_VERSION, "status": "prepared",
                 "execution_mode": "host_only_cpu", "operation_id": self.operation_id, "channel_id": self.channel_id,
                 "owner_epoch": request["owner_epoch"], "session_config_digest": profile["session_config_digest"],
@@ -12497,7 +12689,8 @@ class LocalExecutionPreparation:
             reply = {**abort_bound, "custody_capabilities": dict(capabilities), "status": "cleaned",
                      "cleanup": {"host_children": "absent"}}
             with self._lock:
-                self._aborted = True; self._abort_ack = reply
+                self._aborted = True
+                self._abort_ack = reply
             return json.loads(json.dumps(reply))
         except BaseException as exc:
             self.control_error = exc
@@ -13022,9 +13215,11 @@ class _NativeEngineGraph:
         env.update(self.engine.child_environment(argv, start_new_session=True))
         with (root / "daemon.log").open("xb") as log:
             self._engine_spawn_started = True
-            self.process = subprocess.Popen(custody_module.custody_wrapper_argv(profile["engine_executable"]),
-                                            cwd=str(root.parents[2]), env=env, stdin=subprocess.DEVNULL,
-                                            stdout=subprocess.DEVNULL, stderr=log, close_fds=True)
+            self.process = platform.spawn_tree(
+                custody_module.custody_wrapper_argv(profile["engine_executable"]),
+                cwd=str(root.parents[2]), env=env, stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, stderr=log, close_fds=True,
+            )
         self.process._astrid_custody = self.custody
         self.process._astrid_process_group_id = self.process.pid
         self.custody._launch_broker = self.engine
@@ -13247,9 +13442,10 @@ class _NativeEngineGraph:
                 or "sha256:" + hashlib.sha256((root / "config.json").read_bytes()).hexdigest() != self.profile["session_config_digest"]):
             raise HostError("owned engine readiness registry differs from selected launch")
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
-        if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
-            raise HostError("selected listener socket ownership is uncertain")
+        if _is_posix():
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-a", "-p", str(listener_pid), "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            if observation.returncode != 0 or f":{endpoint.port} (LISTEN)" not in observation.stdout:
+                raise HostError("selected listener socket ownership is uncertain")
         for broker in (self.engine, self.listener):
             if broker.state == "sealed":
                 broker.bind_ready_token(expected_pid=int(broker.registration["pid"]), expected_identity=broker.registration["identity"])
@@ -13297,9 +13493,10 @@ class _NativeEngineGraph:
         verify_tree_absent(self.process)
         root = Path(self.profile["engine_launch"]["session_root"])
         endpoint = urlsplit(self.profile["engine_endpoint"])
-        observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
-        if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
-            raise CleanupUncertainError("engine endpoint cleanup is not verified")
+        if _is_posix():
+            observation = subprocess.run(["lsof", *(["-O"] if sys.platform == "darwin" else []), "-nP", "-t", "-iTCP:" + str(endpoint.port), "-sTCP:LISTEN"], stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=2, check=False)
+            if observation.returncode != 1 or observation.stdout.strip() or observation.stderr.strip():
+                raise CleanupUncertainError("engine endpoint cleanup is not verified")
         # Registry files are historical evidence only; successful census and
         # retained child wait proofs reconcile the exact recorded incarnations.
         if isinstance(exit_code, bool) or not isinstance(exit_code, int):
@@ -13524,6 +13721,8 @@ def _await_worker_activation_socket(
     existing SSH command boundary and sends the same bounded activation frame
     used by local parked hosts.
     """
+    if os.name == "nt":
+        raise HostError("parked activation socket is unavailable on Windows")
     path = Path(socket_path).expanduser()
     if not path.is_absolute() or str(path) != socket_path or path.is_symlink():
         raise HostError("parked activation socket path must be canonical and absolute")
@@ -13680,8 +13879,18 @@ class _ManagedStdinShutdown:
 
 
 def _log_cli_exit_failure(error: BaseException) -> None:
-    """Log CLI failures without copying potentially sensitive exception text."""
-    _LOGGER.error("generic host CLI exiting after failure: error_type=%s", type(error).__name__[:96])
+    """Log only the type, plus context explicitly marked safe at a startup site."""
+    error_type = type(error).__name__[:96]
+    safe_message = error.safe_message if isinstance(error, HostError) else None
+    if isinstance(safe_message, str) and safe_message:
+        safe_context = " ".join(safe_message.split())[:400]
+        _LOGGER.error(
+            "generic host CLI exiting after failure: error_type=%s safe_context=%s",
+            error_type,
+            safe_context,
+        )
+    else:
+        _LOGGER.error("generic host CLI exiting after failure: error_type=%s", error_type)
 
 
 def _cli() -> int:
@@ -13725,7 +13934,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     parser.add_argument("--runtime-instance-id", help="runtime instance identity bound to this host")
     parser.add_argument("--source-inventory-identity", help="verified managed source inventory identity bound to this host")
     parser.add_argument("--boot-manifest-path", help="existing explicit boot-manifest path")
-    parser.add_argument("--remotion-validation-launch-id", help=argparse.SUPPRESS)
     parser.add_argument("--boot-manifest-hash", help="expected SHA-256 hash of the boot manifest")
     parser.add_argument("--readiness-profile-path", help="Worker-published readiness profile")
     parser.add_argument("--readiness-profile-hash", help="expected SHA-256 hash of the readiness profile")
@@ -13745,12 +13953,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     )
     args = parser.parse_args()
     _emit_startup_phase("cli_args_parsed")
-    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE
-    declared_validation = os.environ.get(ASTRID_REMOTION_VALIDATION_LAUNCH)
-    if declared_validation != args.remotion_validation_launch_id:
-        parser.error("Remotion readiness reference belongs to a foreign launch")
-    if declared_validation and os.environ.get(ASTRID_REMOTION_VALIDATION_ROLE) != "host":
-        parser.error("Remotion readiness context is not the host launch context")
     if args.attempt_root and args.attempt_base:
         parser.error("--attempt-root and --attempt-base are mutually exclusive")
     if (args.readiness_profile_path is None) != (args.readiness_profile_hash is None):
@@ -13905,7 +14107,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         try:
             if (not credential_path.is_absolute() or credential_path.is_symlink()
                     or not credential_path.is_file()
-                    or credential_path.stat().st_mode & 0o777 != 0o600):
+                    or not platform.is_owner_only(credential_path)):
                 raise OSError("credential file must be an absolute owner-only regular file")
             credential = credential_path.read_text(encoding="utf-8").strip()
         except OSError as exc:
@@ -13942,6 +14144,10 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         support_root = Path(args.support_root).expanduser()
         if not support_root.is_absolute() or support_root.is_symlink() or not support_root.is_dir():
             parser.error("--support-root must be an absolute non-symlink directory")
+        try:
+            configure_process_control(support_root)
+        except (ConflictError, OSError, RuntimeError, ValueError) as exc:
+            parser.error(f"process control: {exc}")
     else:
         support_root = None
     if support_root is not None and args.command in ("run", "supervise"):
@@ -14088,6 +14294,7 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         try:
             registration = host.register() if args.register else {"capabilities": [record.manifest() for record in host.capabilities.values()]}
         except Exception as exc:
+            _log_cli_exit_failure(exc)
             code = str(getattr(exc, "code", "host_registration_failed"))[:128]
             request_id = str(getattr(exc, "request_id", ""))[:128]
             raw_message = getattr(exc, "message", None)
@@ -14133,7 +14340,6 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
     if ready_path is not None:
         ready_payload = {
             "status": "ready",
-            "remotion_validation": {k: v for k, v in os.environ.items() if k.startswith("ASTRID_REMOTION_VALIDATION_")} or None,
             "python_executable": os.path.abspath(sys.executable),
             "pid": os.getpid(),
             "process_birth_id": process_birth_identity(),

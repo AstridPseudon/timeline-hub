@@ -75,7 +75,7 @@ def build_plan_v2(
 def _build_ados_cmd(python_exec: str, run_root: Path) -> str:
     _ = run_root
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"ados-sunday-template --out {shlex.quote('{produces_root}/ados-sunday-template.json')}"
     )
 
@@ -90,7 +90,7 @@ def _build_search_cmd(
     if transcript is not None:
         transcript_flag = f"--transcript {shlex.quote(str(Path(transcript).resolve()))}"
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"search-transcript {transcript_flag} "
         f"--out {shlex.quote('{produces_root}/search-results.txt')}"
     )
@@ -101,7 +101,7 @@ def _build_holding_cmd(
 ) -> str:
     src = shlex.quote(str(Path(source).resolve())) if source else "''"
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"find-holding-screens --video {src} "
         f"--out {shlex.quote('{produces_root}/holding-screens.json')}"
     )
@@ -116,7 +116,7 @@ def _build_render_cmd(python_exec: str, run_root: Path) -> str:
         "{step_dir}/../ados-sunday-template/v1/produces/ados-sunday-template.json"
     )
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"render --manifest {shlex.quote(manifest_ref)} "
         f"--out-dir {shlex.quote('{produces_root}')}"
     )

@@ -366,11 +366,17 @@ def plan_authoring_media(
         entry["type"] = row["media_type"].split("/", 1)[0]
         entry["media_type"] = row["media_type"]
         entry["filename"] = row["filename"]
+        width, height = row.get("width"), row.get("height")
+        if width is not None and height is not None:
+            entry["resolution"] = f"{width}x{height}"
+        else:
+            entry.pop("resolution", None)
+        if "duration_seconds" in row:
+            entry["duration"] = row["duration_seconds"]
+        else:
+            entry.pop("duration", None)
         for field in ("width", "height", "duration_seconds"):
-            if field in row:
-                entry[field] = row[field]
-            elif field in entry:
-                entry.pop(field)
+            entry.pop(field, None)
 
     def rewrite_registry(
         node: dict[str, Any], base: Mapping[str, Any], *, explicit_only: bool = False

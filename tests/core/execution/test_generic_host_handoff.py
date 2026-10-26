@@ -87,6 +87,60 @@ def _host(client):
     return host
 
 
+def test_review_session_reads_do_not_require_o_nofollow(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    attempt = tmp_path / "attempt"
+    attempt.mkdir()
+    path = attempt / generic_host._REVIEW_SESSION_NAME
+    nonce = "a" * 64
+    row = {
+        "schema": "astrid.human-review-session/v2",
+        "receiver_url": "http://127.0.0.1:8123/?token=" + "b" * 32,
+        "process_pid": 123,
+        "process_birth_id": "receiver-birth",
+        "launch_nonce": nonce,
+    }
+    path.write_text(json.dumps(row))
+    path.chmod(0o600)
+    process = SimpleNamespace(_astrid_review_launch_nonce=nonce)
+    monkeypatch.setattr(generic_host, "_process_birth_identity", lambda pid: "receiver-birth")
+    monkeypatch.delattr(generic_host.os, "O_NOFOLLOW")
+
+    snapshot = generic_host._observe_owned_review_session(process, attempt)
+    generic_host._retire_owned_review_session(attempt, snapshot)
+    assert snapshot is not None
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("is_posix", [True, False])
+def test_handoff_journal_keeps_file_fsync_and_only_posix_directory_fsync(monkeypatch, tmp_path, is_posix):
+    import stat
+
+    journal = tmp_path / "host-handoff-state.json"
+    preparation = generic_host.LocalExecutionPreparation.__new__(generic_host.LocalExecutionPreparation)
+    preparation._handoff_journal_ready = True
+    preparation._handoff_journal_path = journal
+    calls = []
+    original_fsync = os.fsync
+
+    def fsync(fd):
+        is_directory = stat.S_ISDIR(os.fstat(fd).st_mode)
+        calls.append(is_directory)
+        if not is_posix and is_directory:
+            raise OSError("Windows refuses directory fsync")
+        return original_fsync(fd)
+
+    monkeypatch.setattr(generic_host, "_is_posix", lambda: is_posix, raising=False)
+    monkeypatch.setattr(generic_host.os, "fsync", fsync)
+    request = {"binding": {"original_owner_epoch": "epoch", "handoff_id": "handoff"}, "command": "pause"}
+    reply = {"host": {"pid": 123, "birth_id": "host-birth"}, "request_digest": "digest"}
+
+    assert preparation._persist_handoff_reply(request, reply)
+    assert calls == ([False, True] if is_posix else [False])
+    assert json.loads(journal.read_text())["reply"] == reply
+
+
 def _actor(pid=10):
     return {"pid": pid, "uid": 501, "birth_id": f"birth-{pid}",
             "audit_token_sha256": "sha256:" + "a" * 64,

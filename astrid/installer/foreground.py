@@ -60,7 +60,7 @@ def _run(root: Path, argv: list[str], system: str, lock_fd: int) -> None:
         os.chdir(version.root)
         # os.exec on Windows creates another process. Evaluate the canonical
         # -c command in this interpreter instead, with no waiting shim/child.
-        exec(compile(arguments[3], "<astrid-runtime run>", "exec"), {"__name__": "__main__"})
+        exec(compile(arguments[-1], "<astrid-runtime run>", "exec"), {"__name__": "__main__"})
 
 
 if __name__ == "__main__":

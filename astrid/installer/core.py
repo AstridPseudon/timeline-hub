@@ -17,6 +17,10 @@ from .support import HELP_MESSAGE
 class VerificationError(RuntimeError):
     """The installed Runtime's browser door did not pass its readiness check."""
 
+    def __init__(self, message: str, *, safe_message: str | None = None) -> None:
+        super().__init__(message)
+        self.safe_message = safe_message
+
 
 class BackupSpaceError(RuntimeError):
     """The update cannot fit its workspace backup on the program disk."""

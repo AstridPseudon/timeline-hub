@@ -724,6 +724,8 @@ def main(argv: list[str] | None = None) -> int:
                 return subprocess.run(
                     [
                         sys.executable,
+                        "-X",
+                        "utf8",
                         "-m",
                         "vibecomfy.cli",
                         "validate",

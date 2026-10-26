@@ -251,7 +251,7 @@ def _ts_property_key(value: str) -> str:
 def _write_generated_registry(path: Path, content: str) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content.encode("utf-8"))
     except PermissionError:
         return False
     return True
@@ -469,7 +469,11 @@ def main(argv: list[str] | None = None) -> int:
     from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
 
     if remotion_lock.remotion_render_lock_held():
-        return _main_unlocked(argv)
+        result = _main_unlocked(argv)
+        token = os.environ.get(remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+        if result == 0 and token is not None:
+            print(remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token)
+        return result
     with remotion_lock.remotion_render_lock():
         return _main_unlocked(argv)
 

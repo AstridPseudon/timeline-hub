@@ -86,7 +86,7 @@ def build_workflow(
 
     # ── Build step commands (mirror plan_template.py) ──────────────────────
     cmd_ados = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"ados-sunday-template --out {shlex.quote('{produces_root}/ados-sunday-template.json')}"
     )
 
@@ -94,14 +94,14 @@ def build_workflow(
     if resolved_transcript is not None:
         transcript_flag = f"--transcript {shlex.quote(str(resolved_transcript))}"
     cmd_search = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"search-transcript {transcript_flag} "
         f"--out {shlex.quote('{produces_root}/search-results.txt')}"
     )
 
     src_flag = shlex.quote(str(resolved_source)) if resolved_source else "''"
     cmd_holding = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"find-holding-screens --video {src_flag} "
         f"--out {shlex.quote('{produces_root}/holding-screens.json')}"
     )
@@ -110,7 +110,7 @@ def build_workflow(
         "{step_dir}/../ados-sunday-template/v1/produces/ados-sunday-template.json"
     )
     cmd_render = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.event_talks.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.event_talks.run "
         f"render --manifest {shlex.quote(manifest_ref)} "
         f"--out-dir {shlex.quote('{produces_root}')}"
     )

@@ -76,7 +76,8 @@ def _load_folder_orchestrator_definitions(orchestrator_root: str | Path) -> tupl
         explicit_env={"PYTHONPATH": os.pathsep.join(parent_paths + [os.environ.get("PYTHONPATH", "")])}
     )
     completed = subprocess.run(
-        [sys.executable, "-c", _EXTRACT_SCRIPT, str(orchestrator_path)],
+        [sys.executable, "-X", "utf8", "-c", _EXTRACT_SCRIPT, str(orchestrator_path)],
+        stdin=subprocess.DEVNULL,
         cwd=str(root),
         check=False,
         capture_output=True,

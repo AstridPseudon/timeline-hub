@@ -413,7 +413,6 @@ for (const agent of ['codex', 'hermes'] as const) {
 
 for (const [label, agentContextForCommand] of [
   ['empty output', async () => ''],
-  ['a failure', async () => { throw new Error('astrid --agent-context failed'); }],
 ] as const) {
   for (const agent of EXTERNAL_AGENT_IDS) {
     test(`${agent} starts without a preferences block after ${label} from the context command`, async () => {
@@ -448,6 +447,46 @@ for (const [label, agentContextForCommand] of [
       }
     });
   }
+}
+
+for (const agent of EXTERNAL_AGENT_IDS) {
+  test(`${agent} starts without preferences and records a failed context lookup`, async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-context-error-'));
+    const f = fixture(directory);
+    const warnings: string[] = [];
+    const warn = console.warn;
+    console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
+    try {
+      const host = await createLocalAgentAcpProcessHost(agent, {
+        cwd: f.cwd,
+        env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+        profileFileForCommand: () => f.profile,
+        agentContextForCommand: async () => { throw new Error('astrid --agent-context failed'); },
+      });
+      try {
+        await host.initialize({ protocolVersion: 1, clientCapabilities: {} });
+        const created = await host.newSession<Json>({ cwd: f.cwd, mcpServers: [] });
+        await host.prompt({ sessionId: created.sessionId, prompt: [{ type: 'text', text: 'hello' }] });
+        const rows = records(f.logs).map(row => row.value as Json);
+        const opening = rows.find(row => row.method === 'session/new')!.params as Json;
+        const prompt = JSON.stringify(rows.find(row => row.receivedPrompt)!.receivedPrompt);
+        if (agent === 'claude-code') {
+          assert.match(JSON.stringify(opening.systemPrompt), /PROFILE_SENTINEL/);
+          assert.doesNotMatch(JSON.stringify(opening.systemPrompt), /PREFS_SENTINEL/);
+          assert.doesNotMatch(prompt, /PREFS_SENTINEL/);
+        } else {
+          assert.match(prompt, /astrid_agent_context.*PROFILE_SENTINEL/);
+          assert.doesNotMatch(prompt, /PREFS_SENTINEL/);
+        }
+        assert.match(warnings.join('\n'), /Astrid agent preferences lookup failed: astrid --agent-context failed/);
+      } finally {
+        await host.dispose();
+      }
+    } finally {
+      console.warn = warn;
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
 }
 
 test('resolveAstridAgentContext runs `astrid --agent-context` and never throws', async () => {

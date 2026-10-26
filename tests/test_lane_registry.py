@@ -83,3 +83,9 @@ def test_a_platform_lane_runs_on_the_os_of_its_jobs() -> None:
     for name, expected in runs_on.items():
         for job_name in lanes.LANES[name].jobs:
             assert expected in job_name or job_name == lanes.DARWIN and expected == "macos", f"{name} runs on {expected}, not {job_name}"
+
+
+def test_windows_native_job_is_blocking() -> None:
+    for job_name in lanes.LANES["windows_native"].jobs:
+        job = _jobs_by_name()[job_name]
+        assert not job.get("continue-on-error", False), f"{job_name} must fail CI when native Windows checks fail"

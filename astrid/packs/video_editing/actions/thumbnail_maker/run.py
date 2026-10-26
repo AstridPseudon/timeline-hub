@@ -370,7 +370,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
         steps.append((
             "resolve-video",
             [
-                args.python_exec, "-m", run_module, "resolve-video",
+                args.python_exec, "-X", "utf8", "-m", run_module, "resolve-video",
                 "--video", str(video),
                 "--out", str(args.out / "video-resolution.json"),
             ],
@@ -382,7 +382,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "plan-evidence",
         [
-            args.python_exec, "-m", run_module, "plan-evidence",
+            args.python_exec, "-X", "utf8", "-m", run_module, "plan-evidence",
             "--query", str(query),
             "--out", str(args.out / "evidence" / "evidence-plan.json"),
         ],
@@ -391,7 +391,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "discover-video-evidence",
         [
-            args.python_exec, "-m", run_module, "discover-video-evidence",
+            args.python_exec, "-X", "utf8", "-m", run_module, "discover-video-evidence",
             "--query", str(query),
             "--out", str(args.out / "evidence" / "candidates.json"),
             "--previous-manifest", str(args.out / "evidence" / "evidence-plan.json"),
@@ -401,7 +401,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "build-reference-pack",
         [
-            args.python_exec, "-m", run_module, "build-reference-pack",
+            args.python_exec, "-X", "utf8", "-m", run_module, "build-reference-pack",
             "--query", str(query),
             "--out", str(args.out / "evidence" / "reference-pack.json"),
             "--previous-manifest", str(args.out / "evidence" / "candidates.json"),
@@ -411,7 +411,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "generate-thumbnails",
         [
-            args.python_exec, "-m", run_module, "generate-thumbnails",
+            args.python_exec, "-X", "utf8", "-m", run_module, "generate-thumbnails",
             "--query", str(query),
             "--out", str(args.out / "thumbnail-manifest.json"),
             "--previous-manifest", str(args.out / "evidence" / "reference-pack.json"),

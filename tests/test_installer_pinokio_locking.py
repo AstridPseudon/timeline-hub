@@ -172,8 +172,8 @@ def test_cli_recovery_releases_live_runtime_before_workspace_or_backup(
     })
 
     class RecoveryBackend(Backend):
-        def __init__(self, backend_root, log, executable):
-            super().__init__(backend_root, log, executable)
+        def __init__(self, backend_root, log, executable, *, process_control=None):
+            super().__init__(backend_root, log, executable, process_control=process_control)
             self.managed_by = "pinokio"
 
         def existing(self, _data):

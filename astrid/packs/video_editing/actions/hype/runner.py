@@ -270,7 +270,7 @@ def run_step(step: Step, cmd: list[str], args: argparse.Namespace) -> int:
             # cancellation cannot reach this detached callback process.
             launcher = popen_owned_process if internal_worker else popen_owned_group
             process = launcher(
-                [sys.executable, "-m", "astrid.packs.video_editing.actions.hype.step_worker", str(request_path)],
+                [sys.executable, "-X", "utf8", "-m", "astrid.packs.video_editing.actions.hype.step_worker", str(request_path)],
                 cwd=str(args.out),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,

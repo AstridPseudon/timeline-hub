@@ -14,8 +14,7 @@ os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 sys.dont_write_bytecode = True
 if sys.pycache_prefix is None:
     _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
-    # Only this process moves its bytecode. Do not export PYTHONPYCACHEPREFIX: children already inherit
-    # PYTHONDONTWRITEBYTECODE, and the Remotion child projection omits this startup control.
+    # Only this process moves its bytecode; children inherit PYTHONDONTWRITEBYTECODE.
     sys.pycache_prefix = str(_pycache_prefix)
     atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
 
@@ -112,7 +111,9 @@ def pytest_sessionfinish(session, exitstatus):
     for pgid in groups:
         try:
             os.killpg(pgid, signal.SIGTERM)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
+            # PermissionError: seccomp sandboxes (e.g. OpenShell) deny process-group
+            # kills; still report the leak below instead of losing the summary.
             pass
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline and any(_group_exists(pgid) for pgid in groups):
@@ -121,7 +122,7 @@ def pytest_sessionfinish(session, exitstatus):
         if _group_exists(pgid):
             try:
                 os.killpg(pgid, signal.SIGKILL)
-            except ProcessLookupError:
+            except (ProcessLookupError, PermissionError):
                 pass
     session.config.pluginmanager.get_plugin("terminalreporter").write_line(
         f"ERROR: killed daemon/host processes left under pytest basetemp: {leaked!r}"

@@ -41,7 +41,7 @@ def service_declaration(
     if program_root := os.environ.get("ASTRID_INSTALL_PROGRAM_ROOT"):
         env["ASTRID_INSTALL_PROGRAM_ROOT"] = program_root
     return {"version": 1, "services": [
-        {"name": "pack-host", "argv": [python, "-m", "astrid.core.execution.generic_host", "--service",
+        {"name": "pack-host", "argv": [python, "-X", "utf8", "-m", "astrid.core.execution.generic_host", "--service",
             "--source-checkout", str(source_checkout), "--support-root", str(discovery.parent)],
             "env": {**env, "ASTRID_PACK_HOST_PYTHON": python}, "restart": "always",
             "ready": {"file": "generic-host.ready.json", "timeout_seconds": 300}},
@@ -78,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
 
         platform.owner_only(args.path)
         return 0
+    from astrid.core.execution.platform_helpers import configure_process_control
     from astrid.sdk.host_bootstrap import run_pack_host_foreground
 
     discovery = Path(os.environ["ASTRID_WORKSPACE_DISCOVERY"])
@@ -85,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("discovery and source checkout must be absolute")
     if discovery.parent != args.support_root:
         parser.error("support root must match the Runtime discovery directory")
+    configure_process_control(args.support_root)
     value = json.loads(discovery.read_text(encoding="utf-8"))
     value["source_checkout"] = str(args.source_checkout)
     return run_pack_host_foreground(value)

@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import tempfile
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Mapping
 
 from astrid.core.foundation.atomic_io import read_json, write_json_atomic
@@ -69,7 +69,8 @@ class SourceDeclaration:
             raise SourceSetupError(f"invalid source pack id {pack_id!r}")
         subpath = str(value.get("pack_subpath", ".")).strip() or "."
         if subpath != "." and (
-            subpath.startswith("/")
+            PureWindowsPath(subpath).drive
+            or subpath.startswith("/")
             or "\\" in subpath
             or any(part in {"", ".", ".."} for part in subpath.split("/"))
         ):
@@ -260,6 +261,7 @@ def _run_git(repository: str, *args: str, cwd: Path | None = None) -> str:
     try:
         result = delegated if delegated is not None else subprocess.run(
             ["git", *args], cwd=str(cwd) if cwd else None,
+            stdin=subprocess.DEVNULL,
             capture_output=True, text=True, check=False, timeout=120,
         )
     except (OSError, subprocess.SubprocessError) as exc:

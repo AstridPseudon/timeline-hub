@@ -8,16 +8,13 @@ import sys
 from collections.abc import Iterable, Mapping
 
 from astrid.core.env_vars import (
-    ASTRID_ENV_FILE,
     ASTRID_ACTOR,
     ASTRID_AUTHOR_TEST,
+    ASTRID_ENV_FILE,
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_NODE_EXECUTABLE,
-    ASTRID_REMOTION_VALIDATION_PATH,
-    ASTRID_REMOTION_VALIDATION_SHA256,
-    ASTRID_REMOTION_VALIDATION_LAUNCH,
-    ASTRID_REMOTION_VALIDATION_ROLE,
     ASTRID_REMOTION_PROJECT_DIR,
+    ASTRID_VIBECOMFY_CHECKOUT,
 )
 from astrid.core.env_vars import (
     ASTRID_HOME as ASTRID_HOME_ENV,
@@ -52,7 +49,6 @@ from astrid.core.env_vars import (
 from astrid.core.env_vars import (
     ASTRID_TIMELINE_SCHEMA_PYTHONPATH as TIMELINE_SCHEMA_PYTHONPATH_ENV,
 )
-from astrid.core.env_vars import ASTRID_VIBECOMFY_CHECKOUT
 
 _SAFE_BASE_ENV = frozenset(
     {
@@ -106,10 +102,6 @@ _ASTRID_PROPAGATED_ENV = frozenset(
         TASK_ITERATION_ENV,
         PACKS_PATH_ENV,
         ASTRID_NODE_EXECUTABLE,
-        ASTRID_REMOTION_VALIDATION_PATH,
-        ASTRID_REMOTION_VALIDATION_SHA256,
-        ASTRID_REMOTION_VALIDATION_LAUNCH,
-        ASTRID_REMOTION_VALIDATION_ROLE,
 
         ASTRID_REMOTION_PROJECT_DIR,
         "ASTRID_RENDER_INHERIT_PROCESS_GROUP",
@@ -170,8 +162,6 @@ def build_child_subprocess_env(
                 env[key] = str(value)
 
     for key, value in (explicit_env or {}).items():
-        if key in {ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256, ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE}:
-            raise SubprocessEnvPolicyError("launch validation references are parent-owned")
         if _is_secret_name(str(key)) and str(key) not in secret_names:
             raise SubprocessEnvPolicyError(f"secret env {key!r} must be supplied through secret_values")
         env[str(key)] = str(value)

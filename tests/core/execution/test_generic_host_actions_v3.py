@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import os
 import py_compile
+import re
 import socket
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -771,67 +773,6 @@ def pack(tmp_path, *, code="def run(value='default'):\n    return value\n", path
     return root, host, runtime, definition, admission
 
 
-def _legacy_probe_manifest(tmp_path, names, *, fixed=None, required=()):
-    manifest = _write_manifest(tmp_path / 'legacy-probe')
-    data = json.loads(manifest.read_text())
-    data['isolation'] = {'mode': 'subprocess', 'env_passthrough': list(names)}
-    data['command']['env'] = fixed or {}
-    data['metadata']['required_env'] = list(required)
-    manifest.write_text(json.dumps(data))
-    return manifest
-
-
-@pytest.mark.parametrize('credential,declared', [
-    ('HIVEMIND_CONTRIBUTOR_KEY', True), ('HIVEMIND_ANON_KEY', False),
-])
-def test_startup_probes_omit_legacy_credentials_without_declaring_them(tmp_path, credential, declared):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    from astrid.core.execution.executor.folder import load_folder_executor
-    manifest = _legacy_probe_manifest(
-        tmp_path, ['HIVEMIND_API_URL', credential],
-        required=[credential] if declared else [])
-    # The real legacy definition carries passthrough, not secrets_required.
-    definition = load_folder_executor(manifest.parent)
-    assert definition.isolation.env_passthrough == ('HIVEMIND_API_URL', credential)
-    assert definition.isolation.secrets_required == ()
-    environment = {'PATH': '/usr/bin', 'HIVEMIND_API_URL': 'https://fixture.invalid',
-                   credential: 'credential-sentinel-never-export',
-                   'UNDECLARED_TOKEN': 'ambient-sentinel-never-export'}
-    variants = _launch_worker_probe_environments((tmp_path,), environment)
-    assert len(variants) == 3  # Safe baseline, actual native and command projections.
-    assert 'HIVEMIND_API_URL' not in variants[0]
-    for variant in variants[1:]:
-        assert variant['HIVEMIND_API_URL'] == environment['HIVEMIND_API_URL']
-        assert variant['PYTHONPATH']
-    for variant in variants:
-        assert credential not in variant and 'UNDECLARED_TOKEN' not in variant
-        assert not any('sentinel-never-export' in value for value in variant.values())
-
-
-@pytest.mark.parametrize('invalid', ['9BAD_TOKEN', 'BROKEN-PUBLIC'])
-def test_startup_probe_omission_preserves_environment_name_validation(tmp_path, monkeypatch, invalid):
-    from dataclasses import replace
-    from astrid.core.execution import generic_host
-    from astrid.core.execution.executor import folder
-    from astrid.core.subprocess_env import SubprocessEnvPolicyError
-    _legacy_probe_manifest(tmp_path, ['PUBLIC_VALUE'])
-    original = folder.load_folder_executor
-
-    def loaded_with_invalid_projection(root):
-        definition = original(root)
-        return replace(definition, isolation=replace(definition.isolation, env_passthrough=(invalid,)))
-
-    monkeypatch.setattr(folder, 'load_folder_executor', loaded_with_invalid_projection)
-    with pytest.raises(SubprocessEnvPolicyError, match='valid environment variable name'):
-        generic_host._launch_worker_probe_environments((tmp_path,), {'PATH': '/usr/bin'})
-
-
-def test_startup_probes_keep_explicit_undeclared_credential_rejection(tmp_path):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    _legacy_probe_manifest(tmp_path, ['HIVEMIND_ANON_KEY'], fixed={'UNDECLARED_TOKEN': 'fixture'})
-    with pytest.raises(HostError, match='undeclared secret environment variable'):
-        _launch_worker_probe_environments((tmp_path,), {'PATH': '/usr/bin'})
-
 
 def invoke(tmp_path, host, definition, admission, *, inputs=None, dry_run=False, cancelled=None):
     attempt = tmp_path / "attempt"
@@ -861,6 +802,23 @@ def test_static_discover_admit_dry_run_and_owned_child(tmp_path):
     assert result.outputs == [] and sentinel.exists()
     host.register()
     assert runtime.registrations[0][1]["resource_keys"] == ["cpu"]
+
+
+def test_real_generic_host_worker_uses_utf8_mode_with_default_off_control(tmp_path, monkeypatch):
+    code = "def run(value='default'):\n    import sys\n    return sys.flags.utf8_mode\n"
+    _, host, _, definition, admission = pack(tmp_path, code=code)
+    # The real child and actual argv builder run; only the Darwin native
+    # process census used for post-exit custody is unavailable in this sandbox.
+    from astrid.core.execution import generic_host as generic_host_module
+    monkeypatch.setattr(generic_host_module, "_terminate_process_group", lambda process, **_kwargs: process.wait(timeout=3))
+    result = invoke(tmp_path, host, definition, admission)
+    assert result.ok
+    assert result.payload["action_result"] == 1
+    control = subprocess.run(
+        [sys.executable, "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env={**os.environ, "PYTHONUTF8": "0"}, check=True, capture_output=True, text=True,
+    )
+    assert control.stdout.strip() == "0"
 
 
 def test_python_action_receives_original_host_bridge_before_import(tmp_path):
@@ -1466,7 +1424,9 @@ def test_host_only_private_prepare_never_allocates_engine_and_rejects_replay(tmp
 
 @pytest.mark.parametrize('keep_attempt', [False, True])
 @pytest.mark.parametrize('drift', [False, True])
-def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(tmp_path, keep_attempt, drift):
+def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(
+    tmp_path, owned_process_groups, monkeypatch, keep_attempt, drift
+):
     """Real inherited command/HTTP receiver/owned termination, no task transport claim."""
     import time
     import urllib.request
@@ -1477,6 +1437,18 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
     host.discover()
     _, admission = host.admit(capability_kind='executor', capability_id='editorial.human_review')
     record = host.capabilities['editorial.human_review']
+    processes = []
+    original_track = host._track_process
+    def track(process):
+        original_track(process)
+        processes.append(process)
+    monkeypatch.setattr(host, '_track_process', track)
+    def reap_test_owned_processes():
+        for process in processes:
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=3)
+    owned_process_groups.add_cleanup(reap_test_owned_processes)
     attempt = tmp_path.resolve()/'review-attempt'; (attempt/'outputs').mkdir(parents=True)
     (attempt/'inputs.html').write_text('<html>review</html>'); (attempt/'data.json').write_text('{}')
     path = attempt/module._REVIEW_SESSION_NAME
@@ -1516,20 +1488,24 @@ def test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift(t
         assert host.client.heartbeat_progress == []
     finally:
         inherited.close(); parent.close()
+        reap_test_owned_processes()
 
 
 @pytest.mark.parametrize('field,value', [('process_pid', -1), ('process_birth_id', 'foreign'),
                                         ('receiver_url', 'http://example.com:12345/?token='+'a'*32)])
-def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, field, value):
+def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, monkeypatch, field, value):
     from types import SimpleNamespace
     from astrid.core.execution import generic_host as module
+    monkeypatch.setattr(module, '_process_birth_identity', lambda pid: f'birth-{pid}')
     attempt = tmp_path.resolve()
     path = attempt/module._REVIEW_SESSION_NAME
-    birth = module.process_birth_identity()
-    row = {'schema':'astrid.human-review-session/v1','process_pid':os.getpid(),
-           'process_birth_id':birth,'receiver_url':'http://127.0.0.1:12345/?token='+'a'*32}
+    birth = f'birth-{os.getpid()}'
+    row = {'schema':'astrid.human-review-session/v2','process_pid':os.getpid(),
+           'process_birth_id':birth,'receiver_url':'http://127.0.0.1:12345/?token='+'a'*32,
+           'launch_nonce':'a'*64}
     row[field]=value;path.write_text(json.dumps(row));path.chmod(0o600)
-    original = SimpleNamespace(pid=os.getpid(), _astrid_process_birth=birth)
+    original = SimpleNamespace(pid=os.getpid(), _astrid_process_birth=birth,
+                               _astrid_review_launch_nonce='a'*64)
     with pytest.raises(HostError, match='original child'):
         module._observe_owned_review_session(original, attempt)
     with pytest.raises(HostError, match='mismatch'):
@@ -1537,10 +1513,148 @@ def test_review_descriptor_cannot_adopt_foreign_process_or_receiver(tmp_path, fi
     assert path.exists()
 
 
-@pytest.mark.parametrize('kind', ['fifo', 'symlink', 'public-mode'])
-def test_review_descriptor_unsafe_file_is_bounded_and_retained(tmp_path, kind):
+def test_review_nonce_accepts_actual_receiver_across_launcher_pid_divergence(tmp_path, monkeypatch):
     from types import SimpleNamespace
     from astrid.core.execution import generic_host as module
+    monkeypatch.setattr(module, '_process_birth_identity', lambda pid: f'birth-{pid}')
+
+    attempt = tmp_path.resolve()
+    path = attempt / module._REVIEW_SESSION_NAME
+    nonce = 'a' * 64
+    receiver_pid = os.getpid()
+    row = {'schema':'astrid.human-review-session/v2', 'receiver_url':'http://127.0.0.1:12345/?token='+'a'*32,
+           'process_pid':receiver_pid, 'process_birth_id':f'birth-{receiver_pid}',
+           'launch_nonce':nonce}
+    path.write_text(json.dumps(row)); path.chmod(0o600)
+    launcher = SimpleNamespace(pid=receiver_pid + 50000, _astrid_process_birth='launcher-birth',
+                                _astrid_review_launch_nonce=nonce)
+
+    snapshot = module._observe_owned_review_session(launcher, attempt)
+
+    assert snapshot is not None and snapshot[2] == path.read_bytes()
+
+
+@pytest.mark.parametrize('nonce_state', ['wrong', 'missing', 'replay'])
+def test_review_nonce_rejects_wrong_missing_or_replayed_launch(tmp_path, monkeypatch, nonce_state):
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as module
+    monkeypatch.setattr(module, '_process_birth_identity', lambda pid: f'birth-{pid}')
+
+    attempt = tmp_path.resolve()
+    path = attempt / module._REVIEW_SESSION_NAME
+    expected = 'b' * 64
+    observed = 'a' * 64 if nonce_state in {'wrong', 'replay'} else None
+    row = {'schema':'astrid.human-review-session/v2', 'receiver_url':'http://127.0.0.1:12345/?token='+'a'*32,
+           'process_pid':os.getpid(), 'process_birth_id':f'birth-{os.getpid()}',
+           'launch_nonce':observed}
+    if nonce_state == 'missing':
+        row.pop('launch_nonce')
+    path.write_text(json.dumps(row)); path.chmod(0o600)
+    owner = SimpleNamespace(pid=os.getpid() + 50000, _astrid_review_launch_nonce=expected)
+
+    with pytest.raises(HostError, match='original child'):
+        module._observe_owned_review_session(owner, attempt)
+    assert path.exists()
+
+
+def test_managed_review_receiver_echoes_and_retires_its_private_launch_observation(tmp_path, monkeypatch):
+    from astrid.core.execution import process_group
+    from astrid.packs.editorial.actions.human_review import run as review
+
+    nonce = 'c' * 64
+    monkeypatch.setenv('ASTRID_HUMAN_REVIEW_LAUNCH_NONCE', nonce)
+    monkeypatch.setattr(process_group, 'process_birth_identity', lambda pid=None: 'receiver-birth')
+    path = tmp_path / review._RECEIVER_SESSION_NAME
+
+    owner = review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'a' * 32)
+
+    row = json.loads(path.read_bytes())
+    assert row == {'schema': review._RECEIVER_SESSION_SCHEMA,
+                   'receiver_url': 'http://127.0.0.1:12345/?token=' + 'a' * 32,
+                   'process_pid': os.getpid(), 'process_birth_id': 'receiver-birth',
+                   'launch_nonce': nonce}
+    review._retire_receiver_session(owner)
+    assert not path.exists()
+
+
+def test_managed_review_receiver_refuses_missing_launch_observation(tmp_path, monkeypatch):
+    from astrid.packs.editorial.actions.human_review import run as review
+
+    monkeypatch.delenv('ASTRID_HUMAN_REVIEW_LAUNCH_NONCE', raising=False)
+    path = tmp_path / review._RECEIVER_SESSION_NAME
+    with pytest.raises(review.HumanReviewInputError, match='launch observation'):
+        review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'a' * 32)
+    assert not path.exists()
+
+
+def test_review_child_receives_fresh_nonce_after_environment_sanitization(tmp_path, monkeypatch):
+    from astrid.core.execution import generic_host as module
+
+    root = Path(__file__).resolve().parents[3] / 'astrid/packs/editorial'
+    host = GenericPackHost(pack_roots=[root], client=FakeRuntime())
+    host.discover()
+    _, admission = host.admit(capability_kind='executor', capability_id='editorial.human_review')
+    record = host.capabilities['editorial.human_review']
+    attempt = tmp_path.resolve() / 'review-attempt'
+    (attempt / 'outputs').mkdir(parents=True)
+    (attempt / 'inputs.html').write_text('<html>review</html>')
+    (attempt / 'data.json').write_text('{}')
+    monkeypatch.setenv(module._REVIEW_LAUNCH_NONCE_ENV, 'ambient-value')
+    sanitized = {}
+    original_environment = host._child_environment
+    def child_environment(*args, **kwargs):
+        env, secrets = original_environment(*args, **kwargs)
+        sanitized.update(env)
+        assert module._REVIEW_LAUNCH_NONCE_ENV not in env
+        return env, secrets
+    monkeypatch.setattr(host, '_child_environment', child_environment)
+
+    launch = {}
+    class Child:
+        pid = 98123
+        returncode = 0
+        def poll(self): return 0
+        def communicate(self): return '', ''
+    process = Child()
+    def spawn(argv, **kwargs):
+        launch.update(argv=list(argv), env=dict(kwargs['env']), pass_fds=kwargs['pass_fds'])
+        return process
+    class Bridge:
+        launched_called = False
+        def inherited_fd(self): return 37
+        def launched(self): self.launched_called = True
+    bridge = Bridge()
+    monkeypatch.setattr(module, 'spawn_task_scope', spawn)
+    monkeypatch.setattr(module, 'process_birth_identity', lambda pid: f'birth-{pid}')
+    observed = []
+    def observe_owned(child, selected_attempt, previous=None):
+        observed.append((child._astrid_review_launch_nonce,
+                         launch['env'][module._REVIEW_LAUNCH_NONCE_ENV]))
+        return previous
+    monkeypatch.setattr(module, '_observe_owned_review_session', observe_owned)
+    monkeypatch.setattr(module, '_retire_owned_review_session', lambda selected_attempt, snapshot: None)
+    monkeypatch.setattr(module, '_terminate_process_group', lambda child: None)
+
+    result = host._run_command_definition(
+        record, {'html':str(attempt/'inputs.html'), 'data':str(attempt/'data.json'),
+                 'no_open':True, 'timeout':10}, attempt/'outputs', attempt,
+        admission=admission, child_bridge=bridge,
+    )
+
+    nonce = launch['env'][module._REVIEW_LAUNCH_NONCE_ENV]
+    assert re.fullmatch(r'[0-9a-f]{64}', nonce)
+    assert nonce != 'ambient-value'
+    assert module._REVIEW_LAUNCH_NONCE_ENV not in sanitized
+    assert launch['pass_fds'] == (37,) and bridge.launched_called
+    assert observed == [(nonce, nonce)]
+    assert result.process_id == process.pid and not host._active_processes
+
+
+@pytest.mark.parametrize('kind', ['fifo', 'symlink', 'public-mode'])
+def test_review_descriptor_unsafe_file_is_bounded_and_retained(tmp_path, monkeypatch, kind):
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as module
+    monkeypatch.setattr(module, '_process_birth_identity', lambda pid: f'birth-{pid}')
     attempt = tmp_path.resolve(); path = attempt/module._REVIEW_SESSION_NAME
     if kind == 'fifo':
         os.mkfifo(path, 0o600)
@@ -1548,7 +1662,7 @@ def test_review_descriptor_unsafe_file_is_bounded_and_retained(tmp_path, kind):
         target = attempt/'foreign'; target.write_text('{}'); path.symlink_to(target)
     else:
         path.write_text('{}'); path.chmod(0o644)
-    owner = SimpleNamespace(pid=os.getpid(), _astrid_process_birth=module.process_birth_identity())
+    owner = SimpleNamespace(pid=os.getpid(), _astrid_process_birth=f'birth-{os.getpid()}')
     with pytest.raises((HostError, OSError)):
         module._observe_owned_review_session(owner, attempt)
     with pytest.raises((HostError, OSError)):
@@ -1690,7 +1804,6 @@ def test_cli_retained_host_only_owns_canonical_attempt_namespace(tmp_path, monke
     if case == 'attempt_base': argv += ['--attempt-base', str(tmp_path / 'override')]
     monkeypatch.setenv('ASTRID_OUTPUT_ROOT', str(tmp_path if case == 'wrong_output' else output))
     if case == 'missing_output': monkeypatch.delenv('ASTRID_OUTPUT_ROOT')
-    monkeypatch.delenv('ASTRID_REMOTION_VALIDATION_LAUNCH', raising=False)
     monkeypatch.delenv('ASTRID_EXECUTION_TARGET_JSON', raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
     monkeypatch.setattr(module.signal, 'signal', lambda *args: None)
@@ -1935,7 +2048,7 @@ def test_cli_startup_phase_orders_real_consumer_boundaries(tmp_path, monkeypatch
     ready = tmp_path / 'ready.json'
     argv = ['host', '--pack-root', str(tmp_path / 'packs'), '--ready-file', str(ready)]
     if fault == 'registration': argv.append('--register')
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE', 'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT'):
+    for name in ('ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
     monkeypatch.setattr(module.signal, 'signal', lambda *a: None)
@@ -2005,7 +2118,7 @@ def test_cli_registration_runs_one_real_preflight_inside_fence(tmp_path, monkeyp
         argv += ['--run-task', 'unit-task', '--lease-token', 'unit-lease']
         monkeypatch.setattr(runtime, 'task', lambda task_id: {'id': task_id})
         monkeypatch.setattr(host, 'run_task', lambda task, **kw: {'task': task})
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(sys, 'argv', argv)
@@ -2076,7 +2189,7 @@ def test_managed_service_startup_failure_waits_for_requested_cleanup(tmp_path, m
         'host', 'run', '--pack-root', str(root), '--runtime-endpoint', 'http://127.0.0.1:1',
         '--credential-file', str(credential), '--register',
     ])
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(module.platform, 'install_stop_handlers', lambda *args: None)
@@ -2148,7 +2261,7 @@ def test_managed_service_registration_failure_does_not_publish_readiness(tmp_pat
         ['host', '--pack-root', str(root), '--ready-file', str(ready),
          '--runtime-endpoint', 'http://127.0.0.1:1', '--credential-file', str(credential), '--register'],
     )
-    for name in ('ASTRID_REMOTION_VALIDATION_LAUNCH', 'ASTRID_REMOTION_VALIDATION_ROLE',
+    for name in (
                  'ASTRID_EXECUTION_TARGET_JSON', 'ASTRID_OUTPUT_ROOT', 'ASTRID_HOST_READINESS_PROFILE_PATH'):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setattr(module.signal, 'signal', lambda *a: None)
@@ -2464,129 +2577,6 @@ def test_local_parent_collision_rejected_across_public_registries(tmp_path, monk
         orchestrators.load_default_registry(executor_registry=ExecutorRegistry((child,)))
 
 
-@pytest.mark.parametrize("kind", ["native", "command"])
-def test_v3_worker_probe_matches_actual_readiness_context(tmp_path, monkeypatch, kind):
-    from unittest.mock import patch
-    from astrid.core.execution import generic_host
-    from astrid.core.rendering import remotion_runtime
-
-    root, host, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    if kind == "command":
-        manifest["actions"]["calculate"]["invocation"] = {
-            "kind": "command", "command": {
-                "argv": ["{python_exec}", "-c", "pass"],
-                "input_args": [{"input": "value", "flag": "--value", "optional": True}],
-                "env": {"LC_ALL": "C.UTF-8"},
-            },
-        }
-        (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    record, = host.discover()
-    selected = tmp_path / "host" / "site-packages"
-    ambient = tmp_path / "caller" / "site-packages"
-    selected.mkdir(parents=True)
-    ambient.mkdir(parents=True)
-    launch = {
-        "HOME": str(tmp_path), "PATH": "/usr/bin", "LANG": "C.UTF-8",
-        "PYTHONPATH": str(selected), "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path),
-        "ASTRID_REMOTION_VALIDATION_ROLE": "host",
-    }
-    monkeypatch.setenv("PYTHONPATH", str(ambient))
-    variants = generic_host._launch_worker_probe_environments((root,), launch)
-    assert len(variants) == 3
-    assert all(str(ambient) not in value for variant in variants for value in variant.values())
-    captured = []
-
-    def validated(project, *, environment):
-        assert project == tmp_path
-        assert environment["ASTRID_REMOTION_VALIDATION_ROLE"] == "worker"
-        captured.append(remotion_runtime._registry_context(environment, generator=False))
-
-    monkeypatch.setattr(remotion_runtime, "_validated_runtime", validated)
-    # Only render-capable workers are validated at launch and checked at spawn.
-    monkeypatch.setattr(generic_host, "_record_may_render", lambda _record: True)
-    # Execution sees the explicit host launch, rather than the SDK caller's
-    # ambient imports. Exercise the genuine final child environment builder.
-    with patch.dict(os.environ, launch, clear=True):
-        explicit = None
-        if kind == "command":
-            explicit = {
-                "PYTHONPATH": os.pathsep.join((str(Path(generic_host.__file__).resolve().parents[3]),
-                                              *generic_host._dependency_pythonpath())),
-                **dict(record.definition.command.env),
-            }
-        host._child_environment(record, tmp_path / "attempt", explicit_env=explicit,
-                                readiness_worker_kind=kind)
-    index = 1 if kind == "native" else 2
-    assert captured == [remotion_runtime._registry_context(variants[index], generator=False)]
-    assert str(selected) in variants[index]["PYTHONPATH"]
-    if kind == "command":
-        assert variants[index]["PYTHONPATH"].split(os.pathsep)[:2] == [str(root), str(root.parent)]
-
-
-@pytest.mark.parametrize("credential", ["HIVEMIND_CONTRIBUTOR_KEY", "HIVEMIND_ANON_KEY"])
-def test_v3_startup_probes_omit_credentials_without_task_authority(tmp_path, credential):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    manifest["actions"]["calculate"]["isolation"] = {
-        "mode": "subprocess", "env_passthrough": ["PUBLIC_VALUE", credential]}
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    variants = _launch_worker_probe_environments((root,), {
-        "PATH": "/usr/bin", "PUBLIC_VALUE": "fixed-public", credential: "never-export-sentinel",
-        "UNDECLARED_TOKEN": "never-export-sentinel"})
-    assert len(variants) == 3
-    for variant in variants[1:]:
-        assert variant["PUBLIC_VALUE"] == "fixed-public"
-    for variant in variants:
-        assert credential not in variant and "UNDECLARED_TOKEN" not in variant
-        assert not any("never-export-sentinel" in value for value in variant.values())
-
-
-def test_v3_startup_probes_reject_fixed_undeclared_secret(tmp_path):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, _, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    manifest["actions"]["calculate"]["invocation"] = {
-        "kind": "command", "command": {"argv": ["{python_exec}", "-c", "pass"],
-        "input_args": [{"input": "value", "flag": "--value", "optional": True}],
-        "env": {"UNDECLARED_TOKEN": "never-export-sentinel"}}}
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    with pytest.raises(HostError, match="undeclared secret environment variable"):
-        _launch_worker_probe_environments((root,), {"PATH": "/usr/bin"})
-
-
-def test_v3_worker_probes_match_exact_host_roots_and_exclusions(tmp_path, monkeypatch):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    root, _, runtime, _, _ = pack(tmp_path)
-    manifest = yaml.safe_load((root / "pack.yaml").read_text())
-    parent = _local_parent_declaration()
-    parent["graph"]["child_actions"] = ["unrelated.calculate"]
-    parent["invocation"]["command"]["env"] = {"PATH": "/excluded-parent"}
-    manifest["actions"]["parent"] = parent
-    ordinary = json.loads(json.dumps(manifest["actions"]["calculate"]))
-    ordinary["metadata"]["local_orchestrator"] = False
-    manifest["actions"]["ordinary"] = ordinary
-    malformed = json.loads(json.dumps(parent))
-    malformed["metadata"]["local_orchestrator"] = "true"
-    manifest["actions"]["malformed"] = malformed
-    (root / "pack.yaml").write_text(yaml.safe_dump(manifest))
-    outside = tmp_path / "outside"
-    outside.mkdir()
-    outside_manifest = json.loads(json.dumps(manifest))
-    outside_manifest["id"] = "outside"
-    outside_manifest["actions"] = {"parent": parent}
-    outside_manifest["actions"]["parent"]["metadata"]["local_orchestrator"] = False
-    outside_manifest["actions"]["parent"]["invocation"]["command"]["env"] = {"PATH": "/outside-root"}
-    (outside / "pack.yaml").write_text(yaml.safe_dump(outside_manifest))
-    host = GenericPackHost(pack_roots=[root], client=runtime)
-    monkeypatch.setenv("ASTRID_PACKS_PATH", str(outside))
-    assert {row.id for row in host.discover()} == {"unrelated.calculate", "unrelated.ordinary"}
-    variants = _launch_worker_probe_environments((root,), {"PATH": "/usr/bin"})
-    assert len(variants) == 5
-    assert all(variant["PATH"] == "/usr/bin" for variant in variants)
-    assert not any(str(outside) in variant.get("PYTHONPATH", "") for variant in variants)
-
 
 @pytest.mark.parametrize("census", ["released", "live-group", "unavailable", "failure"])
 def test_wan_release_darwin_uses_complete_native_census_without_ps(monkeypatch, census):
@@ -2610,7 +2600,7 @@ def test_wan_release_darwin_uses_complete_native_census_without_ps(monkeypatch, 
         assert result["released"] is (census == "released")
 
 
-@pytest.mark.parametrize("platform", ["darwin", "linux"])
+@pytest.mark.parametrize("platform", ["darwin", "linux", "win32"])
 @pytest.mark.parametrize("phase", ["registry", "cleanup"])
 def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing(tmp_path, monkeypatch, platform, phase):
     import hashlib, json, subprocess
@@ -2618,6 +2608,8 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     import astrid.core.execution.generic_host as gh
     import astrid.core.execution.custody_broker as cb
     monkeypatch.setattr(gh.sys, "platform", platform)
+    if platform == "win32":
+        monkeypatch.setattr(gh, "_is_posix", lambda: False, raising=False)
     root = tmp_path / "engine"; root.mkdir()
     birth = "ps-lstart:Mon Oct 12 20:00:00 2026"
     config = b"{}"; digest = "sha256:" + hashlib.sha256(config).hexdigest()
@@ -2647,6 +2639,138 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     monkeypatch.setattr(gh.subprocess,"run",run)
     if phase == "registry": assert graph._measure_registry(root,"nonce",910002)["comfy_pid"] == 910002
     else: assert graph.abort()["engine"]["exit_code"] == 0
-    expected = ["lsof", *(["-O"] if platform == "darwin" else []), "-nP"]
-    expected += ["-a","-p","910002","-iTCP:8188","-sTCP:LISTEN"] if phase == "registry" else ["-t","-iTCP:8188","-sTCP:LISTEN"]
-    assert calls == [expected]
+    if platform == "win32":
+        assert calls == []
+    else:
+        expected = ["lsof", *(["-O"] if platform == "darwin" else []), "-nP"]
+        expected += ["-a","-p","910002","-iTCP:8188","-sTCP:LISTEN"] if phase == "registry" else ["-t","-iTCP:8188","-sTCP:LISTEN"]
+        assert calls == [expected]
+
+
+def test_native_engine_launch_uses_spawn_tree_with_bound_custody_configuration(tmp_path, monkeypatch):
+    import hashlib
+    import json
+    import subprocess
+    from types import SimpleNamespace
+    from astrid.core.execution import generic_host as gh
+    from astrid.core.execution import custody_broker as cb
+    from astrid.core.execution import vibecomfy_engine_adapter as adapter
+    monkeypatch.setattr(gh, 'process_birth_identity', lambda pid=None: f'birth-{os.getpid() if pid is None else pid}')
+
+    executable = tmp_path / 'engine.exe'
+    executable.write_bytes(b'engine fixture')
+    executable.chmod(0o700)
+    artifact = 'sha256:' + hashlib.sha256(executable.read_bytes()).hexdigest()
+    adapter_digest = 'sha256:' + hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest()
+    root = tmp_path / 'realm' / 'support' / 'engine'
+    scope = tmp_path / 'custody'
+    launch = {'session_root': str(root), 'config': {'ready_timeout_sec': 1},
+              'listener_argv': ['listener', '--bound'],
+              'adapter_pins': {'adapter_source_sha256': adapter_digest},
+              'source_revision': 'revision', 'source_content_digest': 'sha256:' + 'd' * 64}
+    profile = {'engine_executable': str(executable), 'engine_artifact_digest': artifact,
+               'engine_listener_executable': str(executable), 'engine_listener_artifact_digest': artifact,
+               'engine_launch': launch, 'session_config_digest': 'sha256:' + 'e' * 64}
+    request = {'profile': profile, 'custody_scope': str(scope), 'owner_epoch': 'epoch',
+               'operation_id': 'operation', 'channel_id': 'channel'}
+    source_observer = SimpleNamespace(pins={'selected': 'source-pin'})
+    monkeypatch.setattr(adapter.SelectedSourceObserver, 'from_selected_launch',
+                        lambda _: source_observer)
+
+    brokers = []
+    child_launches = []
+    class Broker:
+        def __init__(self, *, role, **kwargs):
+            self.role = role
+            self.channel = None
+            self.registration = {'pid': 202, 'identity': {'birth_id': 'listener-birth'}}
+            self.role_authority = SimpleNamespace(ready_reference=lambda: {'role': role})
+            brokers.append(self)
+        def child_environment(self, argv, *, start_new_session):
+            child_launches.append((self.role, list(argv), start_new_session))
+            return {self.role.upper() + '_CUSTODY': 'bound'}
+        def wait_until_sealed(self): pass
+        def release_suspended_launch(self, *, expected_pid):
+            assert expected_pid == 202
+
+    class Custody:
+        def __init__(self, **kwargs):
+            self._handles = {}
+        def bind_launch(self, process):
+            self._handles[process.pid] = ('engine-birth', object())
+        def start_observer(self): pass
+        def release_launch(self): pass
+
+    monkeypatch.setattr(cb, 'RoleBoundCustodyBroker', Broker)
+    monkeypatch.setattr(cb, 'ProcessCustody', Custody)
+    monkeypatch.setattr(cb, 'custody_wrapper_argv', lambda selected: ['/custody-wrapper', selected])
+    process = SimpleNamespace(pid=201, poll=lambda: None)
+    spawn_calls = []
+    def spawn_tree(argv, **kwargs):
+        spawn_calls.append((list(argv), kwargs))
+        return process
+    monkeypatch.setattr(gh.platform, 'spawn_tree', spawn_tree)
+    monkeypatch.setattr(gh.subprocess, 'Popen', lambda *a, **k: pytest.fail('engine must use spawn_tree'))
+    monkeypatch.setattr(gh, 'observe_tree', lambda proc: setattr(proc, '_astrid_tree_members', {201: 'engine-birth', 202: 'listener-birth'}))
+
+    graph = gh._NativeEngineGraph(request=request)
+    graph._source_observer = source_observer
+    graph._start_native_control = lambda: None
+    graph._measure_registry = lambda selected_root, nonce, listener_pid: {'comfy_pid': listener_pid}
+    result = graph.prepare()
+
+    assert len(spawn_calls) == 1
+    argv, options = spawn_calls[0]
+    assert argv == ['/custody-wrapper', str(executable)]
+    assert options['cwd'] == str(root.parents[2])
+    assert options['stdin'] is subprocess.DEVNULL and options['stdout'] is subprocess.DEVNULL
+    assert options['stderr'].name == str(root / 'daemon.log') and options['close_fds'] is True
+    assert options['env']['ENGINE_CUSTODY'] == 'bound'
+    engine_launch = next(row for row in child_launches if row[0] == 'engine')
+    assert engine_launch[2] is True
+    payload = json.loads(engine_launch[1][2])
+    assert payload['operation_id'] == 'operation' and payload['channel_id'] == 'channel'
+    assert payload['owner_epoch'] == 'epoch' and payload['custody_scope'] == str(scope)
+    assert payload['launch_token'] == graph._launch_nonce
+    assert payload['source_observation_pins'] == source_observer.pins
+    assert payload['listener_registration'] == {'ENGINE_LISTENER_CUSTODY': 'bound'}
+    listener_launch = next(row for row in child_launches if row[0] == 'engine_listener')
+    assert listener_launch == ('engine_listener', ['listener', '--bound'], False)
+    assert result['processes']['engine'] == {'pid': 201, 'birth_id': 'engine-birth'}
+    assert result['processes']['engine_listener'] == {'pid': 202, 'birth_id': 'listener-birth'}
+    assert result['engine_binding'] == {'supervisor_pid': 201, 'listener_pid': 202,
+                                        'listener_parent_pid': 201, 'socket_owner_pid': 202}
+
+
+@pytest.mark.parametrize("acl_allows", [True, False])
+def test_cli_credential_admission_uses_windows_acl_not_mode_bits(tmp_path, monkeypatch, acl_allows):
+    from astrid.core.execution import generic_host as module
+
+    credential = tmp_path / "credential"
+    credential.write_text("token")
+    credential.chmod(0o600)
+    real_stat = Path.stat
+    def windows_stat(candidate, *args, **kwargs):
+        result = real_stat(candidate, *args, **kwargs)
+        if candidate == credential:
+            return os.stat_result((stat.S_IFREG | 0o666, *result[1:]))
+        return result
+    monkeypatch.setattr(Path, "stat", windows_stat)
+    monkeypatch.setattr(module.platform, "is_owner_only", lambda _path: acl_allows)
+    monkeypatch.setattr(sys, "argv", ["generic-host", "--pack-root", str(tmp_path),
+                                       "--credential-file", str(credential)])
+
+    class ReachedCredentialRead(Exception):
+        pass
+
+    def reached(*_args):
+        raise ReachedCredentialRead
+
+    monkeypatch.setattr(module, "_compose_cli_boot_manifest", reached)
+    if acl_allows:
+        with pytest.raises(ReachedCredentialRead):
+            module._cli()
+    else:
+        with pytest.raises(SystemExit) as error:
+            module._cli()
+        assert error.value.code == 2

@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import subprocess
 import sys
 
@@ -56,6 +56,24 @@ def _source_checkout(tmp_path: Path) -> Path:
     return checkout
 
 
+def _simulate_windows_path_semantics(monkeypatch) -> None:
+    path_type = type(Path())
+    relative_to = path_type.relative_to
+
+    def windows_relative_to(path, other, *args, **kwargs):
+        relative = relative_to(path, other, *args, **kwargs)
+        return PureWindowsPath(*relative.parts)
+
+    monkeypatch.setattr(path_type, "relative_to", windows_relative_to)
+    monkeypatch.setattr(path_type, "parts", property(lambda path: PureWindowsPath(path.as_posix()).parts))
+    monkeypatch.setattr(
+        path_type,
+        "__lt__",
+        lambda path, other: tuple(part.casefold() for part in path.parts)
+        < tuple(part.casefold() for part in other.parts),
+    )
+
+
 def test_startup_attestation_normalizes_and_records_exact_target(tmp_path: Path) -> None:
     checkout = _source_checkout(tmp_path)
     target = {
@@ -98,6 +116,27 @@ def test_source_closure_digest_changes_when_sdk_or_launcher_changes(tmp_path: Pa
         "# sdk changed\n", encoding="utf-8"
     )
     assert source_checkout_closure_digest(checkout) != before
+
+
+def test_source_digest_preserves_posix_revision_and_windows_component_order(tmp_path: Path, monkeypatch) -> None:
+    checkout = tmp_path / "digest-tree"
+    root = checkout / "astrid" / "packs"
+    files = {
+        "a/x.txt": b"x",
+        "a.txt": b"dot",
+        "MiXeD/Child.py": b"upper",
+        "Z.py": b"upperZ",
+        "a.py": b"lowerA",
+    }
+    for relative, content in files.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+
+    expected = "9fc07210a07049a2a7367f8ffa27b68a9cfbbe5e17ba1e65aa807e4411c10bf2"
+    assert source_checkout_digest(checkout) == expected
+    _simulate_windows_path_semantics(monkeypatch)
+    assert source_checkout_digest(checkout) == expected
 
 
 def test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client() -> None:

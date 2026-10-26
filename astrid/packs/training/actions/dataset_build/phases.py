@@ -502,6 +502,8 @@ def _run_human_review(run_dir: Path, review_data_path: Path, state_path: Path, r
     media_dir = media_root or run_dir / "clips"
     cmd = [
         sys.executable,
+        "-X",
+        "utf8",
         "-m",
         "astrid.packs.editorial.actions.human_review.run",
         "--html",

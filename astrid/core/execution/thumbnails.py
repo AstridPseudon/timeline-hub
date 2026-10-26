@@ -104,6 +104,7 @@ def _write_video_thumbnail(
     try:
         completed = subprocess.run(
             command,
+            stdin=subprocess.DEVNULL,
             check=False,
             capture_output=True,
             text=True,

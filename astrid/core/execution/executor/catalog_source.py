@@ -87,7 +87,7 @@ def _cache_key(source: GitExecutorSource) -> Path:
 
 
 def _run_git(command: tuple[str, ...]) -> None:
-    completed = subprocess.run(list(command), check=False, capture_output=True, text=True)
+    completed = subprocess.run(list(command), stdin=subprocess.DEVNULL, check=False, capture_output=True, text=True)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise CatalogSourceError(f"command failed: {' '.join(command)}" + (f": {detail}" if detail else ""))

@@ -13,6 +13,7 @@ from .backend import Backend
 from .core import (
     BackupSpaceError,
     Installer,
+    VerificationError,
     absolute,
     current,
     read_json,
@@ -46,6 +47,9 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--data-root", type=Path, help="absolute workspace support directory")
     result.add_argument("--manifest", type=Path, help="local copy of the pinned hosted install manifest")
     result.add_argument("--uv", type=Path, help="absolute pinned uv executable supplied by the bootstrap")
+    result.add_argument("--sandbox", action="store_true",
+                        help="run inside a seccomp sandbox such as OpenShell: Runtime's sandbox process control "
+                             "(docs/setup/openshell-sandbox.md); selected for this install or update")
     return result
 
 
@@ -57,13 +61,16 @@ def main(argv: list[str] | None = None) -> int:
         parser().error("--delete-data is only valid for uninstall.")
     if args.managed_by and (args.root is None or not args.root.expanduser().is_absolute()):
         parser().error("--managed-by pinokio requires an absolute --root.")
+    if args.sandbox and mode not in ("install", "update"):
+        parser().error("--sandbox is only valid for install or update.")
     from runtime_protocol import platform
     log = platform.log_dir() / "install.log"
     try:
         platform.private_directory(log.parent)
         root = absolute(args.root or default_program_root(Path.home(), sys.platform))
         uv = args.uv or Path(os.environ.get("ASTRID_INSTALL_UV", bootstrap_root(Path.home(), sys.platform) / ("uv.exe" if sys.platform == "win32" else "uv")))
-        backend = Backend(root, log, uv)
+        process_control = ("sandbox" if args.sandbox else "strict") if mode in {"install", "update"} else None
+        backend = Backend(root, log, uv, process_control=process_control)
         lock_path = installer_lock_path(Path.home(), sys.platform)
         platform.private_directory(lock_path.parent)
         with lock_path.open("a+b") as lock:
@@ -104,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
                         write_json(backend.service.selection, recorded)
                 if mode == "doctor" and not args.root and recorded.get("managed_by") == "pinokio":
                     root = absolute(recorded["program_root"])
-                    backend = Backend(root, log, uv)
+                    backend = Backend(root, log, uv, process_control=process_control)
                 prior = read_json(root / "install.json")
                 managed_by = args.managed_by or (prior.get("managed_by") if args.root or mode == "doctor" else None)
                 if (managed_by is None and (args.root or mode == "doctor")
@@ -138,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
                     if args.root and recorded_root != root:
                         raise ValueError(f"The login service already belongs to {recorded_root}.")
                     root = recorded_root
-                    backend = Backend(root, log, uv)
+                    backend = Backend(root, log, uv, process_control=process_control)
                     prior = read_json(root / "install.json")
                 if not recorded and prior.get("owner") == LABEL and prior.get("data_root"):
                     recorded = {"data_root": prior["data_root"]}
@@ -198,5 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         print(FAILURE_MESSAGE)
         if isinstance(failure, (BackupSpaceError, ValueError)):
             print(str(failure))
+        elif isinstance(failure, VerificationError) and failure.safe_message:
+            print(failure.safe_message)
         print(f"Details: {log}")
         return 1

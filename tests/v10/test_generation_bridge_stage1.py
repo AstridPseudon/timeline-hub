@@ -140,7 +140,7 @@ def test_recipe_round_trips_through_normal_executor_argv() -> None:
         ),
         load_default_registry(),
     )
-    parsed = build_parser().parse_args(list(command[3:]))
+    parsed = build_parser().parse_args(list(command[command.index("-m") + 2:]))
     assert parsed.shot_generation_recipe == recipe
 
 
@@ -162,7 +162,7 @@ def test_recipe_round_trips_through_generic_dry_run_argv() -> None:
         python_exec="python",
         out="/tmp/stage",
     )
-    parsed = build_parser().parse_args(command[3:])
+    parsed = build_parser().parse_args(command[command.index("-m") + 2:])
     assert parsed.shot_generation_recipe == recipe
 
 

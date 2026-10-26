@@ -20,6 +20,16 @@ ROOT = Path(__file__).resolve().parents[3]
 LOCAL_EFFECT_SMOKE_FIXTURE = ROOT / "tests" / "fixtures" / "local_effect_smoke"
 
 
+def _lock_receipt(kwargs: dict[str, object]) -> str:
+    env = kwargs.get("env", {})
+    if not isinstance(env, dict):
+        return ""
+    token = env.get(render_remotion.remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+    if not isinstance(token, str):
+        return ""
+    return render_remotion.remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token
+
+
 @pytest.fixture(autouse=True)
 def _trusted_node_for_render_tests(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     node = tmp_path / "node"
@@ -126,7 +136,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(prefix="render-registry-stale-") as tmp_text:
             tmp = Path(tmp_text)
-            project_dir, _composition_src = self._write_fake_remotion_project(tmp)
+            project_dir, composition_src = self._write_fake_remotion_project(tmp)
             state = render_remotion._effective_registry_state(None)
             render_remotion._write_registry_state(project_dir, state)
             for output_path in render_remotion._registry_output_paths(project_dir):
@@ -138,7 +148,18 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
 
             self.assertFalse(render_remotion._registry_outputs_match_state(project_dir, state))
 
-            with mock.patch.object(render_remotion.subprocess, "run") as run_mock:
+            def fake_generate(*_args, **_kwargs):
+                for kind in ("effects", "animations", "transitions"):
+                    (composition_src / f"{kind}.generated.ts").write_text(
+                        render_remotion.gen_effect_registry.generate_element_registry(kind),
+                        encoding="utf-8",
+                    )
+                command = _args[0]
+                return subprocess.CompletedProcess(command, 0, stdout=_lock_receipt(_kwargs), stderr="")
+
+            with mock.patch.object(
+                render_remotion.subprocess, "run", side_effect=fake_generate
+            ) as run_mock:
                 render_remotion._regenerate_element_registries(project_dir, None)
 
         run_mock.assert_called_once()
@@ -167,10 +188,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
                 # actual generated registries into the (temp) composition src
                 # so the render-admission effect check sees the real EFFECT_IDS
                 # (the fixture's local effect must be mountable).
-                if (
-                    len(command) >= 2
-                    and str(command[0]).endswith("gen_effect_registry.py")
-                ):
+                if any(str(part).endswith("gen_effect_registry.py") for part in command):
                     env = kwargs.get("env", {})
                     src = env.get("ASTRID_TIMELINE_COMPOSITION_SRC")
                     if src:
@@ -180,7 +198,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
                                 render_remotion.gen_effect_registry.generate_element_registry(kind),
                                 encoding="utf-8",
                             )
-                    return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                    return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
                 if (
                     len(command) >= 3
                     and Path(command[0]).name == "node"
@@ -201,7 +219,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
                     self.assertEqual(staged_badge.read_text(encoding="utf-8"), "fixture badge asset\n")
                     self.assertEqual(staged_palette.read_text(encoding="utf-8"), '{"accent":"cyan"}\n')
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion, "REPO_ROOT", project_root),

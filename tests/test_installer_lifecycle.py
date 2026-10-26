@@ -1,6 +1,7 @@
 """Lifecycle coverage for reinstalling a kept workspace and installed doctor."""
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -15,7 +16,6 @@ from astrid.sdk import storage_root
 
 
 def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_path, monkeypatch):
-    from astrid.core.rendering.remotion_runtime import probe_context
     from astrid.installer.backend import Backend
 
     monkeypatch.delenv("PYTHONUTF8", raising=False)
@@ -28,7 +28,7 @@ def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_pa
     ]))
 
     assert environment["PYTHONIOENCODING"] == "utf-8"
-    probe_context(environment=environment, python_executable=sys.executable)
+    assert environment["HOME"] == str(tmp_path)
 
 
 class LifecycleBackend:
@@ -145,6 +145,58 @@ def test_fresh_install_runs_skills_sync_after_verify(tmp_path):
     assert names.index("verify") < names.index("sync_skills") < names.index("finish")
 
 
+def test_reinstall_without_sandbox_rewrites_setting_after_sandbox_install(tmp_path):
+    from runtime_protocol import process_control
+    from astrid.installer.backend import Backend
+
+    root, data = tmp_path / "program", tmp_path / "data"
+    support = data / "runtime"
+    support.mkdir(parents=True)
+    realm = {"realm_id": "kept-realm", "realm_root": str(data / "runtime/realms/kept-realm")}
+
+    for expected in ("sandbox", "strict"):
+        backend = Backend.__new__(Backend)
+        backend.process_control = expected
+        calls = []
+        version_root = root / "versions" / "candidate"
+
+        def stage(_manifest, _root, _data):
+            version_root.mkdir(parents=True)
+            version = Version(version_root, version_root / "py/bin/python", version_root / "profile.json", {})
+            version.python.parent.mkdir(parents=True)
+            version.python.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            write_json(version_root / "version.json", version.document())
+            return version
+
+        def runtime(_version, _data, *args, **_kwargs):
+            calls.append(args)
+            if args[:2] == ("workspace", "inspect"):
+                return realm
+            assert args[:2] == ("workspace", "attach")
+            setting = args[args.index("--process-control") + 1]
+            process_control.write_setting(support, setting)
+            return realm
+
+        backend.existing = lambda _data: None
+        backend.has_workspace = lambda _data: True
+        backend.reinstallable = lambda _data: True
+        backend.stage = stage
+        backend.runtime = runtime
+        backend.register = lambda *_args: None
+        backend.start = lambda *_args: None
+        backend.verify = lambda *_args: None
+        backend.sync_skills = lambda *_args: None
+        backend.finish = lambda *_args: None
+        backend.open = lambda: None
+
+        Installer(root, data, backend, say=lambda _line: None).run("install", {})
+
+        assert calls[-1][-2:] == ("--process-control", expected)
+        assert process_control.read_setting(support) == expected
+        (root / "current").unlink()
+        shutil.rmtree(version_root)
+
+
 def test_upgrade_runs_skills_sync_after_verify(tmp_path):
     root, data = tmp_path / "program", tmp_path / "data"
     old_root = root / "versions" / "old"
@@ -196,7 +248,7 @@ def test_backend_skill_sync_logs_output_and_failure_result(tmp_path, monkeypatch
     version = Version(tmp_path / "version", Path(sys.executable), tmp_path / "profile.json", {})
     backend.sync_skills(version)
 
-    assert calls[0][0] == [Path(sys.executable), "-I", "-m", "astrid.skills", "sync"]
+    assert calls[0][0] == [Path(sys.executable), "-X", "utf8", "-I", "-m", "astrid.skills", "sync"]
     assert calls[0][2] == 60
     assert "sync diagnostic output" in log.read_text(encoding="utf-8")
     assert "Astrid skills sync failed (CalledProcessError)." in log.read_text(encoding="utf-8")
@@ -373,7 +425,7 @@ def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypat
     message = "There is not enough free disk space to back up your workspace."
     monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
 
-    def no_space(*_args):
+    def no_space(*_args, **_kwargs):
         raise BackupSpaceError(message)
 
     monkeypatch.setattr(cli, "Backend", no_space)
@@ -383,7 +435,33 @@ def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypat
     assert message in (tmp_path / "logs/install.log").read_text()
 
 
-def test_cli_loads_manifest_when_current_pointer_targets_missing_interpreter(monkeypatch, tmp_path):
+def test_cli_shows_safe_verification_context_but_not_raw_diagnostics(tmp_path, monkeypatch, capsys):
+    from runtime_protocol import platform
+
+    from astrid.installer import cli
+    from astrid.installer.core import VerificationError
+
+    monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
+    safe = f"pack-host state=restarting reason=worker exited during startup last_exit=7; log={tmp_path / 'service-pack-host.log'}"
+
+    def verification_failed(*_args, **_kwargs):
+        raise VerificationError(
+            "raw private-token-should-not-appear",
+            safe_message=safe,
+        )
+
+    monkeypatch.setattr(cli, "Backend", verification_failed)
+
+    assert cli.main(["--root", str(tmp_path / "program")]) == 1
+    output = capsys.readouterr().out
+    assert safe in output
+    assert "private-token-should-not-appear" not in output
+
+
+@pytest.mark.parametrize(("sandbox_flag", "expected_control"), [(None, "strict"), ("--sandbox", "sandbox")])
+def test_cli_loads_manifest_when_current_pointer_targets_missing_interpreter(
+    monkeypatch, tmp_path, sandbox_flag, expected_control
+):
     from runtime_protocol import platform
 
     from astrid.installer import cli
@@ -408,9 +486,11 @@ def test_cli_loads_manifest_when_current_pointer_targets_missing_interpreter(mon
     uv.write_text("", encoding="utf-8")
     record = {"owner": LABEL, "program_root": str(root), "data_root": str(data)}
     backend = LifecycleBackend(root, data)
+    process_controls = []
 
     class CliBackend(LifecycleBackend):
-        def __new__(cls, *_args, **_kwargs):
+        def __new__(cls, *_args, **kwargs):
+            process_controls.append(kwargs["process_control"])
             backend.service = SimpleNamespace(recorded=lambda: record)
             return backend
 
@@ -425,12 +505,16 @@ def test_cli_loads_manifest_when_current_pointer_targets_missing_interpreter(mon
     monkeypatch.setattr(cli, "validate_manifest", lambda _value: {"pinned": True})
     monkeypatch.setattr(cli, "download", lambda *_args: pytest.fail("manifest should be read from disk"))
 
-    result = cli.main(["--root", str(root), "--data-root", str(data),
-                       "--manifest", str(manifest_path), "--uv", str(uv)])
+    arguments = ["--root", str(root), "--data-root", str(data),
+                 "--manifest", str(manifest_path), "--uv", str(uv)]
+    if sandbox_flag:
+        arguments.append(sandbox_flag)
+    result = cli.main(arguments)
 
     assert result == 0
     assert backend.staged_manifest == {"pinned": True}
     assert any(call[0] == "attach" for call in backend.calls)
+    assert process_controls == [expected_control, expected_control]
 
 
 def test_repeat_uninstall_removes_bootstrap_recreated_program_root(tmp_path, monkeypatch):

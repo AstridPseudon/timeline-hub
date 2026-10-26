@@ -29,6 +29,8 @@ def run_subprocess(
 
     Raises :class:`AstridError` when the child exits non-zero.
     """
+    if kwargs.get("stdin") is None and kwargs.get("input") is None:
+        kwargs["stdin"] = subprocess.DEVNULL
     proc = subprocess.run(cmd, capture_output=True, text=True, **kwargs)
 
     if proc.returncode != 0:

@@ -59,6 +59,33 @@ def _last_logged_error(log: Path, *, tail: int = 65536) -> str | None:
     return found
 
 
+def _last_service_log(log: Path, *, tail: int = 8192) -> str | None:
+    try:
+        with log.open("rb") as stream:
+            stream.seek(max(0, log.stat().st_size - tail))
+            value = stream.read().decode("utf-8", "replace").strip()
+        return value or None
+    except OSError:
+        return None
+
+
+def _classify_services(services, ready_file: Path) -> tuple[str, dict | None, dict | None]:
+    """Classify one health snapshot as ready, crashed, or still starting."""
+    if not isinstance(services, list):
+        services = []
+    pack_host = next((service for service in services
+                      if isinstance(service, dict) and service.get("name") == "pack-host"), None)
+    failed = next((service for service in services
+                   if isinstance(service, dict) and service.get("state") == "failed"), None)
+    if failed is not None:
+        return "crashed", pack_host, failed
+    if pack_host and pack_host.get("state") == "running" and ready_file.is_file():
+        return "ready", pack_host, None
+    if pack_host and (pack_host.get("restart_count", 0) > 0 or pack_host.get("last_exit") is not None):
+        return "crashed", pack_host, None
+    return "starting", pack_host, None
+
+
 def _runtime_json(output: str) -> dict:
     """Runtime's one JSON result, after any stderr notes merged into output."""
     start = next((match.start() for match in re.finditer(r"^\{", output, re.MULTILINE)), 0)
@@ -66,9 +93,16 @@ def _runtime_json(output: str) -> dict:
 
 
 class Backend:
-    def __init__(self, root: Path, log: Path, uv: Path, *, say=print, managed_by: str | None = None):
+    def __init__(self, root: Path, log: Path, uv: Path, *, say=print,
+                 process_control: str | None = None, managed_by: str | None = None):
         self.root, self.log, self.uv, self.say = root, log, uv, say
         self.managed_by = managed_by
+        # None keeps the workspace's current setting (strict on a new one).
+        self.process_control = process_control
+        if process_control:
+            from runtime_protocol import platform
+
+            platform.configure_process_control(process_control)  # this process signals too
         self.service = Service(root, log, self.run, say=say)
 
     def run(self, argv, *, extra_env=None, cwd=None, timeout=1800, clean_bun_env=False) -> str:
@@ -90,24 +124,43 @@ class Backend:
             raise subprocess.CalledProcessError(result.returncode, [str(argv[0])], output=result.stdout)
         return result.stdout.strip()
 
-    def install_remotion_dependencies(self, agent: Path, env: dict[str, str], npm: Path) -> None:
+    def install_remotion_dependencies(self, agent: Path, env: dict[str, str], npm: Path) -> bool:
         """Install the renderer's frozen dependencies, reusing an identical lock."""
         remotion = agent / "remotion"
         lock_hash = hashlib.sha256((remotion / "package-lock.json").read_bytes()).hexdigest()
         modules = remotion / "node_modules"
         marker = modules / ".astrid-package-lock.sha256"
-        if (modules.is_dir() and marker.is_file()
+        if not (modules.is_dir() and marker.is_file()
                 and marker.read_text(encoding="ascii").strip() == lock_hash):
-            return
-        # Node's official archives expose npm through this JavaScript entrypoint
-        # on every OS; neither shell shims nor an ambient npm are required.
-        self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
-                 cwd=remotion, extra_env=env)
-        marker.write_text(lock_hash + "\n", encoding="ascii")
+            # Node's official archives expose npm through this JavaScript entrypoint
+            # on every OS; neither shell shims nor an ambient npm are required.
+            try:
+                self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
+                         cwd=remotion, extra_env=env)
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+                self.say(f"Rendering unavailable: Remotion npm ci failed ({self._command_failure(exc)}). Check the installer log and retry the install.")
+                return False
+            marker.write_text(lock_hash + "\n", encoding="ascii")
+        # Renders never download: fetch Remotion's browser now, once per Remotion
+        # version into the shared cache (a no-op when it is already there).
+        try:
+            self.run([env["ASTRID_NODE_EXECUTABLE"], remotion / "scripts" / "fetch-shared-browser.mjs"],
+                     cwd=remotion, extra_env=env)
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            self.say(f"Rendering unavailable: Remotion browser setup failed ({self._command_failure(exc)}). Check network access and retry the install.")
+        return True
+
+    @staticmethod
+    def _command_failure(exc: Exception) -> str:
+        if isinstance(exc, subprocess.CalledProcessError):
+            return f"exit code {exc.returncode}"
+        if isinstance(exc, subprocess.TimeoutExpired):
+            return "timed out"
+        return str(exc)
 
     def runtime(self, version: Version | None, data: Path, *args, profile=False, timeout=1800) -> dict:
         python = version.python if version else Path(sys.executable)
-        argv = [python, "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
+        argv = [python, "-X", "utf8", "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
         if profile and version:
             argv += ["--source-manifest", str(version.profile)]
         result = _runtime_json(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
@@ -189,7 +242,7 @@ class Backend:
             "Path(sys.argv[6]).write_text(json.dumps(value, indent=2, sort_keys=True)+'\\n', encoding='utf-8')"
         )
         self.run(
-            [python, "-I", "-c", script, str(agent), str(data), str(python), bun,
+            [python, "-X", "utf8", "-I", "-c", script, str(agent), str(data), str(python), bun,
              str(chat_cwd) if chat_cwd else "", str(services_path)],
             extra_env={**env, **chat_options, "ASTRID_INSTALL_PROGRAM_ROOT": str(self.root)},
         )
@@ -237,6 +290,12 @@ class Backend:
         if self.managed_by != "pinokio":
             self.service.disable()
         if version is not None and not version.python.is_file():
+            version = None
+        if self.process_control == "sandbox":
+            # An install from before sandbox mode cannot signal inside the
+            # sandbox, so it cannot stop itself. Record the mode now and stop
+            # with this installer's own Runtime, which reads it.
+            self._write_process_control(data)
             version = None
         discovery = data / "runtime" / "discovery.json"
         owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
@@ -348,7 +407,7 @@ class Backend:
                       "key=Path(sys.argv[3]); "
                       "restore_backup(sys.argv[1],sys.argv[2],**({'key_path':key} if key.is_file() else {}))")
             retained_key = destination / "support" / "runtime" / "backup-auth.key"
-            self.run([old.python, "-I", "-c", script, destination / "realm", restored, retained_key],
+            self.run([old.python, "-X", "utf8", "-I", "-c", script, destination / "realm", restored, retained_key],
                      extra_env=old.env)
         failed = realm_root.with_name(realm_root.name + ".failed-" + uuid.uuid4().hex[:8])
         # Recovery may replay after a process was killed between the two
@@ -428,20 +487,21 @@ class Backend:
                         prior.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)) if prior else str(DEFAULT_DOOR_PORT)),
                     "PATH": str(python.parent) + os.pathsep + env["PATH"]})
         npm = binary(folder / "tools" / "node", "npm-cli.js")
-        self.install_remotion_dependencies(agent, env, npm)
+        npm_installed = self.install_remotion_dependencies(agent, env, npm)
         # The lockfile's transitive @banodoco/timeline-schema package is the
         # source used by host_bootstrap. Install its Python subtree from this
         # candidate's npm tree so the environment follows the same pinned
         # package as the Remotion bundle.
-        schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
-        self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
+        if npm_installed:
+            schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
+            self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
         services_path = self._declare_services(
             folder=folder, agent=agent, data=data, python=python,
             bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
         )
         profile = folder / "profile.json"
         # Compute the admitted source identity in the installed environment.
-        digest = self.run([python, "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
+        digest = self.run([python, "-X", "utf8", "-I", "-c", "from astrid.core.execution.generic_host import source_checkout_digest; import pathlib,sys; print(source_checkout_digest(pathlib.Path(sys.argv[1])))", agent], extra_env=env)
         write_json(profile, {"profile": "astrid", "runtime_checkout": str(runtime),
                              "source_checkout": str(agent), "runtime_environment": str(environment),
                              "source_digest": digest, "service_declaration": str(services_path)})
@@ -453,17 +513,28 @@ class Backend:
     def create(self, version: Version, data: Path) -> dict:
         realm_id = str(uuid.uuid4())
         return self.runtime(version, data, "workspace", "create", "--realm-root",
-                            str(data / "runtime" / "realms" / realm_id), "--realm-id", realm_id, profile=True)
+                            str(data / "runtime" / "realms" / realm_id), "--realm-id", realm_id,
+                            *self._process_control_args(), profile=True)
 
     def attach_existing(self, version: Version, data: Path) -> dict:
         realm = self.workspace(version, data)
         return self.runtime(version, data, "workspace", "attach", "--realm-root", realm["realm_root"],
-                            "--realm-id", realm["realm_id"], profile=True)
+                            "--realm-id", realm["realm_id"], *self._process_control_args(), profile=True)
+
+    def _write_process_control(self, data: Path) -> None:
+        from runtime_protocol import process_control
+
+        support = data / "runtime"
+        if support.is_dir() and process_control.read_setting(support) != self.process_control:
+            process_control.write_setting(support, self.process_control)
+
+    def _process_control_args(self) -> tuple[str, ...]:
+        return ("--process-control", self.process_control) if self.process_control else ()
 
     def doctor(self, version: Version, data: Path, bundle: Path) -> Path:
         bundle = absolute(bundle)
         before = bundle.stat() if bundle.exists() else None
-        argv = [version.python, "-I", "-m", "astrid", "doctor", "--bundle", bundle]
+        argv = [version.python, "-X", "utf8", "-I", "-m", "astrid", "doctor", "--bundle", bundle]
         try:
             self.run(argv, extra_env={**version.env, "ASTRID_RUNTIME_DATA_ROOT": str(data)})
         except subprocess.CalledProcessError:
@@ -476,6 +547,10 @@ class Backend:
 
     def upgrade(self, version: Version, data: Path) -> None:
         self.runtime(version, data, "upgrade", profile=True)
+        if self.process_control:
+            # Runtime upgrade preserves support metadata. Apply the latest
+            # install flag before the candidate is started by the service.
+            self._write_process_control(data)
 
     def register(self, version: Version, data: Path) -> None:
         chat_cwd, chat_options = self._prior_chat_settings(version)
@@ -508,6 +583,7 @@ class Backend:
         port = int(version.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)))
         deadline = time.monotonic() + timeout
         error = None
+        identity_ok = False
         while time.monotonic() < deadline:
             try:
                 status = self.runtime(version, data, "status", timeout=3)
@@ -515,38 +591,93 @@ class Backend:
                 endpoint = discovery.get("door_endpoint", "")
                 if endpoint != f"http://127.0.0.1:{port}":
                     raise ValueError("Astrid's recorded door is not on the configured loopback port.")
+
                 def get(path):
                     request = urllib.request.Request(endpoint + path, headers={"Origin": "https://astrid.haus"})
                     with opener.open(request, timeout=2) as response:
                         return json.load(response)
+
                 health = get("/api/runtime/v1/health")
                 realm = get("/api/runtime/v1/realm")
                 services = health.get("services", [])
-                if isinstance(services, list) and any(
-                    isinstance(service, dict) and service.get("state") == "failed"
-                    for service in services
-                ):
-                    raise ValueError("A declared Astrid service is failed.")
                 if (health.get("status") != "ok" or realm.get("realm_id") != realm_id
                         or discovery.get("active_realm") != realm_id
                         or health.get("runtime_instance_id") != discovery.get("runtime_instance_id")
                         or (status.get("discovery") or {}).get("runtime_instance_id") != discovery.get("runtime_instance_id")
                         or status.get("support", {}).get("pid_alive") is not True):
                     raise ValueError("The browser door belongs to a different Runtime or workspace.")
-                return
+                identity_ok = True
+                break
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 error = exc
                 time.sleep(0.25)
-        # A Runtime that died at startup records why in its service log; that is
-        # the real cause, not the missing door it leads to.
-        cause = _last_logged_error(self.service.log)
-        if cause:
-            raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
-        raise VerificationError(f"Astrid's browser door did not become ready: {error}")
+        if not identity_ok:
+            cause = _last_logged_error(self.service.log)
+            if cause:
+                raise VerificationError(
+                    f"Astrid Runtime did not start: {cause} (details: {self.service.log})",
+                    safe_message=f"Astrid Runtime didn't start. Its log says why: {self.service.log}",
+                )
+            raise VerificationError(
+                f"Astrid's browser door did not become ready: {error}",
+                safe_message=(f"Astrid didn't become reachable from the browser in time. "
+                              f"Its log may say why: {self.service.log}"),
+            )
+
+        ready_file = data / "runtime" / "generic-host.ready.json"
+        state, pack_host, failed = _classify_services(services, ready_file)
+        if state == "ready":
+            return
+
+        def service_failure(*, crashed: bool) -> VerificationError:
+            service_name = failed.get("name") if failed else "pack-host"
+            service_log = platform.log_dir() / f"service-{service_name}.log"
+            tail = _last_service_log(service_log)
+            service_state = pack_host.get("state", "missing") if pack_host else "missing"
+            reason = pack_host.get("reason") if pack_host else None
+            last_exit = pack_host.get("last_exit") if pack_host else None
+            label = (
+                "An Astrid service stopped while starting"
+                if crashed else "Astrid's task host didn't finish starting in time"
+            )
+            detail = (f"{label}; see the log for the cause. "
+                      f"state={service_state}, reason={reason or 'none'}, "
+                      f"last_exit={last_exit!r}; log={service_log}")
+            if failed is not None:
+                detail += (f"; failed_service={failed.get('name')}, failed_state={failed.get('state')}, "
+                           f"failed_reason={failed.get('reason') or 'none'}, "
+                           f"failed_last_exit={failed.get('last_exit')!r}")
+            safe_detail = detail
+            if tail:
+                detail += f"\nLast service log lines:\n{tail}"
+            return VerificationError(detail, safe_message=safe_detail)
+
+        if state == "crashed":
+            raise service_failure(crashed=True)
+        profile = read_json(version.profile)
+        declaration = read_json(Path(profile["service_declaration"]))
+        pack_host_declaration = next(
+            service for service in declaration.get("services", [])
+            if isinstance(service, dict) and service.get("name") == "pack-host"
+        )
+        ready_deadline = time.monotonic() + pack_host_declaration["ready"]["timeout_seconds"]
+        while state == "starting":
+            if time.monotonic() >= ready_deadline:
+                raise service_failure(crashed=False)
+            try:
+                health = get("/api/runtime/v1/health")
+                services = health.get("services", [])
+            except (OSError, ValueError, RuntimeError, subprocess.SubprocessError):
+                time.sleep(0.25)
+                continue
+            time.sleep(0.25)
+            state, pack_host, failed = _classify_services(services, ready_file)
+            if state == "crashed":
+                raise service_failure(crashed=True)
 
     def sync_skills(self, version: Version) -> None:
         """Best-effort install of Astrid's skill view into detected harnesses."""
-        argv = [version.python, "-I", "-m", "astrid.skills", "sync"]
+        argv = [version.python, "-X", "utf8", "-I", "-m", "astrid.skills", "sync"]
         failed = False
         try:
             self.run(argv, extra_env=version.env, timeout=60)

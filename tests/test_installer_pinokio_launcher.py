@@ -23,7 +23,8 @@ def isolated_home(tmp_path, monkeypatch):
 
 
 def _runtime_args(command):
-    return ast.literal_eval(ast.parse(command[3]).body[-1].value.args[0].args[0])
+    source = command[command.index("-c") + 1]
+    return ast.literal_eval(ast.parse(source).body[-1].value.args[0].args[0])
 
 
 def _installation(tmp_path: Path, name: str = "v1") -> tuple[Path, Path, Version]:
@@ -141,14 +142,14 @@ def test_launch_uses_current_version_service_command_and_pinokio_environment(
         assert calls[0][1] == os.getpid()
         assert expected[0] == str(windows_python)
         assert Path(expected[0]).name.lower() == "python.exe"
-        assert expected[2] == "-c"
+        assert expected[1:5] == ["-X", "utf8", "-I", "-c"]
         assert _runtime_args(expected)[-len(extra_args):] == extra_args
         task_command = service.command(version, data, windows=True,
                                        log=root / "runtime-service.log",
                                        env_file=root / "service-env.json", extra_args=extra_args)
         assert _runtime_args(task_command) == _runtime_args(expected)
         assert Path(task_command[0]).name == "pythonw.exe"
-        assert str(root / "service-env.json") in expected[3]
+        assert str(root / "service-env.json") in expected[-1]
         assert windows_env["ASTRID_INSTALL_MANAGED_BY"] == "pinokio"
         assert windows_env["ASTRID_VERSION_MARKER"] == "v1"
         assert "PYTHONPATH" not in windows_env
@@ -224,8 +225,8 @@ def test_run_renderings_keep_arguments_and_windows_console_owner(tmp_path):
     launcher.install(root)
     posix = (root / "run").read_text()
     windows = (root / "run.cmd").read_text()
-    assert 'exec "$root/versions/$version/py/bin/python" -I "$root/run_runtime.py" "$@"' in posix
+    assert 'exec "$root/versions/$version/py/bin/python" -X utf8 -I "$root/run_runtime.py" "$@"' in posix
     assert os.access(root / "run", os.X_OK)
-    assert '"%ASTRID_PROGRAM_ROOT%versions\\%ASTRID_VERSION%\\py\\Scripts\\python.exe" -I "%ASTRID_PROGRAM_ROOT%run_runtime.py" %*' in windows
+    assert '"%ASTRID_PROGRAM_ROOT%versions\\%ASTRID_VERSION%\\py\\Scripts\\python.exe" -X utf8 -I "%ASTRID_PROGRAM_ROOT%run_runtime.py" %*' in windows
     assert 'exit /b %errorlevel%' in windows
     assert 'pythonw' not in windows and 'start ' not in windows.lower()

@@ -18,6 +18,9 @@ from .core import Version, read_json, write_json
 
 LABEL = "haus.astrid.runtime"
 TASK = "Astrid Runtime"
+# The only keys service-env.json may set. ASTRID_ALLOW_UNQUALIFIED_GPU no longer
+# changes anything; it stays accepted so existing settings files still load.
+SERVICE_SETTINGS = frozenset({"ASTRID_WARM_IDLE_SECONDS", "ASTRID_ALLOW_UNQUALIFIED_GPU"})
 # A named Get-ScheduledTask lookup reports a non-terminating error when absent.
 # Enumerating and filtering makes an absent task a successful no-op while still
 # propagating Task Scheduler access failures through ErrorActionPreference=Stop.
@@ -69,7 +72,7 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
                  "--source-manifest", str(version.profile), *(extra_args or [])]
     if env_file is None and not windows and lock_fd is None:
-        return [str(python), "-I", "-m", "astrid_runtime", *arguments]
+        return [str(python), "-X", "utf8", "-I", "-m", "astrid_runtime", *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
@@ -86,12 +89,12 @@ def command(version: Version, data: Path, *, windows: bool = False, log: Path | 
     if env_file is not None:
         script += (f"path=Path({str(env_file)!r})\n"
                    "settings=json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}\n"
-                   "if (not isinstance(settings,dict) or set(settings)-{'ASTRID_WARM_IDLE_SECONDS','ASTRID_ALLOW_UNQUALIFIED_GPU'} "
+                   f"if (not isinstance(settings,dict) or set(settings)-set({sorted(SERVICE_SETTINGS)!r}) "
                    "or any(not isinstance(value,str) for value in settings.values())):\n"
                    "    raise ValueError('Invalid Astrid service-env.json; use the documented string settings.')\n"
                    "os.environ.update(settings)\n")
     script += f"from astrid_runtime.cli import main\nsys.exit(main({arguments!r}))"
-    return [str(python), "-I", "-c", script]
+    return [str(python), "-X", "utf8", "-I", "-c", script]
 
 
 def systemd_quote(value: str) -> str:
@@ -270,7 +273,7 @@ class Service:
 
     def settings(self) -> dict:
         settings = read_json(self.env_file)
-        if (set(settings) - {"ASTRID_WARM_IDLE_SECONDS", "ASTRID_ALLOW_UNQUALIFIED_GPU"}
+        if (set(settings) - SERVICE_SETTINGS
                 or any(not isinstance(value, str) for value in settings.values())):
             raise ValueError("Invalid Astrid service-env.json; use the documented string settings.")
         return settings

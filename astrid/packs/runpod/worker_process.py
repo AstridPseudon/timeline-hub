@@ -39,7 +39,7 @@ from typing import Any, Callable, Mapping, Protocol
 from runtime_protocol import platform
 from runtime_protocol.dirfd import filesystem as os
 
-from astrid.core.execution.platform_helpers import owned_by_current_user
+from astrid.core.execution.platform_helpers import owned_by_current_user, process_control_report
 from astrid.core.execution.process_group import process_birth_identity
 
 OWNERSHIP_ROOT = "/tmp/astrid-runpod-worker-owners"
@@ -82,12 +82,18 @@ def _safe_path(value: str) -> Path:
 
 def _private_dir(path: Path, *, exclusive: bool = False) -> None:
     _safe_path(str(path))
-    path.mkdir(mode=0o700, parents=True, exist_ok=not exclusive)
+    try:
+        path.mkdir(mode=0o700, parents=True, exist_ok=False)
+    except FileExistsError:
+        if exclusive:
+            raise
+    else:
+        platform.owner_only(path)
     info = path.stat()
     if not stat.S_ISDIR(info.st_mode) or not owned_by_current_user(path, info):
         raise WorkerProcessError("ownership directory has a different owner")
-    if stat.S_IMODE(info.st_mode) != 0o700:
-        raise WorkerProcessError("ownership directory must have mode 0700")
+    if not platform.is_owner_only(path):
+        raise WorkerProcessError("ownership directory must be owner-only")
 
 
 @dataclass(frozen=True)
@@ -416,8 +422,8 @@ def stop_owned_process(
     """Pin, signal, and prove the exact incarnation exited before acknowledging."""
     if not 0 < timeout_seconds <= 30:
         raise WorkerProcessError("exact stop timeout must be bounded")
-    if not (callable(getattr(platform, "pidfd_open", None))
-            and callable(getattr(platform, "pidfd_send_signal", None))):
+    # Pods run a full kernel: this stays pidfd-only even in sandbox mode.
+    if process_control_report().get("pidfd") != "available":
         raise WorkerProcessError("exact stop requires Linux pidfd support; no PID fallback")
     def stopped(*, already_exited: bool) -> dict[str, Any]:
         return {
@@ -529,7 +535,7 @@ def launch_owned_process(request: Mapping[str, Any]) -> dict[str, Any]:
             raise WorkerOwnerConflict("physical pod is retired for release")
         payload = base64.b64encode(json.dumps(request, sort_keys=True).encode()).decode()
         child = platform.spawn_tree(
-            [request["python_executable"], str(Path(__file__).resolve()), "--owned-host", payload],
+            [request["python_executable"], "-X", "utf8", str(Path(__file__).resolve()), "--owned-host", payload],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -610,6 +616,8 @@ class RunPodWorkerProcessTransport:
             shlex.quote(value)
             for value in [
                 self.python_executable,
+                "-X",
+                "utf8",
                 "-c",
                 wrapper,
                 self.source_root,

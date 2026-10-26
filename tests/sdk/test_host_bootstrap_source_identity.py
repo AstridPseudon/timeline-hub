@@ -3,13 +3,11 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.rendering.remotion_runtime import RemotionValidationError
 from astrid.sdk import host_bootstrap
 from astrid.core.execution.generic_host import (
     source_checkout_closure_digest,
@@ -62,6 +60,18 @@ def _materialize_source_closure(source: Path) -> None:
     )
 
 
+def test_windows_parked_preparation_refuses_before_projection_or_socket_allocation(monkeypatch):
+    projected = []
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda reference: projected.append(reference))
+    monkeypatch.setattr(host_bootstrap.sys, "platform", "win32")
+    monkeypatch.setattr(host_bootstrap.socket, "socketpair", lambda: pytest.fail("socket allocated"))
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="unavailable on Windows"):
+        preparer.prepare(object())
+
+    assert projected == []
+
+
 @pytest.mark.parametrize("outcome,alive", [("LIVE", True), ("ZOMBIE", False), ("ABSENT", False)])
 def test_host_pid_alive_uses_native_darwin_state_without_subprocess(monkeypatch, outcome, alive):
     from astrid.core.execution import custody_broker
@@ -80,6 +90,50 @@ def test_host_pid_alive_native_failure_does_not_become_absence(monkeypatch):
     monkeypatch.setattr(custody_broker, "ordinary_candidate_observation", lambda pid: {"outcome": "OBSERVATION_ERROR"})
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="native state observation unavailable"):
         host_bootstrap._host_pid_alive(4242)
+
+
+@pytest.mark.parametrize("acl_allows", [True, False])
+def test_parked_grant_uses_owner_only_acl_on_windows_modes(monkeypatch, tmp_path, acl_allows):
+    from astrid.core.execution import generic_host
+
+    credential = tmp_path / "credential"
+    credential.write_text("token")
+    credential.chmod(0o600)
+    real_stat = Path.stat
+    def windows_stat(candidate, *args, **kwargs):
+        result = real_stat(candidate, *args, **kwargs)
+        if candidate == credential:
+            return os.stat_result((__import__("stat").S_IFREG | 0o444, *result[1:]))
+        return result
+    monkeypatch.setattr(Path, "stat", windows_stat)
+    monkeypatch.setattr(host_bootstrap.platform, "is_owner_only", lambda _path: acl_allows)
+    monkeypatch.setattr(host_bootstrap, "_parked_host_identity_matches", lambda _state: True)
+    grant = {"activation_id": "activation", "credential_file": str(credential),
+             "executor_incarnation": "incarnation", "evidence_digest": "digest"}
+    process = SimpleNamespace(pid=4321, poll=lambda: None)
+    control = SimpleNamespace(settimeout=lambda _value: None, recv=lambda _size: b"",
+                              close=lambda: None, shutdown=lambda _how: None)
+    handle = host_bootstrap._ParkedPackHostHandle(
+        process, control, None,
+        {"credential_file": str(credential), "process_birth_id": "birth"}, "op", "channel",
+    )
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda *_args: None)
+    preparer._handle = handle
+    sent = []
+    monkeypatch.setattr(generic_host, "_send_activation_frame", lambda _control, frame: sent.append(frame))
+    monkeypatch.setattr(generic_host, "_read_activation_frame", lambda _control: {
+        "version": generic_host._ACTIVATION_ACCEPTED_VERSION, "operation_id": "op",
+        "channel_id": "channel", "activation_id": "activation",
+        "executor_incarnation": "incarnation", "evidence_digest": "digest",
+        "host": {"pid": 4321, "birth_id": "birth"},
+    })
+    if acl_allows:
+        assert preparer.acknowledge(handle, grant)["activation_id"] == "activation"
+        assert sent
+    else:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="credential reference is unsafe"):
+            preparer.acknowledge(handle, grant)
+        assert not sent
 
 
 def test_selected_python_matches_its_live_process_executable(tmp_path) -> None:
@@ -118,7 +172,8 @@ def test_executable_probe_failure_does_not_accept_another_python(monkeypatch, tm
     assert not host_bootstrap._host_executable_matches("/unrelated/Python", tmp_path / "python")
 
 
-def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize("windows_acl", [None, True, False])
+def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path: Path, windows_acl) -> None:
     source = tmp_path / "source"
     (source / "astrid" / "packs").mkdir(parents=True)
     (source / "astrid" / "packs" / "marker.txt").write_text("pack", encoding="utf-8")
@@ -130,6 +185,15 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     credential = support.parent / "worker.token"
     credential.write_text("worker", encoding="utf-8")
     os.chmod(credential, 0o600)
+    if windows_acl is not None:
+        real_stat = Path.stat
+        def windows_stat(candidate, *args, **kwargs):
+            result = real_stat(candidate, *args, **kwargs)
+            if candidate == credential:
+                return os.stat_result((__import__("stat").S_IFREG | 0o666, *result[1:]))
+            return result
+        monkeypatch.setattr(Path, "stat", windows_stat)
+        monkeypatch.setattr(host_bootstrap.platform, "is_owner_only", lambda _path: windows_acl)
     value = {
         "worker_credential_file": str(credential),
         "source_checkout": str(source),
@@ -215,6 +279,11 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     monkeypatch.setattr(host_bootstrap, "_IDLE_CHECK_INTERVAL_SECONDS", 0.0)
     monkeypatch.setattr(host_bootstrap, "_retire_host_locked", lambda current: terminated.append(dict(current)))
 
+    if windows_acl is False:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="handoff is unavailable"):
+            host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+        assert launches == []
+        return
     result = host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
     assert result["host_status"] == "ready"
     assert result["host_source_inventory_identity"] == "inventory-1"
@@ -253,6 +322,72 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     assert result3["host_status"] == "ready"
     assert len(launches) == 3
     assert len(inventory_calls) == 3
+
+
+def test_unresolved_remotion_probe_blocks_host_spawn(monkeypatch, tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    (source / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(source)
+    credential = tmp_path / "support" / "credentials" / "worker.token"
+    credential.parent.mkdir(parents=True)
+    credential.write_text("worker", encoding="utf-8")
+    credential.chmod(0o600)
+    value = {
+        "worker_credential_file": str(credential),
+        "source_checkout": str(source),
+        "worker_actor": host_bootstrap.PACK_HOST_ACTOR,
+        "worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES),
+        "endpoint": "http://runtime.test",
+        "runtime_epoch": 1,
+        "runtime_instance_id": "instance-1",
+        "schema_digest": "schema-1",
+    }
+    monkeypatch.setattr(
+        "astrid.core.pack.source_setup.active_source_inventory",
+        lambda: SimpleNamespace(identity="", roots=(), sources=()),
+    )
+    from astrid.core.execution import generic_host
+
+    class FakeRuntimeClient:
+        def __init__(self, endpoint, token):
+            assert endpoint == "http://runtime.test"
+            assert token == "worker"
+
+        def health(self):
+            return {
+                "status": "ok", "runtime_epoch": 1,
+                "runtime_instance_id": "instance-1", "schema_digest": "schema-1",
+            }
+
+    monkeypatch.setattr(generic_host, "RuntimeProtocolClient", FakeRuntimeClient)
+    monkeypatch.setattr(host_bootstrap, "_read_object", lambda _path: None)
+    monkeypatch.setattr(host_bootstrap, "_host_render_environment", lambda _source: {})
+    launches: list[list[str]] = []
+
+    def record_launch(argv, **_kwargs):
+        launches.append(list(argv))
+        pytest.fail("host was spawned despite unresolved probe custody")
+
+    _mock_host_launch(monkeypatch, record_launch)
+    from astrid.core.rendering import remotion_runtime
+
+    retained = SimpleNamespace(pid=5151)
+    fatal_probe = remotion_runtime.RemotionProbeCleanupError(
+        "trusted Remotion probe cleanup is unproved"
+    )
+    fatal_probe.process = retained
+    fatal_probe.cleanup_error = RuntimeError("simulated live probe child")
+    monkeypatch.setattr(
+        remotion_runtime,
+        "remotion_runtime_status",
+        lambda **_kwargs: (_ for _ in ()).throw(fatal_probe),
+    )
+
+    with pytest.raises(
+        host_bootstrap.PackHostBootstrapError, match="pack host launch is blocked"
+    ):
+        host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+    assert launches == []
 
 
 def test_bootstrap_stops_on_correlated_terminal_registration_failure(
@@ -405,9 +540,6 @@ def test_bootstrap_refuses_runtime_health_without_ok_status(
 
 
 
-
-
-
 def _owned_registration(tmp_path, monkeypatch, process):
     support = tmp_path / "runtime"
     support.mkdir()
@@ -425,17 +557,6 @@ def _owned_registration(tmp_path, monkeypatch, process):
     process._astrid_host_registration = (state_path, ready_path, dict(state))
     monkeypatch.setitem(host_bootstrap._RETAINED_HOSTS, (process.pid, state["process_birth_id"]), process)
     return state, state_path, ready_path
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -458,7 +579,8 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="actual installed"):
         host_bootstrap._installed_execution_origins(tmp_path, "/selected/python")
-    assert seen[0][0][:3] == ["/selected/python", "-I", "-c"]
+    assert seen[0][0][:4] == ["/selected/python", "-X", "utf8", "-I"]
+    assert seen[0][0][4] == "-c"
     assert "PYTHONPATH" not in seen[0][1]["env"]
     assert seen[0][1]["cwd"] != str(tmp_path)
 
@@ -474,13 +596,13 @@ def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpret
     def isolate(monkeypatch, fake_popen):
         def guarded(argv, **kwargs):
             launches.append(argv)
-            assert argv[1:3] == ["-I", "-m"]
+            assert argv[1:5] == ["-X", "utf8", "-I", "-m"]
             assert "PYTHONPATH" not in kwargs["env"]
             assert kwargs["cwd"] != str(tmp_path / "source")
             return fake_popen(argv, **kwargs)
         return original(monkeypatch, guarded)
     monkeypatch.setitem(globals(), "_mock_host_launch", isolate)
-    test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path)
+    test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch, tmp_path, windows_acl=None)
     assert len(launches) == 3
 
 
@@ -495,7 +617,6 @@ def test_parked_launch_diagnostics_preserve_exact_ready_identity(monkeypatch, tm
     monkeypatch.setattr(host_bootstrap, "_installed_execution_origins", lambda *_: origins)
     monkeypatch.setattr(host_bootstrap, "_dependency_pythonpath", lambda: [])
     monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_: None)
-    monkeypatch.setattr(host_bootstrap, "_prepare_render_validation", lambda *_: None)
     monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda *_: "birth")
     monkeypatch.setattr(host_bootstrap, "_capture_native_host_launch_identity", lambda pid: {
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1700000000, "start_usec": 1})
@@ -650,8 +771,6 @@ def test_startup_budget_polling_preserves_identity_and_original_cleanup(
 
 
 
-
-
 @pytest.fixture
 def native_host_command_fixture(monkeypatch, tmp_path):
     from astrid.core.execution import custody_broker as broker
@@ -762,7 +881,7 @@ def test_darwin_framework_variant_requires_verified_executable_and_exact_private
     monkeypatch.setattr(host_bootstrap, "subprocess", SimpleNamespace(**{**vars(subprocess), "run": selected_probe}))
     assert host_bootstrap._parked_host_identity_matches(f.state) is True
     assert probes[0][0] == str(f.executable)
-    assert probes[0][1:3] == ["-I", "-S"]
+    assert probes[0][1:5] == ["-X", "utf8", "-I", "-S"]
     f.argv[f.argv.index("--max-concurrency") + 1] = "3"
     with pytest.raises(host_bootstrap.PackHostBootstrapError):
         host_bootstrap._parked_host_identity_matches(f.state)
@@ -777,7 +896,6 @@ def test_darwin_framework_variant_requires_verified_executable_and_exact_private
 def test_launch_capacity_is_validated_before_pin(argv):
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="capacity"):
         host_bootstrap._launch_argv_digest(argv)
-
 
 
 
@@ -844,13 +962,6 @@ def _framework_native_fixture(f, monkeypatch):
 
 
 
-
-
-
-
-
-
-
 @pytest.mark.parametrize(
     "overrides",
     [
@@ -887,53 +998,3 @@ def test_bootstrap_refuses_worker_credential_outside_the_pack_host_contract(
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="least-privilege pack-host contract"):
         host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
-
-
-def _validating_launch(monkeypatch, tmp_path):
-    """Run the host launch transaction and record projected contexts without spawning probes."""
-    from astrid.core.rendering import remotion_runtime
-    from astrid.core.subprocess_env import build_child_subprocess_env
-
-    captured = []
-    def validate_contexts(*, host_environment, python_executable, contexts, **_kwargs):
-        projection = {}
-        for role, value in contexts.items():
-            projection[role] = []
-            for environment in ([value] if isinstance(value, dict) else value):
-                probe = remotion_runtime.probe_context(environment=environment, python_executable=python_executable)
-                registry = remotion_runtime._registry_context(environment, generator=False)
-                child = build_child_subprocess_env(base=environment, parent=environment)
-                projection[role].append((probe, registry, child))
-        captured.append(projection)
-        return {}
-
-    monkeypatch.setattr(remotion_runtime, "prepare_remotion_validation", validate_contexts)
-
-    def prepare(extra: dict[str, str]):
-        home = tmp_path / "home"
-        home.mkdir(exist_ok=True)
-        env = {"HOME": str(home), "PATH": os.defpath, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path / "remotion"), **extra}
-        launch = host_bootstrap._prepare_render_validation(tmp_path, env, tmp_path / "support", sys.executable)
-        return launch, env
-
-    return prepare, captured
-
-
-def test_host_launch_drops_shell_loader_keys(monkeypatch, tmp_path):
-    prepare, _captured = _validating_launch(monkeypatch, tmp_path)
-    launch, env = prepare({"LD_LIBRARY_PATH": "/opt/hostedtoolcache/lib", "DYLD_LIBRARY_PATH": "/x", "LD_PRELOAD": "/y"})
-    assert launch is not None
-    assert not [key for key in env if key.startswith(("LD_", "DYLD_"))]
-
-
-@pytest.mark.parametrize("name", ["NODE_OPTIONS", "PYTHONHOME", "PYTHONUTF8", "GIT_CONFIG_GLOBAL"])
-def test_host_launch_ignores_controls_omitted_from_child_projections(monkeypatch, tmp_path, name):
-    prepare, captured = _validating_launch(monkeypatch, tmp_path)
-    ambient_value = str(tmp_path / "ambient-control") if name == "GIT_CONFIG_GLOBAL" else "x"
-    _launch, env = prepare({name: ambient_value})
-    assert env[name] == ambient_value
-    ambient_projection = captured[-1]
-
-    _clean_launch, clean_env = prepare({})
-    assert name not in clean_env
-    assert captured[-1] == ambient_projection

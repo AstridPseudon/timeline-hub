@@ -43,6 +43,7 @@ def test_ffprobe_duration_seconds_uses_duration_only_probe() -> None:
     ]
     assert kwargs["check"] is True
     assert kwargs["capture_output"] is True
+    assert kwargs["stdin"] == subprocess.DEVNULL
     assert kwargs["text"] is True
     assert "PATH" in kwargs["env"]
     assert "OPENAI_API_KEY" not in kwargs["env"]

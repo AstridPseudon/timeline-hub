@@ -86,6 +86,31 @@ def test_composition_root_stamps_under_explicit_support_without_sqlite(tmp_path:
     assert load_boot_manifest_hash(manifest, support_root=support) == handoff["sha256"]
 
 
+def test_manifest_publish_retries_windows_sharing_violation(tmp_path: Path, monkeypatch) -> None:
+    import os
+
+    from astrid.core._shared import boot_manifest
+
+    calls = []
+    def move(source, destination):
+        calls.append((source, destination))
+        if len(calls) == 1:
+            error = PermissionError("file is in use")
+            error.winerror = 32
+            raise error
+        os.replace(source, destination)
+
+    monkeypatch.setattr(boot_manifest.platform.sys, "platform", "win32")
+    monkeypatch.setattr(boot_manifest.platform, "_move_file_write_through", move)
+    monkeypatch.setattr(boot_manifest.platform.time, "sleep", lambda _: None)
+    support, manifest = _paths(tmp_path)
+
+    compose_profile_handoff(manifest, support_root=support)
+
+    assert len(calls) == 2
+    assert manifest.is_file()
+
+
 def test_manifest_drift_refuses_existing_stamp(tmp_path: Path) -> None:
     support, manifest = _paths(tmp_path)
     compose_profile_handoff(manifest, support_root=support)

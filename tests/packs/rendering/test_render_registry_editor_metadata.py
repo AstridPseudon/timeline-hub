@@ -1,8 +1,11 @@
 """Editor metadata on registry entries never reaches the renderer's strict schema."""
+from types import SimpleNamespace
+
 import pytest
 
 from astrid.core import timeline
 from astrid.packs.rendering.actions.render.managed_timeline import _render_compatible_projection
+from astrid.sdk.authoring_media import _metadata
 
 DIGEST = "a" * 64
 
@@ -29,9 +32,32 @@ def test_retired_locators_and_unknown_keys_still_fail():
             timeline.validate_registry(projected)
 
 
-def test_authoring_import_description_is_projected_to_render_fields():
-    # astrid.sdk.authoring_media writes media_type/filename/width/height/duration_seconds.
-    imported = _entry(media_type="video/mp4", filename="clip.mp4", width=1280, height=720, duration_seconds=4.0)
+def test_authoring_media_import_metadata_maps_to_renderer_registry_shape(monkeypatch, tmp_path):
+    path = tmp_path / "clip.mp4"
+    path.write_bytes(b"media")
+    monkeypatch.setattr(
+        "astrid.sdk.authoring_media.ffprobe_metadata_strict",
+        lambda _path: SimpleNamespace(
+            has_audio_stream=False,
+            has_video_stream=True,
+            duration_seconds=4.0,
+            width=1280,
+            height=720,
+        ),
+    )
+    details = _metadata(path)
+    assert details["width"] == 1280
+    assert details["height"] == 720
+    assert details["duration_seconds"] == 4.0
+    assert not {"resolution", "duration"} & set(details)
+
+    imported = _entry(
+        type="video",
+        media_type=details["media_type"],
+        filename=details["filename"],
+        resolution=f"{details['width']}x{details['height']}",
+        duration=details["duration_seconds"],
+    )
     _config, projected = _render_compatible_projection({"clips": []}, {"assets": {"clip": imported}})
     timeline.validate_registry(projected)
     entry = projected["assets"]["clip"]

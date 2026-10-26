@@ -86,7 +86,8 @@ def _load_folder_executor_definitions(executor_root: str | Path) -> tuple[Execut
         explicit_env={"PYTHONPATH": os.pathsep.join(parent_paths + [os.environ.get("PYTHONPATH", "")])}
     )
     completed = subprocess.run(
-        [sys.executable, "-c", _EXTRACT_SCRIPT, str(executor_path)],
+        [sys.executable, "-X", "utf8", "-c", _EXTRACT_SCRIPT, str(executor_path)],
+        stdin=subprocess.DEVNULL,
         cwd=str(root),
         check=False,
         capture_output=True,

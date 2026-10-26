@@ -12,7 +12,7 @@
     <RunOnlyIfIdle>false</RunOnlyIfIdle><WakeToRun>false</WakeToRun><ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
     <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>
   </Settings>
-  <Actions Context="Owner"><Exec><Command>C:\Astrid\versions\v1\py\Scripts\pythonw.exe</Command><Arguments>-I -c "import json,os,sys
+  <Actions Context="Owner"><Exec><Command>C:\Astrid\versions\v1\py\Scripts\pythonw.exe</Command><Arguments>-X utf8 -I -c "import json,os,sys
 from pathlib import Path
 os.environ.update({'PATH': 'C:\\Astrid\\tools;C:\\Windows\\System32', 'PYTHONUTF8': '1'})
 sys.stdout=sys.stderr=open('C:\\Astrid\\logs\\runtime-service.log','a',encoding='utf-8',buffering=1)

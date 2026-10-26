@@ -82,7 +82,6 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
     # Interpreter selection is the unit boundary. Exercise the real registration/marker
     # retirement, while no process probe is started.
     monkeypatch.setattr(bootstrap, "_terminate_old_host", lambda state: terminated.append(state["pid"]))
-    monkeypatch.setattr(bootstrap, "_prepare_render_validation", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(bootstrap, "_capture_native_host_launch_identity", lambda pid: {
         "pid": pid, "uid": os.getuid(), "pgid": pid, "start_sec": 1, "start_usec": 0,
     })
@@ -124,15 +123,16 @@ def test_bootstrap_reuses_only_the_selected_interpreter(
 
 
 
-
 def test_pack_host_python_override_must_be_absolute_and_executable(tmp_path, monkeypatch):
     monkeypatch.setenv(bootstrap.PACK_HOST_PYTHON_ENV, "relative/python")
     with pytest.raises(bootstrap.PackHostBootstrapError, match="absolute path"):
         bootstrap._pack_host_python_executable()
 
     monkeypatch.setenv(bootstrap.PACK_HOST_PYTHON_ENV, str(tmp_path / "missing-python"))
-    with pytest.raises(bootstrap.PackHostBootstrapError, match="executable file"):
+    with pytest.raises(bootstrap.PackHostBootstrapError, match="executable file") as failure:
         bootstrap._pack_host_python_executable()
+    assert bootstrap.PACK_HOST_PYTHON_ENV in str(failure.value)
+    assert str(tmp_path / "missing-python") in str(failure.value)
 
     non_executable = tmp_path / "non-executable-python"
     non_executable.write_text("not executable")
