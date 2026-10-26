@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T20:59:45Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- app | 2026-10-26T21:05:04Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
 # app board, 2026-10-26T20:57:20.521046+00:00
 
 Current decision: Published Main20:39 records delivery complete, all lanes idle, and followups waiting for the owner's go. Main19:40 README question remains Main-owned. No App assignment or release. Lead20:35 reaffirms App18:41 keepalive only. Final metadata and Runtime1848 artifact receiving remain complete, with original findings preserved.
