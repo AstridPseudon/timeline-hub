@@ -140,7 +140,9 @@ for f in $ORCH/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); [ 
   [ -e hub/artifacts/$b ] || { cp -p $f hub/artifacts/$b; sha256sum $f | awk '{print $1}' > hub/artifacts/$b.sha256; }; done
 for f in hub/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); want=$(cat $f.sha256 2>/dev/null)
   [ -n "$want" ] && [ "$(sha256sum $f | awk '{print $1}')" != "$want" ] && { echo "hub-sync: artifact $b digest mismatch, skipped" >&2; continue; }
-  [ -e $ORCH/artifacts/$b ] || cp -p $f $ORCH/artifacts/$b; done
+  [ -e $ORCH/artifacts/$b ] || cp -p $f $ORCH/artifacts/$b
+  # 03:45Z 26 Oct: carry the verified sidecar too (Farm verifier needs <archive>.sha256 next to the archive); write-once, only when the local bytes match
+  [ -n "$want" ] && [ ! -e $ORCH/artifacts/$b.sha256 ] && [ "$(sha256sum $ORCH/artifacts/$b | awk '{print $1}')" = "$want" ] && cp -p $f.sha256 $ORCH/artifacts/$b.sha256; done
 
 # deletion ledger: per-area files sync like any design doc; main regenerates the combined read-only view after the sync-in
 # design docs both ways, newer wins
