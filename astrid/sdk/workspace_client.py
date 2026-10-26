@@ -237,6 +237,7 @@ class WorkspaceClient:
                 "get_project_shot_revision", "get_project_timeline_revision",
                 "get_project_parent_composition_revision",
                 "publish_parent_composition",
+                "import_timeline",
                 "replace_parent_composition_media",
                 "promote_project_shot_candidate", "reorder_shot_items",
                 "list_project_references", "create_project_reference",
@@ -246,7 +247,7 @@ class WorkspaceClient:
                 "get_project_reference", "update_project_reference", "archive_project_reference",
                 "recover_project_reference", "associate_reference", "set_primary_reference",
                 "link_references", "create_document", "list_documents", "get_document",
-                "update_document", "ingest_object", "ingest_project_object",
+                "update_document", "ingest_object", "ingest_project_object", "ingest_project_object_stream",
                 "get_preferences", "update_preferences",
                 "import_project_media", "get_project_media_import",
                 "list_project_objects", "get_project_object_location", "create_media_relation", "list_media_relations",
@@ -461,6 +462,10 @@ class WorkspaceClient:
 
     def list_timelines(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
         return self._call_generated("list_timelines", project_id, cursor=cursor, limit=limit)
+
+    def get_project_timeline(self, project_id: str, timeline_id: str) -> Any:
+        """Read one project timeline head without inspecting or mutating it."""
+        return self._call_generated("get_project_timeline", project_id, timeline_id)
 
     def get_timeline(self, timeline_id: str, *, project_id: str | None = None) -> Any:
         if hasattr(self._generated, "get_timeline"):
@@ -726,6 +731,31 @@ class WorkspaceClient:
             idempotency_key=idempotency_key,
             filename=filename,
         )
+
+    def ingest_project_object_stream(
+        self,
+        project_id: str,
+        stream: Any,
+        *,
+        size: int,
+        media_type: str,
+        idempotency_key: str,
+        filename: str | None = None,
+        expected_digest: str | None = None,
+    ) -> Any:
+        return self._call_generated(
+            "ingest_project_object_stream",
+            project_id,
+            stream,
+            size=size,
+            media_type=media_type,
+            idempotency_key=idempotency_key,
+            filename=filename,
+            expected_digest=expected_digest,
+        )
+
+    def import_timeline(self, project_id: str, prepared: Mapping[str, Any], *, idempotency_key: str) -> Any:
+        return self._call_generated("import_timeline", project_id, prepared, idempotency_key=idempotency_key)
 
     def import_project_media(
         self, project_id: str, data: bytes, *, media_type: str,

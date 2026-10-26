@@ -156,7 +156,8 @@ def test_export_plan_closure_equals_runtime_publish_manifest(tmp_path):
         plan = export_plan(client, project_id, "main")
         assert {"sha256:" + row["sha256"] for row in plan["media"]} == {
             row["media_id"] for row in published_manifest["media"]
-        } | {binding_pin["media_id"]}
+        }
+        assert binding_pin["media_id"] in {row["media_id"] for row in published_manifest["media"]}
         assert plan["media"] == plan["manifest"]["media"]
         assert any(row["sha256"] == binding_pin["media_id"].removeprefix("sha256:")
                    and row["size"] == len(binding_text.encode("utf-8")) for row in plan["media"])

@@ -233,8 +233,23 @@ def _text_binding_media(bundle: Mapping[str, Any]) -> set[str]:
     return result
 
 
-def _resolve_project(client: Any, project: str) -> str:
-    result = client.projects.show(project)
+def _resolve_project(client: Any, project: str | None) -> str:
+    ref = project
+    timeline_service = getattr(client, "timelines", None)
+    resolver = getattr(timeline_service, "_resolve_project_ref", None)
+    if callable(resolver):
+        resolved = resolver(project)
+        if hasattr(resolved, "ok") and not resolved.ok:
+            raise ValueError(f"cannot resolve project {project!r}: {getattr(resolved, 'error', None)}")
+        ref = getattr(resolved, "data", resolved)
+    elif project in (None, ""):
+        current = client._transport.current_project()
+        current_data = _plain(getattr(current, "data", current))
+        current_row = current_data.get("project") if isinstance(current_data, Mapping) else None
+        ref = (current_row or {}).get("project_id") or (current_row or {}).get("id") or (current_row or {}).get("slug")
+        if not isinstance(ref, str) or not ref:
+            raise ValueError("no current project is selected")
+    result = client.projects.show(ref)
     data = _plain(getattr(result, "data", result))
     if hasattr(result, "ok") and not result.ok:
         raise ValueError(f"cannot resolve project {project!r}: {result.error}")
@@ -247,6 +262,9 @@ def _resolve_project(client: Any, project: str) -> str:
 
 
 def _transport(client: Any) -> Any:
+    transport = getattr(client, "_transport", None)
+    if transport is not None:
+        return transport
     remote = getattr(client, "_remote", None)
     transport = getattr(remote, "_transport", None)
     if transport is None:
@@ -311,7 +329,9 @@ def _saved_head_bundle(client: Any, project: str, timeline: str) -> tuple[Mappin
 def export_plan(client: Any, project: str, timeline: str) -> dict[str, Any]:
     """Build metadata and exact media closure for the saved current head."""
     bundle, export_project_id, timeline_id = _saved_head_bundle(client, project, timeline)
-    bundle = _plain(bundle)
+    # Canonicalize Runtime object URLs before compiling the dependency closure;
+    # the compiler and package format both use sha256 object identities.
+    bundle = _strip_machine_paths(_plain(bundle))
     compilation = compile_authoring_candidate(bundle)
     elements = inventory_elements(bundle)
     custom = [item for item in elements if item["packId"].startswith("project_")]
