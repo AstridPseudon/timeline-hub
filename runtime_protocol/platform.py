@@ -1309,14 +1309,10 @@ def signal_process(expected, signum):
             # CTRL_BREAK is cooperative and addressed to the isolated group;
             # force termination always uses the identity-checked kernel handle.
             if signum != KILL:
-                try:
-                    os.kill(pid, signal.CTRL_BREAK_EVENT)
+                kernel.GenerateConsoleCtrlEvent.argtypes = [wintypes.DWORD, wintypes.DWORD]
+                kernel.GenerateConsoleCtrlEvent.restype = wintypes.BOOL
+                if kernel.GenerateConsoleCtrlEvent(signal.CTRL_BREAK_EVENT, pid):
                     return
-                except (OSError, SystemError):
-                    # Services and console-less processes have no console
-                    # control channel. In that case fail closed to the
-                    # identity-checked process handle below.
-                    pass
             kernel.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
             if not kernel.TerminateProcess(handle, 1):
                 raise ctypes.WinError(ctypes.get_last_error())

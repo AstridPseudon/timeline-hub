@@ -489,10 +489,69 @@ def test_signal_process_uses_public_pidfd_helpers(monkeypatch):
     assert calls == [("open", 123), ("observe", 123), ("send", 18, platform.TERM), ("close", 18)]
 
 
-def test_windows_signal_process_falls_back_when_ctrl_break_raises_system_error(monkeypatch):
+def test_windows_signal_process_uses_checked_fallback_when_ctrl_break_fails(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
+    terminated = False
+
+    def checked_terminate(_handle, _exit_code):
+        nonlocal terminated
+        if terminated:
+            return False
+        terminated = True
+        return True
+
+    def builtin_kill(_pid, _signum):
+        nonlocal terminated
+        terminated = True
+        raise SystemError("<built-in function kill> returned a result with an exception set")
+
+    kernel = SimpleNamespace(
+        OpenProcess=Mock(return_value=18),
+        GenerateConsoleCtrlEvent=Mock(return_value=False),
+        TerminateProcess=Mock(side_effect=checked_terminate),
+        CloseHandle=Mock(),
+    )
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: expected)
+    kill = Mock(side_effect=builtin_kill)
+    monkeypatch.setattr(platform.os, "kill", kill)
+    monkeypatch.setattr(platform.ctypes, "get_last_error", lambda: 5, raising=False)
+    monkeypatch.setattr(platform.ctypes, "WinError", lambda code: OSError(code, "target already exited"), raising=False)
+
+    platform.signal_process(expected, platform.TERM)
+
+    kill.assert_not_called()
+    kernel.GenerateConsoleCtrlEvent.assert_called_once_with(1, 123)
+    kernel.TerminateProcess.assert_called_once_with(18, 1)
+    kernel.CloseHandle.assert_called_once_with(18)
+
+
+def test_windows_signal_process_refuses_identity_mismatch_before_ctrl_break(monkeypatch):
     expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
     kernel = SimpleNamespace(
         OpenProcess=Mock(return_value=18),
+        GenerateConsoleCtrlEvent=Mock(),
+        CloseHandle=Mock(),
+    )
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: {**expected, "uid": 502})
+
+    with pytest.raises(OSError, match="process incarnation changed"):
+        platform.signal_process(expected, platform.TERM)
+
+    kernel.GenerateConsoleCtrlEvent.assert_not_called()
+    kernel.CloseHandle.assert_called_once_with(18)
+
+
+def test_windows_signal_process_keeps_successful_ctrl_break_cooperative(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
+    kernel = SimpleNamespace(
+        OpenProcess=Mock(return_value=18),
+        GenerateConsoleCtrlEvent=Mock(return_value=True),
         TerminateProcess=Mock(return_value=True),
         CloseHandle=Mock(),
     )
@@ -507,46 +566,31 @@ def test_windows_signal_process_falls_back_when_ctrl_break_raises_system_error(m
 
     platform.signal_process(expected, platform.TERM)
 
-    platform.os.kill.assert_called_once_with(123, 1)
-    kernel.TerminateProcess.assert_called_once_with(18, 1)
+    platform.os.kill.assert_not_called()
+    kernel.GenerateConsoleCtrlEvent.assert_called_once_with(1, 123)
+    kernel.TerminateProcess.assert_not_called()
     kernel.CloseHandle.assert_called_once_with(18)
 
 
-def test_windows_signal_process_refuses_identity_mismatch_before_ctrl_break(monkeypatch):
-    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
-    kernel = SimpleNamespace(OpenProcess=Mock(return_value=18), CloseHandle=Mock())
-    kill = Mock()
-    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
-    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
-    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
-    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: {**expected, "uid": 502})
-    monkeypatch.setattr(platform.os, "kill", kill)
-
-    with pytest.raises(OSError, match="process incarnation changed"):
-        platform.signal_process(expected, platform.TERM)
-
-    kill.assert_not_called()
-    kernel.CloseHandle.assert_called_once_with(18)
-
-
-def test_windows_signal_process_keeps_successful_ctrl_break_cooperative(monkeypatch):
+def test_windows_signal_process_reports_checked_termination_failure(monkeypatch):
     expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
     kernel = SimpleNamespace(
         OpenProcess=Mock(return_value=18),
-        TerminateProcess=Mock(return_value=True),
+        GenerateConsoleCtrlEvent=Mock(return_value=False),
+        TerminateProcess=Mock(return_value=False),
         CloseHandle=Mock(),
     )
-    kill = Mock()
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
     monkeypatch.setattr(platform, "_kernel", lambda: kernel)
     monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: expected)
-    monkeypatch.setattr(platform.os, "kill", kill)
+    monkeypatch.setattr(platform.ctypes, "get_last_error", lambda: 5, raising=False)
+    monkeypatch.setattr(platform.ctypes, "WinError", lambda code: OSError(code, "termination denied"), raising=False)
 
-    platform.signal_process(expected, platform.TERM)
+    with pytest.raises(OSError, match="termination denied"):
+        platform.signal_process(expected, platform.TERM)
 
-    kill.assert_called_once_with(123, 1)
-    kernel.TerminateProcess.assert_not_called()
+    kernel.TerminateProcess.assert_called_once_with(18, 1)
     kernel.CloseHandle.assert_called_once_with(18)
 
 
