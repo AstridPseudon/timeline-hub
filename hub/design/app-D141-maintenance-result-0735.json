@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-26T07:35:34.584840+00:00",
+  "before_available_bytes": 4985679872,
+  "after_available_bytes": 4980178944,
+  "KEEP_count": 35,
+  "KEEP_findings": [],
+  "sweep_tmp_3": {
+    "exit": 0,
+    "removed_dirs": 0,
+    "diagnostic": "ls Broken pipe messages from existing helper pipeline; terminal exit0; no refusal"
+  },
+  "compact_scratch_20": {
+    "exit": 0,
+    "packed_scratch_dirs": 0,
+    "gzipped_worker_logs": 0,
+    "packed_test_dirs": 0
+  },
+  "recycle_0707": "normal auto-recycle already removed finished clean source; bin/recycle readback no worktree",
+  "held_targets": "all dirty, refused, missing-metadata, hardlinked and rawKEEP untouched",
+  "hub_operations": false
+}
