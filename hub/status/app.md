@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T05:26:00Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
-# app board, 2026-10-26T05:25:08Z
+<!-- app | 2026-10-26T05:31:03Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# app board, 2026-10-26T05:28:50Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,7 +17,7 @@
 | D141 binding | Supply genuine freeze2 paired rows | Luna | Actual source5344 | merged | 0459 | All8 pairs published0503. First command hashes98522/97277; registration false. | 5344c53e3063 |
 | D141s received ask | Provide first pair for final kit review | Luna | Runtime0506 receiving ask | merged | 0459;manager hash checks | Exact requested packet already byte equal in normal hub. Sole Runtime0503 review owns receiving. | Source5344 |
 | D141 Node route | Retain exact standalone Node row | Luna | Main standalone phase requirement | merged | 0515 | One full-d141-node-phase row; exact npm run test:node. All outside config bytes equal preimage. No body. | Source5344 andd822 |
-| D141 unit measure | Qualify retained full-suite disk bracket | Luna | Main05:20; source floor4.6GB | blocked:disk | Reserved app-F-D141l-unit-measurement-0523 | Retained exact df candidates found; X and floor NOT YET qualified. General D89d installed route exists. | Evidence pending |
+| D141 unit measure | Qualify retained full-suite disk bracket | Luna | Main05:20; source floor4.6GB | doing | app-F-D141l-unit-measurement-0523 | Admitted4600090624 bytes after lossless v1 log compression. Exact retained samples under qualification; no body. | Evidence pending |
 | D141 unit pair | Run current and pristine units | Luna and service | Normal5.2GB or qualified D89d | blocked:disk | Existing full controller lineage | New full5344 and pristined822 plus each own Node phase. Same-kind environment before per-ID REG verdict. | Pending |
 | D141 Node body | Cover both actual standalone phases | Luna and service | Each full outcome and admission | gated:D141-unit | Existing full controller lineage | 5344 script1709 bytes;d8221666. Each source executes its own unchanged script; no phase short circuit claim. | Pending |
 | D141 P1 | Reprove original dependent chain | Luna and service | D141s final disposition | gated:D141s | Existing journey controller lineage | Original2 cases and readiness preserved. Historical17879 PASS on867 stays historical. | Pending5344 |
@@ -32,7 +32,7 @@
 | D141 P5 | Receive actual custody and applicability | Runtime and service | Metadata0500 and final producer | blocked:runtime | Actual6934;0445;0500 | Actual38 PASS31.02s on6a/28e. Corrected exact IDs and final source applicability owed; no new tuple retarget. | Historical6a tuple |
 | D141 core | Receive definitive same-kind comparison | Agent and service | Main D141u | blocked:agent | 0455;0507;0500;0508 | Early17 candidates,376 UNKNOWN retained; freeze2 identical full pair definitive. Farm only for undecidable environment need. | Pending8585 pair |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
-| D74 headroom | Run ordinary guarded maintenance | Manager and lead | No refused dirty KEEP or hub target | doing | Maintenance0520 | Sweep3 removed0; compact running. Zero eligible clean ended nonKEEP tree. Owner hub gate remains lead only. | No source edit |
+| D74 headroom | Run ordinary guarded maintenance | Manager and lead | No refused dirty KEEP or hub target | merged | Maintenance0520 and0530 | Sweep0;compact0dirs/2logs;29 old KEEP markers exact. V1 manager logs saved48.63MB losslessly. Owner hub gate remains lead only. | No source edit |
 | D74 holds | Preserve refused or unowned targets | Manager and lead | Existing owner dispositions | gated:owner-holds | Existing guarded holds | DirtyU3, lockedU3c, missing metadata bundles, hardlink cache and refused orphan graph untouched. | No source edit |
 | D141 SWAP | Retain documented safety-held gap | Existing owner | D130 absolute hold | gated:safety-D130 | Actual3250;refusal1537 | Original NO GO. No retry, transfer or alternate qualification. | Historical tuple |
 | D141 stopped | Retain other known gaps and failures | Existing owners | D141 stop | gated:D141-stop | Existing stopped lineages | Element32016/15200 FAIL;B0222330 nine setup errors;D77 unqualified;own tests visible unchanged. | Historical tuples |
@@ -49,18 +49,20 @@ D141 controls: Unit suites independent of paired kit. Main05:20 allows retained 
 
 H6: Normal hub Runtime05:03 board /05:07 publication has sole paired0503 review, P5metadata0500 and disjoint15REG fixes; TS source normal857e reported in latest peer, complete qualified producer handoff not yet received. Agent05:07 board has source0500/independent0508 and early join0507; its source receipt wait is stale, exact App home0459 and source binding already byte equal in normal hub. Header D141u demands identical freeze2 selection; early17 candidates not definitive. Farm04:25 stood down; no child/core fallback. Proof05:08 stood down. No duplicate owner.
 
-Blockers: Disk — App full/new-pristine units need normal5.2GB or qualified same-kind D89d. Measurement0523 awaits ordinary4.6GB source admission; no exception inferred.
+Blockers: Disk — App full/new-pristine units need normal5.2GB or qualified same-kind D89d. Measurement0523 admitted4600090624 bytes at05:28:16Z after lossless old v1 output compression; no body before qualified floor.
 Blockers: Runtime paired kit — Sole final review0503 plus installation by06:00; genuine App0459 binding already delivered. Otherwise use normal floors.
 Blockers: Runtime old queue — Existing peer0506 requests exact hold for18617 on867 before headroom opens; original queue/request unchanged.
 Blockers: Runtime P5 — Corrected exact-ID derivative0500 and final source applicability owed; actual38 PASS retains historical6a/28e scope.
 Blockers: Agent — Definitive freeze2 full pair and changed-CLI P4 proof owed by existing owning controllers.
 Blockers: Safety — D130 held; owner-gated hub stays lead only. Refused orphan graph, hardlink cache and dirty or unowned trees untouched.
 
-Next ready: Ordinary4.6GB -> unit measurement0523; qualified witness floor or normal5.2GB -> actual new/pristine full and exact Node coverage. D141s disposition -> placement first, remaining5 P2, P1 and P3 on genuine tuple. Reserved Sol repair only on proved REG. No later catch-up before F-final.
-live 0 / cap 0; ready-undispatched 0. Current available 4555423744 bytes is below ordinary4.6GB source floor. No actual heavy body.
+Next ready: Measurement0523 terminal -> qualified witness floor or normal5.2GB -> actual new/pristine full and exact Node coverage. D141s disposition -> placement first, remaining5 P2, P1 and P3 on genuine tuple. Reserved Sol repair only on proved REG. No later catch-up before F-final.
+live 1 / cap 1; ready-undispatched 0. Measurement0523 dispatched at4600090624 bytes; no actual heavy. New work requires ordinary admission.
 
-Custody and maintenance: Every named raw test run retains KEEP; raw private0700/files0600 stay exact. New controller0043 KEEP preserves newly requested historical full witnesses. Maintenance0520 protects preexisting29 marker hashes/modes; allowed new marker disclosed. Guarded inventory has zero eligible ended clean nonKEEP tree; historical dirtyU3, lockedU3c, bundles without metadata, orphan1.107GB and hardlinked v1cache remain held. No hub operation, raw deletion, metadata invention or refusal retry. Sweep3 terminal removed0; compact1 still running. [Precheck](../../design/app-D141-maintenance-precheck-0520.json).
+Custody and maintenance: Every named raw test run retains KEEP; raw private0700/files0600 stay exact. New controller0043 KEEP preserves newly requested historical full witnesses. Maintenance0520 protects preexisting29 marker hashes/modes; allowed new marker disclosed. Guarded inventory has zero eligible ended clean nonKEEP tree; historical dirtyU3, lockedU3c, bundles without metadata, orphan1.107GB and hardlinked v1cache remain held. No hub operation, raw deletion, metadata invention or refusal retry. Sweep3 terminal removed0; compact1 terminal0dirs/2logs. Lossless23 pre22Oct manager stdout logs save48634220 bytes; all decompressed hashes exact. [Result](../../design/app-D141-maintenance-result-0530.json). [Precheck](../../design/app-D141-maintenance-precheck-0520.json).
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. Historical source/notes/prep/admission/P4 custody remain immutable. No source-only behavior credit, REG0, platform GO, delivery build or ZIP. Manager writes only operational board/briefs/peers/KEEP and byte publications; all product/test/generated/pin changes remain worker-owned.
 
 INBOX consumed through2763889 bytes. Board overwritten 2026-10-26T05:25:08Z; current pass consumes Main05:20 unit-floor instruction and Runtime0506 receiving ask.
+
+Current pass 2026-10-26T05:28:50Z: manager exact pre-dispatch4600090624 admitted sole ordinary Luna unit-measurement0523. Source-floor blocker cleared via authorized lossless old v1 stdout compression; no source/raw/hub deletion. Measurement result pending, general D89d installed route present. Cross-lane receiving ask satisfied by genuine existing0459 source and0503 binding; peer0525 clears stale owner waits.

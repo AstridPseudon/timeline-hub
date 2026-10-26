@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-26T05:30:52.768888+00:00",
+  "scope": "lossless compression of three named closed unreferenced manager stdout logs; same old-log policy as ordinary maintenance; no raw test data, source, hub or protected output touched",
+  "paths": [
+    {
+      "path": "managers/app/rounds/20261022T2339Z.log",
+      "bytes": 1181092,
+      "sha256": "406a015d2219b23bf6d2c11e74c19c1b124a7fd28d2d5ebbc2d76440bd95b25c",
+      "mode": 420,
+      "inode": 2810345,
+      "mtime_ns": 1792712576327714943,
+      "compressed_bytes": 302032,
+      "decompressed_sha256": "406a015d2219b23bf6d2c11e74c19c1b124a7fd28d2d5ebbc2d76440bd95b25c"
+    },
+    {
+      "path": "managers/app/rounds/20261022T2344Z.log",
+      "bytes": 1214094,
+      "sha256": "35c705168fe121830053a3babc6725752747704ae76397fd483ef12a0bc14a2b",
+      "mode": 420,
+      "inode": 2810351,
+      "mtime_ns": 1792712743711724893,
+      "compressed_bytes": 303129,
+      "decompressed_sha256": "35c705168fe121830053a3babc6725752747704ae76397fd483ef12a0bc14a2b"
+    },
+    {
+      "path": "managers/app/rounds/20261022T2343Z.log",
+      "bytes": 1127319,
+      "sha256": "911cfef8e32b9504f44c6d865fbadd3954db28fe2cbaba14f260679cd3a78b75",
+      "mode": 420,
+      "inode": 2810348,
+      "mtime_ns": 1792712655383719642,
+      "compressed_bytes": 293989,
+      "decompressed_sha256": "911cfef8e32b9504f44c6d865fbadd3954db28fe2cbaba14f260679cd3a78b75"
+    }
+  ],
+  "pre_available_bytes": 4598083584,
+  "saved_bytes": 2623355,
+  "post_available_bytes": 4600705024
+}

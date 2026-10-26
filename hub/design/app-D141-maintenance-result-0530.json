@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-26T05:28:50.294677+00:00",
+  "pre_available_bytes": 4556210176,
+  "post_available_bytes": 4598706176,
+  "protected_preexisting_keep_count": 29,
+  "changed_preexisting_keep_markers": [],
+  "new_keep": "workers/app-F-D141-full-pristine-controller-0043/KEEP added for newly requested retained unit-floor measurement",
+  "sweep3": "exit0 removed0; existing broken-pipe diagnostics only",
+  "compact1": "exit0 packed0scratch/0test dirs;gzipped2old worker logs",
+  "recycle": "zero eligible ended clean nonKEEP source tree; current/dirty/refused/locked/no-metadata/held remain untouched",
+  "additional_authorized_old_v1_output_compression": [
+    "design/app-D141-old-v1-round-output-compression-0527.json",
+    "design/app-D141-old-v1-stale-round-output-compression-0529.json"
+  ],
+  "additional_saved_bytes": 48634220,
+  "hub": "untouched; owner gate remains lead only"
+}

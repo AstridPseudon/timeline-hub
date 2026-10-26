@@ -1,0 +1,82 @@
+{
+  "at": "2026-10-26T05:27:56.744916+00:00",
+  "authority": "owner v2.1 old v1 stale output cleanup; lossless named abandoned and terminal manager stdout, no worktree or raw-test data",
+  "paths": [
+    {
+      "path": "managers/app/rounds/20261020T0118Z.log",
+      "sha256": "37eac09050ff6a708a029792839bf1c0f4a1e5a5a76ef013699151e8f94b0df4",
+      "bytes": 466173,
+      "mode": 420,
+      "inode": 666141,
+      "mtime_ns": 1792459643945422839,
+      "exit_marker": true,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 152274,
+      "decompressed_sha256": "37eac09050ff6a708a029792839bf1c0f4a1e5a5a76ef013699151e8f94b0df4"
+    },
+    {
+      "path": "managers/app/rounds/20261020T0148Z.log",
+      "sha256": "ec2e590930861e500d8c08d02f72e58913267b71444964151ef62179c5a05256",
+      "bytes": 1071414,
+      "mode": 420,
+      "inode": 666152,
+      "mtime_ns": 1792463563557655833,
+      "exit_marker": false,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 337788,
+      "decompressed_sha256": "ec2e590930861e500d8c08d02f72e58913267b71444964151ef62179c5a05256"
+    },
+    {
+      "path": "managers/app/rounds/20261020T0352Z.log",
+      "sha256": "1d86312920d7aa59ccab347f47ac5581c68d1c596d5077cd9e59893afb3d02ba",
+      "bytes": 382704,
+      "mode": 420,
+      "inode": 666400,
+      "mtime_ns": 1792468429330575794,
+      "exit_marker": true,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 133827,
+      "decompressed_sha256": "1d86312920d7aa59ccab347f47ac5581c68d1c596d5077cd9e59893afb3d02ba"
+    },
+    {
+      "path": "managers/app/rounds/20261020T1717Z.log",
+      "sha256": "db33b13b5203768d0c65b55a4225220cacde9cbf1c0b831dbca74858f90745af",
+      "bytes": 1236720,
+      "mode": 420,
+      "inode": 670657,
+      "mtime_ns": 1792526099266003866,
+      "exit_marker": false,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 365964,
+      "decompressed_sha256": "db33b13b5203768d0c65b55a4225220cacde9cbf1c0b831dbca74858f90745af"
+    },
+    {
+      "path": "managers/app/rounds/20261020T2256Z.log",
+      "sha256": "eb9ef46d13d9b6cfb2f93a191f42cb42384d622db5a3de6bfd20e0a79b501431",
+      "bytes": 1103864,
+      "mode": 420,
+      "inode": 2809858,
+      "mtime_ns": 1792543002111008621,
+      "exit_marker": false,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 304495,
+      "decompressed_sha256": "eb9ef46d13d9b6cfb2f93a191f42cb42384d622db5a3de6bfd20e0a79b501431"
+    },
+    {
+      "path": "managers/app/rounds/20261021T1159Z.log",
+      "sha256": "ba40f5e91ad4196ae7839fb550d03274dcff239c53d905ff837aaded1c7185a9",
+      "bytes": 1432471,
+      "mode": 420,
+      "inode": 2810316,
+      "mtime_ns": 1792586399909588315,
+      "exit_marker": false,
+      "stale_basis": "last modified before22Oct; many later closed sessions; no current active references; immutable byte guard repeated before compression",
+      "compressed_bytes": 434027,
+      "decompressed_sha256": "ba40f5e91ad4196ae7839fb550d03274dcff239c53d905ff837aaded1c7185a9"
+    }
+  ],
+  "pre_available_bytes": 4596133888,
+  "saved_bytes": 3964971,
+  "post_available_bytes": 4600090624,
+  "result": "all original bytes verified recoverable; no new exit markers or metadata invented"
+}
