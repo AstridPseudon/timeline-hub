@@ -1,0 +1,34 @@
+{
+  "acceptance_verdict": "SOURCE_ACCOUNTING_COMPLETE_WITH_FINITE_UNRESOLVED_BEHAVIOR_ROWS",
+  "aggregate_equations": [
+    "9561 = 9388 + 173",
+    "3255 = 3082 + 173"
+  ],
+  "classification_authority_unchanged": true,
+  "current_reg_candidates": 0,
+  "cut_bad_outcomes": {
+    "error": 196,
+    "fail": 201,
+    "total": 397
+  },
+  "fails_both": 19,
+  "five_cut_only": {
+    "actual_failures_retained": 5,
+    "source_backed_na": 5
+  },
+  "limits": [
+    "No behavior is inferred from source presence or file absence.",
+    "No retirement, assertion adaptation, Farm run, REG0, or ship verdict is issued.",
+    "Raw XML and traceback material remain in the prior private KEEP packet."
+  ],
+  "pristine_only": {
+    "behavior_proven": 0,
+    "mapped": 64,
+    "unresolved": 64
+  },
+  "product_changes": false,
+  "result": "PASS_EVIDENCE",
+  "schema": "timeline.f.d141l.fullpair.source-accounting-review.v1",
+  "scope": "One bounded D141u-a source identity/accounting return over the existing D141l full pair.",
+  "tests_run": false
+}

@@ -1,0 +1,54 @@
+{
+  "utc": "2026-10-26T10:57:53.112400+00:00",
+  "scope": "exact static source/accounting originals; pending independent review, not REG0",
+  "files": [
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/review.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-review.json",
+      "sha256": "e2666b87eeaa83311b73275c1bc9fda45cae7fba7e4067836ebd0d4f6cb69ca8",
+      "bytes": 1035
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/findings.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-findings.md",
+      "sha256": "50730f0c2c9edfc0f3f1c5a79d6181c388002d3abfad0f0dc2a88c2df14600ab",
+      "bytes": 1445
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/counts.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-counts.json",
+      "sha256": "456d792436acb0a711bd52d438de0359ada9afa83575a97b5c53c8b7b95524a5",
+      "bytes": 3560
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/validation.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-validation.md",
+      "sha256": "ebe80db49e0aa35df5b346353d91c20166c858c008b4c31b1b2bcedc3e232d83",
+      "bytes": 1273
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/handoff.md",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-handoff.md",
+      "sha256": "2ea8dce367eac62e9a3800468a6d0dbc9827a1470ceb5d87a7bb55d2aac67f13",
+      "bytes": 735
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/source-identity-map.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-source-identity-map.json",
+      "sha256": "475869ec6e97a883ceee9ffce8717423bdbd816932bee27240b5c0b04b760cca",
+      "bytes": 30476
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/pristine-only-map.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-pristine-only-map.json",
+      "sha256": "07db5cc09c020d796c2039925031ee6e918fada466d9d307a30189a00938f3d0",
+      "bytes": 224103
+    },
+    {
+      "source": "workers/agt-F-D141l-fullpair-source-accounting-return-1051/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141l-fullpair-source-accounting-return-1051-source-manifest.json",
+      "sha256": "db348e979fd9d94300ed03d52787d755812bcce6ffdd3a114ba91be67d933680",
+      "bytes": 6751
+    }
+  ]
+}
