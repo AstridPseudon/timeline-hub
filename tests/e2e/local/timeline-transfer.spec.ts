@@ -40,6 +40,8 @@ test('CLI-imported timeline is selectable and plays in the hosted editor', async
   await expect(page.getByRole('option').first()).toBeVisible();
   const pickerEvidence = browserEvidencePath(testInfo, 'timeline-transfer/cli-imported-picker.png');
   await page.screenshot({ path: pickerEvidence, fullPage: true });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('option')).toHaveCount(0);
 
   const position = page.getByRole('slider', { name: 'Playback position' });
   await expect(position).toBeVisible();
