@@ -1,0 +1,29 @@
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+still running after 1 min ; rerun wait-test
+test agent-agent-core-full-1026100428-24814: fail exit=1 in 1536s — agent-core-full on integration:agent (agent tree d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735)
+cmd: /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/command-cut.sh
+counts: 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026100428-24814/log.txt ---

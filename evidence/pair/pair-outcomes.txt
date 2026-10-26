@@ -1,0 +1,4 @@
+cut_test_exit=1
+pristine_test_exit=1
+custody=PLAIN_ARTIFACT_ASSOCIATION
+qualification=MEASUREMENT_RECORDED

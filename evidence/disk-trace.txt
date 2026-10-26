@@ -1,287 +1,1268 @@
-2026-10-26T06:38:43.577699+00:00 available_bytes=4504854528 stop_bytes=4000000000 state=OK
-2026-10-26T06:38:48.577915+00:00 available_bytes=4504825856 stop_bytes=4000000000 state=OK
-2026-10-26T06:38:53.586632+00:00 available_bytes=4504641536 stop_bytes=4000000000 state=OK
-2026-10-26T06:38:58.586855+00:00 available_bytes=4504735744 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:03.587051+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:08.587245+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:13.587440+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:18.587634+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:23.587848+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:28.588061+00:00 available_bytes=4504489984 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:33.588290+00:00 available_bytes=4504477696 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:38.588522+00:00 available_bytes=4504256512 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:43.588740+00:00 available_bytes=4504256512 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:48.588950+00:00 available_bytes=4504068096 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:53.589172+00:00 available_bytes=4504350720 stop_bytes=4000000000 state=OK
-2026-10-26T06:39:58.589459+00:00 available_bytes=4504346624 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:03.589698+00:00 available_bytes=4504346624 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:08.589957+00:00 available_bytes=4504338432 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:13.590214+00:00 available_bytes=4504334336 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:18.590494+00:00 available_bytes=4504313856 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:23.590747+00:00 available_bytes=4504309760 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:28.591096+00:00 available_bytes=4504309760 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:33.591464+00:00 available_bytes=4504309760 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:38.591794+00:00 available_bytes=4505325568 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:43.594916+00:00 available_bytes=4507115520 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:48.595130+00:00 available_bytes=4508205056 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:53.595393+00:00 available_bytes=4509356032 stop_bytes=4000000000 state=OK
-2026-10-26T06:40:58.598927+00:00 available_bytes=4510330880 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:03.599520+00:00 available_bytes=4510642176 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:08.601933+00:00 available_bytes=4510642176 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:13.602417+00:00 available_bytes=4510638080 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:18.602681+00:00 available_bytes=4510621696 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:23.603023+00:00 available_bytes=4510617600 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:28.603399+00:00 available_bytes=4510597120 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:33.603608+00:00 available_bytes=4510597120 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:38.603837+00:00 available_bytes=4510588928 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:43.604104+00:00 available_bytes=4510588928 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:48.604449+00:00 available_bytes=4511232000 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:53.604709+00:00 available_bytes=4510572544 stop_bytes=4000000000 state=OK
-2026-10-26T06:41:58.605008+00:00 available_bytes=4510556160 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:03.605276+00:00 available_bytes=4510535680 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:08.605551+00:00 available_bytes=4509679616 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:13.605797+00:00 available_bytes=4509663232 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:18.606093+00:00 available_bytes=4509618176 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:23.606363+00:00 available_bytes=4509609984 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:28.606564+00:00 available_bytes=4509609984 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:33.606883+00:00 available_bytes=4509605888 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:38.607153+00:00 available_bytes=4509605888 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:43.607379+00:00 available_bytes=4509605888 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:48.607682+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:53.607905+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:42:58.608123+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:03.608384+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:08.608633+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:13.608903+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:18.609226+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:23.609483+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:28.609778+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:33.610134+00:00 available_bytes=4509581312 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:38.610403+00:00 available_bytes=4509548544 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:43.610650+00:00 available_bytes=4509548544 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:48.610960+00:00 available_bytes=4509548544 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:53.611216+00:00 available_bytes=4509548544 stop_bytes=4000000000 state=OK
-2026-10-26T06:43:58.611440+00:00 available_bytes=4509544448 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:03.611708+00:00 available_bytes=4509536256 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:08.611941+00:00 available_bytes=4509528064 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:13.612182+00:00 available_bytes=4509523968 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:18.612435+00:00 available_bytes=4509519872 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:23.612678+00:00 available_bytes=4509519872 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:28.612930+00:00 available_bytes=4509515776 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:33.613195+00:00 available_bytes=4509515776 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:38.613475+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:43.613750+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:48.614006+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:53.614251+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:44:58.614517+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:03.614755+00:00 available_bytes=4509503488 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:08.615067+00:00 available_bytes=4509499392 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:13.615287+00:00 available_bytes=4509499392 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:18.615555+00:00 available_bytes=4509499392 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:23.615791+00:00 available_bytes=4509483008 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:28.616090+00:00 available_bytes=4509483008 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:33.616412+00:00 available_bytes=4509470720 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:38.616708+00:00 available_bytes=4509462528 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:43.617007+00:00 available_bytes=4509450240 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:48.617411+00:00 available_bytes=4509388800 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:53.617680+00:00 available_bytes=4509388800 stop_bytes=4000000000 state=OK
-2026-10-26T06:45:58.617967+00:00 available_bytes=4509388800 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:03.618276+00:00 available_bytes=4509376512 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:08.618606+00:00 available_bytes=4509376512 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:13.618909+00:00 available_bytes=4509372416 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:18.619180+00:00 available_bytes=4510023680 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:23.619418+00:00 available_bytes=4509319168 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:28.619702+00:00 available_bytes=4509315072 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:33.620020+00:00 available_bytes=4508626944 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:38.620420+00:00 available_bytes=4505808896 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:43.620661+00:00 available_bytes=4505759744 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:48.620898+00:00 available_bytes=4505747456 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:53.621114+00:00 available_bytes=4505735168 stop_bytes=4000000000 state=OK
-2026-10-26T06:46:58.621422+00:00 available_bytes=4505722880 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:03.621609+00:00 available_bytes=4505718784 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:08.621816+00:00 available_bytes=4505706496 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:13.622018+00:00 available_bytes=4505665536 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:18.622232+00:00 available_bytes=4505636864 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:23.622453+00:00 available_bytes=4505628672 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:28.622744+00:00 available_bytes=4505612288 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:33.622940+00:00 available_bytes=4505591808 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:38.623228+00:00 available_bytes=4505591808 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:43.623496+00:00 available_bytes=4505575424 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:48.623747+00:00 available_bytes=4505575424 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:53.623953+00:00 available_bytes=4505575424 stop_bytes=4000000000 state=OK
-2026-10-26T06:47:58.624162+00:00 available_bytes=4505575424 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:03.624523+00:00 available_bytes=4505518080 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:08.624893+00:00 available_bytes=4505505792 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:13.625097+00:00 available_bytes=4504526848 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:18.625381+00:00 available_bytes=4504518656 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:23.625620+00:00 available_bytes=4504518656 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:28.625844+00:00 available_bytes=4504518656 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:33.626079+00:00 available_bytes=4504518656 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:38.626309+00:00 available_bytes=4504518656 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:43.626576+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:48.626830+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:53.627167+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:48:58.627418+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:03.627670+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:08.627938+00:00 available_bytes=4504514560 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:13.628240+00:00 available_bytes=4504461312 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:18.628482+00:00 available_bytes=4504461312 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:23.628688+00:00 available_bytes=4504461312 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:28.628942+00:00 available_bytes=4504461312 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:33.629237+00:00 available_bytes=4504453120 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:38.629520+00:00 available_bytes=4504449024 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:43.629782+00:00 available_bytes=4504350720 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:48.630083+00:00 available_bytes=4504281088 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:53.630434+00:00 available_bytes=4504281088 stop_bytes=4000000000 state=OK
-2026-10-26T06:49:58.630722+00:00 available_bytes=4504281088 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:03.630993+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:08.631258+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:13.631555+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:18.631855+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:23.632110+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:28.632449+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:33.632727+00:00 available_bytes=4503089152 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:38.633041+00:00 available_bytes=4503085056 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:43.633318+00:00 available_bytes=4503740416 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:48.633608+00:00 available_bytes=4503015424 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:53.633840+00:00 available_bytes=4503011328 stop_bytes=4000000000 state=OK
-2026-10-26T06:50:58.634069+00:00 available_bytes=4503007232 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:03.634421+00:00 available_bytes=4500226048 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:08.634696+00:00 available_bytes=4500230144 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:13.635057+00:00 available_bytes=4500230144 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:18.635305+00:00 available_bytes=4499800064 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:23.635564+00:00 available_bytes=4498898944 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:28.635895+00:00 available_bytes=4498898944 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:33.636244+00:00 available_bytes=4497784832 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:38.636453+00:00 available_bytes=4497657856 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:43.636672+00:00 available_bytes=4497657856 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:48.636903+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:53.637133+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:51:58.637443+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:03.638105+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:08.638317+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:13.638613+00:00 available_bytes=4497637376 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:18.638890+00:00 available_bytes=4497629184 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:23.639074+00:00 available_bytes=4497534976 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:28.639301+00:00 available_bytes=4497629184 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:33.639543+00:00 available_bytes=4497629184 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:38.639815+00:00 available_bytes=4497625088 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:43.640046+00:00 available_bytes=4497625088 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:48.640299+00:00 available_bytes=4497625088 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:53.640526+00:00 available_bytes=4497616896 stop_bytes=4000000000 state=OK
-2026-10-26T06:52:58.640762+00:00 available_bytes=4497612800 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:03.641060+00:00 available_bytes=4497612800 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:08.641400+00:00 available_bytes=4496752640 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:13.641657+00:00 available_bytes=4496097280 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:18.641873+00:00 available_bytes=4496084992 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:23.642082+00:00 available_bytes=4494704640 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:28.642260+00:00 available_bytes=4494680064 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:33.642499+00:00 available_bytes=4494680064 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:38.642771+00:00 available_bytes=4494659584 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:43.643071+00:00 available_bytes=4494655488 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:48.643360+00:00 available_bytes=4494647296 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:53.643608+00:00 available_bytes=4494647296 stop_bytes=4000000000 state=OK
-2026-10-26T06:53:58.643836+00:00 available_bytes=4494647296 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:03.644038+00:00 available_bytes=4494643200 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:08.644286+00:00 available_bytes=4494643200 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:13.644585+00:00 available_bytes=4494639104 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:18.644849+00:00 available_bytes=4494639104 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:23.645110+00:00 available_bytes=4494635008 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:28.645416+00:00 available_bytes=4494635008 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:33.645684+00:00 available_bytes=4494630912 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:38.645879+00:00 available_bytes=4496416768 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:43.646112+00:00 available_bytes=4496400384 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:48.646390+00:00 available_bytes=4496400384 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:53.646649+00:00 available_bytes=4496400384 stop_bytes=4000000000 state=OK
-2026-10-26T06:54:58.646928+00:00 available_bytes=4496400384 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:03.647187+00:00 available_bytes=4496400384 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:08.647462+00:00 available_bytes=4494757888 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:13.647684+00:00 available_bytes=4494577664 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:18.647917+00:00 available_bytes=4494577664 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:23.648208+00:00 available_bytes=4494553088 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:28.648490+00:00 available_bytes=4492484608 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:33.648706+00:00 available_bytes=4492484608 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:38.648927+00:00 available_bytes=4492480512 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:43.649177+00:00 available_bytes=4492476416 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:48.649463+00:00 available_bytes=4492476416 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:53.650272+00:00 available_bytes=4492476416 stop_bytes=4000000000 state=OK
-2026-10-26T06:55:58.650554+00:00 available_bytes=4492476416 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:03.650825+00:00 available_bytes=4492472320 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:08.651052+00:00 available_bytes=4492472320 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:13.651618+00:00 available_bytes=4492869632 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:18.651850+00:00 available_bytes=4493901824 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:23.652053+00:00 available_bytes=4494893056 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:28.652289+00:00 available_bytes=4496035840 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:33.652585+00:00 available_bytes=4497240064 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:38.654939+00:00 available_bytes=4498345984 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:43.655148+00:00 available_bytes=4499361792 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:48.655407+00:00 available_bytes=4500054016 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:53.655652+00:00 available_bytes=4500475904 stop_bytes=4000000000 state=OK
-2026-10-26T06:56:58.655887+00:00 available_bytes=4501106688 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:03.656127+00:00 available_bytes=4499681280 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:08.656402+00:00 available_bytes=4499701760 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:13.656734+00:00 available_bytes=4499701760 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:18.656951+00:00 available_bytes=4498305024 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:23.657190+00:00 available_bytes=4498296832 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:28.657450+00:00 available_bytes=4498276352 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:33.657684+00:00 available_bytes=4498079744 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:38.657903+00:00 available_bytes=4498268160 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:43.658105+00:00 available_bytes=4498075648 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:48.658589+00:00 available_bytes=4498264064 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:53.658947+00:00 available_bytes=4498264064 stop_bytes=4000000000 state=OK
-2026-10-26T06:57:58.659200+00:00 available_bytes=4498259968 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:03.659475+00:00 available_bytes=4498259968 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:08.659688+00:00 available_bytes=4498255872 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:13.659949+00:00 available_bytes=4498255872 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:18.660211+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:23.660471+00:00 available_bytes=4498333696 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:28.660686+00:00 available_bytes=4498333696 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:33.660932+00:00 available_bytes=4498325504 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:38.661203+00:00 available_bytes=4498305024 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:43.661431+00:00 available_bytes=4498251776 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:48.661738+00:00 available_bytes=4498251776 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:53.662071+00:00 available_bytes=4498251776 stop_bytes=4000000000 state=OK
-2026-10-26T06:58:58.662375+00:00 available_bytes=4498251776 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:03.662672+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:08.662980+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:13.663214+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:18.663723+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:23.663977+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:28.665914+00:00 available_bytes=4498247680 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:33.666198+00:00 available_bytes=4498919424 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:38.666519+00:00 available_bytes=4498231296 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:43.666740+00:00 available_bytes=4498173952 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:48.666989+00:00 available_bytes=4498173952 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:53.668236+00:00 available_bytes=4496171008 stop_bytes=4000000000 state=OK
-2026-10-26T06:59:58.668802+00:00 available_bytes=4495540224 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:03.669059+00:00 available_bytes=4495540224 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:08.669319+00:00 available_bytes=4495536128 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:13.669615+00:00 available_bytes=4495536128 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:18.669820+00:00 available_bytes=4495536128 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:23.670106+00:00 available_bytes=4495536128 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:28.670412+00:00 available_bytes=4495536128 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:33.670646+00:00 available_bytes=4495474688 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:38.670929+00:00 available_bytes=4495470592 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:43.671155+00:00 available_bytes=4495466496 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:48.671385+00:00 available_bytes=4495454208 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:53.671645+00:00 available_bytes=4495454208 stop_bytes=4000000000 state=OK
-2026-10-26T07:00:58.671936+00:00 available_bytes=4495454208 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:03.672221+00:00 available_bytes=4495450112 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:08.672476+00:00 available_bytes=4495450112 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:13.672728+00:00 available_bytes=4495450112 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:18.672976+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:23.673191+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:28.673458+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:33.673730+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:38.673952+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:43.674222+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:48.675546+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:53.675823+00:00 available_bytes=4495446016 stop_bytes=4000000000 state=OK
-2026-10-26T07:01:58.676085+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:03.676371+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:08.676585+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:13.676793+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:18.677003+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:23.677253+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:28.677518+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
-2026-10-26T07:02:33.677822+00:00 available_bytes=4495441920 stop_bytes=4000000000 state=OK
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:22.861922177Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:27.869734027Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:32.877203572Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:37.886706474Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:42.896473711Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:47.908439432Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:52.924928926Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:04:57.936612956Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:02.957180404Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:07.973513190Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:12.985035663Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:18.005409504Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:23.029239569Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:28.050124875Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:33.060737972Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:38.079620564Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:43.092749007Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:48.104603871Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:53.121083217Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:05:58.140871835Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:03.157304466Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:08.176703113Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:13.193749113Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:18.216861646Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:23.233481764Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:28.249403456Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:33.262376137Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:38.284861577Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:43.295442366Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:48.307116448Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:53.319184493Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:06:58.329285272Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:03.344774927Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:08.359075707Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:13.376769084Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:18.394943722Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:23.410179605Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:28.436818680Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:33.448979988Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:38.458519970Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:43.469295445Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:48.481921429Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:53.507453250Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:07:58.524536729Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:03.538082579Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:08.550250425Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:13.563112186Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:18.578659863Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:23.589869801Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:28.603371234Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:33.616906138Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:38.632425926Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:43.645294859Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:48.658737315Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:53.675652924Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:08:58.697417269Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:03.712658823Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:08.723837328Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:13.737568866Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:18.748156625Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:23.758718169Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:28.772383599Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:33.784181239Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:38.803577341Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:43.819142757Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:48.838795854Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:53.855615980Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:09:58.865270023Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:03.880932183Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:08.891916003Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:13.917606834Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:18.927430609Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:23.945011867Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:28.954909077Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:33.964690662Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:38.985137051Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:44.001381567Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:49.025766306Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:54.035546854Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:10:59.049129062Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:04.060624760Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:09.073592244Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:14.091193331Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:19.105476565Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:24.115140079Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:29.129043143Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:34.139998033Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:39.152217348Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:44.166864388Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:49.176006727Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:54.189041025Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:11:59.200550051Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:04.214276890Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:09.230100281Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:14.242532751Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:19.249856319Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:24.261964093Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:29.276041056Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:34.293163951Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:39.316176784Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:44.348406835Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:49.364570307Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:54.373502433Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:12:59.384183144Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:04.399247231Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:09.419804945Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:14.430981817Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:19.439971524Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:24.452692084Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:29.472711300Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:34.494431049Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:39.508725169Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:44.523292070Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:49.532692940Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:54.549208468Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:13:59.567214394Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:04.586558025Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:09.594011751Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:14.603936668Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:19.615222660Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:24.628419971Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:29.645201177Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:34.661389751Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:39.673464008Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:44.689036570Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:49.708024126Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:54.724807036Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:14:59.743054369Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:04.761572454Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:09.781422014Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:14.796717358Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:19.808725026Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:24.825028263Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:29.832557209Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:34.844731188Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:39.852379713Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:44.863598440Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:49.876679407Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:54.888574912Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:15:59.896511344Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:04.907632339Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:09.921243172Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:14.938468478Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:19.947829335Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:24.959394387Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:29.973179522Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:34.984015688Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:39.991659900Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:45.005151646Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:50.024783899Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:16:55.036949292Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:00.051551915Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:05.061203468Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:10.078553188Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:15.094770330Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:20.108283623Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:25.115804580Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:30.127152067Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:35.146184455Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:40.167931292Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:45.179431132Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:50.193656161Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:17:55.203303595Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:00.215831823Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:05.228306812Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:10.241908121Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:15.252222778Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:20.269387719Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:25.278171714Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:30.288227983Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:35.298718942Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:40.309530707Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:45.320836879Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:50.334549052Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:18:55.344373456Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:00.357461948Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:05.372823895Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:10.393324776Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:15.401886482Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:20.409681600Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:25.421301334Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:30.437265861Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:35.452783101Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:40.461904145Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:45.480672513Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:50.490921728Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:19:55.507939476Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:00.529144551Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:05.540626637Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:10.553988477Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:15.564702311Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:20.572153593Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:25.589896334Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:30.605622669Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:35.620592845Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:40.637782969Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:45.653466470Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:50.667633049Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:20:55.684239729Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:00.696698594Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:05.719878440Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:10.737699910Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:15.750913638Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:20.768683297Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:25.785113625Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:30.801185142Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:35.815118039Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:40.835532388Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:45.852226555Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:50.869210511Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:21:55.879415761Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:00.894058602Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:05.910793147Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:10.929656091Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:15.939213609Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:20.957377406Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:25.970400320Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:30.980752793Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:35.989210108Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:41.003958419Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:46.015868028Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:51.028928040Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:22:56.040163671Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:01.048291220Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:06.068794910Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:11.095615145Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:16.106803264Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:21.118458883Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:26.137260029Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:31.151542183Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:36.167682807Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:41.181025733Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:46.194121056Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:51.207617538Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:23:56.223468213Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:01.235641060Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:06.245963080Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:11.256767300Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:16.270470569Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:21.284693035Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:26.303589315Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:31.316970984Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:36.332754998Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:41.347785163Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:46.365139852Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:51.380685458Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:24:56.397373185Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:01.416725718Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:06.427579526Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:11.436565223Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:16.447466254Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:21.458392228Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:26.468049274Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:31.478160298Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:36.492499802Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:41.506444270Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:46.516516720Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:51.528273228Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:25:56.539557593Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:01.547868585Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:06.566771342Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:11.578048206Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:16.590315437Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:21.599106818Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:26.610745207Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:31.621529809Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:36.636046070Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:41.651951689Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:46.670446787Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:51.681041853Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:26:56.695099415Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:01.705653763Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:06.720900524Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:11.732971980Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:16.744512009Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:21.757987027Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:26.767393191Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:31.783292493Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:36.795476192Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:41.805109570Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:46.822684821Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:51.839266060Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:27:56.848705098Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:01.862981088Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:06.875056966Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:11.884965148Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:16.899739294Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:21.912569240Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:26.930828681Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:31.943100508Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:36.957196326Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:41.968453195Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:46.993548450Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:52.005172783Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:28:57.016707275Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:02.026228256Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:07.038198919Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:12.053078419Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:17.068965319Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:22.085059603Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:27.104963888Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:32.129035372Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:37.139277094Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:42.156941457Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:47.174174641Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:52.187502746Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:29:57.200088841Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:02.213391471Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:07.232896565Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:12.244995576Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:17.253401188Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:22.261688488Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:27.269706273Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:32.276789089Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:37.284040816Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:42.294313016Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:47.306811811Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:52.321091070Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:30:57.331214029Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:02.340736730Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:07.348709129Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:12.355810140Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:17.369248313Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:22.378770854Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:27.386502045Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:32.398728058Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:37.408681014Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:42.420373895Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:47.429864539Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:52.439930286Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:31:57.453278269Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:02.463780290Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:07.478757974Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:12.488404602Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:17.498734902Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:22.513235340Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:27.525154117Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:32.536801766Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:37.549099984Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:42.566031845Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:47.580131888Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:52.596583841Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:32:57.608611243Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:02.620609193Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:07.636965445Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:12.652713660Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:17.668770248Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:22.685159268Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:27.701230369Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:32.716796744Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:37.733204472Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:42.749324367Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:47.773435069Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:52.788750903Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:33:57.804841578Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:02.820621748Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:07.837261527Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:12.860447665Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:17.869803503Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:22.882763635Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:27.905125045Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:32.917043161Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:37.926235793Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:42.940326924Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:47.951906751Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:52.969868646Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:34:57.981681135Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:02.991590753Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:07.999445246Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:13.018116184Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:18.031297926Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:23.041250459Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:28.049331718Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:33.058467360Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:38.067137664Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:43.074254522Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:48.082748154Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:53.091549846Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:35:58.100238672Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:03.116900611Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:08.124526174Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:13.133018887Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:18.141373175Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:23.149055493Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:28.157530683Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:33.165822364Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:38.173815805Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:43.182088307Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:48.189052163Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:53.196883485Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:36:58.205210873Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:03.213815888Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:08.221456295Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:13.230182774Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:18.237802452Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:23.246506374Z
+phase=controller	available_bytes=UNREADABLE	utc=2026-10-26T10:37:28.254878013Z
+phase=source_admission	available_bytes=7430168576	utc=2026-10-26T10:30:43.808620500Z
+phase=before_body	available_bytes=7430156288	utc=2026-10-26T10:30:43.887132711Z
+phase=monitor	available_bytes=7430156288	utc=2026-10-26T10:30:43.908426713Z
+phase=monitor	available_bytes=7430127616	utc=2026-10-26T10:30:48.952588251Z
+phase=monitor	available_bytes=7430127616	utc=2026-10-26T10:30:53.992605743Z
+phase=monitor	available_bytes=7430123520	utc=2026-10-26T10:30:59.025759478Z
+phase=monitor	available_bytes=7429849088	utc=2026-10-26T10:31:04.058131590Z
+phase=monitor	available_bytes=7429775360	utc=2026-10-26T10:31:09.109943334Z
+phase=monitor	available_bytes=7429464064	utc=2026-10-26T10:31:14.162965613Z
+phase=monitor	available_bytes=7428087808	utc=2026-10-26T10:31:19.199826087Z
+phase=monitor	available_bytes=7426998272	utc=2026-10-26T10:31:24.224902781Z
+phase=monitor	available_bytes=7426637824	utc=2026-10-26T10:31:29.250050837Z
+phase=monitor	available_bytes=7426572288	utc=2026-10-26T10:31:34.290776883Z
+phase=monitor	available_bytes=7426400256	utc=2026-10-26T10:31:39.344449735Z
+phase=monitor	available_bytes=7425089536	utc=2026-10-26T10:31:44.372757730Z
+phase=monitor	available_bytes=7426297856	utc=2026-10-26T10:31:49.404244792Z
+phase=monitor	available_bytes=7426281472	utc=2026-10-26T10:31:54.439870749Z
+phase=monitor	available_bytes=7427325952	utc=2026-10-26T10:31:59.489468961Z
+phase=monitor	available_bytes=7427129344	utc=2026-10-26T10:32:04.519984304Z
+phase=monitor	available_bytes=7427186688	utc=2026-10-26T10:32:09.563902093Z
+phase=monitor	available_bytes=7427182592	utc=2026-10-26T10:32:14.592553025Z
+phase=monitor	available_bytes=7427170304	utc=2026-10-26T10:32:19.624033747Z
+phase=monitor	available_bytes=7427162112	utc=2026-10-26T10:32:24.670885216Z
+phase=monitor	available_bytes=7427153920	utc=2026-10-26T10:32:29.709161899Z
+phase=monitor	available_bytes=7427145728	utc=2026-10-26T10:32:34.758074138Z
+phase=monitor	available_bytes=7426740224	utc=2026-10-26T10:32:39.803431742Z
+phase=monitor	available_bytes=7426584576	utc=2026-10-26T10:32:44.851840950Z
+phase=monitor	available_bytes=7426560000	utc=2026-10-26T10:32:49.897121936Z
+phase=monitor	available_bytes=7426543616	utc=2026-10-26T10:32:54.938917878Z
+phase=monitor	available_bytes=7426539520	utc=2026-10-26T10:32:59.987450927Z
+phase=monitor	available_bytes=7426527232	utc=2026-10-26T10:33:05.033066473Z
+phase=monitor	available_bytes=7426510848	utc=2026-10-26T10:33:10.069251519Z
+phase=monitor	available_bytes=7426052096	utc=2026-10-26T10:33:15.104796211Z
+phase=monitor	available_bytes=7426011136	utc=2026-10-26T10:33:20.161515683Z
+phase=monitor	available_bytes=7425851392	utc=2026-10-26T10:33:25.209132524Z
+phase=monitor	available_bytes=7425708032	utc=2026-10-26T10:33:30.246674452Z
+phase=monitor	available_bytes=7425175552	utc=2026-10-26T10:33:35.305209046Z
+phase=monitor	available_bytes=7425163264	utc=2026-10-26T10:33:40.337968112Z
+phase=monitor	available_bytes=7425150976	utc=2026-10-26T10:33:45.384800245Z
+phase=monitor	available_bytes=7425069056	utc=2026-10-26T10:33:50.426168962Z
+phase=monitor	available_bytes=7423307776	utc=2026-10-26T10:33:55.472796223Z
+phase=monitor	available_bytes=7424880640	utc=2026-10-26T10:34:00.509481969Z
+phase=monitor	available_bytes=7424610304	utc=2026-10-26T10:34:05.549717697Z
+phase=monitor	available_bytes=7424892928	utc=2026-10-26T10:34:10.582048260Z
+phase=monitor	available_bytes=7424008192	utc=2026-10-26T10:34:15.607341225Z
+phase=monitor	available_bytes=7423930368	utc=2026-10-26T10:34:20.641125143Z
+phase=monitor	available_bytes=7423840256	utc=2026-10-26T10:34:25.678117595Z
+phase=monitor	available_bytes=7421411328	utc=2026-10-26T10:34:30.707204015Z
+phase=monitor	available_bytes=7421468672	utc=2026-10-26T10:34:35.737333259Z
+phase=monitor	available_bytes=7421362176	utc=2026-10-26T10:34:40.776595916Z
+phase=monitor	available_bytes=7421288448	utc=2026-10-26T10:34:45.820337415Z
+phase=monitor	available_bytes=7421267968	utc=2026-10-26T10:34:50.852714806Z
+phase=monitor	available_bytes=7421247488	utc=2026-10-26T10:34:55.905120777Z
+phase=monitor	available_bytes=7421231104	utc=2026-10-26T10:35:00.954287712Z
+phase=monitor	available_bytes=7420678144	utc=2026-10-26T10:35:06.016208890Z
+phase=monitor	available_bytes=7417913344	utc=2026-10-26T10:35:11.047428803Z
+phase=monitor	available_bytes=7413071872	utc=2026-10-26T10:35:16.093017546Z
+phase=monitor	available_bytes=7407427584	utc=2026-10-26T10:35:21.120615670Z
+phase=monitor	available_bytes=7421927424	utc=2026-10-26T10:35:26.146700887Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:31.169111222Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:36.197893874Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:41.224771305Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:46.255404862Z
+phase=monitor	available_bytes=7425409024	utc=2026-10-26T10:35:51.281798548Z
+phase=monitor	available_bytes=7425409024	utc=2026-10-26T10:35:56.310586379Z
+phase=monitor	available_bytes=7425404928	utc=2026-10-26T10:36:01.334985546Z
+phase=monitor	available_bytes=7424819200	utc=2026-10-26T10:36:06.358968573Z
+phase=monitor	available_bytes=7424557056	utc=2026-10-26T10:36:11.386593363Z
+phase=monitor	available_bytes=7424294912	utc=2026-10-26T10:36:16.411176214Z
+phase=monitor	available_bytes=7423901696	utc=2026-10-26T10:36:21.436639318Z
+phase=monitor	available_bytes=7423639552	utc=2026-10-26T10:36:26.461742828Z
+phase=monitor	available_bytes=7423246336	utc=2026-10-26T10:36:31.494893783Z
+phase=monitor	available_bytes=7423127552	utc=2026-10-26T10:36:36.527625811Z
+phase=monitor	available_bytes=7422918656	utc=2026-10-26T10:36:41.566458428Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:46.591300718Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:51.617880188Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:56.645791249Z
+phase=monitor	available_bytes=7421112320	utc=2026-10-26T10:37:01.673680977Z
+phase=monitor	available_bytes=7421108224	utc=2026-10-26T10:37:06.702927033Z
+phase=monitor	available_bytes=7421100032	utc=2026-10-26T10:37:11.735067332Z
+phase=after_wait	available_bytes=7418650624	utc=2026-10-26T10:37:16.219118059Z
+phase=after_body	available_bytes=7418646528	utc=2026-10-26T10:37:16.990319141Z
+# Exact native traces (source paths retained):
+# dispatch witness
+{"free_bytes": 6479253504, "integrated": {"agent": {"parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab", "path": "/home/user/work/agent", "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"}, "app": {"parents": "82e9e13ddf1d7ec6c736521b2eb091dca9877598 4de54db14bdc9ddc2ce2e5887258b03acbffd30d 4937203f545a77fa3ca7597493e009c84eebeffa", "path": "/home/user/work/app", "sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"}, "composition": {"parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a", "path": "/home/user/work/composition", "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}, "runtime": {"parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7", "path": "/home/user/work/runtime", "sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"}}, "owner_brief": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/owner-brief.txt", "sha256": "2602f4f47c9f6b8f35b8dba81e9cc7122fc69b264607a0db2c6a96eaccaf96eb"}, "pristine": {"agent": {"parents": "64197afa297f86f1e738238d5e80aff6d33e303a d02bcfb66c895b8889aedefbfc732c42f0ab372b", "path": "/home/user/work/wt/agt-pin-64197afa", "sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"}, "runtime": {"parents": "fa9cd5464a8b37b02f971de375e56be846cd69e2 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "path": "/home/user/work/wt/rt-pin-fa9cd546", "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"}}, "required_bytes": 4714564096, "source_manifest": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/source-manifest.json", "sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"}, "utc": "2026-10-26T10:04:27.972946+00:00"}
+# cut service
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T10:04:41.312Z	290311933827992	6680858624	agent-agent-core-full-1026100428-24814	5682	first
+2026-10-26T10:04:46.318Z	290316939560755	6542942208	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:04:51.312Z	290321933806459	6654713856	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:04:56.314Z	290326935349550	6742806528	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:01.316Z	290331937895701	6716276736	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:06.312Z	290336933861982	6801907712	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:11.313Z	290341934450229	6792482816	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:16.312Z	290346933961926	6887477248	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:21.312Z	290351933785453	6875258880	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:26.316Z	290356937910226	6972878848	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:31.315Z	290361936375624	7028305920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:36.312Z	290366933833013	7016124416	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:41.312Z	290371933717556	7119544320	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:46.313Z	290376934501619	7218958336	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:51.312Z	290381933589499	7194005504	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:05:56.312Z	290386933659526	7292059648	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:01.313Z	290391934310624	7373778944	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:06.316Z	290396937807310	7372505088	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:11.315Z	290401936967103	7365038080	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:16.316Z	290406937329843	7465938944	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:21.312Z	290411933982814	7436681216	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:26.312Z	290416934012394	7549698048	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:31.314Z	290421936045094	7585017856	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:36.314Z	290426935499861	7584133120	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:41.312Z	290431933496351	7583031296	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:46.313Z	290436934804418	7582851072	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:51.314Z	290441935315372	7582359552	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:06:56.313Z	290446934617803	7578763264	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:01.313Z	290451934671103	7578341376	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:06.312Z	290456933537912	7552475136	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:11.313Z	290461934738213	7553433600	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:16.313Z	290466934622779	7550660608	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:21.313Z	290471935169105	7552376832	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:26.312Z	290476933400639	7552045056	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:31.313Z	290481934501721	7550648320	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:36.313Z	290486934315574	7545921536	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:41.314Z	290491935445477	7545274368	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:46.314Z	290496935665850	7544389632	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:51.312Z	290501933315509	7547334656	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:07:56.318Z	290506940106063	7544827904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:01.312Z	290511933386797	7547482112	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:06.312Z	290516933293395	7541002240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:11.314Z	290521935228920	7545139200	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:16.313Z	290526935141241	7545159680	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:21.313Z	290531934779171	7545147392	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:26.313Z	290536935105587	7543185408	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:31.313Z	290541934828230	7541284864	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:36.314Z	290546935831602	7539220480	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:41.313Z	290551935049680	7537147904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:46.315Z	290556936637215	7537659904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:51.314Z	290561935923105	7533355008	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:08:56.312Z	290566933570870	7531433984	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:01.315Z	290571936301927	7511130112	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:06.313Z	290576934606080	7511220224	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:11.312Z	290581933967205	7509188608	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:16.315Z	290586936781057	7507288064	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:21.314Z	290591935411427	7509274624	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:26.312Z	290596933614592	7507550208	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:31.315Z	290601936372788	7507464192	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:36.313Z	290606935139847	7505678336	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:41.318Z	290611939685624	7506395136	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:46.312Z	290616933569267	7506960384	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:51.315Z	290621936277404	7506268160	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:09:56.313Z	290626934313516	7506235392	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:01.313Z	290631934416003	7507025920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:06.313Z	290636934877608	7506018304	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:11.312Z	290641934072547	7506022400	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:16.312Z	290646934005126	7504158720	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:21.312Z	290651934165978	7504154624	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:26.312Z	290656934029400	7503679488	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:31.312Z	290661933998028	7503052800	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:36.313Z	290666934361622	7502757888	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:41.315Z	290671936429155	7501340672	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:46.313Z	290676935084999	7501238272	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:51.312Z	290681934117704	7502049280	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:10:56.314Z	290686935309070	7500210176	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:01.313Z	290691934730997	7498379264	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:06.312Z	290696933655404	7498600448	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:11.313Z	290701934591253	7494381568	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:16.320Z	290706941418140	7489507328	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:21.316Z	290711938145257	7490093056	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:26.313Z	290716934553467	7485952000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:31.315Z	290721936456875	7484633088	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:36.314Z	290726935553063	7484563456	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:41.313Z	290731935091687	7483625472	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:46.313Z	290736934424871	7482064896	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:51.312Z	290741933349850	7483060224	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:11:56.313Z	290746934272398	7481712640	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:01.313Z	290751934280863	7480635392	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:06.315Z	290756936365798	7481368576	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:11.314Z	290761936136962	7477968896	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:16.312Z	290766933948960	7480619008	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:21.313Z	290771934430740	7481413632	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:26.313Z	290776934322154	7481143296	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:31.319Z	290781941076688	7482667008	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:36.312Z	290786933540722	7480160256	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:41.313Z	290791934503659	7477542912	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:46.313Z	290796934745101	7476736000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:51.316Z	290801937629831	7471673344	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:12:56.314Z	290806935500877	7473188864	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:01.315Z	290811936505442	7471910912	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:06.313Z	290816934356053	7472177152	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:11.313Z	290821934494006	7472144384	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:16.316Z	290826937449215	7472332800	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:21.313Z	290831934744879	7471263744	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:26.313Z	290836934542449	7471702016	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:31.313Z	290841935054760	7468036096	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:36.314Z	290846935276520	7467397120	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:41.313Z	290851934456456	7464558592	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:46.316Z	290856937276199	7462178816	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:51.312Z	290861933626304	7458652160	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:13:56.313Z	290866934386409	7456870400	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:01.313Z	290871934787630	7454314496	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:06.312Z	290876933591480	7453741056	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:11.315Z	290881936268186	7457366016	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:16.313Z	290886935141676	7453515776	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:21.313Z	290891934558315	7453339648	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:26.314Z	290896935272640	7443144704	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:31.313Z	290901934335037	7440601088	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:36.314Z	290906936054817	7448551424	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:41.319Z	290911940455958	7448129536	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:46.313Z	290916935184727	7446802432	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:51.315Z	290921937072273	7444680704	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:14:56.315Z	290926936648229	7444570112	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:01.312Z	290931933837588	7444320256	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:06.313Z	290936934625112	7443300352	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:11.313Z	290941934252344	7441555456	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:16.313Z	290946934659561	7439769600	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:21.312Z	290951933999932	7440297984	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:26.312Z	290956933790441	7437189120	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:31.312Z	290961933588228	7437611008	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:36.313Z	290966934567663	7437131776	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:41.312Z	290971933597521	7435243520	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:46.312Z	290976933454267	7438090240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:51.312Z	290981933422005	7438016512	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:15:56.313Z	290986934707593	7438348288	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:01.314Z	290991935916981	7437000704	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:06.314Z	290996935871945	7436124160	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:11.313Z	291001934595274	7436115968	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:16.312Z	291006933597154	7433027584	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:21.313Z	291011934774920	7432998912	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:26.313Z	291016934665626	7432904704	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:31.313Z	291021934796575	7431512064	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:36.314Z	291026936164089	7431430144	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:41.313Z	291031934368825	7429816320	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:46.314Z	291036935711890	7429451776	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:51.313Z	291041934701224	7429582848	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:16:56.312Z	291046933499210	7428063232	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:01.313Z	291051934803060	7426465792	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:06.313Z	291056935055308	7426465792	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:11.314Z	291061935210217	7426330624	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:16.312Z	291066933348420	7423311872	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:21.313Z	291071934461863	7420719104	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:26.312Z	291076933491299	7421009920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:31.313Z	291081934932195	7419904000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:36.314Z	291086936088578	7417151488	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:41.314Z	291091935326176	7415136256	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:46.313Z	291096935006897	7414337536	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:51.312Z	291101933533886	7414083584	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:17:56.313Z	291106935098961	7414022144	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:01.312Z	291111933602023	7412584448	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:06.313Z	291116934843581	7410728960	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:11.312Z	291121933483037	7407353856	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:16.312Z	291126934022039	7408357376	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:21.312Z	291131933713069	7406219264	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:26.314Z	291136935453575	7408668672	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:31.312Z	291141933379910	7409938432	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:36.312Z	291146933364225	7408304128	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:41.313Z	291151934290145	7408205824	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:46.315Z	291156937028853	7405924352	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:51.315Z	291161936785347	7406190592	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:18:56.313Z	291166934411875	7405568000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:01.312Z	291171933837406	7405625344	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:06.312Z	291176933834331	7404306432	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:11.313Z	291181934792286	7404343296	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:16.316Z	291186937208812	7408361472	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:21.312Z	291191933675286	7407960064	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:26.312Z	291196933908083	7407677440	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:31.312Z	291201933818919	7406665728	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:36.312Z	291206933860054	7405715456	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:41.313Z	291211934225140	7408758784	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:46.317Z	291216938716329	7407857664	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:51.316Z	291221937468451	7405039616	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:19:56.313Z	291226934926541	7407038464	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:01.313Z	291231934850460	7406743552	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:06.313Z	291236934419766	7405096960	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:11.312Z	291241933610315	7404625920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:16.313Z	291246935039827	7404617728	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:21.313Z	291251934225284	7404388352	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:26.313Z	291256934300718	7404232704	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:31.312Z	291261933541811	7404109824	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:36.313Z	291266934746203	7295967232	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:41.312Z	291271933651498	7293579264	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:46.312Z	291276933794320	7399297024	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:51.313Z	291281935164612	7398207488	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:20:56.312Z	291286933441689	7399084032	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:01.312Z	291291933849799	7399477248	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:06.315Z	291296936832058	7399530496	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:11.314Z	291301935270190	7399526400	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:16.312Z	291306933667899	7398776832	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:21.313Z	291311934947279	7397277696	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:26.312Z	291316933512607	7398404096	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:31.312Z	291321933356808	7398060032	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:36.312Z	291326933622917	7397662720	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:41.312Z	291331933198550	7398342656	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:46.321Z	291336942618787	7399784448	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:51.312Z	291341933495854	7399854080	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:21:56.312Z	291346933563059	7396052992	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:01.317Z	291351938932989	7397949440	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:06.314Z	291356935359436	7397728256	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:11.312Z	291361933437254	7398117376	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:16.332Z	291366953688585	7399088128	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:21.314Z	291371935413161	7398477824	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:26.313Z	291376935118654	7397953536	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:31.312Z	291381933338668	7389462528	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:36.312Z	291386933844857	7388700672	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:41.312Z	291391933372421	7381819392	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:46.313Z	291396934978795	7377207296	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:51.313Z	291401934758403	7375839232	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:22:56.312Z	291406934020578	7371665408	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:01.312Z	291411933289985	7369027584	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:06.312Z	291416934090895	7367077888	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:11.315Z	291421936348674	7370199040	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:16.312Z	291426934141295	7367229440	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:21.313Z	291431934377640	7367254016	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:26.314Z	291436935194941	7366410240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:31.313Z	291441935000187	7367524352	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:36.313Z	291446934475922	7363985408	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:41.313Z	291451935155435	7364362240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:46.316Z	291456937383049	7364603904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:51.316Z	291461937272218	7365156864	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:23:56.312Z	291466934012879	7360778240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:01.312Z	291471933377023	7361114112	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:06.314Z	291476935482658	7360565248	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:11.313Z	291481934311334	7356334080	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:16.313Z	291486935132845	7360327680	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:21.313Z	291491934482242	7360495616	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:26.315Z	291496936333595	7360253952	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:31.316Z	291501937872396	7359356928	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:36.312Z	291506933936542	7358877696	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:41.313Z	291511934441507	7358291968	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:46.313Z	291516934597523	7355854848	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:51.312Z	291521933966760	7359950848	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:24:56.312Z	291526933994016	7358029824	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:01.313Z	291531934437492	7357829120	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:06.313Z	291536934430222	7358107648	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:11.313Z	291541934585953	7358119936	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:16.312Z	291546933576194	7358492672	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:21.312Z	291551933330091	7358210048	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:26.318Z	291556939216374	7354912768	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:31.313Z	291561935089878	7355371520	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:36.312Z	291566933757688	7359905792	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:41.312Z	291571933854816	7358730240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:46.313Z	291576934736637	7355899904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:51.313Z	291581934668168	7362154496	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:25:56.313Z	291586934546606	7356432384	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:01.312Z	291591934005568	7358517248	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:06.312Z	291596933484697	7358910464	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:11.312Z	291601933382319	7358504960	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:16.313Z	291606934911043	7357952000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:21.312Z	291611933436916	7361376256	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:26.313Z	291616934566474	7361097728	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:31.313Z	291621934293243	7361085440	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:36.312Z	291626933303724	7361028096	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:41.314Z	291631935332470	7360958464	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:46.315Z	291636936237326	7360929792	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:51.312Z	291641933811460	7358337024	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:26:56.313Z	291646934849905	7356628992	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:01.312Z	291651933375031	7354277888	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:06.312Z	291656933954911	7352774656	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:11.315Z	291661936795139	7351377920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:16.312Z	291666933544459	7350829056	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:21.313Z	291671935048396	7351894016	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:26.314Z	291676935498018	7348887552	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:31.314Z	291681935232679	7345164288	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:36.313Z	291686934452636	7344566272	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:41.312Z	291691933633212	7339876352	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:46.314Z	291696935326358	7340806144	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:51.313Z	291701934934812	7343468544	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:27:56.313Z	291706934343178	7344029696	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:01.312Z	291711934140305	7345459200	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:06.313Z	291716934806143	7345328128	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:11.313Z	291721935092054	7345295360	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:16.312Z	291726933563293	7344635904	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:21.312Z	291731933995298	7344599040	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:26.315Z	291736936370683	7344406528	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:31.313Z	291741934985402	7341322240	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:36.312Z	291746933890191	7341297664	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:41.312Z	291751933365958	7342673920	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:46.313Z	291756934258448	7341719552	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:51.313Z	291761934307998	7339663360	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:28:56.312Z	291766933975260	7340617728	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:01.313Z	291771934546709	7339552768	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:06.312Z	291776933718522	7339270144	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:11.315Z	291781936414171	7339061248	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:16.312Z	291786934073300	7339065344	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:21.314Z	291791935359989	7340240896	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:26.313Z	291796934368719	7335813120	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:31.315Z	291801937024221	7338782720	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:36.313Z	291806934811505	7339008000	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:41.312Z	291811933700762	7338946560	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:46.313Z	291816935029912	7339282432	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:51.313Z	291821934499090	7336378368	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:29:56.312Z	291826934007473	7328784384	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:30:01.313Z	291831934251847	7323385856	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:30:06.312Z	291836933565982	7386374144	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:30:11.312Z	291841933766500	7440322560	agent-agent-core-full-1026100428-24814	5682	periodic
+2026-10-26T10:30:16.223Z	291846845119728	7430696960	agent-agent-core-full-1026100428-24814	5682	final
+2026-10-26T10:30:16.321Z	291846942832364	7430696960	agent-agent-core-full-1026100428-24814	5682	final
+# cut body
+phase=source_admission	available_bytes=6551887872	utc=2026-10-26T10:04:42.672257220Z
+phase=before_body	available_bytes=6551875584	utc=2026-10-26T10:04:42.792979220Z
+phase=monitor	available_bytes=6551875584	utc=2026-10-26T10:04:42.833167777Z
+phase=monitor	available_bytes=6654713856	utc=2026-10-26T10:04:47.859318084Z
+phase=monitor	available_bytes=6652223488	utc=2026-10-26T10:04:52.897369220Z
+phase=monitor	available_bytes=6742806528	utc=2026-10-26T10:04:57.961164569Z
+phase=monitor	available_bytes=6698610688	utc=2026-10-26T10:05:03.017308255Z
+phase=monitor	available_bytes=6801907712	utc=2026-10-26T10:05:08.065285842Z
+phase=monitor	available_bytes=6842716160	utc=2026-10-26T10:05:13.101863392Z
+phase=monitor	available_bytes=6887456768	utc=2026-10-26T10:05:18.144765672Z
+phase=monitor	available_bytes=6973554688	utc=2026-10-26T10:05:23.204858617Z
+phase=monitor	available_bytes=6937022464	utc=2026-10-26T10:05:28.242655397Z
+phase=monitor	available_bytes=7026290688	utc=2026-10-26T10:05:33.270636840Z
+phase=monitor	available_bytes=7014596608	utc=2026-10-26T10:05:38.311811948Z
+phase=monitor	available_bytes=7117811712	utc=2026-10-26T10:05:43.352703951Z
+phase=monitor	available_bytes=7219126272	utc=2026-10-26T10:05:48.408443595Z
+phase=monitor	available_bytes=7187374080	utc=2026-10-26T10:05:53.460665510Z
+phase=monitor	available_bytes=7290933248	utc=2026-10-26T10:05:58.513034457Z
+phase=monitor	available_bytes=7373684736	utc=2026-10-26T10:06:03.546961261Z
+phase=monitor	available_bytes=7369125888	utc=2026-10-26T10:06:08.595384254Z
+phase=monitor	available_bytes=7466377216	utc=2026-10-26T10:06:13.636571125Z
+phase=monitor	available_bytes=7457501184	utc=2026-10-26T10:06:18.737415135Z
+phase=monitor	available_bytes=7461601280	utc=2026-10-26T10:06:23.778568584Z
+phase=monitor	available_bytes=7543750656	utc=2026-10-26T10:06:28.812930163Z
+phase=monitor	available_bytes=7585021952	utc=2026-10-26T10:06:33.842544552Z
+phase=monitor	available_bytes=7583182848	utc=2026-10-26T10:06:38.875019719Z
+phase=monitor	available_bytes=7582683136	utc=2026-10-26T10:06:43.910285074Z
+phase=monitor	available_bytes=7582568448	utc=2026-10-26T10:06:48.951914077Z
+phase=monitor	available_bytes=7580176384	utc=2026-10-26T10:06:53.982611647Z
+phase=monitor	available_bytes=7576956928	utc=2026-10-26T10:06:59.007116593Z
+phase=monitor	available_bytes=7555989504	utc=2026-10-26T10:07:04.036143579Z
+phase=monitor	available_bytes=7554560000	utc=2026-10-26T10:07:09.072963342Z
+phase=monitor	available_bytes=7553556480	utc=2026-10-26T10:07:14.142909231Z
+phase=monitor	available_bytes=7552720896	utc=2026-10-26T10:07:19.181133158Z
+phase=monitor	available_bytes=7550853120	utc=2026-10-26T10:07:24.227692913Z
+phase=monitor	available_bytes=7549788160	utc=2026-10-26T10:07:29.258710896Z
+phase=monitor	available_bytes=7548932096	utc=2026-10-26T10:07:34.295701684Z
+phase=monitor	available_bytes=7550500864	utc=2026-10-26T10:07:39.333679517Z
+phase=monitor	available_bytes=7545819136	utc=2026-10-26T10:07:44.396977039Z
+phase=monitor	available_bytes=7547179008	utc=2026-10-26T10:07:49.426250279Z
+phase=monitor	available_bytes=7545516032	utc=2026-10-26T10:07:54.456213579Z
+phase=monitor	available_bytes=7545569280	utc=2026-10-26T10:07:59.488888663Z
+phase=monitor	available_bytes=7542460416	utc=2026-10-26T10:08:04.535673440Z
+phase=monitor	available_bytes=7544782848	utc=2026-10-26T10:08:09.579142619Z
+phase=monitor	available_bytes=7545155584	utc=2026-10-26T10:08:14.712754107Z
+phase=monitor	available_bytes=7545147392	utc=2026-10-26T10:08:19.751017722Z
+phase=monitor	available_bytes=7543738368	utc=2026-10-26T10:08:24.780489126Z
+phase=monitor	available_bytes=7541780480	utc=2026-10-26T10:08:29.814648544Z
+phase=monitor	available_bytes=7539064832	utc=2026-10-26T10:08:34.847696114Z
+phase=monitor	available_bytes=7537266688	utc=2026-10-26T10:08:39.899940718Z
+phase=monitor	available_bytes=7536054272	utc=2026-10-26T10:08:44.924515643Z
+phase=monitor	available_bytes=7533723648	utc=2026-10-26T10:08:49.996288549Z
+phase=monitor	available_bytes=7531454464	utc=2026-10-26T10:08:55.063258619Z
+phase=monitor	available_bytes=7511908352	utc=2026-10-26T10:09:00.094920189Z
+phase=monitor	available_bytes=7511515136	utc=2026-10-26T10:09:05.140708580Z
+phase=monitor	available_bytes=7511621632	utc=2026-10-26T10:09:10.162687007Z
+phase=monitor	available_bytes=7507091456	utc=2026-10-26T10:09:15.200661312Z
+phase=monitor	available_bytes=7507243008	utc=2026-10-26T10:09:20.259110985Z
+phase=monitor	available_bytes=7507501056	utc=2026-10-26T10:09:25.306083875Z
+phase=monitor	available_bytes=7506694144	utc=2026-10-26T10:09:30.343517976Z
+phase=monitor	available_bytes=7506714624	utc=2026-10-26T10:09:35.401197810Z
+phase=monitor	available_bytes=7506374656	utc=2026-10-26T10:09:40.433179080Z
+phase=monitor	available_bytes=7507066880	utc=2026-10-26T10:09:45.458962553Z
+phase=monitor	available_bytes=7506546688	utc=2026-10-26T10:09:50.485980238Z
+phase=monitor	available_bytes=7507009536	utc=2026-10-26T10:09:55.532560042Z
+phase=monitor	available_bytes=7505555456	utc=2026-10-26T10:10:00.577013961Z
+phase=monitor	available_bytes=7506268160	utc=2026-10-26T10:10:05.620938012Z
+phase=monitor	available_bytes=7506382848	utc=2026-10-26T10:10:10.659921879Z
+phase=monitor	available_bytes=7505874944	utc=2026-10-26T10:10:15.694970328Z
+phase=monitor	available_bytes=7505518592	utc=2026-10-26T10:10:20.734528109Z
+phase=monitor	available_bytes=7504265216	utc=2026-10-26T10:10:25.780736916Z
+phase=monitor	available_bytes=7500484608	utc=2026-10-26T10:10:30.830987552Z
+phase=monitor	available_bytes=7501303808	utc=2026-10-26T10:10:35.876815986Z
+phase=monitor	available_bytes=7502659584	utc=2026-10-26T10:10:40.905297584Z
+phase=monitor	available_bytes=7502725120	utc=2026-10-26T10:10:45.989524167Z
+phase=monitor	available_bytes=7502356480	utc=2026-10-26T10:10:51.045836361Z
+phase=monitor	available_bytes=7499776000	utc=2026-10-26T10:10:56.079838024Z
+phase=monitor	available_bytes=7497867264	utc=2026-10-26T10:11:01.117697279Z
+phase=monitor	available_bytes=7497023488	utc=2026-10-26T10:11:06.177279351Z
+phase=monitor	available_bytes=7494389760	utc=2026-10-26T10:11:11.217594063Z
+phase=monitor	available_bytes=7489507328	utc=2026-10-26T10:11:16.264238538Z
+phase=monitor	available_bytes=7490093056	utc=2026-10-26T10:11:21.337113683Z
+phase=monitor	available_bytes=7485952000	utc=2026-10-26T10:11:26.379859758Z
+phase=monitor	available_bytes=7484477440	utc=2026-10-26T10:11:31.421979313Z
+phase=monitor	available_bytes=7484411904	utc=2026-10-26T10:11:36.481993232Z
+phase=monitor	available_bytes=7481540608	utc=2026-10-26T10:11:41.517780365Z
+phase=monitor	available_bytes=7480041472	utc=2026-10-26T10:11:46.581016811Z
+phase=monitor	available_bytes=7482925056	utc=2026-10-26T10:11:51.612932969Z
+phase=monitor	available_bytes=7481368576	utc=2026-10-26T10:11:56.653924044Z
+phase=monitor	available_bytes=7479562240	utc=2026-10-26T10:12:01.685491869Z
+phase=monitor	available_bytes=7481024512	utc=2026-10-26T10:12:06.712896113Z
+phase=monitor	available_bytes=7481569280	utc=2026-10-26T10:12:11.758946421Z
+phase=monitor	available_bytes=7480311808	utc=2026-10-26T10:12:16.795163678Z
+phase=monitor	available_bytes=7480721408	utc=2026-10-26T10:12:21.820562964Z
+phase=monitor	available_bytes=7479832576	utc=2026-10-26T10:12:26.858528720Z
+phase=monitor	available_bytes=7480897536	utc=2026-10-26T10:12:31.886528392Z
+phase=monitor	available_bytes=7478382592	utc=2026-10-26T10:12:36.918286815Z
+phase=monitor	available_bytes=7477542912	utc=2026-10-26T10:12:41.949099564Z
+phase=monitor	available_bytes=7476568064	utc=2026-10-26T10:12:46.988283636Z
+phase=monitor	available_bytes=7475118080	utc=2026-10-26T10:12:52.032750125Z
+phase=monitor	available_bytes=7474241536	utc=2026-10-26T10:12:57.079392138Z
+phase=monitor	available_bytes=7473356800	utc=2026-10-26T10:13:02.115016176Z
+phase=monitor	available_bytes=7473627136	utc=2026-10-26T10:13:07.159958934Z
+phase=monitor	available_bytes=7473573888	utc=2026-10-26T10:13:12.188696914Z
+phase=monitor	available_bytes=7474544640	utc=2026-10-26T10:13:17.229451803Z
+phase=monitor	available_bytes=7470690304	utc=2026-10-26T10:13:22.265231279Z
+phase=monitor	available_bytes=7471431680	utc=2026-10-26T10:13:27.297763246Z
+phase=monitor	available_bytes=7469342720	utc=2026-10-26T10:13:32.326503624Z
+phase=monitor	available_bytes=7468707840	utc=2026-10-26T10:13:37.366763723Z
+phase=monitor	available_bytes=7466004480	utc=2026-10-26T10:13:42.397429950Z
+phase=monitor	available_bytes=7463108608	utc=2026-10-26T10:13:47.440842490Z
+phase=monitor	available_bytes=7459893248	utc=2026-10-26T10:13:52.477401467Z
+phase=monitor	available_bytes=7456391168	utc=2026-10-26T10:13:57.522310290Z
+phase=monitor	available_bytes=7454851072	utc=2026-10-26T10:14:02.554867179Z
+phase=monitor	available_bytes=7454146560	utc=2026-10-26T10:14:07.611225648Z
+phase=monitor	available_bytes=7458508800	utc=2026-10-26T10:14:12.644645220Z
+phase=monitor	available_bytes=7450394624	utc=2026-10-26T10:14:17.680588836Z
+phase=monitor	available_bytes=7447629824	utc=2026-10-26T10:14:22.717125263Z
+phase=monitor	available_bytes=7443984384	utc=2026-10-26T10:14:27.765374970Z
+phase=monitor	available_bytes=7448891392	utc=2026-10-26T10:14:32.792956628Z
+phase=monitor	available_bytes=7448301568	utc=2026-10-26T10:14:37.829315464Z
+phase=monitor	available_bytes=7447048192	utc=2026-10-26T10:14:42.861491741Z
+phase=monitor	available_bytes=7442149376	utc=2026-10-26T10:14:47.904844617Z
+phase=monitor	available_bytes=7442141184	utc=2026-10-26T10:14:52.945286398Z
+phase=monitor	available_bytes=7442821120	utc=2026-10-26T10:14:58.001406356Z
+phase=monitor	available_bytes=7444594688	utc=2026-10-26T10:15:03.048122199Z
+phase=monitor	available_bytes=7443955712	utc=2026-10-26T10:15:08.085484708Z
+phase=monitor	available_bytes=7441903616	utc=2026-10-26T10:15:13.128581901Z
+phase=monitor	available_bytes=7440338944	utc=2026-10-26T10:15:18.165107605Z
+phase=monitor	available_bytes=7440805888	utc=2026-10-26T10:15:23.220822022Z
+phase=monitor	available_bytes=7439671296	utc=2026-10-26T10:15:28.269571739Z
+phase=monitor	available_bytes=7439523840	utc=2026-10-26T10:15:33.310166103Z
+phase=monitor	available_bytes=7441186816	utc=2026-10-26T10:15:38.345072849Z
+phase=monitor	available_bytes=7441117184	utc=2026-10-26T10:15:43.376277626Z
+phase=monitor	available_bytes=7439253504	utc=2026-10-26T10:15:48.428415450Z
+phase=monitor	available_bytes=7435542528	utc=2026-10-26T10:15:53.484584954Z
+phase=monitor	available_bytes=7439290368	utc=2026-10-26T10:15:58.529087294Z
+phase=monitor	available_bytes=7436693504	utc=2026-10-26T10:16:03.564426373Z
+phase=monitor	available_bytes=7435886592	utc=2026-10-26T10:16:08.601234284Z
+phase=monitor	available_bytes=7436038144	utc=2026-10-26T10:16:13.654204499Z
+phase=monitor	available_bytes=7435960320	utc=2026-10-26T10:16:18.691165192Z
+phase=monitor	available_bytes=7432159232	utc=2026-10-26T10:16:23.728181630Z
+phase=monitor	available_bytes=7434063872	utc=2026-10-26T10:16:28.773434514Z
+phase=monitor	available_bytes=7432368128	utc=2026-10-26T10:16:33.801485188Z
+phase=monitor	available_bytes=7432900608	utc=2026-10-26T10:16:38.835670879Z
+phase=monitor	available_bytes=7430725632	utc=2026-10-26T10:16:43.867000546Z
+phase=monitor	available_bytes=7428251648	utc=2026-10-26T10:16:48.897511972Z
+phase=monitor	available_bytes=7427817472	utc=2026-10-26T10:16:53.930828157Z
+phase=monitor	available_bytes=7425687552	utc=2026-10-26T10:16:58.956697871Z
+phase=monitor	available_bytes=7425683456	utc=2026-10-26T10:17:03.999545658Z
+phase=monitor	available_bytes=7425507328	utc=2026-10-26T10:17:09.027234499Z
+phase=monitor	available_bytes=7424430080	utc=2026-10-26T10:17:14.093946612Z
+phase=monitor	available_bytes=7423733760	utc=2026-10-26T10:17:19.130438356Z
+phase=monitor	available_bytes=7422332928	utc=2026-10-26T10:17:24.174318502Z
+phase=monitor	available_bytes=7420383232	utc=2026-10-26T10:17:29.220599682Z
+phase=monitor	available_bytes=7421083648	utc=2026-10-26T10:17:34.257497133Z
+phase=monitor	available_bytes=7417958400	utc=2026-10-26T10:17:39.298069185Z
+phase=monitor	available_bytes=7417946112	utc=2026-10-26T10:17:44.347266242Z
+phase=monitor	available_bytes=7416725504	utc=2026-10-26T10:17:49.415145455Z
+phase=monitor	available_bytes=7416643584	utc=2026-10-26T10:17:54.473406075Z
+phase=monitor	available_bytes=7412121600	utc=2026-10-26T10:17:59.539977476Z
+phase=monitor	available_bytes=7410929664	utc=2026-10-26T10:18:04.568481296Z
+phase=monitor	available_bytes=7410954240	utc=2026-10-26T10:18:09.603266026Z
+phase=monitor	available_bytes=7409291264	utc=2026-10-26T10:18:14.638177939Z
+phase=monitor	available_bytes=7406669824	utc=2026-10-26T10:18:19.664615517Z
+phase=monitor	available_bytes=7406030848	utc=2026-10-26T10:18:24.699731764Z
+phase=monitor	available_bytes=7409201152	utc=2026-10-26T10:18:29.740949170Z
+phase=monitor	available_bytes=7408291840	utc=2026-10-26T10:18:34.786521547Z
+phase=monitor	available_bytes=7408021504	utc=2026-10-26T10:18:39.824503325Z
+phase=monitor	available_bytes=7403638784	utc=2026-10-26T10:18:44.860917417Z
+phase=monitor	available_bytes=7407964160	utc=2026-10-26T10:18:49.894566183Z
+phase=monitor	available_bytes=7406182400	utc=2026-10-26T10:18:54.932637468Z
+phase=monitor	available_bytes=7405588480	utc=2026-10-26T10:18:59.977167311Z
+phase=monitor	available_bytes=7406481408	utc=2026-10-26T10:19:05.004499229Z
+phase=monitor	available_bytes=7405023232	utc=2026-10-26T10:19:10.033699150Z
+phase=monitor	available_bytes=7407595520	utc=2026-10-26T10:19:15.069896832Z
+phase=monitor	available_bytes=7407910912	utc=2026-10-26T10:19:20.099559810Z
+phase=monitor	available_bytes=7407939584	utc=2026-10-26T10:19:25.149139630Z
+phase=monitor	available_bytes=7406931968	utc=2026-10-26T10:19:30.200800648Z
+phase=monitor	available_bytes=7405813760	utc=2026-10-26T10:19:35.231177992Z
+phase=monitor	available_bytes=7409172480	utc=2026-10-26T10:19:40.260466357Z
+phase=monitor	available_bytes=7407874048	utc=2026-10-26T10:19:45.296113174Z
+phase=monitor	available_bytes=7405228032	utc=2026-10-26T10:19:50.338196444Z
+phase=monitor	available_bytes=7407177728	utc=2026-10-26T10:19:55.373900021Z
+phase=monitor	available_bytes=7406800896	utc=2026-10-26T10:20:00.404670044Z
+phase=monitor	available_bytes=7406723072	utc=2026-10-26T10:20:05.444412190Z
+phase=monitor	available_bytes=7404818432	utc=2026-10-26T10:20:10.485035696Z
+phase=monitor	available_bytes=7404621824	utc=2026-10-26T10:20:15.532528809Z
+phase=monitor	available_bytes=7404453888	utc=2026-10-26T10:20:20.566263479Z
+phase=monitor	available_bytes=7404244992	utc=2026-10-26T10:20:25.614594285Z
+phase=monitor	available_bytes=7404187648	utc=2026-10-26T10:20:30.650244719Z
+phase=monitor	available_bytes=7299162112	utc=2026-10-26T10:20:35.684342514Z
+phase=monitor	available_bytes=7378436096	utc=2026-10-26T10:20:40.736384340Z
+phase=monitor	available_bytes=7399940096	utc=2026-10-26T10:20:45.773455515Z
+phase=monitor	available_bytes=7398875136	utc=2026-10-26T10:20:50.807774785Z
+phase=monitor	available_bytes=7399493632	utc=2026-10-26T10:20:55.878327427Z
+phase=monitor	available_bytes=7399075840	utc=2026-10-26T10:21:00.908539832Z
+phase=monitor	available_bytes=7400927232	utc=2026-10-26T10:21:05.970173612Z
+phase=monitor	available_bytes=7399997440	utc=2026-10-26T10:21:11.023747546Z
+phase=monitor	available_bytes=7398793216	utc=2026-10-26T10:21:16.054272657Z
+phase=monitor	available_bytes=7397634048	utc=2026-10-26T10:21:21.086284858Z
+phase=monitor	available_bytes=7398412288	utc=2026-10-26T10:21:26.120146748Z
+phase=monitor	available_bytes=7398060032	utc=2026-10-26T10:21:31.164737086Z
+phase=monitor	available_bytes=7397662720	utc=2026-10-26T10:21:36.201989205Z
+phase=monitor	available_bytes=7398293504	utc=2026-10-26T10:21:41.246904358Z
+phase=monitor	available_bytes=7399792640	utc=2026-10-26T10:21:46.301022513Z
+phase=monitor	available_bytes=7399854080	utc=2026-10-26T10:21:51.340992730Z
+phase=monitor	available_bytes=7396057088	utc=2026-10-26T10:21:56.386313607Z
+phase=monitor	available_bytes=7397842944	utc=2026-10-26T10:22:01.430717583Z
+phase=monitor	available_bytes=7397658624	utc=2026-10-26T10:22:06.467058310Z
+phase=monitor	available_bytes=7397666816	utc=2026-10-26T10:22:11.515084943Z
+phase=monitor	available_bytes=7399002112	utc=2026-10-26T10:22:16.557891033Z
+phase=monitor	available_bytes=7398121472	utc=2026-10-26T10:22:21.590260992Z
+phase=monitor	available_bytes=7397732352	utc=2026-10-26T10:22:26.625395156Z
+phase=monitor	available_bytes=7389089792	utc=2026-10-26T10:22:31.656672223Z
+phase=monitor	available_bytes=7388430336	utc=2026-10-26T10:22:36.730591442Z
+phase=monitor	available_bytes=7377793024	utc=2026-10-26T10:22:41.770072203Z
+phase=monitor	available_bytes=7398129664	utc=2026-10-26T10:22:46.815098220Z
+phase=monitor	available_bytes=7373668352	utc=2026-10-26T10:22:51.853306450Z
+phase=monitor	available_bytes=7370854400	utc=2026-10-26T10:22:56.902648917Z
+phase=monitor	available_bytes=7370985472	utc=2026-10-26T10:23:01.951649591Z
+phase=monitor	available_bytes=7370330112	utc=2026-10-26T10:23:06.982718114Z
+phase=monitor	available_bytes=7370149888	utc=2026-10-26T10:23:12.027473580Z
+phase=monitor	available_bytes=7366782976	utc=2026-10-26T10:23:17.065269741Z
+phase=monitor	available_bytes=7366619136	utc=2026-10-26T10:23:22.102550542Z
+phase=monitor	available_bytes=7366017024	utc=2026-10-26T10:23:27.141783457Z
+phase=monitor	available_bytes=7366762496	utc=2026-10-26T10:23:32.179858894Z
+phase=monitor	available_bytes=7363620864	utc=2026-10-26T10:23:37.218279736Z
+phase=monitor	available_bytes=7366352896	utc=2026-10-26T10:23:42.256711440Z
+phase=monitor	available_bytes=7363637248	utc=2026-10-26T10:23:47.302248720Z
+phase=monitor	available_bytes=7363620864	utc=2026-10-26T10:23:52.355725004Z
+phase=monitor	available_bytes=7359258624	utc=2026-10-26T10:23:57.385046057Z
+phase=monitor	available_bytes=7358545920	utc=2026-10-26T10:24:02.413229472Z
+phase=monitor	available_bytes=7361355776	utc=2026-10-26T10:24:07.448592659Z
+phase=monitor	available_bytes=7357476864	utc=2026-10-26T10:24:12.482233285Z
+phase=monitor	available_bytes=7356682240	utc=2026-10-26T10:24:17.536865856Z
+phase=monitor	available_bytes=7358918656	utc=2026-10-26T10:24:22.580662533Z
+phase=monitor	available_bytes=7358705664	utc=2026-10-26T10:24:27.644744998Z
+phase=monitor	available_bytes=7357673472	utc=2026-10-26T10:24:32.696663728Z
+phase=monitor	available_bytes=7359021056	utc=2026-10-26T10:24:37.760829756Z
+phase=monitor	available_bytes=7357943808	utc=2026-10-26T10:24:42.816888008Z
+phase=monitor	available_bytes=7358029824	utc=2026-10-26T10:24:47.868654553Z
+phase=monitor	available_bytes=7358586880	utc=2026-10-26T10:24:52.907682515Z
+phase=monitor	available_bytes=7357329408	utc=2026-10-26T10:24:57.955612396Z
+phase=monitor	available_bytes=7357554688	utc=2026-10-26T10:25:03.000734415Z
+phase=monitor	available_bytes=7360299008	utc=2026-10-26T10:25:08.045105117Z
+phase=monitor	available_bytes=7358226432	utc=2026-10-26T10:25:13.126372690Z
+phase=monitor	available_bytes=7357911040	utc=2026-10-26T10:25:18.160741286Z
+phase=monitor	available_bytes=7356936192	utc=2026-10-26T10:25:23.190935828Z
+phase=monitor	available_bytes=7355584512	utc=2026-10-26T10:25:28.241683975Z
+phase=monitor	available_bytes=7355613184	utc=2026-10-26T10:25:33.276180359Z
+phase=monitor	available_bytes=7355596800	utc=2026-10-26T10:25:38.312667833Z
+phase=monitor	available_bytes=7358296064	utc=2026-10-26T10:25:43.371681324Z
+phase=monitor	available_bytes=7355891712	utc=2026-10-26T10:25:48.412478046Z
+phase=monitor	available_bytes=7362150400	utc=2026-10-26T10:25:53.453499438Z
+phase=monitor	available_bytes=7358894080	utc=2026-10-26T10:25:58.506304726Z
+phase=monitor	available_bytes=7358709760	utc=2026-10-26T10:26:03.546627626Z
+phase=monitor	available_bytes=7358164992	utc=2026-10-26T10:26:08.586744603Z
+phase=monitor	available_bytes=7359275008	utc=2026-10-26T10:26:13.627010575Z
+phase=monitor	available_bytes=7361413120	utc=2026-10-26T10:26:18.668696803Z
+phase=monitor	available_bytes=7360995328	utc=2026-10-26T10:26:23.707559342Z
+phase=monitor	available_bytes=7361040384	utc=2026-10-26T10:26:28.732783828Z
+phase=monitor	available_bytes=7361019904	utc=2026-10-26T10:26:33.785726417Z
+phase=monitor	available_bytes=7360983040	utc=2026-10-26T10:26:38.825166078Z
+phase=monitor	available_bytes=7360937984	utc=2026-10-26T10:26:43.881400319Z
+phase=monitor	available_bytes=7359492096	utc=2026-10-26T10:26:48.912919412Z
+phase=monitor	available_bytes=7358636032	utc=2026-10-26T10:26:53.955767751Z
+phase=monitor	available_bytes=7355326464	utc=2026-10-26T10:26:58.991774853Z
+phase=monitor	available_bytes=7355154432	utc=2026-10-26T10:27:04.045087734Z
+phase=monitor	available_bytes=7352496128	utc=2026-10-26T10:27:09.105683240Z
+phase=monitor	available_bytes=7351922688	utc=2026-10-26T10:27:14.141092933Z
+phase=monitor	available_bytes=7351758848	utc=2026-10-26T10:27:19.198385983Z
+phase=monitor	available_bytes=7348690944	utc=2026-10-26T10:27:24.237182349Z
+phase=monitor	available_bytes=7347650560	utc=2026-10-26T10:27:29.269743747Z
+phase=monitor	available_bytes=7344508928	utc=2026-10-26T10:27:34.336596163Z
+phase=monitor	available_bytes=7340646400	utc=2026-10-26T10:27:39.372962606Z
+phase=monitor	available_bytes=7339614208	utc=2026-10-26T10:27:44.416812455Z
+phase=monitor	available_bytes=7344013312	utc=2026-10-26T10:27:49.450474067Z
+phase=monitor	available_bytes=7344037888	utc=2026-10-26T10:27:54.489540350Z
+phase=monitor	available_bytes=7342731264	utc=2026-10-26T10:27:59.543629013Z
+phase=monitor	available_bytes=7345356800	utc=2026-10-26T10:28:04.590989806Z
+phase=monitor	available_bytes=7345315840	utc=2026-10-26T10:28:09.644826837Z
+phase=monitor	available_bytes=7345123328	utc=2026-10-26T10:28:14.679145475Z
+phase=monitor	available_bytes=7344701440	utc=2026-10-26T10:28:19.737871379Z
+phase=monitor	available_bytes=7344513024	utc=2026-10-26T10:28:24.773561139Z
+phase=monitor	available_bytes=7342866432	utc=2026-10-26T10:28:29.801868585Z
+phase=monitor	available_bytes=7343058944	utc=2026-10-26T10:28:34.846772616Z
+phase=monitor	available_bytes=7342989312	utc=2026-10-26T10:28:39.887013689Z
+phase=monitor	available_bytes=7340466176	utc=2026-10-26T10:28:44.923885565Z
+phase=monitor	available_bytes=7340539904	utc=2026-10-26T10:28:49.963655666Z
+phase=monitor	available_bytes=7340331008	utc=2026-10-26T10:28:54.994918798Z
+phase=monitor	available_bytes=7338938368	utc=2026-10-26T10:29:00.023182773Z
+phase=monitor	available_bytes=7339565056	utc=2026-10-26T10:29:05.070650464Z
+phase=monitor	available_bytes=7339483136	utc=2026-10-26T10:29:10.117189329Z
+phase=monitor	available_bytes=7340023808	utc=2026-10-26T10:29:15.152793600Z
+phase=monitor	available_bytes=7338770432	utc=2026-10-26T10:29:20.196853196Z
+phase=monitor	available_bytes=7337254912	utc=2026-10-26T10:29:25.250915679Z
+phase=monitor	available_bytes=7338696704	utc=2026-10-26T10:29:30.307020135Z
+phase=monitor	available_bytes=7339032576	utc=2026-10-26T10:29:35.348921090Z
+phase=monitor	available_bytes=7338934272	utc=2026-10-26T10:29:40.400656581Z
+phase=monitor	available_bytes=7338733568	utc=2026-10-26T10:29:45.437871392Z
+phase=monitor	available_bytes=7337259008	utc=2026-10-26T10:29:50.479268283Z
+phase=monitor	available_bytes=7331041280	utc=2026-10-26T10:29:55.508779210Z
+phase=monitor	available_bytes=7323238400	utc=2026-10-26T10:30:00.540236438Z
+phase=monitor	available_bytes=7347310592	utc=2026-10-26T10:30:05.570970141Z
+phase=monitor	available_bytes=7440318464	utc=2026-10-26T10:30:10.596909831Z
+phase=after_wait	available_bytes=7440318464	utc=2026-10-26T10:30:11.338658353Z
+phase=after_body	available_bytes=7440310272	utc=2026-10-26T10:30:15.811090376Z
+# pristine service
+timestamp_utc	monotonic_ns	available_bytes	job_id	body_pid	kind
+2026-10-26T10:30:42.413Z	291873035014985	7559139328	agent-agent-core-full-1026103030-25513	25298	first
+2026-10-26T10:30:47.415Z	291878036217959	7430127616	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:30:52.414Z	291883035858596	7430127616	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:30:57.414Z	291888035449900	7430123520	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:02.413Z	291893034364185	7429861376	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:07.415Z	291898036315740	7429812224	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:12.415Z	291903036357478	7429746688	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:17.413Z	291908035177648	7429246976	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:22.413Z	291913034837193	7427149824	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:27.415Z	291918036783929	7427567616	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:32.413Z	291923034827722	7426592768	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:37.415Z	291928037156187	7427399680	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:42.413Z	291933034685840	7425204224	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:47.416Z	291938037248181	7426400256	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:52.413Z	291943035036054	7426347008	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:31:57.415Z	291948036318301	7427350528	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:02.415Z	291953036232170	7427301376	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:07.417Z	291958038671777	7427190784	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:12.414Z	291963035507288	7427186688	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:17.413Z	291968035109378	7427174400	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:22.414Z	291973036099112	7427166208	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:27.414Z	291978035466386	7427158016	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:32.413Z	291983034608757	7427149824	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:37.415Z	291988036349546	7427133440	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:42.415Z	291993036305125	7426584576	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:47.414Z	291998035544070	7426560000	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:52.415Z	292003036969107	7426580480	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:32:57.417Z	292008039033186	7426539520	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:02.417Z	292013038408354	7426527232	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:07.416Z	292018037304527	7426510848	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:12.413Z	292023035059359	7426240512	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:17.415Z	292028036207181	7425978368	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:22.416Z	292033037840303	7426007040	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:27.417Z	292038039077679	7425851392	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:32.416Z	292043038094410	7425179648	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:37.417Z	292048038224660	7425171456	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:42.416Z	292053037871520	7425159168	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:47.416Z	292058037812155	7425146880	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:52.416Z	292063037757439	7424892928	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:33:57.417Z	292068038460082	7423307776	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:02.416Z	292073037812777	7424606208	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:07.418Z	292078039372060	7424270336	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:12.414Z	292083035500874	7424778240	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:17.414Z	292088036166260	7423959040	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:22.417Z	292093038963751	7423913984	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:27.414Z	292098035368153	7423807488	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:32.414Z	292103036080904	7421394944	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:37.415Z	292108036469858	7421427712	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:42.415Z	292113036714959	7421362176	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:47.415Z	292118036705046	7421263872	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:52.418Z	292123040125740	7421255680	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:34:57.415Z	292128036280818	7421235200	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:03.001Z	292133622855321	7421218816	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:07.413Z	292138034864667	7420194816	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:12.413Z	292143034717021	7418646528	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:17.415Z	292148036451638	7412920320	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:22.414Z	292153035616458	7407423488	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:27.414Z	292158035431100	7421927424	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:32.413Z	292163034680199	7425384448	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:37.413Z	292168035086307	7425384448	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:42.414Z	292173035228524	7425384448	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:47.413Z	292178034684630	7425384448	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:52.413Z	292183034679532	7425409024	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:35:57.415Z	292188036983929	7425409024	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:02.413Z	292193034916670	7425241088	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:07.413Z	292198034604513	7424819200	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:12.413Z	292203035060974	7424425984	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:17.413Z	292208034728685	7424163840	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:22.413Z	292213034629782	7423901696	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:27.413Z	292218034863695	7423508480	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:32.413Z	292223035143425	7423246336	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:37.413Z	292228034779879	7423127552	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:42.413Z	292233034449412	7422681088	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:47.413Z	292238034684198	7421124608	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:52.414Z	292243036084534	7421124608	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:36:57.413Z	292248034784984	7421124608	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:37:02.413Z	292253034698546	7421112320	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:37:07.413Z	292258034738265	7421108224	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:37:12.413Z	292263034614833	7421100032	agent-agent-core-full-1026103030-25513	25298	periodic
+2026-10-26T10:37:17.224Z	292267845399264	7418372096	agent-agent-core-full-1026103030-25513	25298	final
+2026-10-26T10:37:17.294Z	292267916080749	7418372096	agent-agent-core-full-1026103030-25513	25298	final
+# pristine body
+phase=source_admission	available_bytes=7430168576	utc=2026-10-26T10:30:43.808620500Z
+phase=before_body	available_bytes=7430156288	utc=2026-10-26T10:30:43.887132711Z
+phase=monitor	available_bytes=7430156288	utc=2026-10-26T10:30:43.908426713Z
+phase=monitor	available_bytes=7430127616	utc=2026-10-26T10:30:48.952588251Z
+phase=monitor	available_bytes=7430127616	utc=2026-10-26T10:30:53.992605743Z
+phase=monitor	available_bytes=7430123520	utc=2026-10-26T10:30:59.025759478Z
+phase=monitor	available_bytes=7429849088	utc=2026-10-26T10:31:04.058131590Z
+phase=monitor	available_bytes=7429775360	utc=2026-10-26T10:31:09.109943334Z
+phase=monitor	available_bytes=7429464064	utc=2026-10-26T10:31:14.162965613Z
+phase=monitor	available_bytes=7428087808	utc=2026-10-26T10:31:19.199826087Z
+phase=monitor	available_bytes=7426998272	utc=2026-10-26T10:31:24.224902781Z
+phase=monitor	available_bytes=7426637824	utc=2026-10-26T10:31:29.250050837Z
+phase=monitor	available_bytes=7426572288	utc=2026-10-26T10:31:34.290776883Z
+phase=monitor	available_bytes=7426400256	utc=2026-10-26T10:31:39.344449735Z
+phase=monitor	available_bytes=7425089536	utc=2026-10-26T10:31:44.372757730Z
+phase=monitor	available_bytes=7426297856	utc=2026-10-26T10:31:49.404244792Z
+phase=monitor	available_bytes=7426281472	utc=2026-10-26T10:31:54.439870749Z
+phase=monitor	available_bytes=7427325952	utc=2026-10-26T10:31:59.489468961Z
+phase=monitor	available_bytes=7427129344	utc=2026-10-26T10:32:04.519984304Z
+phase=monitor	available_bytes=7427186688	utc=2026-10-26T10:32:09.563902093Z
+phase=monitor	available_bytes=7427182592	utc=2026-10-26T10:32:14.592553025Z
+phase=monitor	available_bytes=7427170304	utc=2026-10-26T10:32:19.624033747Z
+phase=monitor	available_bytes=7427162112	utc=2026-10-26T10:32:24.670885216Z
+phase=monitor	available_bytes=7427153920	utc=2026-10-26T10:32:29.709161899Z
+phase=monitor	available_bytes=7427145728	utc=2026-10-26T10:32:34.758074138Z
+phase=monitor	available_bytes=7426740224	utc=2026-10-26T10:32:39.803431742Z
+phase=monitor	available_bytes=7426584576	utc=2026-10-26T10:32:44.851840950Z
+phase=monitor	available_bytes=7426560000	utc=2026-10-26T10:32:49.897121936Z
+phase=monitor	available_bytes=7426543616	utc=2026-10-26T10:32:54.938917878Z
+phase=monitor	available_bytes=7426539520	utc=2026-10-26T10:32:59.987450927Z
+phase=monitor	available_bytes=7426527232	utc=2026-10-26T10:33:05.033066473Z
+phase=monitor	available_bytes=7426510848	utc=2026-10-26T10:33:10.069251519Z
+phase=monitor	available_bytes=7426052096	utc=2026-10-26T10:33:15.104796211Z
+phase=monitor	available_bytes=7426011136	utc=2026-10-26T10:33:20.161515683Z
+phase=monitor	available_bytes=7425851392	utc=2026-10-26T10:33:25.209132524Z
+phase=monitor	available_bytes=7425708032	utc=2026-10-26T10:33:30.246674452Z
+phase=monitor	available_bytes=7425175552	utc=2026-10-26T10:33:35.305209046Z
+phase=monitor	available_bytes=7425163264	utc=2026-10-26T10:33:40.337968112Z
+phase=monitor	available_bytes=7425150976	utc=2026-10-26T10:33:45.384800245Z
+phase=monitor	available_bytes=7425069056	utc=2026-10-26T10:33:50.426168962Z
+phase=monitor	available_bytes=7423307776	utc=2026-10-26T10:33:55.472796223Z
+phase=monitor	available_bytes=7424880640	utc=2026-10-26T10:34:00.509481969Z
+phase=monitor	available_bytes=7424610304	utc=2026-10-26T10:34:05.549717697Z
+phase=monitor	available_bytes=7424892928	utc=2026-10-26T10:34:10.582048260Z
+phase=monitor	available_bytes=7424008192	utc=2026-10-26T10:34:15.607341225Z
+phase=monitor	available_bytes=7423930368	utc=2026-10-26T10:34:20.641125143Z
+phase=monitor	available_bytes=7423840256	utc=2026-10-26T10:34:25.678117595Z
+phase=monitor	available_bytes=7421411328	utc=2026-10-26T10:34:30.707204015Z
+phase=monitor	available_bytes=7421468672	utc=2026-10-26T10:34:35.737333259Z
+phase=monitor	available_bytes=7421362176	utc=2026-10-26T10:34:40.776595916Z
+phase=monitor	available_bytes=7421288448	utc=2026-10-26T10:34:45.820337415Z
+phase=monitor	available_bytes=7421267968	utc=2026-10-26T10:34:50.852714806Z
+phase=monitor	available_bytes=7421247488	utc=2026-10-26T10:34:55.905120777Z
+phase=monitor	available_bytes=7421231104	utc=2026-10-26T10:35:00.954287712Z
+phase=monitor	available_bytes=7420678144	utc=2026-10-26T10:35:06.016208890Z
+phase=monitor	available_bytes=7417913344	utc=2026-10-26T10:35:11.047428803Z
+phase=monitor	available_bytes=7413071872	utc=2026-10-26T10:35:16.093017546Z
+phase=monitor	available_bytes=7407427584	utc=2026-10-26T10:35:21.120615670Z
+phase=monitor	available_bytes=7421927424	utc=2026-10-26T10:35:26.146700887Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:31.169111222Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:36.197893874Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:41.224771305Z
+phase=monitor	available_bytes=7425384448	utc=2026-10-26T10:35:46.255404862Z
+phase=monitor	available_bytes=7425409024	utc=2026-10-26T10:35:51.281798548Z
+phase=monitor	available_bytes=7425409024	utc=2026-10-26T10:35:56.310586379Z
+phase=monitor	available_bytes=7425404928	utc=2026-10-26T10:36:01.334985546Z
+phase=monitor	available_bytes=7424819200	utc=2026-10-26T10:36:06.358968573Z
+phase=monitor	available_bytes=7424557056	utc=2026-10-26T10:36:11.386593363Z
+phase=monitor	available_bytes=7424294912	utc=2026-10-26T10:36:16.411176214Z
+phase=monitor	available_bytes=7423901696	utc=2026-10-26T10:36:21.436639318Z
+phase=monitor	available_bytes=7423639552	utc=2026-10-26T10:36:26.461742828Z
+phase=monitor	available_bytes=7423246336	utc=2026-10-26T10:36:31.494893783Z
+phase=monitor	available_bytes=7423127552	utc=2026-10-26T10:36:36.527625811Z
+phase=monitor	available_bytes=7422918656	utc=2026-10-26T10:36:41.566458428Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:46.591300718Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:51.617880188Z
+phase=monitor	available_bytes=7421124608	utc=2026-10-26T10:36:56.645791249Z
+phase=monitor	available_bytes=7421112320	utc=2026-10-26T10:37:01.673680977Z
+phase=monitor	available_bytes=7421108224	utc=2026-10-26T10:37:06.702927033Z
+phase=monitor	available_bytes=7421100032	utc=2026-10-26T10:37:11.735067332Z
+phase=after_wait	available_bytes=7418650624	utc=2026-10-26T10:37:16.219118059Z
+phase=after_body	available_bytes=7418646528	utc=2026-10-26T10:37:16.990319141Z
