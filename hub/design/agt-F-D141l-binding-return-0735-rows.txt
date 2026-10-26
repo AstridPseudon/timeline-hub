@@ -1,0 +1,1 @@
+SOURCE_PREPARATION: no live row installed; controller-continuation.sh dispatch writes actual phase rows after request-test returns each service ID.
