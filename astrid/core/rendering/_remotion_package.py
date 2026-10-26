@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any, Mapping
 
 _COMPOSITION_PACKAGE_NAME = "@banodoco/timeline-composition"
-_COMPOSITION_PACKAGE_VERSION = "0.0.14"
+# Release wheels omit remotion/package-lock.json; this runtime pin is guarded
+# against the checkout lock by tests/core/rendering/test_remotion_package_pin.py.
+_COMPOSITION_PACKAGE_VERSION = "0.0.15"
 _REQUIRED_COMPOSITION_EXPORTS = (
     ".",
     "./evaluation",

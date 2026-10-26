@@ -184,6 +184,8 @@ from astrid.sdk.timeline.sync import TimelineSession
 shown = client.timelines.open_composition(project, timeline, detail=True)
 assert shown.ok
 session = TimelineSession.open(project, timeline, client=client)
+result = session.add_media("/path/to/image.png", on=0, duration=3, track="V1",
+                           clip_id="opening", idempotency_key="first-image-42")
 result = session.move("parent/clip:opening", 1.5, idempotency_key="move-42")
 ```
 
@@ -198,8 +200,9 @@ The complete detached JSON checkout and helper catalog remain useful for
 read/validation, media inspection, and migration. Their broad mutation and
 whole-candidate publication path is held on this base; do not treat the
 runnable [SDK example](scripts/timeline_document.py) as the general timeline
-writer. Temporary local media paths are still rejected: import media through
-the public Runtime media client and use its managed identity. Narration remains
+writer. `session.add_media` accepts local image/video files and imports them
+through Runtime's managed catalog before the timeline commit. Local paths in
+raw native command rows remain invalid; use a verified managed selection there. Narration remains
 readable through `timelines script`, and rendering remains optional.
 
 For repeatable draft narration synchronization, use `video_editing.sync_draft_voiceover` as documented in the [video editing skill](../../video_editing/docs/SKILL.md). It reads the timeline's pinned script, synthesizes through `generation.generate_speech`, and publishes one validated revision. Empty scripts are skipped and existing final or unadopted audio stays protected. For a one-off manual import, see the [placeholder voiceover recipe](references/placeholder-voiceover.md). Neither workflow needs a video render.
@@ -216,6 +219,9 @@ Use the current CLI parser and ask its help before choosing an edit shape:
 python3 -m astrid timelines --help
 python3 -m astrid timelines show <timeline> --project <project> --json
 python3 -m astrid timelines edit <timeline> --project <project> \
+  --add-layer media --layer-asset /path/to/image.png --on 0 --for 3 --track V1 \
+  --idempotency-key first-image-42 --json
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
 python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --trim-in 0.5 --trim-out 3.0 \
@@ -231,8 +237,15 @@ python3 -m astrid timelines commit <timeline> --project <project> \
   --idempotency-key commit-42 --json
 ```
 
+The media add works on a fresh timeline with V1/A1, without a shot or checkout.
+It creates a parent media clip, matching an editor drop. A missing visual track
+and the clip are committed together; `--on` and `--for` (or `--until`) use literal
+seconds. The returned receipt records `source.via: cli`; `show` reads the clip.
+Reuse the exact command and key to retry, including after acceptance. Use a fresh
+key for new intent. `--add-media` remains the separate legacy audio draft verb.
+
 `show` is the read-only scope/head lookup. The direct `edit` forms above route
-literal numeric moves and source trims through the Runtime-backed timeline
+media adds, literal numeric moves and source trims through the Runtime-backed timeline
 session. Symbolic moments and other edit shapes continue through the detached
 working copy. A connected `apply` with supported clip/track rows commits via
 the native sheet adapter; unsupported sheets remain detached-draft operations.

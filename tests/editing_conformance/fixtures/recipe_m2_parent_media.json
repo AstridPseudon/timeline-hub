@@ -909,7 +909,8 @@
               "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
               "type": "video",
               "generationId": "generation-new",
-              "variantId": "variant-new"
+              "variantId": "variant-new",
+              "duration": 6
             }
           }
         },
@@ -1332,8 +1333,8 @@
     "project_id": "project-1",
     "timeline_id": "film",
     "parent_revision": {
-      "revision_id": "authoring-parent-revision-420bad9ff9e5a47ef988e8afe7a41fb2015218f51686844a17ca94925be34c1e",
-      "content_digest": "sha256:ebcfbd1bbfa68dcaaf682c686b3949b3059ef2c243050fd99f0b3cafecbbc99d",
+      "revision_id": "authoring-parent-revision-293ca1a1ba18069eb5b592bb3ad6a7f4f5422aabc65198dd485e76bce4747a91",
+      "content_digest": "sha256:ed13fe6deb727e3b69a7e7b303147e5b421ea509578fcefb45e175b8c9706609",
       "payload": {
         "config": {
           "tracks": [
@@ -1486,7 +1487,8 @@
               "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
               "type": "video",
               "generationId": "generation-new",
-              "variantId": "variant-new"
+              "variantId": "variant-new",
+              "duration": 6
             }
           }
         },

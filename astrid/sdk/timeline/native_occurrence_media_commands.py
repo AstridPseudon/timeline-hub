@@ -57,9 +57,12 @@ def _consume(ctx, owner, ids):
             ctx.read(ref, [field])
 
 
-def _binding(pin, kind):
-    return {'media_id': pin['object_id'], 'type': kind,
-            'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+def _binding(pin, kind, *, verified=None):
+    entry = {'media_id': pin['object_id'], 'type': kind,
+             'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+    if kind == 'video' and verified is not None:
+        entry['duration'] = verified['duration_seconds']
+    return entry
 
 
 def _same_object(value, object_id):
@@ -128,12 +131,16 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     if not isinstance(registry, dict) or not isinstance(registry.get('assets'), dict):
         raise CommandError('media edit requires an authored asset registry')
     ref = owner + '/asset:' + identity
-    expected = _binding(pin, kind)
+    # Registry duration is the intrinsic source bound, never the clip's hold.
+    verified = _verified(ctx, pin)[0] if create else None
+    expected = _binding(pin, kind, verified=verified)
     entry = ctx.read(ref)
     if ctx.state.get(ref, []) == ABSENT and create:
         ctx.create_asset(owner, identity, expected)
     elif create:
-        if not equal(entry, expected):
+        if kind == 'video' and equal(entry, _binding(pin, kind)):
+            ctx.write(ref, ['duration'], expected['duration'])
+        elif not equal(entry, expected):
             raise CommandError('existing registry binding differs from exact selection', kind='dependency_changed')
     elif (not isinstance(entry, dict) or entry.get('media_id') != pin['object_id']
           or entry.get('type') != kind
@@ -263,7 +270,7 @@ def _swap(ctx, command, owner, limit):
         if not affected:
             raise CommandError('media alias has no affected consumers', kind='identity_conflict')
         _registry(ctx, owner, old, kind, alias=alias)
-        for key, replacement in _binding(pin, kind).items():
+        for key, replacement in _binding(pin, kind, verified=value).items():
             ctx.write(owner + '/asset:' + alias, [key], replacement)
         _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])
     else:

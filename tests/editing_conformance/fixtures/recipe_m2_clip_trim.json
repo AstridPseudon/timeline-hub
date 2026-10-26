@@ -114,7 +114,7 @@
           "assets": {
             "picture": {
               "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-              "type": "image",
+              "type": "video",
               "duration": 10
             }
           }
@@ -173,7 +173,7 @@
           ]
         }
       },
-      "content_digest": "sha256:f8784c8e1fe293ff4ac0a5f3017a0d320c837fe66ab388ccdb30b54fbe72dcbf"
+      "content_digest": "sha256:648438bd37e2d56442966ab537847b7108d83c1e2cbba2467367e652244081cf"
     },
     "shot_revisions": [
       {
@@ -940,7 +940,7 @@
             ],
             "state": {
               "state": "present",
-              "value": "image"
+              "value": "video"
             }
           },
           {
@@ -1168,7 +1168,7 @@
               "object_id": null,
               "digest": null,
               "content_digest": null,
-              "type": "image",
+              "type": "video",
               "duration": 10,
               "duration_ms": null,
               "duration_seconds": null,
@@ -1284,8 +1284,8 @@
     "project_id": "project-1",
     "timeline_id": "film",
     "parent_revision": {
-      "revision_id": "authoring-parent-revision-ffd648d8033a6d0a68ce64b1aff0e5d12dafb4373b6638fff21fa58f6bc1496a",
-      "content_digest": "sha256:a7f28f7cc2495a5db632063adb2801a743a755e5de9a661c3a1dc1008c07aed0",
+      "revision_id": "authoring-parent-revision-5bc620d93355e8d1d34658f52ce9cc2a9c3fc2211465ade195f2f3457ac88b36",
+      "content_digest": "sha256:e8ea84ca3ca96358a849f4a988dbdddd526cdf41b6499e30cc1b6a2813c509e4",
       "payload": {
         "config": {
           "tracks": [
@@ -1391,7 +1391,7 @@
           "assets": {
             "picture": {
               "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-              "type": "image",
+              "type": "video",
               "duration": 10
             }
           }

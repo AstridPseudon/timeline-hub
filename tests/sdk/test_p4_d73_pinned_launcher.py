@@ -18,6 +18,11 @@ HEX = {
     "composition_tree": "2" * 40,
 }
 AGENT_PARENTS = f"{HEX['agent']} {'3' * 40} {'4' * 40}"
+COMPOSITION_VERSION = json.loads(
+    (Path(__file__).resolve().parents[2] / "remotion" / "package-lock.json").read_text(
+        encoding="utf-8"
+    )
+)["packages"]["node_modules/@banodoco/timeline-composition"]["version"]
 
 
 def _write_executable(path: Path, contents: str) -> None:
@@ -119,7 +124,7 @@ def _make_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict[str, str
         "profile_lock_sha": hashlib.sha256((profile / "package-lock.json").read_bytes()).hexdigest(),
         "profile_archive_sha": hashlib.sha256(archive.read_bytes()).hexdigest(),
         "profile_registry_sha": hashlib.sha256((profile / ".astrid-registry-state.json").read_bytes()).hexdigest(),
-        "composition_version": "0.0.14",
+        "composition_version": COMPOSITION_VERSION,
         "original_p4_test_hash": original_hash,
         "service_versions": "launcher-control",
         "junit_paths": str(tmp_path / "junit.xml"),

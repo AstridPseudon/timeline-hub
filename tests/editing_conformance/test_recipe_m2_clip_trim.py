@@ -41,6 +41,7 @@ def media_document(**changes):
                         'app': {'astrid': {'for': 19, 'until': None, 'opaque': [None, False]},
                                 'org.example': {'literal': 'clip-a', 'clear': None}}, **changes})
     payload['registry'] = copy.deepcopy(payload['registry'])
+    payload['registry']['assets']['picture']['type'] = 'video'
     payload['registry']['assets']['picture']['duration'] = 10
     document['parent_revision']['content_digest'] = _digest(payload)
     return document
@@ -55,6 +56,15 @@ def bundle(**changes):
 
 def clip(value):
     return State(value).entity(REF)
+
+
+def test_image_refuses_source_trim_even_with_authored_window():
+    original = bundle()
+    State(original).registry('parent')['assets']['picture']['type'] = 'image'
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError, match='images have no source window'):
+        capture_clip_trim(original, REF, in_s=1, out_s=5)
+    assert original == before
 
 
 @pytest.mark.parametrize('changes,args', [({}, {'in_s': 1, 'out_s': 5}),

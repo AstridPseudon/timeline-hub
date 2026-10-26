@@ -828,7 +828,8 @@
                 "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
                 "type": "video",
                 "generationId": "generation-new",
-                "variantId": "variant-new"
+                "variantId": "variant-new",
+                "duration": 6
               }
             }
           },
@@ -926,8 +927,8 @@
       "project_id": "project-1",
       "timeline_id": "film",
       "parent_revision": {
-        "revision_id": "authoring-parent-revision-42658224c1e68d235fde4217283034a46083238d6c9b5b4f4075d12360536a6f",
-        "content_digest": "sha256:a934be0ee43751cc3f510fde219e5bc57d766aed62bdd25a295ad8d883a8939a",
+        "revision_id": "authoring-parent-revision-57f4a32bd8a03620e5a3d6750c0e90fa9c62dd17a840378f35a29843a43e501c",
+        "content_digest": "sha256:1474aafcbb6d44802b18de2f865b81b5e8a863eebd161c5a1234b8837f1a3c62",
         "payload": {
           "config": {
             "tracks": [
@@ -1041,7 +1042,7 @@
               "unknown": {
                 "literal": "chapter-shot"
               },
-              "shot_revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386"
+              "shot_revision_id": "authoring-shot-revision-ea12720c6a6e947c2eb417c064af34e3ecffb52cf5f31c4bdeb0f05afeda56b9"
             },
             {
               "occurrence_id": "occ-b",
@@ -1096,11 +1097,11 @@
         },
         {
           "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
-          "revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386",
-          "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+          "revision_id": "authoring-shot-revision-ea12720c6a6e947c2eb417c064af34e3ecffb52cf5f31c4bdeb0f05afeda56b9",
+          "internal_timeline_revision_id": "authoring-timeline-revision-8263aaef5591e779ac44ff95cfcc67cb268d3a07e5c81bb974dd39b41476ad28",
           "payload": {
             "name": "Chapter One",
-            "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+            "internal_timeline_revision_id": "authoring-timeline-revision-8263aaef5591e779ac44ff95cfcc67cb268d3a07e5c81bb974dd39b41476ad28",
             "items": [
               {
                 "item_id": "shot-item-placement-cb1bf5d05853ca0713af2d9450cfbb2f3d41bbda49e6b17c2d62b854e0b1c993",
@@ -1123,7 +1124,7 @@
               "keep": null
             }
           },
-          "content_digest": "sha256:4b8459769a3dcff9fb25ea929fc10e99451f28b89d79e737675e4ccaef2b41c7"
+          "content_digest": "sha256:36f46a86f97a08827c0a0f1b32600cee7c0b4bedb931b59423f00b3ffdcb8174"
         }
       ],
       "internal_timeline_revisions": [
@@ -1201,7 +1202,7 @@
         },
         {
           "timeline_id": "film",
-          "revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
+          "revision_id": "authoring-timeline-revision-8263aaef5591e779ac44ff95cfcc67cb268d3a07e5c81bb974dd39b41476ad28",
           "payload": {
             "tracks": [
               {
@@ -1283,7 +1284,8 @@
                   "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
                   "type": "video",
                   "generationId": "generation-new",
-                  "variantId": "variant-new"
+                  "variantId": "variant-new",
+                  "duration": 6
                 }
               }
             },
@@ -1292,7 +1294,7 @@
               2
             ]
           },
-          "content_digest": "sha256:675451b17a8a1de14ed75d2160d3b975e6fb6e77fffcd6716905ca446b789029"
+          "content_digest": "sha256:259a552e0c77d93379d0fc797e99d6aa21d63b191aafa5780fe69070494effb0"
         }
       ],
       "dependency_manifest": {
@@ -1305,9 +1307,9 @@
           },
           {
             "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
-            "revision_id": "authoring-shot-revision-e0bb9513655c6d7ffa070b4d3a43438fe1673c47e4a7f76a590d4fd7573f2386",
-            "internal_timeline_revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
-            "content_digest": "sha256:4b8459769a3dcff9fb25ea929fc10e99451f28b89d79e737675e4ccaef2b41c7"
+            "revision_id": "authoring-shot-revision-ea12720c6a6e947c2eb417c064af34e3ecffb52cf5f31c4bdeb0f05afeda56b9",
+            "internal_timeline_revision_id": "authoring-timeline-revision-8263aaef5591e779ac44ff95cfcc67cb268d3a07e5c81bb974dd39b41476ad28",
+            "content_digest": "sha256:36f46a86f97a08827c0a0f1b32600cee7c0b4bedb931b59423f00b3ffdcb8174"
           }
         ],
         "internal_timelines": [
@@ -1318,8 +1320,8 @@
           },
           {
             "timeline_id": "film",
-            "revision_id": "authoring-timeline-revision-bfcf979eeb885f66f3333f72ebec5a66362e168cc345999ca65e5bfafddedb20",
-            "content_digest": "sha256:675451b17a8a1de14ed75d2160d3b975e6fb6e77fffcd6716905ca446b789029"
+            "revision_id": "authoring-timeline-revision-8263aaef5591e779ac44ff95cfcc67cb268d3a07e5c81bb974dd39b41476ad28",
+            "content_digest": "sha256:259a552e0c77d93379d0fc797e99d6aa21d63b191aafa5780fe69070494effb0"
           }
         ],
         "media": [
@@ -2129,7 +2131,8 @@
                 "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
                 "type": "video",
                 "generationId": "generation-new",
-                "variantId": "variant-new"
+                "variantId": "variant-new",
+                "duration": 6
               }
             }
           },
@@ -2224,8 +2227,8 @@
       "project_id": "project-1",
       "timeline_id": "film",
       "parent_revision": {
-        "revision_id": "authoring-parent-revision-d35a5f7f583efa7dfd35b1d753cb32828cc5883957a1b396696c1e433871e09b",
-        "content_digest": "sha256:2ef8479aa665cdc745c75c23a615e0edae99235c3db7de6822b5715a38efd9b3",
+        "revision_id": "authoring-parent-revision-60fe927d0bd15ffd54ea363bd1dfddcf61896e5ad1c70ecc96264f2cde352b31",
+        "content_digest": "sha256:d8ff97210303b79b0403eaa383def94c4027edccb34738040a89a543ada4d640",
         "payload": {
           "config": {
             "tracks": [
@@ -2339,7 +2342,7 @@
               "unknown": {
                 "literal": "chapter-shot"
               },
-              "shot_revision_id": "authoring-shot-revision-441b672f3fb1e57e4b13a81fd56e8859a83c13724d3dffc1cd69e0b9fa9c424e"
+              "shot_revision_id": "authoring-shot-revision-6a64ed8ec0726f6f96e291b262d72a3244297c5c3ff347b084bb837142914ada"
             },
             {
               "occurrence_id": "occ-b",
@@ -2394,11 +2397,11 @@
         },
         {
           "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
-          "revision_id": "authoring-shot-revision-441b672f3fb1e57e4b13a81fd56e8859a83c13724d3dffc1cd69e0b9fa9c424e",
-          "internal_timeline_revision_id": "authoring-timeline-revision-c776de36c1ec34fb06f9941d0b501b4aea943c92673430f8994512d89f005d37",
+          "revision_id": "authoring-shot-revision-6a64ed8ec0726f6f96e291b262d72a3244297c5c3ff347b084bb837142914ada",
+          "internal_timeline_revision_id": "authoring-timeline-revision-d13d151667e3254a7476f1a28a0abb8f9c21b5d6ffb4e3d7ef22a4f401c93aa8",
           "payload": {
             "name": "Chapter One",
-            "internal_timeline_revision_id": "authoring-timeline-revision-c776de36c1ec34fb06f9941d0b501b4aea943c92673430f8994512d89f005d37",
+            "internal_timeline_revision_id": "authoring-timeline-revision-d13d151667e3254a7476f1a28a0abb8f9c21b5d6ffb4e3d7ef22a4f401c93aa8",
             "items": [
               {
                 "item_id": "shot-item-placement-cb1bf5d05853ca0713af2d9450cfbb2f3d41bbda49e6b17c2d62b854e0b1c993",
@@ -2421,7 +2424,7 @@
               "keep": null
             }
           },
-          "content_digest": "sha256:4e0b0e373022a1fdfca97a148d05474d258d64fe19a0b63ca607569cfa48f321"
+          "content_digest": "sha256:db1a1ba7f9e14415e39e798f7c0b5836549947670e4bac06ab6ebb877e882948"
         }
       ],
       "internal_timeline_revisions": [
@@ -2499,7 +2502,7 @@
         },
         {
           "timeline_id": "film",
-          "revision_id": "authoring-timeline-revision-c776de36c1ec34fb06f9941d0b501b4aea943c92673430f8994512d89f005d37",
+          "revision_id": "authoring-timeline-revision-d13d151667e3254a7476f1a28a0abb8f9c21b5d6ffb4e3d7ef22a4f401c93aa8",
           "payload": {
             "tracks": [
               {
@@ -2564,7 +2567,8 @@
                   "media_id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
                   "type": "video",
                   "generationId": "generation-new",
-                  "variantId": "variant-new"
+                  "variantId": "variant-new",
+                  "duration": 6
                 }
               }
             },
@@ -2573,7 +2577,7 @@
               2
             ]
           },
-          "content_digest": "sha256:620ac9a6ced4339246d992ce42b8cdb421fd9daf43660dae92cd5ddab2750934"
+          "content_digest": "sha256:b31b23e7382d2651515a3a7db2fba93cd5ede06964921ecef631dd07cdaf9f4e"
         }
       ],
       "dependency_manifest": {
@@ -2586,9 +2590,9 @@
           },
           {
             "shot_id": "shot-placement-17545afbc02f243b9327cabff19dacf2c3bc6ee5e2abd3a4c4a0415124093e9f",
-            "revision_id": "authoring-shot-revision-441b672f3fb1e57e4b13a81fd56e8859a83c13724d3dffc1cd69e0b9fa9c424e",
-            "internal_timeline_revision_id": "authoring-timeline-revision-c776de36c1ec34fb06f9941d0b501b4aea943c92673430f8994512d89f005d37",
-            "content_digest": "sha256:4e0b0e373022a1fdfca97a148d05474d258d64fe19a0b63ca607569cfa48f321"
+            "revision_id": "authoring-shot-revision-6a64ed8ec0726f6f96e291b262d72a3244297c5c3ff347b084bb837142914ada",
+            "internal_timeline_revision_id": "authoring-timeline-revision-d13d151667e3254a7476f1a28a0abb8f9c21b5d6ffb4e3d7ef22a4f401c93aa8",
+            "content_digest": "sha256:db1a1ba7f9e14415e39e798f7c0b5836549947670e4bac06ab6ebb877e882948"
           }
         ],
         "internal_timelines": [
@@ -2599,8 +2603,8 @@
           },
           {
             "timeline_id": "film",
-            "revision_id": "authoring-timeline-revision-c776de36c1ec34fb06f9941d0b501b4aea943c92673430f8994512d89f005d37",
-            "content_digest": "sha256:620ac9a6ced4339246d992ce42b8cdb421fd9daf43660dae92cd5ddab2750934"
+            "revision_id": "authoring-timeline-revision-d13d151667e3254a7476f1a28a0abb8f9c21b5d6ffb4e3d7ef22a4f401c93aa8",
+            "content_digest": "sha256:b31b23e7382d2651515a3a7db2fba93cd5ede06964921ecef631dd07cdaf9f4e"
           }
         ],
         "media": [
