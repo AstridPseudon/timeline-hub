@@ -89,6 +89,42 @@ def test_admission_is_not_task_settlement(monkeypatch, state, outputs, expected)
             journey.task()
 
 
+def test_failed_follow_cancels_and_settles_before_returning_failure(monkeypatch):
+    calls = []
+    state = "running"
+    follow_count = 0
+
+    def cli(module, argv, name, **kwargs):
+        nonlocal state, follow_count
+        calls.append(tuple(argv[:2]))
+        if argv[:2] == ["projects", "create"]:
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "create"]:
+            return json.dumps({"ok": True, "data": {"task_id": "task-1"}})
+        if argv[:2] == ["tasks", "follow"]:
+            follow_count += 1
+            if follow_count == 1:
+                raise RuntimeError("task-follow.jsonl: exit 1")
+            state = "cancelled"
+            return ""
+        if argv[:2] == ["tasks", "show"]:
+            return json.dumps({"ok": True, "data": {"state": state, "result": {"outputs": []}}})
+        if argv[:2] == ["tasks", "cancel"]:
+            state = "cancel_requested"
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "events"]:
+            return json.dumps({"ok": True, "data": []})
+        raise AssertionError(argv)
+
+    monkeypatch.setattr(journey, "cli", cli)
+    with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
+        journey.task()
+
+    assert ("tasks", "cancel") in calls
+    assert follow_count == 2
+    assert calls[-2:] == [("tasks", "show"), ("tasks", "events")]
+
+
 def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
     monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
     with pytest.raises(RuntimeError, match="exit 7"):

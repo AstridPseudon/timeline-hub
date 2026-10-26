@@ -197,8 +197,37 @@ def task():
     if admitted.get("ok") is not True:
         raise RuntimeError("Task admission failed")
     task_id = admitted["data"]["task_id"]
-    cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
-                   "--timeout-seconds", "900", "--json"], "task-follow.jsonl", timeout=960)
+    try:
+        cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
+                       "--timeout-seconds", "900", "--json"], "task-follow.jsonl", timeout=960)
+    except RuntimeError as follow_error:
+        observed = json.loads(cli(
+            "astrid", ["tasks", "show", task_id, "--project", project, "--json"],
+            "task-after-follow-failure.json",
+        ))
+        row = observed.get("data") or {}
+        if row.get("state") not in {"succeeded", "failed", "cancelled"}:
+            cli("astrid", ["tasks", "cancel", task_id, "--project", project, "--json"],
+                "task-cancel.json")
+            cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
+                           "--timeout-seconds", "300", "--json"], "task-cancel-follow.jsonl", timeout=360)
+        settled_after_failure = json.loads(cli(
+            "astrid", ["tasks", "show", task_id, "--project", project, "--json"],
+            "task-after-cancel.json",
+        ))
+        row = settled_after_failure.get("data") or {}
+        if row.get("state") not in {"succeeded", "failed", "cancelled"}:
+            raise RuntimeError(
+                f"Task remained {row.get('state')!r} after normal cancellation; Runtime down will be blocked"
+            ) from follow_error
+        try:
+            cli("astrid", ["tasks", "events", task_id, "--project", project, "--json"],
+                "task-events-after-failure.json")
+        except RuntimeError:
+            pass
+        raise RuntimeError(
+            f"Task follow failed ({follow_error}); task reached terminal state {row.get('state')!r}"
+        ) from follow_error
     settled = json.loads(cli("astrid", ["tasks", "show", task_id, "--project", project, "--json"], "task-settled.json"))
     row = settled.get("data") or {}
     outputs = {item.get("name"): item for item in (row.get("result") or {}).get("outputs", [])}
