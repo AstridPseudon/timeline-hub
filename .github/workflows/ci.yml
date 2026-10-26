@@ -31,6 +31,7 @@ jobs:
           tests/core/execution/test_platform_helpers.py::test_windows_scope_job_kills_descendants_after_leader_exit
           tests/core/execution/test_platform_helpers.py::test_windows_lock_and_owner_permissions_are_native
           tests/core/execution/test_platform_helpers.py::test_windows_scope_dies_when_owner_process_exits
+          tests/test_generic_host_child_output.py
 
   checks:
     name: fast checks
