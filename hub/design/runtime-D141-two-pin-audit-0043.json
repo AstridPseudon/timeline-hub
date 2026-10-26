@@ -1,0 +1,20 @@
+{
+  "agt-pin-070dfc5e": {
+    "present": true,
+    "running": false,
+    "dirty": true,
+    "ancestor_of_final": true,
+    "live_references": [],
+    "keep": true,
+    "size": "117769697"
+  },
+  "agt-pin-08e6b905": {
+    "present": true,
+    "running": false,
+    "dirty": false,
+    "ancestor_of_final": true,
+    "live_references": [],
+    "keep": true,
+    "size": "108667271"
+  }
+}

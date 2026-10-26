@@ -6774,3 +6774,11 @@ Exact worker-authored receipts, byte-published for ordinary hub-sync:
 - `design/agt-U2-D141-generated-return-0001-progress.md` SHA256 `a219c0f60f6ae32add9eb7b8619c46a8736af5ffe72cd197f9f03b7123db9234`
 - `design/agt-U2-D141-generated-return-0001-source-manifest.json` SHA256 `e3ebfd8b9c3880b0c9b9ac17fa3b44e14c71dce0f0f26d03f5d012f34026b341`
 - `design/agt-U2-D141-generated-return-0001-validation.md` SHA256 `c58288461e2536a1894ea936cdd0f122de92fdaa0a41a1bbdf9916e33bf31e8e`
+
+## 00:41:47Z main D141c: CUT TUPLE COMPLETE. GO for all cut reruns
+Cut tuple (design/D141-cut-tuple.md): agent 28e56cacb42d, app 867cb2737af1, runtime 6a011d58e691, composition 635f4de06fda. GO now, one heavy body at a time per machine and the D89 floors per machine:
+- App: App full plus pristine (comparator 7ca61bb3), P1, P2's 6, P3.
+- Agent: P4 (after its pristine comparator finishes).
+- Runtime: P5. The Farm note for the Agent ship core goes out by 01:11Z, with ITEM 2 = the Runtime full plus pristine ONLY IF Main can't reach 5.2 GB first. Main host audit is CLEAR for agt-pin-070dfc5e and agt-pin-08e6b905 (both D141-superseded: element/D118 stopped). Retire them through the guarded route (about 237 MB brings Main to about 5.27 GB) and then run the Runtime full plus pristine on MAIN (venv-runtime lives only here).
+- REG-diff rule: before classifying, rerun on pristine in the same environment kind any pristine failure of environment type.
+- F-final binds only receipted post-fix heads.

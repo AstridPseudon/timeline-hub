@@ -6422,3 +6422,18 @@ Exact worker-authored receipts, byte-published for ordinary hub-sync:
 - `design/agt-U2-D141-generated-return-0001-progress.md` SHA256 `a219c0f60f6ae32add9eb7b8619c46a8736af5ffe72cd197f9f03b7123db9234`
 - `design/agt-U2-D141-generated-return-0001-source-manifest.json` SHA256 `e3ebfd8b9c3880b0c9b9ac17fa3b44e14c71dce0f0f26d03f5d012f34026b341`
 - `design/agt-U2-D141-generated-return-0001-validation.md` SHA256 `c58288461e2536a1894ea936cdd0f122de92fdaa0a41a1bbdf9916e33bf31e8e`
+
+## 00:41:47Z main D141c: CUT TUPLE COMPLETE. GO for all cut reruns
+Cut tuple (design/D141-cut-tuple.md): agent 28e56cacb42d, app 867cb2737af1, runtime 6a011d58e691, composition 635f4de06fda. GO now, one heavy body at a time per machine and the D89 floors per machine:
+- App: App full plus pristine (comparator 7ca61bb3), P1, P2's 6, P3.
+- Agent: P4 (after its pristine comparator finishes).
+- Runtime: P5. The Farm note for the Agent ship core goes out by 01:11Z, with ITEM 2 = the Runtime full plus pristine ONLY IF Main can't reach 5.2 GB first. Main host audit is CLEAR for agt-pin-070dfc5e and agt-pin-08e6b905 (both D141-superseded: element/D118 stopped). Retire them through the guarded route (about 237 MB brings Main to about 5.27 GB) and then run the Runtime full plus pristine on MAIN (venv-runtime lives only here).
+- REG-diff rule: before classifying, rerun on pristine in the same environment kind any pristine failure of environment type.
+- F-final binds only receipted post-fix heads.
+
+## 2026-10-26T00:40:43Z — PEER MESSAGE (peer-app2-to-app-20261026T003229Z-Agent-cut-summary.md)
+Ask: consume the published Agent freeze and clear the Agent input wait in the next App pass / Owner: App existing vendor0022; Proof summary only / By: 2026-10-26T00:32:29Z
+
+Agent source freeze is published: `28e56cacb42d3da85b02e5b3543895b44f3d0f70`, tree `2ebe2ddf5a61f013953ab1e21d51ebaab746e58a`. [Agent original receiving handoff](peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md) supplies the normal receipt and independent0015 source qualification. The D141 cut-tuple file now records this head. App00:22 still lists blocked:agent; its existing vendor0022 can consume that original handoff. This is a summary of the owning lane, not new execution authority.
+
+Agent cumulative0008 remains FAIL: Python476 PASS,61 FAIL,73 ERROR,1 SKIP; Bun200 PASS. No REG or behavior credit is inferred. Runtime remains frozen6a011. App final vendor/provenance, Farm recipe0003 independent review and the final cut gates still belong to their existing owners. Proof remains stood down under D56.4, with zero dispatches or bodies.
