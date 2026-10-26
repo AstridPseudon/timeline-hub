@@ -2,11 +2,10 @@
 # a real Runtime daemon on throwaway SQLite serving it through its own browser door, and Chromium.
 # Local equivalent: npm run test:e2e:direct (tests/e2e/local/support/harness.ts).
 #
-# Runtime checkout: the Runtime repo is private, so actions/checkout needs a token that can read it. Add a
-# repository secret RUNTIME_READ_TOKEN (a fine-grained PAT, or a deploy-key-backed token, with read access
-# to banodoco/astrid-runtime). When the secret is not set, the job falls back to github.token,
-# which only works if the Runtime repo is readable by this repository. Pull requests from forks get no
-# secrets, so this lane cannot run for them.
+# Runtime and Astrid checkouts are private, so actions/checkout needs tokens that can read them. Add
+# repository secrets RUNTIME_READ_TOKEN and ASTRID_READ_TOKEN with read access to banodoco/astrid-runtime
+# and banodoco/astrid-agent. When either secret is not set, that checkout falls back to github.token,
+# which only works if its repo is readable by this repository. Pull requests from forks get no secrets.
 #
 # Pass rule (a skip means a missing harness, R-9): exactly M tests expected to fail (M is the journey
 # file's budget in scripts/quality/check-known-failures.mjs), none unexpected, none flaky, none skipped.
@@ -65,6 +64,12 @@ jobs:
           ref: ${{ github.event.inputs.runtime_ref || 'main' }}
           path: astrid-runtime
           token: ${{ secrets.RUNTIME_READ_TOKEN || github.token }}
+      - uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-agent
+          ref: ${{ github.event.inputs.agent_ref || 'main' }}
+          path: astrid-agent
+          token: ${{ secrets.ASTRID_READ_TOKEN || github.token }}
 
       - uses: actions/setup-node@v4
         with:
@@ -74,6 +79,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: astral-sh/setup-uv@v6
 
       - name: Build the Runtime venv
         working-directory: astrid-runtime
@@ -81,6 +87,13 @@ jobs:
           python -m venv .venv
           .venv/bin/python -m pip install -e .
           .venv/bin/python -m runtime_protocol.cli --help > /dev/null
+
+      - name: Build the Astrid authoring venv
+        working-directory: astrid-agent
+        run: |
+          uv venv --python 3.11 .venv
+          uv pip install --python .venv/bin/python -e . -e ../astrid-runtime
+          .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
       - name: Install App dependencies, Chromium and ffmpeg
         working-directory: astrid-app
@@ -97,6 +110,8 @@ jobs:
           PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/direct-results
           NODE_OPTIONS: --max-old-space-size=4096
           ASTRID_APP_DIRECT_DOOR_PORT: "17341"
+          ASTRID_CHECKOUT: ${{ github.workspace }}/astrid-agent
+          ASTRID_PYTHON: ${{ github.workspace }}/astrid-agent/.venv/bin/python
           # A missing dependency in this job is a failure, never a skip (config/testing/skipRegistry.mjs).
           ASTRID_REQUIRE_LANES: direct-journey
         run: npx playwright test -c playwright.direct.config.ts --reporter=json,list,./config/testing/playwrightSkipGuard.ts
@@ -187,6 +202,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: astral-sh/setup-uv@v6
 
       - name: Build the Runtime venv
         working-directory: astrid-runtime
@@ -198,11 +214,8 @@ jobs:
       - name: Build the Astrid venv
         working-directory: astrid-agent
         run: |
-          python -m venv .venv
-          .venv/bin/python -m pip install -e .
-          # Astrid imports runtime_protocol but does not declare it: the installer puts the Runtime beside it with --no-deps
-          # (astrid/installer/backend.py, scripts/ci_install_runtime.py). Here the Runtime under test is the sibling checkout.
-          .venv/bin/python -m pip install --no-deps -e ../astrid-runtime
+          uv venv --python 3.11 .venv
+          uv pip install --python .venv/bin/python -e . -e ../astrid-runtime
           .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
       # The fixture launches Playwright's default Chromium in headless mode; the render case needs Google Chrome for H.264.

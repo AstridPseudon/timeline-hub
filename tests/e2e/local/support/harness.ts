@@ -823,6 +823,13 @@ export class DirectHarness {
       return line ? JSON.parse(line).endpoint : null;
     }, 60_000, () => (managed.child.exitCode !== null ? 'Runtime exited before endpoint readiness' : null)).catch((error) => {
       lifecycle.failure = { code: 'startup_failed', class: 'startup', stage: 'endpoint' };
+      if (managed.child.exitCode !== null) {
+        return managed.closed.then(() => {
+          const stderr = managed.stderr.trim();
+          const detail = stderr ? stderr.slice(-4000) : '<empty>';
+          throw new Error(`${error instanceof Error ? error.message : String(error)}\nRuntime stderr:\n${detail}`);
+        });
+      }
       throw error;
     });
     this.runtimePort = Number(new URL(endpoint).port);
