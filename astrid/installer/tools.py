@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
+from runtime_protocol import platform
 
 from ..core.generation.vibecomfy_dependency import VIBECOMFY_FORK_URL
 from ..version import ASTRID_VERSION
@@ -222,7 +223,7 @@ def source(name: str, sha: str, destination: Path, *, repo: str | None = None) -
         if repo is not None:
             local_source(repo, sha, archive)
             extract(archive, staging)
-            os.replace(staging, destination)
+            platform.replace_path(staging, destination)
         else:
             repository = (VIBECOMFY_FORK_URL.removesuffix(".git") if name == "vibecomfy"
                           else f"https://github.com/banodoco/astrid-{name}")
@@ -231,7 +232,7 @@ def source(name: str, sha: str, destination: Path, *, repo: str | None = None) -
             if len(children) != 1 or not children[0].is_dir():
                 raise ValueError(f"Unexpected {name} source archive layout.")
             # Discard GitHub's long SHA directory name to keep Windows paths shallow.
-            os.replace(children[0], destination)
+            platform.replace_path(children[0], destination)
     finally:
         archive.unlink(missing_ok=True)
         if staging.exists():
@@ -357,7 +358,7 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r
     # The selected commit is authoritative. Never apply a downstream producer
     # patch here: owners land the separately delivered fix before selecting it.
     normalized = root / "source"
-    os.replace(source_root, normalized)
+    platform.replace_path(source_root, normalized)
     if container.exists():
         shutil.rmtree(container)
     source_root = normalized
@@ -383,7 +384,7 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r
             native_file = native_archive / "package" / relative
             if not native_file.is_file() or relative.name != name or not name.endswith(".node"):
                 raise ValueError(f"The pinned OMP native archive is missing {name}.")
-            os.replace(native_file, destination / name)
+            platform.replace_path(native_file, destination / name)
     finally:
         shutil.rmtree(native_archive)
     # Import the producer's CPU-aware loader, then enforce the exact ABI marker

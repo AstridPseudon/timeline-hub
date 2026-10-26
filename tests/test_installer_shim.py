@@ -116,6 +116,21 @@ def test_later_path_clash_does_not_hide_the_shim(manager, monkeypatch):
     assert foreign.read_text() == "foreign command"
 
 
+def test_installer_bootstrap_entry_point_does_not_block_shim(manager, monkeypatch, tmp_path):
+    prefix = tmp_path / "astrid-install-temp" / "venv"
+    folder = prefix / ("Scripts" if manager.system == "win32" else "bin")
+    folder.mkdir(parents=True)
+    command = folder / ("astrid.exe" if manager.system == "win32" else "astrid")
+    command.write_text("bootstrap entry point")
+    command.chmod(0o755)
+    monkeypatch.setattr(launcher.sys, "prefix", str(prefix))
+    monkeypatch.setenv("PATH", str(folder))
+
+    shim, _ = launcher.install_shim(manager)
+
+    assert shim is not None and launcher.owned_shim(shim)
+
+
 @pytest.mark.parametrize("kind", [1, 2])
 def test_windows_user_path_preserves_kind_expansion_and_removes_duplicates(tmp_path, monkeypatch, registry, kind):
     values, writes = registry

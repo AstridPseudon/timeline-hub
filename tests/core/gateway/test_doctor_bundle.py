@@ -228,12 +228,50 @@ def test_doctor_bundle_cli_writes_archive_without_mutating_services(tmp_path, mo
     target = tmp_path / "doctor.zip"
 
     assert dispatch._dispatch_doctor(["--bundle", str(target)]) == 0
-
     assert target.is_file()
     assert "Astrid doctor bundle:" in capsys.readouterr().out
     with zipfile.ZipFile(target) as archive:
         status = json.loads(archive.read("status.json"))
     assert status["runtime_health"]["services"][0]["state"] == "running"
+
+
+def test_doctor_marks_non_running_service_unhealthy_with_reason(tmp_path, monkeypatch, capsys):
+    import astrid.core.execution.generic_host as generic_host
+    import astrid.core.execution.host_log as host_log
+    import astrid.core.rendering.node_pin as node_pin
+    import astrid.core.rendering.remotion_runtime as remotion_runtime
+    import astrid.runtime_cli
+    import astrid.sdk.invocation as invocation
+    import astrid.sdk.storage_ownership as storage_ownership
+    import astrid.sdk.storage_root as storage_root
+    import astrid.sdk.visualize_cache as visualize_cache
+    import astrid.core.gateway.diagnostics as diagnostics
+
+    observed = type("Observed", (), {
+        "data": {"ok": True, "healthy": True, "runtime_health": {"services": [
+            {"name": "pack-host", "state": "restarting", "reason": "ready file timed out"},
+        ]}},
+        "returncode": 0,
+    })()
+    monkeypatch.setattr(diagnostics, "collect_diagnostic", lambda *_args, **_kwargs: (
+        {"problemCode": None, "facts": {"computeWorker": {}}}, None, observed))
+    monkeypatch.setattr(astrid.runtime_cli, "RuntimeCLI", type("RuntimeCLI", (), {}))
+    monkeypatch.setattr(storage_root, "resolve_runtime_data_root", lambda: tmp_path)
+    monkeypatch.setattr(storage_ownership, "reclaim", lambda *_args, **_kwargs: {"reclaimable_bytes": 0})
+    monkeypatch.setattr(generic_host, "executor_skip_section", lambda: {})
+    monkeypatch.setattr(host_log, "host_log_section", lambda *_args: {})
+    monkeypatch.setattr(node_pin, "doctor_section", lambda *_args: {"status": "ok", "detail": "ok", "fix": ""})
+    monkeypatch.setattr(remotion_runtime, "resolve_remotion_project_dir", lambda: tmp_path)
+    monkeypatch.setattr(remotion_runtime, "remotion_install_problem", lambda *_args: None)
+    monkeypatch.setattr(visualize_cache, "cache_size", lambda *_args: 0)
+    monkeypatch.setattr(invocation, "_visualize_cache_base", lambda: tmp_path)
+
+    assert dispatch._dispatch_doctor(["--json"]) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["healthy"] is False
+    assert report["ok"] is False
+    assert any("service pack-host" in issue and "ready file timed out" in issue for issue in report["issues"])
+
 
 
 def test_collect_diagnostic_preserves_runtime_service_states(tmp_path, monkeypatch):

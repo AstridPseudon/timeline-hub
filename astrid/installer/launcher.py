@@ -6,6 +6,7 @@ import importlib
 import ntpath
 import os
 import shlex
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,13 @@ def owned_shim(path: Path) -> bool:
 
 def _windows_path_key(value: str) -> str:
     return ntpath.normcase(ntpath.normpath(ntpath.expandvars(value.strip().strip('"'))))
+
+
+def _in_installer_prefix(candidate: Path) -> bool:
+    try:
+        return candidate.resolve().is_relative_to(Path(sys.prefix).resolve())
+    except (OSError, RuntimeError):
+        return False
 
 
 def _registry_path(machine: bool = False) -> str:
@@ -87,6 +95,8 @@ def install_shim(service, *, say=print) -> tuple[Path | None, str | None]:
             names = ["astrid" + ext.lower() for ext in os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(";")] if windows else ["astrid"]
             for name in names:
                 candidate = folder / name
+                if _in_installer_prefix(candidate):
+                    continue
                 if candidate.is_file() and (windows or os.access(candidate, os.X_OK)) and not owned_shim(candidate):
                     clash = candidate
                     break

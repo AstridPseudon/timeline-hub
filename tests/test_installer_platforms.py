@@ -430,7 +430,9 @@ def test_door_verification_requires_selected_realm_recorded_instance_and_live_ow
     if mismatch == 'port':
         discovery['door_endpoint'] = 'http://127.0.0.1:9999'
     write_json(data / 'runtime/discovery.json', discovery)
-    health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance'}
+    (data / 'runtime/generic-host.ready.json').write_text('{}')
+    health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance',
+              'services': [{'name': 'pack-host', 'state': 'running'}]}
     realm = {'realm_id': 'other' if mismatch == 'realm' else 'selected'}
     def opening(request, timeout):
         if mismatch == 'restart-required':
@@ -461,7 +463,9 @@ def test_door_verification_retries_status_observed_before_discovery_was_publishe
     discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
                  "door_endpoint": "http://127.0.0.1:17340"}
     write_json(data / "runtime/discovery.json", discovery)
-    health = {"status": "ok", "runtime_instance_id": "owned-instance"}
+    (data / "runtime/generic-host.ready.json").write_text("{}")
+    health = {"status": "ok", "runtime_instance_id": "owned-instance",
+              "services": [{"name": "pack-host", "state": "running"}]}
     realm = {"realm_id": "selected"}
     opener = Mock()
     opener.open.side_effect = lambda request, timeout: io.BytesIO(json.dumps(
@@ -493,6 +497,34 @@ def test_source_archives_are_flattened_to_shallow_managed_paths(tmp_path, monkey
     assert root == tmp_path / 'a'
     assert (root / 'pyproject.toml').read_text() == 'source'
     assert not (tmp_path / 'a.unpack').exists()
+
+
+def test_source_retries_windows_sharing_violation_on_publish(tmp_path, monkeypatch):
+    import os
+    from astrid.installer import tools
+
+    calls = []
+    def move(source, destination):
+        calls.append((source, destination))
+        if len(calls) == 1:
+            error = PermissionError("file is in use")
+            error.winerror = 32
+            raise error
+        os.replace(source, destination)
+
+    monkeypatch.setattr(tools.platform.sys, "platform", "win32")
+    monkeypatch.setattr(tools.platform, "_move_file_write_through", move)
+    monkeypatch.setattr(tools.platform.time, "sleep", lambda _: None)
+    def unpack(url, destination):
+        child = destination / ('astrid-agent-' + 'a' * 40)
+        child.mkdir(parents=True)
+        (child / 'pyproject.toml').write_text('source')
+    monkeypatch.setattr(tools, 'fetch_archive', unpack)
+
+    root = tools.source('agent', 'a' * 40, tmp_path / 'a')
+
+    assert len(calls) == 2
+    assert (root / 'pyproject.toml').read_text() == 'source'
 
 
 def test_python311_windows_reparse_points_are_rejected_using_mocked_file_attributes(monkeypatch):

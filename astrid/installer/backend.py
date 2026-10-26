@@ -60,6 +60,16 @@ def _last_logged_error(log: Path, *, tail: int = 65536) -> str | None:
     return found
 
 
+def _last_service_log(log: Path, *, tail: int = 8192) -> str | None:
+    try:
+        with log.open("rb") as stream:
+            stream.seek(max(0, log.stat().st_size - tail))
+            value = stream.read().decode("utf-8", "replace").strip()
+        return value or None
+    except OSError:
+        return None
+
+
 def _runtime_json(output: str) -> dict:
     """Runtime's one JSON result, after any stderr notes merged into output."""
     start = next((match.start() for match in re.finditer(r"^\{", output, re.MULTILINE)), 0)
@@ -528,6 +538,8 @@ class Backend:
         port = int(version.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)))
         deadline = time.monotonic() + timeout
         error = None
+        pack_host = None
+        identity_ok = False
         while time.monotonic() < deadline:
             try:
                 status = self.runtime(version, data, "status", timeout=3)
@@ -542,21 +554,54 @@ class Backend:
                 health = get("/api/runtime/v1/health")
                 realm = get("/api/runtime/v1/realm")
                 services = health.get("services", [])
-                if isinstance(services, list) and any(
-                    isinstance(service, dict) and service.get("state") == "failed"
-                    for service in services
-                ):
-                    raise ValueError("A declared Astrid service is failed.")
+                if isinstance(services, list):
+                    pack_host = next((service for service in services
+                                      if isinstance(service, dict) and service.get("name") == "pack-host"), None)
                 if (health.get("status") != "ok" or realm.get("realm_id") != realm_id
                         or discovery.get("active_realm") != realm_id
                         or health.get("runtime_instance_id") != discovery.get("runtime_instance_id")
                         or (status.get("discovery") or {}).get("runtime_instance_id") != discovery.get("runtime_instance_id")
                         or status.get("support", {}).get("pid_alive") is not True):
                     raise ValueError("The browser door belongs to a different Runtime or workspace.")
-                return
+                identity_ok = True
+                if (pack_host is not None and pack_host.get("state") == "running"
+                        and (data / "runtime" / "generic-host.ready.json").is_file()
+                        and not (isinstance(services, list) and any(
+                            isinstance(service, dict) and service.get("state") == "failed"
+                            for service in services
+                        ))):
+                    return
+                error = ValueError("Astrid pack-host service is not ready.")
+                if isinstance(services, list) and any(
+                    isinstance(service, dict) and service.get("state") == "failed"
+                    for service in services
+                ):
+                    break
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 error = exc
                 time.sleep(0.25)
+        if identity_ok and (pack_host is None or pack_host.get("state") != "running"
+                            or not (data / "runtime" / "generic-host.ready.json").is_file()):
+            service_state = pack_host.get("state", "missing") if isinstance(pack_host, dict) else "missing"
+            reason = pack_host.get("reason") if isinstance(pack_host, dict) else None
+            last_exit = pack_host.get("last_exit") if isinstance(pack_host, dict) else None
+            service_log = platform.log_dir() / "service-pack-host.log"
+            tail = _last_service_log(service_log)
+            detail = (f"Astrid pack-host service did not become ready: state={service_state}, "
+                      f"reason={reason or 'none'}, last_exit={last_exit!r}; log={service_log}")
+            if tail:
+                detail += f"\nLast service log lines:\n{tail}"
+            raise VerificationError(detail)
+        if not identity_ok:
+            cause = _last_logged_error(self.service.log)
+            if cause:
+                raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
+            raise VerificationError(f"Astrid's browser door did not become ready: {error}")
+        if isinstance(services, list) and any(
+            isinstance(service, dict) and service.get("state") == "failed"
+            for service in services
+        ):
+            raise VerificationError("A declared Astrid service is failed.")
         # A Runtime that died at startup records why in its service log; that is
         # the real cause, not the missing door it leads to.
         cause = _last_logged_error(self.service.log)

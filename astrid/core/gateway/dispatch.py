@@ -296,6 +296,17 @@ def _dispatch_doctor(args: list[str]) -> int:
                 "status": "missing" if remotion_problem else "ok",
                 "detail": remotion_problem or "locked Remotion packages and CLI are installed",
             }
+            service_rows = (report.get("runtime_health") or {}).get("services", [])
+            if isinstance(service_rows, list):
+                for service in service_rows:
+                    if not isinstance(service, dict) or service.get("state") == "running":
+                        continue
+                    name = service.get("name") or "unnamed service"
+                    reason = service.get("reason") or "no reason reported"
+                    report["healthy"] = False
+                    report["issues"] = [*report.get("issues", []),
+                                        f"service {name}: state={service.get('state', 'unknown')}; reason: {reason}"]
+                    result_code = 1
             if renderer_node.get("status") in ("mismatch", "broken"):
                 report["healthy"] = False
                 report["issues"] = [*report.get("issues", []), f"renderer node: {renderer_node['detail']}; fix: {renderer_node['fix']}"]
