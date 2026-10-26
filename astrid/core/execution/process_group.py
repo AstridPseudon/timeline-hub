@@ -600,8 +600,7 @@ def verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = No
 
 def _verify_tree_absent(process: subprocess.Popen, *, deadline: float | None = None) -> None:
     if sys.platform == "win32":
-        job = getattr(process, "_runtime_job", None)
-        if job is None or job.handle or process.poll() is None:
+        if process.poll() is None or not platform.tree_drained(process):
             raise CleanupUncertainError("Windows Job cleanup is unproved")
         return
     custody = getattr(process, "_astrid_custody", None)
