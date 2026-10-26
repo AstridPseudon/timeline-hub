@@ -1,0 +1,924 @@
+{
+  "schema": "d141cc-native-caller-procedure-v2",
+  "source_only": true,
+  "actual_dispatch_now": false,
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "source_tuple": {
+    "app": {
+      "sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "checkout": "/home/user/work/wt/app-pin-82e9e13d"
+    },
+    "agent": {
+      "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "checkout": "/home/user/work/wt/agt-pin-ecdc242e"
+    },
+    "runtime": {
+      "sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03"
+    },
+    "composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "scope": "Private operational procedure; ordinary request metadata is not Runtimev2 wire. No new service interface, kit, lease, authorization, product or source semantics.",
+  "procedure": [
+    "This packet is source-only and executes nothing now. After independent review, dispatch SEVEN SEPARATE future selector controllers in listed order, one heavy body at a time. Placement9168 is excluded permanently from this packet.",
+    "Use the existing owner/tool session. The owner records the command and returned tool session ID in its normal controller log immediately. A tool yield, exec timeout, missing response, missing PID, missing lock, or missing normal artifact is never evidence of process death and never permission for another invocation.",
+    "Before the first invocation, authenticate the unchanged builder SHA/blob and all four exact detached clean checkouts, their SHA/tree pairs and existing request-checkout receipts/worker target metadata by read-only inspection. Native submit retains its own validation. No pins, queue, registry, kit, product or historical artifact edits by the controller.",
+    "Read native request files for BOTH exact preflight/normal suites, all potentially torn ID directories, exact registry rows, native artifact and existing .lock. Use inspection argv below. The inspector parses assignments as data; snap.key authenticates native command+App tree+suite+files+ext. All twelve cross-product pins are in the genuine command bytes. Any wrong source OR command OR row OR inconsistent hash, duplicate ID/row, mismatched artifact, missing native snap or unreadable custody is finite NOTRUN for THAT selector, not an ignored candidate. Preserve the first error and observed IDs.",
+    "ADOPT: use the exact existing normal ID whether queued, running, pass, fail, timeout, error or cancelled. Retain original request/snap/status/exit/summary and immutable checkout receipts in place. Do not rewrite the submit artifact, infer a body verdict from a request state, create another request, or invoke native submit. A request before normal-artifact persistence is adoptable only with authentic native row/request/snap-key binding. If native custody cannot supply this binding, return NOTRUN; no fabricated command receipt.",
+    "WAIT_EXISTING_TOOL_SESSION: resume/poll ONLY the originally returned exec session/cell (write_stdin for exec_command session_id, functions.wait only for its returned cell_id). Use <=60s poll intervals, retain session ownership, and repeat read-only inspection as native preflight/normal artifacts appear. Never call exec_command with the native argv a second time, never repeat printed request-test lines, and never substitute a PID observed through another sandbox for the retained tool session.",
+    "An existing preflight-only artifact/request with an ended or unknown owner cannot safely resume via unchanged native submit. Return finite NOTRUN for this selector even if the preflight passed or a lock appears stale. Do not reconstruct artifact IDs or alter/remove the native lock. A live owner may continue only its already-running invocation. This removes the former create_preflight/create_normal model path entirely.",
+    "FIRST_NATIVE_INVOCATION_ONLY: this is conditional on proven not-started ownership and an empty namespace (no request, artifact, lock or registered row). Repeat the same inspection immediately before exec. The existing sole owner is the only producer; no second controller of this selector may be launched between inspection and exec or during preflight/normal persistence. If another request appears after an earlier empty check, authenticate/adopt it or return NOTRUN; never proceed from the stale empty check. No new lease/guard/authorization is introduced. The native artifact file lock remains responsible for its own acquisition/release.",
+    "Measure ordinary admission once at dispatch: free bytes strictly above5200000000, one heavy at a time, no held routes. Start the genuine argv exactly once, cwd and explicit env below; remove conflicting inherited override keys listed below. Retain stdout/stderr and tool session in the existing owner record. Native --submit alone owns request-checkout, exact receipt validation, source preflight, row registration, preflight request+wait, normal request and artifact persistence. This packet never calls request-test directly.",
+    "After the original native tool session returns, wait/reap that same session, inspect again and authenticate the exact normal ID before observing its terminal. Existing native wait-test may observe ONLY that authenticated normal ID; exit124 means observe that SAME ID again, never resubmit. Retain actual native resultDir/d66, request/snap/status/exit/summary/log/trace in place. Submission output_path is private per selector; the service body independently sets D66_OUTPUT_DIR=resultDir/d66. No future IDs are invented in this packet.",
+    "The future controller owns a genuine 5s trace from its first tool and KEEP before fixtures. At <=4000000000 stop only its already-authenticated owned IDs through the existing request-stop-test lifecycle, then observe their terminal cancellation, explicitly stop/wait/reap its sampler and original native tool session. No stops for held8912/19479 or cancelled18617/13234/20413. No raw export, hub write, D130 weakening or D141j diagnostic.",
+    "Finite deadline: <=180min per future controller, polls <=60s. At a custody error, lost session or deadline return NOTRUN_CUSTODY with exact known IDs and unfinished-owner state; do not rerun to obtain a cleaner outcome. Do not launch another heavy while any original body/owner remains unaccounted for; report that shared safety blocker. Otherwise the next separate selector controller performs its own ordinary admission and source checks; a private selector fault does not automatically mark the others NOTRUN. Report each actual terminal separately to lead through the existing manager route."
+  ],
+  "dispatches": [
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add'"
+      },
+      "selector": "p2-popup-add",
+      "attempt_scope": "popup-retry-1",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1",
+        "preflight": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add' --preflight\n",
+        "normal": "app full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1 D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-add'\n"
+      },
+      "command_sha256": {
+        "preflight": "12a77c6b068f56a092136bda8953ca916bb456cdf3501f823828fd7a2c23dcc3",
+        "normal": "27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501"
+      },
+      "row_sha256": {
+        "preflight": "76706b38147716c75e577d7685ef0b9cf220bf0190f3f52e33bc636fd7216abe",
+        "normal": "c89f8ac7430f4e5342fbffb23cd5ce4aa54f2151e38b3e46af7035aea13fc6c3"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p2-popup-add",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-popup-add",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-popup-add",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-parent-move' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-parent-move'"
+      },
+      "selector": "p2-parent-move",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p2-parent-move-82e9e13d-submit",
+        "preflight": "full-d141-p2-parent-move-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p2-parent-move-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-parent-move' --preflight\n",
+        "normal": "app full-d141-p2-parent-move-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-parent-move'\n"
+      },
+      "command_sha256": {
+        "preflight": "becf69527edc1be7c12b457ba0754ac8d63f942a24d1a1b52708d90490963036",
+        "normal": "c77b6a97e0807d43a2590624e3d47590a5e76d5ed5841f7f214f3aa9176c8f04"
+      },
+      "row_sha256": {
+        "preflight": "5b3f746b01dc3c18a84c21737e82841b108d04d637000adfbc901825f432d83f",
+        "normal": "ff98c12644fed8ba786a453ae49fde0ba7648160e8a2c1bf7ab75fc07d3c898d"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p2-parent-move-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p2-parent-move",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-parent-move",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-parent-move",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-parent-move-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single'"
+      },
+      "selector": "p2-transition-none-single",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p2-transition-none-single-82e9e13d-submit",
+        "preflight": "full-d141-p2-transition-none-single-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p2-transition-none-single-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single' --preflight\n",
+        "normal": "app full-d141-p2-transition-none-single-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-single'\n"
+      },
+      "command_sha256": {
+        "preflight": "7dc0c13e7bea23a39fee9788a1575e76eae06be2ec74a3e3d595c99043facd57",
+        "normal": "00ee17b1b120f8907c537bb73879a6020f0f32aca9942a4402cb399d137b52ee"
+      },
+      "row_sha256": {
+        "preflight": "45ffb77c0bfe61fedd90997a0b6b96037073a5e512a35eeebef45f249b6dd009",
+        "normal": "f287fea597ca4fbe7c875b7678c92f3a27be08066712d8cb2be70bf1c474498b"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p2-transition-none-single-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p2-transition-none-single",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-transition-none-single",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-transition-none-single",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-single-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-bulk' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-bulk'"
+      },
+      "selector": "p2-transition-none-bulk",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p2-transition-none-bulk-82e9e13d-submit",
+        "preflight": "full-d141-p2-transition-none-bulk-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p2-transition-none-bulk-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-bulk' --preflight\n",
+        "normal": "app full-d141-p2-transition-none-bulk-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-transition-none-bulk'\n"
+      },
+      "command_sha256": {
+        "preflight": "38c79f83817a3f923fff11c76a1c0334e0158325a6f93bec04f152b123a7dc28",
+        "normal": "b9dbc7f4f69d9bde52d84e8c96b50e0519c33245b4d2de304ca021740f609db3"
+      },
+      "row_sha256": {
+        "preflight": "cdd99483ea31d82263011b54fbe81baec4ec9d2f83807fa17b4fa93202beddce",
+        "normal": "3636c3aec938363dd71350cafbce79434fa852463e7c2733fa30deaa4cb36bbd"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p2-transition-none-bulk-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p2-transition-none-bulk",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-transition-none-bulk",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-transition-none-bulk",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset'"
+      },
+      "selector": "p2-register-asset",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p2-register-asset-82e9e13d-submit",
+        "preflight": "full-d141-p2-register-asset-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p2-register-asset-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset' --preflight\n",
+        "normal": "app full-d141-p2-register-asset-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-register-asset'\n"
+      },
+      "command_sha256": {
+        "preflight": "2df8dca86e433204711077ab296f9e02f47afe6db52f748dc060f1fc74ccc768",
+        "normal": "06852ebd4ab501e51704f8df7d5709063a4e8a1d675b3c018eb39226f0ce2df8"
+      },
+      "row_sha256": {
+        "preflight": "2b28a4dad8b87103d1bda6613261a206dfe8d06e29ad485c2bce77a98ee75774",
+        "normal": "c5f318d16964e88df19e41544d5bf73920542ed138c587681e2771d15c015a0b"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p2-register-asset-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p2-register-asset",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-register-asset",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p2-register-asset",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1'"
+      },
+      "selector": "p1",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p1-82e9e13d-submit",
+        "preflight": "full-d141-p1-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p1-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1' --preflight\n",
+        "normal": "app full-d141-p1-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1'\n"
+      },
+      "command_sha256": {
+        "preflight": "dd370bf2089f971b7f53eab596a740fefd764079ffb93e71b9c74b13b7bd7cc2",
+        "normal": "513dd6421d52e745bb3ba54daaa79eb4c05cfa0d1bd464c27cb03997969245e6"
+      },
+      "row_sha256": {
+        "preflight": "83dfca368dc296f95d9e4c16f3c4585206a3713958cd4d88241e9a0c65e5d88c",
+        "normal": "890320b6c6608fc53e356268bce7cb8890d144b8c4d8151cf2fc6dfc8c730db6"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p1-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p1",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p1",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p1",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    },
+    {
+      "pins": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+          "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+          "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+          "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+        },
+        "composition": {
+          "checkout": "/home/user/work/composition",
+          "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+          "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        }
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-82e9e13d",
+        "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+        "runtime": "/home/user/work/wt/rt-pin-95d98f03",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      },
+      "recipes": {
+        "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p3' --preflight",
+        "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p3'"
+      },
+      "selector": "p3",
+      "attempt_scope": "original",
+      "target": "app-pin-82e9e13d",
+      "suites": {
+        "normal": "full-d141-p3-82e9e13d-submit",
+        "preflight": "full-d141-p3-82e9e13d-submit-preflight"
+      },
+      "rows": {
+        "preflight": "app full-d141-p3-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p3' --preflight\n",
+        "normal": "app full-d141-p3-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p3'\n"
+      },
+      "command_sha256": {
+        "preflight": "07b4478e7ea3b19e9303f67fd4fca1fead8668661cd69ded69cfd46badad3342",
+        "normal": "8323d9cc07a099a8234f6b2fda34b1250b78f7df9ffcbcb8ab66ec2e3fd90cb4"
+      },
+      "row_sha256": {
+        "preflight": "8058c0684051a3eed19d2b99cc941ca9d7aee90faf8594f1ce780066b4808b89",
+        "normal": "6ccf671ffe56b9fc5625317761f5e2a437be89d8d58ad77dca301c3fb610071f"
+      },
+      "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/output",
+      "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/submit-plan.json",
+      "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/submit-plan.json.lock",
+      "environment": {
+        "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+        "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+        "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+        "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+        "D66_SUBMIT_TARGET": "app-pin-82e9e13d",
+        "D66_SUBMIT_SUITE": "full-d141-p3-82e9e13d-submit",
+        "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/submit-plan.json",
+        "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/output"
+      },
+      "argv": [
+        "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+        "--max-old-space-size=6144",
+        "--import",
+        "tsx",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+        "p3",
+        "--submit"
+      ],
+      "cwd": "/home/user/work/app",
+      "inspection_argv": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p3",
+        "--owner-state",
+        "not-started"
+      ],
+      "inspection_active_argv_template": [
+        "/usr/bin/python3",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+        "p3",
+        "--owner-state",
+        "active",
+        "--tool-session",
+        "<EXACT_EXISTING_TOOL_SESSION_ID>"
+      ],
+      "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/native-submit.stdout.log",
+      "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p3-82e9e13d-submit/native-submit.stderr.log",
+      "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+      "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again.",
+      "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+      "deadline_seconds": 10800,
+      "environment_unset": [
+        "D66_SUITE_REGISTRY",
+        "D66_CHECKOUT_ROOT",
+        "D66_NORMAL_AGENT_HOME",
+        "D66_NORMAL_RUNTIME_HOME",
+        "D66_NORMAL_COMPOSITION_HOME",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+        "D66_ELEMENT_VERIFICATION_ONLY"
+      ],
+      "operational_environment": {
+        "GIT_OPTIONAL_LOCKS": "0"
+      },
+      "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request."
+    }
+  ],
+  "non_claims": [
+    "No actual --submit or service command was executed.",
+    "Native controls intercepted service commands and waited only local test promises.",
+    "No body, browser, collection, full suite, build, rehearsal or ZIP result.",
+    "Original historical overlap is established by independent1026 originals, not reconstructed from a model."
+  ],
+  "old_attempts": {
+    "placement": "9168 bounded PASS; NEVER rerun",
+    "popup": [
+      "13234 terminal cancelled UNKNOWN body verdict",
+      "20413 terminal cancelled UNKNOWN body verdict"
+    ],
+    "other_six": "NOTRUN as of original review",
+    "held": [
+      "8912",
+      "19479"
+    ],
+    "cancelled_original": "18617",
+    "D130": "absolute",
+    "rawKEEP": "retained in original private locations"
+  }
+}

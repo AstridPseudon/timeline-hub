@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T11:10:50.907473+00:00",
+  "worker": "app-P-D141cc-popup-controller-next",
+  "free_bytes": 5922410496,
+  "no_live_test_ids": [],
+  "source_pins": [
+    {
+      "role": "app",
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "clean": true
+    },
+    {
+      "role": "agent",
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "clean": true
+    },
+    {
+      "role": "runtime",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true
+    },
+    {
+      "role": "composition",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "clean": true
+    }
+  ],
+  "review": "PASS_SOURCE_ONLY all43",
+  "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "normal_suite": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1",
+  "body_ids": "not yet generated"
+}

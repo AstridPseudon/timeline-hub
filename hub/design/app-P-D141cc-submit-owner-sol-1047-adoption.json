@@ -1,0 +1,114 @@
+{
+  "schema": "d141cc-native-adoption-source-only-v2",
+  "source_checks": {
+    "app": {
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "detached": true,
+      "clean": true,
+      "checkout": "/home/user/work/wt/app-pin-82e9e13d"
+    },
+    "agent": {
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "detached": true,
+      "clean": true,
+      "checkout": "/home/user/work/wt/agt-pin-ecdc242e"
+    },
+    "runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "detached": true,
+      "clean": true,
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "detached": true,
+      "clean": true,
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+  "builder_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+  "retained_actual_native_records": [
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-preflight-1026101609-6758",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-preflight-1026101609-6758",
+      "status": "pass",
+      "phase": "preflight",
+      "request_sha256": "4a466695be6c76109a95033b351617ca7b8f378562d1c657920799285d880444",
+      "snap_sha256": "f0b9b749876a85e5df83c5066139855ab47bc5998d52377d6f9e77231b59080c",
+      "selector": "p2-automatic-child-placement",
+      "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output/full-d141-p2-automatic-child-placement-82e9e13d-submit/submit-plan.json",
+      "artifact_sha256": "b93922d9eebfe424fa19dfbac0949c4e9ac1f83f062f94aae37a540b482619ff",
+      "command_sha256": "01361393d0189db2d60e7effb17666cd5ddbd7554286e98a1f10b2459b3c799a",
+      "row_sha256": "1e6d6eaf55e2b3e03f673ac142fafdfc6ddbaab8b4b3345402fa7da8be9a6641",
+      "disposition": "PRESERVE_BOUNDED_PASS_NEVER_RERUN",
+      "exit": "0"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-automatic-child-placement-82e9e13d-submit-1026101639-9168",
+      "status": "pass",
+      "phase": "normal",
+      "request_sha256": "c3002f104e8c99f9ee9362d89b211a3213021d4b22e08f0669e6640d1ab777bc",
+      "snap_sha256": "4821b0e0cd0eb080fb043f0dc32220b7dbc50e0b78433545cfff61a168804f24",
+      "selector": "p2-automatic-child-placement",
+      "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output/full-d141-p2-automatic-child-placement-82e9e13d-submit/submit-plan.json",
+      "artifact_sha256": "b93922d9eebfe424fa19dfbac0949c4e9ac1f83f062f94aae37a540b482619ff",
+      "command_sha256": "ee68699ee18022ce9e77c40173fb85db2112204bc7d3df6b705edde3211ecedb",
+      "row_sha256": "cf48fac96e4f97bd7c1646a11b01edfa0aa269c9cee772fc90bcebc19a7cf934",
+      "disposition": "PRESERVE_BOUNDED_PASS_NEVER_RERUN",
+      "exit": "0"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437",
+      "status": "pass",
+      "phase": "preflight",
+      "request_sha256": "c725389310482db26fdda3760ca372cb450478f344ad0c46671044ecd7335adc",
+      "snap_sha256": "7118645fb1bf8fb60589cfb6e9c1290cafb32e846363aceb8fb095159259291c",
+      "selector": "p2-popup-add",
+      "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output/full-d141-p2-popup-add-82e9e13d-submit/submit-plan.json",
+      "artifact_sha256": "1935f2e49787f4d3b3c1f6dcc308cdd41cdf2dc25f7025ac55f03aa35d162699",
+      "command_sha256": "12a77c6b068f56a092136bda8953ca916bb456cdf3501f823828fd7a2c23dcc3",
+      "row_sha256": "cd9526ab52208e22a0eab1a0461e96f2e12d475482bc8a5b74434fb2176c67a1",
+      "disposition": "RETAIN_OLD_PREFLIGHT_EXCLUDED_FROM_RETRY",
+      "exit": "0"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234",
+      "status": "cancelled",
+      "phase": "normal",
+      "request_sha256": "3196311a5aa5b92e922639016adf80e7b579afe64c31d150f3b1241a62b123b7",
+      "snap_sha256": "9911cd9aa3298d1090031caf58c297731c279ed036d8dfdfae450a87efe8ef12",
+      "selector": "p2-popup-add",
+      "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output/full-d141-p2-popup-add-82e9e13d-submit/submit-plan.json",
+      "artifact_sha256": "1935f2e49787f4d3b3c1f6dcc308cdd41cdf2dc25f7025ac55f03aa35d162699",
+      "command_sha256": "27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501",
+      "row_sha256": "71efa748b4b2f84a054e411fd2d76161b096060447f6e82b1a70ffc08f6dcb09",
+      "disposition": "EXCLUDE_OLD_CANCELLED_ATTEMPT_UNKNOWN_BODY",
+      "exit": "130"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413",
+      "status": "cancelled",
+      "phase": "normal",
+      "request_sha256": "f5c0e1ab8611ab5897e937d1f4a3448b904aef0aea3ed30458112d7349a833b5",
+      "snap_sha256": "9911cd9aa3298d1090031caf58c297731c279ed036d8dfdfae450a87efe8ef12",
+      "selector": "p2-popup-add",
+      "artifact_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/controller-output/full-d141-p2-popup-add-82e9e13d-submit/submit-plan.json",
+      "artifact_sha256": "1935f2e49787f4d3b3c1f6dcc308cdd41cdf2dc25f7025ac55f03aa35d162699",
+      "command_sha256": "27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501",
+      "row_sha256": "71efa748b4b2f84a054e411fd2d76161b096060447f6e82b1a70ffc08f6dcb09",
+      "disposition": "EXCLUDE_OLD_CANCELLED_ATTEMPT_UNKNOWN_BODY"
+    }
+  ],
+  "new_requests_created": 0,
+  "future_selector_requests": "NOTRUN; no actual CLI submit, request-test, wait-test or stop-test executed",
+  "source_limit": "Request/snap keys, exact registry rows and original artifact recipes authenticate native bindings. This is not new body evidence. A queued request missing snap is finite NOTRUN for custody."
+}

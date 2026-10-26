@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-26T11:06:48.751934+00:00",
+  "actual_terminal": "exit0 ended2026-10-26T11:05:23Z",
+  "source": "private operational; Composition635f unchanged",
+  "author_controls": "43 PASS sourceonly awaiting independent review",
+  "trace_limit": "201 samples bounded post-start; first-tool gap and initial detached reap unverified",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-Sol-1047-controller.py",
+      "sha256": "86020cad9608be7abc5285dfca72e1373ba066f9ac30c2d1be5486dcb3dd3c66",
+      "bytes": 16827
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/check.sh",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-Sol-1047-check.sh",
+      "sha256": "9afb576cfa7c4408c192931f019e571976647957f9a8f2143a95394595a38ee1",
+      "bytes": 1464
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/cases.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-Sol-1047-cases.json",
+      "sha256": "94b90398d3956bf67cad7808fc17cb8464264586ce2c47f8328b7d278bf05156",
+      "bytes": 59892
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/adoption.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-adoption.json",
+      "sha256": "b52998fdc15424c0747748233de1223b4fabcdc306ab7e35e938a344348bf48b",
+      "bytes": 7411
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-source-manifest.json",
+      "sha256": "4c1c59497ac2694d62fa4ad6efe7b1a18cd4cf96f8cd6e4aa7d644f77ea21467",
+      "bytes": 18556
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-dispatch-recipes.json",
+      "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+      "bytes": 83774
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-validation.md",
+      "sha256": "9a3a2c160ac9d305027dbbdf47c2ec4312b96138fb0b74d7bcaba4d6e4268fe1",
+      "bytes": 4242
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/findings.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-findings.json",
+      "sha256": "ba11f5daf59177d41f1487e30a712a94f7152cc861509bb6fd672a5ae1d2ddf6",
+      "bytes": 3649
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-handoff.md",
+      "sha256": "9585f1991949606484eb5333296bc1c128439a5cc2ef67a46d27e80bd8cad8ae",
+      "bytes": 4512
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-disk-trace.txt",
+      "sha256": "587cd223f602aac826053df0d7b1b3e85ede552c14fbbeba0527b729f255fa9f",
+      "bytes": 20301
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-submit-owner-sol-1047-sampler-lifecycle.json",
+      "sha256": "a22a527021c8eeddf839345ad3c15a0895900338a2845d3242277920e3828069",
+      "bytes": 1016
+    }
+  ]
+}

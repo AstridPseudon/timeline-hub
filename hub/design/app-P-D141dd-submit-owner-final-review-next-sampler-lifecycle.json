@@ -1,0 +1,14 @@
+{
+  "schema": "d141dd-review-sampler-v1",
+  "started_at": "2026-10-26T11:08:27.306229338Z",
+  "interval_seconds": 5,
+  "stop_bytes": 4000000000,
+  "sampler_pid": 4,
+  "stop_signal": "SIGTERM after bounded read-only trace",
+  "stopped_at": "2026-10-26T11:08:33.315550917Z",
+  "wait_reap_exit": 143,
+  "minimum_available_bytes_observed": 5925060608,
+  "standing_stop_reached": false,
+  "first_tool_coverage": "NOT_MET: sampler began after the same-script check; no historical backfill",
+  "scope": "reviewer-owned read-only df trace; no native service/body activity"
+}

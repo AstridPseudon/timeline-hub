@@ -1,0 +1,24 @@
+{
+  "pid": 9,
+  "supervisor_pid": 8,
+  "started_at": "2026-10-26T10:46:03.853291+00:00",
+  "interval_seconds": 5,
+  "stop_bytes": 4000000000,
+  "stop_requested": true,
+  "gap": "Whole-author first-tool disk coverage NOT MET. First read-only tool preceded KEEP/sampler setup. Initial detached attempt produced no observed sample. Supervised trace began before native fixtures at the recorded started_at; no historical backfill.",
+  "stop_wait_reap": "signal sent if live; child wait completed and reaped",
+  "stopped_at": "2026-10-26T11:02:45.965149+00:00",
+  "exit_code": -15,
+  "initial_attempt": {
+    "outcome": "UNKNOWN; no observed sample or retained persistent tool handle",
+    "reap": "UNVERIFIED",
+    "backfill": false
+  },
+  "sample_count": 201,
+  "first_sample": "2026-10-26T10:46:03.886142+00:00",
+  "last_sample": "2026-10-26T11:02:43.965039+00:00",
+  "minimum_available_bytes": 5930668032,
+  "standing_stop_reached": false,
+  "supervisor_tool_session": "93779",
+  "supervisor_tool_terminal_exit": 0
+}

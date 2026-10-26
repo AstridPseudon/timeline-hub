@@ -1,0 +1,26 @@
+{
+  "schema": "d141dd-final-submit-owner-review-v1",
+  "status": "PASS_SOURCE_ONLY",
+  "scope": "One same-script independent review of the actual Sol1047 terminal source and its native-path controls",
+  "author_terminal": "Sol1047 exit 0 at 2026-10-26T11:05:23Z",
+  "same_script": "bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/check.sh",
+  "same_script_review_exit": 0,
+  "same_script_run_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/private-controls/runs/20261026T110739-4",
+  "controls": 43,
+  "findings": {
+    "D141cc-R1": "PASS: all seven commands and registry rows derive from unchanged serviceRecipe and exact source pins",
+    "D141cc-R2": "PASS: actual native lock/session path is used; torn or unknown custody adopts or stops finitely and never resumes with a second submit",
+    "D141cc-R3": "PASS: source, command, row, digest, artifact, duplicate, and ambiguous custody mismatches fail closed"
+  },
+  "native_builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "limits": [
+    "Source qualification only; no live admission, service body, browser, collection, build, dry run, rehearsal, ZIP, or product test is claimed.",
+    "The reviewer-owned sampler has a fresh 5-second trace and explicit signal/wait/reap, but first-tool coverage before the checker is NOT MET; no backfill was made.",
+    "Placement 9168 remains the prior bounded PASS; cancelled popup IDs 13234 and 20413 remain excluded with UNKNOWN body verdict."
+  ],
+  "next_step": "D141dd PASS: retain the corrected source-only controller and separately admit future selectors one at a time through the stated native procedure; this worker performs no dispatch."
+}

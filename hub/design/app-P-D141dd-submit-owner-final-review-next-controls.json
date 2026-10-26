@@ -1,0 +1,18 @@
+{
+  "schema": "d141dd-control-verdict-v1",
+  "result": "PASS",
+  "count": 43,
+  "groups": {
+    "genuine_builder_bindings": "PASS all seven selectors; serviceRecipe commands, rows, env and unique absolute paths",
+    "native_order_and_lock": "PASS request-before-artifact, preflight/normal interleaving, unchanged file lock, same-session continuation",
+    "overlap": "PASS negative two-invocation control produces two normal requests and inspector refuses ambiguity",
+    "adoption": "PASS authentic queued, running and terminal IDs are adopted without body verdict",
+    "fail_closed": "PASS source/command/row/digest/request/snap/artifact/duplicate/ambiguous/unknown-owner cases",
+    "historical": "PASS four detached clean pins and five historical native IDs; no new service operations",
+    "selector_isolation": "PASS one selector custody failure does not authorize or block an unrelated fresh selector",
+    "disk": "PASS 4GB standing stop preserves exact authenticated ID; reviewer trace remained above stop"
+  },
+  "results": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/private-controls/runs/20261026T110739-4/fixtures/results.json",
+  "service_activity": "none; all request/checkout callbacks were intercepted inside private fixtures",
+  "product_activity": "none"
+}

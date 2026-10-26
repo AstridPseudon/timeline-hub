@@ -1,0 +1,43 @@
+{
+  "schema": "d141cc-submit-owner-correction-v2",
+  "status": "CORRECTED_SOURCE_ONLY_AWAIT_INDEPENDENT_REVIEW",
+  "scope": "One bounded repair of all private candidate findings; production source and wire unchanged",
+  "original_real_cause": "Independent1026 records two worker-launched native invocations after a yield/incomplete artifact; each native invocation made one normal request. Native implementation/file lock preserved.",
+  "corrections": [
+    {
+      "id": "D141cc-R1",
+      "status": "CORRECTED_LOCAL_CONTROLS",
+      "change": "All seven command and registry-row bytes derive from unchanged pure serviceRecipe with actual exact pins; normal row hashes include LF. No synthetic command/row strings.",
+      "popup_command_sha256": "27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501",
+      "popup_normal_row_sha256": "c89f8ac7430f4e5342fbffb23cd5ce4aa54f2151e38b3e46af7035aea13fc6c3"
+    },
+    {
+      "id": "D141cc-R2",
+      "status": "CORRECTED_LOCAL_CONTROLS",
+      "change": "Removed the private model producer/resume path. Procedure retains a single genuine native invocation/tool session. After-preflight checks wait that owner or adopt exact existing native request; incomplete ended/unknown custody is finite NOTRUN and never launches native resume.",
+      "controls": "Actual native preflight hold/file lock; repeat inspection after earlier empty state; same-session continuation; request-before-artifact; wrong replacement negative with intercepted torn return produces two requests and ambiguity refusal.",
+      "limit": "Negative is a deterministic source-faithful overlapping-replacement/torn-return control, not a reconstruction of historical process timing or evidence of native lock failure. Sole-owner procedure does not claim safety against arbitrary independent concurrent producers."
+    },
+    {
+      "id": "D141cc-R3",
+      "status": "CORRECTED_LOCAL_CONTROLS",
+      "change": "Enumerate same-target/suite requests without silently excluding command/row mismatches. Validate exact rows including LF, request argv metadata, all artifact source/recipe fields, native snap command/source key and ext bytes; reject wrong or inconsistent hashes, unknown digest fields, ambiguous IDs and torn custody."
+    }
+  ],
+  "private_controls": {
+    "result": "PASS",
+    "count": 43,
+    "results_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/private-controls/runs/20261026T110137-2/fixtures/results.json",
+    "historical_native_authentication": "PASS four detached clean pins and five existing IDs; no service operations"
+  },
+  "retained_limits": [
+    "Placement9168 remains bounded PASS and is not rerun.",
+    "Popup13234/20413 remain cancelled with UNKNOWN body verdict; six other original selectors remain NOTRUN.",
+    "No live admission/body/browser/collection/full/build/dryrun/rehearsal/ZIP/product qualification.",
+    "First-tool disk trace coverage NOT MET; genuine supervised five-second trace began before native fixtures and was explicitly stopped/waited/reaped. Initial detached attempt lifecycle is unverified.",
+    "Manager-owned live INBOX grew during first control run; it is a retained read witness, not one of the35 immutable conservation targets.",
+    "D130 absolute; held8912/19479, cancelled18617 and rawKEEP preserved; no D141j triggered."
+  ],
+  "blocked": false,
+  "next_step": "Independent review of this actual terminal source, using the identical check.sh; then separately admitted future selector controllers in dispatch-recipes.json. No dispatch by this worker."
+}
