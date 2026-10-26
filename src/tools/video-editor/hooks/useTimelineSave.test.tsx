@@ -478,7 +478,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         }
         if (['missing old selection', 'mismatched old selection', 'extra old selection', 'missing old metadata', 'missing selector'].includes(outcome)) {
           if (outcome !== 'extra old selection') await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('source Runtime project media selection. Draft retained'));
-          await act(async () => { await expect(harness!.hook.result.current.localDocumentSave!.flush()).rejects.toThrow('both exact Runtime'); });
+          await act(async () => { await expect(harness!.hook.result.current.flushPendingSave()).rejects.toThrow('both exact Runtime'); });
           const [draft] = await createCommitOutbox().list(scope);
           expect(draft.intents).toEqual([]);
           expect(draft.pending).toBeUndefined();
@@ -1063,8 +1063,8 @@ describe('useTimelineSave — recovered draft durability', () => {
       const assertInverseRequest = (post: typeof posted[number], ordinal: number, label: string) => {
         const body = JSON.parse(post.body) as CommitRequest;
         if (label === 'Undo timeline') checkUndo({ key: post.key, body },
-          { revision_id: `r${ordinal}`, publication_id: `p${ordinal}` }, false,
-          { projectId, timelineId, publicationId: `p${ordinal}` });
+          { revision_id: `r${ordinal}`, publication_id: `p${ordinal}` },
+          { projectId, timelineId, publicationId: `p${ordinal}`, action: 'Undo' });
         expect(post.key).toBeTruthy();
         expect(post.path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
         expect(Object.hasOwn(body, 'reads')).toBe(true);
