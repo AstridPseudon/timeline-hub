@@ -1,7 +1,11 @@
 #!/bin/bash
-# merge WORKER  — merge worker branch tl/WORKER into tl/integration of its repo, serialized by a per-repo lock. --no-ff, aborts cleanly on conflict.
+# merge WORKER  — merge worker branch tl/WORKER into tl/integration of its repo (or into its meta target= branch), serialized by a per-repo lock. --no-ff, aborts cleanly on conflict.
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-N=$1; . $O/workers/$N/meta || exit 2; I=/home/user/work/$repo
+N=$1; target=; . $O/workers/$N/meta || exit 2; I=/home/user/work/$repo; TGT=tl/integration
 exec 9>/home/user/work/.$repo.merge.lock; flock -w 600 9 || { echo "lock timeout"; exit 3; }
-if git -C $I merge --no-ff -q -m "Merge tl/$N" tl/$N 2>&1; then echo "merged tl/$N into $repo tl/integration -> $(git -C $I rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $repo $N $(git -C $I rev-parse --short HEAD)" >> $O/merges.log
-else git -C $I merge --abort 2>/dev/null; echo "CONFLICT merging tl/$N into $repo — aborted; dispatch a worker to rebase tl/$N onto tl/integration"; exit 1; fi
+# 26 Oct follow-ups: a worker dispatched with --merge-target BRANCH (meta target=) merges into BRANCH, inside its own integration worktree, created on first use under the same lock
+if [ -n "$target" ]; then TGT=$target; I=/home/user/work/wt-int/$repo-$(echo "$target" | tr '/' '-')
+  [ -d $I ] || { mkdir -p /home/user/work/wt-int && git -C /home/user/work/$repo worktree add -q $I "$target" 2>&1 || { echo "cannot create integration worktree $I for $target"; exit 1; }; }
+  [ "$(git -C $I symbolic-ref -q --short HEAD)" = "$target" ] || { echo "integration worktree $I is not on $target"; exit 1; }; fi
+if git -C $I merge --no-ff -q -m "Merge tl/$N" tl/$N 2>&1; then echo "merged tl/$N into $repo $TGT -> $(git -C $I rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $repo $N $(git -C $I rev-parse --short HEAD) target=$TGT" >> $O/merges.log
+else git -C $I merge --abort 2>/dev/null; echo "CONFLICT merging tl/$N into $repo $TGT — aborted; dispatch a worker to rebase tl/$N onto $TGT"; exit 1; fi

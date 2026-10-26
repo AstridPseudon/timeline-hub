@@ -14,7 +14,8 @@ ID=$(echo "${T#integration:}" | tr -c 'a-zA-Z0-9-\n' -)-$S-$(date -u +%m%d%H%M%S
 # 12:07Z 26 Oct (D141hh): TEST_KEEP=<reason> in the environment protects the run dir from the moment it exists (KEEP is written before the request is queued)
 [ -n "${TEST_KEEP:-}" ] && echo "$(date -u +%FT%TZ) KEEP at creation: $TEST_KEEP" > $D/KEEP
 # 18:05Z 26 Oct (F-final TMPDIR refusal, owner-approved): TEST_PRIVATE_TMP=1 gives the run its own root-owned 0700 TMPDIR/TMP/TEMP at $D/tmp
-PT=; [ "${TEST_PRIVATE_TMP:-}" = 1 ] && { PT=$D/tmp; mkdir -m 700 $PT && chmod 700 $PT || { echo "private tmp failed"; exit 2; }; }
+# 22:35Z 26 Oct (RUNBOOK §4 step 5): private temp is now the default; TEST_PRIVATE_TMP=0 opts out
+PT=; [ "${TEST_PRIVATE_TMP:-1}" = 1 ] && { PT=$D/tmp; mkdir -m 700 $PT && chmod 700 $PT || { echo "private tmp failed"; exit 2; }; }
 printf 'target=%q\nrepo=%q\nsuite=%q\nfiles=%q\nnocache=%s\nrequested=%s\n' "$T" "$R" "$S" "$F" $NC $(date -u +%FT%TZ) > $D/request
 [ -n "$PT" ] && printf 'private_tmp=%q\n' "$PT" >> $D/request
 echo queued > $D/status; echo "TEST $ID" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID

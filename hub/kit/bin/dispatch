@@ -1,13 +1,14 @@
 #!/bin/bash
-# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] [--merge-parent SHA] --brief FILE
+# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] [--merge-parent SHA] [--merge-target BRANCH] --brief FILE
 # Starts a Codex worker in its own worktree /home/user/work/wt/NAME on branch tl/NAME (from --base, default tl/integration).
 # Refuses if free disk < 5 GB, or if --heavy and >=2 heavy jobs (heavy workers + running full test suites) are already running.
 set -e
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=; MPARENT=
+N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=; MPARENT=; MTARGET=
 while [ $# -gt 0 ]; do case $1 in
  --repo) REPO=$2; shift 2;; --base) BASE=$2; shift 2;; --model) M=$2; shift 2;; --effort) E=$2; shift 2;;
  --merge-parent) MPARENT=$2; shift 2;;
+ --merge-target) MTARGET=$2; shift 2;;   # 26 Oct follow-ups: bin/merge merges into this branch (in /home/user/work/wt-int/<repo>-<branch>) instead of tl/integration
  --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
  *) echo "unknown arg $1"; exit 2;; esac; done
 # Owner rule 2026-10-20 (rev 2): effort is capped at high (no xhigh). Sol only for hard tasks, flagged by a line starting "HARD:" in the brief; otherwise Luna.
@@ -24,6 +25,7 @@ if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | w
 WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
 mkdir -p $D; cp $BRIEF $D/brief.md; [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
 printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
+[ -n "$MTARGET" ] && printf 'target=%s\n' "$MTARGET" >> $D/meta
 [ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
 touch $D/running
