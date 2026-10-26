@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T17:53:06Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-26T17:51:48.911367+00:00
+<!-- main | 2026-10-26T17:58:38Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-26T17:57:11.481140+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -35,7 +35,7 @@
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
 | D141 REG upgrade | Retain merged13 case upgrade correction | Luna | Independent0458 and0505 PASS | merged | Author fix-next; review0458; identity0505 | Author13 and independent13 PASS; exact source merged95d. Integrated15 actual0508 and independent0513 PASS. | 012889c1 /95d98 |
 | D141 REG TypeScript | Retain regenerated conformance outputs | Luna | Independent0458 PASS | merged | Author fix-next; independent0458 | Exact2pytest, generatorcheck and TS PASS. Normal857e joined95d; integrated15 actual0508 and independent0513 PASS. | 4a66dee1 /857e |
-| F-final and ZIP | Retain actual prebuilder safety refusal | Luna | Recorded refusal disposition | blocked:orchestrator | rt-F-final-build-resume-next | [Actual3359 exit2; builder and ZIP NOTRUN](../../design/runtime-F-final-service-refusal-publication-1751.json). No retry or route change. | No ZIP |
+| F-final and ZIP | Run sole owner-authorized private tmp body | Luna | Owner disposition 17:55 | doing | rt-F-final-private-tmp-1800 | Original 3359 refusal retained. New normal request uses TEST_PRIVATE_TMP=1 and TEST_KEEP; same source, tuple and guards. | Final tuple unchanged |
 | D141 other proofs | Retain accepted original App journeys | App and Runtime | Owner D141jj frozen App choice | merged | App original controllers and custody | Seven original journeys qualified with disclosed gaps; popup known gap. No deferred catch-up enters this ZIP. Final metadata successor separate. | App82e / Agentecdc |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
 | D136 original nine | Retain independently qualified failure | App and Runtime | D141 stop | gated:D141-stop | Actual 2330; independent 2335 | Nine setup errors in 39.34 seconds; cause UNKNOWN. No reporting fix, producer investigation or next body. | Captured ab1e delta |
@@ -95,11 +95,11 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: None. Final build and dependent artifact review await recorded safety-refusal disposition.
-live 0 / cap 6; ready-undispatched 0. Safety stop: actual3359 refused before builder; no repair or retry dispatched.
+Next ready: Independent artifact review after the sole authorized body succeeds.
+live 1 / cap 6; ready-undispatched 0. One heavy body; no source, cleanup or second build dispatched.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
-Blockers: Main and owner — actual3359 safety refusal: service TMPDIR /tmp is writable by another user. [Decision escalation](../../escalations/runtime-20261026T175148Z-F-final-TMPDIR-safety-refusal.md); no retry or workaround.
+Blockers: None awaiting a decision. Owner 17:55 resolved service 3359 refusal for exactly one private temporary directory rerun. Any new refusal or failure stops the lane.
 Blockers: Safety — D130 and protected targets stay held. Main16:18 no further cleanup on a floor trip; raw KEEP and held19479 remain.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -156,4 +156,7 @@ Current pass 2026-10-26T17:44:45.736703+00:00: Accepted scopedinstaller terminal
 
 Current pass 2026-10-26T17:47:42.011526+00:00: Actual independent correctedinstallation terminalexit0/PASS, no findings, publication1747. Fresh5114753024 and zero heavytestmarkers. Sole Luna rt-F-final-build-resume-next queued immediately --net --heavy at originalMainvenue/recordedGO. One newnormalrequest only through correctedoriginaldelivery-v2-final; original10589 retained. Operational4.86GB admission, existingservice5GBstricter guard and actualclassification honest; realbody5sKEEP/wholegroup4GBstop. No cleanup or sourcechanges.
 
-Current pass 2026-10-26T17:51:48.911367+00:00: PLAN/MANAGER-COMMON read; INBOX1936116 and HEADER260288 consumed. Corrected normal3359 terminal fail exit2 in0s: service TMPDIR /tmp writable by another user. Worker records SAFETY REFUSAL; builder/staging/ZIP NOTRUN. Raw original and KEEP hashes published1751; same-pass escalation runtime-20261026T175148Z-F-final-TMPDIR-safety-refusal.md. No retry/config/source/guard/cleanup/newworker. Startup sampler exited before request, exit/reap UNKNOWN retained. Actual source11, registry2df2 and final tuple unchanged. Free 5112954880 bytes. Dependent artifact review held under safety stop.
+Current pass 2026-10-26T17:55:05.594958+00:00: PLAN and MANAGER-COMMON read; INBOX 1936116 and HEADER 261181 remain unchanged. Main 17:52 still records PENDING OWNER for service 3359. Its suggested private TMPDIR is not authorization. All 15 published and raw receipt hashes read back exact; sole build worker terminal and Runtime running markers zero. No ready task is released. Builder, staging and ZIP remain NOTRUN. Existing escalation retained; no retry, configuration change, cleanup or worker dispatched. Final tuple, source 11, installed registry, notes and KEEP remain unchanged. Free 5110288384 bytes. Round stops on the recorded safety refusal.
+
+
+Current pass 2026-10-26T17:57:11.481140+00:00: Read PLAN and MANAGER-COMMON; consumed INBOX1937254 and HEADER261586. Recorded owner17:55 authorizes exactly one private0700root temp rerun through TEST_PRIVATE_TMP=1 plus TEST_KEEP, no code or guard change. Sole rt-F-final-private-tmp-1800 queued17:56:42 and actualSTART17:56:50 at5109698560 bytes, --net --heavy/default180. Existing3359 and10589 originals retained; source11, registry2df2, notes and finaltuple unchanged. Independent artifact review follows actual success; any further refusal or failure STOP/report. No cleanup or alternate route.
