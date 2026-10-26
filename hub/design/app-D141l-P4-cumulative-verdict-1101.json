@@ -1,0 +1,155 @@
+{
+  "at": "2026-10-26T11:00:13.138154+00:00",
+  "decision": "GO_CHANGED_CLI_ON_CURRENT_TUPLE",
+  "scope": "P4 changed-CLI reproof only; cumulative receipt preserves historical original-three GO at original scope",
+  "service": {
+    "id": "agent-p4-current-becfe-http-3legs-1026103939-14092",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092",
+    "request_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/request",
+    "requested": "2026-10-26T10:39:39Z",
+    "terminal_status": "pass",
+    "terminal_exit": 0,
+    "request_sha256": "abb0c8d2f4e8d5f292d5617ec8c92b2ed2e1a35ed4110680548a668be8982e7e",
+    "summary_sha256": "bc8b69951094046b65f8a3a85b0e541f70df5e663cd69b971172a8d36948fdc1",
+    "status_sha256": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2",
+    "exit_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "log_sha256": "8b7616183803f388822c2547db1299afe734c447dbca03ec4e82e761fce73f31",
+    "snapshot_sha256": "831280c9d1203e5af4fb38f2088c9b0b8830b67c50d7669ae03168e1a1cc04b9",
+    "external_tuple_sha256": "ce7d085ea211435701f0efa83ab29de17e4cea98e90face21f7caf45da469ae0",
+    "bench_lease_result_sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1"
+  },
+  "tuple": [
+    {
+      "repo": "agent",
+      "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+    },
+    {
+      "repo": "runtime",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    },
+    {
+      "repo": "app",
+      "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+    },
+    {
+      "repo": "composition",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  ],
+  "independent_custody": {
+    "worker": "agt-P4-D141l-cli-custody-next",
+    "status": "PASS_EVIDENCE",
+    "review_sha256": "a45c6fde3857691344974cf088108a98d738d3552cdaf3b1046b17228d7897ef"
+  },
+  "own_XML_verification": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141l-retained-14092-p4-d141l-cli.xml",
+    "sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+    "suite": {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "1",
+      "time": "4.643",
+      "timestamp": "2026-10-26T10:39:49.611505+00:00",
+      "hostname": "vm"
+    },
+    "case": {
+      "classname": "tests.editing_conformance.test_p4_cli_sheet_v2_runtime",
+      "name": "test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "time": "3.436"
+    },
+    "passed": 1,
+    "failed": 0,
+    "error": 0,
+    "skip": 0
+  },
+  "trace_figures_verified_from_hash_bound_packet": {
+    "samples": 58,
+    "minimum_available_bytes": 7406792704,
+    "max_gap_seconds": 5.006671,
+    "source_sha256": "69a541620009011957cbbba85748645b90bbfdcc06d64fa6d6518ab12f059ac7",
+    "native_class": "LIGHT",
+    "native_admission_bytes": 5000000000,
+    "stop_bytes": 4000000000,
+    "independent_review_and_summary_consistent": true,
+    "raw_Agent_trace_recomputed_on_App": false
+  },
+  "limitations": [
+    "Native LIGHT emitted no disk-trace.tsv; genuine Agent manager 5s trace independently reviewed, no backfill.",
+    "This one current CLI selector does not retarget historical original-three 10086 on Agent28e/App867/Runtime6a/Composition635f.",
+    "Historical App0254 original-three GO stays separate. No new current-tuple Python/sheet/ten-note/conflict proof inferred.",
+    "19479 and8912 held unstarted; no body, source, pin, full-suite REG0, build or ZIP claim."
+  ],
+  "published_originals_verified": [
+    {
+      "path": "design/agt-P4-D141l-cli-body-continuation-next-result.json",
+      "sha256": "b230dc9ff712ea9d67228997602116a191b30278a9db173cba5393b0b22bfbc0",
+      "bytes": 13325
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-body-continuation-next-source-manifest.json",
+      "sha256": "d450de5ddbe79a3eb33a467e074c4987cfb1a7bfb7e855ef49a2dffd27153613",
+      "bytes": 6812
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-body-continuation-next-validation.md",
+      "sha256": "ac27fcea8292e18c3fa70ea4e96ebc182d269ca9f5da28d0de68a3dff4f9a0ca",
+      "bytes": 2981
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-body-continuation-next-handoff.md",
+      "sha256": "cd14a135aa64763982f4ac5097ea4d7a6901ef494abe49126c496b74935366b9",
+      "bytes": 1325
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-body-continuation-next-disk-trace.txt",
+      "sha256": "c106eeab4c95d8404c83b94fa4972fa0ecc93c350d8928c1eecaa4c90334fa0e",
+      "bytes": 676
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-review.json",
+      "sha256": "a45c6fde3857691344974cf088108a98d738d3552cdaf3b1046b17228d7897ef",
+      "bytes": 5701
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-findings.md",
+      "sha256": "d47a66f6125215739fbf9124cf8b4917c1c650c47bae97cbc696405360ce820d",
+      "bytes": 1695
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-source-map.json",
+      "sha256": "06a40973160a654a33270aba284c68e391b5cd2c68eb0c602435bf5b436d304c",
+      "bytes": 4520
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-source-manifest.json",
+      "sha256": "b922950394c7f6a71b6924ebe1f66be673b633ef14a9e372583a54fba959da81",
+      "bytes": 5178
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-validation.md",
+      "sha256": "b742426b9607ce0bca26564e1f87a5981b8bddf7416751c55ff8d751119e0be1",
+      "bytes": 4537
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-handoff.md",
+      "sha256": "39b5dd1e7aa6679a29c3a6789bdb7dcad4918b0d57ce2a7c150bbeac0057a00d",
+      "bytes": 1154
+    },
+    {
+      "path": "design/agt-P4-D141l-cli-custody-next-disk-trace.txt",
+      "sha256": "4c0834d04c76a4fdaed6ff220a56618836c2778648de7bc05eeef398fd2e1d64",
+      "bytes": 801
+    },
+    {
+      "path": "design/agt-P4-D141l-retained-14092-p4-d141l-cli.xml",
+      "sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+      "bytes": 397
+    }
+  ]
+}

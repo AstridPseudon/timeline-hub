@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T10:59:19Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 4m -->
-# app board, 2026-10-26T10:55:13.676435+00:00
+<!-- app | 2026-10-26T11:04:55Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 4 | status age 4m -->
+# app board, 2026-10-26T11:00:13.138154+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -48,7 +48,7 @@
 | D141 old queue | Retain supported cancellation | Owning App lead | Main D141x | merged | Lead stop0655; manager0704 check | Cancelled: superseded by freeze-2 head4de54db1. Original request, registry and raw retained;8912/19479 unchanged. | Historical867 |
 | D141 review host | Retain unused hosting offer | Luna | Existing independent0529 PASS | gated:no-duplicate-review | Peer0510; no allocation | Sole Runtime review already PASS74; amendment permits no new review round. No App reviewer. | No source change |
 | D141 P4 history | Retain historical three-leg GO | Agent and App | XML and independent path checks | merged | 10086;0202;App0254 | Original XMLafca45b7:3 PASS23.668s on actual old tuple. Changes through520d outside executed path. | 28e6a867 tuple |
-| D141 P4 freeze2 | Receive changed CLI path reproof | Agent and service | Owning source review0916 PASS | blocked:agent | Existing Agent P4 controller | CLI source and owning profile qualified; actual named service needs5GB on Agent. New tuple body owed; no App duplicate or retarget. | Pending |
+| D141 P4 freeze2 | Receive changed CLI path reproof | Agent and App | Independent CLI custody PASS | merged | Actual14092; Agent custody-next; App1101 | Exact1 PASS4.643s; XML7ff7 and packet trace58/min7.406GB checked. Native LIGHT trace gap disclosed; historical3 separate. | Actualecdc tuple |
 | D141 P5 | Retain38 and exact bounded applicability | Runtime and service | Independent0513 and correction0619 | merged | Actual6934;0513;0619; App0645 | Original38 PASS31.02s retained. Independent0637 qualifies95d/ecdc source path; normal originals and actualGit verified0708. No newbody or retarget. | Historical6a tuple |
 | D141 core | Receive definitive same kind comparison | Agent and service | Fresh independent checker PASS | blocked:agent | agt-F-D141l-fullpair-controller-next | Owning10:04 board confirms fresh10/38/10 PASS and actual fullpair controller10:03:10. Actual receipts and join pending. | Agentecdc pair |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
@@ -84,7 +84,7 @@ Maintenance0735 and0757: Compact1 additionally gzipped4 ended worker logs; packe
 
 
 Blockers: App custody — Independent review-next FAIL3; sole HARD Sol1047 and required independent wholepath1047 dispatched. Seven bodies remain paused; placement PASS retained.
-Blockers: Agent — Both pair bodies terminal; per-ID join and custody active10:38. Changed CLI14092 PASS service, custody owed. Actual definitive REG0 still gates pins; no App duplicate.
+Blockers: Agent — Definitive join/custody still owed. Changed CLI14092 independently PASS and App cumulative1101 GO; current full REG0 alone gates final pins.
 Blockers: Safety — D130 absolute hold. Lead completed the one owner-approved repack; no further hub operation. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Actual Sol terminal, then one independent same-script source check. Seven selectors dispatch separately after PASS and fresh normal admission. Agent REG0 still gates pins.
@@ -92,7 +92,7 @@ live 1 / cap 6 source; ready-undispatched 0. Sole Sol1047 correction; wholepath1
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through2903404 bytes; Main D141dd and Runtime1038 duplicate map follow-up consumed.
+INBOX consumed through2904569 bytes; lead changed-CLI cumulative ask fulfilled1101.
 
 
 Current pass 2026-10-26T10:45:09.963109+00:00: PLAN/common/header reread; initial inbox empty through2891537; delayed new items later consumed through2897468. Full app-prefix census terminal; new independent submit-owner-review-next terminal FAIL3. Same author12 controls PASS model only. Actual popup retry command/row synthetic, preflight-to-normal interleaving double creation and same-source command/row mismatch not refused. Ten SAFE originals published [controlling second failure](../../design/app-D141cc-second-failure-publication-1047.json). Original1026 concrete cause returned before10:58 timebox, but1032 source does not qualify. Standard second-failure rule immediately assigned sole HARD Sol app-P-D141cc-submit-owner-sol-1047 and independent read-only wholepath1047 in parallel, ordinary admission5953880064bytes, no heavy. These are private operational source, native builder remains exact, actual seven bodies paused. Main notified by finite peer, no new mechanism or speculative product repair. Source review follows actual terminal.
@@ -104,3 +104,5 @@ Main D141dd10:47 consumed: sole Sol1047 plus wholepath1047 gets ONE same-script 
 Wholepath1047 terminal0 at10:47, eight SAFE originals [published](../../design/app-D141cc-wholepath-publication-1049.json). Native builder exact and originaloverlap root confirmed; private model does not qualify actualartifactlock/daemon/receipt path. All3 independent findings mapped. One native owner/toolsession, exact adoption or finite stop, no second manualnormalrequest. Its wording not to reopenpopup applies its own readonly scope; MainD141cc expressly authorizes a later corrected attempt, not an unchangedbody now. Sol remains sole private author; no further investigator.
 
 H6 10:55: Agent10:39 supersedes prior bodywait: both pair bodies terminal, per-ID join and independent paircustody active10:38; CLI14092 servicePASS with owningworker collecting. No REG0 or finalpinrelease inferred. Runtime10:37 retains qualifiedMainchain and finalgates. All26 Main1030 and30 notes1027 normal originals hash/size exact; sourceintake andnotes waits remaincleared. Delayed Runtime1038 map request is same completed1024 row, firstMain1011 owner retained, no review/adoption/newwriter or historicalinputwait. Finite peer sent. Maintenance sweep3/compact1 terminal0, zero dirs/logs, all96 existingKEEP markers hash/mode exact; noeligible cleanendednonKEEPworktree. [Maintenance](../../design/app-D141cc-maintenance-result-1053.json). Sol1047 progresses in unchangednativebuilder interceptedcontrols; actual terminal/review stillowed.
+
+P4 current CLI receiving1101 complete: exact13 SAFEpublished originals, own fullXMLhash/parse and all4 Gitcommit/tree pairs verified. Hashboundindependentreview/summary agree58samples/min7406792704/maxgap5.006671, nativeLIGHT5GB/4GBstop; rawAgenttrace not recomputed onApp, native disk-trace.tsv absent retained. [Cumulative changed-CLI GO](../../design/app-D141l-P4-cumulative-verdict-1101.json). Historicaloriginal3/App0254 remainoldscope; no retarget/globalGO. Peerlead/Agent/Runtime delivered.
