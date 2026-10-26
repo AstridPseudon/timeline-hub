@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:22:59Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
-# app board, 2026-10-26T00:22Z
+<!-- app | 2026-10-26T00:27:44Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-26T00:26Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Prior final289 and later affected127 plus warmup2, types and lint PASS. Final D141 source and cut proof separate. | d24ed69; 2f36246a32 |
@@ -9,7 +9,7 @@
 | A4 | Retire reachable legacy executor | Luna and independent Luna | Historical P1 GO | merged | Caller census and source reviews | Zero reachable legacy writers; behavioral tests preserved. Historical source scope only. | Current home |
 | U3 D141 | Preserve frozen source join and tour REG | Luna and independent Luna | Independent0017 SOURCEPASS | merged | Source0014; review0017; normal receipt | Home tree equals reviewed db8 exactly. Independent89/types/lint PASS. Frozen7ca ancestor; final generated adoption still separate. | 263b728f0140 |
 | U4p D141 Runtime | Adopt exact frozen Runtime through tools | Luna and independent Luna | Independent0017 PASS | merged | Adopter0011; review0017; normal home | Tool vendor17/schema2/lint PASS; locksource only. Independent canonical15/mapped14/schema custody PASS on exact home tree. | 263b728f0140 |
-| U4p D141 Agent | Re-vendor exact final Agent source | Luna | Final Agent home and source | blocked:agent | Existing peer2354 and0009 | Agent reviewer2357 active. Runtime adoption independent and dispatched; final browser provenance and manifest follow Agent receipt. | Agent cut pending |
+| U4p D141 Agent | Re-vendor frozen Agent and final manifest | Luna | Lead recorded Agent28e freeze | doing | app-U4p-D141-Agent-final-vendor-0022 | Full28e/tree2ebe actual HEAD verified. Normal browser/provenance and manifest tools only; final custody review follows. | Base App263b; Agent28e |
 | D141 notes | Install reviewed SWAP and Element paragraphs | Luna and independent Luna | Runtime existing notes owner | blocked:runtime | Notes2354; reviewer0003 PASS; peer0006 | Exact two paragraphs independently qualified and byte published. Runtime installs; no GO or ZIP claim. | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full2354; reviewer0003 PASS | All exact artifacts and hashes qualified. Prepared only; final tuple and MAIN GO still required. | Evidence only |
 | D141 journeys prep | Prepare P1 P2 six and P3 recipes | Luna and independent Luna | None | merged | Journey2346; reviewer0003 PASS | Exact selectors and D66/D73 routes qualified; source hashes exact. P4/P5 peer0006 sent. No browser proof. | Evidence only |
@@ -35,13 +35,13 @@ Integration: App263b728f014040afc9c6b3fdfb54963b93b757eb/tree6594cb861575456f354
 
 D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required ship proof P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures unchanged, visible and listed. Final source needs one independent product review, notes one review; unchanged reruns need receipts only. Bodies wait allthreeheads and recorded MAIN GO.
 
-Blockers: Agent final producer input — Runtime frozen6a011/treeac5b actual HOME and independent2350PASS; runtime wait cleared. Existing Agent finalU2 worker2355 pending exact fullhead/tree/receiving source. Normal tools dispatch on receipt.
+Blockers: Final generated adoption — Actual frozen Agent28e/tree2ebe delivered by recorded lead and verified locally. Old Agent wait CLEAR; sole final vendor/manifest worker0022 active. Detailed source peer0023 delivery still pending, no guessed input.
 Blockers: Final cut GO — Main owns recorded allthreeheads and GO. App final source2358 active; no full/comparator/journey body before recorded release.
 Blockers: Farm core — Runtime owns complete receiving recipe and Farm owns child/import/preflight/core. Latest Farm23:54 has no body. No App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal1537 still holds recovery and related qualification. Existing Runtime escalation owns disposition; D141 does not authorize a retry.
-Next ready: Final Agent home -> dispatch prepared vendor0022 immediately. Source join already HOME and exact tree verified. Final generated custody review thennormalmerge/FREEZE. Full/pristine/journeys remain finalallheads/GO-held.
-live 0 / cap 6; ready-undispatched 0. Source and Runtime lock HOME263b, exact reviewed tree. Prepared vendor0022 waits actualAgenthome, not a ready row. Fresh5.47GB, no heavy body or early proof before finalallheads/GO.
-INBOX consumed through 2570275 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
+Next ready: Vendor0022 terminal -> final generated custody review and normalmerge/FREEZE fullApphead. Source join already HOME. Runtime notes original confirmed normalhub byte exact. All full/pristine/journey bodies remain allheads/GO-held.
+live 1 / cap 6; ready-undispatched 0. Luna0022 final normal Agent vendor/manifest tools active on App263b. Runtime source and tour REG already reviewed and HOME. Fresh5.46GB before worker prep; no heavy body. All proof bodies remain GO-held.
+INBOX consumed through 2574306 bytes. H6 read Runtime23:51, Agent23:54, Farm23:54 from normal hub/status. D141 stop supersedes prior original9/Element/installed-render work. No new blocked:orchestrator row or escalation.
 
 Safety: Manager writes only ORCH boards/briefs/peers and byte-publishes authored SAFE evidence. No manager product/test/generated/pin edits, direct Git writes, upstream push, M5 or credentials. Dirty U3/orphan guards and refused targets untouched. Prior D130 hold absolute.
 Later: Gate3 correctedD133B deferred unchanged; D23 helpercut and D14 retained; D79 ZIP-held; E4 dropped. Shared105/media48 source release is Agent normalc585 per latest owner board; behavior awaits Farm core, no new App propagation. Missing native records retain UNKNOWN. No own-test source investigations under D141.
