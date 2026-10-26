@@ -32,6 +32,9 @@ def save(name, value):
 def run(argv, name, *, env=None, timeout=300, show=True):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     print(f"Running {name}", flush=True)
+    if ntpath.basename(str(argv[0])).casefold() in {"powershell.exe", "pwsh.exe"}:
+        env = {key: value for key, value in (os.environ if env is None else env).items()
+               if key.casefold() != "psmodulepath"}
     try:
         with (EVIDENCE / name).open("w", encoding="utf-8") as log:
             result = subprocess.run([str(arg) for arg in argv], env=env, stdout=log,

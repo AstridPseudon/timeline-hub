@@ -2,6 +2,7 @@
 
 import json
 from pathlib import PureWindowsPath
+import subprocess
 import sys
 
 import pytest
@@ -94,3 +95,55 @@ def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
         journey.run([sys.executable, "-c", "import sys; print('native error', file=sys.stderr); sys.exit(7)"],
                     "bootstrap.log")
     assert "native error" in (tmp_path / "bootstrap.log").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("shell", ["powershell.exe", r"C:\Program Files\PowerShell\7\pwsh.exe"])
+def test_powershell_child_rebuilds_module_path_without_mutating_environment(tmp_path, monkeypatch, shell):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    monkeypatch.setenv("PSModulePath", r"C:\pwsh\Modules;C:\pwsh\7\Modules")
+    monkeypatch.setenv("KEEP_ME", "inherited")
+    original = dict(journey.os.environ)
+    captured = {}
+
+    def fake_run(argv, **kwargs):
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(journey.subprocess, "run", fake_run)
+    journey.run([shell, "-NoProfile"], "powershell.log", show=False)
+
+    assert "PSModulePath" not in captured["env"]
+    assert captured["env"]["KEEP_ME"] == "inherited"
+    assert dict(journey.os.environ) == original
+
+
+def test_powershell_explicit_environment_is_copied_and_preserved(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    inherited = {"PSModulePath": "pwsh-path", "KEEP_ME": "explicit"}
+    captured = {}
+
+    def fake_run(argv, **kwargs):
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(journey.subprocess, "run", fake_run)
+    journey.run(["pwsh.exe", "-NoProfile"], "pwsh.log", env=inherited, show=False)
+
+    assert captured["env"] == {"KEEP_ME": "explicit"}
+    assert inherited == {"PSModulePath": "pwsh-path", "KEEP_ME": "explicit"}
+
+
+def test_non_powershell_child_keeps_explicit_environment(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    inherited = {"PSModulePath": "caller-value", "KEEP_ME": "explicit"}
+    captured = {}
+
+    def fake_run(argv, **kwargs):
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(argv, 0)
+
+    monkeypatch.setattr(journey.subprocess, "run", fake_run)
+    journey.run([sys.executable, "-c", "pass"], "python.log", env=inherited, show=False)
+
+    assert captured["env"] is inherited
+    assert inherited == {"PSModulePath": "caller-value", "KEEP_ME": "explicit"}
