@@ -1,6 +1,6 @@
 import { createServer, request as httpRequestFn, type ServerResponse } from 'node:http';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, win32 } from 'node:path';
 import ts from 'typescript';
 import { WebSocket } from 'ws';
 import { describe, expect, it } from 'vitest';
@@ -291,6 +291,16 @@ const connectorSource = ts.createSourceFile('astrid-local-connector.ts', readFil
 const urlPredicate = connectorSource.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'connectorWebSocketUrl');
 if (!urlPredicate) throw new Error('connector URL predicate is missing');
 const connectorWebSocketUrl = new Function(`${ts.transpileModule(urlPredicate.getText(connectorSource), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText}; return connectorWebSocketUrl;`)() as (origin: string) => URL;
+
+const metadataPathFunction = connectorSource.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'productCredentialMetadataPath');
+if (!metadataPathFunction) throw new Error('connector credential metadata path helper is missing');
+const productCredentialMetadataPath = new Function('pathApi', `${ts.transpileModule(metadataPathFunction.getText(connectorSource), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText}; return (credentialPath) => productCredentialMetadataPath(credentialPath, pathApi);`)(win32) as (credentialPath: string) => string;
+
+describe('paired connector credential metadata path', () => {
+  it('finds sibling metadata for a Windows credential path', () => {
+    expect(productCredentialMetadataPath('C:\\Users\\Astrid\\credentials\\product.token')).toBe('C:\\Users\\Astrid\\credentials\\product.json');
+  });
+});
 
 describe('paired connector URL policy', () => {
   it.each(['http://127.0.0.1:4444', 'http://localhost:4444', 'http://[::1]:4444'])('allows explicit loopback HTTP %s as WS', (origin) => {
