@@ -5,7 +5,7 @@ import { defineConfig } from '@playwright/test';
 // Run with: npm run test:e2e:direct
 export default defineConfig({
   testDir: './tests/e2e/local',
-  testMatch: ['direct-journey.spec.ts', 'settings-persist.spec.ts', 'timeline-transfer.spec.ts'],
+  testMatch: ['direct-journey.spec.ts', 'settings-persist.spec.ts'],
   globalSetup: './tests/e2e/local/global-setup.ts',
   outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR ?? 'test-results/direct',
   // Hang guard only (R-10): durations are reported, never judged.

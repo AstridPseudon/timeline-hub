@@ -4,7 +4,7 @@
  */
 import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
 import type { ChildProcess } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 
@@ -56,7 +56,11 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
   }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
   browser: [async ({ harness }, use) => {
     if (process.env.ASTRID_QUICK_DESCRIPTOR) {
-      const browserServer = await chromium.launchServer({ args: harness.chromiumArgs, executablePath: resolveChromium() });
+      const args = [...harness.chromiumArgs];
+      const downloadsPath = process.env.PLAYWRIGHT_DOWNLOADS_PATH;
+      if (downloadsPath) mkdirSync(downloadsPath, { recursive: true, mode: 0o700 });
+      const installedChrome = process.env.PLAYWRIGHT_USE_INSTALLED_CHROME === '1';
+      const browserServer = await chromium.launchServer({ args, ...(installedChrome ? { channel: 'chrome' as const } : { executablePath: resolveChromium() }), ...(downloadsPath ? { downloadsPath } : {}) });
       let browser: Browser | undefined;
       try { browser = await chromium.connect(browserServer.wsEndpoint()); await use(browser); }
       finally { await closeQuickBrowser(browser, browserServer); }
