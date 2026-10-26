@@ -1,1 +1,1 @@
-app-lead 17:33Z uptime 4771m: daemons alive, live 0/cap 3 idle; final App HOME abac6c809da2; proofs on 82e9 stand; popup known gap; eac97ea5 unmerged post-ZIP; no refusals/blocked rows; ~/.codex unchanged; idle since 14:36Z, asked MAIN if anything further.
+app-lead 18:34Z uptime 4833m: daemons alive; App on keepalive-only per MAIN 17:32Z; final App HOME abac6c809da2; free disk >4.1G; no refusals/blocked rows; ~/.codex unchanged; waiting MAIN post-ZIP order.
