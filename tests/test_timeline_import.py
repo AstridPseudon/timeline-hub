@@ -130,6 +130,42 @@ def test_import_accepts_minimal_prepare_binding_descriptor(tmp_path):
     assert stored["text_bindings"][0]["binding_id"] == pin["binding_id"]
 
 
+def test_import_commits_unresolved_unpinned_effect_warning_and_returns_receipt(tmp_path):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, timeline="missing-effect-warning")
+    unresolved = {"packId": "", "kind": "effect", "id": "not-installed", "revision": "", "pinned": False}
+    prepared["differences"]["missing_effects"] = [unresolved]
+
+    result = service.import_timeline(project, prepared, idempotency_key="missing-effect-warning")
+
+    assert result["data"]["missing_effects"] == [unresolved]
+    assert result["data"]["different_effects"] == []
+    assert service.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (prepared["timeline_id"],)).fetchone()
+
+
+@pytest.mark.parametrize("field,descriptor", [
+    ("missing_effects", {"packId": "", "kind": "effect", "id": "not-installed", "pinned": True}),
+    ("missing_effects", {"packId": "", "kind": "effect", "id": "not-installed"}),
+    ("missing_effects", {"packId": None, "kind": "effect", "id": "not-installed", "pinned": False}),
+    ("missing_effects", {"kind": "effect", "id": "not-installed", "pinned": False}),
+    ("missing_effects", {"packId": "", "kind": "", "id": "not-installed", "pinned": False}),
+    ("different_effects", {"packId": "", "kind": "effect", "id": "not-installed", "pinned": False}),
+])
+def test_import_rejects_malformed_or_misplaced_unresolved_warning_without_metadata(tmp_path, field, descriptor):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, timeline="invalid-warning")
+    prepared["differences"][field] = [descriptor]
+
+    with pytest.raises(ValidationError, match="differences"):
+        service.import_timeline(project, prepared, idempotency_key="invalid-warning")
+
+    assert service.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (prepared["timeline_id"],)).fetchone() is None
+    assert service.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (prepared["timeline_id"] + "-shot",)).fetchone() is None
+    assert service.store.conn.execute(
+        "SELECT 1 FROM command_idempotency WHERE command_kind='timeline.import' AND idempotency_key='invalid-warning'"
+    ).fetchone() is None
+
+
 def test_import_transcript_reuse_and_conflict_are_reported_without_overwrite(tmp_path):
     service, project = _service(tmp_path)
     prepared = _prepared(service, project, timeline="transcript-import", transcript=True)

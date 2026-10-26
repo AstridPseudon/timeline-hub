@@ -79,6 +79,21 @@ CHILD_LIMIT_CEILINGS = CHILD_LIMITS | {
     "max_recoverable_bytes": 4 * 1024 * 1024 * 1024,
     "max_snapshot_bytes": OBJECT_MAX_BYTES,
 }
+
+
+def _valid_import_effect_difference(value, *, allow_unresolved_unpinned=False):
+    if not isinstance(value, dict):
+        return False
+    pack_id, kind, element_id = value.get("packId"), value.get("kind"), value.get("id")
+    if not isinstance(pack_id, str) or not isinstance(kind, str) or not kind or not isinstance(element_id, str) or not element_id:
+        return False
+    if "revision" in value and value["revision"] is not None and not isinstance(value["revision"], str):
+        return False
+    if "pinned" in value and not isinstance(value["pinned"], bool):
+        return False
+    if pack_id:
+        return True
+    return allow_unresolved_unpinned and value.get("pinned") is False
 # Fail-closed prototype caps; these are not certified discovery workload sizes.
 DISCOVERY_GRANT_CEILINGS = {
     "max_discovery_rows": 750,
@@ -2010,7 +2025,15 @@ class RuntimeService:
         publication = prepared["publication"]
         if not isinstance(publication, dict) or publication.get("project_id") != project["id"] or publication.get("timeline_id") != timeline_id or publication.get("expected_head", object()) is not None:
             raise ValidationError("import publication must target this project and timeline with expected_head null")
-        if not isinstance(prepared["differences"], dict) or set(prepared["differences"]) != {"missing_effects", "different_effects"} or any(not isinstance(prepared["differences"][k], list) or any(not isinstance(value, dict) or not all(isinstance(value.get(field), str) and value[field] for field in ("packId", "kind", "id")) for value in prepared["differences"][k]) for k in ("missing_effects", "different_effects")):
+        differences = prepared["differences"]
+        if (not isinstance(differences, dict)
+                or set(differences) != {"missing_effects", "different_effects"}
+                or not isinstance(differences["missing_effects"], list)
+                or not isinstance(differences["different_effects"], list)
+                or any(not _valid_import_effect_difference(value, allow_unresolved_unpinned=True)
+                       for value in differences["missing_effects"])
+                or any(not _valid_import_effect_difference(value)
+                       for value in differences["different_effects"])):
             raise ValidationError("differences must contain missing_effects and different_effects lists")
         transcripts, text_bindings = prepared["transcripts"], prepared["text_bindings"]
         if not isinstance(transcripts, list) or not isinstance(text_bindings, list):

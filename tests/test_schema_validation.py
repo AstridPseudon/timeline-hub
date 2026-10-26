@@ -36,6 +36,32 @@ def test_timeline_import_publication_ref_resolves_to_canonical_composition_schem
     assert resolved["$id"] == composition["$id"]
     assert resolved["required"] == ["project_id", "timeline_id", "expected_head", "parent_composition"]
 
+
+def test_timeline_import_schema_limits_empty_pack_to_missing_unpinned_effects() -> None:
+    transfer = json.loads((ROOT / "contract/schemas/timeline-import.json").read_text())
+    missing_schema = {
+        "$schema": transfer["$schema"], "$id": transfer["$id"], "$defs": transfer["$defs"],
+        **transfer["$defs"]["MissingEffectDifference"],
+    }
+    missing = Draft202012Validator(missing_schema)
+    different_schema = {
+        "$schema": transfer["$schema"], "$id": transfer["$id"], "$defs": transfer["$defs"],
+        **transfer["$defs"]["EffectDifference"],
+    }
+    different = Draft202012Validator(different_schema)
+    unresolved = {"packId": "", "kind": "effect", "id": "missing", "pinned": False}
+
+    assert not list(missing.iter_errors(unresolved))
+    assert not list(missing.iter_errors({"packId": "astrid_motion", "kind": "effect", "id": "ordinary"}))
+    for invalid in (
+        {"kind": "effect", "id": "missing", "pinned": False},
+        {"packId": None, "kind": "effect", "id": "missing", "pinned": False},
+        {"packId": "", "kind": "effect", "id": "missing", "pinned": True},
+        {"packId": "", "kind": "", "id": "missing", "pinned": False},
+    ):
+        assert list(missing.iter_errors(invalid))
+    assert list(different.iter_errors(unresolved))
+
 def _execution_wire_validators() -> tuple[Draft202012Validator, Draft202012Validator]:
     task = json.loads((ROOT / "contract/schemas/task.json").read_text())
     worker = json.loads((ROOT / "contract/schemas/worker.json").read_text())
