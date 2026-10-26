@@ -57,10 +57,10 @@ D140_PHASE=post-child ops-d140-farm/receive-farm.sh --check-only
 ## 2. Registered child import census — mandatory stop gate
 
 Run the existing checker inside the registered child, with the authenticated
-canonical census. Its 1,146-row `4c/ab1e` packet is supporting evidence only;
+canonical census. Its historical 1,146-row `4c/ab1e` packet is supporting evidence only;
 the result must report unconditional-required failures separately from the
 12 diagnostic missing rows and the five optional/plugin misses. It must not
-be relabelled as a current `41ad/f103` census without a named new receipt.
+be relabelled as a current D141 `28e56/6a011` census without a named new receipt.
 
 ```sh
 test -f "$POSITIVE_COUNTER" && test ! -s "$POSITIVE_COUNTER"
@@ -104,7 +104,7 @@ no control or core call follows a checker failure.
 
 ## C0 wire names retained by the receiving handoff
 
-The Runtime `f103bb46` `contract/schemas/timeline-commit.json` request is the
+The frozen Runtime `6a011d58` `contract/schemas/timeline-commit.json` request is the
 actual ABI: `api_version`, `project_id`, `timeline_id`,
 `base_revision_id`, `base_publication_id`, `commands`, optional `label`,
 `steps`, `merge`, `reads`, `dry_run`, `source`, `rationale`, and `group_id`.
@@ -115,7 +115,7 @@ with its `Idempotency-Key` header; this packet does not rename or synthesize
 that contract.
 
 The accepted result uses `status` (`accepted`, `rebased`, or `merged` in the
-f103 acceptance shape), `base_revision_id`, `base_publication_id`,
+C0 acceptance shape), `base_revision_id`, `base_publication_id`,
 `previous_revision_id`, `previous_publication_id`, `accepted_revision_id`,
 `rebased_onto`, `canonical_document`, `document_digest`, `commands`,
 `id_map`, `provider_version`, `compiler_version`, `merge_mode`, `steps`, and
@@ -146,8 +146,8 @@ Preview writes no history or publication. Failure uses `http_status`, `code`,
 `reason`, nullable `base`/`current`, and `conflicts`, with structured
 `code`, `path`, `hint`, `suggested_command` where applicable. Each conflict
 has `kind`, `ref`, `path`, `base`, `theirs`, `ours`, `choices`. These shapes
-remain exactly C0 and the f103 schema; Farm receipt custody changes no wire
-field or authority rule.
+remain exactly C0 and the D141 schema bytes equal the historical f103 schema;
+Farm receipt custody changes no wire field or authority rule.
 
 ## 3. D73 dry controls — positive then poison
 

@@ -55,12 +55,17 @@ def run_receiver(tmp_path: Path, phase: str, receiver: Path | None = None, **bin
 def test_receiver_is_check_only_and_contains_current_tuple() -> None:
     assert '"$1" != "--check-only"' in RECEIVER
     for value in (
-        "41ad656529fa8489829de9078b1b6e157c7433c8",
-        "f103bb46866999c961a8865636f2e66d544e0c9b",
-        "5696769dfca056676cde1ab46d8bc94354b3a44a",
+        "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "867cb2737af1b46dc608c7cd37c349e920fe9422",
         "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
     ):
         assert value in RECEIVER
+    assert "41ad656529fa8489829de9078b1b6e157c7433c8" not in RECEIVER
+    assert "f103bb46866999c961a8865636f2e66d544e0c9b" not in RECEIVER
+    assert "5696769dfca056676cde1ab46d8bc94354b3a44a" not in RECEIVER
+    assert "readonly LOCK_BLOB=2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20" in RECEIVER
+    assert "readonly LOCK_SHA=0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3" in RECEIVER
 
 
 def test_core_selector_has_exactly_22_unfiltered_roots() -> None:

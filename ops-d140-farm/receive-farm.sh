@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# D140 Farm receiver: prerequisite census only.
+# D141 Farm receiver binding for the D140 prerequisite census only.
 #
 # This command intentionally has one mode.  It never invokes the child maker,
 # Python imports, pytest, the Store, a queue, or the D73 launcher.  The Farm
@@ -12,12 +12,12 @@ if [ "$#" -ne 1 ] || [ "$1" != "--check-only" ]; then
     exit 2
 fi
 
-readonly AGENT_SHA=41ad656529fa8489829de9078b1b6e157c7433c8
-readonly AGENT_TREE=d29e47fe7be6e55940b42fa1477a23e7925f62fa
-readonly RUNTIME_SHA=f103bb46866999c961a8865636f2e66d544e0c9b
-readonly RUNTIME_TREE=5d0cedf2e5134acf895e8d43191cc5fdc09f9883
-readonly APP_SHA=5696769dfca056676cde1ab46d8bc94354b3a44a
-readonly APP_TREE=0748df404125114a0f68b701fa76f43abd3fc79a
+readonly AGENT_SHA=28e56cacb42d3da85b02e5b3543895b44f3d0f70
+readonly AGENT_TREE=2ebe2ddf5a61f013953ab1e21d51ebaab746e58a
+readonly RUNTIME_SHA=6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d
+readonly RUNTIME_TREE=ac5b862744bece65b2e30565db1777bacd60da28
+readonly APP_SHA=867cb2737af1b46dc608c7cd37c349e920fe9422
+readonly APP_TREE=2b44a46ca51d880c6a00da4c19aa8629b55eb7dd
 readonly COMPOSITION_SHA=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
 readonly COMPOSITION_TREE=5ab5191a296980a0a6bcd1178ab6902d6478a148
 readonly AGENT_ORIGIN=https://github.com/peteromallet/astrid-agent
@@ -32,8 +32,8 @@ readonly WRAPPER_SHA=60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa04
 readonly CHECKER_SHA=8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c
 readonly LAUNCHER_SHA=9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd
 readonly SUITE_SHA=782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c
-readonly LOCK_BLOB=01559de71798c40ba6da1e12c7fba0643902d3e2
-readonly LOCK_SHA=073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a
+readonly LOCK_BLOB=2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20
+readonly LOCK_SHA=0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3
 readonly PROOF_LOCK_SHA=6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110
 readonly CLIENT_BLOB=b8dd84cf35db2420ba23bb560abcbd5d6115a77b
 readonly CLIENT_SHA=952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b

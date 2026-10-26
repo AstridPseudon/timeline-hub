@@ -8,8 +8,8 @@ fallback profile/interpreter.
 
 The Farm owner must bind every path through the environment. Paths in the
 packet are receipt bindings, not portable assumptions. In particular,
-`AGENT_CHECKOUT` must be a clean checkout at Agent `41ad6565…`, not Main's
-stale `tl/integration` `547e1045…` home. The Agent commit object may be
+`AGENT_CHECKOUT` must be a clean checkout at the frozen Agent
+`28e56cac…`/tree `2ebe2ddf…`, not Main's stale integration home. The Agent commit object may be
 verified read-only in that object store, but a stale checkout is not accepted.
 
 The schema route is the D139a installed-distribution route. It requires the
@@ -99,15 +99,18 @@ the launcher’s exact manifest/`run` argv; no wrapper or alternate launcher is
 defined here. Its outer command binds the exact JUnit path, raw log,
 start/stop, disk witness, and retained KEEP root before cleanup.
 
-The handoff names the f103 C0 request/reply fields literally. Request `reads`
+The handoff names the frozen D141 Runtime `6a011d58…` C0 request/reply fields
+literally; its C0 schema bytes are unchanged from the historical f103 source.
+Request `reads`
 are not `optionalreads`; accepted output uses `canonical_document`, explicit
 base/previous/accepted IDs and `rebased_onto`, while conflict details use
 `current` and `conflicts`. Record nesting, `receipt`, and the separate
 history/head shapes remain the Runtime schema’s shapes.
 
-The pinned `41ad/f103/569/635f` tuple is SOURCE_ONLY. D141's actual Runtime
-`6a` cut is frozen and Agent/App remain pending; this packet does not retarget
-pins or claim readiness. Missing venue inputs remain: the qualified four
+The pinned D141 `28e56/6a011/867cb/635f` tuple is SOURCE_ONLY. This packet does
+not claim venue readiness. The historical canonical census remains the
+supporting-only `4c/ab1e` packet and is not relabelled as a D141 census. Missing
+venue inputs remain: the qualified four
 source checkouts and normal queue results; the compatible normal caller join;
 authentic Farm selected schema source/original input and retained dependency
 closure; the D139a installed carrier and installation evidence; a registered
