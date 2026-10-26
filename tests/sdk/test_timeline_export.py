@@ -39,6 +39,30 @@ def test_inventory_covers_effect_pins_animations_and_transitions():
     assert next(row for row in rows if row["id"] == "am-callout")["pinned"] is True
 
 
+def test_inventory_rejects_conflicting_pins_without_losing_pack_identity():
+    timeline = {"parent": {"clips": [
+        {"clipType": "am-callout", "elementRef": {
+            "packId": "astrid_motion", "kind": "effect", "id": "am-callout", "revision": "rev-a",
+        }},
+        {"clipType": "am-callout", "elementRef": {
+            "packId": "astrid_motion", "kind": "effect", "id": "am-callout", "revision": "rev-b",
+        }},
+    ]}}
+    with pytest.raises(ValueError, match="am-callout.*astrid_motion.*rev-a.*rev-b"):
+        inventory_elements(timeline, elements=[])
+
+
+@pytest.mark.parametrize("element_ref,missing", [
+    ({"kind": "effect", "revision": "rev-a"}, "id"),
+    ({"id": "am-shimmer", "revision": "rev-a"}, "kind"),
+    ({"id": "am-shimmer", "kind": "effect"}, "revision"),
+])
+def test_inventory_rejects_incomplete_explicit_element_refs_by_name(element_ref, missing):
+    timeline = {"parent": {"clips": [{"clipType": "am-shimmer", "elementRef": element_ref}]}}
+    with pytest.raises(ValueError, match=f"am-shimmer.*{missing}"):
+        inventory_elements(timeline, elements=[])
+
+
 def test_machine_paths_and_loopback_urls_are_removed_or_normalized():
     value = {"parent": {"config": {"source": "/Users/alice/movie.mp4", "bundle": {
         "slots": {"music": {"media": "/Users/alice/music.wav"}}}},

@@ -131,10 +131,29 @@ def inventory_elements(timeline_bundle: Mapping[str, Any], *, elements: Any = No
             found[key] = descriptor
         elif descriptor.get("pinned") and not old.get("pinned"):
             found[key] = descriptor
+        elif descriptor.get("pinned") and old.get("pinned") and descriptor["revision"] != old["revision"]:
+            pack_id, kind, element_id = key
+            raise ValueError(
+                f"Timeline element {element_id!r} from pack {pack_id!r} has conflicting pinned revisions "
+                f"{old['revision']!r} and {descriptor['revision']!r}."
+            )
 
     def visit_clip(clip: Mapping[str, Any]) -> None:
-        raw_ref = clip.get("elementRef") or clip.get("element_ref")
+        has_ref = "elementRef" in clip or "element_ref" in clip
+        raw_ref = clip.get("elementRef") if "elementRef" in clip else clip.get("element_ref")
+        if has_ref and not isinstance(raw_ref, Mapping):
+            element_name = clip.get("clipType") or "unknown element"
+            raise ValueError(f"Timeline element {element_name!r} has a malformed elementRef; expected an object.")
         if isinstance(raw_ref, Mapping):
+            element_name = raw_ref.get("id") or clip.get("clipType") or "unknown element"
+            missing = [field for field in ("id", "kind", "revision")
+                       if not isinstance(raw_ref.get(field), str) or not raw_ref.get(field)]
+            if missing:
+                raise ValueError(
+                    f"Timeline element {element_name!r} has an incomplete elementRef; missing "
+                    + ", ".join(missing)
+                    + ". Update Astrid and save the timeline again."
+                )
             add(raw_ref)
         clip_type = clip.get("clipType")
         if isinstance(clip_type, str) and clip_type not in _DEFAULT_MEDIA and not (
