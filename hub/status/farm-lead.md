@@ -1,1 +1,1 @@
-2026-10-25T23:55:32Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D141: farm's one job = ship-grade Agent core on the cut tuple; waiting for integration heads (pending in D141-cut-tuple.md) and Runtime's corrected recipe note; kit fd83c9e2 ok; D77 cut
+2026-10-26T00:27:14Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D141: Agent head 28e56cac and Runtime head 6a011d58 frozen, App pending; waiting for Runtime's ONE complete farm handoff (corrected recipe, security review active) before census; kit fd83c9e2 ok
