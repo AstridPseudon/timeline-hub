@@ -371,11 +371,12 @@ test('PowerShell drains simultaneous multi-megabyte native output without deadlo
 }));
 
 test('PowerShell handles stderr progress from native uv bootstrap setup', () => scenario(async (context, run) => {
-  await rm(path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe'));
+  const bootstrapUv = path.join(context.env.LOCALAPPDATA, 'Astrid Installer/bootstrap/uv.exe');
+  await rm(bootstrapUv);
+  await assert.rejects(readFile(bootstrapUv), { code: 'ENOENT' });
   context.env.SystemRoot = path.join(context.root, 'system root');
   context.env.MOCK_SOURCE_UV = path.join(context.bootstrap, 'uv');
   context.env.MOCK_BOOTSTRAP_ARGS = path.join(context.root, 'bootstrap-args.json');
-  await context.powershell();
   const installScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
     .replace('Join-Path $PSHOME $PowerShellName', 'Join-Path $env:SystemRoot $PowerShellName');
   const scriptPath = path.join(context.root, 'install-current-shell.ps1');
