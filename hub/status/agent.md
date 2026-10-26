@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T00:29:34Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 6m -->
-# agent board, 2026-10-26T00:26Z
+<!-- agent | 2026-10-26T00:33:27Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 1m -->
+# agent board, 2026-10-26T00:32Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -125,13 +125,13 @@
 | D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 | D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
 | U2 D141 final join | Freeze final reviewed upstream join | Luna | Source receiving 0015 PASS | merged | Author 2355; fixes 0001/0005; review 0015 | Source and normal tools PASS; Bun 200 PASS. Python 476 PASS,61 FAIL,73 ERROR,1 SKIP retained. Full REG proof pending. | 28e56cacb4 |
-| F D141 pristine comparator | Run plain upstream comparator | Sol and Luna | Corrected command review | review | Sol 0019; whole path 0019 complete | Final source is frozen. Command had four residual failures and child lifetime issue; Sol owns correction. No body yet. | Pristine 8b6ed/fa9 |
+| F D141 pristine comparator | Run plain upstream comparator | Luna and service | Independent command PASS | gated:command-review | Review 0030; controller next | Agent source frozen. One 17-root plain pytest service follows PASS at decimal 4.7 GB admission, 4.0 GB stop. | Pristine 8b6ed/fa9 |
 | F D141 own failure notes | List unchanged own failures by root cluster | Luna | Notes source review complete | merged | Prep2350; reviewer2353 | Documentary conservation PASS | All370 IDs and52 clusters exact; media48 nested in105. Old executable recipe FAIL is superseded. No behavior credit. | Evidence only |
 
-| F D141b command | Qualify plain pristine pytest route | Sol and Luna | Complete correction | doing | Sol 0019; independent whole path 0019 | Five finite findings delivered; final independent corrected-command review follows author completion. No pytest or service body. | a811 base |
+| F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent corrected command PASS | review | Author Sol 0019; review Luna 0030 | Author corrected all five findings; seven plumbing smoke cases PASS. Exact committed command now under independent review. No body. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Prepare existing P4 controller | Luna and service | Final App tuple and MAIN GO | gated:MAIN-GO | Existing lineage prep 0026 | App recipe 2346 received. Existing P4 normal route preparation active; no body before final tuple and explicit GO. | Agent cut 28e56 |
+| P4 D141 cut rerun | Prepare existing P4 controller | Luna and service | Final App tuple and MAIN GO | gated:MAIN-GO | Prep 0026; independent review 0028 | Existing three-leg route recovered. External receiving remains NOT_READY; source packet under independent review. No body. | Agent cut 28e56 |
 
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
 
@@ -139,10 +139,10 @@ Core open: 370 measured (D134, measurement-only), ship-grade pending.
 Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190 FAIL,180 ERROR,173 subtests PASS,1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Final core and REG counts UNKNOWN. Independent2029 source classification370: own344 =132 setup,0 proved product,212 UNKNOWN; host14 UNVERIFIED,other12 UNKNOWN. Source edits deduct nothing.
 
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
-Blockers: Agent comparator — Sol 0019 must close all finite command findings and receive one independent PASS; source freeze is complete. Plain 17 roots, no D73 controls.
+Blockers: Agent comparator — independent corrected-command review 0030 must PASS. Source freeze complete; plain 17 roots with no D73 controls.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Sol 0019 completion -> final independent command review -> one pristine service. P4 prep 0026 active, body GO held. live 2 / cap 6; ready-undispatched 0. No heavy body.
+Next ready: Command review 0030 -> one pristine service controller; P4 review 0028 active, body GO held. live 2 / cap 6; ready-undispatched 0. No heavy body.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -163,3 +163,4 @@ Pass00:16Z: product composition2357 SOURCE PASS retained; normalgenerated/proven
 Pass00:19Z: comparator secondreview0014 FAIL residual custody/earlytrap/witnesswrite/monitorordering. HARD Sol0019 and independent wholepathLuna0019 dispatched immediately in parallel, no body. Freshguardedrecycle of superseded App04be/245/5fcb freed headroom from4947931136 to5573177344 bytes; no refusal,branches/rawKEEP retained. Source0015 and Python0008 remain active; no sourcefreeze before receivingPASS.
 
 Pass 00:26Z: Receiving 0015 PASS_SOURCE_QUALIFICATION and normal merge receipt read back. Agent head 28e56/tree2ebe FROZEN; identical handoff with full receipts sent to App and lead. Cumulative0008 overall FAIL retained: Python476 PASS/61 FAIL/73 ERROR/1 SKIP; Bun200 PASS. No inferred REG status or source repair. App2346 recipe arrived; existing P4 source preparation0026 dispatched, final tuple and explicit MAIN GO remain required. Whole path0019 complete with five finite command findings; Sol0019 active. No product edits by manager.
+Pass 00:32Z: Sol0019 completed exact0710897c with all five finite findings corrected and seven safe operational smoke cases PASS. Final independent Luna0030 dispatched immediately. P4 preparation0026 completed NOT_READY on real finalApp/GO/registration inputs; independent0028 active. Sweep3 removed0 stale dirs; compact packed0 scratch/testdirs and gzipped5 logs. No protected target recycled or refusal. Current free5560274944 bytes; core admission remains clear.
