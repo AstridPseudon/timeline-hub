@@ -1,0 +1,71 @@
+{
+  "schema_version": 2,
+  "task": "app-P-D141w-ordinary-recipe-return-0747",
+  "generated_at": "2026-10-26",
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "source_only": true,
+  "repositories": {
+    "app": {"path":"/home/user/work/app","branch":"tl/integration","commit":"82e9e13ddf1d7ec6c736521b2eb091dca9877598","tree":"6a6e49eb4461b5ca1a7fa1247653bc794f26d710","clean":true},
+    "agent": {"path":"/home/user/work/agent","branch":"tl/integration","commit":"ecdc242ed9b673f641759ecf029f95e89a2c6f92","tree":"d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735","clean":true},
+    "runtime": {"path":"/home/user/work/runtime","branch":"tl/integration","commit":"95d98f038320d5d46bd679ac000ab3e15825c935","tree":"78df31d62c5b9ba4c84dee4ea346e43a767718c1","clean":true},
+    "composition": {"path":"/home/user/work/composition","branch":"tl/integration","commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","clean":true}
+  },
+  "exact_checkout_custody": {
+    "app": {"path":"/home/user/work/wt/app-pin-82e9e13d","materialized":false,"receipt_present":false},
+    "agent": {"path":"/home/user/work/wt/agt-pin-ecdc242e","materialized":false,"receipt_present":false},
+    "runtime": {"path":"/home/user/work/wt/rt-pin-95d98f03","materialized":true,"detached":true,"clean":true},
+    "composition": {"path":"/home/user/work/wt/vw-pin-635f4de0","materialized":true,"detached":true,"clean":true}
+  },
+  "builder": {
+    "path":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob":"59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256":"2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes":49914,
+    "historical_0736_equal":true,
+    "pure_exports":["buildSubmitPlan","serviceRecipe","exactCheckoutPath"],
+    "helper_override":null
+  },
+  "source_backed_caller_proof": {
+    "pin_validation": {"source":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs","lines":"187-209","proof":"all four SHA/TREE pairs are required before selected checkout validation; explicit selected checkout paths are absolute, detached, clean, and pinned"},
+    "recipe_pins": {"source":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs","lines":"375-395","proof":"serviceRecipe emits all twelve D66 SHA/TREE/CHECKOUT variables and the genuine node/tsx/script argv"},
+    "suite_derivation": {"source":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs","lines":"624-626","proof":"D66_SUBMIT_SUITE is used for normal and -preflight is derived by the builder"},
+    "submit_ownership": {"source":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs","lines":"638-701","proof":"submitUnlocked performs checkout receipts, source validation, registration, preflight request/wait, normal request, and artifact persistence"},
+    "registration_guard": {"source":"/home/user/work/app/scripts/testing/d66-plain-stack.mjs","lines":"408-425","proof":"registration is atomic and refuses an existing suite name"},
+    "request_interface": {"source":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test","lines":"1-16","proof":"each request-test invocation creates a fresh result ID and pending request"},
+    "wait_interface": {"source":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test","lines":"1-8","proof":"wait-test consumes an existing result ID and returns its status/exit"},
+    "classification": {"source":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run","lines":"19,30-39,50-58","proof":"full* is heavy; each request is admitted independently; default heavy floor is 5200000000 and strict greater-than applies without a receipt; <=4500000000 refuses"},
+    "sampler": {"source":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run","lines":"61-120","proof":"every heavy body starts and finalizes its own d141-disk-trace sampler"},
+    "trace_interval": {"source":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-disk-trace.py","lines":"16-17","proof":"existing sampler cadence is five seconds"}
+  },
+  "registry_preimage": {
+    "path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "sha256":"e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7",
+    "bytes":733192,
+    "new_full_d141_names_present":false,
+    "historical_0545_names_present":false,
+    "written":false
+  },
+  "original_source_guards": {
+    "source_specs": [
+      {"selector":"p2-automatic-child-placement","file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","blob":"186ba03b6a8bb5d45d2659cf0a1b647b68e5a149","sha256":"ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e","original_tail_inputs_predicates":true},
+      {"selector":"p2-popup-add","file":"tests/e2e/local/three-products.p2-popup.spec.ts","blob":"d7da4c234fb921c448bc18e9ac174b1a11dbc4a6","sha256":"09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9","original_tail_inputs_predicates":true},
+      {"selector":"p2-parent-move","file":"tests/e2e/local/three-products.p2-tour.spec.ts","blob":"63dd04ef1055dbb380642f27f24d47e1fd104625","sha256":"83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4","original_tail_inputs_predicates":true},
+      {"selector":"p2-transition-none-single","file":"tests/e2e/local/three-products.p2-tour.spec.ts","blob":"63dd04ef1055dbb380642f27f24d47e1fd104625","sha256":"83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4","original_tail_inputs_predicates":true},
+      {"selector":"p2-transition-none-bulk","file":"tests/e2e/local/three-products.p2-tour.spec.ts","blob":"63dd04ef1055dbb380642f27f24d47e1fd104625","sha256":"83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4","original_tail_inputs_predicates":true},
+      {"selector":"p2-register-asset","file":"tests/e2e/local/three-products.p2-elements-assets.spec.ts","blob":"186ba03b6a8bb5d45d2659cf0a1b647b68e5a149","sha256":"ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e","original_tail_inputs_predicates":true},
+      {"selector":"p1","file":"tests/e2e/local/three-products.p1-chain.spec.ts","blob":"5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde","sha256":"50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17","original_tail_inputs_predicates":true},
+      {"selector":"p3","file":"tests/e2e/local/three-products.spec.ts","blob":"ed083c0aab1a3c995be14e5b774fbb1cb877111b","sha256":"93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b","original_tail_inputs_predicates":true}
+    ],
+    "all_spec_blobs_match_5344": true,
+    "all_eight_original_tails_inputs_predicates_unchanged":true,
+    "placement_first":true,
+    "popup_add_unchanged":true,
+    "d141s_c_paired_kit_dropped":true,
+    "no_swap_element_or_duplicate_p4_p5":true
+  },
+  "c0_wire": {"unchanged":true,"source":"/home/user/work/runtime/contract/commit-v2.md","field_guard":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/binding.json:c0_wire_preservation"},
+  "immutable_inputs": {
+    "original_0736":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence",
+    "independent_review_0740":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-review-0740/evidence"
+  }
+}
