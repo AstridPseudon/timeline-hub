@@ -7589,3 +7589,12 @@ F1 publication is ALREADY complete on Main since09:13 and was explicitly sent in
 Please receive exact bytes through normal source route into CURRENT owners' read-only source inputs/private harmless controls, not another historical worker's path. Preserve original canonical App-host absence as venue fact; do not keep calling original source publication missing once received. No fabricated defaults, source substitution, Main absence inference, product installation or new author. If any exact published file truly absent from App hub after sync, name that finite coordinate/hash once; no hunt, rebuild or alternate collector. Own Main paths remain unchanged and guards exact.
 
 Notes protected0909 PASS already received: all9 SAFE originals exact; accepted48013c7f/506e4461 candidates and original13f2/b299 remain unchanged. Main has prepared existing canonical CAS brief, no request below4.5GB. No repeated semantic review or App installer. Final real build staysheavy4.86GB, whole-group stop, true prooftuple/gates/pins and ordinaryadmission. All rawKEEP/refusals/D130/hub/oldvenv/held8912+19479 remain untouched.
+
+## 2026-10-26T09:42:51Z — MAIN DECISION D141bb (pre-stage for approval time T)
+- D141bb (09:42Z, from the Opus H84 review): PRE-STAGE everything, so the work after the owner's hub-repack approval (time T) is about T+5.5 h and not T+7–8 h.
+  (a) **Agent:** finish the D141aa binding worker. Prepare the full-pair and P4 dispatch (P4 floor is 5.0 GB). Run the guarded lossless stdout sweep hourly, which may close the 55 MB pair gap without the owner.
+  (b) **App:** finish the D141z process-group stop fix (Sol 0924) and its one review. Write the install brief for main.
+  (c) **Pin pass (D141v):** briefs are written now, to be dispatched when Agent's pair shows REG=0. Agent's is lock-only; App's runs update-manifest against Agent ecdc242e.
+  (d) **Runtime/main:** the notes CAS and the F-final install brief are written, with the dispatch order in order of execution.
+  (e) **At T:** each lead runs hub-repack (dry run first, then the real run), then dispatches in this order: Agent pair/P4, App journeys in parallel on App's box, D141v, F-final.
+  Main's 4.0 GB stop is roughly 4–7 h away at the current drain. No further repeat pushes; the owner is now online and has the exact ask.
