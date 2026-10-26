@@ -49,6 +49,7 @@ jobs:
           ASTRID_TEST_PWSH: ${{ matrix.executable }}
         run: "$env:ASTRID_TEST_PWSH; & $env:ASTRID_TEST_PWSH -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'"
       - name: Run PowerShell bootstrap tests
+        shell: cmd
         env:
           ASTRID_TEST_PWSH: ${{ matrix.executable }}
         run: node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/quality/node-skip-guard-reporter.mjs --test-reporter-destination=stdout scripts/installer/bootstrap-powershell.test.mjs
