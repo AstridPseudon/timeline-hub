@@ -1,0 +1,50 @@
+{
+  "utc": "2026-10-26T17:00:28.280342+00:00",
+  "free_before": 5781295104,
+  "free_after": 5783465984,
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1533Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1533Z.log.xz",
+      "decoded_sha256": "5712058d7d259ad015aaf9bdbcd60337e1a8d7b7c5638a069e6cc153cbedf072",
+      "original_bytes": 674202,
+      "compressed_bytes": 144052,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1549Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1549Z.log.xz",
+      "decoded_sha256": "d742e352a38b26c999582e68656a90c68253ef5c17b217ee9baecbb339ad63ea",
+      "original_bytes": 534140,
+      "compressed_bytes": 142028,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1603Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1603Z.log.xz",
+      "decoded_sha256": "7b6b7a0f349f5381e6ecf4c10560eb7fa5d15f37d0e9528318aca729359173a3",
+      "original_bytes": 605556,
+      "compressed_bytes": 129964,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1615Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1615Z.log.xz",
+      "decoded_sha256": "758e94d7d84dd5d895957c9ccb819b85da69d27141fe2ab93eaf57ef1ed1f4f4",
+      "original_bytes": 375981,
+      "compressed_bytes": 98292,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1627Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1627Z.log.xz",
+      "decoded_sha256": "2c09a6633d25f3d99d309bc4d1d4cbec5f9071d64e2b5572c0c421a3c510b104",
+      "original_bytes": 646157,
+      "compressed_bytes": 148808,
+      "mode": "0o644"
+    }
+  ],
+  "skipped": [],
+  "saved_bytes": 2172892,
+  "scope": "D141bb hourly guarded lossless closed manager stdout only; single-link, exit older15min, no KEEP, no live FD, no active board/suite/env/lease reference; raw workers/tests and active manager log untouched"
+}
