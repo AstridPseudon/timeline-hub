@@ -9,8 +9,10 @@ test.  The final Agent bindings must arrive in a reviewed checkout receipt.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import shlex
 import subprocess
 from pathlib import Path
@@ -20,7 +22,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / "route-config.json"
 HEX40 = set("0123456789abcdef")
-FORBIDDEN = ("41ad", "9521", "placeholder", "assumed")
+FORBIDDEN = ("41ad", "9521", "placeholder", "assumed", "fallback")
+DONE_CREATED = re.compile(
+    r"^created (?P<path>/home/user/work/wt/agt-pin-[0-9a-f]{8}) "
+    r"\(detached at (?P<commit>[0-9a-f]{40}), KEEP\)$"
+)
+DONE_EXISTS = re.compile(
+    r"^exists: (?P<path>/home/user/work/wt/agt-pin-[0-9a-f]{8}) "
+    r"at (?P<commit>[0-9a-f]{40})$"
+)
+SCHEMA_DIGEST = re.compile(r"SCHEMA_DIGEST\s*=\s*['\"](sha256:[0-9a-f]{64})['\"]")
 
 
 class RouteError(ValueError):
@@ -34,7 +45,7 @@ def load_config(path: Path = CONFIG) -> dict[str, Any]:
     routes = data.get("routes")
     if not isinstance(routes, list) or len(routes) != 2:
         raise RouteError("exactly two D141 routes are required")
-    names = [route.get("name") for route in routes]
+    names = [route.get("name") if isinstance(route, dict) else None for route in routes]
     if names != ["full-d141-cut", "full-d141-pristine"]:
         raise RouteError("route names or order changed")
     if len(set(names)) != len(names):
@@ -65,14 +76,28 @@ def _validate_hex(value: Any, length: int, label: str) -> None:
 def _validate_route(route: dict[str, Any]) -> None:
     if not isinstance(route, dict) or route.get("kind") not in {"cut", "pristine"}:
         raise RouteError("invalid route entry")
+    name = route.get("name")
+    if name != f"full-d141-{route['kind']}":
+        raise RouteError("route name and kind disagree")
     runtime = route.get("runtime")
     if not isinstance(runtime, dict):
         raise RouteError("runtime identity is missing")
-    _validate_hex(runtime.get("commit"), 40, f"{route['name']} runtime commit")
-    _validate_hex(runtime.get("tree"), 40, f"{route['name']} runtime tree")
+    _validate_hex(runtime.get("commit"), 40, f"{name} runtime commit")
+    _validate_hex(runtime.get("tree"), 40, f"{name} runtime tree")
     agent = route.get("agent")
     if not isinstance(agent, dict) or agent.get("status") not in {"pending", "qualified"}:
-        raise RouteError(f"{route['name']} Agent status is invalid")
+        raise RouteError(f"{name} Agent status is invalid")
+    expected_commit = agent.get("expected_commit")
+    expected_tree = agent.get("expected_tree")
+    if expected_commit is not None:
+        _validate_hex(expected_commit, 40, f"{name} expected Agent commit")
+    if expected_tree is not None:
+        _validate_hex(expected_tree, 40, f"{name} expected Agent tree")
+    if route["kind"] == "pristine" and (
+        expected_commit != "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+        or expected_tree != "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+    ):
+        raise RouteError("pristine Agent frozen identity is not exact")
     if agent["status"] == "pending":
         if any(
             agent.get(key) is not None
@@ -87,23 +112,63 @@ def _validate_route(route: dict[str, Any]) -> None:
                 "lock_values",
             )
         ):
-            raise RouteError(f"{route['name']} pending Agent has partial binding")
+            raise RouteError(f"{name} pending Agent has partial binding")
     else:
-        _validate_hex(agent.get("commit"), 40, f"{route['name']} Agent commit")
-        _validate_hex(agent.get("tree"), 40, f"{route['name']} Agent tree")
+        _validate_hex(agent.get("commit"), 40, f"{name} Agent commit")
+        _validate_hex(agent.get("tree"), 40, f"{name} Agent tree")
+        if expected_commit is not None:
+            if agent["commit"] != expected_commit:
+                raise RouteError(f"{name} Agent commit is not the expected frozen tip")
+        if expected_tree is not None:
+            if agent["tree"] != expected_tree:
+                raise RouteError(f"{name} Agent tree is not the expected frozen tree")
         checkout = agent.get("checkout")
         receipt = agent.get("receipt")
         if not isinstance(checkout, str) or not checkout.startswith("/"):
-            raise RouteError(f"{route['name']} Agent checkout is not absolute")
+            raise RouteError(f"{name} Agent checkout is not absolute")
         if not isinstance(receipt, str) or not receipt.startswith("/"):
-            raise RouteError(f"{route['name']} Agent receipt is not absolute")
+            raise RouteError(f"{name} Agent receipt is not absolute")
         for key in ("provider_origin", "client_origin"):
             if not isinstance(agent.get(key), str) or not agent[key].startswith("/"):
-                raise RouteError(f"{route['name']} {key} is not an absolute origin")
+                raise RouteError(f"{name} {key} is not an absolute origin")
         if not isinstance(agent.get("schema_digest"), str) or not agent["schema_digest"].startswith("sha256:"):
-            raise RouteError(f"{route['name']} schema digest is missing")
+            raise RouteError(f"{name} schema digest is missing")
         if not isinstance(agent.get("lock_values"), dict) or not agent["lock_values"]:
-            raise RouteError(f"{route['name']} actual lock values are missing")
+            raise RouteError(f"{name} actual lock values are missing")
+
+
+def _regular_file(path: Path, label: str) -> None:
+    if not path.is_absolute() or path.is_symlink() or not path.is_file():
+        raise RouteError(f"{label} is not a regular file")
+
+
+def _inside(root: Path, path: Path, label: str) -> None:
+    try:
+        path.relative_to(root)
+    except ValueError as error:
+        raise RouteError(f"{label} is outside its bound checkout") from error
+
+
+def _read_checkout_done(receipt: Path, expected_commit: str | None) -> tuple[Path, str]:
+    _regular_file(receipt, "checkout done receipt")
+    if receipt.parent.name != "done" or not receipt.name.startswith("checkout-agent-"):
+        raise RouteError("checkout receipt is not an existing make-checkout done file")
+    pending = receipt.parent.parent / "pending" / receipt.name
+    if pending.exists() or pending.is_symlink():
+        raise RouteError("checkout still has a pending request")
+    lines = receipt.read_text(encoding="utf-8").splitlines()
+    if len(lines) != 1:
+        raise RouteError("checkout done receipt is malformed")
+    match = DONE_CREATED.fullmatch(lines[0]) or DONE_EXISTS.fullmatch(lines[0])
+    if match is None:
+        raise RouteError("checkout done receipt is not from make-checkout")
+    checkout = Path(match["path"])
+    commit = match["commit"]
+    if receipt.name != f"checkout-agent-{commit}":
+        raise RouteError("checkout done receipt name does not match its commit")
+    if expected_commit is not None and commit != expected_commit:
+        raise RouteError("checkout done receipt commit is not the expected frozen tip")
+    return checkout, commit
 
 
 def route_status(config: dict[str, Any]) -> tuple[str, list[str]]:
@@ -111,7 +176,8 @@ def route_status(config: dict[str, Any]) -> tuple[str, list[str]]:
     for route in config["routes"]:
         agent = route["agent"]
         if agent["status"] != "qualified":
-            missing.append(f"{route['name']}: Agent cut checkout receipt")
+            label = "pristine Agent request-checkout receipt" if route["kind"] == "pristine" else "Agent cut checkout receipt"
+            missing.append(f"{route['name']}: {label}")
     if missing:
         return "NOT_READY", missing
     return "READY", missing
@@ -139,6 +205,51 @@ def _verify_checkout(path: str, commit: str, tree: str, label: str) -> None:
         )
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return "sha256:" + digest.hexdigest()
+
+
+def _verify_agent_binding(route: dict[str, Any]) -> tuple[Path, str, str]:
+    agent = route["agent"]
+    if agent["status"] != "qualified":
+        raise RouteError(f"{route['name']} Agent receipt is pending")
+    expected_commit = agent.get("expected_commit")
+    checkout, receipt_commit = _read_checkout_done(Path(agent["receipt"]), expected_commit)
+    if receipt_commit != agent["commit"] or str(checkout) != agent["checkout"]:
+        raise RouteError(f"{route['name']} checkout identity disagrees with its done receipt")
+    _verify_checkout(str(checkout), agent["commit"], agent["tree"], f"{route['name']} Agent")
+    keep = Path(agent["receipt"]).parents[2] / "workers" / checkout.name / "KEEP"
+    _regular_file(keep, f"{route['name']} checkout KEEP witness")
+
+    root = checkout.resolve()
+    for key in ("provider_origin", "client_origin"):
+        origin = Path(agent[key])
+        _regular_file(origin, f"{route['name']} {key}")
+        _inside(root, origin.resolve(), f"{route['name']} {key}")
+    metadata = root / "astrid_runtime_client" / "contract_metadata.py"
+    _regular_file(metadata, f"{route['name']} client metadata")
+    schema_match = SCHEMA_DIGEST.search(metadata.read_text(encoding="utf-8"))
+    if schema_match is None or schema_match[1] != agent["schema_digest"]:
+        raise RouteError(f"{route['name']} schema digest is not derived from the checkout")
+    client_text = Path(agent["client_origin"]).read_text(encoding="utf-8")
+    client_match = SCHEMA_DIGEST.search(client_text)
+    if client_match is None or client_match[1] != agent["schema_digest"]:
+        raise RouteError(f"{route['name']} client metadata digest disagrees")
+    for lock_path, expected_hash in agent["lock_values"].items():
+        candidate = Path(lock_path)
+        if not candidate.is_absolute():
+            candidate = root / candidate
+        _regular_file(candidate, f"{route['name']} lock metadata")
+        _inside(root, candidate.resolve(), f"{route['name']} lock metadata")
+        if not isinstance(expected_hash, str) or expected_hash != _sha256(candidate):
+            raise RouteError(f"{route['name']} lock metadata is not derived from the checkout")
+    return checkout, agent["commit"], agent["tree"]
+
+
 def _source_guard(route: dict[str, Any], agent: dict[str, Any]) -> str:
     runtime = route["runtime"]
     checkout = shlex.quote(agent["checkout"])
@@ -147,8 +258,11 @@ def _source_guard(route: dict[str, Any], agent: dict[str, Any]) -> str:
     agent_commit = shlex.quote(agent["commit"])
     agent_tree = shlex.quote(agent["tree"])
     return (
-        "test \"$(git rev-parse HEAD)\" = "
+        "( test \"$(git rev-parse HEAD)\" = "
         + runtime_commit
+        + " || test \"$(git rev-parse HEAD^)\" = "
+        + runtime_commit
+        + " )"
         + " && test \"$(git rev-parse HEAD^{tree})\" = "
         + runtime_tree
         + " && test -z \"$(git status --porcelain)\""
@@ -170,19 +284,31 @@ def render_rows(config: dict[str, Any]) -> list[str]:
     status, missing = route_status(config)
     if status != "READY":
         raise RouteError("pending tuple: " + "; ".join(missing))
-    rows: list[str] = []
+    bindings: list[tuple[Path, str, str]] = []
     for route in config["routes"]:
+        bindings.append(_verify_agent_binding(route))
+    if len({str(binding[0]) for binding in bindings}) != len(bindings):
+        raise RouteError("cut and pristine Agent bindings must be distinct")
+    if len({binding[1] for binding in bindings}) != len(bindings):
+        raise RouteError("cut and pristine Agent commits must be distinct")
+    if len({binding[2] for binding in bindings}) != len(bindings):
+        raise RouteError("cut and pristine Agent trees must be distinct")
+    rows: list[str] = []
+    for route, _binding in zip(config["routes"], bindings):
         agent = route["agent"]
-        _verify_checkout(
-            agent["checkout"], agent["commit"], agent["tree"], f"{route['name']} Agent"
-        )
         checkout = shlex.quote(agent["checkout"])
         command = " ".join(shlex.quote(part) for part in config["pytest"]["arguments"])
         junit = f'"$D66_OUTPUT_DIR/{config["pytest"]["junit_name"]}"'
         body = (
-            f"{_source_guard(route, agent)} && env ASTRID_CHECKOUT={checkout} "
+            f"{_source_guard(route, agent)} && "
+            f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-start\" && "
+            f"env ASTRID_CHECKOUT={checkout} "
             f"{shlex.quote(config['pytest']['interpreter'])} {command} "
-            f"--junitxml={junit}"
+            f"--junitxml={junit}; rc=$?; "
+            f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-stop\"; "
+            f"printf '%s\\n' \"$rc\" > \"$D66_OUTPUT_DIR/runner-exit\"; "
+            f"printf '%s\\n' 'KEEP before service cleanup' > \"$D66_OUTPUT_DIR/KEEP\"; "
+            f"exit \"$rc\""
         )
         rows.append(f"runtime {route['name']} {body}")
     return rows
@@ -193,15 +319,19 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
 
     The central service registry is intentionally not a valid destination.
     """
-    if destination.resolve() == ROOT or not destination.is_absolute():
+    if not destination.is_absolute() or any(part in {".", ".."} for part in destination.parts):
+        raise RouteError("installer destination has unsafe path components")
+    if destination == ROOT or ROOT in destination.parents:
         raise RouteError("installer destination must be a separate absolute directory")
     rows = render_rows(config)
+    _check_install_path(destination)
     destination.mkdir(parents=True, exist_ok=True)
     row_text = "\n".join(rows) + "\n"
     row_path = destination / "suites.conf"
+    _check_install_file(row_path)
     if row_path.exists() and row_path.read_text() != row_text:
         raise RouteError("private CAS destination already contains different rows")
-    row_path.write_text(row_text)
+    env_paths: list[tuple[Path, str]] = []
     for route in config["routes"]:
         env_path = destination / f"{route['name']}.env"
         env_text = (
@@ -211,9 +341,61 @@ def install_candidate(config: dict[str, Any], destination: Path) -> None:
             f"D141_AGENT_COMMIT={route['agent']['commit']}\n"
             f"D141_AGENT_TREE={route['agent']['tree']}\n"
         )
+        _check_install_file(env_path)
         if env_path.exists() and env_path.read_text() != env_text:
             raise RouteError(f"private CAS destination already contains {env_path.name}")
-        env_path.write_text(env_text)
+        env_paths.append((env_path, env_text))
+    if not row_path.exists():
+        row_path.write_text(row_text)
+    for env_path, env_text in env_paths:
+        if not env_path.exists():
+            env_path.write_text(env_text)
+
+
+def _check_install_path(destination: Path) -> None:
+    current = destination
+    missing: list[Path] = []
+    while not current.exists():
+        missing.append(current)
+        if current.parent == current:
+            break
+        current = current.parent
+    if current.is_symlink():
+        raise RouteError("installer parent is a symlink")
+    if not current.is_dir():
+        raise RouteError("installer parent is not a directory")
+    _check_parent_mode(current, "installer parent")
+    for parent in missing:
+        if parent.is_symlink():
+            raise RouteError("installer parent is a symlink")
+    for parent in missing:
+        if parent.parent.exists():
+            _check_parent_mode(parent.parent, "installer parent")
+    if destination.exists():
+        if destination.is_symlink() or not destination.is_dir():
+            raise RouteError("installer destination must be a regular directory")
+        _check_owner_mode(destination, "installer destination")
+
+
+def _check_install_file(path: Path) -> None:
+    if not path.exists() and not path.is_symlink():
+        return
+    if path.is_symlink() or not path.is_file():
+        raise RouteError(f"installer target {path.name} is unsafe")
+    _check_owner_mode(path, f"installer target {path.name}")
+
+
+def _check_owner_mode(path: Path, label: str) -> None:
+    stat = path.stat()
+    if stat.st_uid != os.getuid() or stat.st_mode & 0o022:
+        raise RouteError(f"{label} has unsafe owner or mode")
+
+
+def _check_parent_mode(path: Path, label: str) -> None:
+    stat = path.stat()
+    writable = stat.st_mode & 0o022
+    if stat.st_uid != os.getuid() or writable and not (path.is_dir() and stat.st_mode & 0o1000):
+        raise RouteError(f"{label} has unsafe owner or mode")
 
 
 def run_stub(config: dict[str, Any], output: Path) -> int:

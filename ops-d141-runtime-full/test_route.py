@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +11,49 @@ import pytest
 
 import route
 import receive
+
+
+def _qualified_config(tmp_path: Path) -> dict[str, object]:
+    config = json.loads(route.CONFIG.read_text())
+    for entry, checkout in zip(
+        config["routes"],
+        (Path("/home/user/work/wt/agt-pin-4c4ee35d"), Path("/home/user/work/wt/agt-pin-8b6ed211")),
+    ):
+        commit = subprocess.check_output(
+            ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
+        ).strip()
+        tree = subprocess.check_output(
+            ["git", "-C", str(checkout), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+        receipt = tmp_path / "queue" / "done" / f"checkout-agent-{commit}"
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        receipt.write_text(f"created {checkout} (detached at {commit}, KEEP)\n")
+        (tmp_path / "workers" / checkout.name / "KEEP").parent.mkdir(
+            parents=True, exist_ok=True
+        )
+        (tmp_path / "workers" / checkout.name / "KEEP").write_text("keep\n")
+        metadata = checkout / "astrid_runtime_client" / "contract_metadata.py"
+        schema_digest = re.search(
+            r"SCHEMA_DIGEST\s*=\s*['\"](sha256:[0-9a-f]{64})['\"]",
+            metadata.read_text(),
+        ).group(1)
+        lock = checkout / "runtime.lock.json"
+        entry["agent"] = {
+            "status": "qualified",
+            "expected_commit": entry["agent"]["expected_commit"],
+            "expected_tree": entry["agent"]["expected_tree"],
+            "commit": commit,
+            "tree": tree,
+            "checkout": str(checkout),
+            "receipt": str(receipt),
+            "provider_origin": str(checkout / "astrid" / "sdk" / "timeline" / "api.py"),
+            "client_origin": str(checkout / "astrid_runtime_client" / "generated.py"),
+            "schema_digest": schema_digest,
+            "lock_values": {
+                "runtime.lock.json": "sha256:" + hashlib.sha256(lock.read_bytes()).hexdigest()
+            },
+        }
+    return config
 
 
 def test_config_has_two_unique_routes_and_frozen_runtime_identities() -> None:
@@ -33,7 +78,7 @@ def test_pending_tuple_is_not_ready_and_cannot_render_or_install(tmp_path: Path)
         "NOT_READY",
         [
             "full-d141-cut: Agent cut checkout receipt",
-            "full-d141-pristine: Agent cut checkout receipt",
+            "full-d141-pristine: pristine Agent request-checkout receipt",
         ],
     )
     with pytest.raises(route.RouteError, match="pending tuple"):
@@ -73,14 +118,12 @@ def test_wrong_source_tree_and_origin_fail_before_any_artifact(tmp_path: Path) -
         "lock_values": {"runtime": "pending-check-control"},
     }
     config["routes"][1]["agent"] = dict(config["routes"][0]["agent"])
+    config["routes"][1]["agent"]["expected_commit"] = "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+    config["routes"][1]["agent"]["expected_tree"] = "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
     bad = tmp_path / "wrong.json"
     bad.write_text(json.dumps(config))
-    loaded = route.load_config(bad)
-    assert route.route_status(loaded)[0] == "READY"
-    destination = tmp_path / "candidate"
-    with pytest.raises((route.RouteError, FileNotFoundError)):
-        route.install_candidate(loaded, destination)
-    assert not destination.exists()
+    with pytest.raises(route.RouteError, match="expected frozen tip"):
+        route.load_config(bad)
 
 
 def test_harmless_pytest_subprocess_writes_durable_junit(tmp_path: Path) -> None:
@@ -89,6 +132,51 @@ def test_harmless_pytest_subprocess_writes_durable_junit(tmp_path: Path) -> None
     assert result == 0
     assert (tmp_path / "output" / "stub.xml").is_file()
     assert "test_d141_route_stub" in (tmp_path / "output" / "stub.xml").read_text()
+
+
+def test_genuine_done_receipts_bind_distinct_cut_and_pristine_rows(tmp_path: Path) -> None:
+    config = _qualified_config(tmp_path)
+    rows = route.render_rows(config)
+    assert len(rows) == 2
+    assert all("python -m pytest -q -n3" in row for row in rows)
+    assert all("disk-start" in row and "runner-exit" in row and "KEEP" in row for row in rows)
+    assert route.route_status(config) == ("READY", [])
+
+
+def test_qualified_path_rejects_poisoned_receipt_and_origin(tmp_path: Path) -> None:
+    config = _qualified_config(tmp_path)
+    config["routes"][1]["agent"]["receipt"] = str(tmp_path / "missing")
+    with pytest.raises(route.RouteError, match="receipt"):
+        route.render_rows(config)
+    config = _qualified_config(tmp_path / "second")
+    config["routes"][1]["agent"]["provider_origin"] = "/tmp/not-the-checkout.py"
+    with pytest.raises(route.RouteError, match="provider_origin"):
+        route.render_rows(config)
+
+
+def test_private_installer_rejects_symlink_destination_parent_and_target(tmp_path: Path) -> None:
+    config = _qualified_config(tmp_path / "bindings")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    destination = tmp_path / "destination-link"
+    destination.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(route.RouteError, match="symlink"):
+        route.install_candidate(config, destination)
+    parent = tmp_path / "parent-link"
+    parent.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(route.RouteError, match="symlink"):
+        route.install_candidate(config, parent / "candidate")
+    target = tmp_path / "target-candidate"
+    target.mkdir()
+    (target / "suites.conf").symlink_to(outside / "escaped")
+    with pytest.raises(route.RouteError, match="unsafe"):
+        route.install_candidate(config, target)
+    with pytest.raises(route.RouteError, match="unsafe path"):
+        route.install_candidate(config, tmp_path / "candidate" / ".." / "escape")
+    safe = tmp_path / "safe-candidate"
+    route.install_candidate(config, safe)
+    assert (safe / "suites.conf").is_file()
+    assert (safe / "full-d141-pristine.env").is_file()
 
 
 def test_status_cli_is_json_and_does_not_launch() -> None:
@@ -108,8 +196,38 @@ def test_receiver_requires_and_records_durable_service_artifacts(tmp_path: Path)
     output.mkdir()
     (output / "exit").write_text("0\n")
     (output / "log.txt").write_text("pytest output\n")
-    (output / "runtime-full.xml").write_text('<?xml version="1.0"?><testsuite tests="1"/>\n')
-    (output / "KEEP").write_text("retain until independent comparison\n")
+    (output / "request").write_text(
+        "target=integration:runtime\nrepo=runtime\nsuite=full-d141-pristine\n"
+    )
+    runtime = Path("/home/user/work/runtime")
+    runtime_tree = subprocess.check_output(
+        ["git", "-C", str(runtime), "rev-parse", "HEAD^{tree}"], text=True
+    ).strip()
+    (output / "snap").write_text(f"tree={runtime_tree}\nworktree={runtime}\n")
+    agent = "/home/user/work/wt/agt-pin-8b6ed211"
+    (output / "summary").write_text(
+        "cmd: env ASTRID_CHECKOUT="
+        + agent
+        + ' df -B1 --output=avail /home/user > "$D66_OUTPUT_DIR/disk-start"; '
+        + "/home/user/work/venv-runtime/bin/python -m pytest -q -n3 "
+        + '--junitxml="$D66_OUTPUT_DIR/runtime-full.xml"; rc=$?; '
+        + 'df -B1 --output=avail /home/user > "$D66_OUTPUT_DIR/disk-stop"; '
+        + 'printf "$rc" > "$D66_OUTPUT_DIR/runner-exit"; '
+        + 'printf KEEP > "$D66_OUTPUT_DIR/KEEP"\n'
+    )
+    d66 = output / "d66"
+    d66.mkdir()
+    (d66 / "runtime-full.xml").write_text(
+        '<?xml version="1.0"?><testsuite name="pytest" tests="1">'
+        '<testcase classname="test_route" name="test_one"/></testsuite>\n'
+    )
+    (d66 / "disk-start").write_text("Filesystem\n9000000000\n")
+    (d66 / "disk-stop").write_text("Filesystem\n8999999999\n")
+    (d66 / "runner-exit").write_text("0\n")
+    (d66 / "KEEP").write_text("retain until independent comparison\n")
     receipt = tmp_path / "receipt.json"
     receive.receive(output, receipt)
     assert json.loads(receipt.read_text())["runner_exit"] == 0
+    assert json.loads(receipt.read_text())["testcases"] == [
+        {"id": "test_route::test_one", "outcome": "passed"}
+    ]

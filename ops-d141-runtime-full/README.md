@@ -12,6 +12,12 @@ tree, checkout, receipt, provider/client origins, and lock values before
 rendering or CAS-installing the two rows.
 
 The rendered rows preserve the normal Runtime command (`python -m pytest -q
--n3`) and add only durable JUnit output. The service supplies `D66_OUTPUT_DIR`.
-`receive.py` accepts a completed service output only when the raw exit, log,
-JUnit, and KEEP witness are present.
+-n3`) and add only the small D66 witnesses needed for the existing service:
+start/stop disk values, the raw pytest exit, JUnit, and KEEP before cleanup.
+The service supplies `D66_OUTPUT_DIR`. `receive.py` accepts only a completed
+normal service result with its request, snapshot, summary command, clean source
+identities, source origins/hashes, parsed per-ID JUnit outcomes, disk witnesses,
+and KEEP witness.
+
+Checkout receipts are the plain files produced by `bin/request-checkout` and
+`bin/make-checkout` in the queue/done path. They are not JSON manifests.

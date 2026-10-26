@@ -10,6 +10,8 @@
       },
       "agent": {
         "status": "pending",
+        "expected_commit": null,
+        "expected_tree": null,
         "commit": null,
         "tree": null,
         "checkout": null,
@@ -29,6 +31,8 @@
       },
       "agent": {
         "status": "pending",
+        "expected_commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+        "expected_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
         "commit": null,
         "tree": null,
         "checkout": null,
