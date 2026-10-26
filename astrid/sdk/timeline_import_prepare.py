@@ -94,9 +94,12 @@ def check_import_manifest(manifest: Mapping[str, Any], *, elements: Any = None) 
             continue
         wanted_revision = item.get("revision")
         current_revision = current.get("revision")
-        if wanted_revision and current_revision and wanted_revision != current_revision:
-            if item.get("pinned"):
+        if item.get("pinned"):
+            if not isinstance(wanted_revision, str) or not wanted_revision:
+                _fail(f"This timeline pins {key[2]} without a revision; update or repair the archive before importing it.")
+            if not isinstance(current_revision, str) or not current_revision or wanted_revision != current_revision:
                 _fail(f"This timeline pins {key[2]} at a different revision; update Astrid before importing it.")
+        elif wanted_revision and current_revision and wanted_revision != current_revision:
             different.append(item)
     return {"missing_effects": missing, "different_effects": different}
 

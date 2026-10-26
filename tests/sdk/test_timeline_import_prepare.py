@@ -60,6 +60,28 @@ def test_copy_content_accepts_a_bundle_file(tmp_path):
     assert list(copied["shots"]) == ["file-copy-A"]
 
 
+def test_copy_content_preserves_parent_extensions_and_remaps_ids():
+    source = _source_bundle()
+    source_shot = source["placements"][0]["shot_id"]
+    source_occurrence = source["placements"][0]["occurrence_id"]
+    source["parent"]["extension"] = {
+        "shot": source_shot,
+        "occurrence": source_occurrence,
+        "nested": [{"shot": source_shot}],
+    }
+    source["parent"]["occurrences"] = [{"shot_id": source_shot, "occurrence_id": source_occurrence}]
+
+    copied, _ = copy_content(source, {"parent": {}, "shots": {}, "placements": []}, new_slug="extension-copy")
+    target_shot = copied["placements"][0]["shot_id"]
+    target_occurrence = copied["placements"][0]["occurrence_id"]
+    assert copied["parent"]["extension"] == {
+        "shot": target_shot,
+        "occurrence": target_occurrence,
+        "nested": [{"shot": target_shot}],
+    }
+    assert "occurrences" not in copied["parent"]
+
+
 def test_duplicate_accepts_a_file_source_through_shared_copy_path(tmp_path, monkeypatch):
     source = _source_bundle()
     path = tmp_path / "timeline.json"
@@ -105,6 +127,14 @@ def test_check_import_manifest_refuses_unknown_format_and_unsatisfied_pin():
     ]}
     with pytest.raises(TimelineEditError, match="pins pinned"):
         check_import_manifest(manifest, elements=[])
+    with pytest.raises(TimelineEditError, match="pins pinned without a revision"):
+        check_import_manifest({"format": "astrid.timeline/1", "elements": [
+            {"packId": "astrid_motion", "kind": "effect", "id": "pinned", "pinned": True},
+        ]}, elements=[{"packId": "astrid_motion", "kind": "effect", "id": "pinned", "revision": "sha256:old"}])
+    with pytest.raises(TimelineEditError, match="different revision"):
+        check_import_manifest({"format": "astrid.timeline/1", "elements": [
+            {"packId": "astrid_motion", "kind": "effect", "id": "pinned", "revision": "sha256:old", "pinned": True},
+        ]}, elements=[{"packId": "astrid_motion", "kind": "effect", "id": "pinned"}])
     with pytest.raises(TimelineEditError, match="custom effect custom"):
         check_import_manifest({"format": "astrid.timeline/1", "elements": [
             {"packId": "project_custom", "kind": "effect", "id": "custom", "pinned": False},
@@ -187,6 +217,7 @@ def test_prepare_import_builds_fresh_children_and_target_transcript_ids(monkeypa
                       if row["payload"].get("text_bindings"))
     assert copied_pin["head"] == 1 and copied_pin["binding_id"] != "source-binding"
     assert "created_at" not in copied_pin and "updated_at" not in copied_pin
+    assert {row["media_id"] for row in result["publication"]["dependency_manifest"]["media"]} >= {media_id}
     copied_item = next(row["payload"]["items"][0] for row in result["publication"]["shot_revisions"]
                        if row["payload"].get("items"))
     assert copied_item["item_id"] != "source-item"

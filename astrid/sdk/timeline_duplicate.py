@@ -102,12 +102,14 @@ def copy_content(source: Mapping[str, Any] | str | Path, target: Mapping[str, An
 
     out = copy.deepcopy(dict(target))
     src_parent = source.get("parent") or {}
-    out["parent"] = {
-        **dict(out.get("parent") or {}),
-        "config": copy.deepcopy(src_parent.get("config") or {}),
-        "registry": _remap_values(copy.deepcopy(src_parent.get("registry") or {}), ids),
-        "clips": _remap_values(copy.deepcopy(src_parent.get("clips") or []), ids),
-    }
+    if not isinstance(src_parent, Mapping):
+        raise TimelineEditError("source parent must be an object")
+    # Parent revision payloads may contain authored extension fields beyond
+    # config/registry/clips. Preserve those fields too, remapping any exact
+    # shot/occurrence references. Occurrences themselves are compiler-derived.
+    copied_parent = copy.deepcopy(dict(src_parent))
+    copied_parent.pop("occurrences", None)
+    out["parent"] = _remap_values(copied_parent, ids)
     out["shots"] = {}
     out["placements"] = []
     out["source_mapping"] = {"placements": {}, "shots": {}}
