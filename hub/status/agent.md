@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:00:24Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
-# agent board, 2026-10-26T00:57Z
+<!-- agent | 2026-10-26T01:04:15Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
+# agent board, 2026-10-26T01:01Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Run reserved P4 after pristine | Luna and service | Correct operational packet and review | doing | Controller 0047; return 0055 | Service1347 exit1 before pytest, zero selectors and no XML. Manifest path collision and missing module arg corrected by0055; then review and first body. | Cut tuple GO |
+| P4 D141 cut rerun | Run reserved P4 after pristine | Luna and service | Independent operational review | review | Controller0047; source0055; review0101 | Source0055 PASS: distinct input/output and exact module/marker args; real run controls17/once and poison1/zero. Service1347 zero-body retained. | Cut tuple GO |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
@@ -142,7 +142,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: P4 source0055 then independent review and same controller first body; per-ID evidence review0100. live 2 / cap 6 source; no heavy body. ready-undispatched 0.
+Next ready: P4 independent0101 then same controller first body. live 1 / cap 6 source; no heavy body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -171,3 +171,5 @@ Pass 00:48Z: Pristine27388 terminal332s, raw3255tests/4fail/1error/0skip; exacta
 Pass 00:52Z: Actualpristine extraction0045 complete and exactSAFEsevenfilepacket immediatelypublished0051:3255accounted=3077concretePASS+173aggregatePASS+4FAIL+1ERROR; nofabricatedsubtestIDs. Fourenvironmentfailures requireFarmmatching-kindrerun beforeREGclassification, timeoutUNKNOWN. AuthenticApp867cfullsource arrivednormalleadroute; ordinaryApppin andAgent28epincreatedKEEP. P4existingcontroller0047active withsourcewaitcleared, owner4.7GBstart/4GBstop, noguardwaiver orbodyyet. No more Agentbaselinebody orowninvestigation.
 
 Pass 2026-10-26T00:57Z: New MAIN00:52 conditional rule applied: only pristine bad nodes also failing cut need matching-kind Farm rerun. Existing3255 packet already published with sha256,3082 concrete IDs plus173 missing subtest identities explicit. Independent read-only0100 dispatched immediately. P4 zero-body1347 evidence retained; sole ordinary source return0055 already active, no duplicate author or test. Frozen28e unchanged. H6 owner boards consumed Runtime00:50/App00:43/Farm current header; core recipe review0049 still active, no released Farm body yet.
+
+Pass01:02Z: Operational0055 terminal PASS immediately sent independent0101. Real launcher run controls qualify materialization and both module/marker args, no original body. Per-ID independent0100 PASS byte-published and sent to lead/Runtime/Farm with full3255-outcome and explicit173 missing IDs. Sweep3 removed0; compact packed0 scratch/0 test dirs and gzipped3 old logs. Ended0100 recycle found no worktree, no refusal. Current free5177155584 bytes; no protected source or Store operation.
