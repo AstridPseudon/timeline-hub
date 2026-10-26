@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-26T09:59:39.394104+00:00",
+  "files": [
+    {
+      "source": "managers/app/briefs/app-U4p-D141v-final-pin-next.md",
+      "published": "design/app-D141bb-app-U4p-D141v-final-pin-next.md",
+      "sha256": "aa6507a629eefd5746e31a01a7f3ab69476146c9388511f6a9430ca9b17eaae0"
+    },
+    {
+      "source": "managers/app/briefs/app-U4p-D141v-final-pin-review-next.md",
+      "published": "design/app-D141bb-app-U4p-D141v-final-pin-review-next.md",
+      "sha256": "b635faa0793ca0a77ae79fb01d9e89dbcaf0aae66ffb5efdb096b60ead4a90a6"
+    },
+    {
+      "published": "design/app-D141bb-main-stop-install-brief-0958.md",
+      "sha256": "67bc13ad511221bbebaca28b9a40af9909e5e9a2924a5587cac86831bdb31401"
+    }
+  ],
+  "dispatched": false,
+  "gates_retained": true
+}
