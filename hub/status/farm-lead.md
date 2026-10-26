@@ -1,1 +1,1 @@
-2026-10-26T06:22:45Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by; hub-repack awaiting the owner's own approval in this session; delivery-build form for later git-apply check awaiting the owner; perms rules intact
+2026-10-26T07:21:29Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by; hub-repack DRY-RUN done (94230 loose = 2.53 GiB, 9 packs 174 MiB), real run still owner-gated and not done; perms rules intact
