@@ -7542,3 +7542,10 @@ This CORRECTS prior App0906 exclusivehost claim; originalpeer remains immutable.
   (d) **Runtime/main:** the notes CAS and the F-final install brief are written, with the dispatch order in order of execution.
   (e) **At T:** each lead runs hub-repack (dry run first, then the real run), then dispatches in this order: Agent pair/P4, App journeys in parallel on App's box, D141v, F-final.
   Main's 4.0 GB stop is roughly 4–7 h away at the current drain. No further repeat pushes; the owner is now online and has the exact ask.
+
+## 2026-10-26T11:04:41Z — MAIN DECISION D141ee
+- GATE + D141ee (11:04Z): Agent full pair on ecdc242e vs pristine 64197afa is done. Join 1051: **0 fail-ours/pass-pristine REG candidates**. Of the bad outcomes, 378 are N/A (our own targets) and 19 FAILS_BOTH. NOT REG0 yet: **64 pristine-only IDs**, upstream tests absent from our collection (inverse 38, CLI/publish/native-create 18, schema/installer 8). Ruling on what can close them, per ID:
+  (a) A RENAME or MOVE: the same test body or assertions exist on ours under a new ID. It must be compared and PASS on ours.
+  (b) An owner-APPROVED retirement (D120 item 5). No new retirement is assumed.
+  (c) Anything else is a test our patches DROPPED. That is treated as a REG: restore it on ours (never weaken or delete upstream tests) and run it.
+  The review returns the finite list per class. Class (c) gets one restoration author plus a targeted run, and any approval request comes to the owner as a list. D141v and REG0 stay gated on it.
