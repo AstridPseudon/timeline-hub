@@ -227,6 +227,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["transcribe"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.transcribe.run",
                 "--audio",
@@ -239,6 +241,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["scenes"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.scenes.run",
                 "--video",
@@ -251,6 +255,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["quality_zones"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.quality_zones.run",
                 str((root / "main.mp4").resolve()),
@@ -263,6 +269,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["render"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 "astrid.packs.rendering.actions.render.run",
                 "--timeline",
@@ -424,6 +432,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["arrange"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.arrange.run",
                 "--pool",
@@ -443,6 +453,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["refine"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.refine.run",
                 "--arrangement",
@@ -467,6 +479,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["render"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 "astrid.packs.rendering.actions.render.run",
                 "--timeline",
@@ -481,6 +495,8 @@ class PipelineCachingTest(unittest.TestCase):
             commands["validate"],
             [
                 pipeline.sys.executable,
+                "-X",
+                "utf8",
                 "-m",
                 f"astrid.packs.editorial.actions.validate.run",
                 "--video",

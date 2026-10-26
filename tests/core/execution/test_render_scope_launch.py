@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,8 @@ def test_render_command_keeps_inherited_group_and_observes_until_cleanup(tmp_pat
 
     class RenderProcess:
         pid = 19450
+        stdout = BytesIO()
+        stderr = BytesIO()
         returncode = None
         polls = 0
 

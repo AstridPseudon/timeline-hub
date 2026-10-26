@@ -114,15 +114,11 @@ def _write_inputs(tmp_path: Path) -> tuple[Path, Path]:
 def _write_project(tmp_path: Path) -> Path:
     project = tmp_path / "remotion"
     packages = project / "node_modules" / "@banodoco"
-    for package in (
-        "timeline-composition/typescript/src",
-        "timeline-schema",
-        "timeline-theme-2rp",
-    ):
+    for package in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
         package_dir = packages / package
         package_dir.mkdir(parents=True)
-        if package in {"timeline-schema", "timeline-theme-2rp"}:
-            (package_dir / "package.json").write_text("{}\n", encoding="utf-8")
+        (package_dir / "package.json").write_text("{}\n", encoding="utf-8")
+    (packages / "timeline-composition" / "typescript" / "src").mkdir(parents=True)
     (project / "package.json").write_text("{}\n", encoding="utf-8")
     cli = project / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
     cli.parent.mkdir(parents=True)

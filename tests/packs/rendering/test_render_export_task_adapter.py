@@ -705,6 +705,7 @@ def test_owned_probe_positive_original_wait_precedes_final_census(monkeypatch, t
 
 def test_owned_probe_timeout_preserves_primary_when_cleanup_refuses(monkeypatch, tmp_path):
     from astrid.core.execution import process_group
+    monkeypatch.setattr(remotion_runtime, "_UNRESOLVED_PROBE_CUSTODY", [])
     original = subprocess.TimeoutExpired(['/exact/node', '--version'], 5)
     class Process:
         pid = 813
@@ -716,10 +717,12 @@ def test_owned_probe_timeout_preserves_primary_when_cleanup_refuses(monkeypatch,
     def refuse(*a, **kw):
         raise RuntimeError('strict retained cleanup refusal')
     monkeypatch.setattr(process_group, 'terminate_group', refuse)
-    with pytest.raises(subprocess.TimeoutExpired) as error:
+    with pytest.raises(remotion_runtime.RemotionProbeCleanupError, match="timed out") as error:
         remotion_runtime._owned_probe(['/exact/node', '--version'], cwd=tmp_path,
                                       env={'HOME': str(tmp_path)}, timeout=5)
-    assert error.value is original and original.process is process
+    assert error.value.process is process
+    assert str(error.value.cleanup_error) == 'strict retained cleanup refusal'
+    assert original.process is process
     assert isinstance(original.cleanup_error, RuntimeError)
 
 def test_owned_probe_empty_env_refuses_before_launch(monkeypatch, tmp_path):

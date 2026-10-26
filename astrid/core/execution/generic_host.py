@@ -2178,6 +2178,9 @@ def _source_digest(root: Path) -> str:
 _TASK_OUTPUT_TAIL_BYTES = 64 * 1024
 _TASK_OUTPUT_TAIL_NAMES = {"stdout": "task-stdout-tail.log", "stderr": "task-stderr-tail.log"}
 _TASK_OUTPUT_METADATA_NAME = "task-output-capture.json"
+_TASK_OUTPUT_DIAGNOSTIC_NAMES = frozenset(
+    (*_TASK_OUTPUT_TAIL_NAMES.values(), _TASK_OUTPUT_METADATA_NAME)
+)
 
 
 def _attempt_tree_bytes(root: Path) -> int:
@@ -2191,6 +2194,8 @@ def _attempt_tree_bytes(root: Path) -> int:
             # race, not a renderer failure.
             try:
                 if path.is_symlink() or not path.is_file():
+                    continue
+                if path.parent == root and path.name in _TASK_OUTPUT_DIAGNOSTIC_NAMES:
                     continue
                 total += int(path.stat().st_size)
             except FileNotFoundError:
@@ -2277,6 +2282,8 @@ def _storage_envelope_measurement(
         for path in root.rglob("*"):
             try:
                 if path.is_symlink() or not path.is_file():
+                    continue
+                if path.parent == root and path.name in _TASK_OUTPUT_DIAGNOSTIC_NAMES:
                     continue
                 size = int(path.stat().st_size)
                 relative = path.relative_to(root).as_posix()

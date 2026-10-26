@@ -506,6 +506,7 @@ def _receiver_bridge(monkeypatch, tmp_path):
     attempt = tmp_path.resolve() / 'task-attempt'
     (attempt / 'outputs').mkdir(parents=True)
     monkeypatch.setenv('ASTRID_PROGRESS_PATH', str(attempt / '.astrid-progress.json'))
+    monkeypatch.setenv(review._REVIEW_LAUNCH_NONCE_ENV, 'a' * 64)
     return review, bridge, parent, attempt
 
 
@@ -517,8 +518,9 @@ def test_managed_receiver_private_publication_and_exact_retirement(tmp_path, mon
         path = review._managed_receiver_path(attempt / 'outputs' / 'decisions.json')
         owner = review._publish_receiver_session(path, 'http://127.0.0.1:12345/?token=' + 'a'*32)
         row = json.loads(path.read_bytes())
-        assert set(row) == {'schema', 'receiver_url', 'process_pid', 'process_birth_id'}
+        assert set(row) == {'schema', 'receiver_url', 'process_pid', 'process_birth_id', 'launch_nonce'}
         assert row['process_pid'] == os.getpid() and row['process_birth_id']
+        assert row['launch_nonce'] == 'a' * 64
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
         assert not (attempt / '.astrid-progress.json').exists()
         review._retire_receiver_session(owner)

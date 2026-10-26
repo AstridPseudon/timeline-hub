@@ -410,7 +410,7 @@ class HumanNotesTest(unittest.TestCase):
 
         self.assertEqual(len(calls), 3)
         self.assertEqual(
-            [call[0][2] for call in calls],
+            [call[0][call[0].index("-m") + 1] for call in calls],
             [
                 "astrid.packs.editorial.actions.arrange.run",
                 "astrid.packs.video_editing.actions.cut.run",

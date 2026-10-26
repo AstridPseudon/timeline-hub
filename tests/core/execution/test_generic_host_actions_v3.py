@@ -1588,6 +1588,7 @@ def test_managed_review_receiver_refuses_missing_launch_observation(tmp_path, mo
 
 
 def test_review_child_receives_fresh_nonce_after_environment_sanitization(tmp_path, monkeypatch):
+    from io import BytesIO
     from astrid.core.execution import generic_host as module
 
     root = Path(__file__).resolve().parents[3] / 'astrid/packs/editorial'
@@ -1613,6 +1614,8 @@ def test_review_child_receives_fresh_nonce_after_environment_sanitization(tmp_pa
     class Child:
         pid = 98123
         returncode = 0
+        stdout = BytesIO()
+        stderr = BytesIO()
         def poll(self): return 0
         def communicate(self): return '', ''
     process = Child()
@@ -2633,7 +2636,15 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     calls=[]
     def run(argv, **kwargs):
         calls.append(argv)
-        assert kwargs == dict(capture_output=True,text=True,encoding="utf-8",errors="replace",timeout=2,check=False)
+        assert kwargs == dict(
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=2,
+            check=False,
+        )
         if phase == "registry": return subprocess.CompletedProcess(argv,0,"fixture :8188 (LISTEN)\n","")
         return subprocess.CompletedProcess(argv,1,"","")
     monkeypatch.setattr(gh.subprocess,"run",run)
