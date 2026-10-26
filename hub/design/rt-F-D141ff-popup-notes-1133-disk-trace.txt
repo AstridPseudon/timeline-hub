@@ -1,0 +1,11 @@
+{"timestamp": "2026-10-26T11:35:53.129388+00:00", "available_bytes": 5613445120, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:35:58.129743+00:00", "available_bytes": 5613436928, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:03.130838+00:00", "available_bytes": 5613436928, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:08.132031+00:00", "available_bytes": 5613436928, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:13.133518+00:00", "available_bytes": 5613436928, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:18.135386+00:00", "available_bytes": 5613432832, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:23.137156+00:00", "available_bytes": 5613428736, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:28.138509+00:00", "available_bytes": 5613428736, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:33.139827+00:00", "available_bytes": 5613244416, "stop_free_bytes": 4000000000}
+{"timestamp": "2026-10-26T11:36:38.141009+00:00", "available_bytes": 5613240320, "stop_free_bytes": 4000000000}
+{"status": "terminated_by_session", "pid": 2, "exit_code": null, "waited": true, "reaped": true, "timestamp": "2026-10-26T11:36:38.141009+00:00"}

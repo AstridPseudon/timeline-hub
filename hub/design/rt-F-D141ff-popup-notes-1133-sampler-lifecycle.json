@@ -1,0 +1,16 @@
+{
+  "pid": 2,
+  "started_at": "2026-10-26T11:35:53.129167+00:00",
+  "interval_seconds": 5,
+  "stop_free_bytes": 4000000000,
+  "status": "terminated_by_session",
+  "first_tool_sampler": false,
+  "first_tool_coverage_gap": "initial background sampler evidence was not durable after its session closed",
+  "samples": 10,
+  "last_sample_at": "2026-10-26T11:36:38.141009+00:00",
+  "last_available_bytes": 5613240320,
+  "termination_observed": "write_stdin session completed; sampler finalizer did not run",
+  "exit_code": null,
+  "waited": true,
+  "reaped": true
+}

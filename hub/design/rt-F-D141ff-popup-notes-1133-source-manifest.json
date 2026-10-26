@@ -1,0 +1,142 @@
+{
+  "candidates": {
+    "README.template.md": {
+      "bytes": 39689,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-README.template.md",
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "suffix_bytes": 1407
+    },
+    "gate-results.md": {
+      "bytes": 36699,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-gate-results.md",
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "suffix_bytes": 1117
+    }
+  },
+  "conservation": {
+    "balanced_fences_and_placeholders": true,
+    "full_preimage_prefix": true,
+    "only_intended_suffix_once_per_document": true,
+    "previous_known_gaps_and_32_ids": true
+  },
+  "preimages": {
+    "README.template.md": {
+      "bytes": 38282,
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02"
+    },
+    "gate-results.md": {
+      "bytes": 35582,
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"
+    }
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "0097c99901b1e42e75ef4061d9c8129ac67d56ad76d76c35982cb7724a6b90e2",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "rendered_sha256": "1bdaa5012f6cdc592579c44652174ed222a9e154fac795f8e3914163314a9fc5"
+  },
+  "scope": "private documentary candidates only; no canonical write, install, build, service, diagnostic, or product test",
+  "source_hashes": {
+    "custody_publication": {
+      "path": "/home/user/timeline-hub/hub/design/app-D141ff-popup-custody-publication-1127.json",
+      "sha256": "279387891c32712fecdbfc28c30dad55e2b8ca4b3e6a3d11116fb602ebf1d717",
+      "verdict": "PASS_CUSTODY_TEST_FAIL"
+    },
+    "eight_hash_exact_originals": [
+      {
+        "bytes": 1947,
+        "index": 1,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-controller-receipt.json",
+        "regular_non_symlink": true,
+        "sha256": "34f40f321b093dd90e68330a01bc08d0f050d0ad59479c9cf99d9d620ff1994d"
+      },
+      {
+        "bytes": 1376,
+        "index": 2,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-results.json",
+        "regular_non_symlink": true,
+        "sha256": "97ecfac6257840b508d9db187e53d6052d01b159d1b5e9c3c4d69bf80bacc344"
+      },
+      {
+        "bytes": 2430,
+        "index": 3,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-source-manifest.json",
+        "regular_non_symlink": true,
+        "sha256": "3efec87a5eac894069c6c50500cea42f9de9f93f156b8190da218e2c6f1b0850"
+      },
+      {
+        "bytes": 1242,
+        "index": 4,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-trace-measurement.json",
+        "regular_non_symlink": true,
+        "sha256": "b58e89df83f2ce4d052d5653c606fcae548c52bae580a1d5b5f45a9d61f7275b"
+      },
+      {
+        "bytes": 567,
+        "index": 5,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-sampler-lifecycle.json",
+        "regular_non_symlink": true,
+        "sha256": "96e0155620f42b12408794848134ec1ca59019f8730a2ddd34022263a2d25834"
+      },
+      {
+        "bytes": 1866,
+        "index": 6,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-validation.md",
+        "regular_non_symlink": true,
+        "sha256": "18c8020a6ae7cb3471a7e7aadbb47f864bba4a3940605e7f8066f0a70eb76f65"
+      },
+      {
+        "bytes": 1022,
+        "index": 7,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-handoff.md",
+        "regular_non_symlink": true,
+        "sha256": "1defed95edf4c9fc55516e6974566838d4e4f342a3eb4f67964c25418625d0f9"
+      },
+      {
+        "bytes": 1118,
+        "index": 8,
+        "mode": "0644",
+        "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-progress.json",
+        "regular_non_symlink": true,
+        "sha256": "c0dd61b536304716bcd312d959e31cb02bbcbd6f6e1777909b041391ea995b92"
+      }
+    ],
+    "publication": {
+      "path": "/home/user/timeline-hub/hub/design/app-D141cc-popup-terminal-publication-1122.json",
+      "sha256": "718011e008f18520636102813ca26c8bdab6b7ebbb37b177e0c918c98096fa69",
+      "status": "FUNCTIONAL_FAIL_PENDING_CUSTODY"
+    },
+    "results": {
+      "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-results.json",
+      "sha256": "97ecfac6257840b508d9db187e53d6052d01b159d1b5e9c3c4d69bf80bacc344"
+    },
+    "source_manifest": {
+      "path": "/home/user/timeline-hub/hub/design/app-P-D141cc-popup-controller-next-source-manifest.json",
+      "sha256": "3efec87a5eac894069c6c50500cea42f9de9f93f156b8190da218e2c6f1b0850"
+    }
+  },
+  "status": "PASS_PRIVATE_D141FF_CANDIDATES"
+}

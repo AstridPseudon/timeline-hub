@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T11:37:57Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# runtime board, 2026-10-26T11:34:34.073219+00:00
+<!-- main | 2026-10-26T11:43:23Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 4m -->
+# runtime board, 2026-10-26T11:39:31.872238+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -80,13 +80,13 @@
 
 | D141ee pristine-only | Restore55 dropped upstream tests | Agent Luna and independent review | Main11:23 classification | doing | agt-U2-D141ee-restore-next | Nine moves PASS;55 dropped: inverse38,writers15,installer2 treated REG. Actual restoration/run and any owner retirement decision owed. | Agent ecdc |
 
-| F D141ff popup note | Document authorized popup known gap | Luna | Main11:20 and actual27026 | doing | rt-F-D141ff-popup-notes-1133 | Private suffix candidate only; original1368 and27026 FAIL, cause UNKNOWN. Independent review then guarded notes CAS. | No product change |
+| F D141ff popup note | Review authorized popup known gap | Luna and independent Luna | Main D141ff and source1133 | review | rt-F-D141ff-popup-notes-review-1139 | Private599d0e3f/6175f480 checks PASS; sole review queued. Canonical48013/506e unchanged; author monitor limits retained. | No product change |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. Lead repack complete; no manager hub operation. All open raw KEEP and refused smoke retained.
 Blockers: Final activation — Main source receiving1030 PASS. Durable final placement and canonical rows await actual source/gate tuples and D141v; existing final-install-next owns this step.
-Blockers: Final proofs — Agent restores55 dropped upstream tests; REG0 and pins gated. App owes six selectors. Popup27026 is non-blocking D141ff known gap; Runtime notes1133 active. Current P4 GO retained.
-Next ready: Runtime1133 candidate then independent notes review. Agent restored55 and App six selectors; then D141v, guarded final install and heavy F-final after gates.
-live 1 / cap 6; ready-undispatched 0 locally. Notes1133 dispatched at5618753536bytes. Final activation and build remain gated on actual cross-lane proofs and final pins.
+Blockers: Final proofs — Agent restores55 dropped upstream tests; REG0 and pins gated. App owes six selectors. Popup27026 is non-blocking D141ff known gap; Runtime notes review1139 active. Current P4 GO retained.
+Next ready: Runtime1139 review then guarded notes CAS. Agent restored55 and App six selectors; then D141v, guarded final install and heavy F-final after gates.
+live 1 / cap 6; ready-undispatched 0 locally. Notes1139 queued at5612204032bytes; author1133 terminal0. Final activation and build remain gated on actual cross-lane proofs and final pins.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s and independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Successor applicability0513/0637 stays separate. Raw originals KEEP;8912/19479 stay held unstarted.
 
@@ -101,3 +101,5 @@ D141bb order remains: actual Agent pair/CLI and App journeys, all lane REG closu
 Historical rehearsal0710 exit2/ancestor refusal retains original reaping UNKNOWN. Interrupted0741 partial Agent/Runtime onepatch checks only; independent0756 FAIL_CUSTODY all7, original command exit/reap/App/Composition UNKNOWN. Later Main080530 audit found no survivors; separate present-time fact. Original348MB and partial outputs KEEP. Refused Farm smoke remains dropped everywhere.
 
 H6 current pass1134: INBOX through1880517bytes; App1123 notes ask consumed; latest BOARD-HEADER includes D141ff11:20 and Agent11:23 preservation gate. Nine of64 upstream IDs are passing moves;55 dropped tests require restoration, inverse38/writers15/installer2. Agent sole restore-next active; no assumed retirement or REG0. App final source review PASS43, genuine popup preflight26455PASS/body27026 functionalFAIL207s/readinessPASS, causeUNKNOWN, distinct from cancelled operational IDs. D141ff makes popup non-blocking documented gap; six selectors precede any authorized optional diagnostic. Actual eight source originals available in design/app-D141cc-popup-terminal-publication-1122.json; private notes author rt-F-D141ff-popup-notes-1133 queued at11:33:49 on Composition635f, Luna high/default180, source-only with real5s trace and4GBstop. No canonical write before review; exact48013/506e preimages and all prior paragraphs preserved. App1123 confirms the same notes row, actual final tuple and sole popup custody1121; parent controller started11:21:09. Existing actual custody verdict requested when terminal, no extra reviewer. Actual workers rt- census2656 rows terminal0 and metadata no live/eligible before new dispatch; five dirty v1 trees retained. Guarded cleanup this round terminal0, all counts0, stderr empty; no eligible recycle or held-data deletion. All historical P4/P5/Runtime15 results and bounded notes custody limits unchanged. Source receiving1011/1023 retained; no final pins, activation, build or ZIP.
+
+D141ff source11:39: author1133 terminal0; actual prefix/hash/JSON/function-only render checks PASS. Exact10 originals published runtime-D141ff-popup-notes-source-publication-1139.json. Independent Luna1139 queued immediately at5612204032bytes on same branch/default180; all findings one pass, same readonly checker67122109. Canonical48013/506e unchanged. Author sampler limits explicit; actual new App custody1127 PASS_CUSTODY_TEST_FAIL is available and reviewer checks exact original1368 identity and current evidence. No product merge, real body, diagnostic or build.

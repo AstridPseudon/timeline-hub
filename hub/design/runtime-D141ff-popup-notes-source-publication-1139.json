@@ -1,0 +1,68 @@
+{
+  "utc": "2026-10-26T11:39:31.872238+00:00",
+  "worker": "rt-F-D141ff-popup-notes-1133",
+  "scope": "Private popup-known-gap notes candidates only; independent review1139 pending; no canonical install",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-candidate-README.template.md",
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "bytes": 39689
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-candidate-gate-results.md",
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "bytes": 36699
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/popup-note.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-popup-note.md",
+      "sha256": "1c85469f60bcb46a3e1cc63b8fba86795e7324cb3216d4f1874ed3ab7695bc87",
+      "bytes": 868
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/check_notes.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-check_notes.py",
+      "sha256": "67122109344b018f94df3d670e03139779ff9f2e27c0d74eba3560e2bd3e1fee",
+      "bytes": 16119
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-source-manifest.json",
+      "sha256": "467b4fc939443ceabe2dd3255a84bf1f47231f3db6f54a56b089e182370e77ac",
+      "bytes": 5758
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-validation.md",
+      "sha256": "8a738f2de8d1e6da982566597a3769edf6f3016aafe259a131c6dd502e5cd9ff",
+      "bytes": 1191
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-handoff.md",
+      "sha256": "e6869091e36dfc4e24ada5c75001bd9d8103a8c5cc763c243380a2c8451205f3",
+      "bytes": 641
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-disk-trace.txt",
+      "sha256": "382571c80dc60fb1f9f40d90ab10052d3ba9e85c2e59127bac81561f3efc6fef",
+      "bytes": 1266
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-sampler-lifecycle.json",
+      "sha256": "a37924e58b79a1285be95eb81e3d1f93bc49d3e600876c92fb532e8f03bbd584",
+      "bytes": 560
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-1133-report.md",
+      "sha256": "ff084ae1b4d076ed94db0bdf19051510f66d8a7bf198f54d5a6b5e27377e9f50",
+      "bytes": 1055
+    }
+  ],
+  "author_sampler_limits": "Restarted10samples; first attempt and final exit/wait/reap unverified; not whole-worker continuity."
+}

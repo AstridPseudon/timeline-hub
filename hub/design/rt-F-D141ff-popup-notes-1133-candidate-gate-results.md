@@ -1,0 +1,198 @@
+# Timeline v2.1 final qualification inputs — D141 policy, receipts PENDING
+
+This document is the input to the final `delivery-build` README, not a release result. It intentionally contains no final ZIP receipt, final integration source pin, final tree identity, cut-base verification result, or all-gates-green claim. The Runtime candidate was authored from `tl/integration` base `becfe6db`; that authoring base is not a final delivery pin.
+
+## D141 morning cut (policy; not a result)
+
+D141 requires P1, P3, P4, and P5 GO on the frozen cut tuple, the six passing P2 gestures, documented known gaps for SWAP and Element, and zero regressions versus pristine upstream (D54a). Zero REG versus pristine is the sole fixing gate. Own failures that the authentic cut/pristine comparison proves are not regressions remain unchanged, visible, and listed by root-cause cluster. No passing cut, full-suite, REG0, or ZIP result is claimed before authentic receipts.
+
+The final per-ID REG/known-gap list remains **PENDING** until the actual cut full suites, pristine comparators, and source-bound diff exist. This input is not an acceptance receipt.
+
+## Source and delivery boundary
+
+F-final builds the frozen D141 integration tuple on Runtime main using the existing builder and the recorded upstream cut bases below, retaining the D135 ancestor guard. The generated README sections, builder checks, and authentic receipts must provide the integration SHAs and trees, cut-base checks, patch counts, bundle mode, applied trees, bundle trees, Farm cut-tip apply check, and ZIP identity. The upstream bases are already recorded; no new live-main refresh is required or authorized by these notes.
+
+The patch and bundle routes remain equivalent tree-preserving installation routes. The synthetic `git am` commit is not a producer or publication identity. A failed pin, patch, bundle, tree, or cut-base check stops delivery and remains visible for disposition against the frozen cut tuple.
+
+D141 freezes the recorded upstream cut tips at 2026-10-25T23:42:41Z:
+
+| Repository | Frozen upstream `main` base |
+|---|---|
+| Agent | `8b6ed2116fd1803d24b2be5bc08bd9490407fe4a` |
+| Runtime | `fa9cd5464a8b37b02f971de375e56be846cd69e2` |
+| App | `7ca61bb3280beca21d98a854af266a382f7ce5df` |
+| Composition | `67b8aa3d0d6831d3e3504a340ff583c3da253707` |
+
+Each lane makes the one final reviewed merge-forward to its recorded tip, then freezes integration for the cut. No further upstream chase or live-main refresh is part of F-final. These are recorded upstream bases, not final delivery integration identities. The complete four-repository delivery tuple and its authentic final receipts remain **PENDING**; individual recorded merge-forward heads do not themselves supply that receipt. The Farm `git apply --check` uses fresh upstream at these cut tips, with zero reverts; it does not select newer upstream tips.
+
+D135 ZIP base note under D141: package only the recorded cut tuple after each integration includes its frozen upstream base. The D135 ancestor guard remains required. The Agent tip comes from the cut tuple’s home integration, never the historical proof pin beginning `547e1045` or an older checkpoint. An unmerged tree or one missing its recorded cut base is not packageable. Final integration identities, build verification and ZIP receipts remain **PENDING**.
+
+## D65 owner release order and App manifest guard
+
+The owner merges Runtime first, then Agent, then runs the one guarded App manifest command from the App root, and only then merges App:
+
+```sh
+node scripts/installer/update-manifest.mjs --runtime-checkout /path/to/owner-merged/runtime --agent-checkout /path/to/owner-merged/agent --write
+```
+
+Before that write, App's adopted `runtime.lock.json` must name the exact Runtime checkout `HEAD`. If it names an earlier Runtime, the supported App rebind is `node scripts/sync-runtime-client.mjs /path/to/owner-merged/runtime`, which delegates to `node scripts/vendor-lock.mjs update runtime.lock.json --producer /path/to/owner-merged/runtime`; do not replace this with a tag, release label, fabricated SHA, or direct lock edit. The actual [manifest updater](app/scripts/installer/update-manifest.mjs) (`scripts/installer/update-manifest.mjs:11-27,81-117`) validates the Runtime lock source and equality of Runtime `packages/typescript/src/contract-metadata.ts` with App `src/integrations/runtime/generated-contract-metadata.ts`, then updates `agent.sha`, `runtime.sha`, and `runtime.schema_digest` (`:119-150`). The supported rebind sources are [sync-runtime-client.mjs](app/scripts/sync-runtime-client.mjs) (`scripts/sync-runtime-client.mjs:7-30`) and [vendor-lock.mjs](app/scripts/vendor-lock.mjs) (`scripts/vendor-lock.mjs:45-105`).
+
+Runtime is the only writer. All production callers use the v2 commit door described in [`contract/commit-v2.md`](runtime/contract/commit-v2.md): the exact project/timeline scope and base revision/publication pair, nonempty commands, label, step metadata and patches, merge mode, declared reads, dry-run flag, source/rationale/group annotations, and the HTTP idempotency key. Existing permission refusals remain stopped. D140 assigns the merged-cut ship-grade Agent child/core to Farm, with Agent retaining source ownership; D141 includes that work. These notes add no trust backend, source acquisition, execution authorization, alternate writer, or force-conflict route.
+
+## D72 retired CLI migration — owner update
+
+### Timeline write-route migration
+
+The delivery retires the native `edit commands-file`/native-batch ingress and
+the other separate native/publish writers (`edit --native`, `apply --native`,
+`undo --publication`, `publish`, `publish_bundle`, and the old three-way
+writer). A document edit now uses `timelines commit --file ... --message ...
+--idempotency-key ...`; the Runtime `commitTimeline` door owns accepted,
+merged, conflict, and invalid replies, durable exact-key retry, and the
+receipt/history. A single move or trim uses the current native `timelines edit
+...` route. Cut-sheet edits use the current `timelines apply <sheet> ...` /
+`NativeSheet` route, which emits registered commands through that same Runtime
+door and preserves the draft on refusal. No native packet envelope,
+commands-file alias, detached document overwrite, or resurrected G5 interface
+is included.
+
+The current Agent registry lists `commit`, `edit`, `apply`, `undo`, and `redo`, but not `publish`; use the live `python3 -m astrid timelines --help` output and [the current registry](agent/astrid/packs/timeline/cli.py#L3831-L3839), without restoring aliases or bypasses.
+
+Supported current forms are: `timelines edit REF --project PROJECT ... --idempotency-key KEY` for literal moves/trims; `timelines apply REF SHEET --project PROJECT [--dry-run] [--idempotency-key KEY] [--json]`; `timelines undo REF --commit RECEIPT_ID ...` and the corresponding `redo` form; and `timelines commit REF --project PROJECT --file FILE -m MESSAGE --idempotency-key KEY [--dry-run] [--json]` for a detached JSON document. Current help has no `--native` apply option or `--publication` undo/redo option. `show --native --as sheet` remains a read/export projection whose sheet feeds `apply`. Python callers use `from astrid.sdk import timeline`, `timeline.open(...)`, then `tl.commit(..., merge="fields"|"atomic", dry_run=..., reads=..., idempotency_key=...)`; the commit wrapper preserves the bounded conflict/unknown-transport behavior ([commit_session.py](agent/astrid/sdk/timeline/commit_session.py#L163-L171)).
+
+Runtime old save/CAS/document routes are refused with HTTP 410 through `_require_timeline_command`; the replacement is `POST /v1/projects/{project_id}/timelines/{timeline_id}/commit` (`commitTimeline`) with the exact base revision/publication pair and `Idempotency-Key` ([server.py](runtime/runtime_protocol/server.py#L522-L544), [service.py](runtime/runtime_protocol/service.py#L1653-L1666), [timeline_commit_store.py](runtime/runtime_protocol/timeline_commit_store.py#L337-L345)). Timeline create/rename/archive/recover remain supported metadata operations. Automatic relational timing—anchors and pinned markers—remains deferred; this update does not claim every deferred case passes. D72 protects replacement idempotency/conflict, clean-copy, and output behavior, not an unqualified final-tuple result; use the Agent family disposition rather than duplicating its classifier.
+
+## Final proof status
+
+All outcomes are **PENDING** until actual final-tuple receipts are attached. Historical runs are retained only as historical scope and cannot close these rows.
+
+| Proof | Required final evidence | Status |
+|---|---|---|
+| P1 | Final integrated real-document split → trim-new-ID → intervening Agent edit → lost acknowledgement → restart chain, covering accepted, merged, and refused replies. | **PENDING — D141 requires GO** |
+| P2 | Final integrated App core gestures, commit-door traffic, intended-field preservation, reload, undo, and no old save route. App-owned verdict. | **PENDING — D141 requires six passing gestures** |
+| P3 | Final integrated Gate-5 journey with exact retry accounting, newer local edit, restart/reload, undo, and zero legacy snapshot traffic. App-owned verdict plus the required independent verdict review. | **PENDING — D141 requires GO** |
+| P4 | Final integrated Agent CLI/Python/sheet single edit, ten-note per-step undo, conflict/re-run, and show/history evidence. | **PENDING — D141 requires GO** |
+| P5 | Final integrated Runtime renderer-off save, door authorization, crash/retry points, and changed payload under one idempotency key. | **PENDING — D141 requires GO** |
+
+**Core Timeline suites: PENDING.** The required core surface is EditCommand, the commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, the App save path, and the Agent editing runner, rebase, and inverse. D141 requires P1/P3/P4/P5 GO and the six P2 gestures on the cut tuple; ZERO REG versus pristine is the sole fixing gate. Comparator-proven own nonREG failures, including core failures, remain unchanged, visibly failing, listed by root-cause cluster, and non-gating.
+
+## Final venues and receipts
+
+- **F-final / ZIP:** Runtime on main, frozen D141 tuple and recorded upstream bases, D135 ancestor guard, then Farm cut-tip apply check with zero reverts; status **PENDING**.
+- **Runtime:** its lane-owned service; status **PENDING**.
+- **Agent:** source ownership stays with Agent; D140 Farm owns the merged-cut ship-grade child/core venue; status **PENDING**.
+- **App:** its lane-owned service; App owns P2/P3 execution and the cut P1/P2/P3/P4/P5 verdicts; status **PENDING**.
+- **Composition:** final full suite on main; status **PENDING**.
+- **Farm:** D140 merged-cut ship-grade Agent child/core; D141 requires one cut child, in-child imports, dry preflight and ship-grade core after the reviewed recipe inputs. This is existing policy, not a run receipt or new execution authorization. D77 installed render remains stopped/NOTRUN. Existing source-access refusals and D130 remain stopped; no acquisition or alternate route is inferred.
+
+### C0 v2 request and reply fields
+
+Production callers use `POST /v1/projects/{project_id}/timelines/{timeline_id}/commit` (`commitTimeline`), with `api_version: 1` and the C0 v2 semantics. The HTTP `Idempotency-Key` is required for a mutation and is separate from its document base. The approved field definitions are in Runtime [`contract/commit-v2.md`](runtime/contract/commit-v2.md), [`timeline-commit.json`](runtime/contract/schemas/timeline-commit.json), [`edit-command.json`](runtime/contract/schemas/edit-command.json), and the referenced [`CommittedMutation` receipt](runtime/contract/openapi/workspace-v1.yaml).
+
+The request body’s required fields are `api_version`, `project_id`, `timeline_id`, `base_revision_id`, `base_publication_id`, and the nonempty ordered `commands` array. New App/Agent producers supply nonempty `label` and `steps`; compatibility omission normalizes the label to `Timeline edit` and synthesizes one provider-completed step. The other body fields are optional: `merge` (`fields` or `atomic`, default `fields`), `reads`, `dry_run` (default false), `source`, `rationale`, and `group_id`. `source` requires `via` (`cli`, `python`, `app`, `script`, or `sheet`) and optionally `detail`.
+
+Each command requires `schema_version`, `op`, `version`, `select`, and `args`. Its optional fields are `resolved`, `expect`, `bindings`, `created`, `authorship`, `reads`, `selections`, `intent`, `rationale`, and `group_id`; caller recorder fields remain checked claims. `label` and `steps` belong to the request, not each command. Each requested step requires `id`, `label`, `intent`, `tags`, `command_ordinals`, and `patch`, with optional `reads`. Accepted steps have those fields plus optional provider-derived `dependencies`; caller-supplied step dependencies are invalid. Steps partition the commands into nonempty contiguous runs in execution order.
+
+Commands execute in array order as one transaction, using registered semantic commands or `doc.patch`. Patches are id-addressed, carry previous-value checks, preserve ordered-list rules, and record authoritative effects. A request containing `doc.patch` with omitted request `reads` has effective `merge_mode: atomic` over its complete touched scopes; explicit `reads: []` does not erase captured or step-local dependencies. Accepted step patches and dependencies come from verified provider execution.
+
+A successful mutation has the envelope `data` and non-null `receipt`. `data` requires `status`, `base_revision_id`, `base_publication_id`, `previous_revision_id`, `previous_publication_id`, `accepted_revision_id`, `rebased_onto`, `canonical_document`, `document_digest`, `commands`, `id_map`, `provider_version`, `compiler_version`, and `publisher`. Its other schema fields are `merge_mode`, `steps`, `source`, `label`, `rationale`, and `group_id`; C0 v2 results expose effective merge mode and complete authoritative steps and echo supplied annotations. New results use `accepted` at the requested base and `merged` for a disjoint landing head; `rebased_onto` is null for accepted or the landing `revision_id`/`publication_id` pair for merged. The schema also accepts historical `rebased` results; exact retries preserve the original durable spelling.
+
+`canonical_document` contains `schema_version`, `project_id`, `timeline_id`, `parent_revision`, `shot_revisions`, `internal_timeline_revisions`, and `dependency_manifest`. Clients adopt the complete canonical closure, including the other party’s changes in a merged reply. The receipt’s exact fields are `receipt_id`, `command_kind`, `idempotency_key`, `request_hash`, `project_id`, `project_seq`, `event_ids`, `result`, and `created_at`. `receipt.result` equals the accepted `data`; `receipt.receipt_id` is the resulting publication ID. History separately exposes `records`, including authoritative command captures and step patches/dependencies used by guarded undo; these are not additional mutation-envelope or receipt fields.
+
+Send a dry run with `dry_run: true` and a separate key. A successful dry run has `data.status: preview` and `receipt: null`. Preview data requires `status`, `would_status` (`accepted` or `merged`), `base_revision_id`, `base_publication_id`, `evaluated_head`, `canonical_document`, `document_digest`, `commands`, `id_map`, `provider_version`, and `compiler_version`; its other schema fields are `merge_mode` and `steps`. It exposes complete provider-derived steps and effective merge mode. Candidate IDs are provisional; preview accepts no write, persists no history or durable idempotency winner, and may evaluate a newer head on repetition.
+
+Failures have exactly the outer fields `http_status`, `code`, `message`, and `details`, with no acceptance receipt. `details` requires `status`, `reason`, `base`, `current`, and `conflicts`; the additional structured diagnostic fields are `code`, `path`, `hint`, and `suggested_command`. `details.status` is `conflict`, `refused`, or `invalid`. A conflict returns 409, outer `code: conflict`, and the actual head pair in `details.current`; each `details.conflicts` entry has `kind`, `ref`, `path`, `base`, `theirs`, `ours`, and `choices`. A malformed/invalid-at-base request returns 422, outer `code: validation_error`, and `details.status: invalid`; `current` is null only before the authorized head can be loaded. Legacy refusals retain 409 and `details.status: refused`. A later-head guard failure is not an invalid-base diagnosis, and an invalid document is not a successful merge.
+
+Committing after preview uses a new key and `dry_run: false`, repeats validation, and may conflict. An exact retry of a durable accepted mutation returns the original `data`/`receipt` without executing again or adding history. A changed body or principal under the same key is `idempotency_mismatch`, not a second edit. An unknown transport outcome retries the original request/key before deciding to reauthor; a successful preview has no durable accepted reply to replay.
+
+# D141 documented known gaps
+
+**SWAP.** The independent D125 terminal packet `3250` is overall **NO-GO**: five original tails passed, two failed, and one was serially not run; the SWAP predicate expected accepted HTTP 200 but received the public `history_unavailable` result. The separate D130-held SWAP/WAL worker `1537` ended in an automatic classifier refusal, not a product assertion failure, and no retry or alternate qualification was attempted. SWAP is therefore a documented known gap; future proof is owed.
+
+**Element.** Independent actual requests `32016` and `15200` both failed unchanged at the five-second `applied` status predicate. Their Runtime-bound lifecycles completed internally with HTTP 200 (32016: 21.740631 s handler / 13.780929 s provider; 15200: 19.557721 s handler / 12.290285 s provider), while App/provider/caller/browser outcomes remain **UNKNOWN**. The D112 waiter path is conditionally reachable, but its occurrence, duration, and causal attribution are unproved; no cause, fix, profile, or ETA is claimed. Element is therefore a documented known gap; future proof is owed.
+
+## Historical evidence and limits
+
+Historical bounded evidence must remain labeled as historical and scoped to its original source tuple. Existing links include [the retained P1 actual-cause report](design/app-A2-P1-17985-actual-cause-sol-2017.md), [the retained integrated P4 symbol report](design/agent-F-P4-symbol-integrated-0023.md), and [the retained App P4/P5 registration report](design/app-F-P4-P5-registration-cumulative-0838.md). They are not final-tuple receipts and do not establish final GO.
+
+The retained D134 root-cluster measurement is historical only: 370 unique IDs; 132 setup/expectation, 0 proved product, 212 UNKNOWN, 14 unverified current REG, and 12 prior UNKNOWN. Missing XML/receipts/core counts and missing causal records remain missing. This historical inventory is not a current-cut finding and does not establish nonREG. Its retained-log SHA-256 is `65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e`; the existing qualified root-cluster evidence remains the authority for that historical map only.
+
+Current-cut own failures remain unchanged, visible, and pending authentic full/pristine comparison. Do not turn UNKNOWN into pre-existing or nonREG. The final per-ID REG/known-gap list is pending.
+
+D141 records the D130 SWAP D127 WAL-recovery safety stop as surfaced to the owner; the held source branch `tl/rt-P2-D127-WAL-sol-1537` remains unreviewed and unmerged; the related SWAP acceptance worker is stopped; and no retry, rephrase, machine transfer, alternate test route, or D112 rollback occurred. SWAP remains on its D112 safety hold; Element's delay, with any D112 timeout suspicion explicitly **UNPROVED**; D77 installed render **NOTRUN**; and original9/B022 as **UNKNOWN** for missing evidence. Gate3 and deferred timing remain deferred. Existing installation/platform limits, including the absent genuine D13 installed native tuple and its required symlink-free source/environment/tool bindings, are not functional or final qualification receipts.
+
+D54a evidence distinguishes environment/setup, upstream-identical/pre-existing behavior, D52 deliberate deprecation with caller proof, and owner-deferred scope. D141 controls the cut: comparator-proven own nonREG failures stay unchanged, visible, listed by root-cause cluster, and non-gating. UNKNOWN is not nonREG. A caused regression is fixed or reverted. No live-behavior test is weakened, skipped, deleted, xfailed, or rewritten to expect a refusal.
+
+Under D62, Runtime does not prove a v2 producer's native coverage is complete at submit (Sol1422's 8 omission packets); such commits fail closed at fork/inverse use. This is the existing Runtime deletion-ledger row D62 ([`design/deletion-ledger.runtime.md`](design/deletion-ledger.runtime.md)), with BOARD-HEADER D62 as its decision source. It is post-delivery hardening, not a new final gate PASS.
+
+Rendering/parity remains deferred. Relational timing remains deferred. The M5 extension-model rewrite remains deferred. Deferred relay, remote-provider, and provider-child scope remains fail-closed. These boundaries do not resurrect prior acceptance criteria or add delivery extras. The existing installed delivery builder is the production caller for the README template and gate-results input; a controlled four-repository stub render is only a documentation wiring check, not a build or qualification receipt.
+
+D87 coverage is source evidence only: 24 retained selectors plus one separate checkout case are mapped with zero current promised capability gaps, and the other six checkout cases remain live. It does not establish functional PASS, and the historical P4 result is not a current 45-second PASS. The already recorded App `d11417a59` (`WelcomeConnection.test.tsx` overlap) and Agent `08e6b90511` (installer service/test overlap) packaging concerns remain checks within the frozen D141 cut. Their App full-suite and Agent installer service/test receipts remain pending; no new upstream refresh or additional green-suite gate is introduced.
+Gate3 current companion selector `tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable` is deferred and remains a visible failure: the protected `parent/clip:card.on` word choice (`"again"` in line #2 +1f) still sources `occurrence:occ/clip:voice`, so Gate3's required `occurrence:occ` deletion has a protected word-choice/topology dependency; the current field/source remains unchanged, and the future semantic owner is Agent G3/R2. The three other transcript-bound companions remain separate and unmodified; no blanket word waiver applies.
+D139a installed schema input: the approved test-child schema input is the authenticated installed `banodoco-timeline-schema==0.0.2` distribution. Its `direct_url.json` names the pinned ArtAgents commit `242f9c4306bf3b501222cb041a9eb246ef47bc85` at `packages/timeline-schema/python`. Its exact RECORD closure has 18 rows: 12 hashed rows plus these six named standard unhashed rows: `banodoco_timeline_schema-0.0.2.dist-info/RECORD`, `banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc`, `banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc`, `banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc`, `banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc`, and `banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc`. This is an installed-distribution input, not a fresh source build. The pinned source-tree tie `75a5a697f630affee40632e500b3f5b704a9b834` is **UNAVAILABLE** because no genuine pinned object was held and no acquisition occurred. The D139a installed review `2314` records PASS_INSTALLED_CUSTODY for the exact reviewed maker (`fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5`, 111171 bytes), wrapper and checker. That receipt is custody-only: it does not establish normal hub publication, Farm receiving, child acceptance, core, render or release PASS. Those results remain unverified in this note; no new installation or acquisition is performed here.
+fake-runtime contract: retired-write check now uses POST, because GET became a valid read
+`A2 D141 REG: duplicate-shot-group retains the upstream two-read predicate; its test mock adds only the approved authenticated basis/display reader interface, with every original input/assertion unchanged and all 16 placement guards passing (protected review PASS; integrated-head journey reproof and final ZIP qualification remain downstream).`
+P2 placement expectation updated to the D124 materialization contract.
+App unit admission used a reformatted disk witness (DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT) containing authentic retained disk readings, independently reviewed in 0600. The witness records derived data; original stdout and a continuous historical disk peak were not retained.
+
+## Pending installer fields
+
+The installer must return, at minimum:
+
+- recorded D141 upstream cut bases and the one final merge-forward receipt per lane;
+- each repository’s exact `origin/main` base SHA, `tl/integration` tip SHA, and integration tree;
+- each generated patch count, bundle mode, applied tree, bundle tree, and verification status;
+- final P1/P3/P4/P5 GO and six-P2-gesture receipts, plus complete core/full/pristine receipts and the source-bound per-ID REG diff and visible nonREG root-cluster list, with tuple and venue;
+- App’s P2/P3 verdicts and the required independent verdict review;
+- Composition main full-suite receipt;
+- Farm `git apply --check` against the recorded upstream cut tips, zero reverts, F-final builder result, final ZIP SHA256, and `SHA256SUMS`.
+
+Until those fields are received, every final status in this document remains **PENDING**.
+
+## D141 final App unit disclosure (source-only)
+
+The final App unit disclosure is a bounded documentary comparison, not an App or Main installation. The authentic current App source is `4de54db14bdc9ddc2ce2e5887258b03acbffd30d` / tree `84c3fb7f73f08c22220f8e808962fe3f24aaa0aa`: registered full `app-full-1026060654-8638` exited 1 with 19,745 passed and 32 failed tests across four failed files, plus a separate module-level collection error; its chained Node phase was **NOTRUN**. Standalone Node `app-full-d141-node-phase-1026063009-19156` exited 1 with 296 passed, 2 failed, and 26 actual skipped tests (324 tests in 33 suites; 27 declared skip entries are distinct). The exact pristine d822 source is `d822d2f5d2bd05187b4ff5b6071c3e13945d4747` / tree `2af40a015057779ceb4e4b37cad62e1469aa7e36`: full `app-pin-d822d2f5-full-1026063854-17524` exited 1 with 17,866 passed and 18 failed tests across three failed files, with chained Node **NOTRUN**; standalone Node `app-pin-d822d2f5-full-d141-node-phase-1026072325-11111` exited 1 with 289 passed, 2 failed, and 26 actual skipped tests (317 tests in 33 suites; 27 declared skip entries are distinct). The independent finite comparison qualifies all 32 current full failure IDs as `OWN/N/A`: five files are absent upstream and 27 exact titles or predicates are absent from the present upstream file; no renamed equivalent was found, and the upstream-absent `genericPatch` collection file remains a separate collection error rather than a test ID. The two same-kind Node failures are independent `ssh-keygen ENOENT` failures at the retained callsites and source blobs, classified non-regression for that finite Node pair only. The current `82e9e13ddf1d7ec6c736521b2eb091dca9877598` / tree `6a6e49eb4461b5ca1a7fa1247653bc794f26d710` catch-up is separate applicability evidence and does not retarget the original `4de` measurements; its targeted 255 tests and both TypeScript checks passed, while exactly three inherited `AgentSetupCard` `react-hooks/exhaustive-deps` findings remain and no lint pass is claimed. The retained receipts use their own five-second sampled traces and 4,000,000,000-byte stop; they do not establish a continuous peak. This narrow App unit scope claims no global REG0, gate, ZIP, popup-not-reproduced, product, or final PASS; missing originals are reported at their exact retained paths/statuses rather than reconstructed, and the existing SWAP, Element, mock/placement, derived-witness, historical-receipt, placeholder, and C0 scopes remain unchanged. Main later owns one independent protected documentary check and the guarded two-document CAS; this source-only candidate is not a canonical install and an App inventory is not a Main inventory.
+
+## Complete finite current full failure-ID list
+
+All 32 IDs below are independently qualified `OWN/N/A`; the five absent-file IDs precede the 27 absent-title/predicate IDs. This is the bundled complete per-ID table for this candidate.
+
+1. src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx > A3 mounted popup full caller > carries a real mounted shared-child add through the accepted v2 commit transport
+2. src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx > A3 mounted popup full caller > carries a real mounted shared-child add through the merged v2 commit transport
+3. src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending history response resolves
+4. src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending commit response resolves
+5. src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx > routed element save with the class Runtime provider > settles the catalog gesture after the pending refresh response resolves
+6. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: false)
+7. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: accepted (children: true)
+8. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: false)
+9. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: merged (children: true)
+10. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: false)
+11. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: conflict (children: true)
+12. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: false)
+13. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: retry (children: true)
+14. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: dependent conflict (children: false)
+15. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old selection (children: false)
+16. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: mismatched old selection (children: false)
+17. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: extra old selection (children: false)
+18. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing old metadata (children: false)
+19. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selector (children: false)
+20. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: existing asset (children: false)
+21. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: rebased (children: false)
+22. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: false)
+23. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: invalid (children: true)
+24. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: false)
+25. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > routes mounted shot prepared video through the persisted semantic outbox: missing selection (children: true)
+26. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (accepted)
+27. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (merged)
+28. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (lost acknowledgement)
+29. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (later_write)
+30. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (aba_write)
+31. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (history_unavailable)
+32. src/tools/video-editor/hooks/useTimelineSave.test.tsx > useTimelineSave — recovered draft durability > mounted Undo uses the public client, authoritative history and reload (invalid)
+
+
+## D141ff popup ADD known gap (bounded documentary note)
+
+The genuine normal service result `app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026` is a functional FAIL: exit 1 in 207 s, readiness PASS, popup FAIL, and the `f2-occurrence-copy` shared-occurrence label was absent within 5 s. Cause is UNKNOWN. Retain the original pointer `app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368`; do not reconstruct it. Cancelled operational attempts `...13234` and `...20413` have no functional verdict and are not credited. No source or author receipt establishes custodyPASS; independent actual custody review remains pending unless its genuine published verdict arrives.
+
+Owner wording: "failing since the freeze-1 upstream merge (4de era); cause under diagnosis". This is our own non-REG P2 known gap, non-blocking for ZIP, alongside SWAP and Element. Diagnostic is NOTRUN and non-blocking, allowed only after the six selectors and first four-field visibility proof; no diagnostic action is included here. Final pins, installation, and build remain separately gated.
