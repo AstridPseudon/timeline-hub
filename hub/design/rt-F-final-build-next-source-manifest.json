@@ -1,0 +1,40 @@
+{
+  "status": "preflight_authenticated_build_not_started",
+  "source_tuple": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-source-tuple.json",
+    "sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+    "heads": {
+      "agent": ["ec0a9f5baef2c31bc5179087b83f044524575182", "83b84c79941917fde535ee3ddba5533a776cace3"],
+      "app": ["abac6c809da25f4c6cc7cce61a7d5ea2ac067067", "e2632a4fbe63cadbd03b03edc5d34196a37304fd"],
+      "runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+      "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+    }
+  },
+  "gate_tuple": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/final-gate-tuple.json",
+    "sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8"
+  },
+  "accepted_candidate_files": {
+    "check.sh": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+    "core-inventory.json": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+    "delivery_gate_build.py": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+    "delivery_lifecycle.py": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+    "inherited-runtime-final-service-rows.txt": "774aafcd47adbdbce61c680132d091bb363f6466368d42e0c4ef55ee14615d3b",
+    "install-final-services.py": "41d963bb400f115a872a7f433f58e1291849dc5cd6c575eb5fe1a61eb4ed3959",
+    "install-map.json": "c262a1ea4255f371cbe4bcbe2729743dd63ace8101200f2c64dac9dbd35ab308",
+    "receiving_controls.py": "fd8c1a24fac14d8690a24e9810e1e20888ea1cd4c5ddc6ae229de69851a54be0",
+    "run-final-delivery.py": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+    "run-final-services.py": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+    "runtime-final-service-rows.txt": "251dc22826a7b42314c77b51e49b5e7cc3f44a9a17246eb3c92e40c370ecad81"
+  },
+  "builder": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "mode": "0755"
+  },
+  "canonical_notes": {
+    "README": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+    "gates": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+  },
+  "per_repo_build_results": "NOTRUN: caller import failure before builder invocation"
+}

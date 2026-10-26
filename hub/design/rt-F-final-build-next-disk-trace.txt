@@ -1,0 +1,11 @@
+start=2026-10-26T17:16:23Z
+sampler_pid=6
+sample=2026-10-26T17:16:23.526Z /dev/vda       270553174016 36674330624 5149528064  88% /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+sample=2026-10-26T17:16:24.534Z /dev/vda       270553174016 36674330624 5149528064  88% /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+sample=2026-10-26T17:16:25.541Z /dev/vda       270553174016 36674330624 5149528064  88% /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+sample=2026-10-26T17:16:26.548Z /dev/vda       270553174016 36674330624 5149528064  88% /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+sample=2026-10-26T17:16:27.556Z /dev/vda       270553174016 36674330624 5149528064  88% /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+wait_status=0
+sampler_exit=0
+reaped=true
+end=2026-10-26T17:16:28Z

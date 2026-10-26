@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-26T17:16:16.159918+00:00",
+  "worker": "rt-F-final-install-review-next",
+  "exit": 0,
+  "scope": "PASS bounded independent installed tuple, immutable source and registry readback; no build. Structured requested output bundle was not created; actual report and log control. Sampler PTY exit 1, wait/reap not recovered; physical ownership limitation retained.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-install-review-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-install-review-next-report.md",
+      "sha256": "3880fa97871f44043ef07de6af9b04a006f3cfa4a3903349db8b20720e1f00bb",
+      "bytes": 1130
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-install-review-next/log.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-install-review-next/log.txt",
+      "sha256": "da37e7b4fad0ac0b307eb5122d9366b6588b6e81cf250ff565ded87bf4c53213",
+      "bytes": 1988193
+    }
+  ]
+}

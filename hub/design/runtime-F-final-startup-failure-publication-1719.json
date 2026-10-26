@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T17:20:07.542027+00:00",
+  "scope": "Actual10589 FAIL exit1 before builder, worker exit0 is report completion only. No ZIP or delivery measurement. No retry.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/result.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-result.json",
+      "sha256": "7093bba796c0e99299f05ae19764b5bdc90490a72d3bf21227bbd4c2254659fd",
+      "bytes": 3542
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/request-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-request-receipt.json",
+      "sha256": "f9a6b58a4600cbed139525a6d7b629cd6577b7c51b53a21f10e25c766c4d07d1",
+      "bytes": 3390
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-source-manifest.json",
+      "sha256": "7480b05bcc37c38174184f406a910d81ea5e6d201e8f3e4471ef120780dcd8b6",
+      "bytes": 2696
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-validation.md",
+      "sha256": "82e764a0dac2e8598c76096b547697e72530ce385d9a71e1a58510d64620d4b8",
+      "bytes": 1585
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-handoff.md",
+      "sha256": "a2f3c0c848980a1245e96b878d7e1e560ae2b0636dfb2632bbf80fe58ab367be",
+      "bytes": 1082
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-disk-trace.txt",
+      "sha256": "8d66a78452521a572cd21861d44317d6a6fb8c0b5a2ea5c5b56db69d668c23ad",
+      "bytes": 962
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-sampler-lifecycle.json",
+      "sha256": "33359a5fbb3397bfdd6dfada0636c997279ecbc7e3f659f4569ff94c406d758d",
+      "bytes": 640
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-next-report.md",
+      "sha256": "a98005922b3e1c07b440c4670a5c6ef0605c6be9fd138b98c1e0861d8f138ba0",
+      "bytes": 1191
+    }
+  ]
+}

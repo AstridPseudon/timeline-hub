@@ -1,0 +1,59 @@
+{
+  "status": "BLOCKED",
+  "reason": "The sole authorized delivery-v2-final service exited before importing the accepted caller helper.",
+  "blocker": {
+    "type": "finite_startup_failure",
+    "exception": "ModuleNotFoundError: No module named 'delivery_lifecycle'",
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/run-final-delivery.py",
+    "line": 23,
+    "builder_invoked": false,
+    "zip_written": false
+  },
+  "request": {
+    "service_id": "runtime-delivery-v2-final-1026171722-10589",
+    "target": "integration:runtime",
+    "suite": "delivery-v2-final",
+    "no_cache": true,
+    "requested_at": "2026-10-26T17:17:22Z",
+    "request_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026171722-10589/request",
+    "status_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026171722-10589/status",
+    "raw_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026171722-10589/log.txt",
+    "summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026171722-10589/summary",
+    "exit_code": 1,
+    "wait_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test runtime-delivery-v2-final-1026171722-10589",
+    "wait_exit_code": 1,
+    "resubmitted": false
+  },
+  "authenticated_inputs": {
+    "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+    "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "caller_sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+    "lifecycle_sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+    "wrapper_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8"
+  },
+  "heads": {
+    "agent": {"sha": "ec0a9f5baef2c31bc5179087b83f044524575182", "tree": "83b84c79941917fde535ee3ddba5533a776cace3"},
+    "app": {"sha": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067", "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "disk": {
+    "pre_dispatch_available_bytes": 5148094464,
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-next/evidence/disk-trace.txt",
+    "trace_samples": 5,
+    "trace_min_available_bytes": 5149528064,
+    "trace_max_available_bytes": 5149528064,
+    "trace_interval_seconds": "about 1",
+    "stop_line_bytes": 4000000000,
+    "sampler_pid": 6,
+    "sampler_exit_code": 0,
+    "sampler_wait_status": 0,
+    "sampler_reaped": true
+  },
+  "limits": [
+    "No delivery lifecycle trace was produced because the caller failed at import time.",
+    "No builder staging, patch application, bundle verification, ZIP, manifest, archive inspection, or per-repository delivery result exists.",
+    "No product tests, typecheck, lint, or full suite were run by this worker."
+  ]
+}
