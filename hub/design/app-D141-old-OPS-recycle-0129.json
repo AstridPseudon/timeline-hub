@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T01:29:07.536652+00:00",
+  "worker": "app-P1-local-OPS-1830",
+  "host_CLEAR": "design/app-pin-host-process-use-0126.md",
+  "guards": "clean; obsolete2107; no live worker, active process plan or lease references",
+  "recycle_exit": 0,
+  "stdout": "recycled app-P1-local-OPS-1830\n",
+  "stderr": "",
+  "worktree_absent": true,
+  "raw_files": 80,
+  "raw_modes_hashes_equal": true,
+  "worker_KEEP_restored_exact": true,
+  "private_content_published": false
+}

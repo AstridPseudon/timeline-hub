@@ -1,0 +1,11 @@
+{
+  "worker": "app-P1-local-OPS-1830",
+  "path": "/home/user/work/wt/app-P1-local-OPS-1830",
+  "head": "2107e1870e51c650d59315f4cc1ab6af338f198c",
+  "clean": true,
+  "running_marker": false,
+  "KEEP": true,
+  "historical_only": true,
+  "references": [],
+  "note": "Host process audit still required. Historical suites registrations preserved; retain every private819acf artifact and worker KEEP protecting it. Only worktree release proposed, not worker raw marker release."
+}
