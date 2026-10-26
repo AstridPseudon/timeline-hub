@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.agent.d141u.protected-review.source-manifest.v1",
+  "target": {
+    "branch": "tl/agt-F-D141k-REG-timeline-fix-next",
+    "commit": "2473301cc3513d045ea38b969b4750901b6c9c4c",
+    "tree": "6064c7cc76ef3e4eee72911369f1baa0fa85ac0f",
+    "parent_baseline": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "parent_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "status": "clean"
+  },
+  "diff": {
+    "files": [
+      "tests/timeline/test_authoring_feedback.py",
+      "tests/timeline/test_authoring_media.py"
+    ],
+    "sha256": "7cdf3f1bd17fe2fdb76687ed4da6f95af95a3317083423939e2b7868f21e4c76"
+  },
+  "target_file_sha256": {
+    "tests/timeline/test_authoring_feedback.py": "20d53897ab229f2ecea593fe9a111afad14731c7f0626c6a088cd9b56a2aadfb",
+    "tests/timeline/test_authoring_media.py": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+    "astrid/packs/rendering/docs/scripts/timeline_document.py": "798a2d2ecbc1f7b08c180e356e6608dc2d1c8cd386069410f0e0d89c8cf2a9c8",
+    "astrid/sdk/timeline/sync.py": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
+  },
+  "runtime": {
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "status": "clean"
+  },
+  "runtime_frozen_comparison": {
+    "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "timeline_commit_route": "absent"
+  },
+  "author_evidence_limit": {
+    "historical_trace_sha256_prefix": "e83f4997",
+    "meaning": "author evidence disk-trace.txt was copied from reproduction0510 and is not an author trace",
+    "manager_trace": "separate trace began later"
+  }
+}

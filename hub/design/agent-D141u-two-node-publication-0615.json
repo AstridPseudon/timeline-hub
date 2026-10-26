@@ -1,0 +1,51 @@
+{
+  "time": "2026-10-26T06:14:17.788202+00:00",
+  "scope": "SAFE original source/review summaries only; result.json/private raw and disk histories remain local",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-REG-timeline-fix-next/evidence/findings.md",
+      "path": "design/agt-F-D141k-REG-timeline-fix-next-findings.md",
+      "sha256": "8437622e20bc6a05353f74cdbd525626e319cd55f6d283f932c58b501d9f46fa"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-REG-timeline-fix-next/evidence/source-manifest.json",
+      "path": "design/agt-F-D141k-REG-timeline-fix-next-source-manifest.json",
+      "sha256": "20e90f21fe4f2d81f6acd4813536fba1e5902005b4e70041f139aca8ab8383e2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-REG-timeline-fix-next/evidence/validation.md",
+      "path": "design/agt-F-D141k-REG-timeline-fix-next-validation.md",
+      "sha256": "3d0ee56c01a21474187c7c5d618bd12f0bd0e06c42569dc1dd93be890b10d02e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141k-REG-timeline-fix-next/evidence/handoff.md",
+      "path": "design/agt-F-D141k-REG-timeline-fix-next-handoff.md",
+      "sha256": "de71a6062e176ebd6f8814805d280cbb1e24015a9031c4925319ad286ec90c6d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-protected-review-0610/evidence/review.json",
+      "path": "design/agt-F-D141u-protected-review-0610-review.json",
+      "sha256": "20721fba57abc7eeb0ca88a6fa12bd096599ffe973eb7ae50a34d818e5f43b14"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-protected-review-0610/evidence/findings.md",
+      "path": "design/agt-F-D141u-protected-review-0610-findings.md",
+      "sha256": "79978c98186c3049dcd2f9e08ff2ba493f971d2a9c88c057f8788cf6291b9388"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-protected-review-0610/evidence/source-manifest.json",
+      "path": "design/agt-F-D141u-protected-review-0610-source-manifest.json",
+      "sha256": "d056d57af86044afdb180e52989d8ae35f501c6c06aede2ae62c3a439abde56f"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-protected-review-0610/evidence/validation.md",
+      "path": "design/agt-F-D141u-protected-review-0610-validation.md",
+      "sha256": "b9557523f3aaf73d5c756b8256168add3db377748e8b72574c01dd3f5f72461a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-protected-review-0610/evidence/handoff.md",
+      "path": "design/agt-F-D141u-protected-review-0610-handoff.md",
+      "sha256": "63260ba67b9d79b902e9a28780976e23e13715fe8c8b2a177503d49de91b1709"
+    }
+  ]
+}

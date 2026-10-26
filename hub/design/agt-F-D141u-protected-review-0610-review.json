@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.agent.d141u.protected-review.v1",
+  "disposition": "PASS",
+  "target": "tl/agt-F-D141k-REG-timeline-fix-next",
+  "target_commit": "2473301cc3513d045ea38b969b4750901b6c9c4c",
+  "baseline_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+  "findings": [],
+  "classification": {
+    "kind": "setup_only_existing_test_doubles",
+    "production_gap": false,
+    "d104": "proved",
+    "d116": "proved_for_exact_input_assertion_and_purpose_conservation",
+    "d120": "not_invoked_no_status_or_legacy_behavior_change"
+  },
+  "diff_scope": {
+    "files": [
+      "tests/timeline/test_authoring_feedback.py",
+      "tests/timeline/test_authoring_media.py"
+    ],
+    "changes": 2,
+    "product_files_changed": false,
+    "diff_sha256": "7cdf3f1bd17fe2fdb76687ed4da6f95af95a3317083423939e2b7868f21e4c76"
+  },
+  "ownership": {
+    "agent_caller": "astrid/packs/rendering/docs/scripts/timeline_document.py:275",
+    "agent_owner": "astrid/sdk/timeline/sync.py:199-216 TimelineSession._capture_bundle",
+    "public_wrapper": "astrid/sdk/timeline/sync.py:193-197 TimelineSession._bundle",
+    "runtime_commit_route": "runtime_protocol/server.py:301 and runtime_protocol/service.py:2469 in Runtime 6a011d58",
+    "runtime_comparison": "Runtime fa9cd5464a has no timeline_commit implementation files or _capture_bundle symbol; neither Runtime revision owns this setup failure"
+  },
+  "conservation": {
+    "authored_inputs": "PASS",
+    "assertion_asts": "PASS",
+    "exception_predicates": "PASS",
+    "test_identity_and_purpose": "PASS",
+    "case_local_double_other_callers": "PASS",
+    "sequence_bounds": "PASS",
+    "metadata_generation_variant_predicates": "UNCHANGED",
+    "private_runtime_document_cache_boundary": "UNCHANGED",
+    "c0_authenticated_closure": "UNCHANGED"
+  },
+  "custody_limit": "The author's evidence disk-trace.txt is historical reproduction0510 material (hash e83f4997...) and is not author-run custody. Manager actual tracing began later. This review's own persistent trace began at its recorded restart timestamp and is not backfilled."
+}

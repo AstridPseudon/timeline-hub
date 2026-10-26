@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.agent.d141u.reg.source-manifest.v1",
+  "agent": {
+    "path": "/home/user/work/wt/agt-F-D141k-REG-timeline-fix-next",
+    "base_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "base_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "status": "modified_only_named_test_doubles",
+    "working_sha256": {
+      "tests/timeline/test_authoring_feedback.py": "20d53897ab229f2ecea593fe9a111afad14731c7f0626c6a088cd9b56a2aadfb",
+      "tests/timeline/test_authoring_media.py": "8101ad4e0a9ff304e2f7ae9fb0a02c2270a827379aa253e38692af9ad7577961",
+      "astrid/packs/rendering/docs/scripts/timeline_document.py": "798a2d2ecbc1f7b08c180e356e6608dc2d1c8cd386069410f0e0d89c8cf2a9c8",
+      "astrid/sdk/timeline/sync.py": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
+    },
+    "base_blob_sha1": {
+      "tests/timeline/test_authoring_feedback.py": "da9f6e8af0a0042046c5fc9b5c8c4ebc3eddb8d5",
+      "tests/timeline/test_authoring_media.py": "079c6c43b1db2853fddc04b301542561381ee292",
+      "astrid/packs/rendering/docs/scripts/timeline_document.py": "63d6962333ae3462e01440a41fe741523504e74c",
+      "astrid/sdk/timeline/sync.py": "2b3418e521bd45913322bc220e94387f8335e7c4"
+    }
+  },
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-6a011d58",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "status": "clean"
+  },
+  "diff_sha256": "7cdf3f1bd17fe2fdb76687ed4da6f95af95a3317083423939e2b7868f21e4c76",
+  "private_output_sha256": {
+    "private/targeted.xml": "5e3726913b9c41c9d865549153505ffb65de9b5bade6e9612891f22c87bd7353",
+    "private/stdout": "f91bbdf27931e71e2462fc3acdd475542de0bd65a1cde81cf9e86986fdfb7160",
+    "private/stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "disk-trace.txt": "e83f4997d4ddd66e06c4939580fdc61c03e396bb1eeb07e130ea768773d0b447"
+  }
+}
