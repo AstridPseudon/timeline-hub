@@ -1,0 +1,205 @@
+from __future__ import annotations
+
+import copy
+import importlib.util
+import json
+import sys
+import types
+import uuid
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline_duplicate import _duplicate, copy_content
+from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.timeline_import_prepare import _document_id, check_import_manifest, prepare_import
+
+
+def _source_bundle() -> dict:
+    path = Path(__file__).parents[1] / "editing_scenarios" / "fixtures" / "empty.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _chapter_bundle() -> dict:
+    helper_path = Path(__file__).with_name("test_timeline_restructure.py")
+    spec = importlib.util.spec_from_file_location("timeline_restructure_fixture", helper_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    flat = module.flat_film()
+    for shot in flat["shots"].values():
+        assets = shot["internal_timeline"]["registry"]["assets"]
+        for index, asset in enumerate(assets.values(), start=1):
+            asset["media_id"] = "sha256:" + f"{index:064x}"
+        shot["base_internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    flat["project_id"] = "source-project"
+    stored = module.split(flat)
+    stored["parent"]["config"]["bundle"] = {
+        "transcriptReferences": {
+            "schema": "media.transcript.references/v1",
+            "associations": [{"assetId": "P", "documentId": "transcript:source"}],
+        },
+    }
+    return stored
+
+
+def _inventory(monkeypatch, entries):
+    module = types.ModuleType("astrid.sdk.timeline_export")
+    module.inventory_elements = lambda _bundle, *, elements=None: copy.deepcopy(entries)
+    monkeypatch.setitem(sys.modules, "astrid.sdk.timeline_export", module)
+
+
+def test_copy_content_accepts_a_bundle_file(tmp_path):
+    source = _source_bundle()
+    path = tmp_path / "timeline.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+    copied, _ = copy_content(path, copy.deepcopy(source), new_slug="file-copy")
+    assert list(copied["shots"]) == ["file-copy-A"]
+
+
+def test_duplicate_accepts_a_file_source_through_shared_copy_path(tmp_path, monkeypatch):
+    source = _source_bundle()
+    path = tmp_path / "timeline.json"
+    path.write_text(json.dumps(source), encoding="utf-8")
+
+    class Timelines:
+        def create_empty(self, **_kwargs):
+            return SimpleNamespace(ok=True, data={"timeline_id": "file-duplicate"}, error=None)
+
+    class Client:
+        timelines = Timelines()
+
+    monkeypatch.setattr(Checkout, "open", classmethod(
+        lambda cls, project, timeline, **_kwargs: cls({**copy.deepcopy(source), "project_id": project, "timeline_id": timeline})
+    ))
+    monkeypatch.setattr(Checkout, "check", lambda self: SimpleNamespace(valid=True, blocking=[], problems=[]))
+    monkeypatch.setattr(Checkout, "publish", lambda self, *_args, **_kwargs: {"old_head": None, "new_head": "new-head"})
+    result = _duplicate(Client(), "p", path, slug=None, name=None, revision_id=None)
+    assert result["timeline_id"] == "file-duplicate"
+    assert result["shots"] == 1
+
+
+def test_check_import_manifest_reports_unpinned_missing_and_different():
+    manifest = {
+        "format": "astrid.timeline/1",
+        "elements": [
+            {"packId": "astrid_motion", "kind": "effect", "id": "gone", "revision": "sha256:old", "pinned": False},
+            {"packId": "astrid_motion", "kind": "effect", "id": "changed", "revision": "sha256:old", "pinned": False},
+        ],
+    }
+    result = check_import_manifest(manifest, elements=[
+        {"packId": "astrid_motion", "kind": "effect", "id": "changed", "revision": "sha256:new"},
+    ])
+    assert [row["id"] for row in result["missing_effects"]] == ["gone"]
+    assert [row["id"] for row in result["different_effects"]] == ["changed"]
+
+
+def test_check_import_manifest_refuses_unknown_format_and_unsatisfied_pin():
+    with pytest.raises(TimelineEditError, match="newer Astrid"):
+        check_import_manifest({"format": "astrid.timeline/2", "elements": []}, elements=[])
+    manifest = {"format": "astrid.timeline/1", "elements": [
+        {"packId": "astrid_motion", "kind": "effect", "id": "pinned", "revision": "sha256:old", "pinned": True},
+    ]}
+    with pytest.raises(TimelineEditError, match="pins pinned"):
+        check_import_manifest(manifest, elements=[])
+    with pytest.raises(TimelineEditError, match="custom effect custom"):
+        check_import_manifest({"format": "astrid.timeline/1", "elements": [
+            {"packId": "project_custom", "kind": "effect", "id": "custom", "pinned": False},
+        ]}, elements=[])
+
+
+def test_prepare_import_rejects_manifest_that_hides_a_source_pin(monkeypatch):
+    source = _source_bundle()
+    _inventory(monkeypatch, [
+        {"packId": "astrid_motion", "kind": "effect", "id": "pinned-effect", "revision": "sha256:" + "a" * 64, "pinned": True},
+    ])
+    with pytest.raises(TimelineEditError, match="inventory does not match"):
+        prepare_import(source, {"format": "astrid.timeline/1", "elements": []}, {}, "target", elements=[], timeline_id="target-timeline")
+
+
+def test_manifest_inventory_allows_target_revision_difference_for_unpinned_element(monkeypatch):
+    source = _source_bundle()
+    current = {"packId": "astrid_motion", "kind": "effect", "id": "unPinned", "revision": "sha256:new", "pinned": False}
+    _inventory(monkeypatch, [current])
+    manifest = {"format": "astrid.timeline/1", "name": "Fixture", "elements": [
+        {**current, "revision": "sha256:old"},
+    ]}
+    result = prepare_import(source, manifest, {}, "target", elements=[current], timeline_id="target-timeline")
+    assert result["differences"]["different_effects"][0]["id"] == "unPinned"
+
+
+def test_prepare_import_builds_fresh_children_and_target_transcript_ids(monkeypatch):
+    source = _chapter_bundle()
+    source_project = source["project_id"]
+    first_shot_id = source["placements"][0]["shot_id"]
+    first_shot = source["shots"][first_shot_id]
+    media_id = next(iter(first_shot["internal_timeline"]["registry"]["assets"].values()))["media_id"]
+    source_document_id = _document_id(source_project, media_id, "default")
+    source["parent"]["config"]["bundle"]["transcriptReferences"]["associations"][0]["documentId"] = source_document_id
+    first_shot["payload"]["text_bindings"] = [{
+        "binding_id": "source-binding",
+        "kind": "voiceover_script",
+        "slot": None,
+        "head": 8,
+        "media_id": media_id,
+        "content_hash": media_id,
+        "byte_size": 12,
+        "mime_type": "text/plain; charset=utf-8",
+        "created_at": "source timestamp",
+        "updated_at": "source timestamp",
+    }]
+    first_shot["payload"]["items"] = [{
+        "item_id": "source-item",
+        "media_id": media_id,
+        "selected_item_id": "source-item",
+        "metadata": {"role": "primary_visual"},
+    }]
+    _inventory(monkeypatch, [])
+    manifest = {"format": "astrid.timeline/1", "name": "Fixture", "elements": []}
+    content = {"schema": "media.transcript/v1", "media_id": media_id, "source_id": "default", "segments": []}
+    unreferenced = {"schema": "media.transcript/v1", "media_id": media_id, "source_id": "other", "segments": []}
+    result = prepare_import(
+        source,
+        manifest,
+        {"transcripts/fixture.json": {"document_id": source_document_id, "kind": "media.transcript", "content": content},
+         "transcripts/unreferenced.json": unreferenced},
+        "target-project",
+        timeline_id="target-timeline",
+    )
+    assert result["timeline_id"] == "target-timeline"
+    assert result["publication"]["expected_head"] is None
+    assert result["publication"]["internal_timeline_revisions"]
+    assert all(row["timeline_id"] == "target-timeline" for row in result["publication"]["internal_timeline_revisions"])
+    assert len(result["publication"]["shot_revisions"]) == len(source["placements"])
+    assert {row["shot_id"] for row in result["publication"]["shot_revisions"]}.isdisjoint(
+        {row["shot_id"] for row in source["placements"]}
+    )
+    new_document_id = next(row["document_id"] for row in result["transcripts"] if row["content"]["source_id"] == "default")
+    assert len(result["transcripts"]) == 2
+    assert new_document_id != source_document_id
+    assert result["publication"]["parent_composition"]["config"]["bundle"]["transcriptReferences"]["associations"][0]["documentId"] == new_document_id
+    registration = result["text_bindings"][0]
+    assert registration["media_id"] == media_id and registration["shot_id"] != first_shot_id
+    copied_pin = next(row["payload"]["text_bindings"][0] for row in result["publication"]["shot_revisions"]
+                      if row["payload"].get("text_bindings"))
+    assert copied_pin["head"] == 1 and copied_pin["binding_id"] != "source-binding"
+    assert "created_at" not in copied_pin and "updated_at" not in copied_pin
+    copied_item = next(row["payload"]["items"][0] for row in result["publication"]["shot_revisions"]
+                       if row["payload"].get("items"))
+    assert copied_item["item_id"] != "source-item"
+    assert copied_item["selected_item_id"] == copied_item["item_id"]
+    assert source_project != "target-project"
+
+
+def test_prepare_import_requires_every_transcript_reference(monkeypatch):
+    source = _source_bundle()
+    source["parent"]["config"]["bundle"] = {"transcriptReferences": {
+        "schema": "media.transcript.references/v1",
+        "associations": [{"assetId": "P", "documentId": "transcript:missing"}],
+    }}
+    _inventory(monkeypatch, [])
+    with pytest.raises(TimelineEditError, match="no carried transcript"):
+        prepare_import(source, {"format": "astrid.timeline/1", "elements": []}, {}, "target", timeline_id=str(uuid.uuid4()))

@@ -12,8 +12,10 @@ Pure parts (``id_map``, ``copy_content``) take and return plain dicts; only
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Any
 
 from astrid.core.timeline.astrid_ns import migrate_bundle
@@ -69,12 +71,27 @@ def _remap_values(value: Any, mapping: Mapping[str, str]) -> Any:
     return value
 
 
-def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_slug: str) -> tuple[dict[str, Any], list[str]]:
+def _copy_source(source: Mapping[str, Any] | str | Path) -> dict[str, Any]:
+    """Normalize the shared copy path's source bundle, including an archive JSON file."""
+    if isinstance(source, Mapping):
+        return copy.deepcopy(dict(source))
+    path = Path(source)
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise TimelineEditError(f"cannot read timeline bundle {path}: {exc}") from exc
+    if not isinstance(value, Mapping):
+        raise TimelineEditError(f"timeline bundle {path} must contain a JSON object")
+    return copy.deepcopy(dict(value))
+
+
+def copy_content(source: Mapping[str, Any] | str | Path, target: Mapping[str, Any], *, new_slug: str) -> tuple[dict[str, Any], list[str]]:
     """Return a copy of ``target`` (keeping its provenance and identity) holding ``source``'s content.
 
     Shots, placements and occurrences get new ids (``id_map``). Returns ``(bundle, notes)``
     where notes say what was not carried over.
     """
+    source = _copy_source(source)
     notes: list[str] = []
     placements = [dict(row) for row in source.get("placements") or []]
     shot_ids = [str(row["shot_id"]) for row in placements]
@@ -113,6 +130,22 @@ def copy_content(source: Mapping[str, Any], target: Mapping[str, Any], *, new_sl
         shot = add_authoring_shot(out, shot_id=new_shot, occurrence_id=occ_map[str(row["occurrence_id"])],
                                   start_ms=(row.get("placement") or {}).get("start_ms", 0))
         payload = copy.deepcopy(dict(src_shot.get("payload") or src_shot.get("base_payload") or {}))
+        # Item ids are globally unique inside a compiled authoring bundle.
+        # Reuse the compiler's canonical placement remapper so copied shots
+        # get fresh item identities and known item references stay coherent.
+        try:
+            from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement
+
+            payload, _item_ids = _copy_shot_for_placement(
+                payload,
+                project_id=str(out.get("project_id") or ""),
+                timeline_id=str(out.get("timeline_id") or new_slug),
+                occurrence_id=occ_map[str(row["occurrence_id"])],
+                authoring_shot_id=new_shot,
+                source_shot_id=old_shot,
+            )
+        except Exception as exc:
+            raise TimelineEditError(f"cannot remap copied shot item identities for {old_shot!r}: {exc}") from exc
         text_bindings += len(payload.get("text_bindings") or [])
         for key in _SOURCE_BOUND_PAYLOAD_KEYS:
             payload.pop(key, None)
@@ -169,7 +202,7 @@ def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, An
             raise TimelineEditError(f"shot {old!r} was not copied faithfully into {new!r} (its clips differ)")
 
 
-def duplicate_timeline(project: str, source: str, *, slug: str | None = None, name: str | None = None,
+def duplicate_timeline(project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None = None, name: str | None = None,
                        revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
     """Create a timeline with a copy of ``source``'s head (new shot ids) and publish it.
 
@@ -184,9 +217,24 @@ def duplicate_timeline(project: str, source: str, *, slug: str | None = None, na
         return _duplicate(opened, project, source, slug=slug, name=name, revision_id=revision_id)
 
 
-def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
+def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None, name: str | None,
                revision_id: str | None) -> dict[str, Any]:
-    src = Checkout.open(project, source, revision_id=revision_id, client=client)
+    is_file_source = isinstance(source, (Mapping, Path))
+    if isinstance(source, str):
+        try:
+            is_file_source = Path(source).is_file()
+        except OSError:
+            is_file_source = False
+    if is_file_source:
+        if revision_id is not None:
+            raise TimelineEditError("a file-backed timeline source cannot select a Runtime revision")
+        source_bundle = _copy_source(source)
+        # The copied content is now being checked and authored in the requested
+        # target project; source project/timeline identities do not carry over.
+        source_bundle["project_id"] = project
+        src = Checkout(source_bundle)
+    else:
+        src = Checkout.open(project, str(source), revision_id=revision_id, client=client)
     report = src.check()  # all or nothing: refuse an invalid head BEFORE creating anything
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
