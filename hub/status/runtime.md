@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T02:03:45Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
-# runtime board, 2026-10-26T02:00:07Z
+<!-- main | 2026-10-26T02:08:38Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-26T02:08:39Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -7,7 +7,7 @@
 | U4p cut inputs | Supply exact Runtime producer | Runtime manager | Final Runtime head | merged | Peer 0002 and 0005 | Full SHA, tree, canonical artifact hashes and normal tool inputs published to App and main. | 6a011d58e691 |
 | U2 U3 cut | Receive frozen producers | Agent and App | Final normal source | merged | Agent28e56; App867cb273 | Final four-way tuple recorded; Main00:41 GO. No upstream chasing. | 28e56 / 867cb273 |
 | D140 Farm recipe | Retain qualified ordinary route | Luna | Independent0049 and0101 PASS | merged | Ordinary0032; review0049 | Ordinary branch97 controls PASS; frozen tuple source0055 qualified by0101. Farm actual census remains its own proof row. | 1b709a79 |
-| D141 Farm inputs | Resolve all census input producers | Luna | Actual Farm census0140 | doing | rt-F-D141-Farm-input-producers-0201 | Full22 non-pass packet mapped to one owner; no new census or child body. | Base1b709a79 |
+| D141 Farm inputs | Qualify complete input producer map | Luna | Actual Farm census0140 | review | Author0201; independent0208 | All22 rows supplied;97 recipe controls PASS. Original relative evidence recovered exactly; reviewer checks commands and current venue facts. | 2912e517 |
 | D141 Farm binding | Qualify frozen source binding | Luna | Independent0101 PASS | merged | Source0055; review0101 | Exact four-way source and lock custody PASS; own4 controls PASS. Complete Farm handoff sent01:10:36; venue inputs require real census. | 1b709a79 |
 | D141 Runtime full route | Retain qualified full and pristine routes | Sol and independent Luna | Review0028 and own0052 controls | merged | Review0028; output0052 | Normal route installed; source and symlink guards retained. Actual cut18778 complete; same-route pristine8912 queued. | Source 0404f9819 |
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
@@ -18,7 +18,7 @@
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Normal5GB admission | doing | Controller0129; service6934 | Exact reviewed row installed; sole runtime-d141-p5-cut-1026013331-6934 queued. Whole run KEEP; no actual body or GO yet. | Frozen cut |
 | P4 named admission | Preserve cancelled private source | Luna | Main0148 cancel and original XML | gated:cancelled | Source0146; Agent0136 review0139 PASS | No kit install despite late Agent PASS. Actual10086 passed3/3; Agent corrects receipt only. Queued19479 must not start. | Private candidates only |
-| P2 placement cut | Review history field source and attribution | Luna | App retained3118 safe field diff | review | Sources0140 and0149; review0201 | D124 complete_stage source finding under independent review. Actual cause UNKNOWN pending safe field/index packet. | Frozen cut |
+| P2 placement cut | Join actual history fields to source | Luna | Main0205 actual safe packet | doing | rt-P2-D141-history-final-0207 | App0153 PASS packet announced; final22-path source join dispatched. Prior source PASS and corrected metadata retained. | Frozen cut |
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
 | F-final install | Receive exact final packaging inputs | Luna | Actual gate tuple and pristine results | gated:D141-results | Installer resume0129 complete | All four source guards PASS; only three disjoint registry rows differ. No install: immutable tuple and actual gates remain missing. | Qualified chain0015 |
 | F-final notes | Install reviewed D141 notes | Luna | Independent0032 PASS | merged | rt-F-D141-notes-install-0038 | Exact pair installed;568 outside files unchanged; App paragraphs unchanged; render PASS. No ZIP claim. | 5738d66d / f4bb7346 |
@@ -32,11 +32,11 @@
 | Staging and Store tools | Preserve deferred private source | Existing owners | D140 and D141 | gated:post-ZIP | No new author or cleanup | Source and failed findings retained; no installation, retirement or new cleanup round. | Held candidates |
 | OPS headroom | Preserve guarded cleanup holds | Manager route | Main0123 and0130 decisions | gated:safety | Prior maintenance complete | Sweep removed0; compact packed0 dirs and gzipped5 logs. Sealed fixtures, dirty trees, KEEP data and three old venvs retained. | No product change |
 
-Blockers: Farm — Actual census0140 NOT_READY with22 non-pass checks. Runtime source0201 owns complete producer map; Farm owns full40 composition receipt correction. No child or core body.
+Blockers: Farm — Actual census0140 NOT_READY with22 non-pass checks. Runtime source0201 and review0208 own complete producer map; Farm owns full40 composition receipt correction. No child or core body.
 Blockers: Runtime service — Pristine8912 is queued. Retained start/end bracket gives floor4959521280; normal handler still5.2GB. Main0123 stops per-job interface. Original8912 waits normal5.2GB; no floor change.
 Blockers: P5 — Sole normal service6934 queued after reviewed row install. Actual38-case proof unrun; dispatcher keeps light5GB admission. Raw run KEEP.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
-Next ready: Review Farm producer packet0201 on completion; receive history review0201 and App safe fields; receive queued6934 and8912 only after normal admission. P4 kit stays cancelled.
-live 2 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.73GB; ordinary maintenance complete; sealed fixture compaction held; dirty v1 trees retained by guards.
+Next ready: Receive Farm0208 independent review and history0207 final source join; queued6934 and8912 await normal admission. P4 kit stays cancelled.
+live 2 / cap 3; ready-undispatched 0. Source0125 never started on Main0123 decision. Source controllers only; no heavy body. Fresh disk about4.73GB; sweep and compact complete: zero reclaimed; sealed fixture compaction held; dirty v1 trees retained by guards.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
-INBOX consumed through 1743381 bytes. Peer boards read Farm01:55 App01:42 Agent01:45; all new asks assigned. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
+INBOX consumed through 1748675 bytes. Peer boards read Farm01:55 App01:42 Agent01:45; all new asks assigned. Main0106 source sync resolves installer ref wait. Managers write boards briefs peers only.
