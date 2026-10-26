@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-26T06:41:31.005148+00:00",
+  "scope": "P5 immutable copiedtree correction only; no new body or later Agent applicability",
+  "original_sha256": "a46bcb2d7e566b01c54da297968a2236eb81d6598f5ac85bf18c55e70d096389",
+  "correction_sha256": "4f8326ae2b4d32cbe0fffd33bcf2986e300af16554a97bde8700ce165c39a83b",
+  "corrected_derivative_sha256": "688d08bc899c3c1583fb2010d0f8ff2251e2c593b24d62d2a703856d90a26ce6",
+  "single_pointer": "/actual_integrated_heads/agent/tree",
+  "actual_git_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+  "all_other_json_values_exact": true,
+  "original_prior_receipt_exact": true,
+  "later_agent_432f_ecdc_applicability": "owner disposition still owed; no automatic retarget",
+  "normalhub_paths": [
+    "/home/user/timeline-hub/hub/design/rt-P5-D141-final-Agent-tree-correction-0619-correction.json",
+    "/home/user/timeline-hub/hub/design/rt-P5-D141-final-Agent-tree-correction-0619-p5-applicability-corrected.json"
+  ]
+}
