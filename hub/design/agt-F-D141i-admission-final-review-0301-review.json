@@ -1,0 +1,37 @@
+{
+  "schema": "timeline.agent.d141i.final-review.v1",
+  "status": "FAIL_COMMAND",
+  "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence",
+  "finding_count": 1,
+  "findings": [
+    {
+      "id": "D141I-FINAL-001",
+      "severity": "blocking",
+      "status": "OPEN",
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/measurement-command.sh",
+      "lines": "365-369",
+      "requirement": "Current disk must be >=4000000000 afterbody.",
+      "evidence": "The exact post-body block runs record_disk after_body >/dev/null, checks only record_disk's readability exit, then accepts monitor_rc/body_rc. It has no after_body_available comparison against CONTINUOUS_STOP_BYTES.",
+      "independent_reproduction": "With the extracted unchanged record_disk helper returning 3999999999, the exact post-body block exited 0 and emitted phase=after_body available_bytes=3999999999.",
+      "impact": "A completed body can be accepted despite post-body free disk below the required 4000000000-byte floor.",
+      "required_resolution": "Bind the afterbody sample to a variable and require it to be >= CONTINUOUS_STOP_BYTES before final success; rerun the bounded controls and final source review.",
+      "not_inferred": "No body, service request, pytest result, REG/nonREG classification, or ship credit was inferred."
+    }
+  ],
+  "passed_bounded_checks": [
+    "genuine original 0249 admission receipt and manager brief authenticate at 4821594112 >= 4700000000",
+    "malformed, below-floor, copied-forged, and missing admission inputs refuse with 78",
+    "four frozen source guards are exact, clean, and at the required commits/trees",
+    "bash syntax, static packet validation, native row, 22 roots, manifest/JUnit binding, and operational Python lint/types pass",
+    "production runroot is absent; no service request or measurement body ran"
+  ],
+  "hashes": {
+    "command": "ce0b02296cb2488b8b48ffb246a910d9717e75c265013d6e6df5b998e953eda2",
+    "row": "c7426dfb01e8f929500573791cbed540cc82d8c3a1715c8eaf16b8a87fd7af45",
+    "positive_manifest": "6398e02116849c6f73bb71cd56679a8fef37103d93d854c61d4e02193b2cef58",
+    "poison_manifest": "4511d136c8cce8cc623e709a96debfb83c3a3e818bf2f2c22b5780da58af3729",
+    "original_0238_command": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+    "admission_receipt": "5fbdab93245696b725f7b67eca44f02d939536c8f6e5d6c6678ea628de4b5a35",
+    "manager_brief": "379e1eb69b3f5e589346ac2cced4e19035ce449ce9d1075c5128be74c77137b5"
+  }
+}
