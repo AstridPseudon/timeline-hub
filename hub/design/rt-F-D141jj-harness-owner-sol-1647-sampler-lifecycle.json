@@ -1,0 +1,25 @@
+{
+  "pid": 5,
+  "pgid": 5,
+  "start": 1793033326.9986544,
+  "interval_seconds": 5,
+  "stop_floor": 4000000000,
+  "initial_parent": 4,
+  "wait_reap": "explicit subprocess.wait completed",
+  "exit_code": 0,
+  "end": 1793033812.0933876,
+  "gaps": {
+    "start_to_first_sample_seconds": 0.02642536163330078,
+    "last_sample_to_reap_seconds": 5.006759405136108,
+    "intervals_above_5_1_seconds": [],
+    "after_reap": "final metadata, evidence index, commit message, DONE and final report are unsampled"
+  },
+  "samples": 97,
+  "min_available_bytes": 5178585088,
+  "max_observed_interval_seconds": 5.0212438106536865,
+  "first_sample_time": 1793033327.0250797,
+  "last_sample_time": 1793033807.0866282,
+  "launcher_tool_session_exit": 0,
+  "checker_group_stop": "Each serial checker supervisor independently checks actual free bytes/retained size every1s and sends SIGTERM then bounded SIGKILL to the entire checker process group on4,000,000,000 floor or100MB retained budget; neither trip occurred. Independent sampler and unrelated tool processes are outside that group.",
+  "sampler_stop": "STOP_SAMPLER sentinel; launcher proc.terminate then explicit wait; handler exits0"
+}

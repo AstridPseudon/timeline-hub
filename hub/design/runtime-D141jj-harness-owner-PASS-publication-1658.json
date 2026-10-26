@@ -1,0 +1,140 @@
+{
+  "at": "2026-10-26T16:58:58.889649+00:00",
+  "worker": "rt-F-D141jj-harness-owner-sol-1647",
+  "result": {
+    "status": "AUTHOR_COMPLETE_PASS",
+    "independent_review": "PENDING_SAME_EXACT_CHECKER_AND_PURPOSE_AUDIT",
+    "checker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py",
+    "checker_sha256": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+    "attempts": [
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793033501750580415",
+        "returncode": 1,
+        "end": 1793033507.7771187,
+        "pid": 5,
+        "pgid": 5,
+        "explicit_wait_reaped": true,
+        "stop": null,
+        "retained_regular_file_bytes": 2122058
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793033548496971443",
+        "returncode": 0,
+        "end": 1793033557.643294,
+        "pid": 4,
+        "pgid": 4,
+        "explicit_wait_reaped": true,
+        "stop": null,
+        "retained_regular_file_bytes": 4288144
+      }
+    ],
+    "positive": "PASS",
+    "original_seven": "PASS",
+    "caller_cases": 11,
+    "caller_process_exit": 2,
+    "direct_d68_stage_guards": 2,
+    "direct_app_tree_guard": "PASS",
+    "scoped_cas": "PASS",
+    "static_validation": "PASS",
+    "source11": "IMMUTABLE_PASS",
+    "original_manifest": "IMMUTABLE_PASS",
+    "same33": "PRIOR_PASS_RETAINED_NOT_RERUN",
+    "production_changes": false,
+    "installation": false,
+    "blocked": false,
+    "purpose_map": "purpose-map.json",
+    "evidence_index": "tmp/artifact-index.json",
+    "proof_limit": "unchanged caller.main in child private probe with builder-hash seam, metadata fixtures disclosed; separate direct D68 guards; not untouched production CLI",
+    "retained_regular_file_bytes": 4718240,
+    "allocated_bytes": 9555968,
+    "sampler": {
+      "pid": 5,
+      "pgid": 5,
+      "start": 1793033326.9986544,
+      "interval_seconds": 5,
+      "stop_floor": 4000000000,
+      "initial_parent": 4,
+      "wait_reap": "explicit subprocess.wait completed",
+      "exit_code": 0,
+      "end": 1793033812.0933876,
+      "gaps": {
+        "start_to_first_sample_seconds": 0.02642536163330078,
+        "last_sample_to_reap_seconds": 5.006759405136108,
+        "intervals_above_5_1_seconds": [],
+        "after_reap": "final metadata, evidence index, commit message, DONE and final report are unsampled"
+      },
+      "samples": 97,
+      "min_available_bytes": 5178585088,
+      "max_observed_interval_seconds": 5.0212438106536865,
+      "first_sample_time": 1793033327.0250797,
+      "last_sample_time": 1793033807.0866282,
+      "launcher_tool_session_exit": 0,
+      "checker_group_stop": "Each serial checker supervisor independently checks actual free bytes/retained size every1s and sends SIGTERM then bounded SIGKILL to the entire checker process group on4,000,000,000 floor or100MB retained budget; neither trip occurred. Independent sampler and unrelated tool processes are outside that group.",
+      "sampler_stop": "STOP_SAMPLER sentinel; launcher proc.terminate then explicit wait; handler exits0"
+    }
+  },
+  "scope": "Author bounded control PASS only; protected independent SAME checker is queued. All production11 unchanged. No installation/build.",
+  "monitor": "97 samples min5178585088 maxgap5.021; startup stop and post-reap bookkeeping limitations retained",
+  "outputs": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-check_jj.py",
+      "sha256": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+      "bytes": 30133
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/checker-diff.patch",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-checker-diff.patch",
+      "sha256": "7d8bf9e768674a3659f89cfa64fbfb77d82f297cf7aafd5ecf6ebd7b16b2b6c5",
+      "bytes": 15682
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/purpose-map.json",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-purpose-map.json",
+      "sha256": "fb081e053cea560ba7ee77f1fd8648fc542ab8c41def690b453c2bb672e1558b",
+      "bytes": 94786
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/review.json",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-review.json",
+      "sha256": "8dd41c9fb146583ffda0a5f51ab999c42db3ae099e6bb9160816b9990ace0d74",
+      "bytes": 3140
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/findings.md",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-findings.md",
+      "sha256": "d56672dd09bb4c8835990acdbf8bbe192ec1b2fa42c699d03315bb25e4ef6639",
+      "bytes": 4118
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/source-manifest.json",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-source-manifest.json",
+      "sha256": "567a248020d383c217414d2c243b121ca9fea10676154730b5c2990607d16f0d",
+      "bytes": 6774
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/validation.md",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-validation.md",
+      "sha256": "48a5421e729f0bb41d9825409ecf68cb85fe00bba601272ef24479396cdabe3b",
+      "bytes": 3580
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/handoff.md",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-handoff.md",
+      "sha256": "b509d6e482d2b693623dcc3962315fdf1fde56dc576011e1472e14ebcdbf3777",
+      "bytes": 2396
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-disk-trace.txt",
+      "sha256": "f924d199c2e537dcb167634b533222bea3629ceb38bd7041a5a5c412be4f14e3",
+      "bytes": 6770
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141jj-harness-owner-sol-1647-sampler-lifecycle.json",
+      "sha256": "8f181d579ebde4ca58d03b53b7b0c54e5ca0a5b8e0e1c3ab7bb97f6108975d8f",
+      "bytes": 1176
+    }
+  ]
+}

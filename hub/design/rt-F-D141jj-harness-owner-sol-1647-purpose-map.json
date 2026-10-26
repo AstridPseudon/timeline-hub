@@ -1,0 +1,2107 @@
+{
+  "format": "d141jj-private-completed-checker-purpose-map-v3",
+  "baseline": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+  "baseline_sha256": "0940de25f79f6b90fbc269325940442522a36c2dad1bc4fe23331fc13f28ab9c",
+  "derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py",
+  "derivative_sha256": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+  "inherited_changes_from_sol1627": {
+    "format": "d141jj-private-checker-purpose-map",
+    "baseline": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/check_jj.py",
+    "baseline_sha256": "616f3e23382da003d435053ff3f1aec6b8fc6893ce4d7a0e2794ffefc3617859",
+    "derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+    "assertion_changes": [
+      {
+        "kind": "replace",
+        "before": [
+          {
+            "line": 174,
+            "scope": "validate_manifest",
+            "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"]",
+            "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+          }
+        ],
+        "after": [
+          {
+            "line": 169,
+            "scope": "validate_manifest",
+            "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"], f\"candidate hash mismatch: {entry['name']}\"",
+            "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+          },
+          {
+            "line": 180,
+            "scope": "manifest_refusal",
+            "assertion": "assert str(exc) == \"candidate hash mismatch: \" + manifest[\"candidates\"][0][\"name\"]",
+            "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+          }
+        ],
+        "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+        "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+      },
+      {
+        "kind": "replace",
+        "before": [
+          {
+            "line": 241,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert failure is not None, label",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          }
+        ],
+        "after": [
+          {
+            "line": 223,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert not (service_root / \"timeline-delivery-KEEP\" / \"disk-trace.tsv\").exists()",
+            "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+          },
+          {
+            "line": 259,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert phases[-1][\"phase\"] == phase, (label, phases)",
+            "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+          },
+          {
+            "line": 261,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert failure is None and code == 2, (label, code, failure)",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 262,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert phases[-1][\"outcome\"] == \"returned\", phases",
+            "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+          },
+          {
+            "line": 264,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert value[\"status\"] == \"FAIL\" and value[\"exit\"] == code",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 266,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert d68[\"status\"] == \"FAIL\" and d68[\"error\"] == reason, d68",
+            "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+          },
+          {
+            "line": 267,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert d68[\"repos\"] == {} and \"builder_exit\" not in d68",
+            "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+          },
+          {
+            "line": 268,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert list(Path(d68[\"stage_root\"]).iterdir()) == []",
+            "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+          },
+          {
+            "line": 269,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert \"delivery gate refused: \" + reason in value[\"output\"]",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 271,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert lifecycle[\"status\"] == \"failed\" and lifecycle[\"exit\"] == code, lifecycle",
+            "purpose_and_rationale": "Require production lifecycle completion with failed child exit2 and valid trace, excluding sampler/low-disk/lifecycle failure as false positives."
+          },
+          {
+            "line": 272,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert lifecycle[\"trace_status\"] == \"PASS\", lifecycle",
+            "purpose_and_rationale": "Require production lifecycle completion with failed child exit2 and valid trace, excluding sampler/low-disk/lifecycle failure as false positives."
+          },
+          {
+            "line": 273,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases)",
+            "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+          },
+          {
+            "line": 275,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert code is None and failure == reason, (label, code, failure, reason)",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 276,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert phases[-1][\"outcome\"] == \"refused\", phases",
+            "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+          }
+        ],
+        "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+        "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+      },
+      {
+        "kind": "insert",
+        "before": [],
+        "after": [
+          {
+            "line": 278,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert not list(service_root.rglob(\"delivery-output\")), label",
+            "purpose_and_rationale": "Prohibit negative builder invocation or successful delivery output; exclusive positive marker must remain unchanged."
+          },
+          {
+            "line": 279,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before",
+            "purpose_and_rationale": "Prohibit negative builder invocation or successful delivery output; exclusive positive marker must remain unchanged."
+          },
+          {
+            "line": 280,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert protected_snapshot() == baseline",
+            "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+          },
+          {
+            "line": 281,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+            "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+          },
+          {
+            "line": 282,
+            "scope": "finding_refusals.refusal",
+            "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+            "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+          },
+          {
+            "line": 300,
+            "scope": "finding_refusals.direct_stage_refusal",
+            "assertion": "assert caller.source_identity(spath, ssha) == source",
+            "purpose_and_rationale": "Establish real source ownership/identity succeeds before direct stage-owner or stage-mode production guards."
+          },
+          {
+            "line": 311,
+            "scope": "finding_refusals.direct_stage_refusal",
+            "assertion": "assert str(exc) == reason, (label, str(exc), reason)",
+            "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+          },
+          {
+            "line": 314,
+            "scope": "finding_refusals.direct_stage_refusal",
+            "assertion": "assert not receipt.exists() and list(parent.iterdir()) == []",
+            "purpose_and_rationale": "For preflight/direct guards no receipt exists; subprocess refusals retain FAIL diagnostic receipt and prohibit success delivery."
+          },
+          {
+            "line": 336,
+            "scope": "finding_refusals",
+            "assertion": "assert recorded == stale_base and current == stale_head and recorded != current",
+            "purpose_and_rationale": "Prove frozen recorded gate base differs from independently advanced fixture origin/main while current source identity remains valid."
+          },
+          {
+            "line": 337,
+            "scope": "finding_refusals",
+            "assertion": "assert stale_source[\"agent\"][\"sha\"] == stale_head",
+            "purpose_and_rationale": "Prove frozen recorded gate base differs from independently advanced fixture origin/main while current source identity remains valid."
+          },
+          {
+            "line": 345,
+            "scope": "finding_refusals",
+            "assertion": "assert os.geteuid() == 0, \"real private owner fixtures require root; no geteuid patch allowed\"",
+            "purpose_and_rationale": "Require a real privileged fixture environment; insufficient in this sandbox because only UID0 is mapped. Subsequent chown fails EINVAL before guard. This assertion is not qualified."
+          },
+          {
+            "line": 381,
+            "scope": "finding_refusals",
+            "assertion": "assert str(exc) == \"App upstream base tree is not the authorized faf477ad source\"",
+            "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+          },
+          {
+            "line": 415,
+            "scope": "finding_refusals",
+            "assertion": "assert len([item for item in observations if \"returncode\" in item]) == 11",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 449,
+            "scope": "main",
+            "assertion": "assert shutil.disk_usage(service_tmp).free >= 4_960_000_000, \"NOT_READY: pre-stage floor below 4,960,000,000\"",
+            "purpose_and_rationale": "Fail NOT_READY if fresh heavy admission is below4,960,000,000; no low-disk alternate path can count as complete PASS."
+          }
+        ],
+        "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+        "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+      },
+      {
+        "kind": "replace",
+        "before": [
+          {
+            "line": 433,
+            "scope": "main.refusal",
+            "assertion": "assert failure is not None, label",
+            "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+          },
+          {
+            "line": 434,
+            "scope": "main.refusal",
+            "assertion": "assert not target.exists(), (label, target)",
+            "purpose_and_rationale": "For preflight/direct guards no receipt exists; subprocess refusals retain FAIL diagnostic receipt and prohibit success delivery."
+          }
+        ],
+        "after": [
+          {
+            "line": 519,
+            "scope": "main",
+            "assertion": "assert protected_snapshot() == protected_before",
+            "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+          }
+        ],
+        "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+        "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+      }
+    ],
+    "case_purposes": [
+      {
+        "label": "stale-source-manifest",
+        "phase": "validate_manifest",
+        "expected_reason": "candidate hash mismatch: check.sh",
+        "purpose_and_change": "Exact poisoned candidate digest; catch only the precise assertion, not unrelated filesystem/JSON failures.",
+        "execution_status": "PASS"
+      },
+      {
+        "label": "gate-source-root-mismatch",
+        "phase": "require_root_binding",
+        "expected_reason": "source and gate tuple roots differ for agent",
+        "purpose_and_change": "Source and gate roots must bind to the same real root.",
+        "execution_status": "PASS"
+      },
+      {
+        "label": "stale-nonapp-upstream",
+        "phase": "D68.source_snapshot via caller.run_wrapper",
+        "expected_reason": "agent recorded upstream base is not current origin/main",
+        "purpose_and_change": "Advance private origin/main only after recording old base; actual caller returns2 and writes FAIL diagnostic with empty repos/stage, no builder.",
+        "execution_status": "PASS"
+      },
+      {
+        "label": "wrong-source-owner",
+        "phase": "source_identity",
+        "expected_reason": "source tuple root agent owner is not the effective user",
+        "purpose_and_change": "Change private fixture owner, retain actual effective UID; exact source guard.",
+        "execution_status": "FIXTURE_SETUP_FAILED_BEFORE_GUARD"
+      },
+      {
+        "label": "wrong-source-mode",
+        "phase": "source_identity",
+        "expected_reason": "source tuple root agent is writable by another user",
+        "purpose_and_change": "Retain explicit mode0775, exact source guard.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "wrong-stage-mode",
+        "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+        "expected_reason": "stage parent/service TMPDIR is writable by another user",
+        "purpose_and_change": "Separate exclusive invocation fixtures for direct D68 and actual caller; real source_identity passes; mode0775.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "wrong-stage-owner",
+        "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+        "expected_reason": "stage parent/service TMPDIR owner is not the effective user",
+        "purpose_and_change": "Separate real private wrong-owner fixtures; actual source ownership passes before actual stage guard; no shared geteuid patch.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "wrong-app-base",
+        "phase": "require_app_base",
+        "expected_reason": "App upstream base is not the authorized fc24f849 source",
+        "purpose_and_change": "Current origin object/tree valid so exact authorized-base guard fails.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "wrong-app-tree",
+        "phase": "require_app_base/direct and caller.gate_identity",
+        "expected_reason": "App upstream base tree is not the authorized faf477ad source / frozen upstream base tree drift for app",
+        "purpose_and_change": "Direct precise authorized-tree guard plus real caller earlier object-tree consistency guard; distinguish phases.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "dirty-source",
+        "phase": "source_identity",
+        "expected_reason": "source tuple source is dirty",
+        "purpose_and_change": "Private source/gate roots agree; exact dirty source guard.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "symlink-source",
+        "phase": "source_identity",
+        "expected_reason": "invalid final source tuple identity for agent",
+        "purpose_and_change": "Explicit symlink fixture plus exact source identity branch; valid underlying fixture.",
+        "execution_status": "NOT_EXECUTED"
+      },
+      {
+        "label": "source-ref-drift",
+        "phase": "gate_identity",
+        "expected_reason": "frozen gate ref drift for agent",
+        "purpose_and_change": "Private gate records old integration ref; update actual ref and current source tuple together so source passes and actual frozen-gate guard fails.",
+        "execution_status": "NOT_EXECUTED"
+      }
+    ],
+    "entrypoint_changes": [
+      {
+        "before": "invoke catches OSError/ValueError and discards main return; helpers assert exception and no receipt",
+        "after": "finding_refusals.refusal invokes real caller.main, observes actual production phases, requires exact ValueError for preflight or code2 + FAIL caller/D68 receipts for subprocess refusal",
+        "why": "Diagnostic refusal receipts are normative evidence, not successful delivery; no purpose is removed."
+      },
+      {
+        "before": "duplicated low-disk finding_refusals and heavy main negative fixture definitions",
+        "after": "one complete finding_refusals path; insufficient heavy admission raises NOT_READY before any staging",
+        "why": "Avoid two drifting fixture implementations and false green low-disk completion."
+      },
+      {
+        "before": "wrong-stage-owner globally patches shared os.geteuid",
+        "after": "actual private directory chown; separate direct D68.main stage fixture and real caller.main stage fixture; successful real source_identity first",
+        "why": "Reach actual stage owner branches after passing source owner validation."
+      },
+      {
+        "before": "wrong-app-tree only caller.main (earlier tree consistency guard)",
+        "after": "direct real require_app_base plus actual caller.main exact earlier guard",
+        "why": "Observe both protected authorized-tree purpose and true caller phase without changing production."
+      },
+      {
+        "before": "stale fixture keeps origin/main at stale_base",
+        "after": "advance private origin/main to independent new HEAD; preserve recorded gate base; emit both values before real caller invocation",
+        "why": "Genuinely stale non-App upstream is refused before any repo stages."
+      },
+      {
+        "before": "run directory mkdtemp; positive fixed service root; negative service mkdtemp; stub marker overwrite",
+        "after": "UUID + exclusive-created run/invocation/direct-stage/service roots, preserved explicit bad owner/mode roots, exclusive stub marker; no trace deletion",
+        "why": "Each lifecycle invocation owns fresh real TMPDIR and trace; builder reuse cannot hide negative success."
+      }
+    ],
+    "preserved": "All original positive staging, App frozen-base, other-three current-upstream, source-clean, no-activation assertions; no-install and scoped-CAS/preimage/outside-four-row/poisoned-caller controls unchanged. Eleven caller negatives plus poisoned-manifest control retained (covering and exceeding the requested seven negative purposes).",
+    "review": "Author mapping only; protected independent purpose-conservation review remains pending.",
+    "qualification": "FAIL: full command exited1; three negative purposes PASS, wrong-owner setup EINVAL, eight later caller negatives unexecuted. Direct stage and authorized-tree guards unexecuted."
+  },
+  "delta_assertions": [
+    {
+      "line": 345,
+      "scope": "finding_refusals",
+      "assertion": "assert os.geteuid() == 0, \"real private owner fixtures require root; no geteuid patch allowed\"",
+      "kind": "removed_or_replaced",
+      "rationale": "Replace impossible real chown fixture precondition with module-local/path-exact st_uid observation; real euid is unchanged and production guards execute unchanged."
+    },
+    {
+      "line": 75,
+      "scope": "owner_fixture",
+      "assertion": "assert target.is_absolute() and target.is_relative_to(HERE / \"tmp\")",
+      "kind": "added_or_replacement",
+      "rationale": "Only the named private target has synthetic st_uid=65534. All other stat fields and paths remain real; target actual owner is verified before and after, including refusal exceptions."
+    },
+    {
+      "line": 78,
+      "scope": "owner_fixture",
+      "assertion": "assert actual.st_uid == os.geteuid() and actual.st_uid != 65534",
+      "kind": "added_or_replacement",
+      "rationale": "Only the named private target has synthetic st_uid=65534. All other stat fields and paths remain real; target actual owner is verified before and after, including refusal exceptions."
+    },
+    {
+      "line": 96,
+      "scope": "owner_fixture.lstat",
+      "assertion": "assert all(getattr(changed, name) == getattr(value, name)\n                       for name in dir(value) if name.startswith(\"st_\") and name != \"st_uid\")",
+      "kind": "added_or_replacement",
+      "rationale": "Only the named private target has synthetic st_uid=65534. All other stat fields and paths remain real; target actual owner is verified before and after, including refusal exceptions."
+    },
+    {
+      "line": 109,
+      "scope": "owner_fixture",
+      "assertion": "assert original(target).st_uid == actual.st_uid",
+      "kind": "added_or_replacement",
+      "rationale": "Only the named private target has synthetic st_uid=65534. All other stat fields and paths remain real; target actual owner is verified before and after, including refusal exceptions."
+    },
+    {
+      "line": 110,
+      "scope": "owner_fixture",
+      "assertion": "assert observations, \"owner fixture was never observed by the real guard\"",
+      "kind": "added_or_replacement",
+      "rationale": "Only the named private target has synthetic st_uid=65534. All other stat fields and paths remain real; target actual owner is verified before and after, including refusal exceptions."
+    },
+    {
+      "line": 345,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert process.returncode == 2, (label, process.returncode, process.stdout, process.stderr)",
+      "kind": "added_or_replacement",
+      "rationale": "Require actual child-probe exit2/raw exact refusal plus actual caller.main phase record. Owner metadata is disclosed; this is a private caller-main probe, not execution of the untouched production CLI artifact."
+    },
+    {
+      "line": 346,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases[:-1]), phases",
+      "kind": "added_or_replacement",
+      "rationale": "Every preceding real caller phase must return; the final phase and intended reason must match, excluding unrelated early refusals."
+    },
+    {
+      "line": 348,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert proof[\"mocked_fixture_fields\"]",
+      "kind": "added_or_replacement",
+      "rationale": "Require actual child-probe exit2/raw exact refusal plus actual caller.main phase record. Owner metadata is disclosed; this is a private caller-main probe, not execution of the untouched production CLI artifact."
+    },
+    {
+      "line": 349,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(item[\"path\"] == str(owner_target) and item[\"field\"] == \"Path.lstat().st_uid\"\n                       for item in proof[\"mocked_fixture_fields\"])",
+      "kind": "added_or_replacement",
+      "rationale": "Require actual child-probe exit2/raw exact refusal plus actual caller.main phase record. Owner metadata is disclosed; this is a private caller-main probe, not execution of the untouched production CLI artifact."
+    },
+    {
+      "line": 352,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert proof[\"mocked_fixture_fields\"] == []",
+      "kind": "added_or_replacement",
+      "rationale": "Require actual child-probe exit2/raw exact refusal plus actual caller.main phase record. Owner metadata is disclosed; this is a private caller-main probe, not execution of the untouched production CLI artifact."
+    },
+    {
+      "line": 372,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert process.stderr.strip() == \"final delivery refused: \" + reason",
+      "kind": "added_or_replacement",
+      "rationale": "Require actual child-probe exit2/raw exact refusal plus actual caller.main phase record. Owner metadata is disclosed; this is a private caller-main probe, not execution of the untouched production CLI artifact."
+    },
+    {
+      "line": 395,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert parent.stat().st_mode & 0o777 == fixture.stat().st_mode & 0o777",
+      "kind": "added_or_replacement",
+      "rationale": "Explicit chmod preserves intended writable-directory guard despite umask; no private-mode700 substitute failure is accepted."
+    }
+  ],
+  "entrypoint_changes": [
+    {
+      "before": "in-process real caller.main with exception observation",
+      "after": "private child probe loads unchanged caller.main, observes delegated real phases, maps preflight errors to exit2 exactly as production CLI, captures stdout/stderr/phase/return and explicitly waits",
+      "purpose": "actual process return and phase witness for all eleven cases; not untouched production CLI execution"
+    },
+    {
+      "before": "real chown65534 for private source and stage roots (EINVAL)",
+      "after": "isolated loaded module Path subclass delegates all paths/fields except named private target lstat st_uid=65534, scoped only to guard invocation",
+      "purpose": "same real source/service/stage owner guard and exact reason; no chown, privilege, global geteuid or global Path patch"
+    },
+    {
+      "before": "direct stage mkdir(mode=fixture mode) filtered by umask",
+      "after": "private mkdir0700 followed by exact chmod and explicit matching-mode assertion",
+      "purpose": "reach writable-by-another-user branch, not private-mode700 branch"
+    },
+    {
+      "before": "installer/receiving subprocess outputs held in memory",
+      "after": "same command/arguments in run_process, raw stdout/stderr and PID/return/wait saved exclusively",
+      "purpose": "unchanged no-install/scoped-CAS controls with durable process evidence"
+    }
+  ],
+  "original_seven": [
+    {
+      "label": "stale-source-manifest",
+      "witness": "validate_manifest poisoned hash",
+      "status": "PASS"
+    },
+    {
+      "label": "gate-source-root-mismatch",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 410,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": null,
+        "label": "gate-source-root-mismatch",
+        "mocked_fixture_fields": [],
+        "phase": "require_root_binding",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "refused",
+            "phase": "require_root_binding",
+            "reason": "source and gate tuple roots differ for agent"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/gate-source-root-mismatch-4wb_npt9/process",
+        "protected_sources_unchanged": true,
+        "reason": "source and gate tuple roots differ for agent",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/gate-source-root-mismatch-4wb_npt9/service"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "stale-nonapp-upstream",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 509,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/receipt.json",
+        "label": "stale-nonapp-upstream",
+        "mocked_fixture_fields": [],
+        "phase": "run_wrapper",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_root_binding"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_app_base"
+          },
+          {
+            "outcome": "returned",
+            "phase": "overlap_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "run_wrapper"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/process",
+        "protected_sources_unchanged": true,
+        "reason": "agent recorded upstream base is not current origin/main",
+        "returncode": 2,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/service"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "wrong-source-owner",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 651,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": null,
+        "label": "wrong-source-owner",
+        "mocked_fixture_fields": [
+          {
+            "actual": 0,
+            "actual_inode": 2114053,
+            "actual_mode": "0o40700",
+            "all_other_stat_fields_real": true,
+            "field": "Path.lstat().st_uid",
+            "module_scope": "d141jj_caller",
+            "observed": 65534,
+            "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+          },
+          {
+            "actual": 0,
+            "actual_inode": 2114053,
+            "actual_mode": "0o40700",
+            "all_other_stat_fields_real": true,
+            "field": "Path.lstat().st_uid",
+            "module_scope": "d141jj_caller",
+            "observed": 65534,
+            "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+          },
+          {
+            "actual": 0,
+            "actual_inode": 2114053,
+            "actual_mode": "0o40700",
+            "all_other_stat_fields_real": true,
+            "field": "Path.lstat().st_uid",
+            "module_scope": "d141jj_caller",
+            "observed": 65534,
+            "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+          }
+        ],
+        "phase": "source_identity",
+        "phases": [
+          {
+            "outcome": "refused",
+            "phase": "source_identity",
+            "reason": "source tuple root agent owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner-i448y3vk/process",
+        "protected_sources_unchanged": true,
+        "reason": "source tuple root agent owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner-i448y3vk/service"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "wrong-source-mode",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 673,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": null,
+        "label": "wrong-source-mode",
+        "mocked_fixture_fields": [],
+        "phase": "source_identity",
+        "phases": [
+          {
+            "outcome": "refused",
+            "phase": "source_identity",
+            "reason": "source tuple root agent is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode-48wl5ch7/process",
+        "protected_sources_unchanged": true,
+        "reason": "source tuple root agent is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode-48wl5ch7/service"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "wrong-stage-mode",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 738,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": null,
+        "label": "wrong-stage-mode",
+        "mocked_fixture_fields": [],
+        "phase": "run_wrapper",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_root_binding"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_app_base"
+          },
+          {
+            "outcome": "returned",
+            "phase": "overlap_identity"
+          },
+          {
+            "outcome": "refused",
+            "phase": "run_wrapper",
+            "reason": "service TMPDIR is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode-hgq3qro6/process",
+        "protected_sources_unchanged": true,
+        "reason": "service TMPDIR is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode"
+      },
+      "status": "PASS"
+    },
+    {
+      "label": "wrong-stage-owner",
+      "witness": {
+        "builder_unchanged": true,
+        "caller_pid": 907,
+        "caller_process_returncode": 2,
+        "diagnostic_receipt": null,
+        "label": "wrong-stage-owner",
+        "mocked_fixture_fields": [
+          {
+            "actual": 0,
+            "actual_inode": 2114218,
+            "actual_mode": "0o40700",
+            "all_other_stat_fields_real": true,
+            "field": "Path.lstat().st_uid",
+            "module_scope": "d141jj_caller",
+            "observed": 65534,
+            "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+          },
+          {
+            "actual": 0,
+            "actual_inode": 2114218,
+            "actual_mode": "0o40700",
+            "all_other_stat_fields_real": true,
+            "field": "Path.lstat().st_uid",
+            "module_scope": "d141jj_caller",
+            "observed": 65534,
+            "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+          }
+        ],
+        "phase": "run_wrapper",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_root_binding"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_app_base"
+          },
+          {
+            "outcome": "returned",
+            "phase": "overlap_identity"
+          },
+          {
+            "outcome": "refused",
+            "phase": "run_wrapper",
+            "reason": "service TMPDIR owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+          }
+        ],
+        "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-u4s9wto2/process",
+        "protected_sources_unchanged": true,
+        "reason": "service TMPDIR owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+      },
+      "status": "PASS"
+    }
+  ],
+  "final_actual_observations": [
+    {
+      "builder_unchanged": true,
+      "caller_pid": 410,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "gate-source-root-mismatch",
+      "mocked_fixture_fields": [],
+      "phase": "require_root_binding",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "gate_identity"
+        },
+        {
+          "outcome": "refused",
+          "phase": "require_root_binding",
+          "reason": "source and gate tuple roots differ for agent"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/gate-source-root-mismatch-4wb_npt9/process",
+      "protected_sources_unchanged": true,
+      "reason": "source and gate tuple roots differ for agent",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/gate-source-root-mismatch-4wb_npt9/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 509,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/receipt.json",
+      "label": "stale-nonapp-upstream",
+      "mocked_fixture_fields": [],
+      "phase": "run_wrapper",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "gate_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_root_binding"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_app_base"
+        },
+        {
+          "outcome": "returned",
+          "phase": "overlap_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "run_wrapper"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/process",
+      "protected_sources_unchanged": true,
+      "reason": "agent recorded upstream base is not current origin/main",
+      "returncode": 2,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/stale-nonapp-upstream-habrpfqr/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 651,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-source-owner",
+      "mocked_fixture_fields": [
+        {
+          "actual": 0,
+          "actual_inode": 2114053,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_caller",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+        },
+        {
+          "actual": 0,
+          "actual_inode": 2114053,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_caller",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+        },
+        {
+          "actual": 0,
+          "actual_inode": 2114053,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_caller",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+        }
+      ],
+      "phase": "source_identity",
+      "phases": [
+        {
+          "outcome": "refused",
+          "phase": "source_identity",
+          "reason": "source tuple root agent owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner-i448y3vk/process",
+      "protected_sources_unchanged": true,
+      "reason": "source tuple root agent owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner-i448y3vk/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 673,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-source-mode",
+      "mocked_fixture_fields": [],
+      "phase": "source_identity",
+      "phases": [
+        {
+          "outcome": "refused",
+          "phase": "source_identity",
+          "reason": "source tuple root agent is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode-48wl5ch7/process",
+      "protected_sources_unchanged": true,
+      "reason": "source tuple root agent is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-mode-48wl5ch7/service"
+    },
+    {
+      "label": "wrong-stage-mode",
+      "mocked_fixture_fields": [],
+      "phase": "D68.main/require_directory(stage parent)",
+      "proof_kind": "direct D68.main guard exercise, not caller process",
+      "reason": "stage parent is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode-direct-tc5cbfqa/stage",
+      "source_identity_passed": true
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 738,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-stage-mode",
+      "mocked_fixture_fields": [],
+      "phase": "run_wrapper",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "gate_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_root_binding"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_app_base"
+        },
+        {
+          "outcome": "returned",
+          "phase": "overlap_identity"
+        },
+        {
+          "outcome": "refused",
+          "phase": "run_wrapper",
+          "reason": "service TMPDIR is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode-hgq3qro6/process",
+      "protected_sources_unchanged": true,
+      "reason": "service TMPDIR is writable by another user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-mode"
+    },
+    {
+      "label": "wrong-stage-owner",
+      "mocked_fixture_fields": [
+        {
+          "actual": 0,
+          "actual_inode": 2114220,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_wrapper",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-direct-nuqdhwma/stage"
+        },
+        {
+          "actual": 0,
+          "actual_inode": 2114220,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_wrapper",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-direct-nuqdhwma/stage"
+        }
+      ],
+      "phase": "D68.main/require_directory(stage parent)",
+      "proof_kind": "direct D68.main guard exercise, not caller process",
+      "reason": "stage parent owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-direct-nuqdhwma/stage",
+      "source_identity_passed": true
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 907,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-stage-owner",
+      "mocked_fixture_fields": [
+        {
+          "actual": 0,
+          "actual_inode": 2114218,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_caller",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+        },
+        {
+          "actual": 0,
+          "actual_inode": 2114218,
+          "actual_mode": "0o40700",
+          "all_other_stat_fields_real": true,
+          "field": "Path.lstat().st_uid",
+          "module_scope": "d141jj_caller",
+          "observed": 65534,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+        }
+      ],
+      "phase": "run_wrapper",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "gate_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_root_binding"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_app_base"
+        },
+        {
+          "outcome": "returned",
+          "phase": "overlap_identity"
+        },
+        {
+          "outcome": "refused",
+          "phase": "run_wrapper",
+          "reason": "service TMPDIR owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-u4s9wto2/process",
+      "protected_sources_unchanged": true,
+      "reason": "service TMPDIR owner is not the effective user: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 1014,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-app-base",
+      "mocked_fixture_fields": [],
+      "phase": "require_app_base",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "gate_identity"
+        },
+        {
+          "outcome": "returned",
+          "phase": "require_root_binding"
+        },
+        {
+          "outcome": "refused",
+          "phase": "require_app_base",
+          "reason": "App upstream base is not the authorized fc24f849 source"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-app-base-ph4z3s57/process",
+      "protected_sources_unchanged": true,
+      "reason": "App upstream base is not the authorized fc24f849 source",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-app-base-ph4z3s57/service"
+    },
+    {
+      "label": "wrong-app-tree",
+      "phase": "require_app_base/direct",
+      "reason": "App upstream base tree is not the authorized faf477ad source"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 1083,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "wrong-app-tree",
+      "mocked_fixture_fields": [],
+      "phase": "gate_identity",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "refused",
+          "phase": "gate_identity",
+          "reason": "frozen upstream base tree drift for app"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-app-tree-eggemm6r/process",
+      "protected_sources_unchanged": true,
+      "reason": "frozen upstream base tree drift for app",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-app-tree-eggemm6r/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 1156,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "dirty-source",
+      "mocked_fixture_fields": [],
+      "phase": "source_identity",
+      "phases": [
+        {
+          "outcome": "refused",
+          "phase": "source_identity",
+          "reason": "source tuple source is dirty: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/dirty"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/dirty-source-pqjur4h3/process",
+      "protected_sources_unchanged": true,
+      "reason": "source tuple source is dirty: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/dirty",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/dirty-source-pqjur4h3/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 1180,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "symlink-source",
+      "mocked_fixture_fields": [],
+      "phase": "source_identity",
+      "phases": [
+        {
+          "outcome": "refused",
+          "phase": "source_identity",
+          "reason": "invalid final source tuple identity for agent"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/symlink-source-tesk3h0w/process",
+      "protected_sources_unchanged": true,
+      "reason": "invalid final source tuple identity for agent",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/symlink-source-tesk3h0w/service"
+    },
+    {
+      "builder_unchanged": true,
+      "caller_pid": 1218,
+      "caller_process_returncode": 2,
+      "diagnostic_receipt": null,
+      "label": "source-ref-drift",
+      "mocked_fixture_fields": [],
+      "phase": "gate_identity",
+      "phases": [
+        {
+          "outcome": "returned",
+          "phase": "source_identity"
+        },
+        {
+          "outcome": "refused",
+          "phase": "gate_identity",
+          "reason": "frozen gate ref drift for agent"
+        }
+      ],
+      "process_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/source-ref-drift-u_sxyk9p/process",
+      "protected_sources_unchanged": true,
+      "reason": "frozen gate ref drift for agent",
+      "returncode": null,
+      "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/source-ref-drift-u_sxyk9p/service"
+    }
+  ],
+  "fixture_scope": [
+    {
+      "purpose": "source-owner",
+      "module": "d141jj_caller",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-source-owner",
+      "field": "Path.lstat().st_uid",
+      "actual": 0,
+      "observed": 65534
+    },
+    {
+      "purpose": "caller service-stage-owner",
+      "module": "d141jj_caller",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner",
+      "field": "Path.lstat().st_uid",
+      "actual": 0,
+      "observed": 65534
+    },
+    {
+      "purpose": "direct D68 stage-owner",
+      "module": "d141jj_wrapper",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q/wrong-stage-owner-direct-nuqdhwma/stage",
+      "field": "Path.lstat().st_uid",
+      "actual": 0,
+      "observed": 65534
+    }
+  ],
+  "other_seams": [
+    "In-memory REVIEWED_BUILDER_SHA256 set to hash of exclusive private stub in parent positive and child caller probes. Production constant/source files untouched.",
+    "Phase wrappers on six private caller-module functions delegate original unchanged functions and record outcomes; no reason/result fabricated.",
+    "TMPDIR/TMP/TEMP point to exclusive private invocation roots.",
+    "No metadata fixture exists in the D68 subprocess. Actual caller stage-owner/mode intentionally refuses earlier at run_wrapper; D68 stage guard is exercised separately and labeled direct."
+  ],
+  "unchanged": "All original main positive assertions retained; source11 and original manifest immutable. Prior same33 not rerun.",
+  "qualification": "AUTHOR_COMPLETE_PASS; independent SAME checker and purpose review pending",
+  "passed_attempt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793033548496971443",
+  "final_work": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/d141jj-check-430dad54c88142cc8360dd96f67daec8-aa0m6o4q",
+  "assertion_inventory_before": [
+    {
+      "line": 165,
+      "scope": "validate_manifest",
+      "assertion": "assert value[\"candidate_root\"] == str(CANDIDATE)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 168,
+      "scope": "validate_manifest",
+      "assertion": "assert candidate.stat().st_mode & 0o777 == int(entry[\"mode\"], 8)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 169,
+      "scope": "validate_manifest",
+      "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"], f\"candidate hash mismatch: {entry['name']}\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 180,
+      "scope": "manifest_refusal",
+      "assertion": "assert str(exc) == \"candidate hash mismatch: \" + manifest[\"candidates\"][0][\"name\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 201,
+      "scope": "finding_refusals",
+      "assertion": "assert wrapper_spec is not None and wrapper_spec.loader is not None",
+      "changed_occurrence": false
+    },
+    {
+      "line": 223,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (service_root / \"timeline-delivery-KEEP\" / \"disk-trace.tsv\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 259,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"phase\"] == phase, (label, phases)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 261,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert failure is None and code == 2, (label, code, failure)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 262,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"outcome\"] == \"returned\", phases",
+      "changed_occurrence": false
+    },
+    {
+      "line": 264,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert value[\"status\"] == \"FAIL\" and value[\"exit\"] == code",
+      "changed_occurrence": false
+    },
+    {
+      "line": 266,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert d68[\"status\"] == \"FAIL\" and d68[\"error\"] == reason, d68",
+      "changed_occurrence": false
+    },
+    {
+      "line": 267,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert d68[\"repos\"] == {} and \"builder_exit\" not in d68",
+      "changed_occurrence": false
+    },
+    {
+      "line": 268,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert list(Path(d68[\"stage_root\"]).iterdir()) == []",
+      "changed_occurrence": false
+    },
+    {
+      "line": 269,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert \"delivery gate refused: \" + reason in value[\"output\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 271,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert lifecycle[\"status\"] == \"failed\" and lifecycle[\"exit\"] == code, lifecycle",
+      "changed_occurrence": false
+    },
+    {
+      "line": 272,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert lifecycle[\"trace_status\"] == \"PASS\", lifecycle",
+      "changed_occurrence": false
+    },
+    {
+      "line": 273,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 275,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert code is None and failure == reason, (label, code, failure, reason)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 276,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"outcome\"] == \"refused\", phases",
+      "changed_occurrence": false
+    },
+    {
+      "line": 277,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not target.exists(), (label, target)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 278,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not list(service_root.rglob(\"delivery-output\")), label",
+      "changed_occurrence": false
+    },
+    {
+      "line": 279,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 280,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert protected_snapshot() == baseline",
+      "changed_occurrence": false
+    },
+    {
+      "line": 281,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 282,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 300,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert caller.source_identity(spath, ssha) == source",
+      "changed_occurrence": false
+    },
+    {
+      "line": 311,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert str(exc) == reason, (label, str(exc), reason)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 314,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert not receipt.exists() and list(parent.iterdir()) == []",
+      "changed_occurrence": false
+    },
+    {
+      "line": 336,
+      "scope": "finding_refusals",
+      "assertion": "assert recorded == stale_base and current == stale_head and recorded != current",
+      "changed_occurrence": false
+    },
+    {
+      "line": 337,
+      "scope": "finding_refusals",
+      "assertion": "assert stale_source[\"agent\"][\"sha\"] == stale_head",
+      "changed_occurrence": false
+    },
+    {
+      "line": 345,
+      "scope": "finding_refusals",
+      "assertion": "assert os.geteuid() == 0, \"real private owner fixtures require root; no geteuid patch allowed\"",
+      "changed_occurrence": true
+    },
+    {
+      "line": 381,
+      "scope": "finding_refusals",
+      "assertion": "assert str(exc) == \"App upstream base tree is not the authorized faf477ad source\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 415,
+      "scope": "finding_refusals",
+      "assertion": "assert len([item for item in observations if \"returncode\" in item]) == 11",
+      "changed_occurrence": false
+    },
+    {
+      "line": 449,
+      "scope": "main",
+      "assertion": "assert shutil.disk_usage(service_tmp).free >= 4_960_000_000, \"NOT_READY: pre-stage floor below 4,960,000,000\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 457,
+      "scope": "main",
+      "assertion": "assert caller.main(args) == 0",
+      "changed_occurrence": false
+    },
+    {
+      "line": 459,
+      "scope": "main",
+      "assertion": "assert mark.is_file() and value[\"status\"] == \"PASS\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 461,
+      "scope": "main",
+      "assertion": "assert wrapper[\"status\"] == \"PASS\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 463,
+      "scope": "main",
+      "assertion": "assert staging[\"method\"] == \"alternates-backed private Git no-checkout worktree\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 464,
+      "scope": "main",
+      "assertion": "assert staging[\"max_bytes\"] == 100_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 465,
+      "scope": "main",
+      "assertion": "assert staging[\"full_history_copied\"] is False",
+      "changed_occurrence": false
+    },
+    {
+      "line": 466,
+      "scope": "main",
+      "assertion": "assert staging[\"admission_free_bytes\"] >= 4_860_000_000 + 100_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 467,
+      "scope": "main",
+      "assertion": "assert staging[\"measured_bytes\"] <= staging[\"max_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 468,
+      "scope": "main",
+      "assertion": "assert staging[\"free_bytes\"] >= 4_860_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 470,
+      "scope": "main",
+      "assertion": "assert app[\"checkout_base\"] == APP_BASE",
+      "changed_occurrence": false
+    },
+    {
+      "line": 471,
+      "scope": "main",
+      "assertion": "assert app[\"applied_tree\"] == gate[\"repos\"][\"app\"][\"gated_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 472,
+      "scope": "main",
+      "assertion": "assert app[\"fresh_upstream\"] == upstream[\"app\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 473,
+      "scope": "main",
+      "assertion": "assert app[\"fresh_upstream\"] != APP_BASE",
+      "changed_occurrence": false
+    },
+    {
+      "line": 474,
+      "scope": "main",
+      "assertion": "assert git(Path(app[\"staged_root\"]), \"rev-parse\", \"HEAD^{tree}\") == app[\"applied_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 478,
+      "scope": "main",
+      "assertion": "assert staged.is_dir() and not staged.is_symlink()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 479,
+      "scope": "main",
+      "assertion": "assert staged.resolve().is_relative_to(service_tmp.resolve())",
+      "changed_occurrence": false
+    },
+    {
+      "line": 480,
+      "scope": "main",
+      "assertion": "assert item[\"staging_method\"] == staging[\"method\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 481,
+      "scope": "main",
+      "assertion": "assert item[\"staging_bytes\"] <= staging[\"max_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 482,
+      "scope": "main",
+      "assertion": "assert item[\"free_bytes_after_stage\"] >= staging[\"min_free_after_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 484,
+      "scope": "main",
+      "assertion": "assert alternates.is_file() and not alternates.is_symlink()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 487,
+      "scope": "main",
+      "assertion": "assert item[\"checkout_base\"] == upstream[name]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 488,
+      "scope": "main",
+      "assertion": "assert item[\"fresh_upstream\"] == upstream[name]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 489,
+      "scope": "main",
+      "assertion": "assert item[\"applied_tree\"] == gate[\"repos\"][name][\"gated_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 490,
+      "scope": "main",
+      "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 491,
+      "scope": "main",
+      "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 492,
+      "scope": "main",
+      "assertion": "assert APP_SUCCESSOR.encode() not in CALLER_PATH.read_bytes()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 493,
+      "scope": "main",
+      "assertion": "assert source_snapshot() == before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 507,
+      "scope": "main",
+      "assertion": "assert installer.returncode == 0, installer.stderr",
+      "changed_occurrence": false
+    },
+    {
+      "line": 508,
+      "scope": "main",
+      "assertion": "assert \"no installation requested\" in installer.stdout",
+      "changed_occurrence": false
+    },
+    {
+      "line": 509,
+      "scope": "main",
+      "assertion": "assert REGISTRY.read_bytes() == registry_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 515,
+      "scope": "main",
+      "assertion": "assert receiving.returncode == 0, receiving.stdout + receiving.stderr",
+      "changed_occurrence": false
+    },
+    {
+      "line": 519,
+      "scope": "main",
+      "assertion": "assert protected_snapshot() == protected_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 521,
+      "scope": "main",
+      "assertion": "assert source_snapshot() == before",
+      "changed_occurrence": false
+    }
+  ],
+  "assertion_inventory_after": [
+    {
+      "line": 75,
+      "scope": "owner_fixture",
+      "assertion": "assert target.is_absolute() and target.is_relative_to(HERE / \"tmp\")",
+      "changed_occurrence": true
+    },
+    {
+      "line": 78,
+      "scope": "owner_fixture",
+      "assertion": "assert actual.st_uid == os.geteuid() and actual.st_uid != 65534",
+      "changed_occurrence": true
+    },
+    {
+      "line": 96,
+      "scope": "owner_fixture.lstat",
+      "assertion": "assert all(getattr(changed, name) == getattr(value, name)\n                       for name in dir(value) if name.startswith(\"st_\") and name != \"st_uid\")",
+      "changed_occurrence": true
+    },
+    {
+      "line": 109,
+      "scope": "owner_fixture",
+      "assertion": "assert original(target).st_uid == actual.st_uid",
+      "changed_occurrence": true
+    },
+    {
+      "line": 110,
+      "scope": "owner_fixture",
+      "assertion": "assert observations, \"owner fixture was never observed by the real guard\"",
+      "changed_occurrence": true
+    },
+    {
+      "line": 267,
+      "scope": "validate_manifest",
+      "assertion": "assert value[\"candidate_root\"] == str(CANDIDATE)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 270,
+      "scope": "validate_manifest",
+      "assertion": "assert candidate.stat().st_mode & 0o777 == int(entry[\"mode\"], 8)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 271,
+      "scope": "validate_manifest",
+      "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"], f\"candidate hash mismatch: {entry['name']}\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 282,
+      "scope": "manifest_refusal",
+      "assertion": "assert str(exc) == \"candidate hash mismatch: \" + manifest[\"candidates\"][0][\"name\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 303,
+      "scope": "finding_refusals",
+      "assertion": "assert wrapper_spec is not None and wrapper_spec.loader is not None",
+      "changed_occurrence": false
+    },
+    {
+      "line": 326,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (service_root / \"timeline-delivery-KEEP\" / \"disk-trace.tsv\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 345,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert process.returncode == 2, (label, process.returncode, process.stdout, process.stderr)",
+      "changed_occurrence": true
+    },
+    {
+      "line": 346,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases[:-1]), phases",
+      "changed_occurrence": true
+    },
+    {
+      "line": 348,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert proof[\"mocked_fixture_fields\"]",
+      "changed_occurrence": true
+    },
+    {
+      "line": 349,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(item[\"path\"] == str(owner_target) and item[\"field\"] == \"Path.lstat().st_uid\"\n                       for item in proof[\"mocked_fixture_fields\"])",
+      "changed_occurrence": true
+    },
+    {
+      "line": 352,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert proof[\"mocked_fixture_fields\"] == []",
+      "changed_occurrence": true
+    },
+    {
+      "line": 353,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"phase\"] == phase, (label, phases)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 355,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert failure is None and code == 2, (label, code, failure)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 356,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"outcome\"] == \"returned\", phases",
+      "changed_occurrence": false
+    },
+    {
+      "line": 358,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert value[\"status\"] == \"FAIL\" and value[\"exit\"] == code",
+      "changed_occurrence": false
+    },
+    {
+      "line": 360,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert d68[\"status\"] == \"FAIL\" and d68[\"error\"] == reason, d68",
+      "changed_occurrence": false
+    },
+    {
+      "line": 361,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert d68[\"repos\"] == {} and \"builder_exit\" not in d68",
+      "changed_occurrence": false
+    },
+    {
+      "line": 362,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert list(Path(d68[\"stage_root\"]).iterdir()) == []",
+      "changed_occurrence": false
+    },
+    {
+      "line": 363,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert \"delivery gate refused: \" + reason in value[\"output\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 365,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert lifecycle[\"status\"] == \"failed\" and lifecycle[\"exit\"] == code, lifecycle",
+      "changed_occurrence": false
+    },
+    {
+      "line": 366,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert lifecycle[\"trace_status\"] == \"PASS\", lifecycle",
+      "changed_occurrence": false
+    },
+    {
+      "line": 367,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 369,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert code is None and failure == reason, (label, code, failure, reason)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 370,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert phases[-1][\"outcome\"] == \"refused\", phases",
+      "changed_occurrence": false
+    },
+    {
+      "line": 371,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not target.exists(), (label, target)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 372,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert process.stderr.strip() == \"final delivery refused: \" + reason",
+      "changed_occurrence": true
+    },
+    {
+      "line": 373,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not list(service_root.rglob(\"delivery-output\")), label",
+      "changed_occurrence": false
+    },
+    {
+      "line": 374,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 375,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert protected_snapshot() == baseline",
+      "changed_occurrence": false
+    },
+    {
+      "line": 376,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 377,
+      "scope": "finding_refusals.refusal",
+      "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 395,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert parent.stat().st_mode & 0o777 == fixture.stat().st_mode & 0o777",
+      "changed_occurrence": true
+    },
+    {
+      "line": 399,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert caller.source_identity(spath, ssha) == source",
+      "changed_occurrence": false
+    },
+    {
+      "line": 404,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert caller.source_identity(spath, ssha) == source",
+      "changed_occurrence": true
+    },
+    {
+      "line": 413,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert str(exc) == reason, (label, str(exc), reason)",
+      "changed_occurrence": false
+    },
+    {
+      "line": 416,
+      "scope": "finding_refusals.direct_stage_refusal",
+      "assertion": "assert not receipt.exists() and list(parent.iterdir()) == []",
+      "changed_occurrence": false
+    },
+    {
+      "line": 442,
+      "scope": "finding_refusals",
+      "assertion": "assert recorded == stale_base and current == stale_head and recorded != current",
+      "changed_occurrence": false
+    },
+    {
+      "line": 443,
+      "scope": "finding_refusals",
+      "assertion": "assert stale_source[\"agent\"][\"sha\"] == stale_head",
+      "changed_occurrence": false
+    },
+    {
+      "line": 485,
+      "scope": "finding_refusals",
+      "assertion": "assert str(exc) == \"App upstream base tree is not the authorized faf477ad source\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 519,
+      "scope": "finding_refusals",
+      "assertion": "assert len([item for item in observations if \"returncode\" in item]) == 11",
+      "changed_occurrence": false
+    },
+    {
+      "line": 553,
+      "scope": "main",
+      "assertion": "assert shutil.disk_usage(service_tmp).free >= 4_960_000_000, \"NOT_READY: pre-stage floor below 4,960,000,000\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 561,
+      "scope": "main",
+      "assertion": "assert caller.main(args) == 0",
+      "changed_occurrence": false
+    },
+    {
+      "line": 563,
+      "scope": "main",
+      "assertion": "assert mark.is_file() and value[\"status\"] == \"PASS\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 565,
+      "scope": "main",
+      "assertion": "assert wrapper[\"status\"] == \"PASS\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 567,
+      "scope": "main",
+      "assertion": "assert staging[\"method\"] == \"alternates-backed private Git no-checkout worktree\"",
+      "changed_occurrence": false
+    },
+    {
+      "line": 568,
+      "scope": "main",
+      "assertion": "assert staging[\"max_bytes\"] == 100_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 569,
+      "scope": "main",
+      "assertion": "assert staging[\"full_history_copied\"] is False",
+      "changed_occurrence": false
+    },
+    {
+      "line": 570,
+      "scope": "main",
+      "assertion": "assert staging[\"admission_free_bytes\"] >= 4_860_000_000 + 100_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 571,
+      "scope": "main",
+      "assertion": "assert staging[\"measured_bytes\"] <= staging[\"max_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 572,
+      "scope": "main",
+      "assertion": "assert staging[\"free_bytes\"] >= 4_860_000_000",
+      "changed_occurrence": false
+    },
+    {
+      "line": 574,
+      "scope": "main",
+      "assertion": "assert app[\"checkout_base\"] == APP_BASE",
+      "changed_occurrence": false
+    },
+    {
+      "line": 575,
+      "scope": "main",
+      "assertion": "assert app[\"applied_tree\"] == gate[\"repos\"][\"app\"][\"gated_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 576,
+      "scope": "main",
+      "assertion": "assert app[\"fresh_upstream\"] == upstream[\"app\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 577,
+      "scope": "main",
+      "assertion": "assert app[\"fresh_upstream\"] != APP_BASE",
+      "changed_occurrence": false
+    },
+    {
+      "line": 578,
+      "scope": "main",
+      "assertion": "assert git(Path(app[\"staged_root\"]), \"rev-parse\", \"HEAD^{tree}\") == app[\"applied_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 582,
+      "scope": "main",
+      "assertion": "assert staged.is_dir() and not staged.is_symlink()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 583,
+      "scope": "main",
+      "assertion": "assert staged.resolve().is_relative_to(service_tmp.resolve())",
+      "changed_occurrence": false
+    },
+    {
+      "line": 584,
+      "scope": "main",
+      "assertion": "assert item[\"staging_method\"] == staging[\"method\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 585,
+      "scope": "main",
+      "assertion": "assert item[\"staging_bytes\"] <= staging[\"max_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 586,
+      "scope": "main",
+      "assertion": "assert item[\"free_bytes_after_stage\"] >= staging[\"min_free_after_bytes\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 588,
+      "scope": "main",
+      "assertion": "assert alternates.is_file() and not alternates.is_symlink()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 591,
+      "scope": "main",
+      "assertion": "assert item[\"checkout_base\"] == upstream[name]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 592,
+      "scope": "main",
+      "assertion": "assert item[\"fresh_upstream\"] == upstream[name]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 593,
+      "scope": "main",
+      "assertion": "assert item[\"applied_tree\"] == gate[\"repos\"][name][\"gated_tree\"]",
+      "changed_occurrence": false
+    },
+    {
+      "line": 594,
+      "scope": "main",
+      "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 595,
+      "scope": "main",
+      "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 596,
+      "scope": "main",
+      "assertion": "assert APP_SUCCESSOR.encode() not in CALLER_PATH.read_bytes()",
+      "changed_occurrence": false
+    },
+    {
+      "line": 597,
+      "scope": "main",
+      "assertion": "assert source_snapshot() == before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 610,
+      "scope": "main",
+      "assertion": "assert installer.returncode == 0, installer.stderr",
+      "changed_occurrence": false
+    },
+    {
+      "line": 611,
+      "scope": "main",
+      "assertion": "assert \"no installation requested\" in installer.stdout",
+      "changed_occurrence": false
+    },
+    {
+      "line": 612,
+      "scope": "main",
+      "assertion": "assert REGISTRY.read_bytes() == registry_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 617,
+      "scope": "main",
+      "assertion": "assert receiving.returncode == 0, receiving.stdout + receiving.stderr",
+      "changed_occurrence": false
+    },
+    {
+      "line": 621,
+      "scope": "main",
+      "assertion": "assert protected_snapshot() == protected_before",
+      "changed_occurrence": false
+    },
+    {
+      "line": 623,
+      "scope": "main",
+      "assertion": "assert source_snapshot() == before",
+      "changed_occurrence": false
+    }
+  ],
+  "additional_occurrence_note": "Full inventories include every assertion and multiplicity; changed_occurrence captures identical duplicate assertions as well as textual/scope changes. The added source_identity assertion inside the D68-only owner fixture proves real source validation with the observation active.",
+  "finite_map_consulted": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/purpose-map.json",
+    "rule": "Module-local exact-path st_uid fixture; real source ownership, euid and all other fields unchanged; caller service guard and direct D68 stage guard remain separate."
+  }
+}

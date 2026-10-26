@@ -1,0 +1,72 @@
+{
+  "status": "AUTHOR_COMPLETE_PASS",
+  "independent_review": "PENDING_SAME_EXACT_CHECKER_AND_PURPOSE_AUDIT",
+  "checker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py",
+  "checker_sha256": "7b69bcc20fba24bba939200b1df58e802b4b6dd42026adb219f8426f5d5abc52",
+  "attempts": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793033501750580415",
+      "returncode": 1,
+      "end": 1793033507.7771187,
+      "pid": 5,
+      "pgid": 5,
+      "explicit_wait_reaped": true,
+      "stop": null,
+      "retained_regular_file_bytes": 2122058
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/tmp/attempt-1793033548496971443",
+      "returncode": 0,
+      "end": 1793033557.643294,
+      "pid": 4,
+      "pgid": 4,
+      "explicit_wait_reaped": true,
+      "stop": null,
+      "retained_regular_file_bytes": 4288144
+    }
+  ],
+  "positive": "PASS",
+  "original_seven": "PASS",
+  "caller_cases": 11,
+  "caller_process_exit": 2,
+  "direct_d68_stage_guards": 2,
+  "direct_app_tree_guard": "PASS",
+  "scoped_cas": "PASS",
+  "static_validation": "PASS",
+  "source11": "IMMUTABLE_PASS",
+  "original_manifest": "IMMUTABLE_PASS",
+  "same33": "PRIOR_PASS_RETAINED_NOT_RERUN",
+  "production_changes": false,
+  "installation": false,
+  "blocked": false,
+  "purpose_map": "purpose-map.json",
+  "evidence_index": "tmp/artifact-index.json",
+  "proof_limit": "unchanged caller.main in child private probe with builder-hash seam, metadata fixtures disclosed; separate direct D68 guards; not untouched production CLI",
+  "retained_regular_file_bytes": 4718240,
+  "allocated_bytes": 9555968,
+  "sampler": {
+    "pid": 5,
+    "pgid": 5,
+    "start": 1793033326.9986544,
+    "interval_seconds": 5,
+    "stop_floor": 4000000000,
+    "initial_parent": 4,
+    "wait_reap": "explicit subprocess.wait completed",
+    "exit_code": 0,
+    "end": 1793033812.0933876,
+    "gaps": {
+      "start_to_first_sample_seconds": 0.02642536163330078,
+      "last_sample_to_reap_seconds": 5.006759405136108,
+      "intervals_above_5_1_seconds": [],
+      "after_reap": "final metadata, evidence index, commit message, DONE and final report are unsampled"
+    },
+    "samples": 97,
+    "min_available_bytes": 5178585088,
+    "max_observed_interval_seconds": 5.0212438106536865,
+    "first_sample_time": 1793033327.0250797,
+    "last_sample_time": 1793033807.0866282,
+    "launcher_tool_session_exit": 0,
+    "checker_group_stop": "Each serial checker supervisor independently checks actual free bytes/retained size every1s and sends SIGTERM then bounded SIGKILL to the entire checker process group on4,000,000,000 floor or100MB retained budget; neither trip occurred. Independent sampler and unrelated tool processes are outside that group.",
+    "sampler_stop": "STOP_SAMPLER sentinel; launcher proc.terminate then explicit wait; handler exits0"
+  }
+}

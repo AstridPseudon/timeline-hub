@@ -1,0 +1,302 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-sol-1647/evidence/check_jj.py
+@@ -17,6 +17,7 @@
+ import subprocess
+ import sys
+ import tempfile
++import time
+ import uuid
+ from unittest.mock import patch
+ from pathlib import Path
+@@ -64,6 +65,107 @@
+     module = importlib.util.module_from_spec(spec)
+     spec.loader.exec_module(module)
+     return module
++
++
++@contextlib.contextmanager
++def owner_fixture(module: Any, target: Path | None, observations: list[dict[str, Any]]):
++    if target is None:
++        yield
++        return
++    assert target.is_absolute() and target.is_relative_to(HERE / "tmp")
++    original = Path.lstat
++    actual = original(target)
++    assert actual.st_uid == os.geteuid() and actual.st_uid != 65534
++
++    class OwnerStat:
++        st_uid = 65534
++
++        def __init__(self, value: Any):
++            self.actual = value
++
++        def __getattr__(self, name: str) -> Any:
++            return getattr(self.actual, name)
++
++    class FixturePath(type(target)):
++        def lstat(self) -> Any:
++            value = original(self)
++            if self != target:
++                return value
++            changed = OwnerStat(value)
++            # Every other stat field delegates to this actual lstat result.
++            assert all(getattr(changed, name) == getattr(value, name)
++                       for name in dir(value) if name.startswith("st_") and name != "st_uid")
++            observations.append({"path": str(self), "field": "Path.lstat().st_uid",
++                                 "module_scope": module.__name__,
++                                 "actual": value.st_uid, "observed": changed.st_uid,
++                                 "actual_mode": oct(value.st_mode), "actual_inode": value.st_ino,
++                                 "all_other_stat_fields_real": True})
++            return changed
++
++    try:
++        with patch.object(module, "Path", FixturePath):
++            yield
++    finally:
++        assert original(target).st_uid == actual.st_uid
++        assert observations, "owner fixture was never observed by the real guard"
++
++
++def run_process(command: list[str], root: Path) -> subprocess.CompletedProcess[str]:
++    root.mkdir(mode=0o700)
++    write_json(root / "request.json", {"command": command, "start": time.time(),
++                                      "TMPDIR": os.environ.get("TMPDIR")})
++    with (root / "stdout.txt").open("xb") as stdout, (root / "stderr.txt").open("xb") as stderr:
++        proc = subprocess.Popen(command, cwd="/", stdout=stdout, stderr=stderr,
++                                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
++        write_json(root / "pid.json", {"pid": proc.pid, "pgid": os.getpgid(proc.pid)})
++        code = proc.wait()
++    write_json(root / "return.json", {"pid": proc.pid, "returncode": code,
++                                     "end": time.time(), "explicit_wait_reaped": True})
++    return subprocess.CompletedProcess(command, code, (root / "stdout.txt").read_text(),
++                                       (root / "stderr.txt").read_text())
++
++
++def caller_probe(request_path: Path) -> int:
++    request = json.loads(request_path.read_text())
++    caller = load_caller()
++    caller.REVIEWED_BUILDER_SHA256 = request["builder_sha"]
++    phases: list[dict[str, Any]] = []
++    fields: list[dict[str, Any]] = []
++
++    def observe(name: str, original: Any) -> Any:
++        def observed(*args: Any, **kwargs: Any) -> Any:
++            event = {"phase": name, "outcome": "entered"}
++            phases.append(event)
++            try:
++                value = original(*args, **kwargs)
++            except ValueError as exc:
++                event.update(outcome="refused", reason=str(exc))
++                raise
++            event["outcome"] = "returned"
++            return value
++        return observed
++
++    code = None
++    failure = None
++    target = Path(request["owner_target"]) if request["owner_target"] else None
++    try:
++        with contextlib.ExitStack() as stack:
++            stack.enter_context(owner_fixture(caller, target, fields))
++            for name in ("source_identity", "gate_identity", "require_root_binding", "require_app_base", "overlap_identity", "run_wrapper"):
++                stack.enter_context(patch.object(caller, name, observe(name, getattr(caller, name))))
++            code = caller.main(request["args"])
++    except (OSError, ValueError, json.JSONDecodeError) as exc:
++        failure = str(exc)
++        print(f"final delivery refused: {exc}", file=sys.stderr)
++        return 2
++    finally:
++        write_json(request_path.parent / "phases.json", {
++            "entrypoint": "unchanged caller.main in private child probe; production CLI exception mapping",
++            "pid": os.getpid(), "main_return": code, "failure": failure,
++            "phases": phases, "mocked_fixture_fields": fields,
++            "reviewed_builder_hash_seam": request["builder_sha"],
++        })
++    return int(code)
+ 
+ 
+ def source_snapshot() -> dict[str, tuple[str, str, str, str]]:
+@@ -215,6 +317,7 @@
+         *,
+         returned: bool = False,
+         service_root: Path | None = None,
++        owner_target: Path | None = None,
+     ) -> None:
+         invocation = Path(tempfile.mkdtemp(prefix=f"{label}-", dir=work))
+         service_root = service_root or invocation / "service"
+@@ -231,31 +334,22 @@
+             "--builder", str(builder), "--builder-sha", builder_sha,
+             "--receipt", str(target), "--", "--private-stub",
+         ]
+-        phases = []
+-
+-        def observe(name: str, original: Any) -> Any:
+-            def observed(*args: Any, **kwargs: Any) -> Any:
+-                event = {"phase": name, "outcome": "entered"}
+-                phases.append(event)
+-                try:
+-                    value = original(*args, **kwargs)
+-                except ValueError as exc:
+-                    event.update(outcome="refused", reason=str(exc))
+-                    raise
+-                event["outcome"] = "returned"
+-                return value
+-            return observed
+-
+-        code = None
+-        failure = None
+-        with contextlib.ExitStack() as stack:
+-            stack.enter_context(patch.dict(os.environ, {name: str(service_root) for name in ("TMPDIR", "TMP", "TEMP")}))
+-            for name in ("source_identity", "gate_identity", "require_root_binding", "require_app_base", "overlap_identity", "run_wrapper"):
+-                stack.enter_context(patch.object(caller, name, observe(name, getattr(caller, name))))
+-            try:
+-                code = caller.main(args)
+-            except ValueError as exc:
+-                failure = str(exc)
++        request = invocation / "caller-probe.json"
++        write_json(request, {"args": args, "builder_sha": builder_sha,
++                             "owner_target": str(owner_target) if owner_target else None})
++        with patch.dict(os.environ, {name: str(service_root) for name in ("TMPDIR", "TMP", "TEMP")}):
++            process = run_process([sys.executable, str(HERE / "check_jj.py"),
++                                   "--caller-probe", str(request)], invocation / "process")
++        proof = json.loads((invocation / "phases.json").read_text())
++        phases, code, failure = proof["phases"], proof["main_return"], proof["failure"]
++        assert process.returncode == 2, (label, process.returncode, process.stdout, process.stderr)
++        assert all(event["outcome"] == "returned" for event in phases[:-1]), phases
++        if owner_target:
++            assert proof["mocked_fixture_fields"]
++            assert all(item["path"] == str(owner_target) and item["field"] == "Path.lstat().st_uid"
++                       for item in proof["mocked_fixture_fields"])
++        else:
++            assert proof["mocked_fixture_fields"] == []
+         assert phases[-1]["phase"] == phase, (label, phases)
+         if returned:
+             assert failure is None and code == 2, (label, code, failure)
+@@ -275,6 +369,7 @@
+             assert code is None and failure == reason, (label, code, failure, reason)
+             assert phases[-1]["outcome"] == "refused", phases
+             assert not target.exists(), (label, target)
++            assert process.stderr.strip() == "final delivery refused: " + reason
+         assert not list(service_root.rglob("delivery-output")), label
+         assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before
+         assert protected_snapshot() == baseline
+@@ -283,37 +378,48 @@
+         record = {"label": label, "phase": phase, "reason": reason, "returncode": code,
+                   "diagnostic_receipt": str(target) if target.exists() else None,
+                   "service_root": str(service_root), "phases": phases,
+-                  "builder_unchanged": True, "protected_sources_unchanged": True}
++                  "builder_unchanged": True, "protected_sources_unchanged": True,
++                  "caller_process_returncode": process.returncode, "caller_pid": proof["pid"],
++                  "mocked_fixture_fields": proof["mocked_fixture_fields"],
++                  "process_evidence": str(invocation / "process")}
+         observations.append(record)
+         write_json(work / "negative-observations.json", observations)
+         print(f"PASS refusal before success delivery/candidate/activation writes: {label}; phase={phase}; reason={reason}")
+ 
+-    def direct_stage_refusal(label: str, fixture: Path, detail: str) -> None:
++    def direct_stage_refusal(label: str, fixture: Path, detail: str, *, owner: bool) -> None:
+         # Real source validation succeeds before testing the D68-only stage entrypoint.
+         invocation = Path(tempfile.mkdtemp(prefix=f"{label}-direct-", dir=work))
+         parent = invocation / "stage"
+-        parent.mkdir(mode=fixture.stat().st_mode & 0o777)
+-        os.chown(parent, fixture.stat().st_uid, -1)
++        parent.mkdir(mode=0o700)
++        parent.chmod(fixture.stat().st_mode & 0o777)
++        assert parent.stat().st_mode & 0o777 == fixture.stat().st_mode & 0o777
+         reason = f"stage parent {detail}: {parent}"
+         spath, gpath = invocation / "source.json", invocation / "gate.json"
+         ssha, gsha = write_json(spath, source), write_json(gpath, gate)
+         assert caller.source_identity(spath, ssha) == source
+         receipt = invocation / "wrapper-receipt.json"
++        fields: list[dict[str, Any]] = []
+         try:
+-            wrapper.main([
+-                "--gate-tuple", str(gpath), "--gate-tuple-sha", gsha,
+-                "--builder", str(builder), "--builder-sha", builder_sha,
+-                "--stage-parent", str(parent), "--receipt", str(receipt),
+-                "--app-upstream-base", APP_BASE, "--app-upstream-tree", APP_BASE_TREE,
+-                "--", "--private-stub",
+-            ])
++            with owner_fixture(wrapper, parent if owner else None, fields):
++                assert caller.source_identity(spath, ssha) == source
++                wrapper.main([
++                    "--gate-tuple", str(gpath), "--gate-tuple-sha", gsha,
++                    "--builder", str(builder), "--builder-sha", builder_sha,
++                    "--stage-parent", str(parent), "--receipt", str(receipt),
++                    "--app-upstream-base", APP_BASE, "--app-upstream-tree", APP_BASE_TREE,
++                    "--", "--private-stub",
++                ])
+         except wrapper.CandidateError as exc:
+             assert str(exc) == reason, (label, str(exc), reason)
+         else:
+             raise AssertionError(f"{label} direct D68 stage guard accepted")
+         assert not receipt.exists() and list(parent.iterdir()) == []
+         observations.append({"label": label, "phase": "D68.main/require_directory(stage parent)",
+-                             "reason": reason, "source_identity_passed": True})
++                             "reason": reason, "source_identity_passed": True,
++                             "proof_kind": "direct D68.main guard exercise, not caller process",
++                             "mocked_fixture_fields": fields})
++        write_json(invocation / "direct-guard.json", observations[-1])
++        write_json(work / "negative-observations.json", observations)
+         print(f"PASS direct guard: {label}; phase=D68.main/require_directory(stage parent); reason={reason}")
+ 
+     mismatch_root, mismatch_head = fixture_repo(work, "gate-root-mismatch")
+@@ -342,10 +448,9 @@
+ 
+     wrong_owner_root, wrong_owner_head = fixture_repo(work, "wrong-source-owner")
+     owner_source, owner_gate = fixture_source_gate(source, gate, "agent", wrong_owner_root, wrong_owner_head)
+-    assert os.geteuid() == 0, "real private owner fixtures require root; no geteuid patch allowed"
+-    os.chown(wrong_owner_root, 65534, -1)
+     refusal("wrong-source-owner", owner_gate, owner_source,
+-            f"source tuple root agent owner is not the effective user: {wrong_owner_root}", "source_identity")
++            f"source tuple root agent owner is not the effective user: {wrong_owner_root}", "source_identity",
++            owner_target=Path(wrong_owner_root))
+ 
+     wrong_mode_root, wrong_mode_head = fixture_repo(work, "wrong-source-mode")
+     os.chmod(wrong_mode_root, 0o775)
+@@ -360,11 +465,10 @@
+             parent.chmod(0o775)
+             detail = "is writable by another user"
+         else:
+-            os.chown(parent, 65534, -1)
+             detail = "owner is not the effective user"
+-        direct_stage_refusal(f"wrong-stage-{kind}", parent, detail)
++        direct_stage_refusal(f"wrong-stage-{kind}", parent, detail, owner=kind == "owner")
+         refusal(f"wrong-stage-{kind}", gate, source, f"service TMPDIR {detail}: {parent}",
+-                "run_wrapper", service_root=parent)
++                "run_wrapper", service_root=parent, owner_target=parent if kind == "owner" else None)
+ 
+     wrong_base = json.loads(json.dumps(gate))
+     wrong_base["repos"]["app"]["upstream_base"] = git(REPOS["app"], "rev-parse", "origin/main")
+@@ -497,20 +601,18 @@
+     manifest_refusal(work)
+ 
+     registry_before = REGISTRY.read_bytes()
+-    installer = subprocess.run(
++    installer = run_process(
+         [sys.executable, str(INSTALLER_PATH), "--registry", str(REGISTRY),
+          "--candidate", str(CANDIDATE / "runtime-final-service-rows.txt"),
+          "--builder", "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build"],
+-        cwd="/", capture_output=True, text=True, check=False,
+-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
++        work / "installer-process",
+     )
+     assert installer.returncode == 0, installer.stderr
+     assert "no installation requested" in installer.stdout
+     assert REGISTRY.read_bytes() == registry_before
+-    receiving = subprocess.run(
++    receiving = run_process(
+         [sys.executable, str(CANDIDATE / "receiving_controls.py")],
+-        cwd="/", capture_output=True, text=True, check=False,
+-        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
++        work / "receiving-process",
+     )
+     assert receiving.returncode == 0, receiving.stdout + receiving.stderr
+     print("PASS no-install/preimage/outside-four-row/poisoned-caller scoped-CAS controls")
+@@ -523,4 +625,6 @@
+ 
+ 
+ if __name__ == "__main__":
++    if sys.argv[1:2] == ["--caller-probe"]:
++        raise SystemExit(caller_probe(Path(sys.argv[2])))
+     main()
