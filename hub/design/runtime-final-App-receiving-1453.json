@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T14:53:21.452932+00:00",
+  "kind": "manager read-only receiving; no new tests or source adoption",
+  "handoff": "design/app-D141v-final-HOME-handoff-1435.json",
+  "handoff_sha256": "2a9a9041e15296436f45e52090c6e3bc7415864e7c4acbf30784b61f3ee2278b",
+  "all_three_metadata_hashes_exact": true,
+  "sources": {
+    "app": {
+      "head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+      "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+      "clean": true,
+      "upstream": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671"
+    },
+    "agent": {
+      "head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+      "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+      "clean": true,
+      "upstream": "64197afa297f86f1e738238d5e80aff6d33e303a"
+    },
+    "runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true,
+      "upstream": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "clean": true,
+      "upstream": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+    }
+  },
+  "App_ZIP_base": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+  "history_scope": "82e9 proofs retain their original sources; abac metadata-only successor independent1434",
+  "build_invoked": false
+}
