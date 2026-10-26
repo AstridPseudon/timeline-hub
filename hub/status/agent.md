@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T01:35:47Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+<!-- agent | 2026-10-26T01:39:41Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
 # agent board, 2026-10-26T01:33Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -131,6 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
+| P4 service admission | Apply recorded exact P4 disk floor | Luna | D141c 4.7 GB and source controls | doing | agt-OPS-D141-P4-admission-0136 | Private candidate only; same queued19479 retained. Independent review then normal kit CAS; all other floors exact. | No product change |
 | P4 D141 cut rerun | Run proof with bound JUnit path | Luna and service | Independent0124 source PASS | doing | Controller0128 after0119/0124 | Source PASS; CAS only owned row, outside bytes exact. Service19479 queued at fixed5GB floor, zero body. Dispatch5016035328; old10086 custodyFAIL retained. | Frozen28e/867c/6a |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
@@ -142,7 +143,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm — qualified complete recipe received; genuine census, child, imports, controls and cut core still owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Existing service19479 after normal admission clears; independent result review on terminal. live 1 / cap 3 source; one controller, zero body. ready-undispatched 0.
+Next ready: Existing service19479 after normal admission clears; independent result review on terminal. live 2 / cap 3 source; one controller, zero body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -152,7 +153,7 @@ Disk: 4891828224 bytes currently. Sweep3 removed0; compact gzipped6 logs, no scr
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
-INBOX consumed through 2015412 bytes. D141c GO and lead App transport consumed; exact per-ID/env packet0051 sent to lead, Runtime and Farm.
+INBOX consumed through 2018883 bytes. D141c GO and lead App transport consumed; exact per-ID/env packet0051 sent to lead, Runtime and Farm.
 
 Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime final normal6a011 and independent2350 PASS received from actual published board/peer. Agent firstreturn0001 normally fixed stale am-footage artifact; provenance0005 immediately dispatched on that branch. Initial2357 FAIL retained with full source conservation and missing/wrong-environment tests. Bun2357 borrowed App node_modules (missing zod); final qualification must use actual existing Agent profile dependency tree. No source overwrite or test weakening.
 
