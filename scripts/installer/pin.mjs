@@ -65,9 +65,8 @@ async function pin(agentSha) {
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
-async function check() {
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-  const agentSha = manifest.agent?.sha;
+export async function checkManifest(manifest) {
+  const agentSha = manifest?.agent?.sha;
   if (!/^[0-9a-f]{40}$/.test(agentSha ?? '')) throw new Error('install-manifest.json agent.sha must be a full commit SHA');
   const runtimeSha = await readAgentRuntime(agentSha);
   if (manifest.runtime?.sha !== runtimeSha) {
@@ -77,7 +76,11 @@ async function check() {
   if (manifest.runtime?.schema_digest !== schemaDigest) {
     throw new Error(`install-manifest.json runtime.schema_digest ${manifest.runtime?.schema_digest ?? '(missing)'} does not match Runtime ${runtimeSha} contract digest ${schemaDigest}`);
   }
-  process.stdout.write(`Manifest pins agent ${agentSha}, Runtime ${runtimeSha}, and ${schemaDigest}.\n`);
+  return `Manifest pins agent ${agentSha}, Runtime ${runtimeSha}, and ${schemaDigest}.`;
+}
+
+async function check() {
+  process.stdout.write(`${await checkManifest(JSON.parse(await readFile(manifestPath, 'utf8')))}\n`);
 }
 
 async function main() {
