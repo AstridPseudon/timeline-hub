@@ -1,29 +1,153 @@
 {
-  "schema_version": 1,
-  "task": "U2/D135",
-  "repo": "agent",
-  "candidate_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
-  "candidate_base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
-  "merge_head": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
-  "merge_head_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
-  "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
-  "changed_file_count_from_candidate_base": 96,
-  "frozen_source_note": "The first20 and B-1936 packets use frozen ours 547e10456250c1b5bcf63b44a50c90ff0563ce1e, not the actual candidate base. They were used only as bounded source dispositions; actual conflicts and final source were checked against a30e and merge head.",
-  "resolved_paths": {
-    "astrid/chat/astrid-local-agents.test.ts": "53a14d2debc4c45618e2d40fdd6f42659bc51b6cee274a2c2a7fb4bfb63461e3",
-    "astrid/chat/service.mjs": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "astrid/installer/backend.py": "3892c447dc111cd0b41b06d38483b0cffc5cf2ae63ab519cad7388fc145029c0",
-    "docs/install/OMP-LANDING.md": "ec58b4e1a22ca71e1c5acd28c7e823ab948e0fe6b7a24874e96895688f699061",
-    "tests/test_installer_omp_source.py": "1d925f6a343b8a85144967948fb4c80443c74b3c32510bc00645e734b31de4de",
-    "tests/test_installer_platforms.py": "77517d7eec667958ae2409146ac4d3bf472a0878a5965504fe8fac0961126e10"
+  "task": "F/D141b",
+  "verdict": "PASS_SOURCE_READY",
+  "label": "PRISTINE COMPARATOR",
+  "worker_base": {
+    "sha": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "status_before": "clean",
+    "source_role": "read-only authoring base; never the comparator source"
   },
-  "generated": {
-    "source": "astrid/chat/service.ts",
-    "source_sha256": "e6ca2f298d2785fac2d850fddd34f81c827c1c640f461bb63316fa3ee5ba4899",
-    "artifact": "astrid/chat/service.mjs",
-    "artifact_sha256": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run build:chat",
-    "freshness_command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run check:chat-bundle",
-    "result": "PASS"
-  }
+  "frozen_tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-8b6ed211",
+      "sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "checkout_receipt_sha256": "915cb92977ea0951209472c6b85e69ea3cfed33a8ad41df26c9472130696cd36",
+      "status": "clean"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "checkout_receipt_sha256": "323d3c067f8e39e1aa4ed1adf97a305915503015364d621fd7e530c43f1c94d1",
+      "status": "clean"
+    },
+    "app": {
+      "path": "/home/user/work/wt/app-pin-7ca61bb3",
+      "sha": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "checkout_receipt_sha256": "88b77bc0dd27348b4ea72709886a9cf268d8b780497121afb41c69ea9eb98dd1",
+      "status": "clean"
+    },
+    "composition": {
+      "path": "/home/user/work/wt/vw-pin-67b8aa3d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "checkout_receipt_sha256": "aaa302b63fc5938a6392149153496cb39758eafbe30f899871c27f04cf5b8f35",
+      "status": "clean"
+    }
+  },
+  "roots": {
+    "source": "original design/agt-F-D134-dry-preflight-1848-measurement-command.sh, minus the exact five absent project-only roots",
+    "upstream_present_count": 17,
+    "upstream_present": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py"
+    ],
+    "upstream_present_inventory_sha256": "b1f106c00a6d40804082192e160c80718227acb85af38df2bbebec382411b820",
+    "project_only_absent_count": 5,
+    "project_only_absent": [
+      {
+        "root": "tests/core/test_timeline_element_orphan_cleanup.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/test_timeline_element_orphan_cleanup.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/test_timeline_element_orphan_cleanup.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/core/test_timeline_element_publication_runtime.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/test_timeline_element_publication_runtime.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/test_timeline_element_publication_runtime.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/core/rendering/test_local_schema.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/core/rendering/test_local_schema.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/core/rendering/test_local_schema.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/packs/rendering/test_composition_package.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/packs/rendering/test_composition_package.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/packs/rendering/test_composition_package.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      },
+      {
+        "root": "tests/test_installer_bootstrap_schema.py",
+        "git_object_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 cat-file -e HEAD:tests/test_installer_bootstrap_schema.py",
+        "tree_check": "git -C /home/user/work/wt/agt-pin-8b6ed211 ls-tree -r --name-only HEAD -- tests/test_installer_bootstrap_schema.py",
+        "git_cat_file_exit": 128,
+        "git_ls_tree_lines": 0
+      }
+    ],
+    "absent_disposition": "NOT APPLICABLE at pristine; Farm retains every project test"
+  },
+  "execution_contract": {
+    "runner_target": "agt-F-D141b-plain-command-2358",
+    "runner_repo": "agent",
+    "source_provenance": "the command changes cwd and PYTHONPATH to the exact frozen Agent and Runtime pinned paths; the test-service snapshot is not a source substitute",
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version_observed": "Python 3.13.16",
+    "pytest_settings": [
+      "-q",
+      "-n",
+      "3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45",
+      "durable raw JUnit XML"
+    ],
+    "environment": {
+      "HOME": "/root",
+      "LANG": "C.UTF-8",
+      "LC_ALL": "C.UTF-8",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "PYTHONPATH": "/home/user/work/wt/agt-pin-8b6ed211:/home/user/work/wt/rt-pin-fa9cd546",
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-fa9cd546"
+    },
+    "launcher": "plain pytest; not D73; no positive or poison controls",
+    "disk": {
+      "start_bytes": 4700000000,
+      "stop_bytes": 4000000000,
+      "heavy_body_concurrency": 1
+    },
+    "body_gate": "requires manager-installed PASS markers for U2 final freeze and independent command review"
+  },
+  "scope_exclusions": [
+    "no pytest, collection, imports, or body execution in this source worker",
+    "no D73 launcher, schema overlay, package acquisition, child, Store, fixture, or product-test alteration",
+    "no suite installation, request-test, request-checkout, or live sockets",
+    "no inferred REG or ship credit; later comparison is per-ID against Farm"
+  ]
 }

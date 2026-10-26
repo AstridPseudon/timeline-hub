@@ -1,0 +1,33 @@
+{
+  "task": "F/D141b",
+  "status": "PASS_SOURCE_READY",
+  "admission": {
+    "source_guard": "exact frozen tuple and exact pinned checkout paths",
+    "agent_sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+    "agent_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+    "runtime_sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "runtime_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+    "roots": 17,
+    "absent_project_only_roots": 5,
+    "settings": "-q -n 3 -o addopts= -p no:cacheprovider --timeout=45",
+    "disk_start_bytes": 4700000000,
+    "disk_stop_bytes": 4000000000,
+    "heavy_body_limit": 1,
+    "body_allowed_now": false,
+    "body_gate_files": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/gates/U2_FINAL_FREEZE_PASS",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/gates/INDEPENDENT_COMMAND_PASS"
+    ],
+    "body_gate_value": "PASS",
+    "source_snapshot_is_not": [
+      "current authoring base c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "the test-run snapshot of the target worker",
+      "a D73 launcher or any overlay"
+    ]
+  },
+  "command_sha256": "3b5dd427d52febe81277b2e47af3f52b2fc5de8fe17ceeed1fa0480921ff5bc6",
+  "service_row_sha256": "b43ecc72c1b90d2d0563e08ba31814e3705bc301ee8e008fe0b896f79fdd5f48",
+  "review_requirement": "one independent command review must PASS before a controller installs or submits the row",
+  "freeze_requirement": "U2 final freeze must PASS before body execution",
+  "no_body_evidence": true
+}
