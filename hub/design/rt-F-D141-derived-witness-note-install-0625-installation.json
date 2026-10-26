@@ -1,0 +1,104 @@
+{
+  "cas": {
+    "delivery_directory_fsync": true,
+    "expected_preimages": {
+      "README.template.md": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "gate-results.md": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049"
+    },
+    "preimages_matched_actual_targets": true,
+    "rollback_used": false,
+    "staged_atomic_replacements": true,
+    "unknown_drift_overwritten": false
+  },
+  "conservation": {
+    "only_two_target_files_changed": true,
+    "outside_568_inventory_unchanged": true,
+    "outside_file_count_after": 568,
+    "outside_file_count_before": 568,
+    "protected_prose_unchanged": true
+  },
+  "render_smoke": {
+    "balanced_fences": true,
+    "command": "python3 controlled delivery-build.render_readme smoke (four-repository stub; no real build or ZIP)",
+    "element_occurrences": 2,
+    "exact_note_occurrences": 2,
+    "fence_lines": 16,
+    "placeholders": 0,
+    "placement_note_occurrences": 2,
+    "status": "PASS",
+    "swap_occurrences": 2
+  },
+  "schema": "timeline.d141.derived-witness-note-installation/v1",
+  "scope": "Only the two canonical delivery prose files and requested absolute evidence outputs changed; no repository/product/test/pin/hub/ledger/build/ZIP/source record changed.",
+  "source_basis": {
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "continuous_peak_claim": false,
+    "controller_admission": "MAIN05:20 unit pair D89d; independent0600 PASS; normalized data0549",
+    "historical_stdout": false,
+    "independent_review": "0600",
+    "new_consumption_measurement": false,
+    "new_observation": false,
+    "review_result": "PASS",
+    "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+    "value_conservation": true
+  },
+  "source_note": {
+    "bytes": 280,
+    "exact_line": "App unit admission used a reformatted disk witness (DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT) containing authentic retained disk readings, independently reviewed in 0600. The witness records derived data; original stdout and a continuous historical disk peak were not retained.",
+    "occurrences_per_target": 1,
+    "sha256": "f8bbcdc2bd559bc4bd6bf2853b36cf990e85b74c14ee1e54f23d2e2ae742ee45"
+  },
+  "source_records": {
+    "controller_admission0606": {
+      "bytes": 708,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141l-unit-controller-admission-0606.json",
+      "sha256": "640b02686aae1e2182024d3d9fb1aee5a78e767ddfb9b464cf76151202e4b567"
+    },
+    "handoff": {
+      "bytes": 1330,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-handoff.md",
+      "sha256": "3e8fa430b8df38e755613a65b928996a8b691fa30146c9e90d07c53e192585a1"
+    },
+    "publication0606": {
+      "bytes": 6016,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141l-unit-normalization-publication-0606.json",
+      "sha256": "5be1f20ee816f37eaa49f30e9777547ba688d612b1716efc0bacd523d9e12ea6"
+    },
+    "review": {
+      "bytes": 3443,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-review.json",
+      "sha256": "1bba658a01104618bb002fdc9e080b0d90cad450415bd8c7206e984793bf81bf"
+    },
+    "source_manifest": {
+      "bytes": 4964,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-source-manifest.json",
+      "sha256": "10bf990e7a85437ff0719066bf0c5e9b7de2d4df97b630857c16cc2601b216e8"
+    }
+  },
+  "status": "PASS_INSTALLED_EXACT_NOTE",
+  "targets": [
+    {
+      "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-derived-witness-note-install-0625/evidence/backups/README.template.md",
+      "backup_sha256": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "byte_exact_outside_inserted_line": true,
+      "installed_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+      "mode": "0644",
+      "note_occurrences": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "preimage_sha256": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "regular_non_symlink": true
+    },
+    {
+      "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-derived-witness-note-install-0625/evidence/backups/gate-results.md",
+      "backup_sha256": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049",
+      "byte_exact_outside_inserted_line": true,
+      "installed_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+      "mode": "0644",
+      "note_occurrences": 1,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "preimage_sha256": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049",
+      "regular_non_symlink": true
+    }
+  ],
+  "task": "rt-F-D141-derived-witness-note-install-0625"
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "timeline.d141.derived-witness-note-independent-source-manifest/v1",
+  "decision": "PASS",
+  "task": "rt-F-D141-derived-witness-note-review-0630",
+  "composition": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true,
+    "diff_check": "PASS",
+    "board_header_sha256": "edd2956674a0f196d2cbc0469bdbe0d43ca6a01fb74e86dc200d3cdf2658685c"
+  },
+  "board_decision": {
+    "path": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md",
+    "item": "NOTES ITEM (06:08Z)",
+    "meaning": "App unit-body D89d admission uses a DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT witness; disclose reformatted witness, not original output.",
+    "scope_checked": true
+  },
+  "app_0600_sources": [
+    {
+      "role": "independent_review",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-review.json",
+      "sha256": "1bba658a01104618bb002fdc9e080b0d90cad450415bd8c7206e984793bf81bf"
+    },
+    {
+      "role": "handoff",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-handoff.md",
+      "sha256": "3e8fa430b8df38e755613a65b928996a8b691fa30146c9e90d07c53e192585a1"
+    },
+    {
+      "role": "source_manifest",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141l-unit-normalization-review-0600-source-manifest.json",
+      "sha256": "10bf990e7a85437ff0719066bf0c5e9b7de2d4df97b630857c16cc2601b216e8"
+    },
+    {
+      "role": "publication_0606",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141l-unit-normalization-publication-0606.json",
+      "sha256": "5be1f20ee816f37eaa49f30e9777547ba688d612b1716efc0bacd523d9e12ea6"
+    },
+    {
+      "role": "controller_admission_0606",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141l-unit-controller-admission-0606.json",
+      "sha256": "640b02686aae1e2182024d3d9fb1aee5a78e767ddfb9b464cf76151202e4b567"
+    }
+  ],
+  "source_facts": {
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "independent_review": "0600 PASS",
+    "start_bytes": 5433016320,
+    "stop_bytes": 4839120896,
+    "growth_bytes": 593895424,
+    "floor_bytes": 4793895424,
+    "semantics": "start_end_bracket_delta_only_not_continuous_peak",
+    "historical_stdout": false,
+    "continuous_peak_claim": false,
+    "new_observation": false,
+    "new_consumption_measurement": false,
+    "value_conservation": true,
+    "raw_sources_unchanged": true,
+    "production_receipt_attached": false
+  },
+  "author_installation_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-derived-witness-note-install-0625/evidence/installation.json",
+    "sha256": "e68b573e24e0b5fd08aa9cacad64efe3d2388ad5f0c52caa2583cfe58a5140c4",
+    "source_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-derived-witness-note-install-0625/evidence/source-manifest.json",
+    "source_manifest_sha256": "782c20bc2244c646cdc01524f43545c1f805e62f843edd6e7061e4a5284044fe",
+    "outside_inventory": "568/568 unchanged per author receipt; preimage inventory not materialized for independent replay",
+    "cas": "preimages matched; staged atomic replacements; readback; directory fsync; rollback unused; unknown drift not overwritten"
+  },
+  "c0": {
+    "runtime_contract_path": "/home/user/work/runtime/contract/commit-v2.md",
+    "design_contract_path": "/home/user/timeline-hub/hub/design/commit-v2.md",
+    "runtime_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "design_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "byte_identical": true,
+    "review_change": false
+  }
+}

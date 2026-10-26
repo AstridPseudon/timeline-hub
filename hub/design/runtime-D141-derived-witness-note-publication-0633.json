@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T06:33:12.139003+00:00",
+  "files": [
+    {
+      "path": "design/rt-F-D141-derived-witness-note-install-0625-installation.json",
+      "sha256": "e68b573e24e0b5fd08aa9cacad64efe3d2388ad5f0c52caa2583cfe58a5140c4",
+      "bytes": 5333
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-install-0625-source-manifest.json",
+      "sha256": "782c20bc2244c646cdc01524f43545c1f805e62f843edd6e7061e4a5284044fe",
+      "bytes": 15147
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-install-0625-validation.md",
+      "sha256": "7d79a67e613fa6c554c80ebfd059bd92b9b960939f2b7645547a468a347f807d",
+      "bytes": 1171
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-install-0625-handoff.md",
+      "sha256": "71b0be410bcd26ca5151574f23a423efcff97689b0a66a5eb8c1618ac93615ef",
+      "bytes": 629
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-review-0630-review.json",
+      "sha256": "9312101ef17e7d82187e1ecfa1a29b87b444c80c1d4a9275ef97bf404ce096a9",
+      "bytes": 3506
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-review-0630-findings.md",
+      "sha256": "e33338eaeaf5d715ca5ef21ac4d09449629596bcc75f4a778bb3fc0232143bdd",
+      "bytes": 1970
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-review-0630-source-manifest.json",
+      "sha256": "eee85fc3153b74bf05948afacfec9ddc38025f31e959fc3071405f72ce204b81",
+      "bytes": 4082
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-review-0630-validation.md",
+      "sha256": "0e21e6bb86cc079edacf08f059d5ce427bd8f7523f50a22ba2bdddabed5c08f7",
+      "bytes": 2757
+    },
+    {
+      "path": "design/rt-F-D141-derived-witness-note-review-0630-handoff.md",
+      "sha256": "c75429ffb26ed67458a088ecea0dcb6097eae2e0271c6c461e3d5b9abedb166c",
+      "bytes": 919
+    }
+  ],
+  "notes_installed": true,
+  "independent_review": "PASS",
+  "outside568": "author receipt; independent did not replay full inventory",
+  "no_real_build_or_ZIP": true
+}

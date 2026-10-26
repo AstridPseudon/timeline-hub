@@ -30,3 +30,5 @@ App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just
 **Update 05:39Z:** the Runtime integration head moved to 95d98f0383 after two REG fixes (857e4c3b, 95d98f03). App and Agent re-pin to it through their normal receiving rows.
 
 **Update 05:48Z:** App integration head = 4de54db14bdc9ddc2ce2e5887258b03acbffd30d (tree 84c3fb7f73f08c22220f8e808962fe3f24aaa0aa). It supersedes 5344c53e and is pinned to Runtime 95d98f03 (tree 78df31d6) and Agent 8585ed9c (tree 92a3ffdb). Review 0540 PASS; receipt design/app-D141s-postREG-source-home-0545.json. Current freeze-2 tuple: **App 4de54db1 / Agent 8585ed9c / Runtime 95d98f03 / Composition 635f4de0.** Agent still has to adopt Runtime 95d98f03 (U4a post-REG row, queued behind the REG author on the disk-held box).
+
+**Update 06:39Z:** Agent integration head = ecdc242ed9b673f641759ecf029f95e89a2c6f92 (tree d362fe9d). That is 432f9dcb (the REG test-setup fix) plus U4a 00ec0f2f, so runtime.lock.json now points to Runtime 95d98f03. App 4de54db1 still pins Agent 8585ed9c, and the final pin pass (D141v) will correct that.

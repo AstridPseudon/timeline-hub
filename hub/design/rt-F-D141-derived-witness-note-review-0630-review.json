@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.d141.derived-witness-note-independent-review/v1",
+  "task": "rt-F-D141-derived-witness-note-review-0630",
+  "result": "PASS",
+  "finding_count": 0,
+  "final_verdict": "PASS",
+  "review_scope": "Exact prose installation from rt-F-D141-derived-witness-note-install-0625; custody, disclosure meaning, byte conservation, and controlled documentation wiring only.",
+  "required_disclosure": {
+    "exact_sentence_occurrences_per_target": 1,
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "authentic_retained_readings": true,
+    "independent_review": "0600 PASS",
+    "original_stdout_retained": false,
+    "continuous_historical_peak_retained": false,
+    "semantic_scope": "start_end_bracket_delta_only_not_continuous_peak"
+  },
+  "targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "preimage_sha256": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "installed_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "backup_byte_exact": true,
+      "all_other_bytes_conserved": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "preimage_sha256": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049",
+      "installed_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "backup_byte_exact": true,
+      "all_other_bytes_conserved": true
+    }
+  },
+  "render_smoke": {
+    "status": "PASS",
+    "controlled_fake_inputs_only": true,
+    "real_delivery_build": false,
+    "real_D141m_smoke": false,
+    "placeholders": 0,
+    "fence_lines": 16,
+    "balanced_fences": true,
+    "exact_note_occurrences": 2,
+    "placement_note_occurrences": 2,
+    "a2_occurrences": 2,
+    "swap_occurrences": 2,
+    "element_occurrences": 2
+  },
+  "conservation": {
+    "author_receipt_outside_inventory_count_before": 568,
+    "author_receipt_outside_inventory_count_after": 568,
+    "author_receipt_outside_inventory_unchanged": true,
+    "protected_prose_unchanged": true,
+    "only_two_canonical_targets_changed": true,
+    "inventory_hash_by_hash_replay": "not_performed; author preimage inventory was not materialized as a standalone artifact"
+  },
+  "composition_context": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true,
+    "diff_check": "PASS"
+  },
+  "c0_context": {
+    "runtime_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "design_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "contract_copies_byte_identical": true,
+    "changed_by_review": false
+  },
+  "scope_controls": {
+    "source_product_test_fixture_assertion_generated_pin_edits": false,
+    "kit_cas_registry_service_queue_request_preflight_provider_edits": false,
+    "real_body_browser_network_environment_package_store_cleanup_delete_hub_git_writes": false,
+    "measurement_replay_or_original_witness_reconstruction": false,
+    "production_receipt_attached": false,
+    "full_or_product_tests_required": false
+  }
+}
