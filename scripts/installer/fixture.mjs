@@ -250,7 +250,11 @@ Copy-Item -LiteralPath $env:MOCK_UV_SOURCE -Destination (Join-Path $env:UV_UNMAN
 }
 if ($env:MOCK_PROCESSOR_ARCHITECTURE) { $env:PROCESSOR_ARCHITECTURE = $env:MOCK_PROCESSOR_ARCHITECTURE }
 $InstallerArgs = @()
-if ($env:MOCK_INSTALLER_ARGS) { $InstallerArgs = @(ConvertFrom-Json -InputObject $env:MOCK_INSTALLER_ARGS) }
+if ($env:MOCK_INSTALLER_ARGS) {
+    foreach ($EncodedArgument in ($env:MOCK_INSTALLER_ARGS -split ',')) {
+        $InstallerArgs += [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($EncodedArgument.Substring(1)))
+    }
+}
 try {
     if ($InstallerArgs.Count) {
         & ([scriptblock]::Create([IO.File]::ReadAllText($env:MOCK_INSTALL_SCRIPT))) @InstallerArgs
