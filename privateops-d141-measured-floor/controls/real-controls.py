@@ -210,6 +210,100 @@ def wait_terminal(root: Path, job: str) -> str:
     raise AssertionError(f"job {job} did not reach a terminal status")
 
 
+def attack_finalization(root: Path, script: Path, env: dict[str, str], name: str, replacement: str) -> None:
+    job = f"trace-attack-{name}"
+    repo = "composition"
+    suite = "full-trace-control"
+    receipt(root, job, repo, suite, root / "worktree")
+    request(root, job, repo, suite)
+    write_df(root / "bin/df", 4_600_000_001)
+    started = subprocess.Popen([str(script), job], cwd=root, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    trace = root / "tests" / job / "disk-trace.tsv"
+    deadline = time.monotonic() + 10
+    while not trace.exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    if not trace.exists():
+        raise AssertionError(f"{name}: sampler never created its trace")
+    time.sleep(0.2)
+    owned = trace.with_name("sampler-owned.tsv")
+    trace.rename(owned)
+    if replacement == "symlink":
+        foreign = trace.with_name("foreign-target")
+        foreign.write_bytes(b"foreign-target\n")
+        trace.symlink_to(foreign)
+        foreign_before = foreign.read_bytes()
+    elif replacement == "fifo":
+        os.mkfifo(trace, 0o600)
+        foreign = None
+        foreign_before = b""
+    elif replacement == "regular":
+        foreign = trace
+        foreign.write_bytes(b"foreign-regular\n")
+        foreign.chmod(0o600)
+        foreign_before = foreign.read_bytes()
+    elif replacement == "parent":
+        moved = trace.parent.with_name(f"{trace.parent.name}-physical")
+        trace.parent.rename(moved)
+        trace.parent.symlink_to(moved, target_is_directory=True)
+        foreign = None
+        foreign_before = b""
+    else:
+        raise AssertionError(f"unknown trace attack {replacement}")
+    stdout, stderr = started.communicate(timeout=20)
+    if started.returncode != 0:
+        raise AssertionError(f"{name}: admission failed: {stdout}{stderr}")
+    if wait_terminal(root, job) != "fail":
+        raise AssertionError(f"{name}: replacement was not refused")
+    if replacement in {"symlink", "regular"} and foreign is not None and foreign.read_bytes() != foreign_before:
+        raise AssertionError(f"{name}: replacement received redirected bytes")
+    if not (root / "tests" / job / "trace-error").exists():
+        raise AssertionError(f"{name}: refusal did not leave a trace custody error")
+
+
+def attack_validator_path(root: Path, validator: Path, name: str, replacement: str) -> None:
+    job = f"validator-attack-{name}"
+    directory = root / "tests" / job
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    trace = directory / "disk-trace.tsv"
+    trace.write_text(
+        "timestamp_utc\tmonotonic_ns\tavailable_bytes\tjob_id\tbody_pid\tkind\n"
+        f"2026-10-26T00:00:00.000Z\t1\t4600000001\t{job}\t123\tfirst\n"
+        f"2026-10-26T00:00:01.000Z\t2\t4600000001\t{job}\t123\tfinal\n",
+        encoding="utf-8",
+    )
+    trace.chmod(0o600)
+    owned = trace.with_name("validator-owned.tsv")
+    trace.rename(owned)
+    if replacement == "symlink":
+        foreign = trace.with_name("validator-target")
+        foreign.write_bytes(b"validator-target\n")
+        trace.symlink_to(foreign)
+        foreign_before = foreign.read_bytes()
+    elif replacement == "fifo":
+        os.mkfifo(trace, 0o600)
+        foreign = None
+        foreign_before = b""
+    else:
+        foreign = trace
+        foreign.write_bytes(b"foreign-validator\n")
+        foreign.chmod(0o600)
+        foreign_before = foreign.read_bytes()
+    try:
+        result = subprocess.run(
+            [str(validator), str(trace), job, "123", str(os.getuid())],
+            text=True,
+            capture_output=True,
+            timeout=3,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise AssertionError(f"{name}: validator hung") from exc
+    if result.returncode == 0:
+        raise AssertionError(f"{name}: replacement was accepted")
+    if foreign is not None and foreign.read_bytes() != foreign_before:
+        raise AssertionError(f"{name}: validator redirected bytes")
+
+
 def main() -> int:
     root, script, worktree, env = prepare()
     outcomes: dict[str, object] = {
@@ -387,6 +481,27 @@ def main() -> int:
     if Path(f"/proc/{trace_pid}").exists():
         raise AssertionError("cancelled installed runner did not reap its sampler")
     outcomes["cases"].append({"name": "body-cancel-self-finalized-reaped", "result": "pass"})
+
+    # Trace custody attacks are exercised against the real received runner.
+    for name, replacement in [
+        ("symlink-before-final", "symlink"),
+        ("fifo-before-final", "fifo"),
+        ("regular-before-final", "regular"),
+        ("parent-substitution-before-final", "parent"),
+    ]:
+        attack_finalization(root, script, env, name, replacement)
+        outcomes["cases"].append({"name": name, "result": "pass"})
+
+    # The standalone validator also opens without following a swapped final
+    # component and never reads a FIFO or a foreign replacement.
+    validator = script.parent / "d141-validate-trace.py"
+    for name, replacement in [
+        ("symlink-before-validation", "symlink"),
+        ("fifo-before-validation", "fifo"),
+        ("regular-before-validation", "regular"),
+    ]:
+        attack_validator_path(root, validator, name, replacement)
+        outcomes["cases"].append({"name": name, "result": "pass"})
 
     # Fail-closed receipt and disk controls all reach the candidate validator.
     receipt(root, "wrong-job", "runtime", "full-d141-pristine-targeted15", worktree, "D141h-runtime-pristine-targeted15")

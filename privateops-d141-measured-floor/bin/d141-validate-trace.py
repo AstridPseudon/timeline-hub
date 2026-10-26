@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import stat
 import sys
@@ -19,26 +20,81 @@ def fail(message: str) -> None:
     raise TraceError(message)
 
 
-def main(argv: list[str]) -> int:
-    if len(argv) != 4:
-        print("usage: validate-trace.py TRACE JOB_ID BODY_PID EXPECTED_OWNER_UID", file=sys.stderr)
-        return 2
-    path = Path(argv[0])
-    job_id = argv[1]
-    body_pid = int(argv[2])
-    owner_uid = int(argv[3])
-    item = os.lstat(path)
-    if stat.S_ISLNK(item.st_mode) or not stat.S_ISREG(item.st_mode):
-        fail("trace is not a regular non-symlink file")
-    if item.st_uid != owner_uid:
-        fail("trace owner mismatch")
-    rows = path.read_text(encoding="utf-8").splitlines()
+def parent_binding(path: Path, owner_uid: int) -> tuple[int, str]:
+    if not path.is_absolute() or path.name != "disk-trace.tsv":
+        fail("trace path is not the fixed absolute file")
+    if any(component in {".", ".."} for component in path.parts[1:]):
+        fail("trace path contains traversal components")
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path.anchor, flags)
+    records: list[str] = []
+    try:
+        for component in path.parts[1:-1]:
+            child = os.open(component, flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+            item = os.fstat(descriptor)
+            mode = stat.S_IMODE(item.st_mode)
+            if not stat.S_ISDIR(item.st_mode) or item.st_uid not in {0, owner_uid}:
+                fail("trace parent is not an owned directory")
+            if mode & (stat.S_IWGRP | stat.S_IWOTH) and not (item.st_uid == 0 and mode & stat.S_ISVTX):
+                fail("trace parent is writable by an untrusted class")
+            records.append(f"{component}:{item.st_dev}:{item.st_ino}:{item.st_uid}:{mode:o}")
+        return descriptor, hashlib.sha256("|".join(records).encode()).hexdigest()
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def parse_binding(raw: str) -> tuple[int, int, int, int, int, str]:
+    fields = raw.split("\t")
+    if len(fields) != 7 or fields[0] != "ready":
+        fail("sampler binding is malformed")
+    try:
+        values = [int(value, 8 if index == 3 else 10) for index, value in enumerate(fields[1:6])]
+    except ValueError as exc:
+        raise TraceError("sampler binding has non-numeric identity") from exc
+    device, inode, owner, mode, links = values
+    parent_hash = fields[6]
+    if device < 0 or inode < 0 or owner < 0 or mode != 0o600 or links != 1 or len(parent_hash) != 64:
+        fail("sampler binding has invalid identity")
+    return device, inode, owner, mode, links, parent_hash
+
+
+def check_trace(descriptor: int, binding: tuple[int, int, int, int, int, str] | None, owner_uid: int) -> None:
+    item = os.fstat(descriptor)
+    if not stat.S_ISREG(item.st_mode) or item.st_uid != owner_uid or stat.S_IMODE(item.st_mode) != 0o600 or item.st_nlink != 1:
+        fail("trace is not a single-link owned regular file with mode 600")
+    if binding is not None:
+        device, inode, owner, mode, links, _ = binding
+        if (item.st_dev, item.st_ino, item.st_uid, stat.S_IMODE(item.st_mode), item.st_nlink) != (device, inode, owner, mode, links):
+            fail("trace identity, ownership, mode, or link count changed")
+
+
+def read_descriptor(descriptor: int) -> bytes:
+    chunks: list[bytes] = []
+    size = 0
+    while True:
+        chunk = os.read(descriptor, 65536)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+        size += len(chunk)
+        if size > 16 * 1024 * 1024:
+            fail("trace is too large")
+
+
+def validate_rows(raw: bytes, job_id: str, body_pid: int) -> int:
+    try:
+        rows = raw.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        fail(f"trace is not UTF-8: {exc}")
     expected = "timestamp_utc\tmonotonic_ns\tavailable_bytes\tjob_id\tbody_pid\tkind"
     if not rows or rows[0] != expected:
         fail("trace header mismatch")
     samples: list[tuple[datetime, int, int, str]] = []
-    for raw in rows[1:]:
-        fields = raw.split("\t")
+    for raw_row in rows[1:]:
+        fields = raw_row.split("\t")
         if len(fields) != 6:
             fail("trace row has wrong field count")
         stamp = datetime.fromisoformat(fields[0].replace("Z", "+00:00"))
@@ -61,7 +117,36 @@ def main(argv: list[str]) -> int:
         seconds = (right[1] - left[1]) / 1_000_000_000
         if not 4.0 <= seconds <= 7.0:
             fail(f"trace periodic interval is {seconds:.3f}s, outside 4-7s")
-    print(f"trace PASS: {len(samples)} actual samples; first={samples[0][0].isoformat()} last={samples[-1][0].isoformat()}")
+    return len(samples)
+
+
+def main(argv: list[str]) -> int:
+    if argv and argv[0] == "--fd":
+        if len(argv) != 6:
+            return 2
+        descriptor, job_id, body_pid_text, owner_text, binding_text = int(argv[1]), argv[2], argv[3], argv[4], argv[5]
+        owner_uid = int(owner_text)
+        binding = parse_binding(binding_text)
+        check_trace(descriptor, binding, owner_uid)
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        count = validate_rows(read_descriptor(descriptor), job_id, int(body_pid_text))
+    else:
+        if len(argv) != 4:
+            print("usage: validate-trace.py TRACE JOB_ID BODY_PID EXPECTED_OWNER_UID", file=sys.stderr)
+            return 2
+        path, job_id, body_pid, owner_uid = Path(argv[0]), argv[1], int(argv[2]), int(argv[3])
+        parent_descriptor, _ = parent_binding(path, owner_uid)
+        descriptor = -1
+        try:
+            flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0)
+            descriptor = os.open(path.name, flags, dir_fd=parent_descriptor)
+            check_trace(descriptor, None, owner_uid)
+            count = validate_rows(read_descriptor(descriptor), job_id, body_pid)
+        finally:
+            if descriptor >= 0:
+                os.close(descriptor)
+            os.close(parent_descriptor)
+    print(f"trace PASS: {count} actual samples")
     return 0
 
 

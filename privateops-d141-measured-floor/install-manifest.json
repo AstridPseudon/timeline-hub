@@ -9,7 +9,7 @@
     {
       "source": "bin/d141-append-final.py",
       "destination": "bin/d141-append-final.py",
-      "sha256": "67524e434a55cc221336de2b5ca1051ee1dae1ccad8ed32f453ee4a5f13a2671",
+      "sha256": "1a9a6340f5cfc9b9b5f68e93cb99b2ab279fdd5f9a9a2b7d81ccdcacfe322ac5",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
@@ -18,7 +18,7 @@
     {
       "source": "bin/d141-disk-trace.py",
       "destination": "bin/d141-disk-trace.py",
-      "sha256": "e6f0747a908a6097cec71c10fb62bfd661ef2b3fa4891fd3b2f23aaa32575179",
+      "sha256": "d0eea1f945b1a89c279bb5c6214b93532c907a1e18ffce369a2da91f313330bb",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
@@ -36,7 +36,7 @@
     {
       "source": "bin/d141-validate-trace.py",
       "destination": "bin/d141-validate-trace.py",
-      "sha256": "a535869877130aebc39eb1171757613dd19f3c70ef1c5a3554b9dbd8f440fb27",
+      "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
@@ -45,7 +45,7 @@
     {
       "source": "bin/test-run",
       "destination": "bin/test-run",
-      "sha256": "1d66d3b191f4d91be1463652889e00d40eea3930c1a3260a0d1d295d93423fa2",
+      "sha256": "339d44b4852a69b6733a32f78b8ae7933c7d579368a64b207633fb9070f79987",
       "mode": "755",
       "precondition": {
         "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
