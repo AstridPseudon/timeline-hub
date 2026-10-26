@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-26T11:25:15.153178+00:00",
+  "sweep_tmp_3": {
+    "exit": 0,
+    "removed_dirs": 0,
+    "diagnostics": "Existing helper Broken pipe diagnostics retained in session32059; no refusal"
+  },
+  "compact_scratch_1": {
+    "exit": 0,
+    "packed_scratch_dirs": 0,
+    "gzipped_logs": 0,
+    "packed_test_dirs": 0
+  },
+  "eligible_clean_ended_nonKEEP_worktrees": [],
+  "free_bytes": 5420892160,
+  "raw_KEEP_release": false,
+  "hub_operation": false,
+  "prior_marker_hash_comparison": "Not captured for this pass; no historical equality claim"
+}

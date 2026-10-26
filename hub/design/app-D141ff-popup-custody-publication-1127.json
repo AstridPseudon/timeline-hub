@@ -1,0 +1,73 @@
+{
+  "at": "2026-10-26T11:26:51.820414+00:00",
+  "verdict": "PASS_CUSTODY_TEST_FAIL",
+  "files": [
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/report.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-report.md",
+      "sha256": "25529a77f7b9fa45ebd598b4dc5f1ae1ae0d2b518d95b1ffc6b6be9f5b9e1569",
+      "bytes": 960
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/review.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-review.json",
+      "sha256": "864da098f70bad18898e164dacded239f709eaee8dba265003539be08a51dc0a",
+      "bytes": 2966
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/findings.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-findings.md",
+      "sha256": "529cd45ea180688e01b09ee091607b69141f12f61272a6b354404028a9b14fff",
+      "bytes": 5165
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/source-manifest.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-source-manifest.json",
+      "sha256": "8e60436fbea1cd19c726099cddd8cf5d93cbea5b93ccaf50c46920da987e0819",
+      "bytes": 5041
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/validation.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-validation.md",
+      "sha256": "1e224818d668257e7cb2fab02eded40ba318b2a1943d63e2950a17b9f08bf210",
+      "bytes": 1472
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/handoff.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-handoff.md",
+      "sha256": "80b1d94dc47149003abc3c110c4e67404ac1701663fd63095222462f417e8bb5",
+      "bytes": 1030
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/visibility-map.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/visibility-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-visibility-map.json",
+      "sha256": "f435bcaefd14076d5afd79cf1bc9fbeef153b11095984667de5935ef663e8200",
+      "bytes": 1546
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/disk-trace.txt",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-disk-trace.txt",
+      "sha256": "e3761a773c18945c702d532b011f65942942c1fff2ca7851f2ae5d20fc1d2a9a",
+      "bytes": 789
+    },
+    {
+      "original_git": "d9ed9d4caf700a3781ab9b3688c8fc1f7ed7c27d:evidence/sampler-lifecycle.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-custody-review-1121/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-custody-review-1121-sampler-lifecycle.json",
+      "sha256": "568f75c1dea9d57b4d066f6ed8b1a9ee68ae83ced875221c758c2e61dedaea9b",
+      "bytes": 775
+    }
+  ],
+  "recovery": "Exact Git blobs from worker relative evidence; no source or historical text altered",
+  "trace_limit": "Reviewer own sampler late and only3samples; author original sampler gap retained; actual body native44 trace qualified",
+  "D141ff": "Main11:23 later authorizes ONE nonblocking diagnostic after six selectors AND fourfield source visibility proof; reviewer no-authorization wording applies only its original review scope",
+  "no_product_merge": true
+}
