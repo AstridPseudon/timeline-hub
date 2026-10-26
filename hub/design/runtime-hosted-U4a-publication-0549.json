@@ -1,0 +1,22 @@
+{
+  "source": "c2a34f59235ad491c75bc4036b9dc4d0f6532f30",
+  "custody": "Exact author Git blobs recovered; relative output error disclosed",
+  "files": [
+    {
+      "path": "design/rt-U4a-D141-postREG-host-0544-receiving.json",
+      "sha256": "dd3a31660d712c849bc917b983f314665e6b48c9432737fbbb40579fa9b01810"
+    },
+    {
+      "path": "design/rt-U4a-D141-postREG-host-0544-source-manifest.json",
+      "sha256": "f29d4faccb8777eb0c83255d3b7b79c28ef42d6d2570bbe3ba694819f08195da"
+    },
+    {
+      "path": "design/rt-U4a-D141-postREG-host-0544-validation.md",
+      "sha256": "a0cc71285e59dc694293e803ac9f74cf00530884f5016060f8e0a7406c909e9a"
+    },
+    {
+      "path": "design/rt-U4a-D141-postREG-host-0544-handoff.md",
+      "sha256": "0c7efded5efe0291c44beb017fd3c2942547ac2406d3fb69a7bbab2da3dd1487"
+    }
+  ]
+}
