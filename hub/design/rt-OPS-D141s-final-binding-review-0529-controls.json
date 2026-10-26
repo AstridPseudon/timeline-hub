@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.ops.d141s.controls.v1",
+  "command": "TMPDIR=/tmp/rt-OPS-D141s-final-binding-review-0529.a99S6n PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+  "exit_code": 0,
+  "case_count": 74,
+  "verdict": {"SEC001": "PASS", "SEC002": "PASS", "freeze2": "NEEDS", "release": "NOT_READY"},
+  "coverage": {
+    "lifecycle": ["normal completion", "preflight/body refusal", "USR1/TERM", "mounted request-stop-test", "frozen sampler exit 125", "timeout-child reaping"],
+    "custody": ["symlink", "FIFO", "regular replacement", "physical-parent substitution", "validation-stage variants", "descriptor/inode/no-follow/0600/single-link/nonblock"],
+    "fail_closed": ["matching-hash wrong suite/source/twin/command/replay", "D141g-paired-control production decision", "wrong target/files", "malformed receipts", "held 8912", "held 19479", "held 18617", "P5 non-6934 IDs"],
+    "floors": ["4.6 GB admission", "4.0 GB stop", "one-heavy/global occupancy", "default floor/cache/source/snapshot/lease"],
+    "binding": {"packet": "5344c53e/4 repo tuple", "all_eight_pairs": true, "registration": false, "body": false}
+  },
+  "held_18617": {"id": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617", "returncode": 3, "body_started": false, "artifacts": ["request", "why"]},
+  "publication_smoke": "PASS; installed -> hub/kit -> received direct bin; controls sibling absent",
+  "received_test_run_note": "test-run source hash is a8ede576...; private harness path rewrite changes only isolated received copy hash"
+}

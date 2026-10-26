@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T05:32:01Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-26T05:29Z
+<!-- main | 2026-10-26T05:36:51Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-26T05:35Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -14,10 +14,10 @@
 | D141 full receiving | Initialize safe output directory | Luna | Normal production row | merged | rt-F-D141-full-output-fix-0052 | Four real row controls PASS; corrected scoped rows installed. Cut18778 actual result retained; pristine8912 queued. | Cut6a011 / 28e56 |
 | D141 Runtime full | Retain actual cut full result | Service | Output smoke and scoped install PASS | review | Main0052; service18778 | Actual7300 pass35 fail18 error26 skip13 xfail. Raw XML and witnesses KEEP. No REG verdict without pristine. | 6a011 / 28e56 |
 | D141 pristine targeted15 | Retain qualified actual pristine comparator | Luna and service | Independent0445 terminal | merged | Actual11121; independent0445 | All15 PASS2.76s, same environment and exact predicates. Old8912 queued unstarted. | fa9 / 8b6 |
-| D89d measured admission | Complete actual App binding intake | Luna | Independent0503 PASS73; App packet0503 | review | Author0519; independent0529 | Author74 controls PASS; authentic5344 binding and old18617 hold. Final postREG App packet still owed. Deadline06:00 PASS INSTALL. | 2733c720 |
+| D89d measured admission | Complete actual App binding intake | Luna | Independent0503 PASS73; App packet0503 | blocked:app | Author0519; independent0529 PASS | Independent74 PASS; all code findings closed. Authentic5344 binding remains earlier Runtime6a. Final postREG packet owed before06:00. | 2733c720 |
 | D141h Runtime split | Retain installed qualified Runtime kit | Sol and Luna | Independent0418 PASS49 | merged | Sol0410; review0418; CAS0422 PASS | [Install](../../design/rt-OPS-D141-runtime-CAS-0422-installation.json). Five files exact in live and normal hub kit. No App exception or gate credit. | 56f2d56e |
 | D141g App binding | Retain historical first placement caller | App Luna | Author0309 terminal | merged | app-P-D141g-first-suite-binding-0309 | Exact520d target suite source and builder command hashes published. Prospective only; actual D66 registered bytes must match before either part. | App520d |
-| D141g paired preflight | Hold admission until final binding and CAS | Luna | D141s source intake and review | gated:D141s | Independent0503 PASS73; receiver0519 | All lifecycle and SEC002 closed; authentic current source binding remains. No installed pair or admission release. | b168dbb0 |
+| D141g paired preflight | Hold admission until final binding and CAS | Luna | D141s source intake and review | gated:D141s | Independent0529 PASS74; final packet owed | All lifecycle and SEC002 closed; authentic current source binding remains. No installed pair or admission release. | b168dbb0 |
 | D141l App new binding | Receive actual final App builder packet | App and Runtime Luna | Genuine5344 packet; postREG receiving | blocked:app | App normal producer receiving | Actual5344 packet qualified; normal Runtime95d adoption needs genuine final App source and builder packet. No byte retarget. | App5344c53e |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
@@ -46,15 +46,15 @@
 
 | D141 REG integrated | Retain qualified final15 case batch | Luna | Independent0513 PASS | merged | Actual0508; independent0513 | Exact15 PASS5.79s on95d98 plus8585; all3 blobs exact authors. Real15 client mapping qualified; own38 unchanged. | 95d98f03 |
 
-| D141 old App queue | Keep original18617 unstarted | Luna | Exact authentic App request ID | review | Author0519; independent0529 | Exact old18617 guard source complete; author refusal PASS. No installation yet; queue/request/registry unchanged. | 2733c720 |
+| D141 old App queue | Keep original18617 unstarted | Luna | Exact authentic App request ID | gated:D141s | Author0519; independent0529 PASS | Exact old18617 guard independently PASS in private source. Not live; original queue/request/registry unchanged. | 2733c720 |
 
 Runtime REG closed: final95d98 source and integrated15 PASS are independently qualified by0513. Normal producer handoff0515 and publication0521 sent; Agent and App own normal receiving.
-Blockers: App receiving — D141s author0519 PASS74; independent0529 active. Genuine5344 source is bound; final postREG App adoption and fresh builder packet owed. PASS INSTALL by06:00 or dropped.
+Blockers: App receiving — Independent0529 PASS74 closes all code findings. Genuine5344 still binds Runtime6a; final postREG source/builder packet owed. PASS INSTALL by06:00 or dropped.
 P5 original metadata cleared: immutable0500 derivative exact38 IDs and original witnesses verified; safe controller blobs recovered. Original38PASS scope retained, final applicability0513 PASS; App cumulative handoff0521 sent.
 Blockers: Safety — D130, old venvs and runtimes/agent-remotion held. D141t protects1811 with KEEP after compaction refusal; originals and tgz as found. No actual hub approval; smoke dropped.
 Later: App0510 offered a host for the sole final binding review if Runtime is disk-held. Runtime0519 remains source owner; review brief prepared, no competing reviewer assigned.
-Next ready: Independent0529 source and hold review, then CAS only on eligible final App binding. Runtime REG and P5 applicability closed0513. Final build waits actual freeze2 proofs and tuples.
-live 1 / cap 3; ready-undispatched 0. Independent binding review0529 queued at4632711168 bytes. Integrated15 and final P5 applicability independently0513 PASS. No heavy body, no ready source left waiting.
+Next ready: Authorized final literal completion on genuine App postREG binding, then exact applicability qualification and CAS before06:00. Runtime REG and P5 applicability closed0513. Final build waits actual freeze2 proofs and tuples.
+live 0 / cap 3; ready-undispatched 0. Independent0529 terminal PASS74; final App source/builder packet is a real external dependency. Integrated15 and final P5 applicability independently0513 PASS. No heavy body, no ready source left waiting.
 Runtime now95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 after qualified REG normalmerges. Integrated15 and independent0513 PASS; Composition635f unchanged. Header04:46 records Agent8585ed9c/tree92a3ffdb freeze2; full matching pair and changed-path P4 Agent-owned. App5344c53e normal source HOME now; genuine new builder binding owed. No upstream chasing.
 Runtime18778 actual7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121 actual15PASS; P56934 actual38PASS. Raw XML and trace KEEP retained. Original receipts keep original scopes. Old8912 and P419479 unstarted.
 Farm child chain conditional on Agent join. Schema verified; original kit pair and67wheel seed EXACT MISSING, no hunt/rebuild. Planned F-final separately gated; no smoke or ZIP.
@@ -67,3 +67,5 @@ Cleanup refusal: [exact record](../../escalations/runtime-20261026T045900Z-compa
 Maintenance05:26: guarded compact1 packed0 scratch and0 test dirs, gzipped1 old worker log; sweep3 removed0. No permission refusal. Prior sealed1811 and adjacent archives stayed KEEP protected; no hub/old-venv/Store action.
 
 05:29 source checkpoint:0519 terminal2733c720/treeeb04b6da,74 controls PASS, no live install or queue mutation. Six safe outputs byte-published in runtime-D141s-binding-publication-0529.json. Independent0529 uses exact same script. App0510 hosting offer retained later; Runtime admitted review normally, no transfer.
+
+05:35 result: independent0529 PASS source/control74; release NOT READY, no CAS. Exact source2733/treeeb04 and all8 current5344 pairs qualified; final95d98 receiving packet absent. Source and review flat-published0529/0535; blocking handoff0535 sent. No fresh lifecycle or security fix loop.

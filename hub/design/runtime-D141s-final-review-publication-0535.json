@@ -1,0 +1,31 @@
+{
+  "source": "2733c720c555c2853ce73b5b74d7896aa1fe8b38",
+  "source_control": "PASS",
+  "release": "NOT_READY",
+  "files": [
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-controls.json",
+      "sha256": "0d0d6fd0c6d4360d97f740a9c8f072aa8a178ff6d1f51013e15bfb8f9f1b96e4"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-source-manifest.json",
+      "sha256": "d6e2015f12f65f2f00afcf8e71af7d112aaa71db7652e4a615be884b7962f7b0"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-review.json",
+      "sha256": "03aa91795b4a991234599ce036b7c707d653a7365ce3fdd080a6cf177bec9e87"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-validation.md",
+      "sha256": "5f77dcefff4c5bd120aabe39c3e7954d78e0622029b42714eb6918017bc9ae87"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-findings.md",
+      "sha256": "1373424b728f681ffbe95f966effebcfc306f0f6215bfab0f0045dce5bfd53a1"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-review-0529-handoff.md",
+      "sha256": "723cec3c1012b66439fe1d96c82b3b4991d34ecd9f9a5a25dd63fd35d57f6ab4"
+    }
+  ]
+}

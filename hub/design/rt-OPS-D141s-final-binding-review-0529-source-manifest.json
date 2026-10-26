@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.ops.d141s.final-binding-source-manifest.v1",
+  "commit": "2733c720c555c2853ce73b5b74d7896aa1fe8b38",
+  "tree": "eb04b6da47a320f0920ae7dd53d95b0ac85928a9",
+  "base": {"commit": "b168dbb05d469941ee57c63190198bb4df852cd7", "tree": "aa70f43234e26aa2cdb23031ca0683c3e81da0bd"},
+  "changed_paths": [
+    "ops-d141-measured-floor/bin/d141-validate-receipt.py",
+    "ops-d141-measured-floor/bin/test-run",
+    "ops-d141-measured-floor/controls/real-controls.py",
+    "ops-d141-measured-floor/install-manifest.json"
+  ],
+  "files": [
+    {"path": "bin/d141-append-final.py", "sha256": "d638f2974045220e565f0ed476412c7003a077942bf5c792c69611159ee14431", "mode": "755", "precondition_sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398"},
+    {"path": "bin/d141-disk-trace.py", "sha256": "d38c89cf71a042e3a721ad2e37ba6bc6f5fc6a51c60ecf4736924e6e2ace0520", "mode": "755", "precondition_sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222"},
+    {"path": "bin/d141-validate-receipt.py", "sha256": "16e2592d1307a2567b5e74c6fe018445c428af7c76dbea2b896bfc3fcb06b3df", "mode": "755", "precondition_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6"},
+    {"path": "bin/d141-validate-trace.py", "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5", "mode": "755", "precondition_sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"},
+    {"path": "bin/test-run", "sha256": "a8ede576ef763bae3db4c6acfadc7dcc8f444a9a46f46e69744b0118afda6bc7", "mode": "755", "precondition_sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300"}
+  ],
+  "preimage": {"donor_commit": "56f2d56e7d241d303be85df62166570d51602101", "donor_tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d", "verification": "all five precondition hashes/modes match donor privateops-d141-measured-floor/bin"},
+  "packet_tuple": {"app": ["5344c53e3063001bb3255bd0c9cd32cc5e77967f", "dd989783046aeff652486a1ba39db42aea86e201"], "agent": ["8585ed9c0404d0187b2ce70242d25114a32747c2", "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"], "runtime": ["6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "ac5b862744bece65b2e30565db1777bacd60da28"], "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]},
+  "later_observed_runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"]
+}
