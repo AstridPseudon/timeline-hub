@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T06:47:27Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
-# runtime board, 2026-10-26T06:44:28Z
+<!-- main | 2026-10-26T06:52:32Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
+# runtime board, 2026-10-26T06:51:16Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -56,10 +56,12 @@
 | D141w proof and catch-up | Receive current Agent pair and App catch-up | Agent and App Luna | Main06:41 | doing | Existing Agent0515; App owner | Agent binds ecdc; App catch-up now with touched-file tests, lint and types. Existing unit proof retained for unchanged files. | Owning lane heads |
 | D141w dry-run | Measure Runtime hub loose objects | Runtime manager | Main06:41 read-only request | merged | bin/hub-repack runtime --dry-run | Exit0;30543 loose,1.40GiB; free4613652480 bytes. [Census](../../design/runtime-D141w-hub-repack-dry-run-0643.json). Real repack owner-gated. | No source change |
 
+| D141l command whole path | Investigate second failed Agent command fix | Luna | Agent peer0640; ordinary source admission | doing | rt-F-D141l-command-wholepath-0640 | Queued at4608532480 bytes; read-only production caller and custody chain. Agent Sol0638 owns repair and final review. No body. | Evidence only |
+
 Blockers: App lead — D141x assigns exact obsolete18617 supported cancellation to the owning App lead. Cancellation receipt owed; no Runtime kit or queue edit.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held as found. D141t KEEP retained. Hub-repack still owner-gated. Refused smoke dropped.
-Next ready: Receive Agent current-head full pair and changed CLI P4; App units, catch-up and final journeys remain owned. Final packaging awaits definitive proofs and actual tuple; no build or ZIP.
-live 0 / cap 3 at4612235264 bytes; ready-undispatched 0. P5 successor applicability complete; no Runtime source or heavy worker ready.
+Next ready: Whole-path0640 finite findings to Agent Sol0638; receive current-head full pair and CLI P4, App units/catch-up/journeys. Final build remains gated.
+live 1 / cap 3; ready-undispatched 0. One independent Agent command whole-path investigation queued; no heavy body.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Exact integrated15 actual0508=15PASS5.79s and independent0513 PASS. Original cut18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Original receipts retain original sources; final95d/8585 applicability0513 is a separate analysis. Raw XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912 and19479 remain held/unstarted.
 D141s-c06:18 DROPPED pairedkit. Actual0545 schema3 packet cannot feed unchanged schema2 controls. Source2733, WIP14822/treef077, packet0545 and blocked0601 outputs retained uninstalled. No schema2 derivative, adapter, further round or CAS. Runtime live56f2/f674 unchanged. Packet-format decision escalation0618 resolved by DROP; no decision owed now. App ordinary D89/D89d per body kind applies; journeys wait real headroom.
@@ -68,8 +70,10 @@ Hosted REG source57b/review0611 actual2PASS2.972s retained only as supporting ca
 App unit witness disclosure installed0625 and independently0630 PASS. Notes now13f2/b299; prior text exact, controlled render PASS. Outside568 author receipt accepted; independent full inventory replay not done. No build or new measurement. Exact flat publication0633 sent Main/App.
 H6: latest Agent board06:11 confirms ownREG review; header06:17 supplies actualHOME432f. App full0606 admitted against exact4de with independently0600 qualified derived witness; final journeys/definitive core and changedCLI P4 remain external. Farm04:25 conditional chain only; schema transport closed, original kit pair/67wheel EXACT MISSING, no hunt/rebuild.
 Disk maintenance this pass: fresh recycle census found five dirty ended Runtime trees, no clean eligible ended nonKEEP tree. Guarded sweep3 removed0; compact1 packed0scratch/0testdirs and gzipped1 old worker log, no permission refusal. No raw/held/dirty/Store/hub/oldvenv cleanup.
-INBOX consumed through1822053 bytes. Latest D141v/w/x consumed. Peer asks have rows or later dispositions; no stopped investigation resumes.
+INBOX consumed through1824212 bytes. Agent0640 peer discovered through normal owner board and read in hub; row dispatched this pass. Other asks have rows or later dispositions.
 
 06:37 H6: Agent06:23 board and genuine0622 home packet confirm ecdc242e/tree d362, transport blocker CLEAR. Earlier Agent REG fix stays controlling; Runtime hosted duplicate remains terminal supporting evidence. App06:26 unit8638 active, final journeys disk-held. Farm04:25 conditional only. P5 bounded successor applicability0637 dispatched; no repeated semantic review or body. Fresh all-worker recycle census found no clean eligible ended nonKEEP tree; three dirty Runtime trees retained. Sweep3 and compact1 running under existing guarded routes. No hub/oldvenv/held/raw cleanup.
 
 2026-10-26T06:44:28Z current pass: Independent0637 PASS_SOURCE_APPLICABILITY published byte-exact to App/Agent/Main; original6934 proof and0513/0619 outputs unchanged. D141v prevents repeated pin cascades. D141w dry-run complete with no hub mutation; App catch-up now and Agent ecdc full pair remain owning lanes. D141x exact18617 cancellation moves obsolete-job disposition to owning App lead. All stopped/refused work stays held. Fresh recycle census found only three dirty ended nonKEEP trees and no eligible clean tree; guarded sweep3 and compact50 ongoing. No new Runtime source, body, kit, build or ZIP.
+
+2026-10-26T06:51:16Z Agent peer0640 is READY and dispatched immediately at4608532480 ordinary source admission: rt-F-D141l-command-wholepath-0640, Luna read-only on tiny Composition635f. One finite investigation of all0626 findings and passing production seams, real5s trace/4GBstop; repair and eventual final source review stay Agent0638. No product or body. Sweep3 and compact50 terminal removed0/packed0/gzipped0; three dirty ended trees retained.
