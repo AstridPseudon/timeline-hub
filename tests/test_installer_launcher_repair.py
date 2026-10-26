@@ -196,8 +196,10 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
     })
     status = {"discovery": {"runtime_instance_id": "instance"}, "support": {"pid_alive": True}}
     health = {"status": "ok", "runtime_instance_id": "instance", "services": [
+        {"name": "pack-host", "state": "running"},
         {"name": "chat", "state": service_state},
     ]}
+    (data / "runtime" / "generic-host.ready.json").write_text("{}")
     realm = {"realm_id": "realm"}
 
     class Response:
@@ -228,6 +230,53 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
             backend.verify(version, data, "realm", timeout=0.01)
     else:
         backend.verify(version, data, "realm", timeout=0.01)
+
+
+@pytest.mark.parametrize("state", ["restarting", "running"])
+def test_verification_rejects_pack_host_without_ready_file_with_service_evidence(tmp_path, monkeypatch, state):
+    from astrid.installer import backend as backend_module
+
+    root, data = tmp_path / "program", tmp_path / "workspace"
+    version_root = root / "versions" / "v1"
+    version = Version(version_root, Path(sys.executable), version_root / "profile.json", {})
+    endpoint = f"http://127.0.0.1:{DEFAULT_DOOR_PORT}"
+    write_json(data / "runtime" / "discovery.json", {
+        "door_endpoint": endpoint, "active_realm": "realm", "runtime_instance_id": "instance",
+    })
+    status = {"discovery": {"runtime_instance_id": "instance"}, "support": {"pid_alive": True}}
+    health = {"status": "ok", "runtime_instance_id": "instance", "services": [
+        {"name": "pack-host", "state": state, "reason": "worker exited during startup",
+         "restart_count": 1, "last_exit": 7},
+    ]}
+    realm = {"realm_id": "realm"}
+
+    class Response:
+        def __init__(self, value): self.value = value
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def read(self): return json.dumps(self.value).encode()
+
+    class Opener:
+        def open(self, request, timeout):
+            path = request.full_url.removeprefix(endpoint)
+            return Response({"/api/runtime/v1/health": health, "/api/runtime/v1/realm": realm}[path])
+
+    logs = tmp_path / "runtime-logs"
+    logs.mkdir()
+    (logs / "service-pack-host.log").write_text("startup failed: missing adapter\nrestart scheduled\n")
+    monkeypatch.setattr(backend_module.platform, "log_dir", lambda: logs)
+    monkeypatch.setattr(backend_module.urllib.request, "build_opener", lambda *_: Opener())
+    monkeypatch.setattr(backend_module.time, "sleep", lambda _: None)
+    backend = Backend(root, tmp_path / "install.log", Path(sys.executable))
+    backend.runtime = lambda *_args, **_kwargs: status
+
+    with pytest.raises(VerificationError) as failure:
+        backend.verify(version, data, "realm", timeout=0.01)
+
+    message = str(failure.value)
+    assert f"state={state}" in message
+    assert "worker exited during startup" in message and "last_exit=7" in message
+    assert "missing adapter" in message and "service-pack-host.log" in message
 
 
 class ProcessBackend:

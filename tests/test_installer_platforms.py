@@ -430,7 +430,9 @@ def test_door_verification_requires_selected_realm_recorded_instance_and_live_ow
     if mismatch == 'port':
         discovery['door_endpoint'] = 'http://127.0.0.1:9999'
     write_json(data / 'runtime/discovery.json', discovery)
-    health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance'}
+    (data / 'runtime/generic-host.ready.json').write_text('{}')
+    health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance',
+              'services': [{'name': 'pack-host', 'state': 'running'}]}
     realm = {'realm_id': 'other' if mismatch == 'realm' else 'selected'}
     def opening(request, timeout):
         if mismatch == 'restart-required':
@@ -461,7 +463,9 @@ def test_door_verification_retries_status_observed_before_discovery_was_publishe
     discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
                  "door_endpoint": "http://127.0.0.1:17340"}
     write_json(data / "runtime/discovery.json", discovery)
-    health = {"status": "ok", "runtime_instance_id": "owned-instance"}
+    (data / "runtime/generic-host.ready.json").write_text("{}")
+    health = {"status": "ok", "runtime_instance_id": "owned-instance",
+              "services": [{"name": "pack-host", "state": "running"}]}
     realm = {"realm_id": "selected"}
     opener = Mock()
     opener.open.side_effect = lambda request, timeout: io.BytesIO(json.dumps(
@@ -483,6 +487,85 @@ def test_door_verification_retries_status_observed_before_discovery_was_publishe
     sleep.assert_called_once_with(0.25)
 
 
+@pytest.mark.parametrize("scenario", ["slow-ready", "crash", "failed", "hang"])
+def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkeypatch, scenario):
+    from astrid.installer import backend as module
+
+    program, data = tmp_path / "program", tmp_path / "data"
+    version_root = program / "versions" / "v1"
+    version = Version(version_root, tmp_path / "python", version_root / "profile.json", {})
+    endpoint = "http://127.0.0.1:17340"
+    discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
+                 "door_endpoint": endpoint}
+    write_json(data / "runtime" / "discovery.json", discovery)
+    timeout = 2 if scenario == "hang" else 300
+    declaration = tmp_path / "services.json"
+    write_json(declaration, {"services": [{"name": "pack-host", "ready": {
+        "file": "generic-host.ready.json", "timeout_seconds": timeout}}]})
+    write_json(version.profile, {"service_declaration": str(declaration)})
+
+    class Clock:
+        now = 0.0
+
+        def sleep(self, seconds):
+            self.now += seconds
+
+    clock = Clock()
+    if scenario == "slow-ready":
+        host_states = [{"name": "pack-host", "state": "starting"}]
+    elif scenario == "crash":
+        host_states = [{"name": "pack-host", "state": "restarting", "restart_count": 1,
+                        "last_exit": 1, "reason": "host exited"}]
+    elif scenario == "failed":
+        host_states = [{"name": "pack-host", "state": "starting"},
+                       {"name": "chat", "state": "failed", "reason": "chat exited", "last_exit": 3}]
+    else:
+        host_states = [{"name": "pack-host", "state": "starting"}]
+
+    class Response:
+        def __init__(self, value): self.value = value
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def read(self): return json.dumps(self.value).encode()
+
+    class Opener:
+        def open(self, request, timeout):
+            if request.full_url.endswith("/realm"):
+                return Response({"realm_id": "selected"})
+            if scenario == "slow-ready" and clock.now >= 100:
+                services = [{"name": "pack-host", "state": "running"}]
+                (data / "runtime" / "generic-host.ready.json").write_text("{}")
+            else:
+                services = host_states
+            return Response({"status": "ok", "runtime_instance_id": "owned-instance",
+                             "services": services})
+
+    monkeypatch.setattr(module.urllib.request, "build_opener", lambda *_: Opener())
+    monkeypatch.setattr(module.time, "monotonic", lambda: clock.now)
+    monkeypatch.setattr(module.time, "sleep", clock.sleep)
+    monkeypatch.setattr(module.platform, "log_dir", lambda: tmp_path)
+    (tmp_path / "service-pack-host.log").write_text("host startup detail\n")
+    backend = Backend(program, tmp_path / "install.log", tmp_path / "uv")
+    backend.runtime = lambda *_args, **_kwargs: {
+        "discovery": {"runtime_instance_id": "owned-instance"}, "support": {"pid_alive": True}}
+
+    if scenario == "slow-ready":
+        backend.verify(version, data, "selected", timeout=90)
+        assert clock.now >= 100
+    elif scenario in {"crash", "failed"}:
+        with pytest.raises(RuntimeError, match="declared Astrid service is failed") as failure:
+            backend.verify(version, data, "selected", timeout=90)
+        assert "host startup detail" in str(failure.value)
+        if scenario == "crash":
+            assert "reason=host exited" in str(failure.value) and "last_exit=1" in str(failure.value)
+        else:
+            assert "failed_service=chat" in str(failure.value)
+    else:
+        with pytest.raises(RuntimeError, match="hung during startup"):
+            backend.verify(version, data, "selected", timeout=90)
+        assert clock.now >= timeout
+
+
 def test_source_archives_are_flattened_to_shallow_managed_paths(tmp_path, monkeypatch):
     def unpack(url, destination):
         child = destination / ('astrid-agent-' + 'a' * 40)
@@ -493,6 +576,34 @@ def test_source_archives_are_flattened_to_shallow_managed_paths(tmp_path, monkey
     assert root == tmp_path / 'a'
     assert (root / 'pyproject.toml').read_text() == 'source'
     assert not (tmp_path / 'a.unpack').exists()
+
+
+def test_source_retries_windows_sharing_violation_on_publish(tmp_path, monkeypatch):
+    import os
+    from astrid.installer import tools
+
+    calls = []
+    def move(source, destination):
+        calls.append((source, destination))
+        if len(calls) == 1:
+            error = PermissionError("file is in use")
+            error.winerror = 32
+            raise error
+        os.replace(source, destination)
+
+    monkeypatch.setattr(tools.platform.sys, "platform", "win32")
+    monkeypatch.setattr(tools.platform, "_move_file_write_through", move)
+    monkeypatch.setattr(tools.platform.time, "sleep", lambda _: None)
+    def unpack(url, destination):
+        child = destination / ('astrid-agent-' + 'a' * 40)
+        child.mkdir(parents=True)
+        (child / 'pyproject.toml').write_text('source')
+    monkeypatch.setattr(tools, 'fetch_archive', unpack)
+
+    root = tools.source('agent', 'a' * 40, tmp_path / 'a')
+
+    assert len(calls) == 2
+    assert (root / 'pyproject.toml').read_text() == 'source'
 
 
 def test_python311_windows_reparse_points_are_rejected_using_mocked_file_attributes(monkeypatch):
