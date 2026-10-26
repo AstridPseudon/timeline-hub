@@ -1,0 +1,19 @@
+{
+  "time": "2026-10-26T06:53:15.934578+00:00",
+  "command": "bin/hub-repack agent --dry-run",
+  "exit": 0,
+  "dry_run_only": true,
+  "free_bytes_at_tool_start": 4497534976,
+  "loose_object_count": 104248,
+  "loose_size_reported": "3.23 GiB",
+  "in_pack": 17850,
+  "packs": 8,
+  "pack_size_reported": "126.22 MiB",
+  "prune_packable": 80,
+  "garbage": 0,
+  "batch_reported": 3000,
+  "tool_real_floor_reported_bytes": 4300000000,
+  "tool_sha256": "2dff4685ea7656309ba4fce3303b93e4a969c9d9a8c3739b37599ed28f0e02f1",
+  "qualification": "manager-recorded parsed tool facts; not original stdout; no actual repack, Git mutation or deletion",
+  "owner_approval": "absent; real run not authorized"
+}
