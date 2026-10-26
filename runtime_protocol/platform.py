@@ -1312,7 +1312,7 @@ def signal_process(expected, signum):
                 try:
                     os.kill(pid, signal.CTRL_BREAK_EVENT)
                     return
-                except OSError:
+                except (OSError, SystemError):
                     # Services and console-less processes have no console
                     # control channel. In that case fail closed to the
                     # identity-checked process handle below.

@@ -489,6 +489,67 @@ def test_signal_process_uses_public_pidfd_helpers(monkeypatch):
     assert calls == [("open", 123), ("observe", 123), ("send", 18, platform.TERM), ("close", 18)]
 
 
+def test_windows_signal_process_falls_back_when_ctrl_break_raises_system_error(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
+    kernel = SimpleNamespace(
+        OpenProcess=Mock(return_value=18),
+        TerminateProcess=Mock(return_value=True),
+        CloseHandle=Mock(),
+    )
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: expected)
+    monkeypatch.setattr(
+        platform.os, "kill",
+        Mock(side_effect=SystemError("<built-in function kill> returned a result with an exception set")),
+    )
+
+    platform.signal_process(expected, platform.TERM)
+
+    platform.os.kill.assert_called_once_with(123, 1)
+    kernel.TerminateProcess.assert_called_once_with(18, 1)
+    kernel.CloseHandle.assert_called_once_with(18)
+
+
+def test_windows_signal_process_refuses_identity_mismatch_before_ctrl_break(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
+    kernel = SimpleNamespace(OpenProcess=Mock(return_value=18), CloseHandle=Mock())
+    kill = Mock()
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: {**expected, "uid": 502})
+    monkeypatch.setattr(platform.os, "kill", kill)
+
+    with pytest.raises(OSError, match="process incarnation changed"):
+        platform.signal_process(expected, platform.TERM)
+
+    kill.assert_not_called()
+    kernel.CloseHandle.assert_called_once_with(18)
+
+
+def test_windows_signal_process_keeps_successful_ctrl_break_cooperative(monkeypatch):
+    expected = {"pid": 123, "uid": 501, "birth_id": "windows-creation:42"}
+    kernel = SimpleNamespace(
+        OpenProcess=Mock(return_value=18),
+        TerminateProcess=Mock(return_value=True),
+        CloseHandle=Mock(),
+    )
+    kill = Mock()
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", SimpleNamespace(CTRL_BREAK_EVENT=1))
+    monkeypatch.setattr(platform, "_kernel", lambda: kernel)
+    monkeypatch.setattr(platform, "_windows_identity", lambda _pid, _handle: expected)
+    monkeypatch.setattr(platform.os, "kill", kill)
+
+    platform.signal_process(expected, platform.TERM)
+
+    kill.assert_called_once_with(123, 1)
+    kernel.TerminateProcess.assert_not_called()
+    kernel.CloseHandle.assert_called_once_with(18)
+
+
 @pytest.mark.needs_real_pidfd
 @requires_linux_tree_custody
 def test_public_pidfd_helpers_fallback_signals_real_child_and_retains_fd(monkeypatch, waiting_child):
