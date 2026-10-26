@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T08:37:04Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-26T08:34:04.408069+00:00
+<!-- main | 2026-10-26T08:42:25Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-26T08:39:46.556397+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -67,12 +67,14 @@
 
 | D141l binding return | Review owning Agent source return | Luna | Seventeen SAFE originals hash exact | review | Agent0735; App binding review0820 | App row records review active. Same existing independent check; trace gap disclosed, no duplicate author or body. | Source6a2d1c22 |
 
-| D141z build stop | Stop whole build process group | Luna reserved | Ordinary App source slot | blocked:app | App host0812 requested | Private source and shared harmless controls only. Six source inputs published. Independent review before install; no rehearsal. | No source change |
+| D141z build stop | Stop whole build process group | Luna | Ordinary App source admission | doing | app-F-D141z-build-stop-host-0812 | App08:25 board confirms author active. Private candidate and harmless controls only; no build or install. | Private source |
+
+| D141z stop review | Independently review exact stop candidate | Luna reserved | Actual0812 source terminal | blocked:app | App single review0839 reserved | Fill genuine candidate SHA and same script hash at dispatch. One independent review; no Runtime competitor. | Pending actual source |
 
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
-Blockers: D141z source — Main below 4.5 GB; ordinary App source host requested for process-group stop fix. F-final heavy needs 4.86 GB and independent stop review.
+Blockers: D141z receiving — App0812 author active; one independent0839 review reserved. Main below4.5GB holds later receiving. F-final heavy needs4.86GB and actual gates.
 Next ready: App-host D141z stop author0812 and owning Agent binding review0817. Main notes0820 await source floor. Agent full/P4, App journeys, D141v and heavy headroom gate F-final.
-live 0 / cap 0; ready-undispatched 0. Main below4.5GB. Hosted wholepath and custody complete; stop author0812 still offered App. Notes0820 held for Main source floor. No duplicate.
+live 0 / cap 0; ready-undispatched 0. Main below4.5GB. App0812 author active and single review0839 reserved; notes0820 Mainfloor held. No Runtime duplicate. Hosted source only.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s; P56934=38PASS31.02s. Originals retain their original sources. Successor applicability0513 and0637 stays separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
 
@@ -119,3 +121,5 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 08:29 independent custody0756 received from normalhub;8of8SAFEhashes exact. Substantive FAIL_CUSTODY all7 findings retained; no repair of missing historicalfacts. Main later08:05 audit no survivors clears hostcontrol only; originalexit/wait/reap and App/Composition outcome UNKNOWN. Original0741 and partial staging stayKEEP, no furtherrehearsal. Main4296732672bytes; worker census2650rows zero live/recent. App new0817 independent Agent review stays its existing owner, no Runtime duplicate.
 
 08:34 owning App board has app-F-D141l-Agent-binding-review-0820 review row,17 SAFE originals; Runtime observes same existing Agent0817 review hosted, no duplicate. Inbox through1846821bytes consumes directApp0814 custodyFAIL already received8of8. D141z0812 source exclusiveApp, changeddependency note0831 sent after preceding readers closed. Final notes0820 prepared Mainfloor-held. Free4294418432bytes, no localsource/body/build.
+
+08:39 H6 App08:25 board confirms D141z0812 actualauthor doing, cap3/live3. Row updatedsamepass; single independent0839 source-review allocation sent App for immediate terminal handoff, actualSHA/script hash bound only from real return. Main no competingreview; future receiving/install stillfloorheld. App independentAgent0820 returned finiteFAIL (checker78,45Appmissinginputs; isolated10/36PASS); native wholepath0828 doing and Agent retainsrepair/proofs. No Runtime duplicate. LatestcleanendednonKEEP eligible0 includingexit/INTERRUPTED census; five dirtyv1 trees retained. Inbox through1846821bytes.
