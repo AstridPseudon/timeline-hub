@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-26T11:49:29.082850+00:00",
+  "rows": [
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-preflight-1026114656-9320",
+      "preexisting_keep": false,
+      "keep_present_now": true,
+      "added_at": "2026-10-26T11:49:29.082850+00:00"
+    },
+    {
+      "id": "app-pin-82e9e13d-full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2-1026114726-24271",
+      "preexisting_keep": false,
+      "keep_present_now": true,
+      "added_at": "2026-10-26T11:49:29.082850+00:00"
+    }
+  ],
+  "reason": "Actual raw markers absent despite brief; manager protects now, never backdates or claims earlier presence"
+}
