@@ -1,0 +1,43 @@
+{
+  "recorded_at": "2026-10-26T11:49:29.028510+00:00",
+  "kind": "Exact corrected source worker originals, independent review pending; all15 REG pending, no behavior/retirement credit",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/report.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-report.md",
+      "sha256": "0b79dfa4bb7d0bf986ca6b3e12bd856cde547e8bd94d8b764941e778ab4be2b4",
+      "bytes": 3097
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/per-id.json",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-per-id.json",
+      "sha256": "5f78e5cfae1f6cf5515828b11ef7b0afe663c03078e7e5bd889f8971022d7aae",
+      "bytes": 23049
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-source-manifest.json",
+      "sha256": "f2d024ed1f51f028e8ba46501f6f60954a7e5b59a39bc7304422d544502d55e3",
+      "bytes": 3612
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/validation.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-validation.md",
+      "sha256": "63e717c344bd853da2dcd4703c796c02c4bb10c0242d51f3815bcf6736d31ae4",
+      "bytes": 2625
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/handoff.md",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-handoff.md",
+      "sha256": "f996d3b6eb42dfe3d272f3d1fbe95ef26eaaa3207a0da920b8bb49cb999281de",
+      "bytes": 2924
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-writers15-scope-return-1143/evidence/disk-trace.txt",
+      "destination": "design/agt-F-D141ee-writers15-scope-return-1143-disk-trace.txt",
+      "sha256": "5f138fe5fa1c94da78c0c65797d9df1853164e3031434f1c8180e9662772d991",
+      "bytes": 2256
+    }
+  ],
+  "manager_correction": "Original private independent XML is retained under worker evidence; correction1146 controls any stale loss claim."
+}
