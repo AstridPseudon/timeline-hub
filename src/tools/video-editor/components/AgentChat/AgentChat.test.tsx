@@ -1213,12 +1213,21 @@ describe('AgentChat', () => {
     expect(screen.getByText('queued while processing')).toBeInTheDocument();
   });
 
-  it('shows Stop beside Send in the composer and cancels the running turn', async () => {
+  it('stops one turn, clears queued messages, and keeps the same chat ready for the next turn', async () => {
     const state = createState();
     state.activeSessionData.status = 'processing';
+    state.activeSessionData.turns = [{
+      role: 'tool_call', content: 'Read a file', tool_call_id: 'running-tool', tool_status: 'in_progress', timestamp: iso(1_000),
+    }];
+    state.cancelSession.mutate = vi.fn(() => {
+      state.activeSessionData.status = 'waiting_user';
+      state.activeSessionData.turns.push({
+        role: 'tool_result', content: 'Stopped.', tool_call_id: 'running-tool', tool_status: 'cancelled', timestamp: iso(2_000),
+      });
+    });
     mockFromState(state);
 
-    renderAgentChat();
+    const view = renderAgentChat();
 
     const textbox = await getInput();
     await queueMessage(textbox, 'queued while the turn runs');
@@ -1229,6 +1238,19 @@ describe('AgentChat', () => {
     expect(state.cancelSession.mutate).toHaveBeenCalledTimes(1);
     expect(screen.queryByTitle('Stop agent')).toBeNull();
     await waitFor(() => expect(getQueuedTexts()).toEqual([]));
+    rerenderAgentChat(view.rerender);
+
+    expect(await getInput()).toBeEnabled();
+    expect(screen.queryByText('Session stopped. Start a new conversation to continue.')).toBeNull();
+    expect(state.activeSessionData.id).toBe('session-1');
+    expect(state.activeSessionData.turns.find(turn => turn.role === 'tool_result')?.tool_status).toBe('cancelled');
+
+    await queueMessage(await getInput(), 'continue in the same chat');
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({
+      input: expect.objectContaining({ message: 'continue in the same chat' }),
+      sessionId: 'session-1',
+      projectId: 'project-1',
+    })));
   });
 
   it('keeps a message in the transcript and out of queue rows while its optimistic send is in flight', async () => {
