@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141 independent cumulative FIRSTRETURN preparation review",
+  "reviewed_at": "2026-10-26",
+  "verdict": "PASS_PREPARATION",
+  "preparation_status": "BODY_NOT_READY",
+  "source_failure": false,
+  "execution": "static_read_only_only",
+  "verdict_basis": "The 0028 F001 route-membership and F002 floor defects are corrected in the 0034 return and independently reverified against the live CAS registry, installer, retained source, and production caller. The source packet is finite and internally ready for later receiving. The final three-primary route is not installed, and App/MAIN GO/ordinary receiving/registration inputs remain genuinely absent; those are continuation inputs, not Agent source failure.",
+  "scope": {
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "agent_parents": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d"
+    ],
+    "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "app_commit": null,
+    "app_tree": null,
+    "body_run": false,
+    "go": false,
+    "registration_credit": false,
+    "ship_credit": false
+  },
+  "closed_preparation_findings": [
+    {
+      "id": "P4-D141-F001",
+      "status": "closed_as_preparation_defect",
+      "finding": "The named p4-current-becfe-http-3legs row is historical D84 five-selector state, not the three-primary route previously described.",
+      "direct_recheck": {
+        "registry_sha256": "38a5a5f808b14f1778ba75d90d4024fb3cb38941ed60669c7e113c0c86bc797b",
+        "row_sha256": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59",
+        "manifest_sha256": "13e5c3080d0df736b70924ba785eeb55a8af4ebd7ea575da6e433d4ab93b9636",
+        "selector_count": 5,
+        "selector_shape": "D84 ten-note plus four restart/late-head parameter cases",
+        "row_occurrences": 1
+      },
+      "resolution": "Retain this live CAS preimage as the later installer input. After the final four-way tuple and ordinary receipts exist, render the exact three-primary row and manifest, CAS-install only this owned row with tools/install_p4_launcher.py, then use the existing request-test route. No row was installed and no D84 receipt was retargeted."
+    },
+    {
+      "id": "P4-D141-F002",
+      "status": "closed_as_preparation_defect",
+      "finding": "Source-preparation accounting and future P4 heavy-body admission were incorrectly conflated in the earlier packet.",
+      "corrected_values": {
+        "source_preparation_floor_bytes": 4600000000,
+        "source_preparation_stop_bytes": 4000000000,
+        "future_p4_heavy_floor_bytes": 5200000000,
+        "d89a_core_pristine_specific_bytes": 4700000000,
+        "app_packet_non_authoritative_bytes": 5000000000
+      },
+      "resolution": "Use 4.6 GB/4.0 GB for source-preparation accounting. Future P4 heavy admission follows the recorded D89-kind 5.2 GB floor unless genuine retained D89d evidence supplies a measured floor. No new policy or source gate is introduced."
+    }
+  ],
+  "finite_not_ready_inputs": [
+    {
+      "id": "P4-D141-N001",
+      "kind": "final_app_tuple",
+      "status": "missing",
+      "required": "Final App commit/tree/parents, exact clean checkout path, and ordinary receiving receipt. No mutable /home/user/work/app substitution is valid."
+    },
+    {
+      "id": "P4-D141-N002",
+      "kind": "final_four_way_manifest",
+      "status": "not_rendered",
+      "required": "Render p4-d73-v1 only from the final ordinary receiving receipts and exact Agent/Runtime/App/Composition tuple, including source/import/profile identities, service_versions, and junit_paths."
+    },
+    {
+      "id": "P4-D141-N003",
+      "kind": "normal_route_registration",
+      "status": "missing",
+      "required": "Use the existing CAS installer with live preimage 38a5a5f8... and publish installer backup/before/after/outside-row and final registration receipts. The final row must contain exactly the three primary originals."
+    },
+    {
+      "id": "P4-D141-N004",
+      "kind": "main_go",
+      "status": "missing",
+      "required": "Explicit recorded MAIN GO before the one normal P4 body. Source readiness, elapsed time, comparator progress, or this review cannot substitute."
+    },
+    {
+      "id": "P4-D141-N005",
+      "kind": "sequencing_inputs",
+      "status": "pending",
+      "required": "Same-cut pristine comparator result and later REG closure before the one-heavy/MAIN body sequence. These are not source-preparation prerequisites and no comparator PASS or REG closure is invented here."
+    },
+    {
+      "id": "P4-D141-N006",
+      "kind": "admission_measurement",
+      "status": "continuation_only",
+      "required": "Measure actual continuation admission against the authoritative 4.6 GB source floor/4.0 GB stop and the separate future P4 heavy admission rule. No body was run here."
+    },
+    {
+      "id": "P4-D141-N007",
+      "kind": "ast_hashes",
+      "status": "conditional",
+      "required": "Supply only if the actual final cut record explicitly requires them; no approval gate is inferred."
+    }
+  ],
+  "source_conservation": {
+    "three_primary_test_hash": "sha256:cf65539e79e9731c468368e72da4dba44298107c517715042aceb8d3c6d0e727",
+    "predicates_retained": [
+      "timing45",
+      "full HTTP boundary",
+      "per-step undo/redo",
+      "history/undo/restart/late-head",
+      "receipt/show",
+      "conflict/rerun",
+      "refusal/no-write/no-leak",
+      "single/CLI/sheet"
+    ],
+    "historical_boundary": {
+      "d84": "Authentic mixed result: four restart/late-head cases passed; ten-note timed out at 45.314 seconds. Not an all-P4 pass.",
+      "d97": "Authentic independent ten-note pass at 28.101 seconds with per-step inverse/undo/redo, history/receipt, restart, and no-write/no-leak. Historical only; receipt not retargeted."
+    }
+  },
+  "contract_guard": {
+    "production_path": "Runtime commitTimeline transport through the Agent provider/caller",
+    "request": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands[schema_version,op,version,select,args]",
+      "label",
+      "steps[id,label,intent,tags,command_ordinals,patch,reads?]",
+      "merge",
+      "reads",
+      "idempotency",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "idempotency_key": "Idempotency-Key",
+    "replies": [
+      "accepted/merged canonical",
+      "receipt/records/bindings/effects/dependencies/history/undo_steps",
+      "conflict reason/head",
+      "invalid code/path/hint/suggested_command",
+      "preview would_status with null receipt and no writes"
+    ],
+    "dto_change": false
+  },
+  "controls_not_run": [
+    "pytest",
+    "imports",
+    "collection",
+    "provider",
+    "browser",
+    "controller/wait",
+    "request-test submission",
+    "row installation",
+    "service body",
+    "profile/acquisition",
+    "full suite"
+  ],
+  "credit": "No GO, REG, ship, or behavioral qualification credit is claimed."
+}

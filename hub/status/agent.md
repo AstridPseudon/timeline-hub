@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T00:41:04Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
-# agent board, 2026-10-26T00:40Z
+<!-- agent | 2026-10-26T00:44:57Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+# agent board, 2026-10-26T00:43Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Prepare existing P4 controller | Luna and service | Final App tuple and MAIN GO | gated:MAIN-GO | Return 0034; cumulative review 0039 | Route and floor corrections complete. Final read-only review active; primary three originals and existing CAS route retained. No body. | Agent cut 28e56 |
+| P4 D141 cut rerun | Continue existing P4 normal route | Luna and service | Final App tuple and MAIN GO | gated:MAIN-GO | Return 0034; independent 0039 PASS | Preparation qualified. Actual body NOT_READY: final App, manifest and CAS registration receipts, GO and one heavy sequence owed. | Agent cut 28e56 |
 
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
 
@@ -141,7 +141,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Service 27388 terminal result; P4 read-only review 0039 active, body GO held. live 2 / cap 6 source; one heavy body active. ready-undispatched 0.
+Next ready: Service 27388 terminal result. P4 source preparation PASS; body waits actual final App and MAIN GO. live 1 / cap 6 source; one heavy body active. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -151,7 +151,7 @@ Disk: 5435387904 bytes currently; prior guarded recycle 4947931136 -> 5573177344
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
-INBOX consumed through 1980177 bytes. Frozen inputs peer0023; comparator PASS and controller dispatch peer0035.
+INBOX consumed through 1987482 bytes. Frozen source0023, actual pristine BODY start0038 and P4 prep PASS0043 sent to App and lead.
 
 Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime final normal6a011 and independent2350 PASS received from actual published board/peer. Agent firstreturn0001 normally fixed stale am-footage artifact; provenance0005 immediately dispatched on that branch. Initial2357 FAIL retained with full source conservation and missing/wrong-environment tests. Bun2357 borrowed App node_modules (missing zod); final qualification must use actual existing Agent profile dependency tree. No source overwrite or test weakening.
 
@@ -165,3 +165,4 @@ Pass 00:26Z: Receiving 0015 PASS_SOURCE_QUALIFICATION and normal merge receipt r
 Pass 00:32Z: Sol0019 completed exact0710897c with all five finite findings corrected and seven safe operational smoke cases PASS. Final independent Luna0030 dispatched immediately. P4 preparation0026 completed NOT_READY on real finalApp/GO/registration inputs; independent0028 active. Sweep3 removed0 stale dirs; compact packed0 scratch/testdirs and gzipped5 logs. No protected target recycled or refusal. Current free5560274944 bytes; core admission remains clear.
 Pass 00:35Z: Independent command0030 PASS, exact source0710897c and hashes. Normal pristine controller0035 immediately queued at5555838976 bytes, one heavy/default180/net. No new local author while comparator runs. P4 review0028 finite FAIL -> same-lineage source-only firstreturn0034 assigned before heavy. Other incoming old provenance/recycle peers repeat already-consumed facts and create no duplicate work.
 Pass 00:40Z: Normal comparator service27388 actualbody started00:37:00Z with5295300608 bytes; reviewed ownedprocessgroup/disk monitor active, raw KEEP. P4 firstreturn0034 complete, final independent readonly0039 dispatched above5GB while no new sourceauthor starts. Exact existingnormalCASroute and threeoriginals preserved. Agentfreeze28e56 unchanged. No REG/behavior/shipcredit inferred.
+Pass 00:43Z: P4 cumulative0039 PASS_PREPARATION; exact packet byte-published and readiness/missingfinalinputs sent to App+lead together. No new review of unchanged reruns. Pristine service27388 remainsrunning, around5.4GBfree, continuousstop4GB. H6 read latest App00:30/Runtime00:29 and header Agentfreeze00:27; App generatedadoption0029 active, no finalApp head or MAIN rerunGO yet. Farm recipe Runtime0021 stillreview, so no ready row waitsundispatched.
