@@ -803,6 +803,23 @@ def test_static_discover_admit_dry_run_and_owned_child(tmp_path):
     assert runtime.registrations[0][1]["resource_keys"] == ["cpu"]
 
 
+def test_real_generic_host_worker_uses_utf8_mode_with_default_off_control(tmp_path, monkeypatch):
+    code = "def run(value='default'):\n    import sys\n    return sys.flags.utf8_mode\n"
+    _, host, _, definition, admission = pack(tmp_path, code=code)
+    # The real child and actual argv builder run; only the Darwin native
+    # process census used for post-exit custody is unavailable in this sandbox.
+    from astrid.core.execution import generic_host as generic_host_module
+    monkeypatch.setattr(generic_host_module, "_terminate_process_group", lambda process, **_kwargs: process.wait(timeout=3))
+    result = invoke(tmp_path, host, definition, admission)
+    assert result.ok
+    assert result.payload["action_result"] == 1
+    control = subprocess.run(
+        [sys.executable, "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env={**os.environ, "PYTHONUTF8": "0"}, check=True, capture_output=True, text=True,
+    )
+    assert control.stdout.strip() == "0"
+
+
 def test_python_action_receives_original_host_bridge_before_import(tmp_path):
     """Exercise the host's real FD/argv boundary, without fixture installation."""
     code = """from astrid.sdk import _child_bridge

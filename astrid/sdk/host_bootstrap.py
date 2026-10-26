@@ -276,7 +276,7 @@ def _host_executable_matches(observed: str, selected: Path) -> bool:
     )
     try:
         result = subprocess.run(
-            [str(selected), "-I", "-S", "-c", probe],
+            [str(selected), "-X", "utf8", "-I", "-S", "-c", probe],
             capture_output=True, text=True, check=True, timeout=2,
         )
         actual = Path(result.stdout.strip())
@@ -728,7 +728,7 @@ def _installed_execution_origins(source_path: Path, python_executable: str) -> d
 modules={'host':'astrid.core.execution.generic_host','child':'astrid.core.execution.generic_host_worker','action':'astrid.packs.rendering.actions.render.run','client':'astrid_runtime_client','sdk':'astrid.sdk.invocation'}
 print(json.dumps({key:importlib.util.find_spec(module).origin for key,module in modules.items()}))
 """
-    completed = subprocess.run([python_executable, "-I", "-c", probe],
+    completed = subprocess.run([python_executable, "-X", "utf8", "-I", "-c", probe],
                                cwd=tempfile.gettempdir(), capture_output=True, text=True,
                                timeout=20, check=False,
                                env={key: value for key, value in os.environ.items()
@@ -856,8 +856,10 @@ class _ParkedPackHostPreparer:
         parent, child = socket.socketpair()
         operation_id, channel_id = secrets.token_hex(16), secrets.token_hex(16)
         launch_argv = list(launch.argv)
+        if launch_argv[1:3] != ["-X", "utf8"]:
+            launch_argv[1:1] = ["-X", "utf8"]
         if origins and "-I" not in launch_argv[1:]:
-            launch_argv.insert(1, "-I")
+            launch_argv.insert(3, "-I")
         argv = [*launch_argv,
                 "--source-closure-digest", reference.source_closure_digest.removeprefix("sha256:"),
                 "--activation-fd", str(child.fileno()),
@@ -1524,6 +1526,7 @@ def ensure_pack_host(
         matrix = source_path / "config" / "astrid-beta-capabilities.json"
         argv = [
             host_python,
+            "-X", "utf8",
             *(["-I"] if execution_origins else []),
             "-m", "astrid.core.execution.generic_host", "run",
             "--pack-root", str(pack_root),

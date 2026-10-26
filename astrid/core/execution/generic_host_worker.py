@@ -33,9 +33,14 @@ def _run_child_command(fd: str, encoded: str, *, renderer: bool = False) -> int:
     args = json.loads(encoded)
     if not isinstance(args, list) or not args or any(not isinstance(arg, str) for arg in args):
         raise ValueError("invalid private Python command")
-    while args and args[0] in {"-u", "-B"}:
-        if args.pop(0) == "-B":
-            sys.dont_write_bytecode = True
+    while args:
+        if args[0] in {"-u", "-B"}:
+            if args.pop(0) == "-B":
+                sys.dont_write_bytecode = True
+        elif args[:2] == ["-X", "utf8"]:
+            del args[:2]
+        else:
+            break
     if (not args or args[0].startswith("-") and args[0] not in {"-c", "-m"}
             or args[0] in {"-c", "-m"} and len(args) < 2):
         raise ValueError("unsupported delegating Python command flags")

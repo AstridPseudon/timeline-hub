@@ -166,7 +166,7 @@ def _cmd_scenes(python_exec: str, video: str | Path) -> str:
 def _cmd_segment_map(python_exec: str, video: str | Path, transcript: Path, scenes: Path | None) -> str:
     scenes_arg = f" --scenes {shlex.quote(str(scenes))}" if scenes is not None else ""
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.stream_content.actions.segment_map.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.stream_content.actions.segment_map.run "
         f"--video {shlex.quote(str(Path(video).resolve()))} "
         f"--transcript {shlex.quote(str(transcript))}{scenes_arg} "
         f"--out {shlex.quote('{produces_root}/segment_map.json')}"
@@ -176,7 +176,7 @@ def _cmd_segment_map(python_exec: str, video: str | Path, transcript: Path, scen
 def _cmd_extract_segments(python_exec: str, video: str | Path, run_root: Path) -> str:
     segment_map = run_root / "steps" / "segment-map" / "v1" / "produces" / "segment_map.json"
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.stream_content.actions.distill.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.stream_content.actions.distill.run "
         f"extract-segments --video {shlex.quote(str(Path(video).resolve()))} "
         f"--segment-map {shlex.quote(str(segment_map))} "
         f"--out-dir {shlex.quote('{produces_root}/segments')} "
@@ -188,7 +188,7 @@ def _cmd_clip_candidates(python_exec: str, transcript: Path, run_root: Path, bri
     segment_map = run_root / "steps" / "segment-map" / "v1" / "produces" / "segment_map.json"
     brief_arg = f" --brief {shlex.quote(str(Path(brief).resolve()))}" if brief is not None else ""
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.stream_content.actions.clip_candidates.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.stream_content.actions.clip_candidates.run "
         f"--transcript {shlex.quote(str(transcript))} "
         f"--segment-map {shlex.quote(str(segment_map))}{brief_arg} "
         f"--out {shlex.quote('{produces_root}/candidates.json')}"
@@ -200,7 +200,7 @@ def _cmd_review(python_exec: str, video: str | Path, run_root: Path) -> str:
     candidates = run_root / "steps" / "clip-candidates" / "v1" / "produces" / "candidates.json"
     segments_manifest = run_root / "steps" / "extract-segments" / "v1" / "produces" / "segments" / "segments.json"
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.stream_content.actions.distill.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.stream_content.actions.distill.run "
         f"review --video {shlex.quote(str(Path(video).resolve()))} "
         f"--segment-map {shlex.quote(str(segment_map))} "
         f"--candidates {shlex.quote(str(candidates))} "

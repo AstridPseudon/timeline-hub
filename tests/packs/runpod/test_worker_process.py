@@ -683,7 +683,8 @@ def test_pod_adapter_uses_command_metadata_and_private_preexisting_sftp_file(
         async def exec_ssh(self, command: str, timeout: int) -> tuple[int, str, str]:
             self.commands.append(command)
             args = shlex.split(command)
-            compile(args[2], "<remote-wrapper>", "exec")
+            wrapper_index = args.index("-c") + 1
+            compile(args[wrapper_index], "<remote-wrapper>", "exec")
             request = json.loads(base64.b64decode(args[-1]))
             value = subject.remote_dispatch(args[-2], request)
             return 0, json.dumps(value), ""

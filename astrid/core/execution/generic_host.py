@@ -729,7 +729,7 @@ class _ManagedWanChildAdapter:
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
         environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[3])
         self.process = popen_owned_group(
-            [self.spec["python"], "-m", "astrid.core.execution.generic_host_worker", "--wan-session"],
+            [self.spec["python"], "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker", "--wan-session"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self._diagnostic,
             env=environment, pass_fds=(fd,), cwd=owner_dir,
         )
@@ -2009,8 +2009,14 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
     """Host-selected strict startup, independent of action environment flags."""
     arguments = list(argv[1:])
     flags = []
-    while arguments and arguments[0] in {"-u", "-B"}:
-        flags.append(arguments.pop(0))
+    while arguments:
+        if arguments[0] in {"-u", "-B"}:
+            flags.append(arguments.pop(0))
+        elif arguments[:2] == ["-X", "utf8"]:
+            flags.extend(arguments[:2])
+            del arguments[:2]
+        else:
+            break
     if len(arguments) < 2 or arguments[0] != "-m" or arguments[1] != "astrid.core.execution.generic_host_worker":
         raise HostError("strict network startup requires the host Python worker")
     policy_path = Path(__file__).with_name("network_policy.py").resolve()
@@ -8110,6 +8116,12 @@ class GenericPackHost:
         except BindingError as exc:
             raise HostError(f"capability {record.id!r}: {exc}") from exc
         argv = list(binding.argv)
+        # Astrid-owned Python commands may bypass executor_argv (including
+        # external pack manifests), so set UTF-8 at this exact interpreter
+        # boundary without rewriting arbitrary provider executables.
+        if (argv and Path(argv[0]).resolve() == Path(sys.executable).resolve()
+                and argv[1:3] != ["-X", "utf8"]):
+            argv[1:1] = ["-X", "utf8"]
         # Start from the canonical child environment: only safe process
         # variables and manifest-declared provider configuration cross the
         # boundary.  In particular, an unrelated ambient API key must never
@@ -8159,13 +8171,23 @@ class GenericPackHost:
                 raise HostError("delegating commands require the admitted Python interpreter")
             arguments = argv[1:]
             flags = []
-            while arguments and arguments[0] in {"-u", "-B"}:
-                flags.append(arguments[0])
-                arguments = arguments[1:]
+            utf8_flag = False
+            while arguments:
+                if arguments[0] in {"-u", "-B"}:
+                    flags.append(arguments[0])
+                    arguments = arguments[1:]
+                elif arguments[:2] == ["-X", "utf8"]:
+                    flags.extend(arguments[:2])
+                    arguments = arguments[2:]
+                    utf8_flag = True
+                else:
+                    break
             if (not arguments or arguments[0].startswith("-") and arguments[0] not in {"-c", "-m"}
                     or arguments[0] in {"-c", "-m"} and len(arguments) < 2):
                 raise HostError("unsupported delegating Python command flags")
             inherited_fds = (child_bridge.inherited_fd(),)
+            if not utf8_flag:
+                flags = ["-X", "utf8", *flags]
             argv = [sys.executable, *flags, "-m", "astrid.core.execution.generic_host_worker",
                     "--child-command", str(inherited_fds[0]), json.dumps(arguments)]
         remotion_lease = None
@@ -8176,7 +8198,7 @@ class GenericPackHost:
         try:
             if remotion_lease is not None:
                 inherited_fds += (remotion_lease.inherited_fd(),)
-                argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
+                argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker",
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
@@ -8424,7 +8446,7 @@ class GenericPackHost:
         )
         env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
-        argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
+        argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()
         try:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":

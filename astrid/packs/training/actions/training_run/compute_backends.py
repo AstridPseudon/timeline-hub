@@ -218,6 +218,8 @@ def _runpod_argv(command: str, produces_dir: Path) -> list[str]:
         raise ValueError(f"unsupported RunPod action {command!r}") from exc
     return [
         sys.executable,
+        "-X",
+        "utf8",
         "-m",
         module,
         command,

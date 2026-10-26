@@ -126,7 +126,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory(prefix="render-registry-stale-") as tmp_text:
             tmp = Path(tmp_text)
-            project_dir, _composition_src = self._write_fake_remotion_project(tmp)
+            project_dir, composition_src = self._write_fake_remotion_project(tmp)
             state = render_remotion._effective_registry_state(None)
             render_remotion._write_registry_state(project_dir, state)
             for output_path in render_remotion._registry_output_paths(project_dir):
@@ -138,7 +138,16 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
 
             self.assertFalse(render_remotion._registry_outputs_match_state(project_dir, state))
 
-            with mock.patch.object(render_remotion.subprocess, "run") as run_mock:
+            def fake_generate(*_args, **_kwargs):
+                for kind in ("effects", "animations", "transitions"):
+                    (composition_src / f"{kind}.generated.ts").write_text(
+                        render_remotion.gen_effect_registry.generate_element_registry(kind),
+                        encoding="utf-8",
+                    )
+
+            with mock.patch.object(
+                render_remotion.subprocess, "run", side_effect=fake_generate
+            ) as run_mock:
                 render_remotion._regenerate_element_registries(project_dir, None)
 
         run_mock.assert_called_once()
@@ -167,10 +176,7 @@ class RenderRemotionRegistryGenerationTest(unittest.TestCase):
                 # actual generated registries into the (temp) composition src
                 # so the render-admission effect check sees the real EFFECT_IDS
                 # (the fixture's local effect must be mountable).
-                if (
-                    len(command) >= 2
-                    and str(command[0]).endswith("gen_effect_registry.py")
-                ):
+                if any(str(part).endswith("gen_effect_registry.py") for part in command):
                     env = kwargs.get("env", {})
                     src = env.get("ASTRID_TIMELINE_COMPOSITION_SRC")
                     if src:

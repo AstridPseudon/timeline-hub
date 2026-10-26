@@ -535,7 +535,7 @@ def launch_owned_process(request: Mapping[str, Any]) -> dict[str, Any]:
             raise WorkerOwnerConflict("physical pod is retired for release")
         payload = base64.b64encode(json.dumps(request, sort_keys=True).encode()).decode()
         child = platform.spawn_tree(
-            [request["python_executable"], str(Path(__file__).resolve()), "--owned-host", payload],
+            [request["python_executable"], "-X", "utf8", str(Path(__file__).resolve()), "--owned-host", payload],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -616,6 +616,8 @@ class RunPodWorkerProcessTransport:
             shlex.quote(value)
             for value in [
                 self.python_executable,
+                "-X",
+                "utf8",
                 "-c",
                 wrapper,
                 self.source_root,
