@@ -1,0 +1,27 @@
+{
+  "format": "timeline-rt-f-final-lineage-independent-controls-v1",
+  "verdict": "PASS",
+  "controls": {
+    "compile19": "PASS",
+    "json7": "PASS",
+    "bash3": "PASS",
+    "ruff_f": "PASS",
+    "mypy13": "PASS",
+    "d73_acceptance": "PASS: one capture, four receipts before request; selected-checkout drift refused before request-test",
+    "d59_stub_controls": "PASS: one positive dispatch, zero poisoned dispatches",
+    "installer_no_install": "PASS: validate_registry and validate_artifacts; no installation requested",
+    "registry_current_hash": "PASS: 675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb",
+    "registry_seven_predecessor_rows": "PASS: all seven exact row hashes match",
+    "scoped_cas_outside_bytes": "PASS: in-memory replacement preserves the complete current preimage and appends exactly three candidate rows",
+    "own_target_drift": "PASS: intended-row mutation refused before replacement",
+    "global_cas_drift": "PASS: unrelated registry mutation refused before replacement",
+    "candidate_custody": "PASS: 66/66 files byte-exact; 41/41 matrix/inventory files byte-exact",
+    "path_mode_closure": "PASS: active files absolute, regular, non-symlink; builder/wrapper 0755; active rows absolute",
+    "runner_argv": "PASS from independent 2345/2349 controls: 101 Python targets once, TypeScript leg retained, builder forms pinned",
+    "negative_controls": "PASS from actual private controls: poisoned builder/wrapper/runner/row/hash/registry/source/tuple, pending, malformed, traversal, symlink, zero-launch, and zero-artifact cases refused",
+    "c0_shape": "PASS by inherited exact source manifest and independent D141 Runtime review; no request/reply wire change",
+    "d141_cut": "PASS: frozen-upstream/no-revert/pending-tuple boundary retained"
+  },
+  "not_run": ["real service", "test bodies", "full suite", "build", "ZIP", "live install", "tuple capture", "network", "packages", "browser", "provider", "profile", "render", "original9", "D130", "credentials", "hub", "Git internals mutation"],
+  "historical_limitation": "b055 historical registry bytes are unavailable; no global diff is claimed and this is not promoted to a new gate"
+}

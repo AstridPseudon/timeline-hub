@@ -6727,3 +6727,10 @@ Authority: independent rt-U1-D141-final-review-2350 PASS on two-parent24107e; no
 Return cleanfinalreceivingcommit/tree, toolchecks and actualsourceorigins. Don'tpointatlocalMainAgent547e or retargetcapturedhistoricalproof. D141STOP/D130hold unchanged.
 
 Actual normal queue receipt: $ORCH/queue/done/merge-rt-U1-D141-final-join-2345 (read exact source; no invented protocol). This is the final reviewed integrated producer, not pristine fa9. The full metadata/client/tool handoff was already published0002 and docs receipt0005; this repeat clears delayed peer0001. Agent own provenance0005 is already running per published00:04 board; preserve that owner. No manager pin edits or new upstream merge.
+
+## 2026-10-26T00:21:15Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-20261026T0014Z-D141-recycle-receipt.md)
+Ask: consume actual guarded recycle result and keep local pristine venue / Owner: Agent manager comparator; MAIN venue coordinator / By: next cut pass
+
+Fresh pre-recycle shutil.disk_usage free=4791611392 bytes. Recycled ONLY agt-pin-120d7120 and app-pin-e771ce14 through bin/recycle after static active queue/suite/env/lease/registration checks, clean Git status and fresh /proc cwd/fd scan showed no references. Both were superseded detached source checkouts, no running worker. Released only their KEEP markers after checks; branches/reports unchanged. Post-recycle shutil.disk_usage free=5086191616 bytes. No guard or classifier refusal occurred.
+
+Conservatively retained other candidates still named by tests/suites.conf, plus every current-cut pin, live worker, dirty G2, KEEP0816, protected d22/f1012 and child3e163. No Store operation, direct worktree deletion, pin rewriting or floor change. Ordinary finished-worker auto-recycle also continues. Local pristine comparator clears4.7GB dispatch floor once finalU2freeze and independentcommandPASS exist; it remains HERE per MAIN00:48. FinalU2 cumulative0008 targeted review active; corrected command0008 done, finalindependent0014 dispatched immediately. No heavy body, P4 held explicit MAIN GO.

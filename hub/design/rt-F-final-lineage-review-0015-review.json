@@ -1,0 +1,20 @@
+{
+  "format": "timeline-rt-f-final-lineage-independent-review-v1",
+  "verdict": "PASS",
+  "reviewer": "rt-F-final-lineage-review-0015",
+  "scope": "private candidate route and source/artifact lineage only",
+  "decision": "qualify the existing private ef9 route; do not install, capture the final tuple, retry f25, or bypass guards",
+  "findings": [
+    {"id": "lineage", "verdict": "PASS", "detail": "D135 reviewed commit d45e07dfb305c41d588fe168a2518d5ffa1c4954/tree 92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2 resolves to installed builder ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca."},
+    {"id": "custody", "verdict": "PASS", "detail": "Installed delivery-build is a regular single-link-count file mode 0755; the exact f25 predecessor is retained as the no-clobber backup only."},
+    {"id": "fresh-upstream", "verdict": "PASS", "detail": "Builder and reviewed D68 wrapper retain fresh-upstream staging, ancestor, no-revert, and no-Agent-fallback guards."},
+    {"id": "active-route", "verdict": "PASS", "detail": "Active rows, run-final-services.py, run-final-delivery.py, installer validation, wrapper, builder, and absolute pins form one exact-hash route; the old 98-target a2d463 route is not active."},
+    {"id": "runner", "verdict": "PASS", "detail": "Private route evidence captures 101 unique Python targets exactly once plus the TypeScript leg; zero-body stubs and all required negative controls passed."},
+    {"id": "preservation", "verdict": "PASS", "detail": "The lineage candidate and predecessor compare byte-exactly across 66 files; the 41-file D59 matrix/inventory set is unchanged; full C0 wire shape and D141 pending tuple state remain inherited exact."},
+    {"id": "registry-cas", "verdict": "PASS", "detail": "Current registry 675 is accepted with all seven intended predecessor row hashes. The private in-memory CAS model appends exactly three concrete candidate rows, preserves every current outside byte, and refuses own-target and unrelated/global drift before mutation."},
+    {"id": "source-review", "verdict": "PASS", "detail": "Composition and the four named source worktrees are clean; source review found no product/test/generated/pin changes or unsafe active outside writes."},
+    {"id": "c0-d141", "verdict": "PASS", "detail": "D141 frozen-cut evidence and the independent Runtime review retain C0 request/reply fields and the one-authorized-source-review policy; no extra preapproval was invented."}
+  ],
+  "non_gate_limitation": "Historical registry bytes for inherited guard b0557c15f20fa6de47fc9202f80a4c7533d085611f05c8e1849c3e55239980d3 are absent from the handoff. No global diff or historical-byte claim is made; missing bytes alone is not a new decision gate.",
+  "boundary": {"final_tuple": "PENDING", "live_install": false, "service_or_test_body": false, "full_suite": false, "network": false, "packages": false, "repair_or_deletion": false}
+}
