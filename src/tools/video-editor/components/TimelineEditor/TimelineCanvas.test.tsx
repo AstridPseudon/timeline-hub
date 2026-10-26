@@ -1,10 +1,10 @@
 import { __resetSelectionStoreForTests, userSelectTimelineItems, getSelectedTimelineDataItems, type TimelineDataItemRef } from '@/shared/state/selectionStore';
 // @vitest-environment jsdom
 import React, { useMemo, useState } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas';
-import { CREATE_ANIMATION_PROMPT, CREATE_EFFECT_PROMPT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools';
+import { AI_GENERATION_DRAFT, EFFECT_OR_ANIMATION_DRAFT, EXTENSION_DRAFT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createInteractionState, onInteractionEnd } from '@/tools/video-editor/lib/interaction-state';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events';
@@ -370,10 +370,10 @@ function renderCanvas(params?: {
   scaleWidth?: number;
   tracks?: TrackDefinition[];
   rows?: TimelineRow[];
-  onAddTextAt?: React.ComponentProps<typeof TimelineCanvas>['onAddTextAt'];
   onAddEffectLayerAt?: React.ComponentProps<typeof TimelineCanvas>['onAddEffectLayerAt'];
-  onOpenSequenceCreator?: React.ComponentProps<typeof TimelineCanvas>['onOpenSequenceCreator'];
   onOpenElementCreationPrompt?: React.ComponentProps<typeof TimelineCanvas>['onOpenElementCreationPrompt'];
+  onOpenExtensionManager?: React.ComponentProps<typeof TimelineCanvas>['onOpenExtensionManager'];
+  readOnly?: boolean;
   onAddTrack?: React.ComponentProps<typeof TimelineCanvas>['onAddTrack'];
   onClearUnusedTracks?: React.ComponentProps<typeof TimelineCanvas>['onClearUnusedTracks'];
   unusedTrackCount?: number;
@@ -460,10 +460,10 @@ function renderCanvas(params?: {
       onShotGroupExportManagedOutput={params?.onShotGroupExportManagedOutput}
       onShotGroupSwitchToImages={params?.onShotGroupSwitchToImages}
       interactionStateRef={params?.interactionStateRef}
-      onAddTextAt={params?.onAddTextAt}
       onAddEffectLayerAt={params?.onAddEffectLayerAt}
-      onOpenSequenceCreator={params?.onOpenSequenceCreator}
       onOpenElementCreationPrompt={params?.onOpenElementCreationPrompt}
+      onOpenExtensionManager={params?.onOpenExtensionManager}
+      readOnly={params?.readOnly}
       postprocessShader={params?.postprocessShader}
       onSelectPostprocessShader={params?.onSelectPostprocessShader}
       onEditAreaPointerDown={params?.onEditAreaPointerDown}
@@ -553,7 +553,7 @@ describe('TimelineCanvas DOM contract', () => {
   });
 
   it('holds the desktop tool cluster in the footer row under the tracks, so no button floats over a track', () => {
-    const desktop = renderCanvas({ deviceClass: 'desktop', onAddTextAt: vi.fn(), rowHeight: 36 });
+    const desktop = renderCanvas({ deviceClass: 'desktop', onAddEffectLayerAt: vi.fn(), rowHeight: 36 });
     const cluster = desktop.container.querySelector('[data-testid="timeline-tool-buttons"]');
     expect(cluster).toBeInstanceOf(HTMLElement);
     // Inside the scroll container, in the footer row that ends its content, and in the layout flow.
@@ -564,11 +564,14 @@ describe('TimelineCanvas DOM contract', () => {
     expect(cluster?.className).not.toContain('absolute');
     // The 24px pointer buttons need 32px (one button plus 4px above and below): a 36px track row holds them.
     expect(footer.style.height).toBe('36px');
-    expect(screen.getByTitle('Drag onto timeline to add text')).toBeInTheDocument();
+    // The footer row is pinned to the bottom of the scroll viewport.
+    expect(footer.getAttribute('data-testid')).toBe('timeline-footer-row');
+    expect(footer.className).toContain('sticky');
+    expect(footer.className).toContain('bottom-0');
     desktop.unmount();
 
     // A short row grows to hold the buttons rather than letting them overlap a track.
-    const short = renderCanvas({ deviceClass: 'desktop', onAddTextAt: vi.fn(), rowHeight: 24 });
+    const short = renderCanvas({ deviceClass: 'desktop', onAddEffectLayerAt: vi.fn(), rowHeight: 24 });
     const shortFooter = (short.container.querySelector('[data-testid="timeline-tool-buttons"]') as HTMLElement).parentElement as HTMLElement;
     expect(shortFooter.style.height).toBe('32px');
     short.unmount();
@@ -583,8 +586,6 @@ describe('TimelineCanvas DOM contract', () => {
       const touch = renderCanvas({
         deviceClass: deviceClass as 'phone' | 'tablet',
         inputModality: 'touch',
-        onAddTextAt: vi.fn(),
-        onOpenSequenceCreator: vi.fn(),
         onOpenElementCreationPrompt: vi.fn(),
         rowHeight: 36,
       });
@@ -748,36 +749,25 @@ describe('TimelineCanvas DOM contract', () => {
 });
 
 describe('TimelineCanvas floating tools', () => {
-  it('shows Sequence beside Text and Effect Layer without changing drag payloads', () => {
-    const onOpenSequenceCreator = vi.fn();
-    renderCanvas({
-      onAddTextAt: vi.fn(),
-      onOpenSequenceCreator,
-    });
+  it('shows AI generation, extension and effect-or-animation tools in that order, each opening the chat with its draft', () => {
+    const onOpenElementCreationPrompt = vi.fn();
+    renderCanvas({ deviceClass: 'desktop', onOpenElementCreationPrompt });
 
-    const textTool = screen.getByTitle('Drag onto timeline to add text');
-    const effectLayerTool = screen.getByTitle('Drag onto timeline to add an effect layer');
-    const sequenceTool = screen.getByRole('button', { name: 'Create animation sequence' });
+    const cluster = screen.getByTestId('timeline-tool-buttons');
+    expect(within(cluster).getAllByRole('button').map((button) => button.getAttribute('aria-label'))).toEqual([
+      'New AI generation',
+      'New extension',
+      'New effect or animation',
+    ]);
 
-    expect(textTool).toBeInTheDocument();
-    expect(effectLayerTool).toBeInTheDocument();
-    expect(sequenceTool).toBeInTheDocument();
-    expect(screen.getByText('New text')).toBeInTheDocument();
-    expect(screen.getByText('New effect')).toBeInTheDocument();
-    expect(screen.getByText('Create animation sequence')).toBeInTheDocument();
-
-    const textDataTransfer = { setData: vi.fn(), effectAllowed: '' };
-    fireEvent.dragStart(textTool, { dataTransfer: textDataTransfer });
-    expect(textDataTransfer.setData).toHaveBeenCalledWith('text-tool', 'true');
-    expect(textDataTransfer.effectAllowed).toBe('copy');
-
-    const effectDataTransfer = { setData: vi.fn(), effectAllowed: '' };
-    fireEvent.dragStart(effectLayerTool, { dataTransfer: effectDataTransfer });
-    expect(effectDataTransfer.setData).toHaveBeenCalledWith('effect-layer', 'true');
-    expect(effectDataTransfer.effectAllowed).toBe('copy');
-
-    fireEvent.click(sequenceTool);
-    expect(onOpenSequenceCreator).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'New AI generation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New extension' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New effect or animation' }));
+    expect(onOpenElementCreationPrompt.mock.calls).toEqual([
+      [AI_GENERATION_DRAFT],
+      [EXTENSION_DRAFT],
+      [EFFECT_OR_ANIMATION_DRAFT],
+    ]);
   });
 
   it.each(['tablet', 'phone'] as const)('shows no floating tool cluster on %s (touch)', (deviceClass) => {
@@ -785,16 +775,15 @@ describe('TimelineCanvas floating tools', () => {
     renderCanvas({
       deviceClass,
       inputModality: 'touch',
-      onAddTextAt: vi.fn(),
       onAddEffectLayerAt: vi.fn(),
-      onOpenSequenceCreator: vi.fn(),
+      onOpenExtensionManager: vi.fn(),
+      onOpenElementCreationPrompt: vi.fn(),
       tracks: [{ id: 'A1', kind: 'audio', label: 'A1' }, track],
       rows: [{ id: 'A1', actions: [] }, row],
     });
 
-    expect(screen.queryByTitle('Drag onto timeline to add text')).not.toBeInTheDocument();
-    expect(screen.queryByTitle('Drag onto timeline to add an effect layer')).not.toBeInTheDocument();
-    for (const name of ['New text at playhead', 'New effect layer at playhead', 'Create animation sequence']) {
+    expect(screen.queryByTestId('timeline-tool-buttons')).toBeNull();
+    for (const name of ['New AI generation', 'New extension', 'New effect or animation']) {
       expect(screen.queryByRole('button', { name })).toBeNull();
     }
   });
@@ -804,9 +793,7 @@ describe('TimelineCanvas floating tools', () => {
     renderCanvas({
       deviceClass,
       inputModality: 'touch',
-      onAddTextAt: vi.fn(),
       onAddEffectLayerAt: vi.fn(),
-      onOpenSequenceCreator: vi.fn(),
       onAddTrack: vi.fn(),
       onClearUnusedTracks: vi.fn(),
       unusedTrackCount: 1,
@@ -817,22 +804,6 @@ describe('TimelineCanvas floating tools', () => {
     for (const name of ['+ Video', '+ Audio', 'Clear 1 unused']) {
       expect(screen.queryByRole('button', { name })).toBeNull();
     }
-  });
-});
-
-describe('TimelineCanvas floating tools with an agent prompt host', () => {
-  it('hands the effect and animation prompts to the host in the footer, labelled for the prompt flow', () => {
-    const onOpenElementCreationPrompt = vi.fn();
-    renderCanvas({
-      deviceClass: 'desktop',
-      onAddTextAt: vi.fn(),
-      onOpenSequenceCreator: vi.fn(),
-      onOpenElementCreationPrompt,
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Create new effect' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create animation' }));
-    expect(onOpenElementCreationPrompt.mock.calls).toEqual([[CREATE_EFFECT_PROMPT], [CREATE_ANIMATION_PROMPT]]);
   });
 });
 

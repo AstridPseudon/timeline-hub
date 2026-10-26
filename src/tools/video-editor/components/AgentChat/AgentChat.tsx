@@ -216,7 +216,7 @@ function AvailableAgentChatPanel({
   // Engagement signal: when the pane is locked the user has clearly committed to
   // having chat visible, so auto-create can fire without an explicit click.
   const isTasksPaneLocked = usePanesStore((state) => state.isTasksPaneLocked);
-  const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
+  const setIsTasksPaneLocked = usePanesStore((state) => state.setIsTasksPaneLocked);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const modelCatalog = useAgentModels(true, activeSessionId, projectId);
   const configureSession = useConfigureAgentSession(projectId);
@@ -285,11 +285,19 @@ function AvailableAgentChatPanel({
   }, [startingAgent]);
 
 
+  // A prefilled prompt is a draft, never sent. It never overwrites an unsent draft: it goes after it. The cursor
+  // lands at the end, so the user continues the sentence.
   useEffect(() => {
     if (!pendingComposerPrompt) return;
-    setDraft(pendingComposerPrompt);
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${pendingComposerPrompt}` : pendingComposerPrompt));
     clearPendingComposerPrompt?.();
-    requestAnimationFrame(() => inputRef.current?.focus());
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
   }, [clearPendingComposerPrompt, pendingComposerPrompt]);
 
   const activeSession = useAgentSession(activeSessionId, projectId);
@@ -967,10 +975,10 @@ function AvailableAgentChatPanel({
       setOptimisticMessage(null);
       setSetupRequest(current => current ? { ...current, sessionId } : null);
       setActiveSessionId(sessionId);
-      setIsTasksPaneOpen?.(true);
+      setIsTasksPaneLocked?.(true);
     }
     return sessionId ?? null;
-  }, [createNewSession, projectId, setIsTasksPaneOpen]);
+  }, [createNewSession, projectId, setIsTasksPaneLocked]);
 
   const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string, recoverySessionId?: string, isCurrent?: () => boolean) => {
     const chosen = agent ?? defaultAgent;

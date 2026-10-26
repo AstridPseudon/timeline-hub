@@ -80,7 +80,8 @@ export function usePaneLockPolicyState() {
 
   const createPaneLockSetter = useCallback(
     (lockKey: PaneLockKey) => (isLocked: boolean) => {
-      if (typeof isLocked !== 'boolean') {
+      // Transient-pane hosts (phones, paneControlsHosted pages) never lock: the lock policy above says so.
+      if (typeof isLocked !== 'boolean' || transientPanes) {
         return;
       }
       setLocks((prev) => {

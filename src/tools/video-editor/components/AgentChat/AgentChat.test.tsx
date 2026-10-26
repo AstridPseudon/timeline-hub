@@ -38,7 +38,7 @@ const mocks = vi.hoisted(() => ({
   loadGenerationForLightbox: vi.fn(),
   // Mutable so individual tests can flip isTasksPaneLocked to satisfy the
   // engagement gate that drives auto-create.
-  panesState: { isTasksPaneLocked: false, setIsTasksPaneOpen: vi.fn() },
+  panesState: { isTasksPaneLocked: false, setIsTasksPaneLocked: vi.fn() },
 }));
 
 
@@ -1811,7 +1811,7 @@ describe('project draft consumer ownership', () => {
     const state = createState();
     mockFromState(state);
     const openPane = vi.fn();
-    mocks.panesState.setIsTasksPaneOpen = openPane;
+    mocks.panesState.setIsTasksPaneLocked = openPane;
     state.projectChats['project-1'] = { ...state.projectChats['project-1'], main_session_id: 'session-1' } as typeof state.projectChats['project-1'];
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const key = ['project-agent-chat', 'project-1'];
@@ -1875,7 +1875,7 @@ describe('project draft consumer ownership', () => {
     const state = createState();
     mockFromState(state);
     const openPane = vi.fn();
-    mocks.panesState.setIsTasksPaneOpen = openPane;
+    mocks.panesState.setIsTasksPaneLocked = openPane;
     mocks.useAgentSession.mockImplementation((id: string) => ({ data: { id, status: 'waiting_user', turns: [] }, isLoading: false }));
     let finish!: (value: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));

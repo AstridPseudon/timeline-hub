@@ -57,6 +57,71 @@ describe('usePaneLockPolicyState', () => {
     expect(result.current.isTasksPaneOpenState).toBe(false);
   });
 
+  it('opens a chat pane through the lock path: the same store state as pressing the lock button', () => {
+    const savePaneLocks = vi.fn();
+    useIsMobileSpy.mockReturnValue(false);
+    useIsTabletSpy.mockReturnValue(false);
+    useUserUIStateSpy.mockReturnValue({
+      value: { shots: false, tasks: false, gens: false, editor: false },
+      update: savePaneLocks,
+      isLoading: false,
+    });
+
+    const { result: lockButton } = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      lockButton.current.setIsTasksPaneLocked(true);
+    });
+    const afterLockButton = { locks: lockButton.current.locks, open: lockButton.current.isTasksPaneOpenState };
+
+    const { result: chat } = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      chat.current.setIsTasksPaneLocked(true);
+    });
+
+    expect(chat.current.locks.tasks).toBe(true);
+    expect(chat.current.isTasksPaneOpenState).toBe(true);
+    expect({ locks: chat.current.locks, open: chat.current.isTasksPaneOpenState }).toEqual(afterLockButton);
+    expect(savePaneLocks).toHaveBeenLastCalledWith({ tasks: true });
+  });
+
+  it('a temporary programmatic open leaves the Tasks lock off, so the pane is not locked', () => {
+    useIsMobileSpy.mockReturnValue(false);
+    useIsTabletSpy.mockReturnValue(false);
+    useUserUIStateSpy.mockReturnValue({
+      value: { shots: false, tasks: false, gens: false, editor: false },
+      update: vi.fn(),
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      result.current.setIsTasksPaneOpen(true);
+    });
+    expect(result.current.isTasksPaneOpenState).toBe(true);
+    expect(result.current.locks.tasks).toBe(false);
+  });
+
+  it('never locks a transient-pane host (phones or pages hosting their own pane controls)', () => {
+    const savePaneLocks = vi.fn();
+    useIsMobileSpy.mockReturnValue(false);
+    useIsTabletSpy.mockReturnValue(false);
+    useUserUIStateSpy.mockReturnValue({
+      value: { shots: false, tasks: false, gens: false, editor: false },
+      update: savePaneLocks,
+      isLoading: false,
+    });
+    const release = acquirePaneControlsHost();
+
+    const { result } = renderHook(() => usePaneLockPolicyState());
+    act(() => {
+      result.current.setIsTasksPaneLocked(true);
+    });
+    expect(result.current.locks.tasks).toBe(false);
+    expect(result.current.isTasksPaneOpenState).toBe(false);
+    expect(savePaneLocks).not.toHaveBeenCalled();
+    release();
+  });
+
   it('enforces exclusive locks on tablet/mobile, keeps small mobile unlocked, and preserves the editor key', () => {
     const savePaneLocks = vi.fn();
 

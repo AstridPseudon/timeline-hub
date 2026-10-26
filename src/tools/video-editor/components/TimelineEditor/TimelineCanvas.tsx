@@ -44,8 +44,9 @@ import {
 } from '@/tools/video-editor/components/TimelineEditor/TimelineRulerAndGrid.tsx';
 import { DataLaneList } from '@/tools/video-editor/components/TimelineEditor/DataLaneList.tsx';
 import {
-  CREATE_ANIMATION_PROMPT,
-  CREATE_EFFECT_PROMPT,
+  AI_GENERATION_DRAFT,
+  EFFECT_OR_ANIMATION_DRAFT,
+  EXTENSION_DRAFT,
   TimelineCreateTools,
 } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx';
 import { visibleDataLanes } from '@/tools/video-editor/data-kinds/visibleDataLanes.ts';
@@ -174,9 +175,7 @@ export interface TimelineCanvasProps {
   marqueeRect?: MarqueeRect | null;
   onEditAreaPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
   onAddTrack?: (kind: 'visual' | 'audio') => void;
-  onAddTextAt?: (trackId: string, time: number) => void;
   onAddEffectLayerAt?: (trackId: string, time: number) => void;
-  onOpenSequenceCreator?: () => void;
   onOpenElementCreationPrompt?: (prompt: string) => void;
   /** Applies a new timeline zoom (px per `scale` seconds); drives the touch pinch gesture. */
   onScaleWidthChange?: (scaleWidth: number) => void;
@@ -211,8 +210,8 @@ export interface TimelineCanvasProps {
   hardDurationSeconds?: number;
 }
 
-/** The footer row that holds the desktop create tools is at least one 24px button (`TimelineCreateTools`) plus
- *  4px above and below tall, so the buttons take layout space instead of floating over a track. */
+/** The pinned footer row that holds the desktop create tools is at least one 24px button (`TimelineCreateTools`)
+ *  plus 4px above and below tall, so the buttons take layout space instead of covering a track. */
 const TOOL_CLUSTER_FOOTER_HEIGHT_PX = 24 + 4 * 2;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
@@ -366,9 +365,7 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   marqueeRect,
   onEditAreaPointerDown,
   onAddTrack,
-  onAddTextAt,
   onAddEffectLayerAt,
-  onOpenSequenceCreator,
   onOpenElementCreationPrompt,
   onScaleWidthChange,
   unusedTrackCount = 0,
@@ -588,10 +585,12 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
   /** A touch timeline (phone or tablet) is for seeing the cut and tapping a
    *  clip: adding elements and tracks, and tidying tracks, is the agent's job there. */
   const isTouch = deviceClass !== 'desktop';
-  const hasEffectCreationTool = Boolean(onOpenElementCreationPrompt || onAddEffectLayerAt || onAddTextAt);
-  const hasToolCluster = Boolean(onAddTextAt || hasEffectCreationTool || onOpenSequenceCreator);
-  // Desktop only. The create buttons live in the footer row under the tracks, so the row is as tall as a track
-  // or, when the buttons need more, one button plus padding; the scroll content ends with it.
+  // The AI generation, extension and effect tools open the agent chat with a draft, so they need a prompt host.
+  const hasPromptHost = Boolean(onOpenElementCreationPrompt);
+  const hasEffectCreationTool = hasPromptHost || Boolean(onAddEffectLayerAt);
+  const hasToolCluster = hasPromptHost || hasEffectCreationTool;
+  // Desktop only. The create buttons live in the footer row, pinned to the bottom of the scroll viewport; the row is
+  // as tall as a track or, when the buttons need more, one button plus padding; the scroll content ends with it.
   const canvasHostsCluster = !isTouch && hasToolCluster;
   const footerHeight = canvasHostsCluster ? Math.max(rowHeight, TOOL_CLUSTER_FOOTER_HEIGHT_PX) : rowHeight;
   const scrollContentHeight = rowLayout.totalHeight + footerHeight;
@@ -1053,27 +1052,23 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     },
   }), [handleSetTime, syncCursor]);
 
-  // `handleAddTextAt` / the effect-layer insert both fall back to the first visual
+  // The effect-layer insert falls back to the first visual
   // track when the id does not resolve, so an empty id is a safe "pick for me".
   const firstVisualTrackId = useMemo(
     () => tracks.find((track) => track.kind === 'visual')?.id ?? '',
     [tracks],
   );
+  const openDraft = useCallback((draft: string) => {
+    onOpenElementCreationPrompt?.(draft);
+  }, [onOpenElementCreationPrompt]);
+
   const handleCreateEffect = useCallback(() => {
     if (onOpenElementCreationPrompt) {
-      onOpenElementCreationPrompt(CREATE_EFFECT_PROMPT);
+      openDraft(EFFECT_OR_ANIMATION_DRAFT);
       return;
     }
     onAddEffectLayerAt?.(firstVisualTrackId, timeRef.current);
-  }, [firstVisualTrackId, onAddEffectLayerAt, onOpenElementCreationPrompt]);
-
-  const handleCreateAnimation = useCallback(() => {
-    if (onOpenElementCreationPrompt) {
-      onOpenElementCreationPrompt(CREATE_ANIMATION_PROMPT);
-      return;
-    }
-    onOpenSequenceCreator?.();
-  }, [onOpenElementCreationPrompt, onOpenSequenceCreator]);
+  }, [firstVisualTrackId, onAddEffectLayerAt, onOpenElementCreationPrompt, openDraft]);
 
   // ── Touch: two-finger pinch zoom ───────────────────────────────────────
   const pinchSessionRef = useRef<{ startDistance: number; startScaleWidth: number; time: number; offsetX: number } | null>(null);
@@ -1329,11 +1324,12 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         onScroll={handleScroll}
       >
         <div
-          className="relative"
+          className="relative flex flex-col"
           onContextMenu={handleTimelineAreaContextMenu}
           style={{
             width: totalWidth,
             minWidth: '100%',
+            minHeight: '100%',
             backgroundImage: buildGridBackground(startLeft, scaleWidth, scaleSplitCount),
             backgroundPosition: `${startLeft}px 0, ${startLeft}px 0`,
           }}
@@ -1455,7 +1451,11 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
         </div>
         {/* Footer: + Video / + Audio split buttons and the desktop create tools, outside the grid background div.
             The tools are in the layout flow, below the last row, so no track is ever under a button. */}
-        <div className={cn('relative flex', !isTouch && 'border-t border-border bg-background')} style={{ height: footerHeight, width: totalWidth, minWidth: '100%' }}>
+        <div
+          data-testid="timeline-footer-row"
+          className={cn('relative mt-auto flex shrink-0', !isTouch && 'sticky bottom-0 z-20 border-t border-border bg-background')}
+          style={{ height: footerHeight, width: totalWidth, minWidth: '100%' }}
+        >
           <div
             className={cn('z-20 flex', !isTouch && 'bg-card')}
             style={{ width: startLeft, position: 'sticky', left: 0 }}
@@ -1483,12 +1483,10 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
           {canvasHostsCluster && (
             <TimelineCreateTools
               labelWidth={startLeft}
-              showTextTool={Boolean(onAddTextAt)}
+              onCreateImageGeneration={hasPromptHost ? () => openDraft(AI_GENERATION_DRAFT) : undefined}
+              onCreateExtension={hasPromptHost ? () => openDraft(EXTENSION_DRAFT) : undefined}
               onCreateEffect={hasEffectCreationTool ? handleCreateEffect : undefined}
-              effectLabel={onOpenElementCreationPrompt ? 'Create new effect' : 'New effect layer at playhead'}
               effectDragSource={!onOpenElementCreationPrompt}
-              onCreateAnimation={onOpenSequenceCreator ? handleCreateAnimation : undefined}
-              animationLabel={onOpenElementCreationPrompt ? 'Create animation' : 'Create animation sequence'}
             />
           )}
           <div className="flex flex-1 items-center gap-2 px-2" style={{ position: 'sticky', left: startLeft }}>

@@ -368,9 +368,7 @@ function renderCanvasFor(
       setGestureOwner={vi.fn()}
       onActionResizeStart={vi.fn()}
       onClipEdgeResizeEnd={vi.fn()}
-      onAddTextAt={vi.fn()}
       onAddEffectLayerAt={vi.fn()}
-      onOpenSequenceCreator={vi.fn()}
       onScaleWidthChange={onScaleWidthChange}
       dragSessionRef={{ current: null }}
     />,
@@ -547,18 +545,17 @@ describe.each(DEVICE_CLASSES)('affordance pinning — %s', (deviceClass) => {
     expect(screen.queryByRole('button', { name: 'Reorder track' })).toBeNull();
   });
 
-  it('shows the timeline tool cluster as drag sources on desktop and not at all on touch', () => {
+  it('shows the timeline tool cluster as a drag source on desktop and not at all on touch', () => {
     renderCanvasFor(deviceClass, 'select');
 
     if (deviceClass !== 'desktop') {
       // Touch leaves adding elements to the agent: no drag sources, no tap tools.
-      expect(screen.queryByTitle('Drag onto timeline to add text')).toBeNull();
-      expect(screen.queryByRole('button', { name: 'New text at playhead' })).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Create animation sequence' })).toBeNull();
+      expect(screen.queryByLabelText('New effect or animation')).toBeNull();
+      expect(screen.queryByLabelText('New AI generation')).toBeNull();
       return;
     }
 
-    expect(screen.getByTitle('Drag onto timeline to add text')).toBeTruthy();
+    expect(screen.getByLabelText('New effect or animation').getAttribute('draggable')).toBe('true');
   });
 });
 
