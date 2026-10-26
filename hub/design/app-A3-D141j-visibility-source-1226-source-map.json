@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.app.d141j.visibility-source-map.v1",
+  "candidate_unmerged": true,
+  "production_chain": [
+    "src/tools/video-editor/adapters/app/useAstridShotsHost.ts",
+    "activeCanonicalOccurrences returned by useAstridShotsHost",
+    "src/tools/video-editor/hooks/useShotGroups.ts",
+    "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+    "TimelineCanvas / ShotGroupOverlay"
+  ],
+  "source_control": "/home/user/work/wt/app-A3-D141j-visibility-source-1226/src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx",
+  "collector": "/home/user/work/wt/app-A3-D141j-visibility-source-1226/src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+  "checker": "/home/user/work/wt/app-A3-D141j-visibility-source-1226/scripts/testing/check-d141j-visibility.mjs",
+  "retained_artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-source-1226/evidence/retained-artifact.json",
+  "future_recipe": "Use the same checker against a separately authorized real mounted artifact; do not admit a diagnostic body before independent visibility PASS and resource gating."
+}

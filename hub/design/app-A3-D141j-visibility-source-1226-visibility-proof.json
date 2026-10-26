@@ -1,0 +1,23 @@
+{
+  "schema": "timeline.app.d141j.visibility-proof.v1",
+  "status": "PASS_SOURCE_ONLY",
+  "cause": "UNKNOWN",
+  "diagnostic_body": "NOTRUN",
+  "historical_27026": "not replayed",
+  "synthetic_control": true,
+  "retained_artifact": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-source-1226/evidence/retained-artifact.json",
+    "sha256": "54b9c9a54141bba20853a4636c7758950ac683f760ee7e783f39b814edc82e57"
+  },
+  "fields": [
+    {"name": "accepted read-head continuity", "event": "accepted-canonical-read", "value": "timeline-rev-2", "continued_as": "timeline-rev-2"},
+    {"name": "occurrence presence in that canonical read", "event": "accepted-canonical-read", "value": "occ-5 present in five occurrence IDs"},
+    {"name": "activeCanonicalOccurrences immediately before useShotGroups", "event": "active-occurrences-before-useShotGroups", "value": "five occurrence IDs, including occ-5"},
+    {"name": "useShotGroups input and result before ShotGroupOverlay", "events": ["useShotGroups-input-and-result", "before-shot-group-overlay"], "value": "five input IDs and five matching result/overlay group keys"}
+  ],
+  "event_order": ["accepted-canonical-read", "active-occurrences-before-useShotGroups", "useShotGroups-input-and-result", "before-shot-group-overlay"],
+  "checker": {
+    "source_path": "/home/user/work/wt/app-A3-D141j-visibility-source-1226/scripts/testing/check-d141j-visibility.mjs",
+    "result": "PASS"
+  }
+}

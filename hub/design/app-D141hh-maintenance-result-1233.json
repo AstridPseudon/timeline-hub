@@ -1,0 +1,263 @@
+{
+  "utc": "2026-10-26T12:35:24.053105+00:00",
+  "free_before": 4891140096,
+  "free_after": 4887523328,
+  "keep_baseline_count": 89,
+  "all_baseline_keep_hash_modes_exact": true,
+  "present_worktrees": 33,
+  "ended_nonkeep_clean_candidates": [],
+  "census": [
+    {
+      "worker": "app-P-D141gg-single-scoped-controller-1145",
+      "worktree": "/home/user/work/wt/app-P-D141gg-single-scoped-controller-1145",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "rt-pin-95d98f03",
+      "worktree": "/home/user/work/wt/rt-pin-95d98f03",
+      "running": false,
+      "keep": true,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141cc-bulk-controller-next",
+      "worktree": "/home/user/work/wt/app-P-D141cc-bulk-controller-next",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141gg-single-custody-review-1156",
+      "worktree": "/home/user/work/wt/app-P-D141gg-single-custody-review-1156",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-U3b-recover-r1",
+      "worktree": "/home/user/work/wt/app-U3b-recover-r1",
+      "running": false,
+      "keep": false,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141cc-parent-custody-review-1130",
+      "worktree": "/home/user/work/wt/app-P-D141cc-parent-custody-review-1130",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-popup-controller-next",
+      "worktree": "/home/user/work/wt/app-P-D141cc-popup-controller-next",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-U3b-upstream-editor",
+      "worktree": "/home/user/work/wt/app-U3b-upstream-editor",
+      "running": false,
+      "keep": false,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141gg-single-scope-review-1141",
+      "worktree": "/home/user/work/wt/app-P-D141gg-single-scope-review-1141",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-submit-owner-sol-1047",
+      "worktree": "/home/user/work/wt/app-P-D141cc-submit-owner-sol-1047",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-F-D141-final-unit-notes-review-0909",
+      "worktree": "/home/user/work/wt/app-F-D141-final-unit-notes-review-0909",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-parent-admitted-1121",
+      "worktree": "/home/user/work/wt/app-P-D141cc-parent-admitted-1121",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-F-D141bb-main-install-map-1024",
+      "worktree": "/home/user/work/wt/app-F-D141bb-main-install-map-1024",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-A3-D141j-visibility-source-1226",
+      "worktree": "/home/user/work/wt/app-A3-D141j-visibility-source-1226",
+      "running": true,
+      "keep": false,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141hh-p1-custody-review-1218",
+      "worktree": "/home/user/work/wt/app-P-D141hh-p1-custody-review-1218",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-F-D141l-Agent-binding-sol-0905",
+      "worktree": "/home/user/work/wt/app-F-D141l-Agent-binding-sol-0905",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-submit-owner-wholepath-1047",
+      "worktree": "/home/user/work/wt/app-P-D141cc-submit-owner-wholepath-1047",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-p1-controller-next",
+      "worktree": "/home/user/work/wt/app-P-D141cc-p1-controller-next",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-popup-custody-review-1121",
+      "worktree": "/home/user/work/wt/app-P-D141cc-popup-custody-review-1121",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141hh-asset-custody-review-1205",
+      "worktree": "/home/user/work/wt/app-P-D141hh-asset-custody-review-1205",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P4-D141l-cli-source-return-0838",
+      "worktree": "/home/user/work/wt/app-P4-D141l-cli-source-return-0838",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141gg-asset-admitted-1155",
+      "worktree": "/home/user/work/wt/app-P-D141gg-asset-admitted-1155",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-pin-82e9e13d",
+      "worktree": "/home/user/work/wt/app-pin-82e9e13d",
+      "running": false,
+      "keep": true,
+      "ended": false
+    },
+    {
+      "worker": "vw-pin-635f4de0",
+      "worktree": "/home/user/work/wt/vw-pin-635f4de0",
+      "running": false,
+      "keep": true,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141hh-p3-custody-review-1226",
+      "worktree": "/home/user/work/wt/app-P-D141hh-p3-custody-review-1226",
+      "running": true,
+      "keep": true,
+      "ended": false
+    },
+    {
+      "worker": "app-F-D141l-freeze2-unit-controller-0606",
+      "worktree": "/home/user/work/wt/app-F-D141l-freeze2-unit-controller-0606",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141w-final-journeys-controller",
+      "worktree": "/home/user/work/wt/app-P-D141w-final-journeys-controller",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-F-D141z-build-stop-sol-0924",
+      "worktree": "/home/user/work/wt/app-F-D141z-build-stop-sol-0924",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "agt-pin-ecdc242e",
+      "worktree": "/home/user/work/wt/agt-pin-ecdc242e",
+      "running": false,
+      "keep": true,
+      "ended": false
+    },
+    {
+      "worker": "app-P-D141cc-single-controller-next",
+      "worktree": "/home/user/work/wt/app-P-D141cc-single-controller-next",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-p3-controller-next",
+      "worktree": "/home/user/work/wt/app-P-D141cc-p3-controller-next",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-bulk-custody-review-1143",
+      "worktree": "/home/user/work/wt/app-P-D141cc-bulk-custody-review-1143",
+      "running": false,
+      "keep": true,
+      "ended": true
+    },
+    {
+      "worker": "app-P-D141cc-single-custody-review-1135",
+      "worktree": "/home/user/work/wt/app-P-D141cc-single-custody-review-1135",
+      "running": false,
+      "keep": true,
+      "ended": true
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "bin/sweep-tmp",
+        "3"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/maintenance-1233-sweep.log",
+      "tail": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4665M -> 4665M\n"
+    },
+    {
+      "argv": [
+        "bin/compact-scratch",
+        "1"
+      ],
+      "exit": 0,
+      "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/maintenance-1233-compact.log",
+      "tail": "packed 0 scratch dirs; free 4665M -> 4662M\ngzipped 0 old worker logs; free now 4662M\npacked 0 finished test-run dirs; free now 4662M\n"
+    }
+  ],
+  "scope": "No KEEP release; no protected worktree, hub, raw proof or product change."
+}

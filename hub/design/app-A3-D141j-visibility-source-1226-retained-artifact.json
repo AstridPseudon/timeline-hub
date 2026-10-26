@@ -1,0 +1,83 @@
+{
+  "schema": "timeline.app.d141j.visibility.v1",
+  "expectedOccurrenceId": "occ-5",
+  "events": [
+    {
+      "kind": "accepted-canonical-read",
+      "projectId": "project-001",
+      "parentDocumentId": "document-primary",
+      "acceptedReadHeadRevisionId": "timeline-rev-2",
+      "previousAcceptedReadHeadRevisionId": null,
+      "occurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ]
+    },
+    {
+      "kind": "active-occurrences-before-useShotGroups",
+      "projectId": "project-001",
+      "parentDocumentId": "document-primary",
+      "acceptedReadHeadRevisionId": "timeline-rev-2",
+      "occurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ]
+    },
+    {
+      "kind": "useShotGroups-input-and-result",
+      "inputOccurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "resultOccurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "resultGroupKeys": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "resultGroupCount": 5
+    },
+    {
+      "kind": "before-shot-group-overlay",
+      "canonicalOccurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "shotGroupOccurrenceIds": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "shotGroupKeys": [
+        "occ-1",
+        "occ-2",
+        "occ-3",
+        "occ-4",
+        "occ-5"
+      ],
+      "shotGroupCount": 5
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.app.d141j.visibility-control.v1",
+  "status": "PASS",
+  "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+  "node_version": "v20.19.4",
+  "test_argv": "D141J_VISIBILITY_ARTIFACT_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-source-1226/evidence/retained-artifact.json /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx -t \"retains the four-field visibility chain\"",
+  "test_filter": "retains the four-field visibility chain through the mounted caller seams",
+  "test_result": "1 passed; full touched file 12 passed, 0 failed",
+  "checker_argv": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node scripts/testing/check-d141j-visibility.mjs /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-source-1226/evidence/retained-artifact.json",
+  "checker_stdout": "{\"status\":\"PASS\",\"expectedOccurrenceId\":\"occ-5\",\"acceptedReadHeadRevisionId\":\"timeline-rev-2\",\"occurrenceCount\":5,\"resultGroupCount\":5,\"eventOrder\":[\"accepted-canonical-read\",\"active-occurrences-before-useShotGroups\",\"useShotGroups-input-and-result\",\"before-shot-group-overlay\"]}",
+  "not_run": ["native service", "browser journey", "diagnostic body", "full suite", "package installation"]
+}
