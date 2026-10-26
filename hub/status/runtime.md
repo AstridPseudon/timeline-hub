@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T21:36:10Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- main | 2026-10-26T21:40:31Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # runtime board, 2026-10-26T21:34:19.968697+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -98,6 +98,8 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up agenda | Retain seven prepared briefs pending owner go | Main and owner | Main20:39 | gated:owner | No Runtime worker authorized | [Agenda](../../followups/README.md) read; next work awaits owner go. No Runtime assignment or kit change released. | Delivered ZIP unchanged |
 
+| OPS cancellation scope | Retain idle while Main clarifies owner relay | Main and owner | Header 21:38 | gated:owner | No Runtime worker active | Main relays Agent owner cancellation; Main routines and daemon scope await its owner clarification. No shutdown or dispatch. | No source change |
+
 Blockers: Safety — D130 and protected targets remain held. Historical refusals remain recorded; owner approval is again required for deletion. No active ZIP blocker.
 Next ready: None. Runtime assigned scopes are complete. Main owns the proposed kit hardening round; no new Runtime assignment is recorded.
 live 0 / cap 6; ready-undispatched 0. Free 5805707264 bytes. No new dispatch or eligible cleanup.
@@ -111,4 +113,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Opening standby recheck complete at 2026-10-26T21:34:19.968697+00:00. INBOX 1941564 and HEADER 265224 have no new item. Main21:13 restart recovery and Main20:39 owner-go hold remain controlling. Full bin/workers rt- exit0,2717 rows; stdout and historical metadata-warning stderr exact prior, no running row or Runtime marker. Owner boards rechecked; no ready dependency or release. All36 Runtime trees rechecked:31 KEEP and5 dirty legacy trees; no eligible recycle. Current delivered ZIP SHA256 matches the sidecar and prior receipt. No dispatch, cleanup, test, product edit, Git mutation or upstream action. Beginning a ten-minute standby interval with discrete probes and no continuous-monitor claim. [Pass evidence](rounds/20261026T213355Z-pass.json).
+Current pass: At 2026-10-26T21:39:19.761598+00:00, HEADER gained Main21:38: delivery unchanged and Agent lead relayed owner cancellation21:37. Main has asked its owner about routines and daemons, with no action on the relay. Runtime remains idle; no active worker or ready released task. No dispatch, shutdown, cleanup, test or product action. Opening census and exact ZIP custody remain in [pass evidence](rounds/20261026T213355Z-pass.json). Standby probes continue; no continuous-monitor claim.
