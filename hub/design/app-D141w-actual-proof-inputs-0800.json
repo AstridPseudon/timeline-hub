@@ -1,0 +1,65 @@
+{
+  "utc": "2026-10-26T07:59:46.486934+00:00",
+  "kind": "manager readback of normal exact source preparations",
+  "source_only": true,
+  "registration": false,
+  "body": false,
+  "rows": [
+    {
+      "role": "app",
+      "worker": "app-pin-82e9e13d",
+      "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "detached": true,
+      "clean": true,
+      "source_KEEP": true,
+      "normal_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "receipt_sha256": "a91e7b86b5c75a588765c58bf25f1c4bedb5ff277ed3df319fbd46e8c99b8c3c",
+      "worktree_bytes": 150889508
+    },
+    {
+      "role": "agent",
+      "worker": "agt-pin-ecdc242e",
+      "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "detached": true,
+      "clean": true,
+      "source_KEEP": true,
+      "normal_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "receipt_sha256": "e65af2f0285546ec4c5e33a94063ed83f71f5bc3f601d5ef8972e308094c2799",
+      "worktree_bytes": 117406847
+    },
+    {
+      "role": "runtime",
+      "worker": "rt-pin-95d98f03",
+      "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "detached": true,
+      "clean": true,
+      "source_KEEP": true,
+      "normal_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-95d98f038320d5d46bd679ac000ab3e15825c935",
+      "receipt_sha256": "a17539775569556567720118284c8d7d5f8eb1e2441d3306ed493ebfde2ea668",
+      "worktree_bytes": 20183758
+    },
+    {
+      "role": "composition",
+      "worker": "vw-pin-635f4de0",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "detached": true,
+      "clean": true,
+      "source_KEEP": true,
+      "normal_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+      "worktree_bytes": 447143
+    }
+  ],
+  "available_after_all_sources_bytes": 4956024832,
+  "ordinary_heavy_required_strictly_greater_than": 5200000000,
+  "headroom_shortfall_to_minimum_bytes": 243975169,
+  "original_packet_status": "0736/0747/0756 correctly prospective at their read times; this new immutable receipt alone records later actual materialization; originals unchanged"
+}

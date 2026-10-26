@@ -1,0 +1,36 @@
+{
+  "utc": "2026-10-26T07:59:46.488149+00:00",
+  "kind": "byte-exact safe final reviewer publication",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-final-review-0756/evidence/review.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-ordinary-recipe-final-review-0756-review.json",
+      "bytes": 8284,
+      "sha256": "d17d45f501383000fd861cf60e6ae25427ad513306bb6c1414e7abbc64413d6e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-final-review-0756/evidence/findings.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-ordinary-recipe-final-review-0756-findings.md",
+      "bytes": 3984,
+      "sha256": "3ec0a3bb07cc9b46c824c664bcdc186c5fb1b5035414f43c541014bf4ac8437b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-final-review-0756/evidence/source-manifest.json",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-ordinary-recipe-final-review-0756-source-manifest.json",
+      "bytes": 6571,
+      "sha256": "b3b04dbd5a9585c1d940c306cbef6d258d765241910e24b671f4cb41bf0c7887"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-final-review-0756/evidence/validation.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-ordinary-recipe-final-review-0756-validation.md",
+      "bytes": 3837,
+      "sha256": "6706b4d62a872c5600c4ec63242400d8c1c243315235ea88191a2bf3a164a549"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-final-review-0756/evidence/handoff.md",
+      "destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141w-ordinary-recipe-final-review-0756-handoff.md",
+      "bytes": 3291,
+      "sha256": "2ce67aaf7e445d93e53392662129ef44543a0e59e5b4ac6eca0ab93884a290a1"
+    }
+  ]
+}

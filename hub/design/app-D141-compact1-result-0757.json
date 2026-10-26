@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-26T07:56:40.367712+00:00",
+  "compact_min_MB": 1,
+  "helper_exit": 0,
+  "packed_scratch_dirs": 0,
+  "gzipped_worker_logs": 4,
+  "packed_test_dirs": 0,
+  "before_available_bytes": 4965842944,
+  "after_available_bytes": 5250666496,
+  "concurrent_authorized_pin_release": "app-D141-completed-source-pin-release-0752.json",
+  "KEEP_before": 35,
+  "only_authorized_empty_source_KEEP_removed": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-pin-8585ed9c/KEEP",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-pin-d822d2f5/KEEP"
+  ],
+  "other_KEEP_findings": [],
+  "log": "design/app-D141-compact1-0750.log",
+  "hub_operations": false
+}

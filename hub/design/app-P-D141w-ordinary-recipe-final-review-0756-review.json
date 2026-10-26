@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "task": "app-P-D141w-ordinary-recipe-final-review-0756",
+  "status": "REVIEW_COMPLETE",
+  "review_scope": "one independent final operational review of the source-only D141w FIRST RETURN0747 packet",
+  "base_composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "status": "clean"
+  },
+  "inputs": {
+    "return_0747": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence",
+    "independent_review_0740": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-review-0740/evidence",
+    "original_0736": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-final-head-binding-0736/evidence",
+    "recovery_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141w-ordinary-return-evidence-recovery-0754.json",
+    "recovery_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+    "recovery_verified": "all nine recovered files match recorded Git blobs, byte counts, and SHA-256 values"
+  },
+  "verdicts": {
+    "pure_builder_binding": "PASS",
+    "prospective_ordinary_controller_recipe": "PASS",
+    "actual_controller_body": "NOTRUN",
+    "actual_popup": "NOTRUN; D141j wording remains conditional on an actual popup PASS"
+  },
+  "findings": [
+    {
+      "id": "D141w-C1",
+      "status": "RESOLVED_PASS",
+      "finding": "The submit recipe must bind the reviewed tuple and unique per-selector artifact paths.",
+      "verification": "submit-commands.json supplies all twelve D66 SHA/TREE/CHECKOUT variables, D66_SUBMIT_TARGET=app-pin-82e9e13d, a unique full-d141-<selector>-82e9e13d-submit suite, and unique absolute D66_OUTPUT_DIR and D66_SUBMIT_PLAN_PATH values. The argv is the genuine Node/tsx builder with --submit only.",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/submit-commands.json",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/binding.json"
+      ]
+    },
+    {
+      "id": "D141w-C2",
+      "status": "RESOLVED_PASS",
+      "finding": "The submit owner must not be followed by manual duplicate request commands.",
+      "verification": "The unchanged builder owns exact-checkout requests and waits, source preflight, registration, preflight request/wait, normal request, and artifact persistence. The controller plan says to wait only artifact.normal.id after return, never repeat printed request lines, inspect existing state after a lost-artifact crash window, and stop with a finite custody gap if custody cannot be proven.",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/controller-plan.md",
+        "/home/user/work/app/scripts/testing/d66-plain-stack.mjs:638-701"
+      ]
+    },
+    {
+      "id": "D141w-C3",
+      "status": "RESOLVED_PASS",
+      "finding": "Admission and trace language must match the installed normal test service.",
+      "verification": "All normal and derived preflight names begin with full and are independently heavy. Each has the strict default >5200000000-byte admission, no measured receipt, one own five-second KEEP trace, and the existing <=4500000000-byte initial refusal. The 16 pure-builder rows were regenerated from serviceRecipe and all hashes match the packet; all 16 command bodies match 0736, with only prospective row names changed.",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/binding.json",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/controller-plan.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:19-58",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run:95-120"
+      ]
+    }
+  ],
+  "tuple": {
+    "app": {"commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "exact_checkout": "/home/user/work/wt/app-pin-82e9e13d", "materialized": false},
+    "agent": {"commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "exact_checkout": "/home/user/work/wt/agt-pin-ecdc242e", "materialized": false},
+    "runtime": {"commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "exact_checkout": "/home/user/work/wt/rt-pin-95d98f03", "materialized": true},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "exact_checkout": "/home/user/work/wt/vw-pin-635f4de0", "materialized": true}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "historical_0736_blob_equal": true,
+    "pure_builder_result": {"selectors": 8, "commands": 16, "rows": 16, "hash_mismatches": 0}
+  },
+  "admission": {
+    "normal_and_preflight_class": "heavy",
+    "default_floor_bytes": 5200000000,
+    "default_floor_comparison": "strictly greater",
+    "initial_refusal_bytes": 4500000000,
+    "measured_receipt": false,
+    "trace": "one independent genuine five-second KEEP trace per heavy request",
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_route": "future App manager/controller polls the actual trace and uses existing request-stop-test, then wait-test; live test-run has no automatic 4-GB kill guard",
+    "current_available_bytes_readonly": 5250732032,
+    "headroom_status": "do not claim post-preparation >5200000000; approximately 0.28 GB preparation is not included in this reading"
+  },
+  "wire": {
+    "changed": false,
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args", "created"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "merge_values": ["fields", "atomic"],
+    "reply_families": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "reply_fields": ["data", "receipt", "canonical_document", "document_digest", "provider_version", "compiler_version", "normalized_commands", "idmap", "base", "previous", "accepted_revision_publication_pairs", "rebased_onto", "merge_mode", "steps", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "publisher", "annotations", "reason", "head", "code", "path", "hint", "suggested_command", "would_status", "null_receipt"]
+  },
+  "preserved": {
+    "d141s_c": "paired kit dropped; no adapter, format step, 0545 registration, schema adapter, CAS, or alternate route",
+    "metadata_8585": "expected pending D141v; no re-pin and no defect",
+    "held_or_cancelled": "8912/19479 held; 18617 cancelled originals retained",
+    "popup": "D141j PASS wording is conditional on actual popup PASS; current cause is unknown, no fixed claim; another failure stops pending visible read-head, occurrence, activeCanonicalOccurrences, and shot-group fields",
+    "raw_retention": "raw KEEP/source objects retained; no collector added"
+  },
+  "mutations": {
+    "product_code": false,
+    "tests": false,
+    "generated_files": false,
+    "pins_registry_queue_hub_git_metadata": false,
+    "checkouts_requests_registration_body": false
+  },
+  "tests": {
+    "product_or_full_suite": "NOTRUN by scope",
+    "actual_body": "NOTRUN",
+    "source_review_checks": "PASS"
+  }
+}

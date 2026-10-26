@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "task": "app-P-D141w-ordinary-recipe-final-review-0756",
+  "review_type": "independent_read_only_operational_review",
+  "base_composition": {
+    "repository": "/home/user/work/composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "clean": true
+  },
+  "integration_tuple": {
+    "app": {"repository": "/home/user/work/app", "branch": "tl/integration", "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "clean": true},
+    "agent": {"repository": "/home/user/work/agent", "branch": "tl/integration", "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "clean": true},
+    "runtime": {"repository": "/home/user/work/runtime", "branch": "tl/integration", "commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "clean": true},
+    "composition": {"repository": "/home/user/work/composition", "branch": "tl/integration", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "clean": true}
+  },
+  "exact_checkout_custody": {
+    "app": {"path": "/home/user/work/wt/app-pin-82e9e13d", "materialized": false, "receipt_present": false},
+    "agent": {"path": "/home/user/work/wt/agt-pin-ecdc242e", "materialized": false, "receipt_present": false},
+    "runtime": {"path": "/home/user/work/wt/rt-pin-95d98f03", "materialized": true, "detached_clean": true},
+    "composition": {"path": "/home/user/work/wt/vw-pin-635f4de0", "materialized": true, "detached_clean": true}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "historical_0736_blob_equal": true,
+    "exports": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "pure_builder": {"selectors": 8, "commands": 16, "rows": 16, "hash_mismatches": 0, "hand_constructed_rows": false}
+  },
+  "source_guards": {
+    "eight_spec_blobs_match_manifest": true,
+    "original_tails_inputs_predicates_unchanged": true,
+    "placement_first": true,
+    "popup_add_unchanged": true,
+    "popup_swap_absent": true,
+    "element_selector_absent": true,
+    "duplicate_p4_p5_absent": true,
+    "d141s_c_paired_kit_absent": true,
+    "no_manual_row_or_command_construction": true
+  },
+  "generated_recipe": {
+    "suite_rule": "full-d141-<selector>-82e9e13d-submit; derived preflight adds -preflight",
+    "all_normal_and_preflight_heavy": true,
+    "all_16_command_bodies_equal_0736": true,
+    "only_prospective_row_names_differ": true,
+    "all_16_rows_one_utf8_lf": true,
+    "target": "app-pin-82e9e13d",
+    "argv": ["/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "--max-old-space-size=6144", "--import", "tsx", "scripts/testing/d66-plain-stack.mjs", "<selector>", "--submit"]
+  },
+  "c0_wire": {
+    "changed": false,
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "command": ["schema_version", "op", "version", "select", "args", "created"],
+    "step": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "merge": ["fields", "atomic"],
+    "replies": {
+      "accepted_merged": ["data", "receipt", "canonical_document", "document_digest", "provider_version", "compiler_version", "normalized_commands", "idmap", "base", "previous", "accepted_revision_publication_pairs", "rebased_onto", "merge_mode", "steps", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "publisher", "annotations"],
+      "conflict": ["reason", "head"],
+      "invalid": ["code", "path", "hint", "suggested_command"],
+      "preview": ["would_status", "null_receipt"]
+    }
+  },
+  "registry_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "sha256": "e100f177f029aedc17b5e4ad3fb697e1c9e98142ca88e6c91101c5f0046ac5f7",
+    "prospective_full_d141_names_present": false,
+    "historical_0545_names_present": false,
+    "written": false
+  },
+  "recovered_outputs": {
+    "commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141w-ordinary-return-evidence-recovery-0754.json",
+    "byte_exact": true,
+    "files": [
+      {"path": "binding.json", "blob": "814502cf00474ab10cd48b3cac5c734436d35945", "sha256": "812b737aa235e26ab25fd8a342223c8d6f43d35394d4cdcbcc63545645469255", "bytes": 9059},
+      {"path": "normal-command.txt", "blob": "d1e1b2f4e50e89e04b177ba671175fd34043b67f", "sha256": "ee68699ee18022ce9e77c40173fb85db2112204bc7d3df6b705edde3211ecedb", "bytes": 966},
+      {"path": "preflight-command.txt", "blob": "bdad9acbf3d9a67636d213a982ea1e11944d8aea", "sha256": "01361393d0189db2d60e7effb17666cd5ddbd7554286e98a1f10b2459b3c799a", "bytes": 978},
+      {"path": "submit-commands.json", "blob": "552d5d6b7029c20297e318e16d5adb15dd856a2f", "sha256": "239d93ad133315445c85006e13394af312f0ec616a76bb7bc04203c984cc989e", "bytes": 6708},
+      {"path": "controller-plan.md", "blob": "93ea3a156b74247fda7ef602612a526b9a4eb942", "sha256": "b545f113762afae3cfc53cba75f560aa082db32bc1b578ed40c426382c0632de", "bytes": 4624},
+      {"path": "findings-resolved.json", "blob": "7105bbaf974c8bfed0a70897ae21167119a6b319", "sha256": "e1c3a66ced21d37f72809a4954e2b0d20be0ad08c4c2d9015a4acb8489fee004", "bytes": 3899},
+      {"path": "source-manifest.json", "blob": "746b38f25102d175f57d5817e64ee259c0323e47", "sha256": "89d389d89a8bfcf15ae2bf7c5e78af52a9a57099c6c8813a61d245569aa9e5ba", "bytes": 7610},
+      {"path": "validation.md", "blob": "d4712eb6002a62b1090afbe16176dfa128b673aa", "sha256": "338f1550cdad5b12bb3e6b57628ecdd06d28a3ac5668435951d10d77cdcdecd5", "bytes": 3723},
+      {"path": "handoff.md", "blob": "9e00dc6481dbfa2df06df4575345ddfd3ad94a3a", "sha256": "06e95ec69393ebff66a52b09354a92aa76e0d1622c7549f49abd977474a27a2a", "bytes": 1633}
+    ]
+  },
+  "actual_execution": {"registration": false, "checkout_requests": false, "request_test": false, "wait_test": false, "body": false, "full_suite": false}
+}
