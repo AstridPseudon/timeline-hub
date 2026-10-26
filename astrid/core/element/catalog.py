@@ -265,8 +265,8 @@ def _element_revision(definition: Any) -> str:
         if path.suffix in {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css"}
         and path.resolve() != definition.component
     )
-    for path in sorted(helpers):
-        digest.update(os.path.relpath(path, definition.root).encode("utf-8"))
+    for path in sorted(helpers, key=lambda path: path.parts):
+        digest.update(Path(os.path.relpath(path, definition.root)).as_posix().encode("utf-8"))
         digest.update(b"\0")
         digest.update(path.read_bytes())
         digest.update(b"\0")
