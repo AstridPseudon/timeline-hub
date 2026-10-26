@@ -9,10 +9,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows-installer-cleanup:
+  windows-native-and-installer:
     runs-on: windows-latest
     env:
-      ASTRID_CI_JOB: windows-installer-cleanup
+      ASTRID_CI_JOB: windows-native-and-installer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,6 +25,12 @@ jobs:
         run: python scripts/ci_install_runtime.py
       - name: Check native PowerShell cleanup exit codes
         run: python -m pytest -q tests/test_installer_windows_tasks.py
+      - name: Check native Windows process and permission behavior
+        run: >-
+          python -m pytest -q
+          tests/core/execution/test_platform_helpers.py::test_windows_scope_job_kills_descendants_after_leader_exit
+          tests/core/execution/test_platform_helpers.py::test_windows_lock_and_owner_permissions_are_native
+          tests/core/execution/test_platform_helpers.py::test_windows_scope_dies_when_owner_process_exits
 
   checks:
     name: fast checks
