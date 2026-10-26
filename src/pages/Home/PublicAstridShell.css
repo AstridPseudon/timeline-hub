@@ -485,7 +485,8 @@
     left var(--astrid-surface-duration, 360ms) cubic-bezier(.22,.61,.36,1) var(--astrid-surface-delay, 240ms),
     top var(--astrid-surface-duration, 360ms) cubic-bezier(.22,.61,.36,1) var(--astrid-surface-delay, 240ms),
     width var(--astrid-surface-duration, 360ms) cubic-bezier(.22,.61,.36,1) var(--astrid-surface-delay, 240ms),
-    height var(--astrid-surface-duration, 360ms) cubic-bezier(.22,.61,.36,1) var(--astrid-surface-delay, 240ms);
+    height var(--astrid-surface-duration, 360ms) cubic-bezier(.22,.61,.36,1) var(--astrid-surface-delay, 240ms),
+    opacity 720ms ease;
 }
 .astrid-public-site[data-audience="app"] .astrid-preview-transport-outlet {
   left: 11.2%;
@@ -493,7 +494,8 @@
   width: 44.4%;
   height: 12%;
 }
-.astrid-public-site[data-audience="agent"] .astrid-preview-transport-outlet { visibility: hidden; }
+/* Fades out as the switch to Agents starts; the outlet is also inert in Agent (see PublicAstridMountedEditor). */
+.astrid-public-site[data-audience="agent"] .astrid-preview-transport-outlet { opacity: 0; }
 .astrid-preview-media-failure-poster {
   position: absolute;
   z-index: 15;
@@ -1009,7 +1011,7 @@
 .astrid-timeline-surface { --astrid-surface-stagger: 90ms; }
 .astrid-chat-surface { --astrid-surface-stagger: 20ms; }
 /* The flat transport follows the tilted player; PublicAstridCallouts writes its box each frame. */
-.astrid-preview-transport-outlet[data-astrid-tracked] { transition: none; }
+.astrid-preview-transport-outlet[data-astrid-tracked] { transition: opacity 720ms ease; }
 
 /* Callouts: flat cards above the tilted editor, joined by measured connectors. */
 .astrid-callouts {

@@ -172,6 +172,7 @@ export function PublicAstridMountedEditor({
         ref={bindTransportOutlet}
         aria-label="Preview playback controls"
         aria-hidden={!appView}
+        {...(agentView ? { inert: '' } : {})}
       />
     </PublicAstridEditorProvider>
   );
