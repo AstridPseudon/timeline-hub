@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.app.u4p.d141s.source-manifest.v1",
+  "candidate_head": "fdea805191f466fa67dc0f2ea118da31bf86028f",
+  "runtime": {
+    "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "parents": ["857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5", "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"],
+    "producer": "astrid-runtime",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "artifacts_manifest_sha256": "sha256:9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3",
+    "contract_manifest_sha256": "sha256:414243ac7ab66ea197571e0ef85dbe8b4049e7a10a662a90870d9b9459aad369",
+    "timeline_commit_schema_sha256": "sha256:3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "timeline_config_schema_sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "delta_from_6a": [
+      "conformance/typescript/contract-metadata.ts",
+      "conformance/typescript/generated.ts",
+      "runtime_protocol/upgrade.py"
+    ]
+  },
+  "agent": {
+    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "parents": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "5d202569f3af3852476d182ff49683787bb1e881"],
+    "clean": true
+  },
+  "runtime_mappings": [
+    ["src/integrations/runtime/fixtures/responses/commit_conflict_409.json", "conformance/responses/commit_conflict_409.json", "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"],
+    ["src/integrations/runtime/fixtures/responses/events_page_1_200.json", "conformance/responses/events_page_1_200.json", "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"],
+    ["src/integrations/runtime/fixtures/responses/events_page_2_200.json", "conformance/responses/events_page_2_200.json", "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"],
+    ["src/integrations/runtime/fixtures/responses/invalid_cursor_400.json", "conformance/responses/invalid_cursor_400.json", "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"],
+    ["src/integrations/runtime/fixtures/responses/managed_outputs_200.json", "conformance/responses/managed_outputs_200.json", "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"],
+    ["src/integrations/runtime/fixtures/responses/not_found_404.json", "conformance/responses/not_found_404.json", "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"],
+    ["src/integrations/runtime/fixtures/responses/retired_route_410.json", "conformance/responses/retired_route_410.json", "sha256:e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292"],
+    ["src/integrations/runtime/fixtures/responses/task_admission_201.json", "conformance/responses/task_admission_201.json", "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"],
+    ["src/integrations/runtime/fixtures/responses/task_read_200.json", "conformance/responses/task_read_200.json", "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"],
+    ["src/integrations/runtime/fixtures/responses/validation_error_422.json", "conformance/responses/validation_error_422.json", "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"],
+    ["src/integrations/runtime/generated-contract-metadata.ts", "packages/typescript/src/contract-metadata.ts", "sha256:adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c"],
+    ["src/integrations/runtime/generated.ts", "packages/typescript/src/generated.ts", "sha256:7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"],
+    ["src/integrations/runtime/timeline-commit-types.ts", "packages/typescript/src/timeline-commit-types.ts", "sha256:b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674"],
+    ["vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json", "contract/schemas/timeline-config.schema.json", "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"]
+  ],
+  "runtime_mappings_exact": true,
+  "agent_vendor": {
+    "provenance_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "provenance_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "provenance_entries": 160,
+    "provenance_hashes_exact_in_app": true,
+    "direct_agent_payload_entries": 159,
+    "direct_agent_payload_entries_exact": true,
+    "generated_public_catalog_entries": 1,
+    "generated_public_catalog_path": "astrid/packs/rendering/elements/public-catalog.ts",
+    "generated_public_catalog_is_not_a_pinned_agent_source_path": true,
+    "public_imports": 11
+  },
+  "c0_sections_read": [1, 2, 3, 4, 5, 7],
+  "c0_surface_preserved_by_source_conservation": true
+}

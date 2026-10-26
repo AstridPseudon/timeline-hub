@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T05:41:35Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 4m -->
-# app board, 2026-10-26T05:37:01Z
+<!-- app | 2026-10-26T05:47:01Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 4m -->
+# app board, 2026-10-26T05:42:14Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -12,14 +12,14 @@
 | D141 REG history | Retain proved read count correction | HARD Sol and Luna | Independent0203 PASS | merged | 0149;0203 | Exact upstream loads=2; interface support only.32 own failures and collection error visible unchanged. | 5fe3e4debec5 |
 | D141 placement | Retain exact intended history oracle | Luna and protected Luna | Main D141d;0243 PASS | merged | 0235;0243 | Only placement expected records:2 objects22 paths. Helpers, all other gestures and predicates exact. | 520d7e4fc12a |
 | D141 notes | Retain reviewed installed notes | Runtime Luna and Luna | 0203;0243 and Runtime reviews | merged | 0215;0225;0254;0258 | Exact upstream mock and placement lines installed;568 outside files and gap paragraphs exact; render PASS. | Evidence only |
-| U4p postREG | Adopt actual Runtime95d producer | Luna | Qualified Runtime0515 handoff | doing | app-U4p-D141s-Runtime-postREG-adopt-0535 | Normal tool metadata-only adoption from5344; exact source pin requested. Candidate checks and one bounded review next. | Pending |
+| U4p postREG | Adopt actual Runtime95d producer | Luna | Qualified Runtime0515 handoff | review | Author0535; independent0540 | Candidatefdea two metadata paths;6 tests/tools/verifier14 mappings PASS. Independent0540 active. | fdea805191f4 |
 | D141 final binding | Regenerate actual postREG HOME tuple | Luna | Normal U4p reviewed merge | todo | Existing0459 binding lineage | Genuine serviceRecipe only, all8 pairs, registration false. Runtime0519 receives exact final head before CAS. | Pending |
 | D141 source | Retain reviewed freeze2 home | Luna and independent Luna | Agent8585 and0454 PASS | merged | 0448;0454;home0459 | Clean5344 tree dd989 equals reviewed dc1a; d822 frozen ancestor. No later upstream chase. | 5344c53e3063 |
 | D141 receiving | Retain qualified execution recipes | Luna and Luna | Independent0425 PASS | merged | 0420;0425 | 13 byte-published originals; all8 findings cleared; no body or source merge. | Composition635f |
 | D141 binding | Supply genuine freeze2 paired rows | Luna | Actual source5344 | merged | 0459 | All8 pairs published0503. First command hashes98522/97277; registration false. | 5344c53e3063 |
 | D141s received ask | Provide first pair for final kit review | Luna | Runtime0506 receiving ask | merged | 0459;manager hash checks | Exact requested packet already byte equal in normal hub. Sole Runtime0503 review owns receiving. | Source5344 |
 | D141 Node route | Retain exact standalone Node row | Luna | Main standalone phase requirement | merged | 0515 | One full-d141-node-phase row; exact npm run test:node. All outside config bytes equal preimage. No body. | Source5344 andd822 |
-| D141 unit measure | Qualify retained full-suite disk bracket | Luna and independent Luna | Main05:20 | review | Author0523; independent0535 | Author X null; strict witness format and source admission exclusion challenged. Independent checks all findings. No body. | Evidence pending |
+| D141 unit measure | Qualify retained full-suite disk bracket | Luna and independent Luna | Main05:20 | blocked:runtime | Author0523; independent0535 | Independent correction X593895424; floor4793895424, bracket only. Strict original witness format unavailable; no receipt. | Evidence only |
 | D141 unit pair | Run current and pristine units | Luna and service | Normal5.2GB or qualified D89d | blocked:disk | Existing full controller lineage | New full5344 and pristined822 plus each own Node phase. Same-kind environment before per-ID REG verdict. | Pending |
 | D141 Node body | Cover both actual standalone phases | Luna and service | Each full outcome and admission | gated:D141-unit | Existing full controller lineage | 5344 script1709 bytes;d8221666. Each source executes its own unchanged script; no phase short circuit claim. | Pending |
 | D141 P1 | Reprove original dependent chain | Luna and service | D141s final disposition | gated:D141s | Existing journey controller lineage | Original2 cases and readiness preserved. Historical17879 PASS on867 stays historical. | Pending5344 |
@@ -51,7 +51,7 @@ D141 controls: Unit suites independent of paired kit. Main05:20 allows retained 
 
 H6: Normal hub Runtime05:03 board /05:07 publication has sole paired0503 review, P5metadata0500 and disjoint15REG fixes; TS source normal857e reported in latest peer, complete qualified producer handoff not yet received. Agent05:07 board has source0500/independent0508 and early join0507; its source receipt wait is stale, exact App home0459 and source binding already byte equal in normal hub. Header D141u demands identical freeze2 selection; early17 candidates not definitive. Farm04:25 stood down; no child/core fallback. Proof05:08 stood down. No duplicate owner.
 
-Blockers: Disk — App full/new-pristine units need normal5.2GB or qualified same-kind D89d. Measurement0523 admitted4600090624 bytes at05:28:16Z after lossless old v1 output compression; no body before qualified floor.
+Blockers: Disk — App full/new-pristine units need normal5.2GB or qualified same-kind D89d. Independent0535 corrects observed bracket floor4793895424 bytes; current~4.67GB remains below it. Supported witness format is separately unavailable.
 Blockers: Runtime paired kit — Independent0503 PASS73; final receiving0519 waits actual postREG App binding after normal U4p0535 home. PASS INSTALL by06:00 or normal floors.
 Blockers: Runtime old queue — Existing0519 owns exact18617 hold; original queue/request unchanged. Installed readback owed before headroom opens.
 Blockers: Runtime P5 — Corrected exact-ID derivative0500 and final source applicability owed; actual38 PASS retains historical6a/28e scope.
@@ -59,7 +59,7 @@ Blockers: Agent — Definitive freeze2 full pair and changed-CLI P4 proof owed b
 Blockers: Safety — D130 held; owner-gated hub stays lead only. Refused orphan graph, hardlink cache and dirty or unowned trees untouched.
 
 Next ready: U4p0535 -> one bounded independent review -> normal merge -> genuine final paired binding for Runtime0519. Measurement independent0535 -> actual supported floor or normal5.2GB unit pair and each exact Node phase. D141s disposition -> placement first, remaining5 P2, P1 and P3 on genuine tuple. Reserved Sol repair only on proved REG. No later catch-up before F-final.
-live 2 / cap 2; ready-undispatched 0. Independent measurement0535 and U4p0535 admitted at4700MB after guarded lossless log compression; no heavy body.
+live 1 / cap 1; ready-undispatched 0. Metadata0540 independently reviews exactfdea candidate, admitted4675706880 bytes; no heavy body.
 
 Custody and maintenance: Every named raw test run retains KEEP; raw private0700/files0600 stay exact. New controller0043 KEEP preserves newly requested historical full witnesses. Maintenance0520 protects preexisting29 marker hashes/modes; allowed new marker disclosed. Guarded inventory has zero eligible ended clean nonKEEP tree; historical dirtyU3, lockedU3c, bundles without metadata, orphan1.107GB and hardlinked v1cache remain held. No hub operation, raw deletion, metadata invention or refusal retry. Sweep3 terminal removed0; compact1 terminal0dirs/2logs. Lossless23 pre22Oct manager stdout logs save48634220 bytes; all decompressed hashes exact. [Result](../../design/app-D141-maintenance-result-0530.json). [Precheck](../../design/app-D141-maintenance-precheck-0520.json).
 
@@ -70,3 +70,5 @@ INBOX consumed through2765508 bytes. Board overwritten 2026-10-26T05:25:08Z; cur
 Current pass 2026-10-26T05:28:50Z: manager exact pre-dispatch4600090624 admitted sole ordinary Luna unit-measurement0523. Source-floor blocker cleared via authorized lossless old v1 stdout compression; no source/raw/hub deletion. Measurement result pending, general D89d installed route present. Cross-lane receiving ask satisfied by genuine existing0459 source and0503 binding; peer0525 clears stale owner waits.
 
 Current 2026-10-26T05:37:01Z: exact Runtime95d object/tree/parents match source0515; normal exact checkout queued. Qualified producer ready row dispatched immediately, no custody review delay. All102 named closed23-25Oct unreferenced manager stdout logs losslessly compressed,104199115 bytes saved, exact decompressed hashes/modes;26Oct witness logs untouched. Receipt design/app-D141-closed-manager-output-compression-0534.json. Author0523 terminal NOT QUALIFIED; one independent0535 challenges exclusions and separates evidence bound from strict route format. No body or kit changes.
+
+Current 2026-10-26T05:42:14Z: author0535 terminal fdea805191f466fa67dc0f2ea118da31bf86028f/tree84c3fb7f73f08c22220f8e808962fe3f24aaa0aa,2 metadata paths,6 tests and all14mapping/verifier PASS. Independent0540 dispatched. Independent measurement0535 FAIL corrects F1 and source-qualifies X593895424/floor4793895424; original-format route still unavailable, no body. One finite lead note0541 reports exactly this. Candidate source pin5344 release is later only after actual normal home and host CLEAR; no KEEP release now.

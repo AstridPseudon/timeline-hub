@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.app.u4p.d141s.outside-conservation.v1",
+  "base": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "candidate": "fdea805191f466fa67dc0f2ea118da31bf86028f",
+  "allowed_paths": ["runtime.lock.json", "public/install-manifest.json"],
+  "candidate_changed_paths": ["runtime.lock.json", "public/install-manifest.json"],
+  "outside_allowlist_paths": [],
+  "untracked_files": [],
+  "metadata_field_delta": {
+    "runtime.lock.json": ["source_commit"],
+    "public/install-manifest.json": ["runtime.sha"]
+  },
+  "mapped_app_client_schema_canonical_bytes_unchanged": true,
+  "tests_assertions_inputs_unchanged": true,
+  "runtime_mapped_file_mismatches": [],
+  "runtime_delta_paths_from_6a": [
+    "conformance/typescript/contract-metadata.ts",
+    "conformance/typescript/generated.ts",
+    "runtime_protocol/upgrade.py"
+  ],
+  "runtime_delta_maps_into_consumed_app_clients": false,
+  "agent_payload_or_provenance_mismatches": [],
+  "manual_metadata_edit_or_payload_drift": false,
+  "result": "all allowed metadata changed only through the normal-tool-shaped delta; source, tests, fixtures, generated clients, schema, canonical bytes, and outside-tree entries conserved"
+}
