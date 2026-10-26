@@ -123,7 +123,7 @@ class Backend:
             raise subprocess.CalledProcessError(result.returncode, [str(argv[0])], output=result.stdout)
         return result.stdout.strip()
 
-    def install_remotion_dependencies(self, agent: Path, env: dict[str, str], npm: Path) -> None:
+    def install_remotion_dependencies(self, agent: Path, env: dict[str, str], npm: Path) -> bool:
         """Install the renderer's frozen dependencies, reusing an identical lock."""
         remotion = agent / "remotion"
         lock_hash = hashlib.sha256((remotion / "package-lock.json").read_bytes()).hexdigest()
@@ -133,13 +133,29 @@ class Backend:
                 and marker.read_text(encoding="ascii").strip() == lock_hash):
             # Node's official archives expose npm through this JavaScript entrypoint
             # on every OS; neither shell shims nor an ambient npm are required.
-            self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
-                     cwd=remotion, extra_env=env)
+            try:
+                self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
+                         cwd=remotion, extra_env=env)
+            except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+                self.say(f"Rendering unavailable: Remotion npm ci failed ({self._command_failure(exc)}). Check the installer log and retry the install.")
+                return False
             marker.write_text(lock_hash + "\n", encoding="ascii")
         # Renders never download: fetch Remotion's browser now, once per Remotion
         # version into the shared cache (a no-op when it is already there).
-        self.run([env["ASTRID_NODE_EXECUTABLE"], remotion / "scripts" / "fetch-shared-browser.mjs"],
-                 cwd=remotion, extra_env=env)
+        try:
+            self.run([env["ASTRID_NODE_EXECUTABLE"], remotion / "scripts" / "fetch-shared-browser.mjs"],
+                     cwd=remotion, extra_env=env)
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            self.say(f"Rendering unavailable: Remotion browser setup failed ({self._command_failure(exc)}). Check network access and retry the install.")
+        return True
+
+    @staticmethod
+    def _command_failure(exc: Exception) -> str:
+        if isinstance(exc, subprocess.CalledProcessError):
+            return f"exit code {exc.returncode}"
+        if isinstance(exc, subprocess.TimeoutExpired):
+            return "timed out"
+        return str(exc)
 
     def runtime(self, version: Version | None, data: Path, *args, profile=False, timeout=1800) -> dict:
         python = version.python if version else Path(sys.executable)
@@ -468,13 +484,14 @@ class Backend:
                         prior.env.get("ASTRID_RUNTIME_DOOR_PORT", str(DEFAULT_DOOR_PORT)) if prior else str(DEFAULT_DOOR_PORT)),
                     "PATH": str(python.parent) + os.pathsep + env["PATH"]})
         npm = binary(folder / "tools" / "node", "npm-cli.js")
-        self.install_remotion_dependencies(agent, env, npm)
+        npm_installed = self.install_remotion_dependencies(agent, env, npm)
         # The lockfile's transitive @banodoco/timeline-schema package is the
         # source used by host_bootstrap. Install its Python subtree from this
         # candidate's npm tree so the environment follows the same pinned
         # package as the Remotion bundle.
-        schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
-        self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
+        if npm_installed:
+            schema_python = agent / "remotion" / "node_modules" / "@banodoco" / "timeline-schema" / "python"
+            self.run([self.uv, "pip", "install", "--python", python, "--no-deps", schema_python])
         services_path = self._declare_services(
             folder=folder, agent=agent, data=data, python=python,
             bun=env["ASTRID_BUN_EXECUTABLE"], env=env, old=prior,
