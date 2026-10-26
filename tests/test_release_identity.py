@@ -86,7 +86,7 @@ def test_runtime_generator_uses_utf8_mode_and_records_the_launch_flag(tmp_path: 
     )
 
     observation = rows[0]["generator_observation_rows"][0]
-    assert observation["argv_formula_id"] == "GENERATOR-ARGV-V2"
+    assert observation["argv_formula_id"] == "GENERATOR-ARGV-V1"
     receipt = json.loads(
         base64.b64decode(observation["run_receipt_evidence_rows"][0]["canonical_content_base64"])
     )
