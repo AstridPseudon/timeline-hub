@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T00:37:21Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
-# agent board, 2026-10-26T00:37Z
+<!-- agent | 2026-10-26T00:41:04Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
+# agent board, 2026-10-26T00:40Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -125,13 +125,13 @@
 | D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 | D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
 | U2 D141 final join | Freeze final reviewed upstream join | Luna | Source receiving 0015 PASS | merged | Author 2355; fixes 0001/0005; review 0015 | Source and normal tools PASS; Bun 200 PASS. Python 476 PASS,61 FAIL,73 ERROR,1 SKIP retained. Full REG proof pending. | 28e56cacb4 |
-| F D141 pristine comparator | Run plain upstream comparator | Luna and service | Freeze and command review PASS | doing | Controller 0035 queued | Service 27388 submitted 00:36:44Z; queued at latest check. Dispatch 5555838976 bytes; exact 17 roots, durable raw KEEP. No body start inferred. | Pristine 8b6ed/fa9 |
+| F D141 pristine comparator | Run plain upstream comparator | Luna and service | Reviewed command and freeze | doing | Controller 0035; service 27388 | Actual body start 00:37:00Z at 5295300608 bytes. Central run and disk monitor active; raw KEEP, no duplicate. | Pristine 8b6ed/fa9 |
 | F D141 own failure notes | List unchanged own failures by root cluster | Luna | Notes source review complete | merged | Prep2350; reviewer2353 | Documentary conservation PASS | All370 IDs and52 clusters exact; media48 nested in105. Old executable recipe FAIL is superseded. No behavior credit. | Evidence only |
 
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Prepare existing P4 controller | Luna and service | Correct route, App tuple, MAIN GO | gated:MAIN-GO | Prep 0026; review FAIL 0028; return 0034 | Existing named row is historical D84 five. One source-only return documents normal CAS registration; no P4 body. | Agent cut 28e56 |
+| P4 D141 cut rerun | Prepare existing P4 controller | Luna and service | Final App tuple and MAIN GO | gated:MAIN-GO | Return 0034; cumulative review 0039 | Route and floor corrections complete. Final read-only review active; primary three originals and existing CAS route retained. No body. | Agent cut 28e56 |
 
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
 
@@ -141,7 +141,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Service 27388 terminal comparator result; P4 return 0034 source only, body GO held. live 2 / cap 6 source; one heavy controller admitted. ready-undispatched 0.
+Next ready: Service 27388 terminal result; P4 read-only review 0039 active, body GO held. live 2 / cap 6 source; one heavy body active. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -164,3 +164,4 @@ Pass00:19Z: comparator secondreview0014 FAIL residual custody/earlytrap/witnessw
 Pass 00:26Z: Receiving 0015 PASS_SOURCE_QUALIFICATION and normal merge receipt read back. Agent head 28e56/tree2ebe FROZEN; identical handoff with full receipts sent to App and lead. Cumulative0008 overall FAIL retained: Python476 PASS/61 FAIL/73 ERROR/1 SKIP; Bun200 PASS. No inferred REG status or source repair. App2346 recipe arrived; existing P4 source preparation0026 dispatched, final tuple and explicit MAIN GO remain required. Whole path0019 complete with five finite command findings; Sol0019 active. No product edits by manager.
 Pass 00:32Z: Sol0019 completed exact0710897c with all five finite findings corrected and seven safe operational smoke cases PASS. Final independent Luna0030 dispatched immediately. P4 preparation0026 completed NOT_READY on real finalApp/GO/registration inputs; independent0028 active. Sweep3 removed0 stale dirs; compact packed0 scratch/testdirs and gzipped5 logs. No protected target recycled or refusal. Current free5560274944 bytes; core admission remains clear.
 Pass 00:35Z: Independent command0030 PASS, exact source0710897c and hashes. Normal pristine controller0035 immediately queued at5555838976 bytes, one heavy/default180/net. No new local author while comparator runs. P4 review0028 finite FAIL -> same-lineage source-only firstreturn0034 assigned before heavy. Other incoming old provenance/recycle peers repeat already-consumed facts and create no duplicate work.
+Pass 00:40Z: Normal comparator service27388 actualbody started00:37:00Z with5295300608 bytes; reviewed ownedprocessgroup/disk monitor active, raw KEEP. P4 firstreturn0034 complete, final independent readonly0039 dispatched above5GB while no new sourceauthor starts. Exact existingnormalCASroute and threeoriginals preserved. Agentfreeze28e56 unchanged. No REG/behavior/shipcredit inferred.
