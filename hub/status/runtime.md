@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T03:25:47Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 1m -->
+<!-- main | 2026-10-26T03:30:30Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 3m -->
 # runtime board, 2026-10-26T03:20:52Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -16,6 +16,7 @@
 | D141 pristine targeted15 | Prepare exact upstream present comparator | Luna and Service | Main0218 D141h and qualified kit | gated:D141-kit | Controls0247; independent0250 PASS | Row source15 selectors and CAS PASS. Independent actual valid and poison controls PASS; old8912 intact. Ready after separate kit held-ID clearance. No body. | fa9 / 8b6 |
 | D89d measured admission | Correct App caller and kit publication | HARD Sol | Runtime0309 bounded PASS | doing | Author0317; review0309 bounded PASS | P5 and targeted15 source controls PASS. App real suite absent; helpers outside normal bin sync. No kit installation or admission release. | Private88bb53 |
 | D141g App binding | Supply exact first placement caller | App Luna | Runtime normal kit interface | doing | app-P-D141g-first-suite-binding-0309 | Exact520d target and selector suite received. Prospective production builder command hashes pending; actual D66 registration must match before body. | App520d |
+| D141g paired preflight | Decide exact preflight admission scope | Main | Recorded D141g body scope | blocked:orchestrator | Runtime escalation this pass | Normal submit4.6 source ready; paired real preflight stays light5GB at App4.81GB. Exact source and command hashes supplied; no request or bypass. | App520d |
 | P5 D141 source | Require all passed cases and snapshot key | Luna | Independent0116 PASS | merged | Source0107; review0116 | All eight findings PASS; fourteen controls PASS. Exact38 cases and32hex key required; no normal P5 GO claimed. | c884dcbb53 |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Run renderer off auth crash and retries | Luna and Service | Recorded4.6GB plus trace kit | doing | Controller0129; service6934 | Exact reviewed row installed; sole runtime-d141-p5-cut-1026013331-6934 queued. Whole run KEEP; no actual body or GO yet. | Frozen cut |
@@ -37,6 +38,7 @@
 | Staging and Store tools | Preserve deferred private source | Existing owners | D140 and D141 | gated:post-ZIP | No new author or cleanup | Source and failed findings retained; no installation, retirement or new cleanup round. | Held candidates |
 | OPS headroom | Preserve guarded cleanup holds | Manager route | Main0123 and0130 decisions | gated:safety | Prior maintenance complete | Sweep removed0; compact packed0 dirs and gzipped5 logs. Sealed fixtures, dirty trees, KEEP data and three old venvs retained. | No product change |
 
+Blockers: Main — Exact App paired preflight remains5GB while normal body4.6GB is approved. Narrow D141g scope clarification filed this pass; no early preflight/body.
 Blockers: Runtime service — MainD141h replaces full comparator with exact15 targeted nodes;8912 stays unstarted. New targeted and sameP56934 need reviewed trace kit and recorded4.6GB receipts.
 Blockers: P5 — Sole service6934 queued. MainD141h authorizes4.6GB plus trace; source0317 corrects publication after bounded0309 PASS; no live admission change. App0309 supplies real selector binding.
 Blockers: Safety — D130, three old venvs, runtimes/agent-remotion and sealed fixture cleanup remain held. Main0130 resolves fixture refusal by retaining files; no retry or alternate route.
