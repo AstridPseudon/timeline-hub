@@ -592,36 +592,157 @@ def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
     assert force.value.code == 2
 
 
+def _conflicting_commit(tmp_path, head):
+    """Retained namespace fixtures; the provider and generated error path stay real."""
+    from types import SimpleNamespace
+
+    from astrid.sdk.contracts import DomainResult
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.timeline.commit import (
+        _digest,
+        bundle_from_document,
+        create_runtime_commit_service,
+    )
+    from astrid.sdk.workspace_client import WorkspaceClient
+    from astrid_runtime_client import WorkspaceClient as GeneratedWorkspaceClient
+    from tests.helpers.runtime import use_runtime
+    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm
+    from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+    use_runtime()
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_port import public_failure
+
+    document = document_fixture(shared=False)
+    document["parent_revision"]["revision_id"] = "rev-0"
+    realm = DetachedRealm(document)
+    base = copy.deepcopy(realm.head)
+    realm.call([{
+        "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+        "args": {"changes": [{"op": "set", "ref": "parent", "path": ["name"],
+                              "before": {"state": "present", "value": "Renamed Film"},
+                              "value": "Peer Film"}]},
+    }])
+    # Retained publications can predate the current provider's revision naming.
+    # Seed that immutable identity before the caller runs, never in its reply.
+    revision = realm.head["revision_id"]
+    peer = realm.documents.pop(revision)
+    peer["parent_revision"]["revision_id"] = head
+    realm.documents[head] = peer
+    realm.head["revision_id"] = head
+    realm.entries[-1]["revision_id"] = head
+    for result in (realm.entries[-1]["receipt"]["result"], realm.accepted[-1]["data"]):
+        result["accepted_revision_id"] = head
+        result["canonical_document"]["parent_revision"]["revision_id"] = head
+        result["document_digest"] = _digest(result["canonical_document"])
+
+    calls, failures = [], []
+
+    def transport(method, path, headers, body):
+        assert method == "POST" and path == "/v1/projects/project-1/timelines/film/commit"
+        assert headers["Idempotency-Key"] == "conflict-key"
+        request = json.loads(body)
+        calls.append(request)
+        invocation = {"operation": "commitTimeline", "path": path,
+                      "publisher": "actor-1", "request": request}
+        context = {"request": request, "realm_id": "realm-1", "publisher": "actor-1",
+                   "idempotency_key": headers["Idempotency-Key"],
+                   "request_hash": _digest(invocation).removeprefix("sha256:")}
+        try:
+            create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+        except CommitRejected as exc:
+            error = public_failure(exc.failure)
+            failures.append(error)
+            return error.status, {}, json.dumps(error.as_dict()).encode()
+        pytest.fail("stale atomic document must conflict")
+
+    generated = GeneratedWorkspaceClient("http://runtime", transport=transport)
+    reader = SimpleNamespace(
+        commit_timeline=generated.commit_timeline,
+        list_timeline_commits=lambda *_args, **_kwargs: {
+            "head": copy.deepcopy(realm.head), "items": copy.deepcopy(realm.entries),
+            "next_cursor": None,
+        },
+    )
+
+    def image(operation, project, *args, **kwargs):
+        if operation in {"commit_timeline", "list_timeline_commits"}:
+            return typed(operation, project, *args, **kwargs)
+        rows = {"get_project_parent_composition_revision": "parent_revision",
+                "get_project_shot_revision": "shot_revisions",
+                "get_project_timeline_revision": "internal_timeline_revisions"}
+        for retained in realm.documents.values():
+            images = retained[rows[operation]]
+            for row in ([images] if isinstance(images, dict) else images):
+                if row["revision_id"] == args[-1]:
+                    return DomainResult.success({**copy.deepcopy(row), "project_id": project,
+                        **({"timeline_id": "film", "dependency_manifest": retained["dependency_manifest"]}
+                           if operation == "get_project_parent_composition_revision" else {})})
+        pytest.fail("revision outside retained fixture closure")
+
+    workspace = WorkspaceClient.__new__(WorkspaceClient)
+    workspace._generated = reader
+    workspace._last_handshake = {"realm_id": "realm-1", "actor_id": "actor-1"}
+    timelines = RemoteTimelines(workspace)
+    typed = timelines._typed
+    timelines._typed = image
+    timelines._resolve_timeline = lambda *_args: DomainResult.success({
+        "project_id": "project-1", "timeline_id": "film"})
+    timelines.open_composition = lambda *_args, **_kwargs: DomainResult.success({
+        "native_inspection": {"project_id": "project-1", "timeline_id": "film"},
+        "summary": {"head_revision_id": head, "revision_id": head},
+    })
+    client = SimpleNamespace(timelines=timelines, _remote=SimpleNamespace(_transport=workspace))
+    candidate = bundle_from_document(document)
+    candidate["source_mapping"].pop("_runtime_document", None)
+    candidate["base_parent"]["publication_id"] = base["publication_id"]
+    candidate["parent"]["name"] = "Local Film"
+    path = tmp_path / "timeline.json"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
+    return client, path, realm, calls, failures
+
+
 @pytest.mark.parametrize("head, who", [
     (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
     ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
 ])
-def test_commit_conflict_names_the_writer_and_offers_discard_first(head, who):
-    from types import SimpleNamespace
-
-    from astrid.packs.timeline.cli_native import _document_error
-
-    parsed = SimpleNamespace(ref="t", project="p", idempotency_key="conflict-key")
-    details = {
-        "status": "conflict",
-        "reason": "dependency_changed",
-        "base": {"revision_id": "rev-0", "publication_id": "base"},
-        "current": {"revision_id": head, "publication_id": "head"},
-        "conflicts": [{"ref": "p/a-rocket (clip) moved 1.8s", "path": ["a-rocket"]}],
+def test_commit_conflict_names_the_writer_and_offers_discard_first(tmp_path, capsys, head, who):
+    client, path, realm, calls, failures = _conflicting_commit(tmp_path, head)
+    before_file = path.read_bytes()
+    before = copy.deepcopy((realm.documents, realm.entries, realm.accepted, realm.prepared))
+    parsed = cli.build_parser(client).parse_args([
+        "commit", "film", "--project", "project-1", "--file", str(path),
+        "-m", "Local Film", "--idempotency-key", "conflict-key", "--json",
+    ])
+    assert parsed.handler(parsed) == 1
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    result = json.loads(captured.out)
+    assert result["ok"] is False and result["receipt"] is None
+    assert result["error"]["code"] == "conflict"
+    assert result["error"]["details"]["status"] == "conflict"
+    assert result["error"]["details"]["base"] == {
+        "revision_id": "rev-0", "publication_id": "bootstrap",
     }
-    class Refusal(RuntimeError):
-        code = "conflict"
-
-        def __init__(self):
-            super().__init__("CAS head changed")
-            self.details = details
-
-    result = _document_error(parsed, Refusal())
-    assert result.ok is False and result.error is not None
-    message = result.error.message
+    assert result["error"]["details"]["current"] == realm.head
+    assert result["error"]["details"]["conflicts"]
+    assert len(calls) == len(failures) == 1
+    assert (failures[0].status, failures[0].code) == (409, "conflict")
+    assert result["error"]["details"] == failures[0].details
+    assert calls[0]["base_revision_id"] == "rev-0"
+    assert calls[0]["base_publication_id"] == "bootstrap"
+    assert calls[0]["label"] == "Local Film" and calls[0]["merge"] == "atomic"
+    assert calls[0]["commands"][0]["args"]["changes"] == [{
+        "op": "set", "ref": "parent", "path": ["name"],
+        "before": {"state": "present", "value": "Renamed Film"}, "value": "Local Film",
+    }]
+    assert path.read_bytes() == before_file
+    assert (realm.documents, realm.entries, realm.accepted, realm.prepared) == before
+    message = result["error"]["message"]
 
     assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
-    assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
+    assert "parent" in message
+    assert "next: timelines discard film --project project-1, then timelines checkout film --project project-1 --fresh, and re-apply your edit." in message
     assert "force overwrite is refused" in message
     assert "to overwrite theirs" not in message
     assert "astrid.e\n" not in message and "astrid.e " not in message
