@@ -1,8 +1,10 @@
-"""Bounded delivery-build admission, tracing, process-group stop, and reap."""
+"""Delivery tracing and stop propagation inside the existing dispatcher lease."""
 
 from __future__ import annotations
 
 import ctypes
+import errno
+import fcntl
 import hashlib
 import json
 import os
@@ -20,7 +22,9 @@ STOP_FLOOR_BYTES = 4_000_000_000
 DEFAULT_TIMEOUT_SECONDS = 30 * 60
 SAMPLER_READY_SECONDS = 10.0
 SAMPLER_STALE_SECONDS = 15.0
-STOP_GRACE_SECONDS = 5.0
+# The enclosing test-run lease supervisor escalates after five seconds. Reap the
+# private D68 groups before that supervisor can kill this caller's suite group.
+STOP_GRACE_SECONDS = 1.0
 TRACE_SCRIPT = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
     "/scratchpad/orch/bin/d141-disk-trace.py"
@@ -68,15 +72,38 @@ def _prctl(option: int, argument: int) -> None:
         raise OSError(ctypes.get_errno(), f"prctl({option}) failed")
 
 
-def _reap(reaped: list[int]) -> None:
+def _reap(reaped: list[int], *processes: subprocess.Popen[str]) -> None:
     while True:
         try:
-            pid, _status = os.waitpid(-1, os.WNOHANG)
+            pid, status = os.waitpid(-1, os.WNOHANG)
         except ChildProcessError:
             return
         if pid <= 0:
             return
         reaped.append(pid)
+        for process in processes:
+            if pid == process.pid:
+                process.returncode = os.waitstatus_to_exitcode(status)
+
+
+def _control_descriptor(env: dict[str, str]) -> int | None:
+    raw = env.pop("BENCH_CONTROL_FD", None)
+    if raw is None:
+        return None
+    descriptor = int(raw)
+    if descriptor < 0:
+        raise LifecycleError("invalid BENCH_CONTROL_FD")
+    try:
+        item = os.fstat(descriptor)
+    except OSError as exc:
+        # test-run publishes the suite group and closes its writer before exec.
+        # Its environment still names that now-closed descriptor.
+        if exc.errno == errno.EBADF:
+            return None
+        raise
+    if not stat.S_ISFIFO(item.st_mode) or fcntl.fcntl(descriptor, fcntl.F_GETFL) & os.O_ACCMODE == os.O_RDONLY:
+        raise LifecycleError("BENCH_CONTROL_FD is not a writable pipe")
+    return descriptor
 
 
 def _signal_groups(groups: set[int], signum: signal.Signals) -> None:
@@ -279,6 +306,16 @@ def run_delivery(
     signal_reason: dict[str, str] = {}
     previous_signals: dict[signal.Signals, Any] = {}
     trace_fd = -1
+    parent_pid = os.getppid()
+    death_signal = ctypes.c_int()
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(2, ctypes.byref(death_signal), 0, 0, 0) != 0:  # PR_GET_PDEATHSIG
+        raise OSError(ctypes.get_errno(), "cannot read parent-death signal")
+    child_env = dict(os.environ if env is None else env)
+    sampler: subprocess.Popen[str] | None = None
+    process: subprocess.Popen[str] | None = None
+    groups: set[int] = set()
+    reaped: list[int] = []
 
     def request_stop(signum: int, _frame: Any) -> None:
         signal_reason["reason"] = "sigterm" if signum == signal.SIGTERM else "sigint"
@@ -289,6 +326,13 @@ def run_delivery(
     try:
         try:
             _prctl(36, 1)
+            _prctl(1, signal.SIGTERM)  # PR_SET_PDEATHSIG; recheck the installation race.
+            control_fd = _control_descriptor(child_env)
+            record.update(parent_pid=parent_pid, control_pipe=control_fd is not None)
+            if os.getppid() != parent_pid or signal_reason or (cancel_path is not None and cancel_path.exists()):
+                record.update(status="stopped", stop_reason="cancelled_before_start", exit=130)
+                _write_lifecycle(lifecycle_path, record)
+                return 130, "", record
             if trace.exists() or trace.is_symlink():
                 raise LifecycleError(f"delivery trace already exists: {trace}")
             body_pid = os.getpid()
@@ -317,87 +361,113 @@ def run_delivery(
             if sampler.stderr is not None:
                 sampler.stderr.close()
 
+            deadline = time.monotonic() + SAMPLER_READY_SECONDS
+            first = _latest_sample(trace_fd, parsed_binding)
+            while first is None and time.monotonic() < deadline and sampler.poll() is None:
+                time.sleep(0.02)
+                first = _latest_sample(trace_fd, parsed_binding)
+            if first is None:
+                raise LifecycleError("sampler has no initial sample")
+            before_reason = None
+            before_code = 130
+            if first[0] <= STOP_FLOOR_BYTES:
+                before_reason, before_code = "low_disk_before", 75
+            elif time.time() - first[1] > SAMPLER_STALE_SECONDS:
+                before_reason, before_code = "sampler_stale_before", 125
+            elif os.getppid() != parent_pid or signal_reason or (cancel_path is not None and cancel_path.exists()):
+                before_reason = "cancelled_before_start"
+            if before_reason is not None:
+                _stop_sampler(sampler, time.monotonic() + 2)
+                _validate_trace(trace, job_id, body_pid, probe, binding)
+                record.update(status="stopped", stop_reason=before_reason, trace_status="PASS", exit=before_code)
+                _write_lifecycle(lifecycle_path, record)
+                return before_code, "", record
+
             process = subprocess.Popen(
-                command, env=env or os.environ.copy(), text=True,
+                command, env=child_env, text=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
             )
             supervisor_pid = os.getpid()
             known = {supervisor_pid, process.pid}
             groups = {process.pid}
-            reaped: list[int] = []
             stop_reason: str | None = None
             stop_code = 0
+            if control_fd is not None:
+                try:
+                    os.write(control_fd, f"{process.pid}\n".encode())
+                except BrokenPipeError:
+                    stop_reason, stop_code = "control_pipe_closed", 130
             sent_at: float | None = None
             missing_started: float | None = None
             started = time.monotonic()
-            try:
-                while True:
-                    rows = _proc_rows()
-                    descendants = _descendants(known, rows)
-                    descendants.update(
-                        pid for pid, (ppid, _pgid, _state) in rows.items()
-                        if ppid == supervisor_pid and pid != sampler.pid
-                    )
-                    known.update(descendants)
-                    for pid in descendants:
-                        row = rows.get(pid)
-                        if row is not None and pid != supervisor_pid:
-                            groups.add(row[1])
-                    _reap(reaped)
-                    now = time.monotonic()
-                    try:
-                        latest = _latest_sample(trace_fd, parsed_binding)
-                    except (OSError, LifecycleError):
-                        latest = None
-                        stop_reason = stop_reason or "sampler_invalid"
+            while True:
+                rows = _proc_rows()
+                descendants = _descendants(known, rows)
+                descendants.update(
+                    pid for pid, (ppid, _pgid, _state) in rows.items()
+                    if ppid == supervisor_pid and pid != sampler.pid
+                )
+                known.update(descendants)
+                for pid in descendants:
+                    row = rows.get(pid)
+                    if row is not None and pid != supervisor_pid:
+                        groups.add(row[1])
+                _reap(reaped, process, sampler)
+                now = time.monotonic()
+                try:
+                    latest = _latest_sample(trace_fd, parsed_binding)
+                except (OSError, LifecycleError):
+                    latest = None
+                    stop_reason = stop_reason or "sampler_invalid"
+                    stop_code = 125
+                if latest is None:
+                    missing_started = missing_started or now
+                    if now - missing_started > SAMPLER_READY_SECONDS:
+                        stop_reason = stop_reason or "sampler_missing"
                         stop_code = 125
-                    if latest is None:
-                        missing_started = missing_started or now
-                        if now - missing_started > SAMPLER_READY_SECONDS:
-                            stop_reason = stop_reason or "sampler_missing"
-                            stop_code = 125
-                    else:
-                        missing_started = None
-                        if latest[0] <= STOP_FLOOR_BYTES:
-                            stop_reason = stop_reason or "low_disk"
-                            stop_code = 75
-                        elif time.time() - latest[1] > SAMPLER_STALE_SECONDS:
-                            stop_reason = stop_reason or "sampler_frozen"
-                            stop_code = 125
-                    if sampler.poll() not in (None, 0) and stop_reason is None:
-                        stop_reason, stop_code = "sampler_failed", 125
-                    if cancel_path is not None and cancel_path.exists() and stop_reason is None:
-                        stop_reason, stop_code = "cancelled", 130
-                    if signal_reason and stop_reason is None:
-                        stop_reason = signal_reason["reason"]
-                        stop_code = 143 if stop_reason == "sigterm" else 130
-                    if now - started >= timeout_seconds and stop_reason is None:
-                        stop_reason, stop_code = "timeout", 124
-                    if stop_reason is not None and sent_at is None:
-                        sent_at = now
-                        _signal_groups(groups, signal.SIGTERM)
-                    if sent_at is not None and now - sent_at >= STOP_GRACE_SECONDS:
-                        _signal_groups(groups, signal.SIGKILL)
-                    process_done = process.poll() is not None
-                    current_rows = _proc_rows()
-                    live_descendants = _descendants(known, current_rows)
-                    live_descendants.update(
-                        pid for pid, (ppid, _pgid, _state) in current_rows.items()
-                        if ppid == supervisor_pid and pid != sampler.pid
-                    )
-                    live_descendants -= {process.pid, supervisor_pid, sampler.pid}
-                    if process_done and not live_descendants:
-                        break
-                    time.sleep(0.02)
-            finally:
-                for sig, handler in previous_signals.items():
-                    signal.signal(sig, handler)
+                else:
+                    missing_started = None
+                    if latest[0] <= STOP_FLOOR_BYTES:
+                        stop_reason = stop_reason or "low_disk"
+                        stop_code = 75
+                    elif time.time() - latest[1] > SAMPLER_STALE_SECONDS:
+                        stop_reason = stop_reason or "sampler_frozen"
+                        stop_code = 125
+                if sampler.poll() not in (None, 0) and stop_reason is None:
+                    stop_reason, stop_code = "sampler_failed", 125
+                if os.getppid() != parent_pid and stop_reason is None:
+                    stop_reason, stop_code = "parent_died", 130
+                if cancel_path is not None and cancel_path.exists() and stop_reason is None:
+                    stop_reason, stop_code = "cancelled", 130
+                if signal_reason and stop_reason is None:
+                    stop_reason = signal_reason["reason"]
+                    stop_code = 143 if stop_reason == "sigterm" else 130
+                if now - started >= timeout_seconds and stop_reason is None:
+                    stop_reason, stop_code = "timeout", 124
+                if stop_reason is not None and sent_at is None:
+                    sent_at = now
+                if sent_at is not None:
+                    # Include groups discovered after the first stop request.
+                    _signal_groups(groups, signal.SIGTERM)
+                if sent_at is not None and now - sent_at >= STOP_GRACE_SECONDS:
+                    _signal_groups(groups, signal.SIGKILL)
+                process_done = process.poll() is not None
+                current_rows = _proc_rows()
+                live_descendants = _descendants(known, current_rows)
+                live_descendants.update(
+                    pid for pid, (ppid, _pgid, _state) in current_rows.items()
+                    if ppid == supervisor_pid and pid != sampler.pid
+                )
+                live_descendants -= {process.pid, supervisor_pid, sampler.pid}
+                if process_done and not live_descendants:
+                    break
+                time.sleep(0.02)
             output, _ = process.communicate()
             process_code = int(process.returncode if process.returncode is not None else 125)
             sampler_code = _stop_sampler(sampler, time.monotonic() + 8)
             if sampler_code != 0 and stop_reason is None:
                 stop_reason, stop_code = "sampler_failed", 125
-            _reap(reaped)
+            _reap(reaped, process, sampler)
             record.update(
                 process_groups=sorted(groups), reaped_pids=sorted(set(reaped)),
                 process_exit=process_code, sampler_exit=sampler_code,
@@ -421,10 +491,28 @@ def run_delivery(
             _write_lifecycle(lifecycle_path, record)
             return process_code, output, record
         except (OSError, LifecycleError, ValueError) as exc:
+            if process is not None:
+                # A monitoring/control error must not abandon a started builder.
+                rows = _proc_rows()
+                descendants = _descendants({os.getpid(), process.pid}, rows)
+                stopped_pids = descendants - {os.getpid(), sampler.pid if sampler else -1}
+                groups.update(rows[pid][1] for pid in stopped_pids)
+                _signal_groups(groups, signal.SIGKILL)
+                process.wait()
+                deadline = time.monotonic() + 2
+                while time.monotonic() < deadline:
+                    _reap(reaped, process, *([sampler] if sampler else []))
+                    if not _descendants(stopped_pids, _proc_rows()):
+                        break
+                    time.sleep(0.02)
+                record.update(process_groups=sorted(groups), reaped_pids=sorted(set(reaped)))
             record.update(status="unknown", reason="lifecycle_error", detail=str(exc), exit=125)
             _write_lifecycle(lifecycle_path, record)
             return 125, f"delivery lifecycle failed closed: {exc}\n", record
         finally:
+            if sampler is not None and sampler.poll() is None:
+                _stop_sampler(sampler, time.monotonic() + 2)
+            _prctl(1, death_signal.value)
             for sig, handler in previous_signals.items():
                 signal.signal(sig, handler)
             if trace_fd >= 0:

@@ -12,7 +12,8 @@
     "one_heavy": true,
     "dispatch_floor_bytes": 4860000000,
     "lifecycle_has_private_lock": false,
-    "lifecycle_has_second_dispatch_gate": false
+    "lifecycle_has_second_dispatch_gate": false,
+    "ownership_evidence": "check.sh runs exact qualified test-run suite_lease/supervise and unchanged control-pipe body block over a tiny private real Store fixture, main/D68/stub only; no live admission"
   },
   "receiving_inputs": {
     "run-final-services.py": "absent; Runtime-owned receiving input",
@@ -25,5 +26,22 @@
     "trace_validator": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/d141-validate-trace.py"
   },
   "acceptance_command": "bash ops-d141z-build-stop/check.sh",
-  "typescript": "NOTAPPLICABLE"
+  "typescript": "NOTAPPLICABLE",
+  "qualification": "private source controls only; genuine F1 inputs and actual dispatcher admission remain unverified",
+  "stop_propagation": {
+    "outer_owner": "existing test-run suite_lease: D/CANCELLED, parent-death signal/check, BENCH_CONTROL_FD group advertisement, TERM then 5-second KILL, waitpid before lease release",
+    "existing_closed_writer": "test-run advertises suite PID then closes BENCH_CONTROL_FD before command exec; EOF is normal, not cancellation",
+    "private_caller": "PR_SET_PDEATHSIG(SIGTERM), immediate and repeated parent checks; local TERM then 1-second KILL of discovered D68/descendant groups and wait/reap before outer 5-second escalation",
+    "open_writer": "if inherited writer is still open, advertise D68 process group; broken reader stops with 130",
+    "admission_replacement": false
+  },
+  "route": [
+    "Source0015/D73 submit-final capture and service row receipt route (not changed here)",
+    "registered core runner (101 Python targets plus TypeScript) and delivery caller are separate final service legs; delivery caller hash-checks core runner/inventory",
+    "normal test-run admission owns one-heavy state, cache/running markers and the single 4860000000-byte measured dispatch floor for the later D141z build",
+    "bench-store suite lease and cancellation supervisor -> original test-run body/control-pipe block -> run-final-delivery.main",
+    "main source/gate/hash guards -> run_wrapper -> run_delivery -> D68 staging wrapper -> in-process reviewed builder main_with_args/main",
+    "private caller finalizes bound donor trace; outer supervisor reaps before releasing lease; normal dispatcher finalizes terminal result/markers"
+  ],
+  "historical_0741": "raw exit/reap UNKNOWN; later no-survivors host audit is separate; no backfill"
 }
