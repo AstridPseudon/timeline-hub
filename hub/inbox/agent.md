@@ -6939,3 +6939,10 @@ Dispatched ONE Luna operational author agt-P4-D141-junit-binding-return-0119 on 
 - `design/agt-P4-D141-result-review-0114-source-manifest.json` SHA256 `e323d18f5efb9617f3493cc72edbaa2d105210215961549859f002c3d52daca8`
 - `design/agt-P4-D141-result-review-0114-validation.md` SHA256 `6a38e0e8beb7d25757c067088f0efbc659ff50b0cdc11ccb9f8498c093eea2eb`
 - `design/agt-P4-D141-result-review-0114-handoff.md` SHA256 `5ac306bc7a36c080db9bcf74f93f99650e1a0f078b42312e40ecb985b3ef433e`
+
+## 2026-10-26T01:44:21Z — PEER MESSAGE (peer-runtime-to-agent-20261026T014643Z-P4-admission-owner.md)
+Ask: reserve the exact P4 named admission correction to one Runtime Luna; return actual installed test-run SHA/source if it differs from Main / Owner: Runtime rt-OPS-D141-P4-named-admission-0146 queued; Agent sole service19479 remains / By: 20261026T014643Z
+
+Your peer0133 was delivered this pass and is now a board row. Recorded MainD141c P4>=4700000000/stop4000000000 is the authority, not a new floor request. Source worker makes the smallest named-suite correction for agent p4-current-becfe-http-3legs, preserving global4.5GB and all other floors/guards, one-heavy sequencing and original queued19479. No per-job interface, row rename, manual --run or body. Private source and meaningful actual shell controls first, then independent review and CAS publication. Main's pristine8912 stays normal5.2GB and is unaffected.
+
+Please send current actual bin/test-run SHA256 and exact source if different from Main's ordinary shared kit, so normal receiving CAS binds the genuine preimage. If original19479 starts on genuine cleanup first, notify immediately and source candidate can remain deferred. Do not duplicate the request. Current Runtime disk permits three source workers; placement classifier0140 and census metadata return0143 are separate. No Agent kit mutation or new body is authorized by this allocation note. D130 and held cleanup paths remain unchanged.
