@@ -1,0 +1,119 @@
+{
+  "at": "2026-10-26T16:25:31.550710+00:00",
+  "worker": "rt-F-D141jj-base-positive-review-next",
+  "commit": "ce9e0532a71489e39a0d339e0f9d399a12a39090",
+  "tree": "45a311aa905dbd0e5053682593e4ad7d57f1ef3c",
+  "verdict": "NOT_READY_AUTHOR_CHECK_FIXTURE_COLLISION",
+  "scope": "Actual positive and same33 PASS; unchanged complete check exited1 at stale-nonapp-upstream trace collision. No source qualification PASS.",
+  "custody_limits": [
+    "Worker wrote evidence/ into isolated Composition branch instead of required absolute ORCH root; exports above are immutable Git blobs, not reconstructed historical paths. No product integration requested.",
+    "Sampler started16:21:45 after worker16:18:41; four samples and wait143 are bounded, not whole-worker monitoring.",
+    "Historical negatives and positive remain separate actual results. No installation, builder or ZIP."
+  ],
+  "outputs": [
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/disk-trace.txt",
+      "published": "design/rt-F-D141jj-base-positive-review-next-disk-trace.txt",
+      "sha256": "0bb93d1edff91f246f483ab95e3f5b316888dc224802f5fdef442791cde08654",
+      "bytes": 412,
+      "git_mode": "100644",
+      "blob": "3f038c54cd74ac9b8ca1835a1565024176820c01"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/findings.md",
+      "published": "design/rt-F-D141jj-base-positive-review-next-findings.md",
+      "sha256": "4a7ee6d620e9eee4d84a8a0ffeafec4043da7626e88bbcba51de887e077a5f4c",
+      "bytes": 1738,
+      "git_mode": "100644",
+      "blob": "66076371b58ab62953e5d8dbbbdc277193ac82ca"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/handoff.md",
+      "published": "design/rt-F-D141jj-base-positive-review-next-handoff.md",
+      "sha256": "a491ab883a9eac92ac6a10a659c00280a3e7474cbd8ae4720e92576844466cd5",
+      "bytes": 1169,
+      "git_mode": "100644",
+      "blob": "a6d2f5707ff3512f33296f16847b9980f1d55d84"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/review.json",
+      "published": "design/rt-F-D141jj-base-positive-review-next-review.json",
+      "sha256": "e7ac03a6ed1ab16f242870457bb702ebcd5b744bc3da4b283f97f56f3457af6f",
+      "bytes": 2688,
+      "git_mode": "100644",
+      "blob": "49b45d5de11883a75042b431eeca334424400b48"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141jj-base-positive-review-next-sampler-lifecycle.json",
+      "sha256": "31c503665c8c254dfb9cba1b0587d5f9c54f6e3fcf9e6ff33c4a670f85587ec1",
+      "bytes": 515,
+      "git_mode": "100644",
+      "blob": "b87806aefe24d4c616d595c3ebc67266103e5c8c"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/source-manifest.json",
+      "published": "design/rt-F-D141jj-base-positive-review-next-source-manifest.json",
+      "sha256": "c8025df0cfe48daf49b3a9235e848b9487f31a36a0cf83f9aacfbfb10b9cac54",
+      "bytes": 3290,
+      "git_mode": "100644",
+      "blob": "f4317c8c643e77e217143c588094b0c9510320d5"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/author-positive-receipt.json",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--author-positive-receipt.json",
+      "sha256": "13c17622ffc9349f74a395060e967a5effd713b29a10d08d91338acd2e0f1012",
+      "bytes": 131633,
+      "git_mode": "100644",
+      "blob": "e00de3783c5b1d6a889d2374e68a406f37a98104"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/candidate-5s-disk-trace.tsv",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--candidate-5s-disk-trace.tsv",
+      "sha256": "e65fbed99913b3b3524f16eff9b32cde5876cf98437fa03163e5fffd3d87d7df",
+      "bytes": 371,
+      "git_mode": "100644",
+      "blob": "71f962a2e2a060c7d06130d3201365c7c11cdebe"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/candidate-positive-receipt.json",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--candidate-positive-receipt.json",
+      "sha256": "635cfbc9f10a0567df3bc53322e050cf8a3d73dbcc342fb6a50b423c9d7f233b",
+      "bytes": 10346,
+      "git_mode": "100644",
+      "blob": "2261fd60ca79b44d33e648dda62c2cf0c1c4d71d"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/check-sh-positive.log",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--check-sh-positive.log",
+      "sha256": "61553bec75a92da2149c83449df3ed36d0f83841c411177e61da70e8ababcf43",
+      "bytes": 1606,
+      "git_mode": "100644",
+      "blob": "e7161a795750bf2c0712232b04dfe28e7d5eebab"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/check_jj-positive.log",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--check_jj-positive.log",
+      "sha256": "049134972a2ad541ffc589a9b5cb26ee72ac4bd4981b75cdeff69fa03bf1630a",
+      "bytes": 2309,
+      "git_mode": "100644",
+      "blob": "0ae964d68121c3593721918021cfd8b0c8196107"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/tmp/reviewer-sampler.log",
+      "published": "design/rt-F-D141jj-base-positive-review-next-tmp--reviewer-sampler.log",
+      "sha256": "e1092375d18f2cc48fbd3b125aaf10b172918b3826f8a9ec884d3c8758808bc8",
+      "bytes": 192,
+      "git_mode": "100644",
+      "blob": "f11533a467ccc73236d915f8aa06a667359e063d"
+    },
+    {
+      "original": "git:/home/user/work/composition:ce9e0532a71489e39a0d339e0f9d399a12a39090:evidence/validation.md",
+      "published": "design/rt-F-D141jj-base-positive-review-next-validation.md",
+      "sha256": "9e2a429583c93d2a03335d92807d821e7f65e3bde3f9756873d6a502bb46b017",
+      "bytes": 2259,
+      "git_mode": "100644",
+      "blob": "9398a635fd42b0820e593a2fed70171817c8c8d9"
+    }
+  ]
+}

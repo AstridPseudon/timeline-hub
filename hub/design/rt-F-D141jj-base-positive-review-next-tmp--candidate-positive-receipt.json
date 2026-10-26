@@ -1,0 +1,199 @@
+{
+  "builder": {
+    "path": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/builder.py",
+    "sha256": "aac56e6446bf556514cf1618f66d8fc12459e8c2577d44f10948be5ea88e6db1"
+  },
+  "builder_args": [
+    "--harmless"
+  ],
+  "exit": 0,
+  "frozen_gate": {
+    "agent": {
+      "base_ref": "origin/main",
+      "gate_ref": "tl/integration",
+      "gated_tip": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+      "gated_tree": "162b3b2fd867490926c595e6a1045556adfe8831",
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-agent",
+      "upstream_base": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+      "upstream_base_tree": "162b3b2fd867490926c595e6a1045556adfe8831"
+    },
+    "app": {
+      "base_ref": "origin/main",
+      "gate_ref": "tl/integration",
+      "gated_tip": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+      "gated_tree": "1da5c740e638448115b44628650f17cc4c3ee88a",
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-app",
+      "upstream_base": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+      "upstream_base_tree": "1da5c740e638448115b44628650f17cc4c3ee88a"
+    },
+    "composition": {
+      "base_ref": "origin/main",
+      "gate_ref": "tl/integration",
+      "gated_tip": "3735e00167e518424ba61526a303f7768f6dc61c",
+      "gated_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b",
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-composition",
+      "upstream_base": "3735e00167e518424ba61526a303f7768f6dc61c",
+      "upstream_base_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b"
+    },
+    "runtime": {
+      "base_ref": "origin/main",
+      "gate_ref": "tl/integration",
+      "gated_tip": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+      "gated_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312",
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-runtime",
+      "upstream_base": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+      "upstream_base_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312"
+    }
+  },
+  "frozen_gate_tuple_sha256": "deabdc20036f9b450b42f5a52923a9746878b93304fabc2edee456e3e8567a99",
+  "output": "frozen-gate staging: /tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf\nreceipt: /tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/wrapper.json\n",
+  "overlap": {
+    "agent": {
+      "frozen_gate_delta_paths": [],
+      "later_upstream_paths": [],
+      "overlap_paths": []
+    },
+    "app": {
+      "frozen_gate_delta_paths": [],
+      "later_upstream_paths": [],
+      "overlap_paths": []
+    },
+    "composition": {
+      "frozen_gate_delta_paths": [],
+      "later_upstream_paths": [],
+      "overlap_paths": []
+    },
+    "runtime": {
+      "frozen_gate_delta_paths": [],
+      "later_upstream_paths": [],
+      "overlap_paths": []
+    }
+  },
+  "service": "delivery",
+  "source": {
+    "agent": {
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-agent",
+      "sha": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+      "tree": "162b3b2fd867490926c595e6a1045556adfe8831"
+    },
+    "app": {
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-app",
+      "sha": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+      "tree": "1da5c740e638448115b44628650f17cc4c3ee88a"
+    },
+    "composition": {
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-composition",
+      "sha": "3735e00167e518424ba61526a303f7768f6dc61c",
+      "tree": "6c37debdc30e6f198ee9004f10984b245b5a312b"
+    },
+    "runtime": {
+      "root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-runtime",
+      "sha": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+      "tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312"
+    }
+  },
+  "source_tuple_sha256": "5cd2f51fc89d0785229af913fac780f871bb6dae1f946c01d43a1c4e12bafd6f",
+  "status": "PASS",
+  "version": 1,
+  "wrapper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery_gate_build.py",
+    "receipt": {
+      "builder_exit": 0,
+      "builder_output": "",
+      "builder_sha256": "aac56e6446bf556514cf1618f66d8fc12459e8c2577d44f10948be5ea88e6db1",
+      "gate_tuple_sha256": "deabdc20036f9b450b42f5a52923a9746878b93304fabc2edee456e3e8567a99",
+      "repos": {
+        "agent": {
+          "applied_commit": "b2222001c3f9fccc8c98c6494f68e1908cb63ef7",
+          "applied_tree": "162b3b2fd867490926c595e6a1045556adfe8831",
+          "checkout_base": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+          "delta_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "free_bytes_after_stage": 5229240320,
+          "fresh_upstream": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+          "fresh_upstream_tree": "162b3b2fd867490926c595e6a1045556adfe8831",
+          "frozen_app_base": false,
+          "gated_tip": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+          "gated_tree": "162b3b2fd867490926c595e6a1045556adfe8831",
+          "source_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-agent",
+          "staged_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf/agent",
+          "staging_byte_bound": 100000000,
+          "staging_bytes": 27794,
+          "staging_method": "alternates-backed private Git no-checkout worktree",
+          "upstream_base": "ca6eee533ce1f6374ed277f27e0353a8ffa8d774",
+          "upstream_base_tree": "162b3b2fd867490926c595e6a1045556adfe8831"
+        },
+        "app": {
+          "applied_commit": "3b75f0177565a2852325f88a17bdf44fb0998392",
+          "applied_tree": "1da5c740e638448115b44628650f17cc4c3ee88a",
+          "checkout_base": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+          "delta_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "free_bytes_after_stage": 5228797952,
+          "fresh_upstream": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+          "fresh_upstream_tree": "1da5c740e638448115b44628650f17cc4c3ee88a",
+          "frozen_app_base": true,
+          "gated_tip": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+          "gated_tree": "1da5c740e638448115b44628650f17cc4c3ee88a",
+          "source_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-app",
+          "staged_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf/app",
+          "staging_byte_bound": 100000000,
+          "staging_bytes": 83380,
+          "staging_method": "alternates-backed private Git no-checkout worktree",
+          "upstream_base": "1359803ed4d863568d5a70aecb2e142be5d7ba9f",
+          "upstream_base_tree": "1da5c740e638448115b44628650f17cc4c3ee88a"
+        },
+        "composition": {
+          "applied_commit": "d94985dfa78246a8b8f774df1f7072c016f2d51f",
+          "applied_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b",
+          "checkout_base": "3735e00167e518424ba61526a303f7768f6dc61c",
+          "delta_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "free_bytes_after_stage": 5228576768,
+          "fresh_upstream": "3735e00167e518424ba61526a303f7768f6dc61c",
+          "fresh_upstream_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b",
+          "frozen_app_base": false,
+          "gated_tip": "3735e00167e518424ba61526a303f7768f6dc61c",
+          "gated_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b",
+          "source_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-composition",
+          "staged_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf/composition",
+          "staging_byte_bound": 100000000,
+          "staging_bytes": 111184,
+          "staging_method": "alternates-backed private Git no-checkout worktree",
+          "upstream_base": "3735e00167e518424ba61526a303f7768f6dc61c",
+          "upstream_base_tree": "6c37debdc30e6f198ee9004f10984b245b5a312b"
+        },
+        "runtime": {
+          "applied_commit": "5739d102e44d4d24ea63e80e51b086a28e133933",
+          "applied_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312",
+          "checkout_base": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+          "delta_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "free_bytes_after_stage": 5229019136,
+          "fresh_upstream": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+          "fresh_upstream_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312",
+          "frozen_app_base": false,
+          "gated_tip": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+          "gated_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312",
+          "source_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/source-runtime",
+          "staged_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf/runtime",
+          "staging_byte_bound": 100000000,
+          "staging_bytes": 55591,
+          "staging_method": "alternates-backed private Git no-checkout worktree",
+          "upstream_base": "fd2a73ece6256b03b00bacd72b9ea7725f90a84f",
+          "upstream_base_tree": "5e236bb6b532a518bd3c59b7483b33bc360ef312"
+        }
+      },
+      "stage_root": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf",
+      "staging": {
+        "admission_free_bytes": 5229465600,
+        "free_bytes": 5228576768,
+        "full_history_copied": false,
+        "max_bytes": 100000000,
+        "measured_bytes": 111184,
+        "method": "alternates-backed private Git no-checkout worktree",
+        "min_free_after_bytes": 4860000000,
+        "stage_parent": "/tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs"
+      },
+      "status": "PASS",
+      "version": 1
+    },
+    "sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8"
+  }
+}

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T16:23:56Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 5m -->
-# runtime board, 2026-10-26T16:18:57.667026+00:00
+<!-- main | 2026-10-26T16:29:32Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 3 | status age 2m -->
+# runtime board, 2026-10-26T16:27:33.038486+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -83,7 +83,7 @@
 
 | OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
-| F D141jj App base | Execute unchanged positive source controls | Luna | Main 16:18 GO and genuine headroom | review | rt-F-D141jj-base-positive-review-next | Static F1 to F4 PASS retained; same positive controls now queued at 5240487936 bytes. | Same private source |
+| F D141jj App base | Close control fixture collision | Sol after Luna failure | Actual positive and 33 controls PASS; full checker NOT_READY | doing | rt-F-D141jj-harness-sol-1627 | [Original exact result](../../design/runtime-D141jj-positive-NOTREADY-publication-1625.json). Source unchanged; stale-upstream refusal hit reused trace. | Private checker only |
 | F D141jj notes | Retain qualified App base note installation | Luna and independent Luna | Bounded clarification PASS | merged | CAS resume; review and clarification next | [Receipt](../../design/runtime-D141jj-notes-installed-publication-1428.json). Exact pair and568 conserved. Original FAIL and reviewer monitor gap retained. | Actual60b938 /7cacdb |
 
 | P5 final Agent applicability | Qualify ec0a source boundaries | Luna | Final Agent ec0a HOME | merged | rt-P5-D141-ec0-applicability-next | [PASS source applicability](../../design/runtime-P5-ec0-applicability-publication-1437.json). Original 38-case receipt unchanged; relative-output gap disclosed. | Agent ec0a / Runtime95d |
@@ -95,8 +95,10 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: After actual positive PASS, dispatch existing final installer, independent installation check and one Main GO final heavy build.
-live 1 / cap 1; ready-undispatched 0. One heavy positive-control continuation queued at genuine 5.24 GB; dependent installation and build remain gated.
+Next ready: Independent protected check of actual repaired harness; then existing final installer, installation review, one build and artifact review.
+live 2 / cap 6; ready-undispatched 0. One heavy bounded checker repair and one independent read-only path investigation at more than 5.0 GB.
+| F D141jj harness path | Investigate second failed gate fix | Luna read only | Same source and actual failure | doing | rt-F-D141jj-harness-wholepath-1627 | Complete caller to D68 to refusal investigation; no staging, authoring or final review. | Evidence only |
+
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -116,4 +118,5 @@ F-final remains original Main venue and recordedorder: actual final proofs andal
 Prior watch receipts: [15:30](rounds/20261026T1530Z-pass.json), [15:50](rounds/20261026T1550Z-pass.json). Historical proofs, refusals and KEEP remain unchanged.
 
 
-Current pass 2026-10-26T16:18:57.667026+00:00: Main 16:18 owner-approved three-pin removal is DONE and the headroom escalation is resolved. INBOX 1933303 and HEADER 254529 consumed. Actual free 5240487936 at dispatch; zero existing workers or test bodies. Same-source independent positive continuation requested immediately with Luna high, net, HEAVY and default 180-minute timeout. [Dispatch receipt](rounds/20261026T1618Z-source-dispatch.json). No extra author or source round. Main final tuple and exact App fc24, Agent 64197, Runtime fa9, Composition 67b8 upstream bases remain. Following actual PASS: pre-staged guarded installer, independent installation review, one final body, independent artifact review. No cleanup further; a floor trip stops and is reported.
+
+Current pass 2026-10-26T16:27:33.038486+00:00: Source continuation terminal exit 0 but substantive NOT_READY. Actual caller to D68 to bounded stub PASS and unchanged 33 lifecycle controls PASS. Complete author check exited 1 when stale-nonapp-upstream reused the positive trace path, so no source qualification or install credit. Thirteen SAFE original Git blobs published exactly; relative evidence coordinates and late four-sample monitor disclosed. Normal fresh Sol harness-only author plus independent Luna read-only whole-path investigation dispatched immediately. [Dispatch](rounds/20261026T1627Z-harness-dispatch.json). No production source change, floor trip, further cleanup, activation or ZIP. Actual free 5215588352. Main 16:18 permission decision remains resolved; this is an ordinary bounded control-harness fix, not a new approval ask.

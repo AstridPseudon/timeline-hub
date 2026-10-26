@@ -1,0 +1,15 @@
+frozen-gate staging: /tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/timeline-frozen-gate-scyt_tsf
+receipt: /tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/timeline-d68-receipt-a1mofjzs/wrapper.json
+D68 delivery status: PASS
+receipt: /tmp/w-d842139d51/candidate-check-tmp3/d141z-check.iLFjlT/actual-main/receipt.json
+PASS local lifecycle controls: main/D68 stub, early leader/orphan, TERM/KILL/reap, low/equal disk before/during/after, sampler faults, timeout/signals/local cancel, donor 5s trace, descriptor custody
+PASS mounted-cancel exact donor lease/CANCELLED/control-pipe/PDEATHSIG -> main -> D68 -> stub; lease held until reap
+PASS outer-parent-death exact donor lease/CANCELLED/control-pipe/PDEATHSIG -> main -> D68 -> stub; lease held until reap
+PASS early-leader-mounted-cancel exact donor lease/CANCELLED/control-pipe/PDEATHSIG -> main -> D68 -> stub; lease held until reap
+PASS normal-eof exact donor lease/CANCELLED/control-pipe/PDEATHSIG -> main -> D68 -> stub; lease held until reap
+PASS caller-parent-death PR_SET_PDEATHSIG and getppid -> D68/stub groups KILL/wait/reap
+PASS control-advertise actual inherited BENCH_CONTROL_FD
+PASS control-reader-closed actual inherited BENCH_CONTROL_FD
+PASS 5 main source/inventory/builder/tuple/gate hash refusal controls
+D141z purpose counts: {"direct_parent_death": 1, "inherited_control_pipe": 2, "local_lifecycle": 20, "main_guard_refusals": 5, "main_normal": 1, "mounted_donor_lease": 4}
+D141z mounted acceptance PASS; genuine F1/dispatch admission/install remain unverified
