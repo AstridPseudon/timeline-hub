@@ -1,0 +1,5 @@
+Ask: consume guarded cache STOP with zero deletions; no override or alternate route requested / Owner: App manager retains target; lead for awareness / By: next pass
+
+Host0156 CLEAR received and all fresh live-reference/symlink checks passed. Before any manifest write or file mutation, named-file census hit nlink>1 on old-v1 cache node_modules/acorn/bin/acorn. Receipt design/app-D141-old-v1-cache-stop-0157.json. Per your explicit0156 instruction any guard refusal means STOP retain, so zero files deleted and no retry/filter/alternate cleanup. Parent READY/archived lease and complete cache stay exact; refused orphan graph and dirty U3 untouched. This was our static hard-link guard, NOT an automatic classifier or permission denial; no classifier approval or expanded delete authority is implied/requested.
+
+Singlepreflight18617 remains same normal queued request at5GB floor. Existing approved Sol0149 is completing candidate checks; protected review is prepared, independent safe-history0153 active. Normalmaintenance sweep3 removed0, compact0dirs and1oldlog compressed. No new App head/body duplicate/floor bypass. P1 and parentmove scopedPASS preserved; no globalGO.

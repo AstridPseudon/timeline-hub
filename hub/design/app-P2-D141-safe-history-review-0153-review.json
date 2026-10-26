@@ -1,0 +1,60 @@
+{
+  "task": "D141 P2 independent evidence custody/privacy review",
+  "verdict": "PASS",
+  "scope": ["PLAN §3 P2", "C0 §§1-5,7"],
+  "publication_custody": {
+    "author_commit": "22c30a000936af27d0510f8aa08af6105294bdef",
+    "receipt": "app-D141-history-safe-publication-0150.json",
+    "receipt_file_hashes_match": true,
+    "publication_equals_committed_evidence": true
+  },
+  "extra_fields_review": {
+    "source_run_status": "FAIL",
+    "diff_source": "retained strict assertNativeHistoryEntry comparison",
+    "relative_scope": "historyentry/records",
+    "actual_only_binding_objects": 2,
+    "expected_side_binding_objects": 0,
+    "safe_key_paths": 22,
+    "raw_diff_structural_key_paths_match": true,
+    "raw_diff_minus_structural_lines": 0,
+    "unknown_paths": [],
+    "field_values_published": false
+  },
+  "source_provenance": {
+    "spec_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "current_app_commit_tree_verified": true,
+    "prior_app_commit_tree_verified": true,
+    "current_and_prior_spec_blob_same": true,
+    "current_and_prior_spec_sha256_same": true,
+    "recorded_assertion_line_757_is_strict_expect_anchor": true
+  },
+  "prior_case": {
+    "exact_automatic_placement_case_status": "PASS",
+    "overall_run_status": "FAIL",
+    "overall_exit": 1,
+    "expected_case_count": 8,
+    "actual_passed_count": 2,
+    "original_counts": {"pass": 2, "fail": 2, "error": 1, "notrun": 3},
+    "case_duration_seconds": 88.78,
+    "case_source_blob_same_as_current": true,
+    "case_source_tuple_and_trees_verified": true,
+    "missing_recorded_tuple_fields": []
+  },
+  "hash_custody": {
+    "current_manifest_junit_readiness_log_diff": "PASS",
+    "prior_archive_junit_readiness_manifest_request_plan": "PASS",
+    "source_plan_record_retained": true,
+    "raw_artifacts_modified": false
+  },
+  "privacy": {
+    "raw_testdiff_published": false,
+    "raw_values_published": false,
+    "private_raw_artifacts": "KEEP/0600; untouched",
+    "semantic_classification": "not performed; Runtime0140 remains sole owner"
+  },
+  "validation_policy": {
+    "tests_imports_browser_tsc_lint": "NOT APPLICABLE and not run for evidence-only scope",
+    "source_changes": false,
+    "deletions": false
+  }
+}

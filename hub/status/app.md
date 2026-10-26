@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T01:54:17Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 7 | status age 4m -->
+<!-- app | 2026-10-26T01:59:08Z | dispatcher heartbeat 15s | live 2 (sol 1, luna 1, other 0) | busy30 6 | status age 0m -->
 # app board, 2026-10-26T01:50Z
 
 | ID | task | model | needs | status | worker | proof | commit |
@@ -18,13 +18,13 @@
 | D141 REG join | Qualify exact33 ID comparison | HARD Sol and independent Luna | Actual full receipts | review | Sol0126; path0126 | 32 ours-only failures; one independently proved productREG; collection file absent upstream. Node and pristine env phase owed. | Frozen cut |
 | A2 D141 REG | Restore duplicate caller read count | HARD Sol; independent Luna next | Recorded D141e approval | doing | Sol0149 on0130 lineage | Approved combined read and mock interface support; loads=2 and all16 guards exact. Candidate checks then protected review. | Base867cb273 |
 | D141 P1 | Qualify original dependent chain | Luna and service | Exact cut tuple | merged | Controller0127; actual17879 | PASS exit0 in179s; original2 PASS44.3s; readiness1 PASS29.2s. Scope867cb; affected reproof after REG fix. | 867cb2737af1 |
-| D141 P2 six | Qualify six original passing gestures | Luna and service | Original admitted controller | doing | Controller0127 | Placement3118 history FAIL; ADD1368 locator FAIL; parent25698 running. Others continue; no P2-six GO. | 867cb2737af1 |
-| D141 P2 safe evidence | Supply extra keys and prior passing receipt | Luna | Lead recorded request | review | Reader0146 complete | [Safe publication](../../design/app-D141-history-safe-publication-0150.json);22 keys and exact15203 case PASS. Review waits disk. | No source edits |
+| D141 P2 six | Qualify six original passing gestures | Luna and service | Original admitted controller | doing | Controller0127 | Placement3118 history FAIL; ADD1368 locator FAIL; parent25698 PASS. Other three pending; no P2-six GO. | 867cb2737af1 |
+| D141 P2 safe evidence | Supply extra keys and prior passing receipt | Luna | Independent0153 PASS | merged | Reader0146; review0153 PASS | [Safe publication](../../design/app-D141-history-safe-publication-0150.json);22 keys and exact15203 case PASS. Independent0153 custody/privacy PASS, zero findings. | No source edits |
 | D141 P2 history | Classify additional undo binding fields | Runtime source owner | Finite contract disposition | blocked:runtime | Peer0138 to Runtime and lead | Actual history adds binding fields versus expected.records at spec757. No retry, expectation change or REG claim. | Cut tuple |
 | D141 P3 | Qualify original Gate5 journey | Luna and service | Controller sequence | ready | Controller0127 after P2 | Original full tail preserved; NOTRUN on cut. | Cut pending |
 | D141 P4 | Receive CLI Python sheet cut proof | Agent and service | Corrected JUnit review0124 | review | Agent author0119; review0124 | Actual10086 has3 PASS but custody FAIL. JUnit-only correction under review. No App cut GO credited. | Frozen cut |
 | D141 P5 | Receive Runtime cut proof | Runtime and service | Independent receiver and Main slot | blocked:runtime | Runtime0129; service6934 queued | Review0116 PASS all14 controls. Actual38-case6934 queued; no P5 GO. | Frozen cut |
-| D141 core | Receive ship core and REG comparison | Farm and Runtime | Farm prerequisite census | doing | Farm census0140; Runtime0101 PASS | Complete handoff sent01:10:36. Farm owns census, child, imports, preflight and core. No core result. | Frozen cut |
+| D141 core | Receive ship core and REG comparison | Farm and Runtime | Farm missing-input packet | blocked:farm | Farm census0140 NOT READY; Runtime0101 PASS | Farm0140 census NOT READY with22 non-pass checks. Full missing packet with owners sent lead; no core body. | Frozen cut |
 | D141 Node phase | Complete Node coverage on both heads | Luna and service | Journey sequence and admission | gated:D141-heavy-slot | Prepared Node controller | Both package scripts chain App then Node. Exact Node subcommand equal; both actual phases NOTRUN. | Cut and frozen7ca |
 | D141 pristine env | Qualify pristine renderer environment | Luna and service | Journey sequence and Node phase | gated:D141-heavy-slot | Sol0126 targeted recipe | Three exact files cover18 failed IDs. Shared dependency mismatch qualified; isolated install and same-kind targeted receipts owed. | Frozen7ca |
 | D141 SWAP | Retain documented known gap | Service and Luna | D130 safety disposition | gated:safety-D130 | Actual3250; refusal1537 | Original NO GO retained. No recovery retry, transfer or alternative qualification. | Historical tuple |
@@ -44,10 +44,10 @@ D141 controls: morning-cut and cut-tuple documents read. MAIN GO D141c recorded0
 
 Blockers: Runtime P2 history — classifier0140 owns intended C0 versus product verdict. Safe keys and exact prior passing15203 spec receipt published0150; no test writer or retry before classification.
 Blockers: Runtime P5 — source0116 PASS; sole actual6934 queued for normal admission. No App duplicate.
-Blockers: Farm core — complete Runtime handoff and review0101 PASS received. Farm census0137 owns real prerequisite completion, child, import check, preflight and core.
+Blockers: Farm core — complete Runtime handoff received. Farm census0140 NOT READY22 checks; full owner packet sent lead. Farm retains child/import/preflight/core; no App duplicate.
 Blockers: SWAP safety — automatic classifier refusal1537 remains held. Existing Runtime escalation owns disposition; no retry, transfer or alternative qualification.
-Next ready: Controller0127 continues parent move, single, bulk, registerAsset and P3. Sol0149 candidate -> protected review -> normal merge and affected reproof. Reader0146 review after disk recovers; Node and pristine environment follow journeys.
-live 2 / cap 3 at current disk; ready-undispatched 1 gated by disk: reader0146 review. Journeys0127 and approved Sol0149 active. No new dispatch below4.5GB; no new heavy before fresh5.2GB. Controller0127 retains original5366943744 admission; stop4GB.
+Next ready: Controller0127 continues parent move, single, bulk, registerAsset and P3. Sol0149 candidate -> protected review -> normal merge and affected reproof. Reader0153 PASS published; Node and pristine environment follow journeys.
+live 2 / cap 3 at current disk; ready-undispatched 0. Journeys0127 and approved Sol0149 active; independent0153 complete PASS. No new dispatch below4.5GB; no new heavy before fresh5.2GB. Controller0127 retains original5366943744 admission; stop4GB.
 
 H6: Current Runtime board has complete Farm handoff, terminal cut18778 and pristine8912 disk queue; P5 source0107 awaits review. Agent P4 three-pass receipt10086 failed custody; JUnit-only repair0124 under review. Farm census0137 active. App has no peer body duplicate or unresolved producer adoption wait.
 
@@ -71,3 +71,7 @@ Current full12174, pristine23581, P1preflight3972/body17879 and placement10335/b
 INBOX consumed through 2639645 bytes. Board overwritten 2026-10-26T01:50Z.
 
 Pass 2026-10-26T01:50Z: D141e scope decision applied, cleared orchestrator blocker and dispatched0149. Reader0146 complete safe keys/prior-pass published0150, Runtime0140 notified. ADD1368 real visibility failure retained; parent25698 active. H6 Runtime P5 source PASS/6934 queued; Agent P4 corrected19479 queued; Farm census0140 active under its recorded permission. No new head or proof credit. Disk4.38GB; maintenance underway, current pristine protected.
+
+Pass01:54Z: Parentmove25698 terminalPASS, readiness1 and original1; exact full tail retained. Singlepreflight18617 queued at normal5GBfloor, no actual heavy body. D89b tiny historyreview0153 dispatched at4624433152 available bytes. Sweep3 removed0, compact0scratch/0tests and1oldlog gzipped. Exact obsolete v1 cache static0154 sent lead for host audit; no deletion. P4 main asks immutable correction receipt for10086, no App duplicate body.
+
+Pass01:57Z: Host0156 CLEAR for old-v1 cache; repeated static census hit nlink>1 before manifest/mutation. Per lead any-guard STOP, complete cache retained; zero deletion, no alternate route. [Receipt](../../design/app-D141-old-v1-cache-stop-0157.json). No classifier or permission denial occurred. Single18617 remains queued at5GB; source0149 finishing checks.

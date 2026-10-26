@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T01:57:26.516402+00:00",
+  "status": "STOP_RETAIN_GUARD",
+  "host": "0156 CLEAR",
+  "target": "/home/user/work/wt/app-m2-private13-resolution-repair-bootstrap-real-r2-deps/node_modules/acorn/bin/acorn",
+  "guard": "regular/symlink files must have nlink1",
+  "observed_nlink": 2,
+  "deleted_files": 0,
+  "writes_before_stop": "none; file manifest was not written; only read-only enumeration",
+  "disposition": "lead said any guard refusal STOP retain no alternate; no retry/filter/second delete route"
+}

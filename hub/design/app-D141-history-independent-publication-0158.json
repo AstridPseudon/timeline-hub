@@ -1,0 +1,22 @@
+{
+  "worker": "app-P2-D141-safe-history-review-0153",
+  "verdict": "PASS evidence custody and privacy only",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-review.json",
+      "sha256": "f18a18244172ea4973cc9e29c4b266ab178ec2ac6ac537b5fd49792c878cefed"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-findings.md",
+      "sha256": "723050a29a63bc4767d0633bddcd42312c77018fada354821c71e0113ca37fdd"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-validation.md",
+      "sha256": "abd22f8d9186ae943b5c5b52072e4c0dc32753cc04453ebb2436c3baa66b55d1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-handoff.md",
+      "sha256": "7b10d11323e90d2dcfc7a5944e30647a93b537843febd4f0874f1d23a9937777"
+    }
+  ]
+}
