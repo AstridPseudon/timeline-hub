@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c independent read-only actual RESULT custody review",
+  "base": "tl/agt-P4-D141-body-continuation-0105",
+  "review_scope": "actual completed body only; no body, controls, source, product, registry, or suite rerun",
+  "verdict": "FAIL",
+  "finding_count": 1,
+  "actual_result": {
+    "service_id": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+    "central_request": "p4-d141c-normal",
+    "request_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/request",
+    "summary_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/summary",
+    "snapshot_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/snap",
+    "external_versions_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/ext",
+    "status": "pass",
+    "exit_code": 0,
+    "counts": {
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 23.668
+    },
+    "junit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+      "sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+      "bytes": 724
+    },
+    "preflight_exit": 0,
+    "body_exit": 0,
+    "service_log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/log.txt",
+      "sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef"
+    },
+    "body_log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.body.log",
+      "sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef"
+    },
+    "raw_payloads_public": false
+  },
+  "selectors": [
+    {
+      "pytest_selector": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "junit_module": "tests.editing_conformance.test_p4_cli_sheet_v2_runtime",
+      "junit_name": "test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "source_path": "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py"
+    },
+    {
+      "pytest_selector": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+      "junit_module": "tests.editing_conformance.test_p4_ten_note_v2_runtime",
+      "junit_name": "test_http_ten_note_commit_per_step_inverse_and_redo",
+      "source_path": "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_ten_note_v2_runtime.py"
+    },
+    {
+      "pytest_selector": "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+      "junit_module": "tests.editing_conformance.test_p4_note_rerun_v2_runtime",
+      "junit_name": "test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+      "source_path": "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_note_rerun_v2_runtime.py"
+    }
+  ],
+  "finding": {
+    "id": "P4-D141c-R001",
+    "severity": "custody",
+    "status": "open",
+    "title": "Manifest JUnit identity is stale",
+    "fact": "The materialized manifest and runmanifest retain junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml. That path is absent. The actual production command explicitly wrote --junitxml to /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml, which exists with SHA-256 afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d.",
+    "effect": "A consumer following the manifest field cannot resolve the actual JUnit. This prevents a clean PASS_RESULT_CUSTODY verdict, but does not invalidate the authentic binding formed by the central request/summary/snapshot/ext, actual command, runmanifest, actual JUnit, body log, and exit receipts.",
+    "authentic_binding": "service agent-p4-current-becfe-http-3legs-1026011042-10086; request p4-d141c-normal; actual command hash ad2168fde0f0c928a975e2f2898a824031ce434ec1ecd47db97f16932f32f352; actual JUnit hash afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+    "disposition": "Preserve the stale manifest value and the actual body path as separate identities. App/orchestrator may record an explicit custody binding or correction; this reviewer does not rewrite receipts, rerun the body, or change source/controls."
+  },
+  "historical_conservation": {
+    "service_1347": {
+      "id": "agent-p4-current-becfe-http-3legs-1026005145-1347",
+      "status": "fail",
+      "exit_code": 1,
+      "selectors_executed": 0,
+      "junit_present": false,
+      "log_sha256": "5fab373131e9a30b1b946f4f8e4aa580c84a1734ed3a73dea427b1290dfec6e4"
+    },
+    "source_reviews": {
+      "0101": "FAIL",
+      "0106": "PASS_OPERATIONAL_SOURCE",
+      "0106_readiness": "INSTALLATION_NOT_READY"
+    },
+    "actual_service_distinct_from_1347": true
+  },
+  "not_claimed": [
+    "P4 cumulative verdict",
+    "MAIN GO",
+    "ship or REG credit",
+    "full suite or product qualification",
+    "typecheck or lint",
+    "any result beyond the three executed selectors"
+  ]
+}
