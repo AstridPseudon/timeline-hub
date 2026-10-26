@@ -8,6 +8,6 @@ Each lane: ONE final merge-forward of integration to its tip above, through the 
 
 ## Integration heads after the final merge-forward
 - agent: 28e56cacb42d3da85b02e5b3543895b44f3d0f70 (tree 2ebe2ddf5a61; final merge-forward to upstream 8b6ed211 plus Runtime 6a011 provenance; bounded review 0015 PASS; FROZEN 00:27Z 26 Oct)
-- app: 5fe3e4debec5fb030f772ca41f16c86cc80e6150 (tree af51793b7cc9; REG#1 fix D141e merged on 867cb273 after independent review 0203 PASS; supersedes 867cb273 at 02:13Z 26 Oct)
+- app: 520d7e4fc12a03392afaed3f486aba34a2b5c319 (tree 70ad390c56b0; = 5fe3e4de + D141d placement expectation, review 0243 PASS; FROZEN 02:53Z 26 Oct; supersedes 867cb273/5fe3e4de)
 - composition: 635f4de06fda (upstream 67b8aa3d IS an ancestor, verified by main 2026-10-26T00:41:17Z; no merge needed)
 - runtime: 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d (frozen; upstream fa9cd5464a8b; independent rt-U1-D141-final-review-2350 PASS; author119 PASS)
