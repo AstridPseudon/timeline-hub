@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-26T12:14:09.795451+00:00",
+  "status": "RECEIVED_16_ORIGINALS_EXACT",
+  "worker": "rt-F-D141hh-single-notes-next",
+  "dispatch_available_bytes": 5596450816,
+  "files": [
+    {
+      "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-terminal-publication-1157.json",
+      "sha256": "08d6573b2d1c00223ac306b8caf9caaaa8e047803d51f202e4e97a330515af97",
+      "bytes": 4246,
+      "originals": 8
+    },
+    {
+      "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-custody-publication-1159.json",
+      "sha256": "c67e717facfc968a584a489e86b1e24b49840a1dc10f029c62187568255ff928",
+      "bytes": 3871,
+      "originals": 8
+    }
+  ],
+  "scope": "Documentary source only; accepted24271 PASS separate from original custody FAIL, both procedural gaps retained. No canonical write/body/build."
+}
