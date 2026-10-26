@@ -53,6 +53,16 @@ def _is_remotion_render_command(command: list[str]) -> bool:
     )
 
 
+def _lock_receipt(kwargs: dict[str, object]) -> str:
+    env = kwargs.get("env", {})
+    if not isinstance(env, dict):
+        return ""
+    token = env.get(render_remotion.remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+    if not isinstance(token, str):
+        return ""
+    return render_remotion.remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token
+
+
 @pytest.fixture(autouse=True)
 def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Ensure protocol children use the schema-bearing test interpreter."""
@@ -908,7 +918,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             def fake_run(cmd, **kwargs):
                 calls.append(([str(part) for part in cmd], kwargs))
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.dict(render_remotion.os.environ, {"ASTRID_RENDER_UNDECLARED": "host"}, clear=True),
@@ -919,10 +929,10 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         cmd, kwargs = calls[0]
         self.assertEqual(cmd[0], sys.executable)
-        self.assertEqual(Path(cmd[1]), ROOT / "scripts" / "gen_effect_registry.py")
+        self.assertEqual(Path(cmd[3]), ROOT / "scripts" / "gen_effect_registry.py")
         # Theme is resolved into render props; registry codegen receives no
         # retired checkout theme override.
-        self.assertEqual(cmd[2:], [])
+        self.assertEqual(cmd[4:], [])
         self.assertEqual(kwargs["cwd"], str(ROOT))
         env = kwargs["env"]
         self.assertIsInstance(env, dict)
@@ -947,7 +957,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             def fake_run(cmd, **kwargs):
                 calls.append([str(part) for part in cmd])
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run):
                 render_remotion._regenerate_element_registries(project_dir, None)
@@ -978,7 +988,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             def fake_run(cmd, **kwargs):
                 calls.append([str(part) for part in cmd])
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run):
                 render_remotion._regenerate_element_registries(project_dir, None)
@@ -1018,7 +1028,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             def fake_run(cmd, **kwargs):
                 nonlocal remotion_runs
                 command = [str(part) for part in cmd]
-                if len(command) > 1 and Path(command[1]).name == "gen_effect_registry.py":
+                if any(Path(part).name == "gen_effect_registry.py" for part in command):
                     registry_hashes_seen.append(state_from_component(None)["hash"])
                     for generated_output in generated_outputs:
                         generated_output.parent.mkdir(parents=True, exist_ok=True)
@@ -1027,7 +1037,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     remotion_runs += 1
                     _write_fake_remotion_output(command)
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion, "_effective_registry_state", side_effect=state_from_component),
@@ -1113,7 +1123,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     props_payloads.append(json.loads(props_path.read_text(encoding="utf-8")))
                     _write_fake_remotion_output(command)
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.dict(
@@ -1144,7 +1154,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         registry_cmd, registry_kwargs = calls[0]
         remotion_cmd, remotion_kwargs = calls[1]
 
-        self.assertEqual(Path(registry_cmd[1]), ROOT / "scripts" / "gen_effect_registry.py")
+        self.assertEqual(Path(registry_cmd[3]), ROOT / "scripts" / "gen_effect_registry.py")
         self.assertNotIn("--theme", registry_cmd)
         self.assertEqual(registry_kwargs["cwd"], str(ROOT))
 
@@ -1234,7 +1244,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     self.assertFalse((staged_asset.parents[2] / "unused" / "assets" / "badge.txt").exists())
                     _write_fake_remotion_output(command)
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
@@ -1311,7 +1321,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     self.assertTrue(staged_asset.exists())
                     return subprocess.CompletedProcess(cmd, 2, stdout="", stderr="boom\n")
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
@@ -1363,7 +1373,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 if _is_remotion_render_command(command):
                     _write_fake_remotion_output(command)
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion, "REPO_ROOT", project_root),
@@ -1407,7 +1417,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     remotion_envs.append(dict(kwargs["env"]))
                     _write_fake_remotion_output(command)
                 self._generate_fixture(project_dir)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             host_env = {
                 "HOME": str(tmp / "home"),

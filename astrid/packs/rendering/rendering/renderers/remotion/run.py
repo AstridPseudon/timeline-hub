@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -437,15 +438,28 @@ def _regenerate_element_registries_locked(
     composition_src = _timeline_composition_src(project_dir)
     if composition_src is not None:
         env["ASTRID_TIMELINE_COMPOSITION_SRC"] = str(composition_src)
-    env.update(remotion_lock.remotion_render_lock_child_env())
-    subprocess.run(
+    child_lock_env = remotion_lock.remotion_render_lock_child_env()
+    lock_token = child_lock_env[remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+    env[remotion_lock.REMOTION_LOCK_PATH_ENV] = child_lock_env[remotion_lock.REMOTION_LOCK_PATH_ENV]
+    completed = subprocess.run(
         cmd,
         cwd=str(REPO_ROOT),
-        env=build_child_subprocess_env(explicit_env=env),
+        env=build_child_subprocess_env(
+            explicit_env=env,
+            secret_values={remotion_lock.REMOTION_LOCK_TOKEN_ENV: lock_token},
+            declared_secrets={remotion_lock.REMOTION_LOCK_TOKEN_ENV},
+        ),
         capture_output=True,
         check=True,
         text=True,
     )
+    expected_receipt = remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + lock_token
+    receipts = [
+        line for line in completed.stdout.splitlines()
+        if line.startswith(remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX)
+    ]
+    if len(receipts) != 1 or not hmac.compare_digest(receipts[0], expected_receipt):
+        raise RuntimeError("generated element registry did not return the lock receipt")
     if not _registry_outputs_match_state(project_dir, state):
         raise RuntimeError("generated element registries are missing or stale after regeneration")
     _write_registry_state(project_dir, state)

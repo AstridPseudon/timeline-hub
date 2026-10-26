@@ -811,6 +811,8 @@ class _ParkedPackHostPreparer:
         self._handle: _ParkedPackHostHandle | None = None
 
     def prepare(self, reference: Any) -> _ParkedPackHostHandle:
+        if sys.platform == "win32":
+            raise PackHostBootstrapError("parked pack-host preparation is unavailable on Windows")
         launch = getattr(reference, "launch", None)
         reference = getattr(reference, "reference", reference)
         if self._handle is not None:
