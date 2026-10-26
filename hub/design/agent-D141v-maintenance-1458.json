@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-26T15:01:30.862581+00:00",
+  "free_before": 5379977216,
+  "free_after": 5385797632,
+  "results": {
+    "compact": {
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 5131M -> 5130M\ngzipped 0 old worker logs; free now 5130M\npacked 0 finished test-run dirs; free now 5135M\n",
+      "stderr": ""
+    },
+    "sweep": {
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5131M -> 5137M\n",
+      "stderr": ""
+    }
+  },
+  "scope": "Normal compact and sweep only. No eligible ended nonKEEP tree in fresh census. Raw KEEP and all hard holds untouched."
+}
