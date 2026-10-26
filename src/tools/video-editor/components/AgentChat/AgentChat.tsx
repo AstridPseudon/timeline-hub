@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Download, Loader2, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Loader2, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
@@ -498,6 +498,16 @@ function AvailableAgentChatPanel({
   const isCancelled = activeStatus === 'cancelled';
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
   const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
+  /** A saved row awaiting Send now remains visible after a failed attempt, even if its local turn was recorded. */
+  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
+    && optimisticMessage?.id !== item.id
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
+  const stopAgent = useCallback(() => {
+    setQueue([]);
+    setPausedQueueHeadId(null);
+    setOptimisticMessage(null);
+    cancelSession.mutate();
+  }, [cancelSession]);
   const activeAgentRow = localAgents.data?.agents.find(agent => agent.id === chatAgent);
   const agentBroken = Boolean(activeSessionId && localAgents.data && !isAgentUsable(activeAgentRow));
   const composerLockedRef = useRef(false);
@@ -511,6 +521,12 @@ function AvailableAgentChatPanel({
   // composer look busy. Only a row that will be sent when the running turn ends is a real queue.
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(item.id));
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
+  const transcriptRequestIds = useMemo(() => new Set(
+    activeSessionData?.turns.flatMap(turn => turn.role === 'user' && turn.request_id ? [turn.request_id] : []) ?? [],
+  ), [activeSessionData?.turns]);
+  const displayedQueue = activeQueue.filter(item => notSent(item) || (item.id !== optimisticMessage?.id
+    && !transcriptRequestIds.has(item.id)
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId)));
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
   const idlePlaceholder = !CHAT_VOICE_ENABLED
@@ -932,11 +948,6 @@ function AvailableAgentChatPanel({
     })();
   }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, agentBroken, setupRequest, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
-  /** A saved row that is waiting for the person: not the one in flight, and never auto-sent. */
-  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
-    && optimisticMessage?.id !== item.id
-    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
-
   const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string, isCurrent?: () => boolean): Promise<string | null> => {
     if (!projectId) return null;
     if (!manualCreateOperationIdRef.current || manualCreateOperationIdRef.current.agent !== agent || manualCreateOperationIdRef.current.model !== model) {
@@ -1170,25 +1181,6 @@ function AvailableAgentChatPanel({
             }}
           />
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
-          {showKillSwitch && (
-            <Button
-              type="button"
-              size="icon"
-              variant="destructive"
-              className="h-7 w-7"
-              onClick={() => {
-                setQueue([]);
-                setPausedQueueHeadId(null);
-                setOptimisticMessage(null);
-                cancelSession.mutate();
-              }}
-              disabled={cancelSession.isPending}
-              title="Stop agent"
-              aria-label="Stop agent"
-            >
-              <Square className="h-3.5 w-3.5" />
-            </Button>
-          )}
         </div>
       </div>
       {startFailure && !showSetupCard && !isAgentSetupError(startFailure.error) && (
@@ -1372,7 +1364,7 @@ function AvailableAgentChatPanel({
 
       {/* Input bar */}
       <div className="border-t border-border/70 px-3 py-3">
-        {activeQueue.length > 0 && (
+        {displayedQueue.length > 0 && (
           <div className="mb-2 flex flex-col gap-2">
             {draftSaveError && (
               <p className="text-[11px] text-muted-foreground">
@@ -1380,14 +1372,13 @@ function AvailableAgentChatPanel({
                 <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
               </p>
             )}
-            {activeQueue.map((item, index) => (
+            {displayedQueue.map((item, index) => (
               <div
                 key={item.id}
                 className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs"
               >
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
-                  {sessionControl?.active && item.id === sessionControl.activeRequestId && <div className="text-muted-foreground">{isFollower ? 'In progress in another tab' : 'In progress'}</div>}
                   {notSent(item) && <div className="text-muted-foreground">Not sent{item.id === pausedQueueHeadId && !isFollower ? '. Delivery not confirmed: Send now checks saved history first, and may send this message again.' : ''}</div>}
                 </div>
                 {item.attachments.length > 0 && (
@@ -1426,7 +1417,7 @@ function AvailableAgentChatPanel({
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6 shrink-0"
-                  disabled={isFollower || index === activeQueue.length - 1}
+                  disabled={isFollower || index === displayedQueue.length - 1}
                   onClick={() => moveQueuedMessageDown(queue.indexOf(item))}
                   title="Move queued message down"
                 >
@@ -1565,6 +1556,8 @@ function AvailableAgentChatPanel({
           } : undefined}
           onSend={() => void handleSend()}
           sendDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+          onStop={showKillSwitch ? stopAgent : undefined}
+          stopDisabled={cancelSession.isPending}
         />
       </div>
 

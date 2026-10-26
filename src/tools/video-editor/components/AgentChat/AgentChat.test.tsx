@@ -1213,6 +1213,42 @@ describe('AgentChat', () => {
     expect(screen.getByText('queued while processing')).toBeInTheDocument();
   });
 
+  it('shows Stop beside Send in the composer and cancels the running turn', async () => {
+    const state = createState();
+    state.activeSessionData.status = 'processing';
+    mockFromState(state);
+
+    renderAgentChat();
+
+    const textbox = await getInput();
+    await queueMessage(textbox, 'queued while the turn runs');
+    expect(getQueuedTexts()).toEqual(['queued while the turn runs']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+
+    expect(state.cancelSession.mutate).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTitle('Stop agent')).toBeNull();
+    await waitFor(() => expect(getQueuedTexts()).toEqual([]));
+  });
+
+  it('keeps a message in the transcript and out of queue rows while its optimistic send is in flight', async () => {
+    const state = createState();
+    let finishSend = () => {};
+    const pendingSend = new Promise<void>(resolve => { finishSend = resolve; });
+    state.sendMessage.mutateAsync = vi.fn(() => pendingSend);
+    mockFromState(state);
+
+    renderAgentChat();
+
+    await queueMessage(await getInput(), 'sending now');
+    await waitFor(() => expect(state.sendMessage.mutateAsync).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByText('sending now')).toBeInTheDocument();
+    expect(getQueuedTexts()).toEqual([]);
+
+    await act(async () => { finishSend(); });
+  });
+
   it('auto-sends the queued head with attachments snapshotted at queue time', async () => {
     const state = createState();
     state.activeSessionData.status = 'processing';
@@ -1257,8 +1293,9 @@ describe('AgentChat', () => {
   it('keeps a failed head queued, shows an error, and only resumes draining after the failed head is removed', async () => {
     const state = createState();
     state.activeSessionData.status = 'processing';
-    state.sendMessage.mutateAsync = vi.fn().mockImplementation(async ({ input: { message } }: { input: { message: string } }) => {
+    state.sendMessage.mutateAsync = vi.fn().mockImplementation(async ({ input: { message, requestId } }: { input: { message: string; requestId: string } }) => {
       if (message === 'first queued') {
+        state.activeSessionData.turns = [{ role: 'user', content: message, timestamp: iso(13_000), request_id: requestId }];
         state.sendMessage.localError = 'Send failed';
         throw new Error('Send failed');
       }
@@ -1475,7 +1512,10 @@ describe('AgentChat', () => {
       { id: 'queued-next', text: 'Waiting behind it', session_id: 'session-1', attachments: [] },
     ] };
     state.activeSessionData.status = 'waiting_user'; // Control data must still report the live turn.
-    state.activeSessionData.turns = [{ role: 'assistant', content: 'Live assistant update', timestamp: iso(12_000) }];
+    state.activeSessionData.turns = [
+      { role: 'user', content: 'Already running', timestamp: iso(11_000), request_id: 'active-request' },
+      { role: 'assistant', content: 'Live assistant update', timestamp: iso(12_000) },
+    ];
     state.activeSessionData.control = { role: 'follower', active: true, activeRequestId: 'active-request' };
     state.activeSessionData.durableAcceptedRequestIds = ['active-request'];
     mockFromState(state);
@@ -1483,14 +1523,15 @@ describe('AgentChat', () => {
     const view = renderAgentChat();
     await screen.findByText('Live assistant update');
     await screen.findByText('Already running');
-    await screen.findByText('In progress in another tab');
+    expect(screen.queryByText('In progress in another tab')).toBeNull();
     expect(screen.getByRole('button', { name: 'Active in another tab — take over' })).toBeEnabled();
     expect(screen.getByPlaceholderText('Type to queue next message...')).toBeDisabled();
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
     expect(screen.queryByTitle('Stop agent')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
-    expect(getQueuedTexts()).toEqual(['Already running', 'Waiting behind it']);
+    expect(getQueuedTexts()).toEqual(['Waiting behind it']);
     expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['active-request', 'queued-next']);
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
     expect(mocks.useTakeOverSession).toHaveBeenCalledWith('session-1', 'project-1');
@@ -1500,7 +1541,9 @@ describe('AgentChat', () => {
 
     state.activeSessionData.control = { role: 'writer', active: true, activeRequestId: 'active-request' };
     rerenderAgentChat(view.rerender);
-    expect(await screen.findByText('In progress')).toBeInTheDocument();
+    expect(await screen.findByText('Already running')).toBeInTheDocument();
+    expect(screen.queryByText('In progress')).toBeNull();
+    expect(getQueuedTexts()).toEqual(['Waiting behind it']);
     expect(screen.queryByRole('button', { name: 'Active in another tab — take over' })).toBeNull();
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
