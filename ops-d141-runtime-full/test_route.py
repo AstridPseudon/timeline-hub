@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import re
+import shlex
+import stat
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -13,11 +17,18 @@ import route
 import receive
 
 
-def _qualified_config(tmp_path: Path) -> dict[str, object]:
+def _qualified_config(
+    tmp_path: Path,
+    checkouts: tuple[Path, Path] | None = None,
+) -> dict[str, object]:
     config = json.loads(route.CONFIG.read_text())
     for entry, checkout in zip(
         config["routes"],
-        (Path("/home/user/work/wt/agt-pin-4c4ee35d"), Path("/home/user/work/wt/agt-pin-8b6ed211")),
+        checkouts
+        or (
+            Path("/home/user/work/wt/agt-pin-4c4ee35d"),
+            Path("/home/user/work/wt/agt-pin-8b6ed211"),
+        ),
     ):
         commit = subprocess.check_output(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
@@ -141,6 +152,179 @@ def test_genuine_done_receipts_bind_distinct_cut_and_pristine_rows(tmp_path: Pat
     assert all("python -m pytest -q -n3" in row for row in rows)
     assert all("disk-start" in row and "runner-exit" in row and "KEEP" in row for row in rows)
     assert route.route_status(config) == ("READY", [])
+
+
+def _installed_row(config: dict[str, object], tmp_path: Path, name: str) -> str:
+    destination = tmp_path / "installed"
+    route.install_candidate(config, destination)
+    rows = [
+        line.split(None, 2)[2]
+        for line in (destination / "suites.conf").read_text().splitlines()
+        if line.split(None, 2)[:2] == ["runtime", name]
+    ]
+    assert len(rows) == 1
+    return rows[0]
+
+
+def _substitute_harmless_pytest(
+    config: dict[str, object], row: str, stub: Path
+) -> str:
+    pytest_config = config["pytest"]
+    assert isinstance(pytest_config, dict)
+    interpreter = pytest_config["interpreter"]
+    arguments = pytest_config["arguments"]
+    junit_name = pytest_config["junit_name"]
+    assert isinstance(interpreter, str)
+    assert isinstance(arguments, list)
+    assert isinstance(junit_name, str)
+    normal = (
+        f"{shlex.quote(interpreter)} "
+        f"{' '.join(shlex.quote(argument) for argument in arguments)} "
+        f'--junitxml="$D66_OUTPUT_DIR/{junit_name}"'
+    )
+    harmless = (
+        f"{shlex.quote(interpreter)} -m pytest -q -p no:cacheprovider "
+        f'--junitxml="$D66_OUTPUT_DIR/{junit_name}" {shlex.quote(str(stub))}'
+    )
+    assert row.count(normal) == 1
+    return row.replace(normal, harmless)
+
+
+def test_installed_rendered_row_initializes_private_output_and_keeps_witnesses(
+    tmp_path: Path,
+) -> None:
+    config = _qualified_config(
+        tmp_path / "bindings",
+        (
+            Path("/home/user/work/wt/agt-pin-28e56cac"),
+            Path("/home/user/work/wt/agt-pin-8b6ed211"),
+        ),
+    )
+    stub = tmp_path / "test_d141_output.py"
+    stub.write_text("def test_d141_output_stub():\n    assert True\n")
+    row = _installed_row(config, tmp_path, "full-d141-cut")
+    row = _substitute_harmless_pytest(config, row, stub)
+    output = tmp_path / "service" / "d66"
+    output.parent.mkdir()
+    assert not output.exists()
+
+    completed = subprocess.run(
+        ["bash", "-c", row],
+        cwd="/home/user/work/runtime",
+        env={**dict(os.environ), "D66_OUTPUT_DIR": str(output)},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert output.is_dir() and not output.is_symlink()
+    assert stat.S_IMODE(output.stat().st_mode) == 0o700
+    assert (output / "disk-start").is_file()
+    assert (output / "disk-stop").is_file()
+    assert (output / "runner-exit").read_text() == "0\n"
+    assert (output / "KEEP").read_text() == "KEEP before service cleanup\n"
+    junit = ET.parse(output / "runtime-full.xml").getroot()
+    assert junit.tag in {"testsuite", "testsuites"}
+    assert list(junit.iter("testcase"))
+    output.chmod(0o750)
+    rerun = subprocess.run(
+        ["bash", "-c", row],
+        cwd="/home/user/work/runtime",
+        env={**dict(os.environ), "D66_OUTPUT_DIR": str(output)},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert rerun.returncode == 0, rerun.stderr
+    assert stat.S_IMODE(output.stat().st_mode) == 0o750
+
+
+@pytest.mark.parametrize("poison", ["missing", "symlink"])
+def test_installed_rendered_row_source_poison_does_not_launch_or_create_output(
+    tmp_path: Path, poison: str
+) -> None:
+    config = _qualified_config(
+        tmp_path / "bindings",
+        (
+            Path("/home/user/work/wt/agt-pin-28e56cac"),
+            Path("/home/user/work/wt/agt-pin-8b6ed211"),
+        ),
+    )
+    marker = tmp_path / "launched"
+    launcher = tmp_path / "launcher.py"
+    launcher.write_text(
+        "from pathlib import Path\n"
+        f"Path({str(marker)!r}).write_text('launched')\n"
+    )
+    row = _installed_row(config, tmp_path, "full-d141-cut")
+    normal = (
+        "/home/user/work/venv-runtime/bin/python -m pytest -q -n3 "
+        '--junitxml="$D66_OUTPUT_DIR/runtime-full.xml"'
+    )
+    assert row.count(normal) == 1
+    row = row.replace(normal, f"{shlex.quote(sys.executable)} {shlex.quote(str(launcher))}")
+    actual_checkout = config["routes"][0]["agent"]["checkout"]
+    assert isinstance(actual_checkout, str)
+    poisoned = tmp_path / f"agent-{poison}"
+    if poison == "missing":
+        replacement = str(poisoned)
+    else:
+        poisoned.symlink_to(actual_checkout, target_is_directory=True)
+        replacement = str(poisoned)
+    row = row.replace(shlex.quote(actual_checkout), shlex.quote(replacement))
+    output = tmp_path / "service" / "d66"
+
+    completed = subprocess.run(
+        ["bash", "-c", row],
+        cwd="/home/user/work/runtime",
+        env={**dict(os.environ), "D66_OUTPUT_DIR": str(output)},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode != 0
+    assert not marker.exists()
+    assert not output.exists()
+
+
+def test_installed_rendered_row_output_symlink_refuses_without_outside_writes(
+    tmp_path: Path,
+) -> None:
+    config = _qualified_config(
+        tmp_path / "bindings",
+        (
+            Path("/home/user/work/wt/agt-pin-28e56cac"),
+            Path("/home/user/work/wt/agt-pin-8b6ed211"),
+        ),
+    )
+    stub = tmp_path / "test_d141_output.py"
+    stub.write_text("def test_d141_output_stub():\n    assert True\n")
+    row = _substitute_harmless_pytest(
+        config, _installed_row(config, tmp_path, "full-d141-cut"), stub
+    )
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "sentinel").write_text("unchanged\n")
+    output = tmp_path / "service" / "d66"
+    output.parent.mkdir()
+    output.symlink_to(outside, target_is_directory=True)
+    before = (outside / "sentinel").read_bytes()
+
+    completed = subprocess.run(
+        ["bash", "-c", row],
+        cwd="/home/user/work/runtime",
+        env={**dict(os.environ), "D66_OUTPUT_DIR": str(output)},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode != 0
+    assert not (outside / "disk-start").exists()
+    assert not (outside / "runtime-full.xml").exists()
+    assert (outside / "sentinel").read_bytes() == before
 
 
 def test_qualified_path_rejects_poisoned_receipt_and_origin(tmp_path: Path) -> None:

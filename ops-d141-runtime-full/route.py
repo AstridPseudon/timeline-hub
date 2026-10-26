@@ -266,6 +266,10 @@ def _source_guard(route: dict[str, Any], agent: dict[str, Any]) -> str:
         + " && test \"$(git rev-parse HEAD^{tree})\" = "
         + runtime_tree
         + " && test -z \"$(git status --porcelain)\""
+        + " && test -d "
+        + checkout
+        + " && test ! -L "
+        + checkout
         + " && test \"$(git -C "
         + checkout
         + " rev-parse HEAD)\" = "
@@ -299,8 +303,22 @@ def render_rows(config: dict[str, Any]) -> list[str]:
         checkout = shlex.quote(agent["checkout"])
         command = " ".join(shlex.quote(part) for part in config["pytest"]["arguments"])
         junit = f'"$D66_OUTPUT_DIR/{config["pytest"]["junit_name"]}"'
+        output_setup = (
+            'test -n "${D66_OUTPUT_DIR:-}" && '
+            'case "$D66_OUTPUT_DIR" in /*) ;; *) false ;; esac && '
+            'test "$D66_OUTPUT_DIR" != / && '
+            'if test -L "$D66_OUTPUT_DIR"; then '
+            'false; '
+            'elif test -e "$D66_OUTPUT_DIR"; then '
+            'test -d "$D66_OUTPUT_DIR"; '
+            'else '
+            '( umask 077 && mkdir -- "$D66_OUTPUT_DIR" ); '
+            'fi && '
+            'test -d "$D66_OUTPUT_DIR" && test ! -L "$D66_OUTPUT_DIR"'
+        )
         body = (
             f"{_source_guard(route, agent)} && "
+            f"{output_setup} && {{ "
             f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-start\" && "
             f"env ASTRID_CHECKOUT={checkout} "
             f"{shlex.quote(config['pytest']['interpreter'])} {command} "
@@ -308,7 +326,7 @@ def render_rows(config: dict[str, Any]) -> list[str]:
             f"df -B1 --output=avail /home/user > \"$D66_OUTPUT_DIR/disk-stop\"; "
             f"printf '%s\\n' \"$rc\" > \"$D66_OUTPUT_DIR/runner-exit\"; "
             f"printf '%s\\n' 'KEEP before service cleanup' > \"$D66_OUTPUT_DIR/KEEP\"; "
-            f"exit \"$rc\""
+            f"exit \"$rc\"; }}"
         )
         rows.append(f"runtime {route['name']} {body}")
     return rows
