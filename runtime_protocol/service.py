@@ -79,6 +79,21 @@ CHILD_LIMIT_CEILINGS = CHILD_LIMITS | {
     "max_recoverable_bytes": 4 * 1024 * 1024 * 1024,
     "max_snapshot_bytes": OBJECT_MAX_BYTES,
 }
+
+
+def _valid_import_effect_difference(value, *, allow_unresolved_unpinned=False):
+    if not isinstance(value, dict):
+        return False
+    pack_id, kind, element_id = value.get("packId"), value.get("kind"), value.get("id")
+    if not isinstance(pack_id, str) or not isinstance(kind, str) or not kind or not isinstance(element_id, str) or not element_id:
+        return False
+    if "revision" in value and value["revision"] is not None and not isinstance(value["revision"], str):
+        return False
+    if "pinned" in value and not isinstance(value["pinned"], bool):
+        return False
+    if pack_id:
+        return True
+    return allow_unresolved_unpinned and value.get("pinned") is False
 # Fail-closed prototype caps; these are not certified discovery workload sizes.
 DISCOVERY_GRANT_CEILINGS = {
     "max_discovery_rows": 750,
@@ -1936,6 +1951,334 @@ class RuntimeService:
             resource, project_id=project["id"], event_ids=(event_id,),
             primary_stream_id=timeline_id, resulting_stream_seq=event_seq,
         )
+
+    @staticmethod
+    def _import_key(key, operation, identity=""):
+        """A bounded, collision-resistant child key for one import command."""
+        digest = hashlib.sha256(canonical_json([key, operation, identity]).encode()).hexdigest()
+        return f"import-{digest}"
+
+    def _load_prepared_import(self, project_id, body):
+        inline = "prepared_object_id" not in body
+        if inline:
+            return copy.deepcopy(body)
+        if set(body) != {"prepared_object_id"}:
+            raise ValidationError("prepared_object_id cannot be combined with inline import fields")
+        object_id = body.get("prepared_object_id")
+        if not isinstance(object_id, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", object_id):
+            raise ValidationError("prepared_object_id must be a SHA-256 object id")
+        digest = object_id.removeprefix("sha256:")
+        row = self.store.conn.execute(
+            "SELECT o.size FROM objects o JOIN project_objects po ON po.digest=o.digest "
+            "WHERE o.digest=? AND po.project_id=? AND po.relation='managed'",
+            (digest, project_id),
+        ).fetchone()
+        if row is None:
+            raise NotFoundError("prepared import object is not managed by the target project", details={"object_id": object_id})
+        if int(row["size"]) > 64 * 1024 * 1024:
+            raise ValidationError("prepared import metadata exceeds 64 MiB", details={"object_id": object_id, "size": int(row["size"])})
+        data = self.cas.read(digest)
+        if len(data) != int(row["size"]) or sha256_bytes(data) != digest:
+            raise ConflictError("prepared import object failed integrity verification", details={"object_id": object_id})
+        try:
+            value = json.loads(data.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValidationError("prepared import object must contain UTF-8 JSON") from exc
+        if not isinstance(value, dict):
+            raise ValidationError("prepared import object must contain a JSON object")
+        return value
+
+    @staticmethod
+    def _import_transcript_refs(value):
+        """Read only the document IDs in transcriptReferences association records."""
+        found = set()
+        if isinstance(value, dict):
+            if "transcriptReferences" in value:
+                references = value["transcriptReferences"]
+                if not isinstance(references, dict) or not isinstance(references.get("associations"), list):
+                    raise ValidationError("transcriptReferences must contain an associations list")
+                for item in references["associations"]:
+                    if not isinstance(item, dict) or not isinstance(item.get("documentId"), str) or not item["documentId"]:
+                        raise ValidationError("every transcript association requires a documentId")
+                    found.add(item["documentId"])
+            for child in value.values():
+                found.update(RuntimeService._import_transcript_refs(child))
+        elif isinstance(value, list):
+            for child in value:
+                found.update(RuntimeService._import_transcript_refs(child))
+        return found
+
+    @_durable_mutation
+    def import_timeline(self, project_id, body, *, idempotency_key=None):
+        """Create, populate and receipt one imported timeline in one SQL transaction."""
+        idempotency_key = require_idempotency_key(idempotency_key)
+        self._require_object_body(body)
+        project = self.store.get_project(project_id)
+        prepared = self._load_prepared_import(project["id"], body)
+        allowed = {"timeline_id", "name", "publication", "transcripts", "text_bindings", "differences"}
+        if set(prepared) != allowed:
+            raise ValidationError("import requires timeline_id, name, publication, transcripts, text_bindings, and differences")
+        timeline_id, name = prepared["timeline_id"], prepared["name"]
+        if not isinstance(timeline_id, str) or not timeline_id or len(timeline_id) > 256:
+            raise ValidationError("timeline_id must be a non-empty identity")
+        name = self._timeline_name(name)
+        publication = prepared["publication"]
+        if not isinstance(publication, dict) or publication.get("project_id") != project["id"] or publication.get("timeline_id") != timeline_id or publication.get("expected_head", object()) is not None:
+            raise ValidationError("import publication must target this project and timeline with expected_head null")
+        differences = prepared["differences"]
+        if (not isinstance(differences, dict)
+                or set(differences) != {"missing_effects", "different_effects"}
+                or not isinstance(differences["missing_effects"], list)
+                or not isinstance(differences["different_effects"], list)
+                or any(not _valid_import_effect_difference(value, allow_unresolved_unpinned=True)
+                       for value in differences["missing_effects"])
+                or any(not _valid_import_effect_difference(value)
+                       for value in differences["different_effects"])):
+            raise ValidationError("differences must contain missing_effects and different_effects lists")
+        transcripts, text_bindings = prepared["transcripts"], prepared["text_bindings"]
+        if not isinstance(transcripts, list) or not isinstance(text_bindings, list):
+            raise ValidationError("transcripts and text_bindings must be lists")
+        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "prepared": prepared}).encode()).hexdigest()
+        replay = self._command_replay("timeline.import", project["id"], idempotency_key, request_hash, project_id=project["id"])
+        if replay is not None:
+            return replay
+        prior_key = self.store.conn.execute("SELECT request_hash FROM command_idempotency WHERE command_kind='timeline.import' AND idempotency_key=? LIMIT 1", (idempotency_key,)).fetchone()
+        if prior_key:
+            raise ConflictError("idempotency key was already used with different input")
+        internal_key_source = project["id"] + ":" + idempotency_key
+        if self.store.conn.execute("SELECT 1 FROM timelines WHERE id=?", (timeline_id,)).fetchone():
+            raise ConflictError("timeline already exists", details={"timeline_id": timeline_id})
+        if publication.get("expected_head") is not None:
+            raise ValidationError("import publication expected_head must be null")
+        internal = publication.get("internal_timeline_revisions")
+        shots = publication.get("shot_revisions")
+        parent = publication.get("parent_composition")
+        if not isinstance(internal, list) or not isinstance(shots, list) or not isinstance(parent, dict):
+            raise ValidationError("publication requires internal_timeline_revisions, shot_revisions, and parent_composition")
+        if any(not isinstance(item, dict) or not isinstance(item.get("timeline_id"), str)
+               or item.get("timeline_id") != timeline_id for item in internal):
+            raise ValidationError("all imported internal timeline revisions must belong to the new timeline")
+        occurrences = parent.get("occurrences")
+        if not isinstance(occurrences, list):
+            raise ValidationError("parent composition occurrences must be a list")
+        shot_by_id = {}
+        shot_revision_ids = set()
+        for item in shots:
+            if (not isinstance(item, dict)
+                    or not isinstance(item.get("shot_id"), str) or not item.get("shot_id")
+                    or not isinstance(item.get("revision_id"), str) or not item.get("revision_id")
+                    or not isinstance(item.get("internal_timeline_revision_id"), str)
+                    or not item.get("internal_timeline_revision_id")
+                    or not isinstance(item.get("content_digest"), str) or not item.get("content_digest")):
+                raise ValidationError("every imported shot revision needs shot_id and revision_id")
+            if item["shot_id"] in shot_by_id:
+                raise ValidationError("import contains duplicate shot revisions for one fresh shot")
+            if item["revision_id"] in shot_revision_ids:
+                raise ValidationError("import contains duplicate shot revision identities")
+            shot_revision_ids.add(item["revision_id"])
+            shot_by_id[item["shot_id"]] = item
+            if self.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (item["shot_id"],)).fetchone():
+                raise ConflictError("imported shot identity is already in use", details={"shot_id": item["shot_id"]})
+            if self.store.conn.execute("SELECT 1 FROM shot_revisions WHERE id=?", (item["revision_id"],)).fetchone():
+                raise ConflictError("imported shot revision identity is already in use", details={"revision_id": item["revision_id"]})
+        if any(not isinstance(item, dict) for item in internal):
+            raise ValidationError("every imported internal revision needs a unique revision_id")
+        if any(not isinstance(item.get("revision_id"), str) or not item.get("revision_id") for item in internal):
+            raise ValidationError("every imported internal revision needs a unique revision_id")
+        if any(not isinstance(item.get("content_digest"), str) or not item.get("content_digest") for item in internal):
+            raise ValidationError("every imported internal revision needs a non-empty content_digest")
+        internal_by_id = {item["revision_id"]: item for item in internal}
+        if len(internal_by_id) != len(internal):
+            raise ValidationError("every imported internal revision needs a unique revision_id")
+        referenced_shots = set()
+        occurrence_ids = set()
+        for occurrence in occurrences:
+            if not isinstance(occurrence, dict):
+                raise ValidationError("every imported occurrence must reference a copied shot revision")
+            occurrence_shot_id = occurrence.get("shot_id")
+            if not isinstance(occurrence_shot_id, str) or not occurrence_shot_id:
+                raise ValidationError("import occurrence shot_id must be a non-empty identity")
+            if occurrence_shot_id not in shot_by_id:
+                raise ValidationError("every imported occurrence must reference a copied shot revision")
+            occurrence_id = occurrence.get("occurrence_id")
+            if not isinstance(occurrence_id, str) or not occurrence_id or occurrence_id in occurrence_ids:
+                raise ValidationError("import contains a missing or duplicate occurrence identity")
+            occurrence_ids.add(occurrence_id)
+            shot_id = occurrence["shot_id"]
+            shot = shot_by_id[shot_id]
+            occurrence_revision_id = occurrence.get("shot_revision_id")
+            if not isinstance(occurrence_revision_id, str) or not occurrence_revision_id:
+                raise ValidationError("import occurrence shot_revision_id must be a non-empty identity")
+            if occurrence_revision_id != shot["revision_id"]:
+                raise ValidationError("import occurrence shot revision does not match its copied shot")
+            if shot.get("internal_timeline_revision_id") not in internal_by_id:
+                raise ValidationError("every imported shot must include its copied internal timeline revision")
+            referenced_shots.add(shot_id)
+        if referenced_shots != set(shot_by_id):
+            raise ValidationError("import publication contains unreferenced copied shots")
+        for item in internal:
+            revision_id = item["revision_id"]
+            if self.store.conn.execute("SELECT 1 FROM internal_timeline_revisions WHERE id=?", (revision_id,)).fetchone():
+                raise ConflictError("imported internal revision identity is already in use", details={"revision_id": revision_id})
+        for item in shots:
+            if item.get("internal_timeline_revision_id") not in internal_by_id:
+                raise ValidationError("imported shot references a missing copied internal revision")
+
+        # Validate transcript identities and references before any write. The normal document validator
+        # repeats schema, UTF-8, media ownership and bounds checks inside create_document.
+        transcript_map = {}
+        for item in transcripts:
+            if not isinstance(item, dict) or set(item) != {"document_id", "kind", "content"} or item.get("kind") != TRANSCRIPT_DOCUMENT_KIND:
+                raise ValidationError("imported transcript documents must have document_id, kind, and content")
+            content = item["content"]
+            if not isinstance(content, dict) or content.get("schema") != TRANSCRIPT_DOCUMENT_SCHEMA:
+                raise ValidationError("imported transcript has an unsupported schema")
+            wanted = self._transcript_document_id(project["id"], content.get("media_id"), content.get("source_id"))
+            if item["document_id"] != wanted or wanted in transcript_map:
+                raise ValidationError("imported transcript document identity is invalid or duplicated", details={"document_id": item["document_id"]})
+            transcript_map[wanted] = item
+        # A transcript reference may live in a parent config bundle, an envelope,
+        # or a copied child payload. Resolve the whole immutable publication
+        # closure so no source-project document ID can survive in a nested config.
+        refs = self._import_transcript_refs({
+            "parent": parent,
+            "shots": [item.get("payload", {}) for item in shots],
+            "internal_timelines": [item.get("payload", {}) for item in internal],
+        })
+        if not refs.issubset(transcript_map):
+            raise ValidationError("transcript references must resolve to a carried transcript", details={"document_ids": sorted(refs - set(transcript_map))})
+
+        # The publication manifest must be exactly the copied parent/shot/internal media closure.
+        expected_media = set(self._collect_digest_media(parent))
+        expected_media.update(self._collect_digest_media([item.get("payload", {}) for item in shots]))
+        expected_media.update(self._collect_digest_media([item.get("payload", {}) for item in internal]))
+        manifest = publication.get("dependency_manifest")
+        if not isinstance(manifest, dict) or not isinstance(manifest.get("media"), list):
+            raise ValidationError("publication dependency_manifest.media must be a list")
+        checked_media = self._validate_media_dependencies(project["id"], {"media": manifest["media"]})
+        if len(checked_media) != len(manifest["media"]):
+            raise ValidationError("publication media manifest contains duplicate media identities")
+        supplied_media = {item["media_id"] for item in checked_media}
+        if len(supplied_media) != len(checked_media) or supplied_media != expected_media:
+            raise ValidationError("publication media manifest does not match the copied payload closure", details={"missing": sorted(expected_media - supplied_media), "extra": sorted(supplied_media - expected_media)})
+        expected_shot_manifest = {(item["shot_id"], item["revision_id"], item["internal_timeline_revision_id"], item.get("content_digest")) for item in shots}
+        manifest_shots = manifest.get("shots")
+        manifest_internal = manifest.get("internal_timelines")
+        if not isinstance(manifest_shots, list) or not isinstance(manifest_internal, list):
+            raise ValidationError("publication dependency manifest requires shots and internal_timelines lists")
+        shot_manifest_fields = ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest")
+        if any(not isinstance(item, dict) or any(not isinstance(item.get(field), str) or not item[field] for field in shot_manifest_fields)
+               for item in manifest_shots):
+            raise ValidationError("publication dependency manifest shot identities must be non-empty strings")
+        supplied_shot_manifest = {tuple(item[field] for field in shot_manifest_fields) for item in manifest_shots}
+        expected_internal_manifest = {(item["timeline_id"], item["revision_id"], item.get("content_digest")) for item in internal}
+        internal_manifest_fields = ("timeline_id", "revision_id", "content_digest")
+        if any(not isinstance(item, dict) or any(not isinstance(item.get(field), str) or not item[field] for field in internal_manifest_fields)
+               for item in manifest_internal):
+            raise ValidationError("publication dependency manifest internal timeline identities must be non-empty strings")
+        supplied_internal_manifest = {tuple(item[field] for field in internal_manifest_fields) for item in manifest_internal}
+        if (len(supplied_shot_manifest) != len(manifest_shots) or len(supplied_internal_manifest) != len(manifest_internal)
+                or supplied_shot_manifest != expected_shot_manifest or supplied_internal_manifest != expected_internal_manifest):
+            raise ValidationError("publication dependency manifest does not match the copied child revisions")
+
+        declared_bindings = set()
+        declared_natural = set()
+        for item in text_bindings:
+            if not isinstance(item, dict) or set(item) - {"shot_id", "kind", "slot", "media_id"} or not {"shot_id", "kind", "media_id"}.issubset(item):
+                raise ValidationError("text bindings require shot_id, kind, and media_id")
+            if not isinstance(item["shot_id"], str) or not item["shot_id"]:
+                raise ValidationError("text binding shot_id must be a non-empty identity")
+            if not isinstance(item["kind"], str) or not item["kind"]:
+                raise ValidationError("text binding kind must be a non-empty identity")
+            if item["shot_id"] not in shot_by_id or item["kind"] not in TEXT_BINDING_KINDS:
+                raise ValidationError("text binding must target an imported shot and supported kind")
+            if item.get("slot") is not None and (not isinstance(item["slot"], str) or not item["slot"]):
+                raise ValidationError("text binding slot must be a non-empty string or null")
+            if not isinstance(item["media_id"], str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", item["media_id"]):
+                raise ValidationError("text binding media_id must be a canonical SHA-256 object id")
+            key = (item["shot_id"], item["kind"], item.get("slot"), item["media_id"])
+            natural = key[:3]
+            if natural in declared_natural:
+                raise ValidationError("import contains duplicate text binding declarations", details={"shot_id": item["shot_id"], "kind": item["kind"], "slot": item.get("slot")})
+            declared_bindings.add(key)
+            declared_natural.add(natural)
+            digest = item["media_id"].removeprefix("sha256:")
+            self._verify_text_object(project["id"], digest, candidate=True)
+        payload_bindings = set()
+        payload_natural = set()
+        for shot_id, item in shot_by_id.items():
+            payload = item.get("payload")
+            if not isinstance(payload, dict) or not isinstance(payload.get("text_bindings", []), list):
+                raise ValidationError("copied shot text_bindings must be a list", details={"shot_id": shot_id})
+            for descriptor in payload.get("text_bindings", []):
+                if not isinstance(descriptor, dict):
+                    raise ValidationError("copied text binding descriptor must be an object", details={"shot_id": shot_id})
+                if (not isinstance(descriptor.get("kind"), str) or not descriptor.get("kind")
+                        or descriptor.get("kind") not in TEXT_BINDING_KINDS
+                        or (descriptor.get("slot") is not None and (not isinstance(descriptor.get("slot"), str) or not descriptor.get("slot")))
+                        or not isinstance(descriptor.get("media_id"), str)
+                        or not re.fullmatch(r"sha256:[0-9a-f]{64}", descriptor["media_id"])):
+                    raise ValidationError("copied text binding descriptor has invalid identity or media", details={"shot_id": shot_id})
+                key = (shot_id, descriptor.get("kind"), descriptor.get("slot"), descriptor.get("media_id"))
+                natural = key[:3]
+                if natural in payload_natural:
+                    raise ValidationError("copied shot contains duplicate text binding descriptors", details={"shot_id": shot_id})
+                payload_bindings.add(key)
+                payload_natural.add(natural)
+        if payload_bindings != declared_bindings:
+            raise ValidationError("text binding declarations do not match the copied shot pins", details={"missing_declarations": [list(x) for x in sorted(payload_bindings - declared_bindings, key=str)], "extra_declarations": [list(x) for x in sorted(declared_bindings - payload_bindings, key=str)]})
+        referenced_internal = {item.get("internal_timeline_revision_id") for item in shots}
+        if referenced_internal != set(internal_by_id):
+            raise ValidationError("publication internal timelines must exactly match the copied shot closure")
+
+        # Validate every transcript even when it will be reused or reported as a conflict.
+        for item in transcript_map.values():
+            self._validate_project_document(project["id"], item["document_id"], item["kind"], item["content"])
+
+        create = self.create_timeline(project["id"], timeline_id, name=name, idempotency_key=self._import_key(internal_key_source, "create", timeline_id))
+        if isinstance(create, dict) and create.get("error"):
+            raise ConflictError("could not create imported timeline", details=create["error"])
+        # Create only the target projections needed by binding registration. The canonical
+        # publication below installs the copied immutable shot heads and projection contents.
+        for shot_id, item in shot_by_id.items():
+            payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+            self._apply_published_shot_projection(project["id"], {"shot_id": shot_id, "payload": payload}, now())
+        binding_events = []
+        for item in text_bindings:
+            digest = str(item["media_id"]).removeprefix("sha256:")
+            text = self.cas.read(digest).decode("utf-8")
+            result = self.set_project_shot_text_binding(project["id"], {"shot_id": item["shot_id"], "kind": item["kind"], "slot": item.get("slot"), "expected_head": 0, "text": text}, idempotency_key=self._import_key(internal_key_source, "binding", item["shot_id"] + ":" + item["kind"] + ":" + str(item.get("slot"))))
+            data = result.get("data", result) if isinstance(result, dict) else {}
+            descriptor = next((pin for pin in shot_by_id[item["shot_id"]]["payload"].get("text_bindings", []) if pin.get("kind") == item["kind"] and pin.get("slot") == item.get("slot")), None)
+            fields = ("binding_id", "head", "media_id", "content_hash", "byte_size", "mime_type", "kind", "slot")
+            optional_fields = ("project_id", "shot_id", "event_stream_id")
+            if (not isinstance(data, dict) or not isinstance(descriptor, dict)
+                    or any(field not in descriptor or descriptor.get(field) != data.get(field) for field in fields)
+                    or any(field in descriptor and descriptor.get(field) != data.get(field) for field in optional_fields)):
+                raise ConflictError("registered text binding differs from prepared text object", details={"shot_id": item["shot_id"]})
+            binding_events.extend(result.get("receipt", {}).get("event_ids", []) if isinstance(result, dict) else [])
+
+        # Conflicting target transcript content is preserved and reported; identical content is reused.
+        transcript_conflicts = []
+        transcript_events = []
+        for document_id, item in transcript_map.items():
+            existing = self.store.conn.execute("SELECT kind, content_json FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
+            if existing:
+                if existing["kind"] == item["kind"] and json.loads(existing["content_json"]) == item["content"]:
+                    continue
+                content = item["content"]
+                transcript_conflicts.append({"document_id": document_id, "media_id": content.get("media_id"), "source_id": content.get("source_id"), "message": "target project already has different transcript content"})
+                continue
+            created_doc = self.create_document(project["id"], item, idempotency_key=self._import_key(internal_key_source, "transcript", document_id))
+            transcript_events.extend(created_doc.get("receipt", {}).get("event_ids", []) if isinstance(created_doc, dict) else [])
+
+        # Publish the prepared immutable payload exactly as compiled by A; normal
+        # publication validates the newly registered pins and copied digest set.
+        publish = self.publish_parent_composition(project["id"], timeline_id, publication, idempotency_key=self._import_key(internal_key_source, "publish", timeline_id))
+        data = publish.get("data", publish) if isinstance(publish, dict) else {}
+        receipt = {"timeline_id": timeline_id, "name": name, "new_head": data.get("new_head"), "media": {"count": len(checked_media), "bytes": sum(int(self.store.conn.execute("SELECT size FROM objects WHERE digest=?", (item["media_id"].removeprefix("sha256:"),)).fetchone()["size"]) for item in checked_media)}, "missing_effects": prepared["differences"]["missing_effects"], "different_effects": prepared["differences"]["different_effects"], "transcript_conflicts": transcript_conflicts}
+        event_ids = binding_events + transcript_events + (publish.get("receipt", {}).get("event_ids", []) if isinstance(publish, dict) else [])
+        return self._command_record("timeline.import", project["id"], idempotency_key, request_hash, receipt, project_id=project["id"], event_ids=event_ids, primary_stream_id=timeline_id)
 
     @_durable_mutation
     def create_timeline_document(self, project_id, body, *, idempotency_key=None):
