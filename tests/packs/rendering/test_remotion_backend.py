@@ -32,9 +32,9 @@ from astrid.core.rendering.contracts import (
     SupportReport,
 )
 from astrid.core.rendering.transport import CommandTransport
-from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 from astrid.packs.rendering.actions.render import run as facade
 from astrid.packs.rendering.actions.render.run import render
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 from tests.packs.rendering._helpers import _execution_env, _probe
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -66,8 +66,16 @@ def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         "_probe_node",
         lambda node_executable, *, cwd: ("v20.19.4", None),
     )
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", _available_runtime_status)
+    old_project = os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
     with _execution_env():
-        yield
+        try:
+            yield
+        finally:
+            if old_project is None:
+                os.environ.pop("ASTRID_REMOTION_PROJECT_DIR", None)
+            else:
+                os.environ["ASTRID_REMOTION_PROJECT_DIR"] = old_project
 
 
 
@@ -101,12 +109,30 @@ def _write_project(tmp_path: Path) -> Path:
         "timeline-schema",
         "timeline-theme-2rp",
     ):
-        (packages / package).mkdir(parents=True)
+        package_dir = packages / package
+        package_dir.mkdir(parents=True)
+        if package in {"timeline-schema", "timeline-theme-2rp"}:
+            (package_dir / "package.json").write_text("{}\n", encoding="utf-8")
     (project / "package.json").write_text("{}\n", encoding="utf-8")
     cli = project / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
     cli.parent.mkdir(parents=True)
     cli.write_text("// locked test CLI\n", encoding="utf-8")
+    os.environ["ASTRID_REMOTION_PROJECT_DIR"] = str(project)
     return project
+
+
+def _available_runtime_status():
+    project = Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"]).resolve()
+    node, reason = remotion_runtime._configured_node_executable()
+    if reason or node is None:
+        return remotion_runtime.RemotionRuntimeStatus(False, project, reason)
+    return remotion_runtime.RemotionRuntimeStatus(
+        True,
+        project,
+        node_executable=node,
+        node_version="v20.19.4",
+        remotion_cli=(project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH).resolve(),
+    )
 
 
 def _request(
@@ -342,11 +368,6 @@ def test_remotion_review_uses_native_scale_flag(tmp_path: Path) -> None:
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     with (
-        # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(
             remotion,
@@ -776,16 +797,9 @@ def test_audio_ownership_enum_remains_protocol_value() -> None:
 
 class RemotionBackendRegistryGenerationTest(unittest.TestCase):
     def setUp(self) -> None:
-        # These tests mock Remotion itself and exercise standalone registry
-        # generation/provenance. Supply an explicit fake validated tool tuple;
-        # they do not claim an owned launch-readiness transaction.
-        def fake_tools(project: Path):
-            node, error = remotion_runtime._configured_node_executable()
-            if error:
-                return None, error
-            return remotion_runtime.RemotionRuntimeTools(
-                node, 'v20.19.4', project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH), None
-        patch = mock.patch.object(render_remotion, 'resolve_remotion_runtime_tools', side_effect=fake_tools)
+        patch = mock.patch.object(
+            remotion_runtime, "remotion_runtime_status", _available_runtime_status
+        )
         patch.start()
         self.addCleanup(patch.stop)
 
@@ -827,11 +841,14 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         # _validate_project_dir requires all three @banodoco adapter packages
         # (see docs/reference/render-adapter.md).  Create stub directories for the other two.
         (banodoco_root / "timeline-schema").mkdir(parents=True)
+        (banodoco_root / "timeline-schema" / "package.json").write_text("{}\n", encoding="utf-8")
         (banodoco_root / "timeline-theme-2rp").mkdir(parents=True)
+        (banodoco_root / "timeline-theme-2rp" / "package.json").write_text("{}\n", encoding="utf-8")
         (project_dir / "package.json").write_text('{"scripts":{}}\n', encoding="utf-8")
         cli = project_dir / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
         cli.parent.mkdir(parents=True)
         cli.write_text("// locked test CLI\n", encoding="utf-8")
+        os.environ["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir)
         return project_dir, composition_src
 
     def _write_effect_definition(self, tmp: Path, effect_id: str, asset_text: str) -> ElementDefinition:
@@ -1103,6 +1120,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     render_remotion.os.environ,
                     {
                         "HOME": str(tmp / "home"),
+                        "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
                         "ASTRID_NODE_EXECUTABLE": os.environ[
                             "ASTRID_NODE_EXECUTABLE"
                         ]
@@ -1399,6 +1417,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 "PATH": "/usr/bin:/bin",
                 "ASTRID_TASK_RUN_ID": "task-run-9",
                 "ASTRID_ACTOR": "human:peter",
+                "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
                 "ASTRID_NODE_EXECUTABLE": render_remotion.os.environ[
                     "ASTRID_NODE_EXECUTABLE"
                 ],
@@ -1659,11 +1678,6 @@ def test_pcm_aac_capture_is_invocation_scoped_and_keeps_alpha_and_default_paths(
 
     with (
         mock.patch.dict(os.environ, {"ASTRID_REMOTION_PCM_AAC_OUTPUT": "/ambient/unrelated.mov"}),
-        # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(remotion, "_effective_registry_state", return_value={"version": 1, "hash": "test"}),
         mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
@@ -1723,11 +1737,6 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
         suffix = ".mov" if timeline_path == alpha_timeline else ".mp4"
         output_path = tmp_path / f"{Path(timeline_path).stem}{suffix}"
         with (
-            # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
             mock.patch.object(remotion, "_regenerate_element_registries"),
             mock.patch.object(
@@ -1883,7 +1892,10 @@ def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
 
 
 def test_frame_progress_relay_publishes_bound_attempt_and_keeps_codec_stages(tmp_path):
-    from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay, parse_progress_line
+    from astrid.packs.rendering.rendering.renderers.remotion.progress import (
+        RemotionProgressRelay,
+        parse_progress_line,
+    )
     log = tmp_path / "frames.log"; progress = tmp_path / ".astrid-progress.json"
     log.write_text("Rendered 2/4, time remaining: 2s\nEncoded 1/4\n")
     relay = RemotionProgressRelay(log, progress_path=progress)

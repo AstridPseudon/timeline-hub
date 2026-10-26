@@ -12,6 +12,7 @@ import pytest
 
 from astrid.core.rendering import remotion_runtime as runtime
 from astrid.core.subprocess_env import build_child_subprocess_env
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 
 
 @pytest.fixture
@@ -113,6 +114,61 @@ def test_foreign_schema_origin_is_unavailable(installed_runtime, monkeypatch, or
     monkeypatch.setattr(runtime, "_owned_probe", owned)
     status = runtime.remotion_runtime_status(require_explicit_project=True)
     assert not status.available and "origin escaped trusted root" in status.reason
+
+
+def test_filmstrip_backend_requires_schema_origin_before_registry_or_render(
+    installed_runtime, monkeypatch, tmp_path
+):
+    world = installed_runtime
+    launched = []
+
+    def owned(argv, **kwargs):
+        if argv[-1] == "--version":
+            return subprocess.CompletedProcess(argv, 0, "v20.19.4\n", ""), {}
+        return subprocess.CompletedProcess(
+            argv, 0, "/foreign/banodoco_timeline_schema/__init__.py\n", ""
+        ), {}
+
+    monkeypatch.setattr(runtime, "_owned_probe", owned)
+    monkeypatch.setattr(
+        remotion_run,
+        "_regenerate_element_registries",
+        lambda *args: launched.append("registry regeneration"),
+    )
+
+    with pytest.raises(FileNotFoundError, match="origin escaped trusted root"):
+        remotion_run.capture_remotion_frames(
+            tmp_path / "timeline.json",
+            tmp_path / "assets.json",
+            tmp_path / "frames",
+            [0],
+            project_dir=world.project,
+        )
+    assert launched == []
+
+
+def test_filmstrip_backend_accepts_good_schema_for_selected_server_project(
+    installed_runtime, monkeypatch, tmp_path
+):
+    world = installed_runtime
+
+    class ReachedRegistry(Exception):
+        pass
+
+    def stop_after_runtime_validation(*_args):
+        raise ReachedRegistry
+
+    monkeypatch.setattr(
+        remotion_run, "_regenerate_element_registries", stop_after_runtime_validation
+    )
+    with pytest.raises(ReachedRegistry):
+        remotion_run.capture_remotion_frames(
+            tmp_path / "timeline.json",
+            tmp_path / "assets.json",
+            tmp_path / "frames",
+            [0],
+            project_dir=world.project,
+        )
 
 
 @pytest.mark.parametrize("failure", [OSError("unreadable runtime"), RuntimeError("probe cleanup unproved"), subprocess.TimeoutExpired("node", 5)])

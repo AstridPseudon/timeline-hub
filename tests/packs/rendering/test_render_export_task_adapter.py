@@ -16,7 +16,6 @@ from typing import Any
 
 import pytest
 
-
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.remotion_runtime import (
@@ -26,7 +25,6 @@ from astrid.core.rendering.remotion_runtime import (
     remotion_runtime_status,
     resolve_remotion_runtime_tools,
 )
-from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 from astrid.packs.rendering.actions.render import task_adapter as task_adapter_module
 from astrid.packs.rendering.actions.render.task_adapter import (
     RenderExportExecutionContext,
@@ -34,6 +32,7 @@ from astrid.packs.rendering.actions.render.task_adapter import (
     RenderExportTaskAdapter,
     execute_render_export_task,
 )
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 from astrid.sdk import workspace_client
 from astrid.sdk.workspace_client import WorkspaceClient
 
@@ -172,6 +171,19 @@ def test_media_timeline_selects_ffmpeg_without_remotion_configuration(
         "semantic_role": "render",
         "selector": "rendering.ffmpeg",
     }
+
+
+@pytest.mark.parametrize("name", ["project_dir", "backend_config"])
+def test_task_cannot_select_remotion_project_or_backend(
+    tmp_path: Path, name: str
+) -> None:
+    task = _task(root=tmp_path)
+    params = dict(task.spec["params"])
+    params[name] = "/caller/selected/remotion"
+    task.spec = {**task.spec, "params": params}
+
+    with pytest.raises(RenderExportRefused, match=f"server-owned parameter.*{name}"):
+        execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
 
 
 def test_renderer_inputs_are_inode_isolated_and_cleaned(
