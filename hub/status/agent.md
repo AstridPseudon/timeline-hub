@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:15:10Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
-# agent board, 2026-10-26T02:15Z
+<!-- agent | 2026-10-26T02:19:00Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
+# agent board, 2026-10-26T02:18:18Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -17,9 +17,9 @@
 | D141 pristine command | Run plain17 upstream-present roots | Sol and Luna | Independent0030 PASS | merged | Sol0019; reviewer0030 | Exact0710897c command qualified with operational controls. No D73 or child build for pristine. | 0710897c87 |
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
-| D141 notes template | Prepare failure notes for later Farm join | Luna | MAIN02:11:57 recorded order | doing | agt-F-D141-nonreg-notes-template-0213 | Source and evidence only; all370 IDs and52 roots, pristine3255 outcomes. Cut outcomes and verdicts stay pending. | Evidence only |
+| D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 check | review | Author0213; reviewer0217 | Author retains370 unique IDs and52 roots, exact pristine3255 outcomes. All cut outcomes and verdicts pending; source presence unknown where unproved. | Evidence only |
 | D141 REG join | Compare Farm cut and pristine per ID | Farm and Runtime | Farm cut XML and conditional reruns | blocked:farm | Existing Runtime REG coordinator | Only pristine bad nodes also failing cut need matching-kind rerun. No Agent body or REG verdict. | Pending Farm |
-| D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Census0140; lead packet0150 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
+| D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Farm census0140; Runtime0201 and0208 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
 | P4 JUnit source | Bind one durable proof destination | Luna | Independent0124 PASS | merged | Author0119; wholepath0119; review0124 | Only normal manifest junit_paths changed. Manifest95f5ce and row630bb exact; guards and original selectors conserved. | 271095 source |
 | P4 service admission | Retain superseded private source | Luna | MAIN shortcut cancels change | gated:superseded | Author0136; reviewer0139 ended | Source and12 controls PASS retained. No installation; Runtime0146 cancellation ordered by MAIN. Live0be17b unchanged. | 6c00 held |
@@ -39,11 +39,11 @@ Integration: FROZEN Agent28e56cacb42d3da85b02e5b3543895b44f3d0f70, tree2ebe2ddf5
 
 Core open: 370 measured (D134, measurement-only), ship-grade pending. Raw18455:8926 PASS190 FAIL180 ERROR,173 subtests PASS,1379.05s. Independent1937 final custody FAIL; XML/full disk witness missing. Source2029 classification:344 own=132 setup,0 proved product,212 UNKNOWN;14 host UNVERIFIED,other12 UNKNOWN. No edit deducts counts.
 
-Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY with22 non-pass checks. Existing lead/Runtime packet0150 owns receiving artifacts. No child/core body.
+Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY with22 non-pass checks. Runtime0201 source and0208 review own the producer map; actual Farm artifact receipt remains owed. No child/core body.
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Notes0213 -> independent review -> Runtime notes handoff; App cumulative receipt verdict. live1 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: Independent notes0217 -> Runtime notes handoff; App cumulative receipt verdict. live1 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -66,3 +66,5 @@ Pass02:10Z: Late Runtime015226 cancellation peer consumed and applied: source014
 Pass02:11Z: Maintenance terminal exit0; no eligible source worktree. Queued19479 why file has disk-only floor5000000000; lead/Runtime queue-owner peer sent to enforce recorded no-second-body rule if cleanup clears admission. No manager queue edit, release, kit change or manual cancellation.
 
 Pass02:15Z: MAIN02:11:57 says P4 cleanly done via receipt and authorizes ONE Luna ZIP-notes template now. Dispatched0213 immediately, source/evidence only; historical370 unique and52 disjoint roots plus exact pristine table, no cut status or verdict inferred. All173 aggregate subtest identities stay null. One independent documentary review follows; no body/test/root-cause work. Farm receiving-owner peer0211 asks existing Runtime coordinator for exact artifact worker and any finite Agent SAFE input.
+
+Pass02:18Z: Notes author0213 terminal exit0; five absolute artifacts exist. Own documentary validation370/52 and3082+173 conservation PASS; no body or join. Dispatched independent Luna0217 at once on same branch. Source-presence unknowns and all pending cut verdicts stay explicit; no source merge needed for evidence-only deliverables.
