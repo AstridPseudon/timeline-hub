@@ -1,0 +1,99 @@
+{
+  "schema": "timeline.d141.notes-placement-source-manifest/v1",
+  "task": "rt-F-D141-placement-note-review-0258",
+  "review_scope": "Read-only receipt verification against actualnotesinstallation0254.",
+  "composition": {
+    "worktree": "/home/user/work/wt/rt-F-D141-placement-note-review-0258",
+    "ref": "tl/integration",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "head_equals_ref": true,
+    "status_porcelain": ""
+  },
+  "source": {
+    "path": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-local-return-0235-zip-note.md",
+    "sha256": "0062e01cff576daa736bf11f3fe01733535e4fb93e3a2bdb3a0fc79d5d0e66be",
+    "source_manifest": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-local-return-0235-source-manifest.json",
+    "source_manifest_sha256": "b84b06ec169ab3ab9a08a49b1a0a7b3a6f7f54ea4dfd81c979b67cdc382a7196",
+    "validation": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-local-return-0235-validation.md",
+    "validation_sha256": "ce1470f32e21a27665d10a63d8c72431d697c52bc1fba806654e6591254125a2",
+    "handoff": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-local-return-0235-handoff.md",
+    "handoff_sha256": "2d2c5bcff999db5a071a7f473989d34712fb226616d0041df5d6472e95be49e9"
+  },
+  "prior_installation": {
+    "installation": "/home/user/timeline-hub/hub/design/rt-F-D141-App-note-install-0215-installation.json",
+    "installation_sha256": "4fa93951c60b3088d7a9e5041be1737ea6362d85bd6098406bcc5ab4aec97c31",
+    "source_manifest": "/home/user/timeline-hub/hub/design/rt-F-D141-App-note-install-0215-source-manifest.json",
+    "source_manifest_sha256": "676d7cab61be3f59fb139d94b5d8a2f52c7720d477655aa0c985e132052f84b7",
+    "required_posthashes": {
+      "README.template.md": "2cb99445661f9466864da05836e3188925c8c6320f7adf3d9c767e2c9b26319e",
+      "gate-results.md": "b50d138e697d90f7bc04f3171dbb21d12d223c41103aaa9790216daa0e424467"
+    },
+    "backup_paths": {
+      "README.template.md": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-placement-note-install-0254/evidence/backups/README.template.md",
+      "gate-results.md": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-placement-note-install-0254/evidence/backups/gate-results.md"
+    },
+    "backups_match_required_posthashes": true
+  },
+  "canonical_targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "readback_minus_note_matches_backup": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "readback_minus_note_matches_backup": true
+    }
+  },
+  "outside_inventory": {
+    "count": 568,
+    "sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "matches_prior_installation": true
+  },
+  "production_caller": {
+    "path": "/home/user/timeline-hub/hub/kit/bin/delivery-build",
+    "function": "render_readme",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_smoke": {
+      "status": "PASS",
+      "placeholders": 0,
+      "fence_lines": 16,
+      "balanced_fences": true,
+      "exact_note_occurrences": 2,
+      "swap_occurrences": 2,
+      "element_occurrences": 2
+    }
+  },
+  "app_binding": {
+    "commit": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+    "cut_tuple": "/home/user/timeline-hub/hub/design/D141-cut-tuple.md",
+    "cut_tuple_sha256": "171cda6293a5fd90cbbcbda208abbb1430edb3fd0f725623a88e9174038070a5",
+    "source_home": "/home/user/timeline-hub/hub/design/app-D141d-expectation-source-home-0251.json",
+    "source_home_receipt_sha256": "166d11920fe0257d4aa468959c1a0babe97ed71cb7b9e601efddd9693072583e",
+    "tree_prefix_recorded": "70ad390c56b0",
+    "tree_suffix_inferred": false
+  },
+  "reused_review": {
+    "review": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-final-review-0243-review.json",
+    "review_sha256": "613c15ade500474a5952f85adf7fd3a19eff057d68d71292a985c1d7943391e5",
+    "verdict": "PASS",
+    "new_policy_review": false,
+    "new_semantic_review": false
+  },
+  "policy": {
+    "absolute_evidence_only": true,
+    "no_source_authoring": true,
+    "no_hub_write": true,
+    "no_git_write": true,
+    "no_real_build_or_zip": true,
+    "no_inferred_gates": true
+  }
+}

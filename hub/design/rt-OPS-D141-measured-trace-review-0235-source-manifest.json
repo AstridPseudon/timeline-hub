@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-review.source-manifest.v1",
+  "task": "rt-OPS-D141-measured-trace-review-0235",
+  "candidate": {
+    "repo": "composition",
+    "worktree": "/home/user/work/wt/rt-OPS-D141-measured-trace-review-0235",
+    "commit": "159acdc84eb953f617697b753156dc69c787acf8",
+    "tree": "7b9a54111ada389c601363d91a1de8089ab92a8b",
+    "parent": "a3f26619fd9fd8398dc99e89ebde99c6da7a54a7",
+    "status": "clean",
+    "frozen_r4_ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+    "frozen_r4_commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a"
+  },
+  "candidate_files": {
+    "ops-d141-measured-floor/bin/test-run": "fce4d21976733fdd93b027075c85767e219bc27f50faf83d9ac769c4113c1b5f",
+    "ops-d141-measured-floor/controls/append-final.py": "67524e434a55cc221336de2b5ca1051ee1dae1ccad8ed32f453ee4a5f13a2671",
+    "ops-d141-measured-floor/controls/disk-trace.py": "e6f0747a908a6097cec71c10fb62bfd661ef2b3fa4891fd3b2f23aaa32575179",
+    "ops-d141-measured-floor/controls/real-controls.py": "9491f1e32b5160392e92db13390a5a3ce2b02a7ba4d82927621f73fa0b222aa4",
+    "ops-d141-measured-floor/controls/validate-receipt.py": "77250cae2efa02ba948d3a0cdf6439aa18b61255404c2e8ba8ed5bd25bfd02d8",
+    "ops-d141-measured-floor/controls/validate-trace.py": "a535869877130aebc39eb1171757613dd19f3c70ef1c5a3554b9dbd8f440fb27"
+  },
+  "normal_caller_files": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf": "0e8e74b787633867a8d5d7cbbc59d2fb0928431419563eaa594693823c839081"
+  },
+  "actual_ids": {
+    "held_8912": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+    "cancelled_p4_19479": "agent-p4-current-becfe-http-3legs-1026012948-19479",
+    "p5": "runtime-d141-p5-cut-1026013331-6934"
+  },
+  "supported_names": {
+    "targeted15": "full-d141-pristine-targeted15",
+    "p5": "d141-p5-cut",
+    "source_0223_shorthand_mismatch": "full-d141-targeted15"
+  },
+  "author_inputs": {
+    "targeted15_recipe": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-targeted15-return-0236/evidence/recipe.json",
+    "targeted15_recipe_sha256": "07ab52b2a725a0f658eae8e501371630c285850458e4ced9a6736ca68663f68d",
+    "targeted15_source_manifest_sha256": "db0740dd0f0ab9bd5eddbe54df58b3941fae3c748ae82b33126cca58b7b1d22c",
+    "approved_main_sha256": "c0dbdab3b5942f18f94224b6f4e74fee8b499654e5086f9d1d4ba14b98f5d23b",
+    "board_header_sha256": "db8853191a185f3017d8c0bcd983a382b0d0abe2a108548124c155e248f9523c"
+  },
+  "no_install_or_live_body": true
+}

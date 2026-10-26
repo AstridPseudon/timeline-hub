@@ -1,0 +1,85 @@
+{
+  "schema": "timeline.d141.notes-placement-review/v1",
+  "task": "rt-F-D141-placement-note-review-0258",
+  "status": "PASS",
+  "scope": "Finite receipt review only; no source authoring and no new policy or semantic review.",
+  "base": {
+    "repo": "composition",
+    "ref": "tl/integration",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "head_equals_tl_integration": true,
+    "worktree_clean": true
+  },
+  "source_note": {
+    "path": "/home/user/timeline-hub/hub/design/app-P2-D141-expectation-local-return-0235-zip-note.md",
+    "sha256": "0062e01cff576daa736bf11f3fe01733535e4fb93e3a2bdb3a0fc79d5d0e66be",
+    "bytes": 71,
+    "exact_bytes": "P2 placement expectation updated to the D124 materialization contract.\\n"
+  },
+  "targets": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "4a5678c66729e5a7e6f9c6966ce975c2844d134d062674536288e155a2738720",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "approved_a2_line_occurrences": 1,
+      "swap_paragraph_occurrences": 1,
+      "element_paragraph_occurrences": 1,
+      "backup_sha256": "2cb99445661f9466864da05836e3188925c8c6320f7adf3d9c767e2c9b26319e",
+      "readback_minus_inserted_line_matches_backup": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "3c2d4b00e5698cb6862a41adc42dbf4c1da53fc311ea939bea72bd385384f049",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "note_occurrences": 1,
+      "approved_a2_line_occurrences": 1,
+      "swap_paragraph_occurrences": 1,
+      "element_paragraph_occurrences": 1,
+      "backup_sha256": "b50d138e697d90f7bc04f3171dbb21d12d223c41103aaa9790216daa0e424467",
+      "readback_minus_inserted_line_matches_backup": true
+    }
+  },
+  "conservation": {
+    "outside_file_count": 568,
+    "outside_inventory_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "outside_inventory_matches_prior_receipt": true,
+    "known_swap_and_element_paragraphs_unchanged": true,
+    "approved_app_a2_line_unchanged": true
+  },
+  "render_smoke": {
+    "command": "python3 inline controlled delivery-build.render_readme smoke with four-repository stub",
+    "status": "PASS",
+    "placeholders": 0,
+    "fence_lines": 16,
+    "balanced_fences": true,
+    "exact_note_occurrences": 2,
+    "swap_occurrences": 2,
+    "element_occurrences": 2,
+    "real_build_or_zip": false
+  },
+  "semantic_review_reuse": {
+    "controlling_review": "app-P2-D141-expectation-final-review-0243",
+    "controlling_review_sha256": "613c15ade500474a5952f85adf7fd3a19eff057d68d71292a985c1d7943391e5",
+    "verdict": "PASS",
+    "new_policy_review": false,
+    "new_semantic_review": false
+  },
+  "app_binding": {
+    "commit": "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65",
+    "tree_prefix_recorded_by_cut_tuple": "70ad390c56b0",
+    "commit_object_present_in_app_repos": true,
+    "tree_matches_commit_in_app_repos": true,
+    "source_receipt": "app-D141d-expectation-source-home-0251.json",
+    "no_tree_suffix_inferred": true
+  },
+  "findings": [],
+  "limitations": [
+    "Documentation wiring only; this is not a product, source, readiness, integrated-head, release, or final-GO receipt.",
+    "No real build, ZIP, full suite, product, browser, live socket, or core run was performed.",
+    "C0 v2 request/reply shapes and production callers were not changed by this task and no new gate is inferred."
+  ]
+}

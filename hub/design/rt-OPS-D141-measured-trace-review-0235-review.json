@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-review.v1",
+  "task": "rt-OPS-D141-measured-trace-review-0235",
+  "reviewed_commit": "159acdc84eb953f617697b753156dc69c787acf8",
+  "reviewed_tree": "7b9a54111ada389c601363d91a1de8089ab92a8b",
+  "parent_commit": "a3f26619fd9fd8398dc99e89ebde99c6da7a54a7",
+  "verdict": "FAIL",
+  "scope": "Independent read-only source, security and actual-normal-caller review; no live request, queue, body, install, registry/kit edit, product/test change or C0 wire change.",
+  "first_proved_seam": "The normal request-test -> dispatcher-daemon -> test-run path carries full generated IDs, but candidate test-run exact-case guards match only bare 8912 and 19479. Exact full-ID held/cancelled controls therefore do not fire.",
+  "findings": [
+    {
+      "id": "F-D141-FC-001",
+      "severity": "BLOCKING",
+      "status": "OPEN",
+      "subject": "Held and cancelled job guards use bare suffixes instead of actual request IDs",
+      "evidence": [
+        "Candidate ops-d141-measured-floor/bin/test-run:23-25 cases only exact 8912 and 19479.",
+        "request-test writes the generated full ID into TEST pending requests; dispatcher-daemon passes that ID unchanged to test-run.",
+        "Actual held request: rt-pin-fa9cd546-full-d141-pristine-1026005231-8912.",
+        "Actual cancelled P4 request: agent-p4-current-becfe-http-3legs-1026012948-19479.",
+        "Private exact-full-ID subprocess reproduction admitted both bodies and reached pass; bare-ID harness controls are insufficient."
+      ],
+      "required_next": "Correct or independently prove exact full-ID held/cancelled guards through the normal caller before CAS/install/admission; rerun both exact IDs with no reissue or alternate body."
+    },
+    {
+      "id": "F-D141-FC-002",
+      "severity": "BLOCKING",
+      "status": "OPEN",
+      "subject": "P5 authorization is bound to bare 6934, not the exact existing full request ID",
+      "evidence": [
+        "Candidate validate-receipt.py:207 requires (job_id, repo, suite) == (6934, runtime, d141-p5-cut).",
+        "Actual P5 request is runtime-d141-p5-cut-1026013331-6934.",
+        "Private exact-full-ID receipt subprocess reproduction rejected the recorded P5 decision with 'P5 decision is not bound to service 6934'."
+      ],
+      "required_next": "Bind P5 only to the exact full ID runtime-d141-p5-cut-1026013331-6934 and prove the normal dispatcher receipt path; do not accept bare 6934 or arbitrary suffix matches."
+    }
+  ],
+  "closed_controls": [
+    "D89d arithmetic and strict receipt validation",
+    "default floors/global 4.5GB guard/4GB stop and one-heavy occupancy",
+    "durable first/periodic/final traces with failure/cancel cleanup in isolated subprocess controls",
+    "exact supported targeted15 name full-d141-pristine-targeted15",
+    "old full-d141-pristine row and queued 8912/P5 custody were not modified"
+  ],
+  "excluded": [
+    "The separate targeted-row validator fail-closed finding is owned by Luna0247 and is not duplicated here.",
+    "Synthetic controls are control evidence only, not product proof or a gate result."
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-review.controls.v1",
+  "verdict": "FAIL",
+  "candidate_commit": "159acdc84eb953f617697b753156dc69c787acf8",
+  "commands": {
+    "real_controls": {
+      "command": "python3 -I ops-d141-measured-floor/controls/real-controls.py",
+      "result": "PASS",
+      "scope": "temporary isolated roots and harmless subprocess bodies; no live queue/request/body"
+    },
+    "bash_syntax": {"command": "bash -n ops-d141-measured-floor/bin/test-run", "result": "PASS"},
+    "python_ast": {"command": "AST parse of all ops-d141-measured-floor/controls/*.py", "result": "PASS"},
+    "ruff": {"command": "ruff check ops-d141-measured-floor/controls/*.py", "result": "PASS"},
+    "diff_check": {"command": "git diff --check 635f4de06f 159acdc84e", "result": "PASS"},
+    "shellcheck": {"command": "shellcheck ops-d141-measured-floor/bin/test-run", "result": "UNAVAILABLE"}
+  },
+  "isolated_real_controls": {
+    "authorized": [
+      {"job": "d141g-app", "repo": "app", "suite": "full-e2e-timeline", "admission": 0, "terminal": "pass", "trace_rows": 4},
+      {"job": "d141h-targeted15", "repo": "runtime", "suite": "full-d141-pristine-targeted15", "admission": 0, "terminal": "pass", "trace_rows": 4},
+      {"job": "6934", "repo": "runtime", "suite": "d141-p5-cut", "admission": 0, "terminal": "pass", "trace_rows": 4}
+    ],
+    "boundary_and_negative_cases": "PASS: measured equality/above/below, defaults, global stop, one-heavy, failure/cancel trace, malformed df, duplicate JSON, job/symlink/hash mismatch, held bare IDs"
+  },
+  "actual_full_id_reproduction": {
+    "held_8912": {
+      "id": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+      "admission_returncode": 0,
+      "terminal": "pass",
+      "expected": "refusal",
+      "result": "FAIL: exact guard did not match full ID"
+    },
+    "cancelled_p4_19479": {
+      "id": "agent-p4-current-becfe-http-3legs-1026012948-19479",
+      "admission_returncode": 0,
+      "terminal": "pass",
+      "expected": "refusal",
+      "result": "FAIL: exact guard did not match full ID"
+    },
+    "p5_full_id": {
+      "id": "runtime-d141-p5-cut-1026013331-6934",
+      "repo": "runtime",
+      "suite": "d141-p5-cut",
+      "admission_returncode": 3,
+      "stderr": "receipt rejected: P5 decision is not bound to service 6934",
+      "expected": "the exact full ID must be accepted when the recorded decision is valid",
+      "result": "FAIL: validator requires bare 6934"
+    }
+  },
+  "not_run": ["live normal request", "direct --run", "environment bypass", "queue/registry/kit install", "real suite/body", "full suite"]
+}
