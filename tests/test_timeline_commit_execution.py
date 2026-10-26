@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import json
+import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -38,6 +40,94 @@ class Provider:
     def commit(self, ctx, port):
         self.calls += 1
         return self.call(ctx, port)
+
+
+def _timing_payloads(caplog):
+    prefix = "runtime.timeline_commit.timing "
+    return [json.loads(record.getMessage()[len(prefix):]) for record in caplog.records
+            if record.getMessage().startswith(prefix)]
+
+
+def test_success_and_replay_keep_receipt_and_emit_bounded_stage_timings(realm, caplog):
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head, "timing-replay")
+    candidate = prepared(commits, ctx)
+    coordinator = CommitExecutionCoordinator(commits)
+    provider = Provider(lambda _, port: port.accept())
+
+    with caplog.at_level(logging.DEBUG, logger="runtime_protocol.timeline_commit_execution"):
+        accepted = coordinator.execute(
+            ctx, provider, lambda c: Port(commits, c, candidate), authorize=lambda: None,
+        )
+        replay = coordinator.execute(
+            ctx, Provider(lambda *_: pytest.fail("exact replay reran provider")),
+            lambda _: pytest.fail("exact replay constructed a port"), authorize=lambda: None,
+        )
+
+    assert replay == accepted
+    assert replay["data"]["status"] == accepted["data"]["status"]
+    assert replay["receipt"] == accepted["receipt"]
+    assert provider.calls == 1
+    payloads = _timing_payloads(caplog)
+    assert [payload["outcome"] for payload in payloads] == ["accepted", "replay"]
+    for payload in payloads:
+        assert set(payload["timings_ms"]) == {
+            "handler", "service_admission", "initial_replay_lookup", "provider_commit",
+            "port_store_accept", "close", "durable_reconciliation", "wire_response", "total",
+        }
+        assert all(type(value) is int and 0 <= value <= 24 * 60 * 60 * 1000
+                   for value in payload["timings_ms"].values())
+
+
+def test_timing_is_redacted_and_durable_winner_still_wins(realm, caplog):
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head, "timing-durable-winner")
+    candidate = prepared(commits, ctx)
+    coordinator = CommitExecutionCoordinator(commits)
+    durable = []
+
+    def provider_call(_, port):
+        durable.append(port.accept())
+        raise RuntimeError("payload-secret-must-not-be-logged")
+
+    with caplog.at_level(logging.DEBUG, logger="runtime_protocol.timeline_commit_execution"):
+        result = coordinator.execute(
+            ctx, Provider(provider_call), lambda c: Port(commits, c, candidate),
+            authorize=lambda: None,
+        )
+
+    assert result == durable[0]
+    assert result["data"]["status"] == "accepted"
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "payload-secret-must-not-be-logged" not in messages
+    payloads = _timing_payloads(caplog)
+    assert len(payloads) == 1
+    line = next(record.getMessage() for record in caplog.records
+                 if record.getMessage().startswith("runtime.timeline_commit.timing "))
+    assert len((line + "\n").encode()) <= 4096
+    assert all(type(value) is int and value >= 0
+               for value in payloads[0]["timings_ms"].values())
+
+
+def test_timing_covers_real_port_and_store_acceptance(realm, caplog):
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    service, commits, project, head, _ = realm
+    ctx = context(service, project, head, "timing-real-port")
+    candidate = prepared(commits, ctx)
+    coordinator = CommitExecutionCoordinator(commits)
+
+    with caplog.at_level(logging.DEBUG, logger="runtime_protocol.timeline_commit_execution"):
+        result = coordinator.execute(
+            ctx,
+            Provider(lambda _, port: (port.head(), port.accept(candidate))[1]),
+            lambda bound: RequestCommitPort(service, commits, bound, lambda: None),
+            authorize=lambda: None,
+        )
+
+    assert result["data"]["status"] == "accepted"
+    payload = _timing_payloads(caplog)[0]
+    assert payload["timings_ms"]["provider_commit"] >= payload["timings_ms"]["port_store_accept"] >= 0
 
 
 def test_commit_duplicate_move_winner_between_lookup_and_execution(realm):

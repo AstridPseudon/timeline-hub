@@ -43,6 +43,7 @@ from .errors import RuntimeErrorBase, AuthorizationError, ForbiddenError, Confli
 from .contract_metadata import PROTOCOL, SCHEMA_DIGEST
 from .dirfd import close_pinned as _close_pinned, mkdir_chain_at as _mkdir_chain_at, open_directory_chain as _open_directory_chain, pin_directory as _pin_directory, write_bytes_at as _write_bytes_at
 from .timeline_commit_store import timeline_scope_is_empty
+from .timeline_commit_execution import timed_timeline_commit
 from .shot_dependencies import analyze_invalidation
 from .timeline_inspection import inspect as inspect_timeline_closure
 from .timeline_view import markdown as render_timeline_markdown, png as render_timeline_png
@@ -2466,6 +2467,7 @@ class RuntimeService:
         return check
 
     @_clear_replay_on_refusal
+    @timed_timeline_commit
     def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key,
                         publisher, invocation_path, authorize, public_request_id=None):
         from .timeline_commit_port import detached, route_path, validate_request
@@ -2493,6 +2495,7 @@ class RuntimeService:
             _is_history_failure,
             _new_request_id,
             current_public_request_id,
+            current_commit_timing,
         )
         from .timeline_commit_port import (
             CommitUnavailable,
@@ -2534,6 +2537,10 @@ class RuntimeService:
                    "request_hash": request_hash, "idempotency_key": idempotency_key,
                    "publisher": publisher, "realm_id": self.realm["id"]}
         request_id = _new_request_id()
+        timing = current_commit_timing()
+        if timing is not None:
+            timing.set_request_id(request_id)
+            timing.begin("service_admission")
         commits, coordinator = self._timeline_commits()
         with self.store._mutex:
             self._timeline_commit_started = True
@@ -2542,6 +2549,8 @@ class RuntimeService:
             require_active()
             self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
             return RequestCommitPort(self, commits, bound_context, require_active)
+        if timing is not None:
+            timing.end("service_admission")
         try:
             if provider is None:
                 replay = commits.lookup(context, authorize=check)
