@@ -1,0 +1,55 @@
+{
+  "utc": "2026-10-26T09:09:39.812811+00:00",
+  "safe_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/candidate-README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-candidate-README.template.md",
+      "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/candidate-gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-candidate-gate-results.md",
+      "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/paragraph.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-paragraph.md",
+      "sha256": "dd939c40eba5d456d941658ca2185d49588b001dbc8bcc129d865f6bdc011077",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-source-manifest.json",
+      "sha256": "d6bcec3ed6cc64ebc8857127655bcd7e56a21e0905a9836d0d24fe0eddbf3cb8",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-validation.md",
+      "sha256": "b62e8a344eec84c6bf06d0ca6e8db36e583a0e581ce630f2c450eafcacee5951",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-handoff.md",
+      "sha256": "aca276d993d82f93ddd4143d109117d37dc1b526af9e444c77d3224236fc8e0f",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-controls.json",
+      "sha256": "f14b33f513ab571f10322a9e91efb26d272fce2b60411ae9126c35eb427447fe",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-disk-trace.txt",
+      "sha256": "4aa8029db5c77ea73f30dbbad17d1d993d0e4850a473755176a267cb53db3c65",
+      "mode": "0o644"
+    }
+  ],
+  "actual_install": false,
+  "actual_build": false
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "scope": "documentary candidate validation only",
+  "production_caller": "delivery-build.render_readme",
+  "function_only": true,
+  "controlled_inputs": [
+    "agent",
+    "runtime",
+    "app",
+    "composition"
+  ],
+  "candidate_docs": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/candidate-README.template.md",
+      "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+      "bytes": 38282
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/candidate-gate-results.md",
+      "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+      "bytes": 35582
+    }
+  },
+  "checks": {
+    "candidate_readme_paragraph": 1,
+    "candidate_gate_paragraph": 1,
+    "candidate_readme_prior_bytes_conserved": true,
+    "candidate_gate_prior_bytes_conserved": true,
+    "candidate_readme_balanced_fences": true,
+    "candidate_gate_balanced_fences": true,
+    "rendered_placeholders_absent": true,
+    "rendered_disclosure_occurrences": 2,
+    "rendered_id_table_occurrences": 1,
+    "fallback_placeholder_behavior": true,
+    "controlled_repo_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "rendered_sha256": "4084e1c74bf1f47dce8447edb96840b113729144e7653cf11291ba589074a422",
+    "fallback_sha256": "3a3e162113f53562287bae234cce33eaaa89adc333bebf648d445fbfe94784a0"
+  },
+  "no_install": true,
+  "no_delivery_build": true,
+  "no_rehearsal_or_zip": true,
+  "no_product_tests_or_services": true,
+  "disk_monitor": {
+    "command": "df -B1 --output=avail /home/user",
+    "threshold_bytes": 4000000000,
+    "minimum_retained_available_bytes": 4725121024,
+    "retained_samples": 1,
+    "retained_trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141-final-unit-notes-host-0849/evidence/disk-trace.txt",
+    "retained_trace_sha256": "4aa8029db5c77ea73f30dbbad17d1d993d0e4850a473755176a267cb53db3c65",
+    "monitor_session_id": 74496,
+    "monitor_pid_as_reported_by_session": 2,
+    "stop": "SIGINT at 2026-10-26T09:05:16Z after final retained sample",
+    "exit_code": "not observable: post-stop wait poll returned Unknown process id 74496",
+    "wait": "not observable: session was already gone on post-stop poll",
+    "reap": "not independently observable; no process remained to query",
+    "persistence_gap": "live terminal samples between start and stop were not durably retained; no backfill performed",
+    "ordinary_source_admission_floor_bytes": 4600000000,
+    "no_heavy_path": true,
+    "sampling_interval_seconds": 5,
+    "stop_bytes": 4000000000,
+    "continuous_peak_claim": false
+  }
+}
