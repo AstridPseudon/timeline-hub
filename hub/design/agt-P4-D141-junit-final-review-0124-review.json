@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c independent source review of JUnit correction 0119 and finite whole-path assessment",
+  "reviewed_at": "2026-10-26",
+  "review_kind": "independent_read_only_source_qualification",
+  "base": "tl/agt-P4-D141-junit-binding-return-0119",
+  "prior_result_review": "tl/agt-P4-D141-result-review-0114",
+  "verdict": "PASS_OPERATIONAL_SOURCE",
+  "readiness": "INSTALLATION_NOT_READY",
+  "source_failure": false,
+  "whole_path_verdict": "QUALIFIED_SOURCE_WITH_BOUNDED_RECEIVER_DEPENDENCIES",
+  "execution": "static_read_only_only",
+  "verdict_basis": "The 0119 candidate packet fixes the finite manifest/runmanifest/argv JUnit identity defect. The new manifest, launcher-materialized runmanifest, and candidate shell argv resolve to one distinct durable body-evidence path; only junit_paths changes from the preserved old manifest. The unchanged launcher and frozen four-way source tuple remain guarded and clean. Existing body and CAS receipts were read and hashed but not rerun or installed.",
+  "candidate": {
+    "manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/inputs/p4-d141c-junit-bound.manifest",
+      "sha256": "95f5ce93705a50cff41559d5a23cd1c43fd9d3611f269bb3acb197ed942a4ab3"
+    },
+    "materialized_control_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c-positive-control.manifest",
+      "sha256": "95f5ce93705a50cff41559d5a23cd1c43fd9d3611f269bb3acb197ed942a4ab3"
+    },
+    "materialized_control_runmanifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c-positive-control.runmanifest",
+      "sha256": "59f5b620e3d71ed2fdcb52ba125875b514a0babf1821f3441858d7bb697aad85"
+    },
+    "candidate_row": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/candidate-row.txt",
+      "sha256": "630bb12343a20b336092480553acf77bbf192d866b1598421723417c79ee3df4"
+    },
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c.xml",
+    "junit_path_pre_controller_absent": true,
+    "old_0047_junit_path_absent": true,
+    "input_and_body_destination_distinct": true
+  },
+  "manifest_diff": {
+    "old_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/inputs/p4-d141c-original-final.manifest",
+    "old_sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+    "changed_fields": ["junit_paths"],
+    "new_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c.xml",
+    "old_junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml",
+    "unchanged_fields_verified": [
+      "format", "batch_id", "scope", "scope_label", "selector_manifest", "timeout_seconds",
+      "profile_mode", "P4_LIVE_PROFILE_DIR_MUST_BE_UNSET", "agent_sha", "agent_tree", "agent_parents",
+      "agent_path", "runtime_sha", "runtime_tree", "runtime_parents", "runtime_path", "app_sha",
+      "app_tree", "app_parents", "app_path", "composition_sha", "composition_tree", "composition_parents",
+      "composition_path", "python", "node", "profile", "schema", "node_version", "profile_lock_sha",
+      "profile_archive_sha", "profile_registry_sha", "composition_version", "client_version", "schema_digest",
+      "runtime_lock_files", "original_p4_test_hash", "service_versions"
+    ]
+  },
+  "argv_and_controls": {
+    "production_caller": "Runtime commitTimeline / Agent provider",
+    "candidate_argv_junit_resolves_to_manifest_path": true,
+    "run_then_pytest": true,
+    "later_marker": "integration",
+    "timeout_seconds": 45,
+    "addopts_cleared": true,
+    "cache_provider_disabled": true,
+    "selector_count": 3,
+    "selectors_byte_identical_to_0047_and_0055": true,
+    "selector_sha256": "59a41669300bdd97fbe7925a36958534abb7a5d7e793dd4ee26fb8c197668ac4",
+    "positive_control": {
+      "preflight_exit": 0,
+      "body_exit": 17,
+      "counter_lines": 1
+    },
+    "agent_sha_only_poison": {
+      "changed_fields": ["agent_sha"],
+      "launcher_exit": 1,
+      "diagnostic": "D73 launcher: agent SHA mismatch",
+      "body_exit_receipt": false,
+      "counter_lines": 0
+    }
+  },
+  "whole_path": {
+    "W001": {
+      "status": "closed_by_0119_source",
+      "finding": "stale manifest/runmanifest JUnit identity",
+      "basis": "new manifest, generated runmanifest, and candidate argv agree on the new durable path"
+    },
+    "W002": {
+      "status": "qualified_at_retention_bound",
+      "keep_markers_verified": [
+        "workers/agt-P4-D141-cut-controller-0047/KEEP",
+        "workers/agt-P4-D141-operational-return-0055/KEEP",
+        "workers/agt-P4-D141-body-continuation-0105/KEEP",
+        "workers/agt-P4-D141-junit-binding-return-0119/KEEP",
+        "tests/agent-p4-current-becfe-http-3legs-1026005145-1347/KEEP",
+        "tests/agent-p4-current-becfe-http-3legs-1026011042-10086/KEEP"
+      ],
+      "selector_copy_sha256": "59a41669300bdd97fbe7925a36958534abb7a5d7e793dd4ee26fb8c197668ac4",
+      "qualification_limit": "App cumulative verdict and final delivery receipt still own closure of the retention row"
+    },
+    "W003": {
+      "status": "bounded_missing_fact",
+      "fact": "Direct body-process module __file__ telemetry is unavailable",
+      "source_binding": "strict unchanged launcher guards plus same-process command environment and exact source comparisons",
+      "not_a_source_defect": true,
+      "no_telemetry_gate_invented": true
+    },
+    "W004": {
+      "status": "pending_app_receiver_dependency",
+      "fact": "App owns cumulative receiving after an actual final result",
+      "not_a_candidate_source_defect": true,
+      "receiver_owned_body_receipt_present": false
+    }
+  },
+  "historical_conservation": {
+    "result_review_0114": "FAIL",
+    "result_review_finding": "P4-D141c-R001 stale JUnit identity",
+    "service_1347": {"exit_code": 1, "selectors_executed": 0, "junit_present": false, "reclassified": false},
+    "service_10086": {"exit_code": 0, "selectors_executed": 3, "junit_sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d", "reclassified": false},
+    "operational_review_0101": "FAIL",
+    "operational_review_return_0106": "PASS_OPERATIONAL_SOURCE / INSTALLATION_NOT_READY"
+  },
+  "credit": "No body, P4 behavior, REG, ship, MAIN GO, or cumulative qualification credit is claimed."
+}

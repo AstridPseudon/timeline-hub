@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c final source review",
+  "verdict": "PASS_OPERATIONAL_SOURCE",
+  "candidate_source": "tl/agt-P4-D141-junit-binding-return-0119",
+  "product_tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "origin": "origin/codex/handover-timeline-r4-20261019-candidate-sdk", "path": "/home/user/work/wt/agt-pin-28e56cac", "clean": true},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "origin": "origin/codex/handover-timeline-r4-20261019-candidate-runtime", "path": "/home/user/work/wt/rt-pin-6a011d58", "clean": true},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "origin": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified", "path": "/home/user/work/wt/app-pin-867cb273", "clean": true},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "origin/codex/handover-timeline-r4-20261019-candidate-composition", "path": "/home/user/work/wt/vw-pin-635f4de0", "clean": true}
+  },
+  "launcher": {
+    "path": "/home/user/work/wt/agt-pin-28e56cac/tools/p4-d73-pinned-launch.sh",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+    "installer_sha256": "1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805",
+    "bash_n": "PASS",
+    "unchanged": true
+  },
+  "manifest": {
+    "format": "p4-d73-v1",
+    "sha256": "95f5ce93705a50cff41559d5a23cd1c43fd9d3611f269bb3acb197ed942a4ab3",
+    "junit_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c.xml",
+    "selector_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.selectors.tsv",
+    "selector_manifest_sha256": "59a41669300bdd97fbe7925a36958534abb7a5d7e793dd4ee26fb8c197668ac4",
+    "timeout_seconds": 45,
+    "marker": "integration",
+  "original_p4_test_hash": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac"
+  },
+  "path_invariants": {
+    "new_input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/inputs/p4-d141c-junit-bound.manifest",
+    "new_body_destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-junit-binding-return-0119/evidence/body-evidence/p4-d141c.xml",
+    "input_body_realpaths_distinct": true,
+    "input_body_samefile": false,
+    "input_body_symlink": false,
+    "new_body_pre_controller_absent": true,
+    "stale_0047_xml_absent": true,
+    "manifest_runmanifest_argv_same_junit": true
+  },
+  "contract_v2": {
+    "caller": "Runtime commitTimeline / Agent provider",
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "accepted_or_merged_fields": ["canonical", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+    "conflict_fields": ["reason", "head"],
+    "invalid_fields": ["code", "path", "hint", "suggested_command"],
+    "preview_fields": ["would_status", "null_receipt", "no_writes"],
+    "unchanged": true
+  },
+  "cas_receiving_preserved_not_reinstalled": {
+    "current_registry_sha256": "f59adb4816a5e8d0db445956af585daf9a771679cfbe2f2f1a6780529edb2aa0",
+    "current_registry_mode": "0600",
+    "prior_installed_row_sha256": "21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b",
+    "candidate_0119_row_not_installed": true,
+    "outside_rows_sha256": "660b72d846441f4fb4d79ad29c75dace7bfdc315f07eef4bd9f79f27e72c063c",
+    "no_install_by_review": true
+  },
+  "source_floor_bytes": 4600000000,
+  "stop_bytes": 4000000000,
+  "no_product_or_shared_dependency_edits": true
+}
