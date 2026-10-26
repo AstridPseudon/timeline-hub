@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T10:52:34.913674+00:00",
+  "baseline": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-maintenance-precheck-1047.json",
+  "baseline_KEEP_count": 96,
+  "KEEP_failures": [],
+  "eligible_recycle": [],
+  "sweep_exit": 0,
+  "sweep_removed": 0,
+  "sweep_diagnostics": "known Broken pipe from helper ls; terminal exit0",
+  "compact_exit": 0,
+  "compact_stdout": "packed 0 scratch dirs; free 5674M -> 5669M\ngzipped 0 old worker logs; free now 5669M\npacked 0 finished test-run dirs; free now 5669M\n",
+  "compact_stderr": "",
+  "available": 5943255040
+}

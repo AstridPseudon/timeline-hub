@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T10:48:14Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 2m -->
-# app board, 2026-10-26T10:45:09.963109+00:00
+<!-- app | 2026-10-26T10:53:45Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 5m -->
+# app board, 2026-10-26T10:48:48.725424+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -88,13 +88,17 @@ Blockers: Agent — Actual cut24814 FAIL201 and196ERROR; pristine25513 submitted
 Blockers: Safety — D130 absolute hold. Lead completed the one owner-approved repack; no further hub operation. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Actual Sol terminal, then one independent same-script source check. Seven selectors dispatch separately after PASS and fresh normal admission. Agent REG0 still gates pins.
-live 2 / cap 6 source; ready-undispatched 0. Sole Sol1047 correction and read-only wholepath1047; no heavy body.
+live 1 / cap 6 source; ready-undispatched 0. Sole Sol1047 correction; wholepath1047 terminal complete; no heavy body.
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through2897468 bytes; delayed D141cc and Runtime1027/1030 items consumed.
+INBOX consumed through2898344 bytes; Main D141dd10:47 consumed.
 
 
 Current pass 2026-10-26T10:45:09.963109+00:00: PLAN/common/header reread; initial inbox empty through2891537; delayed new items later consumed through2897468. Full app-prefix census terminal; new independent submit-owner-review-next terminal FAIL3. Same author12 controls PASS model only. Actual popup retry command/row synthetic, preflight-to-normal interleaving double creation and same-source command/row mismatch not refused. Ten SAFE originals published [controlling second failure](../../design/app-D141cc-second-failure-publication-1047.json). Original1026 concrete cause returned before10:58 timebox, but1032 source does not qualify. Standard second-failure rule immediately assigned sole HARD Sol app-P-D141cc-submit-owner-sol-1047 and independent read-only wholepath1047 in parallel, ordinary admission5953880064bytes, no heavy. These are private operational source, native builder remains exact, actual seven bodies paused. Main notified by finite peer, no new mechanism or speculative product repair. Source review follows actual terminal.
 
 H6 owner readback: Agent10:31 cut24814 terminalFAIL1/9561declared201FAIL196ERROR; pristine25513 requested10:30:30 by sole owning controller, genuine comparison pending. P4 remains serial native5GB, D141v unchanged. Runtime10:30 independent1023 bounded Main source receiving PASS; actual four Runtime rows and33 controls conserved, no activation or live admission. Notes1022 qualifies current48013/506e, current568 and prior0258 aggregate; immediate pre-CAS inventory/sampler history NOT_RECOVERABLE and original custodyFAIL retained. Both stale App receiving waits clear this pass; actual F-final activation still gated by proofs/finalpins. No App canonical writer, sourcehome movement, pin, registry, queue or hub mutation.
+
+Main D141dd10:47 consumed: sole Sol1047 plus wholepath1047 gets ONE same-script independent review. If FAIL, customcontroller DROPPED; manager directly submits each of seven selectors ONCE via builder row/request-test/wait-test serially, no resume/retry; interruption or unclear custody stops selector and reports. Separate read-only5s df sampler in selectorKEEP, normal admission and4GBstop, actualnormalservicereceipts only. No route change until actualreviewverdict. Seven custom-controller briefs were prepared only, NOT admitted. No body now.
+
+Wholepath1047 terminal0 at10:47, eight SAFE originals [published](../../design/app-D141cc-wholepath-publication-1049.json). Native builder exact and originaloverlap root confirmed; private model does not qualify actualartifactlock/daemon/receipt path. All3 independent findings mapped. One native owner/toolsession, exact adoption or finite stop, no second manualnormalrequest. Its wording not to reopenpopup applies its own readonly scope; MainD141cc expressly authorizes a later corrected attempt, not an unchangedbody now. Sol remains sole private author; no further investigator.
