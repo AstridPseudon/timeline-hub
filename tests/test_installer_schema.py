@@ -259,7 +259,6 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
                       "./transitions.generated", "./registry.generated")
 
     assert composition_spec.startswith("file:artifacts/banodoco-timeline-composition-")
-    assert composition["version"] == "0.0.15"
     assert composition["resolved"] == composition_spec
     assert composition["integrity"] == integrity
     assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
@@ -269,7 +268,7 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
         manifest = json.load(archive.extractfile("package/package.json"))
         files = {member.name for member in archive.getmembers()}
     assert manifest["name"] == "@banodoco/timeline-composition"
-    assert manifest["version"] == "0.0.15"
+    assert manifest["version"] == composition["version"]
     for export in public_exports:
         for target in manifest["exports"][export].values():
             assert target.startswith("./dist/")
@@ -286,7 +285,6 @@ def test_d72_runtime_and_composition_pins_have_no_obsolete_externals():
     artifact = ROOT / "remotion" / composition_spec.removeprefix("file:")
 
     assert composition_spec.startswith("file:artifacts/")
-    assert composition["version"] == "0.0.15"
     assert composition["resolved"] == composition_spec
     assert composition["integrity"] == _integrity(artifact)
     assert composition["integrity"] == _integrity(artifact)

@@ -65,12 +65,18 @@ def render_failure_message(detail: str, *, remotion_reason: str | None = None,
     recovery readable for old clients without adding another wire error shape.
     """
     environment = os.environ if environment is None else environment
+    # Keep the toolchain's npm advice out of both classification and detail;
+    # the fix below owns the install-specific command and selected Node path.
+    detail = detail.split("; run `npm ci` in ", 1)[0]
     if remotion_reason:
+        reason = remotion_reason.split("; run `npm ci` in ", 1)[0]
         missing = ("node_modules is missing", "package(s) missing", "CLI is missing",
                    "project directory not found", "package.json missing")
-        if any(part in remotion_reason for part in missing):
+        if any(part in reason for part in missing):
             headline = "Remotion isn't installed on this machine"
-        elif "Node" in remotion_reason or "NODE_EXECUTABLE" in remotion_reason:
+        elif "unexpected name:" in reason or "unexpected version:" in reason:
+            headline = "Remotion's installed packages don't match this version of Astrid"
+        elif "Node" in reason or "NODE_EXECUTABLE" in reason:
             headline = "Remotion needs the pinned Node version"
         else:
             headline = "Remotion isn't ready on this machine"
@@ -78,9 +84,6 @@ def render_failure_message(detail: str, *, remotion_reason: str | None = None,
     else:
         headline = "The renderer isn't available" if unavailable else "The render couldn't finish"
         fix = recovery or "Review the details, correct the render settings or timeline, and try again."
-    # Keep the toolchain's old npm advice out of the detail; the fix above owns
-    # the install-specific command, including the selected Node path.
-    detail = detail.split("; run `npm ci` in ", 1)[0]
     # Leave room for the fix inside the legacy bridge's 4,000-character message.
     budget = max(0, 3_950 - len(headline) - len(fix))
     if len(detail) > budget:

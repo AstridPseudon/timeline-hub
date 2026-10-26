@@ -56,7 +56,9 @@ def _selected_composition_package() -> Path:
     )
     manifest = package / "package.json"
     assert manifest.is_file(), manifest
-    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == "0.0.14"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == (
+        remotion_runtime._COMPOSITION_PACKAGE_VERSION
+    )
     return package
 
 
