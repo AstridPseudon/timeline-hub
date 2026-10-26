@@ -1,0 +1,27 @@
+{
+  "schema": "timeline.d140.independent-review-source-manifest/v1",
+  "candidate": {
+    "commit": "0634ea013b29ba2ab02f619a99328b1f5ca81c7a",
+    "tree": "7493f07a49d8df5b2d0abe6fbd10c63431fb5d23",
+    "parent": "d7727b99fb9cb063d4c0ee73fdfa54d752666135"
+  },
+  "reviewed_files": {
+    "ops-d140-farm/receive-farm.sh": "3bb27be6a46adc8b0c9217d51a27ca4f2451929769ac4e22ae6bfcff1c75dfe6",
+    "ops-d140-farm/receipts.py": "0fa1b5b6cfa1570b2e03d23b988aebabc5d3330ae54176f9aca913dc5becbbf2",
+    "ops-d140-farm/test_recipe.py": "a64c1b9eedec8a9673099c1fbd5c40a7124a30184b9428665cf0869ea6f86249",
+    "ops-d140-farm/README.md": "13d990f6b37e89a25b544128054dab139015f688ee24e2c1b0775ff615f0abd3",
+    "ops-d140-farm/commands.md": "2f74cb684235f7fd7667a22ab74675fe5f55e853cd53f9519cdf8809f67ec846"
+  },
+  "required_source_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa"},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883"},
+    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "producer_sources": {
+    "farm_distribution": "/home/user/timeline-hub/hub/kit/bin/verify_farm_distribution_inputs.py",
+    "dependency_retention": "/home/user/timeline-hub/hub/kit/bin/verify_dependency_seed.py",
+    "child_success": "ops-child-custody/make-child-venv:453-466",
+    "d73_launcher": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh:60-73"
+  }
+}

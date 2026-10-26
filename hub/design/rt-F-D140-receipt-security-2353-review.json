@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.d140.independent-receipt-review/v1",
+  "verdict": "FAIL_SOURCE",
+  "readiness": "NOT_READY",
+  "candidate": {
+    "commit": "0634ea013b29ba2ab02f619a99328b1f5ca81c7a",
+    "tree": "7493f07a49d8df5b2d0abe6fbd10c63431fb5d23",
+    "parent": "d7727b99fb9cb063d4c0ee73fdfa54d752666135",
+    "repository": "composition"
+  },
+  "findings": [
+    {
+      "id": "D140-RECEIPT-005A",
+      "severity": "blocking",
+      "status": "FAIL",
+      "title": "Kit admission still uses the wrong producer format",
+      "evidence": "ops-d140-farm/receipts.py:106-152 accepts timeline.ops.d137.installed-kit/v1 and the old PASS_INSTALL summary. The independently reviewed normal Farm producer is verify_farm_distribution_inputs.py, which emits timeline.farm-distribution-inputs.v1 with roles, lock, distributions, ownership and component_identity, and dependency retention uses .farm-receipt.json.",
+      "impact": "A historical or synthetic installed-kit summary can qualify the kit path without authenticating the current Farm distribution/dependency receipt and its producer closure.",
+      "required": "Consume the existing Farm distribution/dependency receipt format and bind its canonical bytes, component identity, source/custody paths and retained child copy. Unknown or legacy kit formats must fail closed."
+    },
+    {
+      "id": "D140-RECEIPT-005B",
+      "severity": "blocking",
+      "status": "FAIL",
+      "title": "D73 receipt is not closed to retained evidence/runmanifest",
+      "evidence": "ops-d140-farm/receipts.py:231-253 only authenticates FARM_D73_RECEIPT bytes, compares them to P4_D73_MANIFEST, checks launcher/source/input fields, and never requires FARM_D73_RECEIPT to equal P4_D73_EVIDENCE/$P4_D73_REQUEST_ID.manifest or verifies the request-id/runmanifest and its digest. receive-farm.sh:388-400 checks only that the evidence directory exists.",
+      "impact": "A detached copy of a valid p4-d73-v1 manifest can pass as the retained producer receipt without proving it came from the normal launcher request or that the required retained evidence exists.",
+      "required": "Bind the authenticated D73 receipt to the launcher-created request-scoped manifest, request-id and runmanifest/exit closure, preserving the existing producer paths and no substitute format."
+    },
+    {
+      "id": "D140-RECEIPT-005C",
+      "severity": "major",
+      "status": "FAIL",
+      "title": "Independent digest handoff has no real caller wiring",
+      "evidence": "The implementation trusts arbitrary environment values such as FARM_CURRENT_*_RECEIPT_SHA256, FARM_D139A_KIT_RECEIPT_SHA256, CHILD_RECEIPT_SHA256 and FARM_D73_RECEIPT_SHA256 in receipts.py:45-51. README.md:23-30 and commands.md only document that an operator should bind them; repository-wide search found no producer/handoff command that obtains, authenticates, or exports these values. Tests derive them locally from the files under test.",
+      "impact": "The checker proves equality to a caller-supplied string, not independent Farm-owner authentication. A caller that controls both artifact and environment can authorize a forged artifact; missing real handoff evidence is not distinguishable from an invented local digest.",
+      "required": "Use the actual Farm-owner handoff/caller and retain its authenticated source/path/report closure. Until those inputs are supplied, the census must remain NOT_READY; do not treat locally computed environment hashes as an authenticated receipt."
+    }
+  ],
+  "source_only_limits": [
+    "No Farm census, child request, service, Store, package acquisition, import check, D73 body, core body, browser, socket, credential, hub or Git mutation was performed.",
+    "D141 final integration heads remain pending; 41ad/f103/569/635f is source qualification only, not a live Farm receipt."
+  ]
+}

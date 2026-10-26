@@ -1,0 +1,18 @@
+{
+  "schema": "timeline.d140.independent-review-controls/v1",
+  "verdict": "FAIL_SOURCE",
+  "controls": [
+    {"id": "phase-order", "status": "PASS_SOURCE", "detail": "pre-child and post-child bindings are separated; check-only does not request a child"},
+    {"id": "missing-census", "status": "PASS_SOURCE", "detail": "missing bindings remain in a complete NOT_READY census"},
+    {"id": "d139a-schema-closure", "status": "PASS_SOURCE", "detail": "18 RECORD rows, 12 hashed rows, six named unhashed rows, direct URL, manifest and physical path checks are present"},
+    {"id": "poison-field-only", "status": "PASS_SOURCE", "detail": "poison is required to equal the positive manifest with only agent_sha zeroed"},
+    {"id": "import-stop", "status": "PASS_SOURCE", "detail": "commands stop after a failed import checker and do not proceed to dry/core"},
+    {"id": "durability-and-22-roots", "status": "PASS_SOURCE", "detail": "commands retain XML, raw, start/stop, disk, KEEP/runmanifest evidence and the unchanged 22-root selector"},
+    {"id": "c0-wire", "status": "PASS_SOURCE", "detail": "documented C0 request/reply field names remain unchanged; no product caller change found"},
+    {"id": "synthetic-attack", "status": "PASS_SOURCE", "detail": "timeline.synthetic-forged source receipt is refused even with matching checkout support"},
+    {"id": "kit-real-producer", "status": "FAIL", "detail": "candidate admits timeline.ops.d137.installed-kit/v1, not the actual timeline.farm-distribution-inputs.v1 producer and dependency-retention receipt"},
+    {"id": "d73-retained-closure", "status": "FAIL", "detail": "candidate does not bind FARM_D73_RECEIPT to P4_D73_EVIDENCE/request-id/runmanifest"},
+    {"id": "independent-digest-handoff", "status": "FAIL", "detail": "SHA256 environment bindings have no actual authenticated Farm-owner caller wiring in the reviewed source"}
+  ],
+  "readiness": "NOT_READY"
+}
