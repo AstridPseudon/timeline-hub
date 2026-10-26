@@ -20,7 +20,7 @@ from tests.helpers.runtime import locate_runtime
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot-layering-v1.json"
 # Exact Runtime conformance/fixtures/shot-layering-v1.json, shared with the App.
-FIXTURE_SHA256 = "3c75d3ede4f868bedc46bfebe1c6988e159a58d4edf444986509e9a87f8fba1e"
+FIXTURE_SHA256 = "c779ef38d4f47368967a5afab2704548c70c0f27c646f8ebab6be74ad3cf63a7"
 CASES = json.loads(FIXTURE.read_bytes())["cases"]
 
 
@@ -91,6 +91,21 @@ def test_shared_fixture_projection(project, case, caplog):
             and clip["at"] + clip_timeline_duration(clip) > start_ms / 1000
             for clip in projection.config["clips"]
         )
+
+
+def test_source_role_visual_track_is_grouped(project):
+    case = next(case for case in CASES if case["id"] == "film-picture-over-type")
+    projection = project(case["input"])
+    tracks = projection.config["tracks"]
+    assert tracks[2] == {
+        "id": "occ-vision~source-plate", "kind": "visual", "role": "source",
+        "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}},
+    }
+    assert [track["id"] for track in tracks[:4]] == [
+        "occ-vision~plate", "occ-vision~type", "occ-vision~source-plate", "picture",
+    ]
+    clip = next(clip for clip in projection.config["clips"] if clip["id"] == "occ-vision:vision-source-plate")
+    assert clip["track"] == "occ-vision~source-plate"
 
 
 def source_graph():
