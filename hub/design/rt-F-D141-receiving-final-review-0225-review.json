@@ -1,0 +1,95 @@
+{
+  "base": "composition:tl/rt-F-D141-Farm-input-return-0219",
+  "findings": [
+    {
+      "id": "A-001",
+      "severity": "none",
+      "status": "PASS",
+      "text": "All seven requested corrected Farm evidence blobs match both HEAD and the absolute prior-worker copies."
+    },
+    {
+      "id": "A-002",
+      "severity": "none",
+      "status": "PASS",
+      "text": "The actual 01:50Z census and corrected receipt facts are represented without adding phantom rows; the Composition mismatch remains disclosed and Agent/Runtime/App are not re-requested."
+    },
+    {
+      "id": "A-003",
+      "severity": "none",
+      "status": "PASS",
+      "text": "The original 22 IDs, source/parser/producer/owner mappings, frozen tuple, operational hashes, and unchanged 97-control recipe are conserved."
+    },
+    {
+      "id": "B-001",
+      "severity": "none",
+      "status": "PASS",
+      "text": "Canonical README.template.md and gate-results.md match the recorded post-install hashes, are regular 0644 files, contain the exact protected note once each, and have exact two preimage backups."
+    },
+    {
+      "id": "B-002",
+      "severity": "none",
+      "status": "PASS",
+      "text": "The current delivery inventory has 570 files total, exactly 568 outside the two approved targets; SWAP and Element paragraphs are byte-identical to backups."
+    },
+    {
+      "id": "B-003",
+      "severity": "none",
+      "status": "PASS",
+      "text": "The normal App full commit IDs resolve from Git and merge/candidate trees are equal; the recorded C0 schema and production caller hashes are unchanged."
+    },
+    {
+      "id": "B-004",
+      "severity": "none",
+      "status": "PASS",
+      "text": "Controlled render_readme smoke passes with zero placeholders and balanced fences; the note itself keeps integrated-head reproof and final ZIP qualification downstream."
+    }
+  ],
+  "limits": [
+    "No Farm census, child request, import, service, control, core, acquisition, network, cleanup, product, test, pin, guard, kit, registry, hub, or Git write was performed by this review.",
+    "No 97-control suite was repeated; its existing recorded result and recipe hashes were verified only.",
+    "No real build or ZIP was run or claimed."
+  ],
+  "overall": "PASS",
+  "receipts": {
+    "A_farm_input_return": {
+      "actual_census": {
+        "agent": "PASS",
+        "app": "PASS",
+        "composition": "MISMATCH",
+        "composition_action": "full-40-hex normal checkout already requested; bind on next census",
+        "exit": 1,
+        "nonpass_checks": 22,
+        "runtime": "PASS",
+        "status": "NOT_READY"
+      },
+      "custody_limit": "The seven producer outputs are verified as Git blobs and byte-identical to the absolute recovered copies; original authoring was repo-relative evidence/ and no path-only reauthoring is credited. Inherited evidence files are not new outputs.",
+      "preserved": {
+        "97_control_recipe": true,
+        "original_0201_0208_artifacts": true,
+        "original_22_nonpass_ids": true,
+        "parser_producer_owner_source_hash_maps": true
+      },
+      "source_blobs_verified": 7,
+      "source_commit": "71ef3c95023d784bd068f3cd68e0798322a9dd55",
+      "verdict": "PASS"
+    },
+    "B_app_note_installation": {
+      "app_merge_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+      "app_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+      "candidate_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+      "controlled_render": "PASS",
+      "no_final_gate_claim": true,
+      "note_occurrences": {
+        "README.template.md": 1,
+        "gate-results.md": 1
+      },
+      "outside_target_file_count": 568,
+      "protected_note_sha256": "76dd3661042efe7580c170caad669ed5bbf690f5301c6662aa70475df89a3e8d",
+      "targets_verified": 2,
+      "verdict": "PASS"
+    }
+  },
+  "reviewed_commit": "71ef3c95023d784bd068f3cd68e0798322a9dd55",
+  "schema": "timeline.f.d141.receiving-final-review/v1",
+  "task": "rt-F-D141-receiving-final-review-0225"
+}

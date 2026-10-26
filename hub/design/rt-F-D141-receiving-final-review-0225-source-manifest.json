@@ -1,0 +1,70 @@
+{
+  "app": {
+    "candidate_commit": "a1955216f947f9d84c3154d3bd715e65bc945452",
+    "candidate_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "normal_merge_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "normal_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "outside_target_files": 568,
+    "production_caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "protected_note": {
+      "path": "/home/user/timeline-hub/hub/design/app-A2-D141-read-interface-protected-review-0203-zip-note.md",
+      "sha256": "76dd3661042efe7580c170caad669ed5bbf690f5301c6662aa70475df89a3e8d"
+    },
+    "runtime_c0_schema_sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "targets": {
+      "README.template.md": {
+        "mode": "0644",
+        "preimage_sha256": "5738d66d75b5f784fd42991b8dd542fcc37e1cbc95b2cee769abf059b538ab72",
+        "sha256": "2cb99445661f9466864da05836e3188925c8c6320f7adf3d9c767e2c9b26319e"
+      },
+      "gate-results.md": {
+        "mode": "0644",
+        "preimage_sha256": "f4bb7346af865be1876e5890d655a4cfb22762fddbec00cb7d1f440cf7f714d4",
+        "sha256": "b50d138e697d90f7bc04f3171dbb21d12d223c41103aaa9790216daa0e424467"
+      }
+    }
+  },
+  "base_commit": "71ef3c95023d784bd068f3cd68e0798322a9dd55",
+  "farm": {
+    "census_packet": {
+      "exit": 1,
+      "nonpass_checks": 22,
+      "output_sha256": "8532e8de9f0cf38ae281aa0097e1ab2c0d705d9a6877babc40a0522db45dc7f2",
+      "sha256": "4393b2dbd985573eece7314a50543ecb599064a387f0e052b762bd27fac79631",
+      "status": "NOT_READY"
+    },
+    "custody": "The original producer outputs were authored under repo-relative evidence/ paths; this review verifies Git recovery and absolute-copy identity but does not reauthor them.",
+    "immutable_0201_commit": "2912e517da83e087e8cbc31a62a499f5e681b65d",
+    "immutable_0208_design_hashes": {
+      "findings.md": "c417cc77ba709bb37bd65292ff3999e38af2ffe3992536a4376be02fff23250c",
+      "handoff.md": "63e2b5cab8fba59c2a3712f63ca55642f6bec04d8db3116a6e7fa283c371876a",
+      "review.json": "e60e326a5cf4a84e22494290626b0c68dac0318c7afe465fa08d20232acf10f7",
+      "source-manifest.json": "c41b1919c9fa3296e158f40df997dd62b76f0afe9235fcf1c8637b5a2a9e1e7d",
+      "validation.md": "7deb68f808ab27af32c7d647b7fe11bf7574db4a841885fec943f5067d74ba2a"
+    },
+    "prior_worker_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Farm-input-return-0219/evidence",
+    "receipt_facts": {
+      "agent": "PASS",
+      "app": "PASS",
+      "composition": "MISMATCH",
+      "runtime": "PASS"
+    },
+    "recipe_sha256": {
+      "ops-d140-farm/commands.md": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3",
+      "ops-d140-farm/receipts.py": "c5531c7c75db63dd99016c8b4337dda41295a69f57dcf10f3a679d2a1b182b99",
+      "ops-d140-farm/receive-farm.sh": "f506a7e5d24e03fcc1af745c66a5ca0a5ec48ce8029d01fd04e682c86c83cff7",
+      "ops-d140-farm/test_recipe.py": "b9fd807e8e0699a3502ad42b4a9c70deb079ba20b6927ef64f67defaf9512919"
+    },
+    "verified_git_blobs": {
+      "evidence/commands.md": "05d531c433bc86678ca37abcd3203470d01482f1f999ba4aeacd48adeb5f9771",
+      "evidence/correction.json": "4bca2cd27e794e2d061bb8563a8f5d045244f2a393a151fe80e7d2e5919f3f15",
+      "evidence/findings.md": "097e6067d0236ae2856e1649c829fcbb6221a312c9a67980acc9abe37d76711e",
+      "evidence/handoff.md": "372f57da3f56577ddfff8e7a10f3070e01321651e265cd75f314374fa28d6f8e",
+      "evidence/input-map.json": "66d980896600536ef1bbb6d592d54b78e122e04a6f63f7872723d76ca8609cdd",
+      "evidence/source-manifest.json": "e288dcba46f5c736c9d87c068e4ceafd21a6e473a366d962087de98155080462",
+      "evidence/validation.md": "478de99db525f7fd9d1ac1d45fefd75332c92be52b43a5f03206469ef9d543a1"
+    }
+  },
+  "schema": "timeline.f.d141.receiving-final-review.source-manifest/v1",
+  "task": "rt-F-D141-receiving-final-review-0225"
+}

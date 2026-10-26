@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.d141.notes-installation/v2",
+  "status": "PASS_INSTALLED_PROTECTED_NOTE",
+  "task": "rt-F-D141-App-note-install-0215",
+  "source_full_note": {
+    "path": "/home/user/timeline-hub/hub/design/app-A2-D141-read-interface-protected-review-0203-zip-note.md",
+    "sha256": "76dd3661042efe7580c170caad669ed5bbf690f5301c6662aa70475df89a3e8d",
+    "review_sha256": "e6f66a9d69362f4f524d5bd0c5e4d507be7c98fdb7e97ddd584e2d69c6701d20",
+    "review_verdict": "PASS",
+    "exact_note_line": "`A2 D141 REG: duplicate-shot-group retains the upstream two-read predicate; its test mock adds only the approved authenticated basis/display reader interface, with every original input/assertion unchanged and all 16 placement guards passing (protected review PASS; integrated-head journey reproof and final ZIP qualification remain downstream).`"
+  },
+  "normal_app_identity": {
+    "merge_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "candidate_commit": "a1955216f947f9d84c3154d3bd715e65bc945452",
+    "candidate_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "candidate_parent": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "normal_home_receipt_sha256": "a49bbb55a9a95fda5e68d5f0e40d99811b542d547e272d5c01a3b1515f47e233"
+  },
+  "targets": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "2cb99445661f9466864da05836e3188925c8c6320f7adf3d9c767e2c9b26319e",
+      "preimage_sha256": "5738d66d75b5f784fd42991b8dd542fcc37e1cbc95b2cee769abf059b538ab72",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "exact_note_once": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "b50d138e697d90f7bc04f3171dbb21d12d223c41103aaa9790216daa0e424467",
+      "preimage_sha256": "f4bb7346af865be1876e5890d655a4cfb22762fddbec00cb7d1f440cf7f714d4",
+      "mode": "0644",
+      "regular_non_symlink": true,
+      "exact_note_once": true
+    }
+  ],
+  "backups": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-App-note-install-0215/evidence/backups/README.template.md",
+      "sha256": "5738d66d75b5f784fd42991b8dd542fcc37e1cbc95b2cee769abf059b538ab72",
+      "mode": "0644",
+      "byte_exact_preimage": true
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-App-note-install-0215/evidence/backups/gate-results.md",
+      "sha256": "f4bb7346af865be1876e5890d655a4cfb22762fddbec00cb7d1f440cf7f714d4",
+      "mode": "0644",
+      "byte_exact_preimage": true
+    }
+  ],
+  "atomic_install_receipt": {
+    "cas_preimage_guard": "PASS",
+    "replacement": "pairwise staged os.replace with rollback stages and delivery-directory fsync",
+    "rollback_used": false,
+    "outside_delivery_files": 568,
+    "outside_delivery_files_unchanged": true,
+    "builder_active_before_install": false
+  }
+}

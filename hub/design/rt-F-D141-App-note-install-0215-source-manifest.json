@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.d141.app-note-source-manifest/v1",
+  "protected_review": {
+    "review": "app-A2-D141-read-interface-protected-review-0203",
+    "review_json_sha256": "e6f66a9d69362f4f524d5bd0c5e4d507be7c98fdb7e97ddd584e2d69c6701d20",
+    "review_validation_sha256": "9c1cc0adb0037234ec81c43821d899a8a571da3e224e2325b26844844a5916fc",
+    "review_findings_sha256": "b2419cc3b165c997af463b1c91ff2cf695de57de3e2ef374ab8d5196eb043f80",
+    "review_source_manifest_sha256": "c38bc3c2630f3e8d84c638d05d3d72fc77579b3b81f5098b48b8a0b6fc3a76e4",
+    "reviewed_note_sha256": "76dd3661042efe7580c170caad669ed5bbf690f5301c6662aa70475df89a3e8d",
+    "verdict": "PASS"
+  },
+  "approved_propositions": {
+    "zip_note_sha256": "8dda12805b852fc469a956f31480d9ed4703fb7818b2ddc5b34475f13f99689c",
+    "upstream_test_ledger_sha256": "d519a222e2d6e3817d5e4a8b678e1ea4cf321f015c1fc8a2105e3c58a292f03a",
+    "protected_review_upstream_test_ledger_sha256": "e30626f4f53bdb9adb7c0d6f504df31b0fc6272659eceeb8e9940ab6075ac3e2"
+  },
+  "normal_app_home": {
+    "merge_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "candidate_commit": "a1955216f947f9d84c3154d3bd715e65bc945452",
+    "candidate_tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "candidate_parent": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "publication_receipt_sha256": "a49bbb55a9a95fda5e68d5f0e40d99811b542d547e272d5c01a3b1515f47e233"
+  },
+  "custody": {
+    "source_root": "/home/user/timeline-hub/hub/design",
+    "source_mode": "normalhub read-only sourceblobs",
+    "hub_writes": false,
+    "network": false,
+    "acquisition": false,
+    "source_copies": false
+  },
+  "production_caller": {
+    "path": "/home/user/timeline-hub/hub/kit/bin/delivery-build",
+    "function": "render_readme",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  }
+}
