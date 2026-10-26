@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T13:32:13Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 4m -->
-# runtime board, 2026-10-26T13:26:57.318417+00:00
+<!-- main | 2026-10-26T13:37:44Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
+# runtime board, 2026-10-26T13:34:45.973287+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -77,19 +77,18 @@
 | F D141gg parent note | Retain qualified installed parent note | Luna and protected Luna | Independent1203 bounded PASS | merged | CAS1157; install review1203 | [Receipt](../../design/runtime-D141gg-parent-notes-installed-publication-1208.json). Exact90f8/ddebb; all568 outside files/CAS/render PASS. Historical custody limits retained. | No product change |
 | F D141hh single note | Retain qualified installed single disclosure | Luna and independent Luna | Independent installation PASS bounded | merged | Source-next; review-next; CAS-next; install-review-next | [Receipt](../../design/runtime-D141hh-single-notes-installed-publication-1234.json). Exact715a/d001;568 outside files and backups PASS. Custody and monitor gaps explicit. | No product change |
 
-| F D141hh P1 P3 notes | Qualify actual documentary installation | Luna and independent Luna | Actual installer1252 terminal0 | review | rt-F-D141hh-P1-P3-install-review-1252 | Actual3c32/c610 installed.11 exact originals published; independent568 map/backup/CAS/readback/render check queued. | No product change |
+| F D141hh P1 P3 notes | Retain qualified documentary installation | Luna and independent Luna | Independent1252 PASS | merged | Installer1252; independent1252 | [Receipt](../../design/runtime-D141hh-P1-P3-notes-installed-publication-1332.json). Exact3c32/c610;568 outside records, backups, CAS, readback and render PASS. Monitor limits retained. | No product change |
 
-| D141ii App successor | Qualify latest upstream catch-up | App Luna and independent review | Owner D141ii 12:55 | blocked:app | App owning U3 lineage | New head delta, full pair and seven journey maps required. Take upstream Elements removal; retain both AgentChat test families. | Pending actual head |
+| D141ii App successor | Retain held latest catch-up candidate | App Luna and independent review | Main13:32 owner choice reopened | gated:D141ii-owner | App author1305; review1317 | Review touches all8 journey paths. HOME held;82e proofs and pins conserved. Owner chooses latest or retainedfc24 before reproof. | Candidateeac97ea5 |
 
-| OPS normal sync | Check ordinary hub publication freshness | Main lead | Normal hub sync machinery | blocked:lead | Existing hub sync owner | Readback13:26 hub still13:12; newer Runtime source/review and peer absent. Lead check asked; no manager hub operation or bypass. | No source change |
+| OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
 Blockers: Agent — Owner D141ii closes scope decisions: inverse38 restore, installer2 exact retirement, writers15 protected migration. Repairs, independent reviews and actual per ID proof must reach REG0 before D141v.
-Blockers: Lead machinery — Normal hub checkout readback13:26 remains13:12; newer local source/review publications absent. Peer requests normal sync check only; local source work continues.
 Blockers: Final activation — Existing final-install-next has qualified Main1011/1023 source and scoped registry map. Actual final source/gate tuple, D141v and accepted final proofs remain required.
-Blockers: App — Owner D141ii chooses latest upstream catch-up. App owns touched-file delta proof, one new full pair and seven journey path maps; only affected journeys rerun. Final App qualification still owed.
+Blockers: App owner choice — Main13:32 reopens D141ii(4): latest catch-up touches all8 journeys. App holds HOME pending owner latest versus retainedfc24 decision;82e proofs and pins stay.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. No manager hub operation or repeat repack. All open raw KEEP and refused smoke retained.
-Next ready: P1/P3 independent installation terminal then exact receiving publication. Existing Agent failure-note join needs SAFE per ID table. D141v and final activation wait for actual D141ii proof closure.
-live 1 / cap 6; ready-undispatched 0. P1/P3 independent installation check queued; no heavy body. Final pins, activation and build remain gated.
+Next ready: Existing Agent failure-note join needs its SAFE per ID table. Agent protected writer review and integratedkept53 remain owed. App HOME holds owner target choice; no early final pins.
+live 0 / cap 6; ready-undispatched 0. P1/P3 installation qualification complete; no heavy body. Final pins, activation and build remain gated.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s. Fifteen proved REG corrected;38 own nonpass unchanged. P56934=38PASS31.02s on original6a/28e, final applicability0513/0637 stays separate, metadata0619 correction immutable. Raw originals KEEP;8912/19479 held unstarted. P4 historical10086=3PASS23.668s/XMLafca45b7 through0151/0202; current CLI14092=1PASS/XML7ff7ea37, cumulative App1101 GO. No original receipt retarget or repeat body.
 
@@ -113,3 +112,10 @@ Maintenance: fresh ended nonKEEP census [{"worker":"rt-m2-parent-media-door-proo
 
 
 Current installation1326: installer1252 terminal0 reports one guardedCAS after initial inventoryguard refused beforewrites. All11 exact actualinstall originals published runtime-D141hh-P1-P3-CAS-source-publication-1326.json; sole independent install-review1252 immediatelyqueued. Accepted canonicalhashes3c32/c610 are ACTUALinstalled but not yet independentlyqualified. Initialsamplernosamples; later36real5ssamples/exit130/wait/reap remains bounded. Header248876 throughMain13:24 updatesAgentHOME73e369: inverse38actualPASS, installer2retired/ledgered; protectedwriterreviewFAIL F1-F7 and solefirstreturnactive. No REG0/finalpin/activation/build.
+
+
+Current pass 2026-10-26T13:32:53.331656+00:00: INBOX consumed through1900977bytes; header249538 through Farm13:30 informational prep. P1/P3 independent1252 terminal0 PASS, all8 originals published runtime-D141hh-P1-P3-notes-installed-publication-1332.json and direct peers to App/orchestrator. Current canonical3c32/c610 matches protected candidate; full715a/d001 prefixes, exact backups,568 individual outside tuples, fsync/singleCAS/readback/render PASS. Independent monitor has only1sample; initial installer inventory refusal was beforewrites, initial sampler empty, later36samples/exit130/wait/reap not backfilled. All historical limits remain.
+
+Main peer13:29 clears normal-sync blocker: daemon226 alive, cycle23826 active, hub latest773f6f858 at13:26:16. No manual hub mutation. H6 Agent13:17 inverse38 and installer2 HOME73e369, writers sole firstreturn1319 active; integratedkept53 still owed. App13:18 latest-upstream author1304 plus protected visibilityreturn active; newhead/fullpair/sevenjourney path maps still owed. No duplicate owning author. No Runtime worker pending/running. Maintenance13:20 terminal sweep3 removed0, compact packed0/gzipped0/testdirs0; three dirty ended legacy trees retained, no eligible clean source. Free5528342528bytes; no heavybody or new cleanup target.
+
+Main header13:32 reopens D141ii(4) ownerchoice; header249962 read. Latest App review1317 touchesall8journeys, estimatedsevenreproofs plusfullunitpair. CandidateHOME HOLD and82e pins/proofs retained. Runtime row gated:D141ii-owner; owning App/Main decision lineage retained, no duplicate escalation or author. Agent13:24 board solewriterreturn3638 terminal22PASS9.10s/scopedRuffPASS/targetPython3.12mypyPASS; protectedreview active13:24. Still noREG0/integratedkept53 or finalpins. INBOXunchanged1900977.
