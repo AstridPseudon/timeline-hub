@@ -512,3 +512,41 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
     ]
+
+
+def test_remote_create_empty_creates_shell_then_empty_head() -> None:
+    writer = _Writer()
+    result = RemoteTimelines(writer).create_empty(
+        project="render-smoke",
+        timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        config=DEFAULT_CONFIG,
+        idempotency_key="caller-1",
+    )
+    assert result.ok, result.error
+    assert result.data == {
+        "project_id": "P-1",
+        "timeline_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "head_revision_id": "H-1",
+        "created": True,
+    }
+    assert result.idempotency_key == "caller-1"
+    shell, head = writer.calls
+    assert shell == (
+        "create_timeline",
+        ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        {"idempotency_key": "caller-1-shell"},
+    )
+    name, args, kwargs = head
+    assert name == "publish_parent_composition"
+    assert args[0] == "P-1"  # the runtime's project id, not the slug
+    publication = args[2]
+    assert publication["expected_head"] is None
+    assert publication["parent_composition"] == {
+        "config": DEFAULT_CONFIG,
+        "registry": {},
+        "clips": [],
+        "occurrences": [],
+    }
+    assert publication["shot_revisions"] == []
+    assert publication["internal_timeline_revisions"] == []
+    assert kwargs == {"idempotency_key": "caller-1-head"}
