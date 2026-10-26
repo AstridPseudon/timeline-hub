@@ -1,0 +1,52 @@
+{
+  "format": "timeline-d141jj-owner-fixture-purpose-map-v1",
+  "classification": "read-only finite continuation; no checker execution",
+  "basis": {
+    "complete_derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+    "complete_run": "exit 1 at wrong-source-owner fixture os.chown(...,65534,-1): EINVAL",
+    "uid_map": "0 0 1",
+    "gid_map": "0 0 1",
+    "real_effective_uid": 0,
+    "qualification": "FAIL_NOT_READY"
+  },
+  "fixture_rule": {
+    "allowed": "allowlisted per-path lstat metadata fixture or isolated module proxy",
+    "required": [
+      "real os.geteuid remains 0",
+      "only named private fixture path receives synthetic st_uid",
+      "all other stat fields and paths delegate to the real implementation",
+      "source-owner and stage-owner fixtures use separate exact paths",
+      "direct D68 proxy reaches D68 require_directory after real source_identity",
+      "child D68 proxy is required if actual caller branch is claimed"
+    ],
+    "forbidden": [
+      "global os.geteuid patch",
+      "broad os.stat or Path.lstat patch",
+      "chown or privilege experiment",
+      "caller exception sentinel replacing code2/FAIL receipt",
+      "production source or guard change"
+    ]
+  },
+  "caller_negative_cases": [
+    {"label":"gate-source-root-mismatch","phase":"require_root_binding","reason":"source and gate tuple roots differ for agent","status":"PASS_PRIOR","false_positive":"none; exact preflight guard"},
+    {"label":"stale-nonapp-upstream","phase":"run_wrapper -> child D68 source_snapshot","reason":"agent recorded upstream base is not current origin/main","status":"PASS_PRIOR_CORRECTED","false_positive":"lifecycle trace collision was fixed; retain code2/FAIL diagnostic/empty stage evidence"},
+    {"label":"wrong-source-owner","phase":"source_identity","reason":"source tuple root agent owner is not the effective user","status":"UNREACHED_EINVAL","fixture":"synthetic st_uid only for source root; real euid 0","false_positive":"chown EINVAL is setup failure before source_identity"},
+    {"label":"wrong-source-mode","phase":"source_identity","reason":"source tuple root agent is writable by another user","status":"UNEXECUTED","fixture":"real private source root mode 0775; owner remains UID0","false_positive":"do not accept any earlier tuple/file refusal"},
+    {"label":"wrong-stage-mode","phase":"run_wrapper","reason":"service TMPDIR is writable by another user","status":"UNEXECUTED","fixture":"caller service root mode 0775; source identity real and passing","false_positive":"source-owner refusal is not stage-mode evidence"},
+    {"label":"wrong-stage-owner","phase":"run_wrapper","reason":"service TMPDIR owner is not the effective user","status":"UNEXECUTED","fixture":"caller-local per-path synthetic st_uid for service root; source root real UID0","false_positive":"global geteuid patch causes earlier source_identity refusal"},
+    {"label":"wrong-app-base","phase":"require_app_base","reason":"App upstream base is not the authorized fc24f849 source","status":"UNEXECUTED","fixture":"valid current object/tree with unauthorized App base","false_positive":"gate tuple/schema refusal is not this guard"},
+    {"label":"wrong-app-tree","phase":"gate_identity","reason":"frozen upstream base tree drift for app","status":"UNEXECUTED","fixture":"caller tuple tree drift; direct require_app_base is a separate control","false_positive":"caller gate_identity result is not direct authorized-tree result"},
+    {"label":"dirty-source","phase":"source_identity","reason":"source tuple source is dirty","status":"UNEXECUTED","fixture":"private source fixture with uncommitted file","false_positive":"wrong root/ref refusal is not dirty-source evidence"},
+    {"label":"symlink-source","phase":"source_identity","reason":"invalid final source tuple identity for agent","status":"UNEXECUTED","fixture":"source root is an explicit symlink to valid private fixture","false_positive":"underlying target validity cannot substitute for symlink rejection"},
+    {"label":"source-ref-drift","phase":"gate_identity","reason":"frozen gate ref drift for agent","status":"UNEXECUTED","fixture":"private gate ref advanced while source tuple follows the changed ref","false_positive":"source checkout drift is not frozen gate-ref drift"}
+  ],
+  "direct_stage_controls": [
+    {"label":"wrong-stage-mode-direct","phase":"D68.main/require_directory(stage parent)","status":"UNEXECUTED","fixture":"real source_identity pass plus direct D68 stage parent mode 0775","receipt":"none by design"},
+    {"label":"wrong-stage-owner-direct","phase":"D68.main/require_directory(stage parent)","status":"UNEXECUTED","fixture":"real source_identity pass plus D68-module/path-only synthetic st_uid","receipt":"none by design"}
+  ],
+  "other_controls": [
+    {"label":"stale-source-manifest","phase":"validate_manifest","status":"PASS_PRIOR","reason":"candidate hash mismatch: check.sh"},
+    {"label":"wrong-app-tree-direct","phase":"require_app_base","status":"UNEXECUTED","reason":"App upstream base tree is not the authorized faf477ad source"}
+  ],
+  "evidence_boundary": "Only PASS_PRIOR and PASS_PRIOR_CORRECTED entries are credited. UNREACHED_EINVAL and UNEXECUTED entries require a later protected independent run; no semantic PASS is inferred."
+}

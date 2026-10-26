@@ -1,0 +1,66 @@
+{
+  "at": "2026-10-26T16:52:48.881747+00:00",
+  "worker": "rt-F-D141jj-harness-owner-wholepath-1647",
+  "result": "READ_ONLY_FINITE_NOT_READY",
+  "scope": "Ownership fixture strategy and full negative phase audit only; protected executed checker still required",
+  "missing_expected_coordinates": [
+    "workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/report.md"
+  ],
+  "actual_harness_report": "separately published at actual path; no reconstruction",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/findings.md",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-findings.md",
+      "sha256": "cd8cdf64a80d15dec42dd285f8a83f20e96f717fd8f6d17f4d475d24f074a299",
+      "bytes": 3549
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/source-map.json",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-source-map.json",
+      "sha256": "040ed98266995e1ceaa5bfbc375ef663db81b02f28659a1b50be2e70448a0f5e",
+      "bytes": 3040
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/purpose-map.json",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-purpose-map.json",
+      "sha256": "402621c33af7a013a63add98d86f23114a124411014e7e27b27a063e205e8aa3",
+      "bytes": 5391
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/source-manifest.json",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-source-manifest.json",
+      "sha256": "7c3fa7c10dd4afb7e01f6af32aaf28ffb94a16c81730095d36bc514683b27852",
+      "bytes": 3133
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/validation.md",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-validation.md",
+      "sha256": "bb3c70689cc0b72393147abab4420d9754280bdc1d4c458a0fb3bbee8a2866e3",
+      "bytes": 1075
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/handoff.md",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-handoff.md",
+      "sha256": "003dbe71c12c4f9c153f92a859852db1054d025b9719292e08b6d11da8741b70",
+      "bytes": 1320
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-disk-trace.txt",
+      "sha256": "2a96280d18e070ca8e8473495ddd6efb93b9d514471a6be1a8005466a075f64d",
+      "bytes": 802
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-sampler-lifecycle.json",
+      "sha256": "7d3b6abc7831d6898e13abe4747709f001ace077a6ad3d786d12c6627bff6d80",
+      "bytes": 957
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-owner-wholepath-1647/report.md",
+      "published": "design/rt-F-D141jj-harness-owner-wholepath-1647-harness-report.md",
+      "sha256": "b76ca4c6c057bbf797ed9e2d0728cedf7140f48989730e9e6bc91fc7acf80937",
+      "bytes": 1036
+    }
+  ]
+}

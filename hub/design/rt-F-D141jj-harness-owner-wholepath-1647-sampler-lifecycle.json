@@ -1,0 +1,13 @@
+{
+  "format": "timeline-d141jj-owner-fixture-sampler-v1",
+  "interval_seconds": 5,
+  "floor_bytes": 4000000000,
+  "sessions": [
+    {"tool_session":95283,"pid":null,"pgid":null,"samples_observed":true,"stop":"Ctrl-C via write_stdin","exit_code":1,"waited":true,"reaped":"not independently observable","gap":"PTY did not expose child PID/PGID"},
+    {"tool_session":92063,"pid":2,"pgid":1,"samples_observed":true,"stop":"Ctrl-C via write_stdin","exit_code":1,"waited":true,"reaped":"not independently observable","gap":"whole-group 4000000000-byte stop and kernel reap cannot be observed from PTY sandbox"}
+  ],
+  "coverage":"read-only audit only; no heavy checker or staging executed",
+  "floor_tripped":false,
+  "available_bytes_observed_minimum":5068656000,
+  "disclosure":"Designated worker tmpdir was a harness pointer file; real private TMPDIR was /tmp/w-c945f2a6f7. Initial detached launch was not durable. No work occurred during the initial gap."
+}

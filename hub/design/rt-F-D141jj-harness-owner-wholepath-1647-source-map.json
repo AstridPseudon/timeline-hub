@@ -1,0 +1,47 @@
+{
+  "format": "timeline-d141jj-owner-fixture-source-map-v1",
+  "classification": "read-only source and prior-run map",
+  "production_source": {
+    "agent": {"head":"ec0a9f5baef2c31bc5179087b83f044524575182","tree":"83b84c79941917fde535ee3ddba5533a776cace3","root":"/home/user/work/agent"},
+    "runtime": {"head":"95d98f038320d5d46bd679ac000ab3e15825c935","tree":"78df31d62c5b9ba4c84dee4ea346e43a767718c1","root":"/home/user/work/runtime"},
+    "app": {"head":"abac6c809da25f4c6cc7cce61a7d5ea2ac067067","tree":"e2632a4fbe63cadbd03b03edc5d34196a37304fd","root":"/home/user/work/app"},
+    "composition": {"head":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","root":"/home/user/work/composition"}
+  },
+  "recorded_upstream": {
+    "app_base":"fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "agent_base_prefix":"64197afa",
+    "runtime_base_prefix":"fa9cd546",
+    "composition_base_prefix":"67b8aa3d"
+  },
+  "stale_fixture_observation": {
+    "recorded_upstream_base":"fdfa8fc373afb73b637d0baf87c12e1aec50ab9a",
+    "current_origin_main":"55b28354433f812a6eae70eedd9b95b8ab6f51d8",
+    "source_head":"55b28354433f812a6eae70eedd9b95b8ab6f51d8",
+    "relation":"recorded base != current origin/main; source HEAD follows current origin/main",
+    "caller_return":2,
+    "python_exception":"none",
+    "caller_diagnostic":"FAIL receipt",
+    "d68_diagnostic":"agent recorded upstream base is not current origin/main",
+    "repos_and_stage":"empty",
+    "builder":"not invoked"
+  },
+  "immutable_candidate": {
+    "root":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate",
+    "manifest":"source-manifest.json",
+    "source_manifest_sha256":"7c3fa7c10dd4afb7e01f6af32aaf28ffb94a16c81730095d36bc514683b27852",
+    "verified":"all 11 named files match recorded bytes and modes"
+  },
+  "prior_runs": {
+    "wholepath_1627":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-wholepath-1627/evidence",
+    "sol_1627":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence",
+    "complete_sol_1637":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence",
+    "historical_failed_commit":"ce9e0532a71489e39a0d339e0f9d399a12a39090",
+    "publication":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-harness-Sol-FAIL-publication-1637.json"
+  },
+  "phase_map": {
+    "caller_source_owner":"run-final-delivery.py source_identity -> require_directory",
+    "caller_stage_owner":"run-final-delivery.py run_wrapper -> require_directory(service TMPDIR)",
+    "direct_stage_owner":"delivery_gate_build.py main -> require_directory(stage parent)",
+    "child_stale_upstream":"delivery_gate_build.py source_snapshot -> current origin/main check"
+  }
+}
