@@ -183,6 +183,31 @@ def test_sfx_output_capture_restricts_path_to_the_journey_attempt(tmp_path, monk
     assert evidence == {"found": False, "files": {}}
 
 
+def test_collect_preserves_timeout_logs_separately_from_final_logs(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path / "evidence")
+    monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "service-pack-host.log").write_text("host at timeout\n", encoding="utf-8")
+    (tmp_path / "logs" / "service-worker.log").write_text("worker at timeout\n", encoding="utf-8")
+
+    journey.capture_task_logs()
+    (tmp_path / "logs" / "service-pack-host.log").write_text("host after shutdown\n", encoding="utf-8")
+    (tmp_path / "logs" / "service-worker.log").write_text("worker after shutdown\n", encoding="utf-8")
+    monkeypatch.setattr(journey, "health", lambda: None)
+    monkeypatch.setattr(journey, "snapshot", lambda name: [])
+    journey.collect()
+
+    evidence = tmp_path / "evidence"
+    assert (evidence / "task-timeout-service-pack-host.log").read_text() == "host at timeout\n"
+    assert (evidence / "task-timeout-service-worker.log").read_text() == "worker at timeout\n"
+    assert (evidence / "service-pack-host.log").read_text() == "host after shutdown\n"
+    manifest = json.loads((evidence / "task-logs-before-cancel.json").read_text())
+    assert manifest["logs"] == [
+        {"source": "service-pack-host.log", "evidence": "task-timeout-service-pack-host.log"},
+        {"source": "service-worker.log", "evidence": "task-timeout-service-worker.log"},
+    ]
+
+
 def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
     monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
     with pytest.raises(RuntimeError, match="exit 7"):

@@ -267,22 +267,24 @@ def best_effort(label, action):
 
 def capture_task_logs():
     logs = data_root() / "logs"
+    EVIDENCE.mkdir(parents=True, exist_ok=True)
     copied = []
     paths = [logs / "service-pack-host.log", logs / "service-worker.log", *logs.glob("worker*.log")]
     for path in paths[:21]:
         if not path.is_file():
             continue
         try:
-            with path.open("rb") as source, (EVIDENCE / path.name).open("wb") as target:
+            evidence_name = f"task-timeout-{path.name}"
+            with path.open("rb") as source, (EVIDENCE / evidence_name).open("wb") as target:
                 source.seek(max(0, path.stat().st_size - 262144))
                 target.write(source.read(262144))
-            copied.append(path.name)
+            copied.append({"source": path.name, "evidence": evidence_name})
         except OSError:
             continue
     save("task-logs-before-cancel.json", {
         "logs": copied,
         "missing": [name for name in ("service-pack-host.log", "service-worker.log")
-                    if name not in copied],
+                    if name not in {entry["source"] for entry in copied}],
         "task_child_output": {
             "available": False,
             "reason": "The task child stdout/stderr are held in pipes and consumed after exit; "
