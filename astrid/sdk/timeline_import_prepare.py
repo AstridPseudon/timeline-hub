@@ -13,7 +13,7 @@ from typing import Any
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline_duplicate import _copy_source, copy_content, id_map
-from astrid.sdk.timeline_restructure import STRUCTURE_KEY, flatten
+from astrid.sdk.timeline_restructure import STRUCTURE_KEY
 
 FORMAT = "astrid.timeline/1"
 TRANSCRIPT_SCHEMA = "media.transcript/v1"
@@ -310,10 +310,11 @@ def prepare_import(timeline: Mapping[str, Any] | str | Path, manifest: Mapping[s
             target_docs[new_id] = {"document_id": new_id, "kind": "media.transcript", "content": copy.deepcopy(content)}
         seen_refs: set[str] = set()
         _rewrite_transcript_references(copied, source_docs, project, target_docs, seen_refs)
-        from astrid.sdk.timeline_checkout import Checkout
-
-        candidate = Checkout(flatten(copied)).stored_document()
-        compiled = compile_authoring_candidate(candidate).as_dict()
+        # `copy_content` returns the complete stored authoring candidate. Do not
+        # route it through the editor's flat Checkout representation here:
+        # flatten/split intentionally derives chapter boundaries and film clips,
+        # which cannot preserve all archive-authored parent config fields.
+        compiled = compile_authoring_candidate(copied).as_dict()
     except TimelineEditError:
         raise
     except Exception as exc:  # keep compiler details useful at the archive boundary

@@ -12,9 +12,10 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline_duplicate import _duplicate, copy_content
+from astrid.sdk.timeline_duplicate import _duplicate, copy_content, id_map
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_import_prepare import _document_id, check_import_manifest, prepare_import
+from astrid.sdk.timeline_restructure import is_split
 
 
 def _source_bundle() -> dict:
@@ -223,6 +224,72 @@ def test_prepare_import_builds_fresh_children_and_target_transcript_ids(monkeypa
     assert copied_item["item_id"] != "source-item"
     assert copied_item["selected_item_id"] == copied_item["item_id"]
     assert source_project != "target-project"
+
+
+def test_prepare_import_preserves_split_parent_authoring_fields(monkeypatch):
+    source = _chapter_bundle()
+    assert is_split(source)
+    source_project = source["project_id"]
+    shot_id = source["placements"][0]["shot_id"]
+    occurrence_id = source["placements"][0]["occurrence_id"]
+    media_id = next(iter(source["shots"][shot_id]["internal_timeline"]["registry"]["assets"].values()))["media_id"]
+    source_document_id = _document_id(source_project, media_id, "default")
+    source["parent"]["config"]["bundle"]["transcriptReferences"]["associations"][0]["documentId"] = source_document_id
+    legacy_chapters = [{"name": "Opening", "shotId": shot_id, "occurrenceId": occurrence_id, "opaque": {"keep": True}}]
+    source["parent"]["config"].setdefault("app", {})["astrid"] = {"chapters": copy.deepcopy(legacy_chapters)}
+    source["parent"]["config"]["clips"] = copy.deepcopy(source["parent"]["clips"])
+    source["parent"]["opaque_authoring"] = {
+        "shot": shot_id,
+        "occurrence": occurrence_id,
+        "nested": [{"shot": shot_id, "occurrence": occurrence_id}],
+    }
+    _inventory(monkeypatch, [])
+    content = {"schema": "media.transcript/v1", "media_id": media_id, "source_id": "default", "segments": []}
+    prepared = prepare_import(
+        source,
+        {"format": "astrid.timeline/1", "name": "Split source", "elements": []},
+        {"transcripts/source.json": {"document_id": source_document_id, "kind": "media.transcript", "content": content}},
+        "target-project",
+        timeline_id="target-timeline",
+    )
+
+    parent = prepared["publication"]["parent_composition"]
+    target_shot = id_map([row["shot_id"] for row in source["placements"]], "target-timeline")[shot_id]
+    target_occurrence = id_map([row["occurrence_id"] for row in source["placements"]], "occ-target-timeline")[occurrence_id]
+    target_document_id = prepared["transcripts"][0]["document_id"]
+    id_mapping = {
+        **id_map([row["shot_id"] for row in source["placements"]], "target-timeline"),
+        **id_map([row["occurrence_id"] for row in source["placements"]], "occ-target-timeline"),
+    }
+
+    def remap_parent(value):
+        if isinstance(value, str):
+            return id_mapping.get(value, value)
+        if isinstance(value, list):
+            return [remap_parent(item) for item in value]
+        if isinstance(value, dict):
+            return {key: remap_parent(item) for key, item in value.items()}
+        return value
+
+    expected_parent = remap_parent(source["parent"])
+    expected_parent.pop("occurrences", None)
+    expected_parent["config"]["bundle"]["transcriptReferences"]["associations"][0]["documentId"] = target_document_id
+    parent_without_compiler_occurrences = {key: value for key, value in parent.items() if key != "occurrences"}
+    assert parent_without_compiler_occurrences == expected_parent
+    assert parent["config"]["app"]["astrid"]["chapters"] == [{
+        "name": "Opening", "shotId": target_shot, "occurrenceId": target_occurrence, "opaque": {"keep": True},
+    }]
+    assert parent["config"]["clips"] == source["parent"]["config"]["clips"]
+    assert parent["opaque_authoring"] == {
+        "shot": target_shot,
+        "occurrence": target_occurrence,
+        "nested": [{"shot": target_shot, "occurrence": target_occurrence}],
+    }
+    assert parent["config"]["bundle"]["transcriptReferences"]["associations"][0]["documentId"] == target_document_id
+    assert len(prepared["publication"]["shot_revisions"]) == len(source["placements"])
+    assert {row["shot_id"] for row in prepared["publication"]["shot_revisions"]}.isdisjoint(
+        {row["shot_id"] for row in source["placements"]}
+    )
 
 
 def test_prepare_import_requires_every_transcript_reference(monkeypatch):
