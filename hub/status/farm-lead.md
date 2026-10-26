@@ -1,1 +1,1 @@
-2026-10-26T03:56:48Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; farm STANDS BY: ZIP smoke dropped for farm (moved to Runtime/main, MAIN 03:56Z); custody child chain conditional on Agent D141i; schema packet c1c2a689 verified PASS_TRANSPORT_CLOSURE; owner-approved perms rules intact
+2026-10-26T04:41:36Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; farm stands by (ZIP smoke moved to Runtime/main; custody child chain conditional on Agent D141i); schema packet verified; owner-approved perms rules intact
