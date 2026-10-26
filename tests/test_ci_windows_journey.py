@@ -1,13 +1,35 @@
 """Guard against a journey going green on admission, stale readiness or PID reuse."""
 
 import json
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
 import subprocess
 import sys
 
 import pytest
 
 from scripts import ci_windows_journey as journey
+
+
+WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "windows-journey.yml"
+
+
+def test_journey_runs_for_main_windows_branches_and_main_pull_requests():
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    assert 'branches: [main, "windows/**"]' in workflow
+    assert "pull_request:\n    branches: [main]" in workflow
+    assert "name: Windows task host journey (${{ matrix.installer-shell }})" in workflow
+    assert "exploratory" not in workflow
+
+
+def test_journey_resolves_companion_refs_from_durable_defaults():
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    lock = json.loads((WORKFLOW.parents[2] / "runtime.lock.json").read_text(encoding="utf-8"))
+    assert len(lock["source_commit"]) == 40
+    assert "$runtimeRef = $lock.source_commit" in workflow
+    assert "ref: ${{ steps.runtime-ref.outputs.ref }}" in workflow
+    assert "runtime_ref:" not in workflow
+    assert "ref: ${{ inputs.app_ref || 'main' }}" in workflow
+    assert "default: windows/task-host" not in workflow
 
 
 def test_manifest_replaces_released_sources_and_keeps_app_tools(tmp_path, monkeypatch):
