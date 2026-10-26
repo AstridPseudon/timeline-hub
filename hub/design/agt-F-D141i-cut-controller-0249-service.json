@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.d141i.cut-controller.service.v1",
+  "controller": "agt-F-D141i-cut-controller-0249",
+  "submitted_utc": "2026-10-26T02:51:56.752503+00:00",
+  "request_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test integration:agent agent-core-full --no-cache",
+  "request_exit": 0,
+  "returned_stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049\n",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049",
+  "service_id": "agent-agent-core-full-1026025151-24049",
+  "request_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/request",
+  "wait_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agent-agent-core-full-1026025151-24049",
+  "status": "SUBMITTED_RECORDED_BEFORE_POLL",
+  "terminal_utc": "2026-10-26T02:52:27.363538+00:00",
+  "terminal_status": "fail",
+  "terminal_exit": 78,
+  "wait_test_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agent-agent-core-full-1026025151-24049",
+  "wait_test_exit": 78,
+  "result_dir_files": [
+    "BENCH-LEASE-RESULT",
+    "exit",
+    "heavy",
+    "log.txt",
+    "request",
+    "runner.log",
+    "snap",
+    "status",
+    "summary"
+  ],
+  "summary": "test agent-agent-core-full-1026025151-24049: fail exit=78 in 1s \u2014 agent-core-full on integration:agent (agent tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a)\ncmd: /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/measurement-command.sh\ncounts: \n--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/log.txt ---\nREFUSED: controller admission disk floor not met: 4687142912 < 4700000000\n",
+  "log": "REFUSED: controller admission disk floor not met: 4687142912 < 4700000000\n"
+}

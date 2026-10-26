@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.d141i.cut-controller.admission.v1",
+  "controller": "agt-F-D141i-cut-controller-0249",
+  "service_id": "agent-agent-core-full-1026025151-24049",
+  "manager_dispatch_witness": {
+    "utc": "2026-10-26T02:50:26.643150+00:00",
+    "free_bytes": 4821594112,
+    "required_bytes": 4700000000,
+    "comparison": "PASS"
+  },
+  "actual_controller_admission": {
+    "free_bytes": 4687142912,
+    "required_bytes": 4700000000,
+    "comparison": "REFUSED",
+    "message": "REFUSED: controller admission disk floor not met: 4687142912 < 4700000000",
+    "terminal_exit": 78
+  },
+  "body_started": false,
+  "body_invocation_count": 0,
+  "retry": false,
+  "status": "TERMINAL_CONTROLLER_REFUSAL"
+}

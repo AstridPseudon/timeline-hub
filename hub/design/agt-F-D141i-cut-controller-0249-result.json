@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.agent.d141i.cut-controller.result.v1",
+  "controller": "agt-F-D141i-cut-controller-0249",
+  "service_id": "agent-agent-core-full-1026025151-24049",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049",
+  "terminal": true,
+  "terminal_status": "fail",
+  "terminal_exit": 78,
+  "outcome": "CONTROLLER_REFUSED_ADMISSION",
+  "message": "REFUSED: controller admission disk floor not met: 4687142912 < 4700000000",
+  "body_started": false,
+  "measurement_body": "NOT_RUN",
+  "pytest": "NOT_RUN",
+  "collection": "NOT_RUN",
+  "genuine_outcome_counts": null,
+  "reg_or_nonreg": "UNCLASSIFIED",
+  "credit": "MEASUREMENT_ONLY; NO SHIP CREDIT",
+  "custody": {
+    "source_custody": "PASS: reviewed source packet and frozen tuple retained",
+    "body_artifacts": "NOT_APPLICABLE: controller refused before body",
+    "runmanifest": null,
+    "junit_xml": {
+      "reviewed_positive_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+      "actual_result": "NOT_PRODUCED"
+    },
+    "argv": "NOT_PRODUCED_AFTER_CONTROLLER_REFUSAL",
+    "raw_stdout": "NOT_PRODUCED_AFTER_CONTROLLER_REFUSAL",
+    "raw_stderr": "NOT_PRODUCED_AFTER_CONTROLLER_REFUSAL",
+    "runner_exit": "NOT_PRODUCED_AFTER_CONTROLLER_REFUSAL",
+    "monitor_exit": "NOT_PRODUCED_AFTER_CONTROLLER_REFUSAL",
+    "continuous_5s_disk_trace": {
+      "min": null,
+      "start": null,
+      "end": null,
+      "result": "NOT_STARTED"
+    }
+  },
+  "retained_service_files": {
+    "request": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/request",
+    "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/status",
+    "exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/exit",
+    "summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/summary",
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/log.txt"
+  },
+  "reviewed_inputs": {
+    "command_sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+    "service_row_sha256": "e29834abb52af15074269c6b7f00d5549943a966c79a74150a696ad09038a844",
+    "positive_manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+    "poison_manifest_sha256": "c1e9ae00cc7c4b94262b9277f3079e1234524d90610cbe807945961d5379fb4c",
+    "source_manifest_sha256": "773d23da50a9212b137ec3a8f3228fea69b206f372e9fad9d25b4c720b70f0c1",
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+  }
+}
