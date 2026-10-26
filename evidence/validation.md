@@ -1,53 +1,85 @@
-# D140 Farm recipe validation
+# D141 Farm input-producer validation
 
-## Source and scope
+## Read-only source checks
 
-The packet is source-only and contains no product, test, pin, kit, Store,
-queue, provider, collection, acquisition, or global-registry change. The
-existing D139a maker/checker/wrapper sources are consumed by hash; the new
-operational receiver is isolated under `ops-d140-farm/`.
-
-Verified read-only source objects:
-
-- Agent `41ad656529fa8489829de9078b1b6e157c7433c8` / tree
-  `d29e47fe7be6e55940b42fa1477a23e7925f62fa`;
-- Runtime `f103bb46866999c961a8865636f2e66d544e0c9b` / tree
-  `5d0cedf2e5134acf895e8d43191cc5fdc09f9883`;
-- App `5696769dfca056676cde1ab46d8bc94354b3a44a` / tree
-  `0748df404125114a0f68b701fa76f43abd3fc79a`;
-- Composition `635f4de06fda22a85fc2e4cfc764d0153a4c9f40` / tree
-  `5ab5191a296980a0a6bcd1178ab6902d6478a148`.
-
-The actual Main Agent checkout remains stale at `547e1045`; it was not
-retargeted. The exact `41ad…` object is present and is recorded as a read-only
-source identity, not as an exact checkout receipt.
-
-## Commands and results
-
-| Command | Result |
+| Check | Result |
 | --- | --- |
-| `bash -n ops-d140-farm/receive-farm.sh` | PASS |
-| `/home/user/work/venv-agent/bin/python - <<'PY' ... compile(test_recipe.py) ... PY` | PASS — in-memory compile |
-| `/home/user/work/venv-agent/bin/python -m pytest -q ops-d140-farm/test_recipe.py` | PASS — 4 tests |
-| `AGENT_CHECKOUT=/home/user/work/agent ... ops-d140-farm/receive-farm.sh --check-only` | PASS — complete JSON census; exit 1 because status is finite `NOT_READY` |
-| `/home/user/work/venv-agent/bin/python -m json.tool <check-only-output>` | PASS |
-| `/home/user/work/venv-agent/bin/ruff check --no-cache ops-d140-farm/test_recipe.py` | PASS |
-| `git diff --check` | PASS |
+| Frozen tuple commit/tree/origin/status readback | PASS for four current worktrees |
+| Operational source SHA/size/mode readback | PASS for maker, requester, checker, seed verifier and Farm verifier |
+| Frozen runtime lock, D73 launcher and C0 schema hashes | PASS; paths and SHA-256 values match `source-manifest.json` |
+| C0 contract and mounted receiver field scan | PASS; no source edits to C0 or product code |
+| Historical 2149/2216 distinction | PASS; no historical evidence retargeted |
+| D139a installed-vs-source distinction | PASS; actual Farm installed bytes remain MISSING |
+| Composition corrected receipt exact filename/content/hash | PASS; venue admission still pending |
 
-The check-only run reported `NOT_READY`, 94 checks, 66 non-PASS checks, and
-named their owners. It confirmed the four source object identities,
-D139a maker `fd83…`, normal wrapper `60d223…`, checker `8215…`, launcher
-`9f668…`, client/schema/runtime-lock hashes and the supporting canonical
-1146-row packet. It found no Farm schema RECORD closure, received maker,
-registered child/interpreter/bootstrap, current D73 manifest/profile, central
-service, retained-disk admission, output roots, fresh controls, or current
-Farm receipts.
+## Exact commands and results
 
-The D73 positive/poison controls, registered child import census, and the
-22-root Agent core were not run. No full suite, browser, socket, Store,
-installer, package acquisition, or body was run. The 57-source-control result
-and the canonical `4c/ab1e` census are not a current `41ad/f103` Farm result.
+```sh
+git -C /home/user/work/wt/agt-pin-28e56cac rev-parse HEAD HEAD^{tree}
+git -C /home/user/work/runtime rev-parse HEAD HEAD^{tree}
+git -C /home/user/work/app rev-parse HEAD HEAD^{tree}
+git -C /home/user/work/composition rev-parse HEAD HEAD^{tree}
+git -C <each> status --porcelain --untracked-files=all
+```
 
-Acceptance must use the exact Agent Python and Ruff paths above. No external
-profile, alternate schema source, old tuple, prior failure, original9, D77
-render, or D130 route is admitted.
+PASS: the four values match `evidence/source-manifest.json`; all four status
+outputs are empty.
+
+```sh
+sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/{make-child-venv,request-child-venv,check-child-imports,verify_dependency_seed.py,verify_farm_distribution_inputs.py}
+stat -c '%n %s %a' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/{make-child-venv,request-child-venv,check-child-imports,verify_dependency_seed.py,verify_farm_distribution_inputs.py}
+```
+
+PASS: hashes, byte counts and modes match the source manifest.
+
+```sh
+/home/user/work/venv-runtime/bin/python - <<'PY'
+import hashlib, json
+from pathlib import Path
+manifest = json.loads(Path('evidence/source-manifest.json').read_text())
+for label, item in manifest['frozen_source_files'].items():
+    path = Path(item['path'])
+    assert path.is_file()
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == item['sha256']
+PY
+```
+
+PASS: frozen runtime lock, D73 launcher and C0 schema hashes match.
+
+```sh
+bash -n ops-d140-farm/receive-farm.sh
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/input-map.json
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/source-manifest.json
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/qualified-inputs/provenance.json
+git diff --check
+```
+
+PASS: all five commands. No Farm census was run because the task explicitly
+forbids running it and the source packet has genuine missing prerequisites.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -p no:cacheprovider ops-d140-farm/test_recipe.py
+```
+
+PASS: `97 passed in 168.38s (0:02:48)`.
+
+```sh
+/home/user/work/venv-runtime/bin/python - <<'PY'
+import ast
+from pathlib import Path
+for name in ('ops-d140-farm/receipts.py', 'ops-d140-farm/test_recipe.py'):
+    ast.parse(Path(name).read_text(), filename=name)
+PY
+rg -n 'FARM_INSTALLED_KIT_SUMMARY|SCHEMA_INSTALLED_DISTRIBUTION|SCHEMA_SOURCE_MANIFEST|SCHEMA_RECORD_CLOSURE|SCHEMA_DIRECT_URL|CANONICAL_CENSUS|DEPENDENCY_SEED|CENTRAL_SERVICE|CENTRAL_SUITE|D73_DRY_ROUTE|CORE_ROUTE|PROFILE|DISK_ADMISSION|RETAINED_ROOT|FARM_CURRENT_COMPOSITION_RECEIPT' ops-d140-farm/receive-farm.sh ops-d140-farm/receipts.py
+```
+
+PASS: Python AST parsing succeeded; the field scan found every mapped
+production binding in the receiver or receipt checker at the line references
+recorded in `input-map.json`.
+
+## Not run by design
+
+No child request, imports/product code, services, D134 controls, D124 core,
+Store, acquisition/network, install/kit edit, cleanup, full suite, or Git
+write was performed. No venue `READY`, finite-source `PASS`, or behavioral
+qualification is claimed.

@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.d141.qualified-input-provenance/v1",
+  "artifact": "composition-receipt.txt",
+  "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "source_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+  "bytes": 87,
+  "format": "normal make-checkout queue/done receipt",
+  "producer": "make-checkout / normal source receipt route",
+  "tuple": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+  "portable_copy_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+  "admission": "READY_TO_RECHECK_ONLY",
+  "limitation": "The receiver requires the original normal queue/done path plus worker meta and KEEP closure; this evidence copy is not a venue receipt and cannot make the census READY"
+}

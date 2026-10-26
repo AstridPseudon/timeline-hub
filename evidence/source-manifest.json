@@ -1,30 +1,26 @@
 {
-  "schema": "timeline.d140.farm-source-manifest/v1",
-  "scope": "portable receiving bindings and read-only source observations; not a Farm execution receipt",
-  "source_tuple": {
-    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "origin": "https://github.com/peteromallet/astrid-agent", "object_store": "/home/user/work/agent", "checkout_binding": "Farm receipt required"},
-    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "checkout_binding": "/home/user/work/runtime"},
-    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "origin": "https://github.com/banodoco/reigh-app", "checkout_binding": "/home/user/work/app"},
-    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "checkout_binding": "/home/user/work/composition"}
+  "schema": "timeline.d141.farm-source-manifest/v1",
+  "status": "SOURCE_PASS_VENUE_NOT_READY",
+  "scope": "original sources, hashes, formats, owners and portable receipt inputs; no Farm execution claim",
+  "frozen_tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "path": "/home/user/work/wt/agt-pin-28e56cac", "origin": "https://github.com/peteromallet/astrid-agent"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "path": "/home/user/work/runtime", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "path": "/home/user/work/app", "origin": "https://github.com/banodoco/reigh-app"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "path": "/home/user/work/composition", "origin": "https://github.com/peteromallet/timeline-composition"}
   },
-  "source_files": {
-    "agent:runtime.lock.json": {"blob": "01559de71798c40ba6da1e12c7fba0643902d3e2", "sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a", "runtime_source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "locked_file_count": 15},
-    "agent:astrid_runtime_client/generated.py": {"blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
-    "agent:astrid_runtime_client/timeline_commit_types.py": {"blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
-    "agent:astrid/core/timeline/banodoco_schema.py": {"blob": "1b3f12da05da3bb89fa76881184eefdf8232e076", "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"},
-    "runtime:runtime_protocol/canonical_schema.py": {"blob": "a97f1b31e27a6c27373799a84ec839b49188acdc", "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"},
-    "runtime:contract/schemas/timeline-commit.json": {"blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"},
-    "agent:tools/p4-d73-pinned-launch.sh": {"blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "mode": "0755"},
-    "agent:tests/suites.conf.candidate.request.md": {"blob": "fbde96168dca681a76cff1526c23b8d0b74001eb", "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"}
+  "frozen_source_files": {
+    "agent:runtime.lock.json": {"path": "/home/user/work/wt/agt-pin-28e56cac/runtime.lock.json", "blob": "2d4d12a1e5a11ec23c027db67ac09a11e6e9ed20", "sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3", "format": "JSON runtime lock with 15 mappings", "owner": "Agent source owner"},
+    "agent:tools/p4-d73-pinned-launch.sh": {"path": "/home/user/work/wt/agt-pin-28e56cac/tools/p4-d73-pinned-launch.sh", "blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "mode": "0755", "format": "reviewed D73 launcher", "owner": "Agent D73 route owner"},
+    "runtime:contract/schemas/timeline-commit.json": {"path": "/home/user/work/runtime/contract/schemas/timeline-commit.json", "blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815", "format": "C0 commit schema JSON", "owner": "Runtime C0 owner"}
   },
-  "d139a_operational_sources": {
-    "maker": {"path": "ops-child-custody/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755"},
-    "wrapper": {"path": "ops-child-custody/request-child-venv", "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755"},
-    "checker": {"path": "ops-child-custody/check-child-imports", "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755"},
-    "received_maker": {"required_mode": "0755", "status": "MISSING_FARM_RECEIPT"}
+  "operational_sources": {
+    "maker": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755", "format": "bash normal maker", "owner": "D139a joined source owner", "portable": false, "reason": "shared kit source; receiver requires the registered normal root"},
+    "requester": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv", "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755", "format": "bash normal request carrier", "owner": "D139a request-carrier owner", "portable": false, "reason": "receiver receipts.py closes the normal root and producer path"},
+    "import_checker": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/check-child-imports", "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755", "format": "Python child import checker", "owner": "D139 census owner", "portable": false, "reason": "checker must run in the registered child"},
+    "seed_verifier": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py", "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2", "bytes": 52731, "mode": "0755", "format": "Python source-only wheelhouse verifier", "owner": "Farm distribution/seed owner", "portable": false, "reason": "verifier is not the wheelhouse"},
+    "farm_input_verifier": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_farm_distribution_inputs.py", "sha256": "c2163184ed51e893c6d194930c061474de08bfe707907a2f43abb5332b62397d", "bytes": 33724, "mode": "0644", "format": "Python source-only Farm input verifier", "owner": "Farm distribution owner", "portable": false, "reason": "special FARM_REQUIRED=1 route is not the qualified installed-schema route"}
   },
-  "schema_input": {
-    "route": "--schema-installed-distribution plus --schema-source-manifest",
+  "schema_source": {
     "package": "banodoco-timeline-schema",
     "version": "0.0.2",
     "url": "https://github.com/banodoco/ArtAgents.git",
@@ -32,15 +28,38 @@
     "subdirectory": "packages/timeline-schema/python",
     "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
     "record_rows": 18,
-    "hashed_rows": 12,
-    "unhashed_rows": ["banodoco_timeline_schema-0.0.2.dist-info/RECORD", "banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc"],
-    "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
-    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
-    "tree_tie": "UNAVAILABLE",
-    "farm_availability": "UNKNOWN_UNTIL_CHECKED",
-    "acquisition": false
+    "record_hashed_rows": 12,
+    "record_sha256_expected": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+    "direct_url_sha256_expected": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "trusted_manifest_sha256_expected": "c9a87be9485f79878262cc9a193bfa9e4932cf0a942a62b32e272b46c7b60a2d",
+    "tree_tie": "UNAVAILABLE until a genuine ArtAgents source object is held",
+    "actual_installed_bytes_on_farm": "MISSING",
+    "owner": "D139a schema owner"
   },
-  "canonical_supporting_census": {"path": "design/agt-F-D139-import-input-census-2149-input-census.json", "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "rows": 1146, "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d", "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464", "applicability_to_current_tuple": "NOT_CLAIMED"},
-  "receipts": {"d139a_source_join": "PASS_SOURCE_JOIN in existing composition evidence; not Farm installation/child acceptance", "d73_current_tuple": "MISSING", "farm_current_tuple": "MISSING", "later_changed_heads": "require a named new actual receipt; no mutable recapture"},
-  "live_actions": {"install": false, "request": false, "child": false, "imports": false, "core": false, "store": false, "queue": false, "provider": false, "collection": false, "acquisition": false}
+  "canonical_census": {
+    "input_2149": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D139-import-input-census-2149-input-census.json", "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "bytes": 10686270, "rows": 1146, "format": "canonical JSON import census", "owner": "D139 census owner", "current_d141": false},
+    "review_2216": {"format": "finite review/reconciliation metadata", "status": "supporting provenance only", "current_d141": false},
+    "farm_bound_path": "MISSING"
+  },
+  "historical_kit": {
+    "cas_install": "D139a CAS2309",
+    "installed_review": "D139a installed2314",
+    "maker_sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+    "maker_bytes": 111171,
+    "maker_mode": "0755",
+    "actual_d141_installation_summary": "MISSING",
+    "owner": "D139a installation/kit owner"
+  },
+  "recipe_sources": {
+    "d124_core": {"path": "ops-d140-farm/commands.md:189-232", "format": "unchanged shell command with 22 unfiltered roots", "owner": "Farm control-plane owner"},
+    "d134_controls": {"path": "ops-d140-farm/commands.md:152-187", "format": "positive exit 17 once; poison nonzero and zero calls", "owner": "D134 control owner"},
+    "c0": {"path": "ops-d140-farm/commands.md:105-150 and design/commit-v2.md", "format": "request/reply field prose retained verbatim by existing packet", "owner": "Runtime C0 owner"}
+  },
+  "portable_inputs": {
+    "directory": "evidence/qualified-inputs",
+    "manifest": "evidence/qualified-inputs/provenance.json",
+    "items": ["composition-receipt.txt", "composition-receipt.sha256"],
+    "limitation": "These are authentic queue text and digest, but direct receiver admission still requires the normal Farm queue/done path, worker meta and KEEP closure; copying them does not make the venue READY"
+  },
+  "not_sources": ["historical D137 installed-kit JSON as D141 proof", "oldvenv or shared dependency installs", "bootstrap tgz as DEPENDENCY_SEED", "2149/2216 historical census as a current D141 census", "synthetic Farm receipts", "alternate schema source or acquisition"]
 }
