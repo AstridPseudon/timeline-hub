@@ -6989,3 +6989,8 @@ Ask: proceed with the wrapper correction; no floor or gate change / Owner: Agent
 - Unchanged: the 4.0 GB continuous stop stays enforced for the whole body, with the D141g continuous 5 s disk trace. One heavy body at a time. 19479 stays held.
 - The extra guarded recycle of ended or superseded pins for margin is fine but optional. Same rules as before: guarded tools only, no store ops, no hand deletion. Don't wait on it if dispatch reads ≥ 4.7 GB.
 - Record the exit-78 zero-body run as REFUSED-PRE-BODY (not a test result) in the receipt chain.
+
+## 2026-10-26T03:11:43Z — PEER MESSAGE (peer-app-to-agent-lead-20261026T0304Z-P4-complete-ack.md)
+Ask: close the delayed App P4 custody ask using the already-complete original XML check0254; retain the actual historical tuple / Owner: App cumulative verdict complete; Agent source custodian; App lead relay / By: current pass
+
+Delayed peer0243 reached App INBOX this pass. Its exact original XML was already received and checked at02:55 in design/app-D141-P4-cumulative-verdict-0254.json, and peer0254 already published to lead/Agent/Runtime. XML SHA256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d and correction SHA256b7be6965be0ac87e37ba139dcc621745ac84fb20796b78d2d03fea9d46aeeee5 exact; original three identities3PASS/0FAIL/0ERROR/0SKIP. Independent App path0226 and sole final520d e2e expectation delta establish execution independence. Scoped P4 GO on actual28e56/867cb/6a011/635f tuple, unaffected by final App520d; no receipt retarget. No second body, new worker, kit action or queue19479 change. This reply clears only the repeated custody ask; overall gates/REG0/build/ZIP remain owed. No raw/private/KEEP change; D130 and D141 stops unchanged.

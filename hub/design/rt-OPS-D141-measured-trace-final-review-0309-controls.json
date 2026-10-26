@@ -1,0 +1,89 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-final-review.controls.v1",
+  "candidate": {
+    "commit": "88bb53f12f9f05aaae3357badc431e7f04cd8559",
+    "tree": "1dfcf8e66d972999ecde7f42699e9cda85fe5b7d",
+    "status": "clean"
+  },
+  "verdict": "PASS_RUNTIME_P5_TARGET15_APP_APPLICABILITY_NOT_READY",
+  "commands": [
+    {
+      "command": "python3 -I ops-d141-measured-floor/controls/real-controls.py",
+      "result": "PASS",
+      "scope": "private isolated controls; exit 0"
+    },
+    {
+      "command": "bash -n ops-d141-measured-floor/bin/test-run",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 -I - <<'PY' ... ast.parse(all ops-d141-measured-floor/controls/*.py) ... PY",
+      "result": "PASS",
+      "scope": "all five control Python files"
+    },
+    {
+      "command": "ruff check --no-cache ops-d141-measured-floor/controls/*.py",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "authorized_routes": [
+    {
+      "name": "D141g synthetic app control",
+      "repo": "app",
+      "suite": "full-e2e-timeline",
+      "result": "PASS",
+      "trace_rows": 4,
+      "qualification": "control-only; this nominal route is not evidence that final App D66 uses this suite name"
+    },
+    {
+      "name": "D141h Runtime targeted15",
+      "repo": "runtime",
+      "suite": "full-d141-pristine-targeted15",
+      "result": "PASS",
+      "trace_rows": 4
+    },
+    {
+      "name": "D141 SAME P5",
+      "job": "runtime-d141-p5-cut-1026013331-6934",
+      "repo": "runtime",
+      "suite": "d141-p5-cut",
+      "result": "PASS",
+      "trace_rows": 4
+    }
+  ],
+  "negative_routes": {
+    "held_exact_ids": {
+      "ids": [
+        "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+        "agent-p4-current-becfe-http-3legs-1026012948-19479"
+      ],
+      "result": "PASS_REFUSED_BEFORE_ARTIFACT_OR_LAUNCH"
+    },
+    "p5_identity": {
+      "bare": "6934",
+      "suffix": "runtime-d141-p5-cut-1026013331-6934-suffix",
+      "wrong_job": "runtime-d141-p5-cut-1026013331-9999",
+      "result": "PASS_REFUSED"
+    }
+  },
+  "semantics_checked": [
+    "D89d formula max(4600000000, 4000000000 + growth + 200000000)",
+    "4.6GB floor equality accepted; below-floor refused",
+    "default light and agent-core floors accepted; default heavy and global 4.5GB stop refused",
+    "start/end bracket delta semantics plus continuous 5s KEEP trace",
+    "body start/end/cancel, sampler reaping, final trace, and exit handling",
+    "strict JSON duplicate/malformed rejection",
+    "no-follow regular path, owner/group, source head/tree, command, job, repo, and suite binding",
+    "reciprocal heavy admission and unchanged 4GB stop",
+    "snapshot/cache/lease preservation"
+  ],
+  "not_run": [
+    "central live request-test or queue submission",
+    "live body, localhost, browser, socket, network, install, or package operation",
+    "full suite and direct product execution"
+  ]
+}

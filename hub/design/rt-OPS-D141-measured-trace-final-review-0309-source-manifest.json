@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-final-review.source-manifest.v1",
+  "candidate": {
+    "repo": "composition",
+    "commit": "88bb53f12f9f05aaae3357badc431e7f04cd8559",
+    "tree": "1dfcf8e66d972999ecde7f42699e9cda85fe5b7d",
+    "files": [
+      {"path": "ops-d141-measured-floor/bin/test-run", "mode": "755", "sha256": "5a0d613f28e0d95b1351509cff7c74c913531366a51763c03c0fe7d585054c8d"},
+      {"path": "ops-d141-measured-floor/controls/append-final.py", "mode": "755", "sha256": "67524e434a55cc221336de2b5ca1051ee1dae1ccad8ed32f453ee4a5f13a2671"},
+      {"path": "ops-d141-measured-floor/controls/disk-trace.py", "mode": "755", "sha256": "e6f0747a908a6097cec71c10fb62bfd661ef2b3fa4891fd3b2f23aaa32575179"},
+      {"path": "ops-d141-measured-floor/controls/real-controls.py", "mode": "755", "sha256": "64ef352369cee6b3bcc0531d6b478ce5d1fe5a1c54467d465813fb36dc308690"},
+      {"path": "ops-d141-measured-floor/controls/validate-receipt.py", "mode": "755", "sha256": "7869e082a43ba25632a676be3fbd7b7171d7fee6eabe1c0db2d387a1bcae8df9"},
+      {"path": "ops-d141-measured-floor/controls/validate-trace.py", "mode": "755", "sha256": "a535869877130aebc39eb1171757613dd19f3c70ef1c5a3554b9dbd8f440fb27"}
+    ]
+  },
+  "caller_chain": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test", "mode": "755", "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon", "mode": "755", "sha256": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run", "mode": "755", "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf", "mode": "600", "sha256": "0e8e74b787633867a8d5d7cbbc59d2fb0928431419563eaa594693823c839081"}
+  ],
+  "runtime_contract": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "mode": "644",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "app_final_source": [
+    {"path": "scripts/testing/d66-plain-stack.mjs", "commit": "520d7e4fc12a03392afaed3f486aba34a2b5c319", "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65", "mode": "644", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f"},
+    {"path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "commit": "520d7e4fc12a03392afaed3f486aba34a2b5c319", "tree": "70ad390c56b0e45d9279b4179598b6cdbad9ed65", "mode": "644", "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e"}
+  ],
+  "cas_install_manifest": {
+    "status": "SOURCE_ONLY_NOT_INSTALLED",
+    "preimage": {"commit": "88bb53f12f9f05aaae3357badc431e7f04cd8559", "tree": "1dfcf8e66d972999ecde7f42699e9cda85fe5b7d"},
+    "intended_files": "the six candidate files listed under candidate.files, preserving their listed modes and hashes",
+    "postimage": "not produced; no Store, registry, kit, package, environment, or hub write was authorized",
+    "receipt": "none produced"
+  },
+  "same_6934_attach": {
+    "identity": {"job": "runtime-d141-p5-cut-1026013331-6934", "repo": "runtime", "suite": "d141-p5-cut"},
+    "supported_sequence": [
+      "retain the existing exact-ID TEST request/body if already present",
+      "let the dispatcher pass that exact ID to its test-run admission path",
+      "validate the receipt and source bindings before any body launch"
+    ],
+    "prohibited_for_this_review": ["request-test reissue", "ID shortening or suffixing", "direct body or install invocation"]
+  }
+}

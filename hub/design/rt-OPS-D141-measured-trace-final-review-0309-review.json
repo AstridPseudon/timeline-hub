@@ -1,0 +1,52 @@
+{
+  "schema": "timeline.ops.d141.measured-trace-final-review.v1",
+  "task": "rt-OPS-D141-measured-trace-final-review-0309",
+  "candidate": {
+    "repo": "composition",
+    "commit": "88bb53f12f9f05aaae3357badc431e7f04cd8559",
+    "tree": "1dfcf8e66d972999ecde7f42699e9cda85fe5b7d",
+    "base_commit": "159acdc84eb953f617697b753156dc69c787acf8",
+    "base_tree": "7b9a54111ada389c601363d91a1de8089ab92a8b",
+    "status": "clean"
+  },
+  "verdict": "PASS_RUNTIME_P5_TARGET15_WITH_APP_APPLICABILITY_BLOCK",
+  "scope": "Independent read-only source/security/real-caller review plus the specified isolated candidate controls; no live request, body, queue, install, product/test edit, pin/client/generated change, network, package, Store, cleanup, Git write, build, or ZIP action.",
+  "findings": [
+    {
+      "id": "F-D141-FC-001",
+      "severity": "CLOSED",
+      "subject": "Held pristine and cancelled P4 full IDs",
+      "result": "PASS",
+      "evidence": "Exact production IDs are refused before snapshot/lease/body/trace; isolated controls leave only request and why files."
+    },
+    {
+      "id": "F-D141-FC-002",
+      "severity": "CLOSED",
+      "subject": "P5 SAME6934 binding",
+      "result": "PASS",
+      "evidence": "runtime-d141-p5-cut-1026013331-6934 with runtime/d141-p5-cut is accepted; bare 6934, suffix, and wrong full job are refused."
+    },
+    {
+      "id": "F-D141-APP-001",
+      "severity": "BLOCKING_FOR_APP_WHOLE_KIT",
+      "subject": "D141g allowlist is not bound to the genuine final App caller",
+      "result": "OPEN",
+      "evidence": "Candidate accepts only app/full-e2e-timeline for D141g. App 520d source exposes selector p2-automatic-child-placement and D66/D73 registers a unique selector-specific row via D66_SUBMIT_SUITE; no final-520d registered row or exact command hash is present in the reviewed source inputs."
+    }
+  ],
+  "readiness": {
+    "runtime_p5": "READY_SOURCE_CONTROLS_ONLY",
+    "runtime_target15": "READY_SOURCE_CONTROLS_ONLY",
+    "app_d141g": "NOT_READY_SOURCE_BINDING_MISSING",
+    "whole_kit": "NOT_READY"
+  },
+  "contract": {
+    "source": "/home/user/work/runtime/contract/commit-v2.md",
+    "required_request": ["base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run"],
+    "request_semantics": "Exact base pair; ordered semantic/doc.patch commands; labelled steps with per-step patches; fields|atomic merge; declared reads; omitted doc.patch reads conservatively become atomic; exact-key idempotency.",
+    "reply_semantics": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "error_shape": "Structured code/path/hint/suggested_command with actual head for conflicts; invalid is distinct from later-head conflict.",
+    "preview": "Same authorization/base/read/guard validation, status preview with would_status and null receipt, no store/history/idempotency/head mutation.",
+    "undo_history": "Whole/per-step guarded inverse with later-history/A->B->A scan; merged inverse uses actual landing head; labels, steps, reads, dependencies and attribution persist in history."
+  }
+}
