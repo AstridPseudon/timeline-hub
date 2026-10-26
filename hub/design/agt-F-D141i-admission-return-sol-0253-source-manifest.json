@@ -1,0 +1,409 @@
+{
+  "schema": "timeline.agent.d141i.admission-return.source-manifest.v1",
+  "tuple": {
+    "Agent": {
+      "path": "/home/user/work/wt/agt-pin-28e56cac",
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "parents": [
+        "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "c585cb2aa73c5298d474e614cb2144f58f27e605",
+        "b4eb5db76fda523407b90a9dbe820f4e20cc1f1d"
+      ],
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "worktree": "clean"
+    },
+    "Runtime": {
+      "path": "/home/user/work/wt/rt-pin-6a011d58",
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "parents": [
+        "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+        "24107e83b096264e59f64ed5bd65e00650567f22"
+      ],
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "worktree": "clean"
+    },
+    "App": {
+      "path": "/home/user/work/wt/app-pin-867cb273",
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "parents": [
+        "867cb2737af1b46dc608c7cd37c349e920fe9422",
+        "263b728f014040afc9c6b3fdfb54963b93b757eb",
+        "9ada0d906a2efc5cf98b18b112d2d4e9d0657098"
+      ],
+      "origin": "https://github.com/banodoco/reigh-app",
+      "worktree": "clean"
+    },
+    "Composition": {
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "worktree": "clean"
+    }
+  },
+  "environment": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "python_realpath": "/usr/bin/python3.13",
+    "python_version": "Python 3.13.16",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "profile_lock_path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json",
+    "profile_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "profile_archive": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "profile_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "profile_registry": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/.astrid-registry-state.json",
+    "profile_registry_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+    "composition_package": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules/@banodoco/timeline-composition/package.json",
+    "composition_package_sha256": "a2435c315fe2235c63d32551f3c38ec85e049f2fc950f3ab556686fd7dab40f7",
+    "composition_version": "0.0.14",
+    "schema_root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "client_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "runtime_lock_source": "/home/user/work/wt/agt-pin-28e56cac/runtime.lock.json",
+    "runtime_lock_sha256": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "runtime_lock_files": 15,
+    "original_p4_test_hash": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac"
+  },
+  "physical_source_hashes": {
+    "/home/user/work/wt/agt-pin-28e56cac/astrid/core/timeline/schema/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/contract_metadata.py": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/generated.py": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid_runtime_client/timeline_commit_types.py": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/events_page_1_200.json": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/events_page_2_200.json": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/invalid_cursor_400.json": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/managed_outputs_200.json": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/not_found_404.json": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/publish_conflict_409.json": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/task_admission_201.json": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/task_read_200.json": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/runtime-responses/validation_error_422.json": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/fixtures/visual-boundary-v1.json": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+    "/home/user/work/wt/agt-pin-28e56cac/astrid/__init__.py": "f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578",
+    "/home/user/work/wt/rt-pin-6a011d58/runtime_protocol/__init__.py": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2",
+    "/home/user/work/wt/rt-pin-6a011d58/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/wt/app-pin-867cb273/vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+    "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules/@banodoco/timeline-composition/package.json": "a2435c315fe2235c63d32551f3c38ec85e049f2fc950f3ab556686fd7dab40f7",
+    "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/.astrid-registry-state.json": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+    "/home/user/work/wt/agt-pin-28e56cac/runtime.lock.json": "0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py": "8239ad0c3ac7de05d7ab0efac7b12c34532df33f7f22f33c9c270f0aeb30f213",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_ten_note_v2_runtime.py": "c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0",
+    "/home/user/work/wt/agt-pin-28e56cac/tests/editing_conformance/test_p4_note_rerun_v2_runtime.py": "02ffa65700ff1c4d2e4a017fbaef6f646d100de5af61bc85e9003866eb927f36"
+  },
+  "sources": {
+    "agent_checkout_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "sha256": "f1938b186e2590eaa62d3a33d27446c47651402c6762f9e32fdec6f8670a69af"
+    },
+    "runtime_checkout_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "sha256": "e045fe3a1f4ea915da47b541e8650dd3d9f1700cde14d659f409eaa94057db30"
+    },
+    "app_checkout_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "sha256": "bea1c16a08c1ec08975a362c9cae8f86b15ce46b051f5165198b76319af4c162"
+    },
+    "composition_checkout_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+    },
+    "normal_manifest_maker": {
+      "path": "/home/user/work/agent/tests/suites.conf.candidate.request.md",
+      "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"
+    },
+    "pinned_launcher": {
+      "path": "/home/user/work/wt/agt-pin-28e56cac/tools/p4-d73-pinned-launch.sh",
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+    }
+  },
+  "historical_inputs": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/measurement-command.sh": {
+      "sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+      "bytes": 14429
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/service-row.txt": {
+      "sha256": "e29834abb52af15074269c6b7f00d5549943a966c79a74150a696ad09038a844",
+      "bytes": 187
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/positive.manifest": {
+      "sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+      "bytes": 2719
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/poison.manifest": {
+      "sha256": "c1e9ae00cc7c4b94262b9277f3079e1234524d90610cbe807945961d5379fb4c",
+      "bytes": 2719
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/source-manifest.json": {
+      "sha256": "773d23da50a9212b137ec3a8f3228fea69b206f372e9fad9d25b4c720b70f0c1",
+      "bytes": 6901
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/monitor-exit.txt": {
+      "sha256": "f57aded2c9024ac2509993f8d4c153ac3e323606c451d7ba98c8d8d80face903",
+      "bytes": 25
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/service.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/KEEP": {
+      "sha256": "c7cde8022846cd6aff9b189e32dc3aa4f3eea733835d469093054391490627b2",
+      "bytes": 5
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/heavy.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/disk-trace.txt": {
+      "sha256": "e7cdf490bffaa6651b06cfe2abd1dadc85826899d6d52d67ab3c16bf0d3f4667",
+      "bytes": 75
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/raw-stdout.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/status.txt": {
+      "sha256": "c9a22b52a881dc21191f742075aa27510fd1add4089d8fcf6dbdd89f4b91fc8a",
+      "bytes": 176
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/callerargv.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/source-after-errors.txt": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "bytes": 1
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/source-after.txt": {
+      "sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2",
+      "bytes": 490
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/runner-exit.txt": {
+      "sha256": "2ec26f7c30806fa702bf8123deeafd039b2482a690078c8b51bddf7bf493e452",
+      "bytes": 24
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/interpreter.txt": {
+      "sha256": "638646cbdf40aa272993d70b59caf8d5c27eb72fbdf04a1390b8b8c08fcf2686",
+      "bytes": 100
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/raw-stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/private/measurement-runs/agent-core-full/source-before.txt": {
+      "sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2",
+      "bytes": 490
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/log.txt": {
+      "sha256": "f7e5887a53ce26ea36acf9abf32d2c99c73d2dc641114648db9b813645ba29f8",
+      "bytes": 74
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/BENCH-LEASE-RESULT": {
+      "sha256": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1",
+      "bytes": 9
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/request": {
+      "sha256": "b24dbb308426413e975506918e63d0a71a3aca9d56f46badf959460ec2c062fa",
+      "bytes": 108
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/exit": {
+      "sha256": "b03c70ff0d641a363f1a021413a098dce02e4c68b75f3a47aa10044f42ee1784",
+      "bytes": 3
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/summary": {
+      "sha256": "ad9dc64fafd1745beb836fb84c25ee69d4f9bb22c492b0945ea3da69fb725289",
+      "bytes": 573
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/snap": {
+      "sha256": "e4019937cd2dd6bb4445c857affd246a89c65b00e5090f02414a2397b1105bad",
+      "bytes": 114
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/status": {
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
+      "bytes": 5
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/heavy": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/runner.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run": {
+      "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+      "bytes": 14962
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf": {
+      "sha256": "8871cb8218c828f74e2ad4a15f385df497f45ff860788b25f98a8fb111cb257d",
+      "bytes": 161975
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md": {
+      "sha256": "379e1eb69b3f5e589346ac2cced4e19035ce449ce9d1075c5128be74c77137b5",
+      "bytes": 5596
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/service.json": {
+      "sha256": "e8796cd7f3f965015996f1d1573b5af857bb8ad381aab6914b657abbec97e400",
+      "bytes": 2226
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/source-manifest.json": {
+      "sha256": "773d23da50a9212b137ec3a8f3228fea69b206f372e9fad9d25b4c720b70f0c1",
+      "bytes": 6901
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/receiving.json": {
+      "sha256": "df47d174220d5f289cd421a23b17a5f0ca94a61ec2a4178cf03314bd19451686",
+      "bytes": 170215
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/result.json": {
+      "sha256": "49207913314c5a10e5aa03315eed27ebf3eb278d3d5227a005ef5d12453dee0b",
+      "bytes": 3061
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json": {
+      "sha256": "5fbdab93245696b725f7b67eca44f02d939536c8f6e5d6c6678ea628de4b5a35",
+      "bytes": 714
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-final-command-review-0246/evidence/review.json": {
+      "sha256": "cae6fd58fa6af2c40dc3fb22a3bc73ccd0d93c79f0b56b17366a498fb2dcfa34",
+      "bytes": 5531
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/findings-resolution.json": {
+      "sha256": "d3ec18b4a3fa4b7da7e0f395257e7a589e7e9464b833aedec052e224e4bf1676",
+      "bytes": 1770
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/readiness.json": {
+      "sha256": "8a0b3bf1d2494dc0175867e33f3ab99cd03a5a624247b903c75c90baf25ef731",
+      "bytes": 1253
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/validation.md": {
+      "sha256": "cf59b6e28fc356402b6308a1ef29b68d14b156d515d57401f8ee85e860c40552",
+      "bytes": 2299
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/preflight.json": {
+      "sha256": "392300f609b4375291094b5dd96a8d387eae75865eca8534e3d1004abc8aab94",
+      "bytes": 4609
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/manifest-diff.json": {
+      "sha256": "b3adbc9121a8089f00d3d2efe4229579a919d2b80c04ba7fc1b43b05159f28a2",
+      "bytes": 685
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/handoff.md": {
+      "sha256": "c2eafec5ed036eb3cfb5f146c23fd84907851f0e3c4cd7716d0123bd86da42f5",
+      "bytes": 1033
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/command-diff.json": {
+      "sha256": "a2d9186284af7e6d4a02544ec61e7033d945813932b59bbc23a9b268667869a5",
+      "bytes": 1598
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/progress.md": {
+      "sha256": "249abcea3fb6d289b662262301231363b2f597961fe9c1db77a4f7fad465d9a7",
+      "bytes": 1016
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-command-return-0238/evidence/privatecontrols/KEEP": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-final-command-review-0246/evidence/source-manifest.json": {
+      "sha256": "8a6ea117b7a6eac3353dd6aae8844e19207597e164cb9cb37e3a2608728c4fd5",
+      "bytes": 8348
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-final-command-review-0246/evidence/validation.md": {
+      "sha256": "62c8f424b3fcb944196f19344a7a943a858830bb8cab2487f644380c585758df",
+      "bytes": 3042
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-final-command-review-0246/evidence/findings.md": {
+      "sha256": "37deee5e3fd80ab2c939d305746d7d7e5050e85daeddf85fb0831917815f590f",
+      "bytes": 1888
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-final-command-review-0246/evidence/handoff.md": {
+      "sha256": "261f3c4ffff7508083b0faa02e1c6237dc9e0aa4578457e458d45126413cce77",
+      "bytes": 1039
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/source-manifest.json": {
+      "sha256": "31c3188d07cbabc10333478bdf1afabbeea9c5947c3991af5b36576e84430a55",
+      "bytes": 3258
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/review.json": {
+      "sha256": "e09b3f17d7bba2df66faa45d96eb262abf5005da92c5ac2a73be52c5063c6b3e",
+      "bytes": 4659
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/validation.md": {
+      "sha256": "77d8cbe1bfa1bba41e4732a6aa5a64d2f2c08ab1d2f858ce652aed87503c5e1c",
+      "bytes": 1596
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/findings.md": {
+      "sha256": "cc011722f87f90a194d357992bf02eae26e95050fb572fc8c50c1962390358f0",
+      "bytes": 2805
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/handoff.md": {
+      "sha256": "8b2b25a9b5adbaa720cae9c9cfa780dadd3b4a2ad8d67b5b52ff2804023c931a",
+      "bytes": 907
+    }
+  },
+  "corrected_bindings": {
+    "junit_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+    "manifest_input_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence",
+    "launcher_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/private/measurement-runs/agent-core-full/launcher-evidence",
+    "admission_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json",
+    "manager_brief": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md"
+  },
+  "measurement_limits": {
+    "pytest": [
+      "-q",
+      "-n3",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45"
+    ],
+    "roots": 22,
+    "source_admission_bytes": 4700000000,
+    "continuous_stop_bytes": 4000000000,
+    "admission_timing": "original controller dispatch only; preparation samples enforce continuous stop",
+    "body_executed": false,
+    "service_submitted": false
+  },
+  "dispatch_binding": {
+    "authority": "Original manager dispatch witness in original 0249 brief, corroborated by hash-bound original admission.json; exact two arguments in native service row",
+    "utc": "2026-10-26T02:50:26.643150+00:00",
+    "admitted_free_bytes": 4821594112,
+    "admission_floor_bytes": 4700000000,
+    "actual_preparation_free_bytes": 4687142912,
+    "after_release_free_bytes_reported_by_manager": 4815646720,
+    "dispatch_to_preparation_drop_bytes": 134451200,
+    "preparation_released_bytes": 128503808,
+    "original_service_id": "agent-agent-core-full-1026025151-24049",
+    "original_service_terminal": "fail exit78; body0; runner/monitor not started",
+    "service_success_inferred": false,
+    "new_controller_service_authority": "Requires independent final source check and normal controller; no queue/service registration in author task"
+  },
+  "packet_source_hashes": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/measurement-command.sh": "ce0b02296cb2488b8b48ffb246a910d9717e75c265013d6e6df5b998e953eda2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/service-row.txt": "c7426dfb01e8f929500573791cbed540cc82d8c3a1715c8eaf16b8a87fd7af45",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/positive.manifest": "6398e02116849c6f73bb71cd56679a8fef37103d93d854c61d4e02193b2cef58",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/poison.manifest": "4511d136c8cce8cc623e709a96debfb83c3a3e818bf2f2c22b5780da58af3729"
+  },
+  "independent_wholepath_findings": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-wholepath-0253/evidence/review.json",
+    "sha256": "e09b3f17d7bba2df66faa45d96eb262abf5005da92c5ac2a73be52c5063c6b3e",
+    "status": "WHOLE_PATH_REVIEW_COMPLETE",
+    "finding": "Only established blocker: duplicate post-preparation admission floor; new packet still requires final independent source check"
+  }
+}

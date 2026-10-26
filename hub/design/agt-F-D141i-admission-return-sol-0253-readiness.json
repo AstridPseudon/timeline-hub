@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.agent.d141i.admission-return.readiness.v1",
+  "status": "READY_FOR_BOUNDED_INDEPENDENT_FINAL_SOURCE_CHECK",
+  "author_complete": true,
+  "new_controller_started": false,
+  "production_runroot_started": false,
+  "independent_final_source_review": "REQUIRED_BEFORE_NEW_NORMAL_CONTROLLER",
+  "packet_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence",
+  "packet_sha256": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/admission-controls.json": "bc4a1893ab2db868055a18f06c874a2ee419420c3f635d310a94c2592e2746b6",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/command-diff.json": "f635ad4e93a1ce3a6abb7ed1cd1cedf618be24eea1c7c9ebd3d6497624093727",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/findings-resolution.json": "c686fe386b06d9a290fe27e03add2dd7172793be45d3a9e08df7ce4ae2791ddd",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/handoff.md": "adbd0ef65e88bbe0306be17c1c3a7e44fbec05fc2c33656222a4a006be6c03e1",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/manifest-diff.json": "ec8ad789293fc194287886de4387693f7d1424093cb90a2961a5d2919e9f76fa",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/measurement-command.sh": "ce0b02296cb2488b8b48ffb246a910d9717e75c265013d6e6df5b998e953eda2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/poison.manifest": "4511d136c8cce8cc623e709a96debfb83c3a3e818bf2f2c22b5780da58af3729",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/positive.manifest": "6398e02116849c6f73bb71cd56679a8fef37103d93d854c61d4e02193b2cef58",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/preflight.json": "28ec92ee10887467610973c2c8d978cdba800bfb8f5d856751523bc1e2e2ccb3",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/progress.md": "1ae80b99b5b28b3aeed3dd8fc367cf0e679da2ac9151dfb33c013209949b2bc0",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/service-row.txt": "c7426dfb01e8f929500573791cbed540cc82d8c3a1715c8eaf16b8a87fd7af45",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/source-manifest.json": "f921ace528becae04d2a01d6274097465c79af6ced47323d6a951aa23c90ecf6",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/validation.md": "a83e6acc5d717e0cfb6ca811888397638d0fe7c31ffaf9409dc50562493d4f98"
+  },
+  "final_static_validation": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-admission-return-sol-0253/evidence/privatecontrols/final-validation.json",
+    "sha256": "cf5efca1b52aafe6414effacd6ec82e7c04304d07147e571ca1e11c9871f60f7",
+    "verdict": "PASS_STATIC_FINAL_PACKET"
+  },
+  "admission_controls": "PASS 20 tiny controls, no measurement body",
+  "dry_controls": {
+    "positive": "preflight0/stub17/1call",
+    "poison": "agent_sha-only exit1/0calls",
+    "serialized_materialized_sha256": "6398e02116849c6f73bb71cd56679a8fef37103d93d854c61d4e02193b2cef58"
+  },
+  "operational_python": {
+    "ruff": "PASS",
+    "mypy": "PASS one source file"
+  },
+  "conservation": "Original0238 packet/runroot/markers,0246 controls/review,0249 receipt/brief,24049 service raw and markers hash-identical; all frozen physical sources and profile preserved",
+  "limits": [
+    "Command/operational qualification only",
+    "No pytest, collection, measurement body, service request, queue mutation, registration, or product edit",
+    "No core outcome, REG/nonREG conclusion, or ship credit"
+  ]
+}

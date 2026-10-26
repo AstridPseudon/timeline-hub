@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T03:03:18Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 5m -->
-# agent board, 2026-10-26T02:57Z
+<!-- agent | 2026-10-26T03:07:29Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# agent board, 2026-10-26T03:05Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -18,7 +18,7 @@
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
 | D141 notes template | Prepare failure notes for later Farm join | Luna | Independent0217 PASS | merged | Author0213; reviewer0217 | Flat table and template published. All370 IDs and52 roots conserved; media48 nested. Cut outcomes and verdicts PENDING; no behavior credit. | Evidence only |
-| D141i cut measurement | Run same kind cut core on Agent | Luna and HARD Sol | D89c operational return | doing | Controller0249; Sol0253; wholepath0253 | Actual24049 fail78 zero body: duplicate4700000000 check after snapshot prep. Sol fixes once-admitted receipt;4000000000 stop retained. | Frozen28e and6a |
+| D141i cut measurement | Run same kind cut core on Agent | Luna and HARD Sol | Final review0301 | review | Sol0253; wholepath0253; review0301 | Source return terminal;20tiny and fresh0/17/1 plus1/0 PASS. Genuine admission receipt bound;4GB stop preserved. No body yet. | Frozen28e and6a |
 | D141 REG join | Compare same kind cut and pristine per ID | Luna and Runtime | Actual D141i cut XML | blocked:agent | D141i controller next; Runtime coordinator | Restricted17 upstream roots;5 project roots N/A. Fails cut and passes pristine gives candidate. Farm definitive for environment sensitive candidates. | Cut pending |
 | D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Farm census0140; Runtime0201 and0208 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
@@ -56,7 +56,7 @@ Later: originalTrue redo, graph child-birth alias, fork18 ABI1 history, transcri
 
 Disk: 4858232832 bytes at02:11Z. Sweep3 removed0; compact packed0 scratch and0 test dirs, gzipped1 old log. Fresh ended non-KEEP census found no remaining worktree. Ended0136/0139 already autorecycled; normal recycle confirms no worktree. No eligible ended non-KEEP worktree remains. DirtyG2,KEEP0816,current cut pins,all referenced raw/selector KEEP,protectedd22/f1012 and child3e163 retained. No cleanup refusal or Store operation.
 
-INBOX consumed through2032971 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+INBOX consumed through2033940 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Pass 01:58Z: Stop0128 completed;19479 remains queued with zero body and kit0be17b unchanged. Receipt0151 terminal, absolute-output mistake recovered byte-exact from Git5d11. Found one truncated39-char Agent tree in emitted JSON; immediately assigned same-lineage metadata-only return0159 before the ONE independent quick check. All actual outcome and original evidence unchanged.
 
@@ -97,3 +97,9 @@ Pass02:54Z: Actual normalserviceagent-agent-core-full-1026025151-24049 terminalf
 Controller0249 terminalexit0report honestly NOTRUN/REFUSED service78/zero body. EightSAFE finaloutputs bytepublished; independentwholepath0253 reviews genuine path/result. Bothremainingworkers active; live2/cap3 source, ready-undispatched0.
 
 Pass02:57Z: Independent wholepath0253 terminal, exact actualproductionpath confirms namedfloor accepted before134451200byte snapshot/prep drop; wrapper repeats admission afterprep contraryD89c. Row/materialization/source/interpreter custody exact, body0. No other finite blocker established. FiveSAFE outputs bytepublished; finalSolpacket not yetterminal, so this is supporting investigation, not finalsourcePASS. SoleSol0253 active; nextboundedcheck upon completion.
+
+H6 03:00Z: HeaderD141j consumed, popup original rerun staysAppowner; noAgentproductscope. App02:52 source merged520d with only approvedplacementtest change; prior pathseparation0219/0226 exists, XMLcustody alreadyfulfilled0243. Runtime artifactreturn0245 continues0229; no finiteAgentphysicalask received. Farm02:36 Compositionfull40 corrected; remaininginputsNOT_READY, noAgentreadyrow. AllD130/Store/deferredholds retained. Sol0253 author nowreports20tinycontrols PASS plus exactfresh0/17/1 and1/0, Ruff/mypyPASS; waitingterminal thenimmediateboundedfinalreview. No newbody.
+
+Pass03:05Z: Sol0253 terminalexit0;14SAFEoutputs bytepublished. Twenty actualwrapper/helperadmission/stop/errorcontrols PASS, freshserializedpositivepreflight0/stub17/onecall andpoison1/zerocalls PASS; Ruff/mypy/syntax/hash/path/argv/sourceconservation PASS. Commandce0b0229 binds genuine0249receipt5fbdab93 andbrief379e1eb6; no fabricatedauthority. Newrunroot preserves alloldraw. IndependentLuna0301 dispatched atonce, boundedD89cdelta finalcheck only; no body/newapprovalgate. Freshfree4798746624 bytes, live1/cap3 ready-undispatched0.
+
+Pass03:07Z: Lead03:05:44 confirmsD89croute and asks freshguardedrecycle. Applied fullAgent/Appcensus: allremainingpinsKEEP, live0301/dirtyG2/KEEP0816/openrawcustodians excludedstatic; noneeligible forprocess/queue/lease checks. Normalrecyclejust-ended0253Sol/wholepath reportsalreadyautorecycled/no worktree, noguardrefusal. Pre4788162560/post4789088256BYTES; no worktreebytesreleased, noKEEPchange/handdelete/Store. Exactpeer0307sentlead/Runtime. Correctedwrappermakespostprep4.7regatemoot, continuous4GBretained.
