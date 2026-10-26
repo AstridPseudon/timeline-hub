@@ -12,6 +12,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -304,16 +305,23 @@ def test_remote_socket_receiver_rejects_overlong_unix_path(tmp_path) -> None:
 
 
 def test_remote_socket_receiver_refuses_windows_before_socket_creation(monkeypatch) -> None:
-    monkeypatch.setattr(generic_host.os, "name", "nt")
-    monkeypatch.setattr(
-        generic_host.socket, "socket",
-        lambda *args, **kwargs: pytest.fail("Windows refusal must happen before AF_UNIX allocation"),
-    )
+    attrs = vars(generic_host.os).copy()
+    attrs["name"] = "nt"
+    monkeypatch.setattr(generic_host, "os", SimpleNamespace(**attrs))
+    calls = []
+
+    def allocate_socket(*args, **kwargs):
+        calls.append(args)
+        raise OSError("fake AF_UNIX allocation")
+
+    monkeypatch.setattr(generic_host.socket, "socket", allocate_socket)
     with pytest.raises(generic_host.HostError, match="unavailable on Windows"):
         generic_host._await_worker_activation_socket(
-            "C:/activation.sock", operation_id="operation-1", channel_id="channel-1",
+            str(Path("/tmp").resolve() / f"astrid-activation-{secrets.token_hex(5)}.sock"),
+            operation_id="operation-1", channel_id="channel-1",
             credential_file="C:/worker.token", timeout_seconds=1,
         )
+    assert calls == []
 
 
 @pytest.mark.parametrize(

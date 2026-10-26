@@ -2609,7 +2609,7 @@ def test_native_engine_graph_listener_commands_keep_platform_timeout_and_parsing
     import astrid.core.execution.custody_broker as cb
     monkeypatch.setattr(gh.sys, "platform", platform)
     if platform == "win32":
-        monkeypatch.setattr(gh, "_is_posix", lambda: False)
+        monkeypatch.setattr(gh, "_is_posix", lambda: False, raising=False)
     root = tmp_path / "engine"; root.mkdir()
     birth = "ps-lstart:Mon Oct 12 20:00:00 2026"
     config = b"{}"; digest = "sha256:" + hashlib.sha256(config).hexdigest()

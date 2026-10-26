@@ -105,7 +105,7 @@ def test_review_session_reads_do_not_require_o_nofollow(monkeypatch, tmp_path):
     path.chmod(0o600)
     process = SimpleNamespace(_astrid_review_launch_nonce=nonce)
     monkeypatch.setattr(generic_host, "_process_birth_identity", lambda pid: "receiver-birth")
-    monkeypatch.delattr(os, "O_NOFOLLOW")
+    monkeypatch.delattr(generic_host.os, "O_NOFOLLOW")
 
     snapshot = generic_host._observe_owned_review_session(process, attempt)
     generic_host._retire_owned_review_session(attempt, snapshot)
@@ -131,7 +131,7 @@ def test_handoff_journal_keeps_file_fsync_and_only_posix_directory_fsync(monkeyp
             raise OSError("Windows refuses directory fsync")
         return original_fsync(fd)
 
-    monkeypatch.setattr(generic_host, "_is_posix", lambda: is_posix)
+    monkeypatch.setattr(generic_host, "_is_posix", lambda: is_posix, raising=False)
     monkeypatch.setattr(generic_host.os, "fsync", fsync)
     request = {"binding": {"original_owner_epoch": "epoch", "handoff_id": "handoff"}, "command": "pause"}
     reply = {"host": {"pid": 123, "birth_id": "host-birth"}, "request_digest": "digest"}
