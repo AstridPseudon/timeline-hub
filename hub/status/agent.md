@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T11:35:26Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 2m -->
-# agent board, 2026-10-26T11:33:24.661712+00:00
+<!-- agent | 2026-10-26T11:40:17Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-26T11:40:17.264247+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -49,9 +49,9 @@
 | D141ee restore | Restore dropped upstream tests | Luna and protected Luna | Independent source restoration PASS | merged | agt-U2-D141ee-restore-next and review-next | All 55 conserved. Behavior open: 15 FAIL and 40 collection blocked; private reviewer XML lost in harness cleanup. | 14ccf296f376 |
 
 
-| D141ee inverse scope | Map each inverse case to live behavior | Luna | Restored 38 exact upstream tests | doing | agt-F-D141ee-inverse38-scope-1134 | Read only current and pristine caller map; no retirement or compatibility route assumed. | Evidence only |
-| D141ee writers scope | Map each writer case to live behavior | Luna | Restored 15 exact upstream tests | doing | agt-F-D141ee-writers15-scope-1134 | Read only current and pristine path map; isolate live fixes and exact owner decisions. | Evidence only |
-| D141ee installer scope | Resolve schema preservation intent | Luna | Restored 2 exact upstream tests | doing | agt-F-D141ee-installer2-scope-1134 | Read only canonical Runtime source versus old npm assertions; no package or contract changes. | Evidence only |
+| D141ee inverse scope | Review per case live repair and owner scope | Luna and independent Luna | Source map terminal PASS with limits | review | agt-F-D141ee-inverse38-scope-review-1137 | Source map only; no retirement or passing preservation credit. Exact upstream predicates protected. | Evidence only |
+| D141ee writers scope | Review per case live repair and owner scope | Luna and independent Luna | Source map terminal PASS with limits | review | agt-F-D141ee-writers15-scope-review-1137 | Source map only; no retirement or passing preservation credit. Exact upstream predicates protected. | Evidence only |
+| D141ee installer scope | Decide exact old schema packaging assertions | Luna and independent Luna | Independent scope PASS; exact 2 IDs in escalation1140 | blocked:orchestrator | agt-F-D141ee-installer2-scope-review-1137 | Old npm graph conflicts with approved Runtime canonical schema. Tests restored and FAIL; no retirement approved. | Evidence only |
 
 Integration: Agent 14ccf296f3768fcde857047b263834e4a6bbe52e / tree 6806fec5657f26097d0d0f3da29082907e6faadd, clean; Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; App82e9e13ddf1d7ec6c736521b2eb091dca9877598/tree6a6e49eb4461b5ca1a7fa1247653bc794f26d710; productComposition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. OperationalComposition6a2d/tree57f68 is separate. Protected pristineAgent64197afa297f86f1e738238d5e80aff6d33e303a and Runtimefa9cd5464a8b37b02f971de375e56be846cd69e2 remain normally checked out. No upstream chase. D141v final pin pass is gated actual REG0/all lane fixes; App8585 pointer expected until then.
 
@@ -77,7 +77,10 @@ Current pass 2026-10-26T11:33:24.661712+00:00: normal source-preserving restorat
 
 Three disjoint Luna source maps actually started 11:31:59, 11:32:00 and 11:32:01 on exact445b, normal prequeue free7380234240 bytes. Each must classify exact original purpose against current supported caller, distinguish live fixes from C0-refused or retired interfaces, and return finite per-ID owner decision lists where needed. No retirement or old-route revival authorized. New prospective manager5s trace began after actual starts and is supplemental; own worker traces assessed independently, no backfill. All three worker KEEP set while active. Current free6990352384 bytes, no heavy. H6 read App11:21 and Runtime11:21: P4 current GO remains; App seven selectors in progress; Runtime final install gated actual proofs and final pin pass. D130 remains absolute. INBOX consumed through2177914 bytes.
 
-Blockers: Proof preservation — Exact 55 tests restored and independently source reviewed; 15 fail and 40 cannot collect. Three source owners classify finite live fixes versus exact owner scope decisions. No REG0 or final pins.
+Blockers: Proof preservation — Exact 55 tests restored and independently source reviewed; 15 fail and 40 cannot collect. Three independent reviewers check finite live fixes versus exact owner scope decisions. No REG0 or final pins.
+Blockers: MAIN scope — Exact two installer IDs conflict with approved canonical Runtime schema; escalation agent-20261026T1140Z-D141ee-upstream-preservation-scope.md records concrete owner choices.
 Blockers: SWAP safety — Existing Runtime1537 classifier refusal held; no retry or alternate route.
-Next ready: Three terminal source maps, then independent review of proposed scope evidence and immediate bounded live repairs; exact retirement requests go to MAIN and owner. REG0 and pins stay gated.
-live 3 / cap 6; ready-undispatched 0. Three disjoint source workers, no heavy body.
+Next ready: Three independent scope verdicts; dispatch authorized live repair where proved and send exact upstream preservation or retirement decisions to MAIN. REG0 and pins stay gated.
+live 2 / cap 6; ready-undispatched 0. Inverse and writer scope reviews active; exact installer decision is with MAIN. No heavy body.
+
+Maintenance current pass: compact-scratch terminal0 packed0 scratch,0 logs,0tests; sweep-tmp3 terminal0 removed0 with known Broken-pipe diagnostics. Metadata census22 present Agent/App trees,21KEEP and zero ended nonKEEP eligible; no recycle candidate. Source authors each sampled only first5 seconds rather than whole lifecycle; explicit limitation retained, no backfill. Supplemental manager trace11:32 onward is distinct. Current available 6724595712 bytes.

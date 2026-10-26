@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.f.d141ee.installer2-scope-review.v1",
+  "result": "PASS_EVIDENCE",
+  "behavior_claim": false,
+  "reg0_claim": false,
+  "retirement_claim": false,
+  "task": "U2 F D141ee independent installer2 purpose and scope review",
+  "review_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+  "review_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+  "assigned_manifest_sha256": "ebfa4f9def71aa3bf7656a31ea759068bd6946e735f5e007040048c5b61bea2d",
+  "assigned_count": 2,
+  "assigned_ids_unique": true,
+  "owner_approved_retirements": [],
+  "classifications": {
+    "c_DROPPED_BY_OUR_PATCHES_REG": 2,
+    "a_same_body_or_assertions_passing_move": 0,
+    "b_owner_approved_retirement": 0
+  },
+  "source_only": true,
+  "tests_run": [],
+  "disk_trace": "fresh review-lifetime trace at evidence/disk-trace.txt; no historical trace copied or backfilled"
+}

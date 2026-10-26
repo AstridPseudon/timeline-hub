@@ -1,0 +1,102 @@
+{
+  "schema": "timeline.f.d141ee.installer2-scope-review.source-manifest.v1",
+  "task": "U2 F D141ee independent installer2 purpose and scope review",
+  "repo": "/home/user/work/wt/agt-F-D141ee-installer2-scope-review-1137",
+  "review": {
+    "commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "parent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "parent_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "pristine": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+  },
+  "bound_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-schema8-full-decision-next/evidence/restoration-manifest.json",
+    "sha256": "ebfa4f9def71aa3bf7656a31ea759068bd6946e735f5e007040048c5b61bea2d",
+    "count": 2,
+    "ids_unique": true
+  },
+  "candidate_evidence": {
+    "per_id": "../agt-F-D141ee-installer2-scope-1134/evidence/per-id.json",
+    "per_id_sha256": "ddaa2a05c62f00d1ed7569a93a2a7e36af8e6b5dcab8975bddcfab289e64f8b8",
+    "source_manifest": "../agt-F-D141ee-installer2-scope-1134/evidence/source-manifest.json",
+    "source_manifest_sha256": "e52c2477366a23f6f91c1428e6a7ec7a2a71457c01ba6376869061770bac43ac",
+    "validation": "../agt-F-D141ee-installer2-scope-1134/evidence/validation.md",
+    "validation_sha256": "7985c421f6c08f3ca432475fd00bec9a40058e6ede63e86e9c469339991b4141",
+    "handoff": "../agt-F-D141ee-installer2-scope-1134/evidence/handoff.md",
+    "handoff_sha256": "b8f2b117531c0b51a161d5f455c3dcdb5416a2df008f7a605a30a3a0a809aaac"
+  },
+  "assigned_test": {
+    "path": "tests/test_installer_schema.py",
+    "review_blob": "cb05ed8e2a641e3fd9ea9331dd10b82ea43abbb5",
+    "supported_parent_blob": "00ba669033726fc84b305144acd2c9c40eb314df",
+    "pristine_blob": "ede759060078ab18e9eac75fd682ddb429073518",
+    "ids": [
+      {
+        "id": "tests.test_installer_schema::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+        "classification": "c_DROPPED_BY_OUR_PATCHES_REG",
+        "pristine_lines": [11, 95],
+        "review_lines": [199, 283],
+        "signature": "(tmp_path, monkeypatch)",
+        "function_source_sha256_stripped": "a918238932392fdab15be4cd797092af1d14853e3060a9efab48dfb4d43c60d6",
+        "ast_sha256": "0912f78626e71ca3a390142a6ad091499db781c2324b22d95d7cad83892ae428"
+      },
+      {
+        "id": "tests.test_installer_schema::test_remotion_lock_pins_the_transitive_schema_package",
+        "classification": "c_DROPPED_BY_OUR_PATCHES_REG",
+        "pristine_lines": [98, 116],
+        "review_lines": [286, 304],
+        "signature": "()",
+        "function_source_sha256_stripped": "c10befe3af82a12a9bb69c04a7fc919506ac6bef39341576c254b14c99540069",
+        "ast_sha256": "0eb5098277f634059f80fdc32e72593079ae96b450a2e37473b166ef15fe7bed"
+      }
+    ]
+  },
+  "agent_production": {
+    "backend": {
+      "path": "astrid/installer/backend.py",
+      "blob": "f3cab4ed0165e82f227660208f8dffcd155755ba",
+      "coordinates": ["install_remotion_dependencies:99-115", "_verify_local_timeline_schema:213-227", "Backend.stage:432-475"]
+    },
+    "runtime_lock": {
+      "path": "runtime.lock.json",
+      "blob": "c6b3b3e102f0ec3efd329a2a6b428669b6617301",
+      "schema_source": "contract/schemas/timeline-config.schema.json",
+      "schema_sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    },
+    "remotion_package": {
+      "path": "remotion/package.json",
+      "blob": "1f904025ff5df7444d9445bca9e1a896a47ecd88",
+      "composition": "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
+    },
+    "remotion_lock": {
+      "path": "remotion/package-lock.json",
+      "blob": "e6cd5c339b86d2420c9021b6a721205a0300ffb7",
+      "composition": "0.0.14 local artifact",
+      "transitive_schema_entry": false
+    },
+    "canonical_schema": {
+      "path": "astrid/core/timeline/schema/timeline-config.schema.json",
+      "blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+      "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    }
+  },
+  "runtime": {
+    "repo": "/home/user/work/runtime",
+    "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "service_blob": "9522969da2818772590032e695323d4e010943a0",
+    "provider_blob": "a05812e82ee2930f29e277f260f3329855378932",
+    "schema_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+    "supported_writer": "runtime_protocol/service.py:2469-2565 commit_timeline -> _execute_timeline_commit",
+    "provider": "runtime_protocol/timeline_commit_provider.py:16-93"
+  },
+  "controls": {
+    "plan_sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "c0_commit_v2_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "d141ee_full_decision_sha256": "9fa6cc6e15459f862bcdaff2d89c0b2b3c41c0828fad15338ab63efa3134f95b",
+    "d141ee_controlling_sha256": "5b26a1914588fa5e5e0a05b409ecd34fd0ee060399f31927461f8556f1d77af5",
+    "d120_scope": "retained D120 reports cover App P2 outcomes; no installer retirement approval was found"
+  },
+  "changes_in_review_commit": "tests only; no production, generated, lock, schema, pin, profile, environment, or Runtime source changes"
+}

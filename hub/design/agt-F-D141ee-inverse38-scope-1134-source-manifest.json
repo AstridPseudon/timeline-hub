@@ -1,0 +1,129 @@
+{
+  "schema": "timeline.f.d141ee.inverse38.source-manifest.v1",
+  "status": "PASS_EVIDENCE",
+  "assigned_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-inverse38-review-next/evidence/restoration-manifest.json",
+  "assigned_count": 38,
+  "assigned_unique_count": 38,
+  "assigned_manifest_sha256": "d1a866d96ed726de985ff27cd7cca496703b57d578d561f3ddca28f1fde52b18",
+  "pristine_test_source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025",
+  "source_scope": {
+    "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "current_supported_agent_ref": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "current_supported_agent_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "assigned_base_ref": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "assigned_base_parent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "assigned_base_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "runtime_ref": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "current_supported_runtime_ref_note": "The Runtime worktree was read-only inspected at the exact supplied ref; no Runtime files were changed."
+  },
+  "pristine_blobs": {
+    "astrid/core/timeline/inverses.py": {
+      "blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+      "bytes": 30911,
+      "sha256": "e67002be0ddf041cfc4e80ee23e727d2d4f0479c11fec07f387e349c657b530c"
+    },
+    "tests/timeline/test_inverses.py": {
+      "blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "bytes": 17327,
+      "sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+    }
+  },
+  "current_supported_agent_modules": {
+    "astrid/sdk/timeline/inverse.py": {
+      "blob": "8a67cede54f8a02d2561a66e70a31d306c613c6f",
+      "coordinates": ["1:120", "527:730", "1032:1220"],
+      "role": "authenticated record-based inverse guard and execution"
+    },
+    "astrid/sdk/timeline/commands.py": {
+      "blob": "10a6c7f0548f04af4820443a0b01cc38bbacbc43",
+      "coordinates": ["29:115", "201:308"],
+      "role": "supported operation registry and timeline.inverse dispatch"
+    },
+    "astrid/sdk/timeline/sync.py": {
+      "blob": "2b3418e521bd45913322bc220e94387f8335e7c4",
+      "coordinates": ["137:216", "422:462"],
+      "role": "TimelineSession open/flush/undo over commitTimeline and durable outbox"
+    },
+    "astrid/sdk/workspace_client.py": {
+      "blob": "99bcae188369927fd1280b5738645c8478b43895",
+      "coordinates": ["485:500"],
+      "role": "generated commit_timeline client call"
+    },
+    "astrid/core/timeline/events/schema/types.py": {
+      "blob": "e1b0b38e7b1dec7c4094b7ab97092b7895806e60",
+      "coordinates": ["73:84", "263:301", "301:423"],
+      "role": "retained TimelineEvent and ErasedPayload schema"
+    },
+    "astrid/core/timeline/projection.py": {
+      "blob": "89ffda73b5e18d729bad485a8e294c3b0235fb14",
+      "coordinates": ["599:650", "718:776"],
+      "role": "retained event projection; not an inverse caller"
+    },
+    "astrid/core/timeline/inverses.py": {
+      "status": "ABSENT",
+      "role": "deleted old pure planner"
+    }
+  },
+  "runtime_modules": {
+    "runtime_protocol/service.py": {"blob": "9522969da2818772590032e695323d4e010943a0", "coordinates": ["2468:2483", "2485:2565"]},
+    "runtime_protocol/timeline_commit_provider.py": {"blob": "a05812e82ee2930f29e277f260f3329855378932", "coordinates": ["51:93"]},
+    "runtime_protocol/timeline_commit_port.py": {"blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3", "coordinates": ["1:67"]},
+    "runtime_protocol/timeline_commit_auth.py": {"blob": "b2b238a716b55276e63d23d2886ef8542a382faa", "coordinates": ["267:339", "382:430", "1025:1080"]},
+    "runtime_protocol/timeline_commit_store.py": {"blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7", "coordinates": ["913:940", "1619:1661", "1758:1818"]}
+  },
+  "removal_evidence": {
+    "commit": "fc33e0e76ca1c29cb64f574acdab6770eb3303d0",
+    "subject": "refactor(timeline): remove dead core inverse",
+    "deleted": ["astrid/core/timeline/inverses.py", "tests/timeline/test_inverses.py"],
+    "interpretation": "Historical deletion rationale says the planner was unused, but MAIN D141ee explicitly says deletion/G5 is not new owner-approved retirement for these IDs."
+  },
+  "current_replacement_route": {
+    "request": "TimelineSession.undo -> commitTimeline",
+    "agent_provider": "commands.execute -> inverse.apply_inverse",
+    "runtime_writer": "service.commit_timeline -> coordinator/provider -> durable commit store",
+    "semantic_examples": ["clip.add", "clip.delete", "clip.move", "clip.trim", "track.create", "shot.pool", "doc.patch"],
+    "contract": "C0 commit-v2.md §2 and §5: authenticated closure-addressed commands, records, guarded inverse, later-history scan"
+  },
+  "assigned_ids": [
+    "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+    "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+    "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+    "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+    "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+    "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+    "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]"
+  ]
+}

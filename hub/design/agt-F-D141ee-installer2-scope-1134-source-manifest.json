@@ -1,0 +1,78 @@
+{
+  "schema": "timeline.f.d141ee.installer2.source-manifest.v1",
+  "task": "U2 F D141ee installer2",
+  "repo": "/home/user/work/wt/agt-F-D141ee-installer2-scope-1134",
+  "assigned_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141ee-schema8-full-decision-next/evidence/restoration-manifest.json",
+  "assigned_manifest_sha256": "ebfa4f9def71aa3bf7656a31ea759068bd6946e735f5e007040048c5b61bea2d",
+  "assigned_count": 2,
+  "assigned_ids_unique": true,
+  "git": {
+    "review_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "review_commit_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "review_parent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "review_parent_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "pristine": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "review_test_file_blob": "cb05ed8e2a641e3fd9ea9331dd10b82ea43abbb5",
+    "supported_test_file_blob": "00ba669033726fc84b305144acd2c9c40eb314df",
+    "pristine_test_file_blob": "ede759060078ab18a9eac75fd682ddb429073518"
+  },
+  "runtime": {
+    "current": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "current_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "pristine": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "pristine_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+    "current_schema_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+    "pristine_schema_blob": "352a8d354ba32fe1a1ee220790f79da99c914bb9",
+    "current_schema_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "current_provider": "runtime_protocol/timeline_commit_provider.py:16-93",
+    "current_writer_route": "runtime_protocol/service.py:2477-2565 (_execute_timeline_commit via commitTimeline)"
+  },
+  "production_sources": {
+    "agent_installer": {
+      "path": "astrid/installer/backend.py",
+      "current_blob": "f3cab4ed0165e82f227660208f8dffcd155755ba",
+      "pristine_blob": "10d72c4e737dc2a52070ba627aa0594d1652b79e",
+      "coordinates": ["install_remotion_dependencies:99-115", "_verify_local_timeline_schema:213-227", "Backend.stage:432-475"]
+    },
+    "agent_runtime_pin": {
+      "path": "runtime.lock.json",
+      "current_blob": "c6b3b3e102f0ec3efd329a2a6b428669b6617301",
+      "pristine_blob": "479b2b78f7414fb83a505a8223630ec75e72eaf4",
+      "coordinate": "files.astrid/core/timeline/schema/timeline-config.schema.json",
+      "source": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    },
+    "remotion_package": {
+      "path": "remotion/package.json",
+      "current_blob": "1f904025ff5df7444d9445bca9e1a896a47ecd88",
+      "pristine_blob": "992262dd204a39564d0adff5a59d47bca33e2e11",
+      "current_composition": "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+      "pristine_composition": "https://github.com/banodoco/timeline-composition/archive/refs/tags/v0.0.6.tar.gz"
+    },
+    "remotion_lock": {
+      "path": "remotion/package-lock.json",
+      "current_blob": "e6cd5c339b86d2420c9021b6a721205a0300ffb7",
+      "pristine_blob": "526705c1b8e31bff9ae8c9001043e7b7ca046951",
+      "current_composition": "0.0.14 local artifact; no @banodoco/timeline-schema entry",
+      "pristine_composition": "0.0.6 external; @banodoco/timeline-schema 0.0.1 external"
+    },
+    "canonical_agent_schema": {
+      "path": "astrid/core/timeline/schema/timeline-config.schema.json",
+      "current_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+      "pristine_blob": "352a8d354ba32fe1a1ee220790f79da99c914bb9",
+      "current_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    }
+  },
+  "supported_path_map": [
+    "Backend.stage -> _verify_local_timeline_schema(agent) -> ordinary Runtime-lock Python install -> install_remotion_dependencies(agent, env, npm) -> _declare_services.",
+    "Runtime contract/schemas/timeline-config.schema.json -> Agent runtime.lock.json source pin -> Agent local canonical schema -> rendering/schema readers.",
+    "Runtime commitTimeline -> runtime_protocol/service.py:_execute_timeline_commit -> registered timeline_commit_provider; this is the supported Runtime-only writer path and is unrelated to the obsolete npm schema package."
+  ],
+  "classification_counts": {
+    "c_dropped_by_our_patches_reg": 2,
+    "owner_approved_retirements": 0,
+    "same_body_or_assertions_passing_move": 0
+  },
+  "changes_in_review_commit": "tests only; no production, generated, pin, profile, environment, kit, or Runtime source changes"
+}

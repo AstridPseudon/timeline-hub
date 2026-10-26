@@ -1,0 +1,63 @@
+{
+  "schema": "timeline.f.d141ee.writers15.source-manifest.v1",
+  "assigned_exact_count": 15,
+  "assigned_n": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+  "agent": {
+    "current_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "current_parent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "current_tree": "6806fec5657f26097d0d0f3da29082907e6faadd",
+    "parent_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "pristine_commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "head_parent_check": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf^ == ecdc242ed9b673f641759ecf029f95e89a2c6f92"
+  },
+  "runtime": {
+    "supported_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "supported_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+  },
+  "production_coordinates": [
+    "Agent astrid/packs/timeline/cli.py:_cmd_commit:2239-2243 and _configure_commit:3596-3608",
+    "Agent astrid/packs/timeline/cli_native.py:commit_document:137-163 and _render_commit_result:164-173",
+    "Agent astrid/sdk/timeline/sync.py:submit:494-523 and _flush:525-590",
+    "Agent astrid/sdk/workspace_client.py:commit_timeline:485-498",
+    "Agent astrid/sdk/timeline/commit.py:RuntimeCommitService.commit:1160-1215+",
+    "Runtime runtime_protocol/server.py:_timeline_commit:304-339",
+    "Runtime runtime_protocol/service.py:commit_timeline:2469-2484 and _execute_timeline_commit:2486+",
+    "Runtime runtime_protocol/service.py:_require_timeline_command:1665-1672 and publish_parent_composition:2943-2944",
+    "Agent astrid/sdk/remote.py:RemoteTimelines.create_empty:489-638",
+    "Agent astrid/packs/rendering/shared/runtime_stitch.py:publish_authoring_proposal:104-176",
+    "Agent astrid/core/timeline/authoring_bundle.py:approve_authoring_candidate:1799-1831 and publish_authoring_candidate:1833-1930"
+  ],
+  "test_files": [
+    {"path":"tests/packs/timeline/test_cli_parity.py","current_sha256":"14b1ff737adef334f2c8c0539f10921bf73ea1dcf054d805240901376fda1dcf","pristine_git_blob":"71b61a296d8b23b1c5d69209fc6d9315cdb8a71a","pristine_sha256":"8ca7d72a5f7038dde9b9b0dfc23b85d047b8ccf342572916a0253ae625b24af8"},
+    {"path":"tests/packs/timeline/test_cli_status_publish.py","current_sha256":"e45d12255310ea94bea1741227a4907517d83f448df2d71ab0cde5a710a83c25","pristine_git_blob":"84df897acc31606eda119bef71abe2cfea6fdff4","pristine_sha256":"aef89abedf95ab9e83f12858362e304c918ca6fd228a47b7ff5dfd828ce5b2c9"},
+    {"path":"tests/packs/timeline/test_verbs_working_copy.py","current_sha256":"d27db2ce9ceda654af0ac722e45b358a33077a458b097a9f5adcdcb7f6686ce0","pristine_git_blob":"e44aed75ad8e97e761e795acb820854888a845d0","pristine_sha256":"659ea09fa924c10020b93a91cde487baaf276a606efb3fc85c6b700f099ee638"},
+    {"path":"tests/packs/video_editing/test_runtime_publication_chain.py","current_sha256":"8dfd78a379e40842f5e3c074b1799b37d2d3851f1b10d1f624dda65124c6b253","pristine_git_blob":"b17c8d1b622a84eda1a076c00ffd17697f1260a9","pristine_sha256":"35a6831cee04c43d9963993436e6383644e41785612487d1866c2a7961afcbd1"},
+    {"path":"tests/sdk/test_runtime_response_conformance.py","current_sha256":"97394b5598f746e313221cd613afc8a43138b68c90cb408776e1cc0f186888a2","pristine_git_blob":"6fc678313f25caffb4796af986116b22523a1115","pristine_sha256":"8c7c2d36904a637702b6e6ed2786934f626ff6b06b9b538696dbb58a290541bb"},
+    {"path":"tests/timeline/test_authoring_bundle.py","current_sha256":"767420f61f794132ee58ff2ba3e31483ad2a46efb51577239dc535991920b0b0","pristine_git_blob":"c6084c424890fba59f2786439ad492efaff789d8","pristine_sha256":"113b761ff4742b0fe993033ce10ecea6528524e84325c62d975bb5d7e6f05051"},
+    {"path":"tests/v10/test_timelines_create.py","current_sha256":"883d70ffd18ae6d5396e60bac7667610b4c6e44316d37bdf423b27c192491c2a","pristine_git_blob":"64623003fdc83f2be8eb5637e57602fc6de9b423","pristine_sha256":"60a21b974922b0410bf856e699ffeb79758690353a9f372c163d983678f82215"}
+  ],
+  "original_blob_rows": {
+    "4": "71b61a296d8b23b1c5d69209fc6d9315cdb8a71a",
+    "5": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "6": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "7": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "8": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "9": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "10": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "11": "84df897acc31606eda119bef71abe2cfea6fdff4",
+    "12": "e44aed75ad8e97e761e795acb820854888a845d0",
+    "13": "e44aed75ad8e97e761e795acb820854888a845d0",
+    "14": "b17c8d1b622a84eda1a076c00ffd17697f1260a9",
+    "15": "6fc678313f25caffb4796af986116b22523a1115",
+    "16": "c6084c424890fba59f2786439ad492efaff789d8",
+    "17": "c6084c424890fba59f2786439ad492efaff789d8",
+    "18": "64623003fdc83f2be8eb5637e57602fc6de9b423"
+  },
+  "source_preservation": {
+    "restoration_commit": "445b9c1a7f8d0e7e3405ad01f4475b9af02acfaf",
+    "diff_is_additions_only": true,
+    "protected_originals_overwritten": 0,
+    "product_files_changed": 0
+  }
+}
