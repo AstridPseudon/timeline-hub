@@ -12,6 +12,7 @@ import argparse
 import contextlib
 import copy
 import hashlib
+import importlib.util
 import io
 import json
 import os
@@ -33,6 +34,10 @@ SOURCE_PROJECT = "811a657af5fe43e4b2b48a670de1f3e8"
 FILM_TIMELINE = "01M4GGKMHZ3J8V402C8CWSCE95"
 LARGE_TIMELINE = "almost-ready-no-first-second-v2"
 HEX = re.compile(r"^[0-9a-f]{64}$")
+
+
+class NativeRenderUnavailable(RuntimeError):
+    """The native host lacks the installed Remotion prerequisites for this acceptance."""
 
 
 def _json_write(path: Path, value: object) -> None:
@@ -1114,6 +1119,7 @@ def render_attempt(args: argparse.Namespace) -> int:
     record: dict[str, object] = {
         "status": "running", "project_id": project, "timeline_id": timeline_id,
         "runtime_checkout": runtime_path, "realm_root": str(realm_root),
+        "requested_backend": args.backend,
         "disk_free_bytes_before": free,
         "route": "explicit sandbox Runtime -> GenericPackHost(rendering) -> actual timeline render CLI -> AstridClient.invoke_result(rendering.render, kind=executor)",
         "started_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -1128,6 +1134,60 @@ def render_attempt(args: argparse.Namespace) -> int:
         pack_path = Path(__file__).resolve().parents[2] / "astrid" / "packs" / "rendering"
         if not pack_path.is_dir():
             raise RuntimeError(f"canonical rendering pack is missing from the Astrid checkout: {pack_path}")
+        source_path = Path(__file__).resolve().parents[2]
+        node = shutil.which("node")
+        schema_spec = importlib.util.find_spec("banodoco_timeline_schema")
+        if not node or schema_spec is None or not schema_spec.origin:
+            raise NativeRenderUnavailable(
+                "Remotion readiness requires an existing Node 20 executable and the installed "
+                "banodoco_timeline_schema package; acceptance does not install dependencies"
+            )
+        from astrid.core.env_vars import (
+            ASTRID_NODE_EXECUTABLE,
+            ASTRID_REMOTION_PROJECT_DIR,
+            ASTRID_REMOTION_VALIDATION_LAUNCH,
+            ASTRID_REMOTION_VALIDATION_PATH,
+            ASTRID_REMOTION_VALIDATION_ROLE,
+            ASTRID_REMOTION_VALIDATION_SHA256,
+            ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
+        )
+        from astrid.sdk.host_bootstrap import _prepare_render_validation
+
+        render_env = dict(os.environ)
+        render_env[ASTRID_NODE_EXECUTABLE] = str(Path(node).resolve())
+        render_env[ASTRID_REMOTION_PROJECT_DIR] = str((source_path / "remotion").resolve())
+        render_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(
+            Path(schema_spec.origin).resolve().parent.parent
+        )
+        launch_id = _prepare_render_validation(
+            source_path,
+            render_env,
+            sandbox_root / "render-support",
+            sys.executable,
+            (pack_path,),
+        )
+        if launch_id is None:
+            raise NativeRenderUnavailable(
+                "canonical Remotion launch preparation found the renderer unavailable; "
+                "check the existing Node 20, remotion/node_modules and timeline-schema install"
+            )
+        record["remotion_readiness"] = "prepared"
+        record["remotion_validation_launch_id"] = launch_id
+        validation_vars = (
+            ASTRID_REMOTION_VALIDATION_PATH,
+            ASTRID_REMOTION_VALIDATION_SHA256,
+            ASTRID_REMOTION_VALIDATION_LAUNCH,
+            ASTRID_REMOTION_VALIDATION_ROLE,
+        )
+        for key in [name for name in os.environ if name.startswith(("LD_", "DYLD_")) and name not in render_env]:
+            os.environ.pop(key, None)
+        for name in (
+            ASTRID_NODE_EXECUTABLE,
+            ASTRID_REMOTION_PROJECT_DIR,
+            ASTRID_TIMELINE_SCHEMA_PYTHONPATH,
+            *validation_vars,
+        ):
+            os.environ[name] = render_env[name]
         host = GenericPackHost(
             pack_roots=[pack_path],
             client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
@@ -1139,6 +1199,7 @@ def render_attempt(args: argparse.Namespace) -> int:
         os.environ["ASTRID_RUNTIME_CHECKOUT"] = runtime_path
         parsed = timeline_cli.build_parser(client).parse_args([
             "render", "--project", project, timeline_id,
+            "--backend", args.backend,
             "--timeout-seconds", str(args.timeout_seconds), "--detach", "--json",
         ])
         output = io.StringIO()
@@ -1187,11 +1248,13 @@ def render_attempt(args: argparse.Namespace) -> int:
             })
         except Exception as exc:
             detail = f"{type(exc).__name__}: {exc}"
-            record.update({"status": "blocked-native" if "CustodyError" in detail or "process census" in detail
+            record.update({"status": "blocked-native" if isinstance(exc, NativeRenderUnavailable)
+                           or "CustodyError" in detail or "process census" in detail
                            or "errno=1" in detail else "failed", "error": detail})
     except Exception as exc:
         detail = f"{type(exc).__name__}: {exc}"
-        record.update({"status": "blocked-native" if "CustodyError" in detail or "process census" in detail
+        record.update({"status": "blocked-native" if isinstance(exc, NativeRenderUnavailable)
+                       or "CustodyError" in detail or "process census" in detail
                        or "errno=1" in detail else "failed", "error": detail})
     finally:
         record.update({"elapsed_seconds": round(time.monotonic() - started, 3),
@@ -1241,6 +1304,8 @@ def parser() -> argparse.ArgumentParser:
     render = sub.add_parser("render-attempt", help="invoke the canonical renderer for an imported sandbox timeline")
     render.add_argument("--import-result", type=Path, required=True)
     render.add_argument("--runtime-checkout", type=Path, required=True)
+    render.add_argument("--backend", choices=("rendering.remotion",), default="rendering.remotion",
+                        help="Require the renderer used by the film acceptance; missing Remotion readiness is a failure.")
     render.add_argument("--timeout-seconds", type=float, default=30.0)
     render.add_argument("--result", type=Path, required=True)
     render.set_defaults(func=render_attempt)

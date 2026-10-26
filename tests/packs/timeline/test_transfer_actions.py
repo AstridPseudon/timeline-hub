@@ -282,6 +282,13 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
 
             before_objects = service.list_project_objects(project)["items"]
             before_head = service.get_project_timeline(project, "main")
+            before_relations = service.list_media_relations(project)["items"]
+            before_shots = service.list_project_shots(project)["items"]
+            before_parent_revisions = service.list_project_parent_composition_revisions(project, "main")["items"]
+            before_timelines = service.list_timelines(project)["items"]
+            before_objects_by_digest = {row["digest"]: row for row in before_objects}
+            before_object_digests = set(before_objects_by_digest)
+            task_outputs = []
 
             def invoke(capability: str, inputs: dict):
                 pending = client.invoke_result(
@@ -289,7 +296,7 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                 ).raise_for_error()
                 assert pending.kernel_task_id and pending.run_id
                 assert len(host.run(once=True)) == 1
-                return observe_task_invocation(
+                observed = observe_task_invocation(
                     client,
                     capability_id=pending.capability_id,
                     capability_type=pending.capability_type,
@@ -298,6 +305,12 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
                     run_id=pending.run_id,
                     read_managed_outputs=True,
                 ).raise_for_error()
+                task_outputs.append({
+                    "task_id": pending.kernel_task_id,
+                    "run_id": pending.run_id,
+                    "outputs": observed.outputs["managed_outputs"],
+                })
+                return observed
 
             exported = invoke("timeline.export_plan", {"project": project, "timeline": "main"})
             plan_output = exported.output("plan")
@@ -323,10 +336,41 @@ def test_real_pack_host_invokes_timeline_transfer_actions_read_only(tmp_path, re
             summary = json.loads(client.media.read_bytes(prepared.output("result")["digest"]))
             assert summary["timeline_id"] == prepared_body["timeline_id"]
 
-            assert service.list_project_objects(project)["items"] == before_objects
+            after_objects = service.list_project_objects(project)["items"]
+            after_object_digests = {row["digest"] for row in after_objects}
+            added_digests = after_object_digests - before_object_digests
+            assert len(task_outputs) == 3
+            declared_outputs = [output for invocation in task_outputs for output in invocation["outputs"]]
+            declared_digests = [output["digest"] for output in declared_outputs]
+            assert len(declared_digests) == 5
+            assert len(set(declared_digests)) == len(declared_digests)
+            assert added_digests == set(declared_digests)
+            after_objects_by_digest = {row["digest"]: row for row in after_objects}
+            assert {digest: after_objects_by_digest[digest] for digest in before_object_digests} == before_objects_by_digest
+            for invocation in task_outputs:
+                for output in invocation["outputs"]:
+                    digest = output["digest"]
+                    assert output["project_id"] == project
+                    assert output["task_id"] == invocation["task_id"]
+                    assert output["run_id"] == invocation["run_id"]
+                    assert output["media_type"] == "application/json"
+                    object_row = after_objects_by_digest[digest]
+                    assert object_row["media_type"] == output["media_type"]
+                    assert object_row["size"] == output["size"]
+                    assert object_row["filename"] == output["filename"]
+                    assert object_row["relation"] == "managed"
+                    associations = service.managed_outputs(invocation["task_id"])
+                    assert [row["association_id"] for row in associations].count(output["association_id"]) == 1
+                    association = next(row for row in associations if row["association_id"] == output["association_id"])
+                    assert association["run_id"] == invocation["run_id"]
+                    assert association["digest"] == digest
+                    assert association["output_port"] == output["output_port"]
+            assert service.list_media_relations(project)["items"] == before_relations
+            assert service.list_project_shots(project)["items"] == before_shots
+            assert service.list_project_parent_composition_revisions(project, "main")["items"] == before_parent_revisions
+            assert service.list_timelines(project)["items"] == before_timelines
             assert service.get_project_timeline(project, "main") == before_head
-            assert prepared_output["digest"].removeprefix("sha256:") not in {
-                row.get("digest", "").removeprefix("sha256:") for row in service.list_project_objects(project)["items"]
-            }
+            published_timeline_ids = {row["timeline_id"] for row in service.list_timelines(project)["items"]}
+            assert prepared_body["timeline_id"] not in published_timeline_ids
         finally:
             host.shutdown()
