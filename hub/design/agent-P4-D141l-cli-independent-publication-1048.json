@@ -1,0 +1,72 @@
+{
+  "utc": "2026-10-26T10:48:11.009007+00:00",
+  "kind": "manager byte-exact SAFE independent originals plus privacy-checked original passing XML",
+  "scope": "PASS_EVIDENCE for ONE changedCLI selector on actualecdc/95d/82e/635f; historical original3 separate",
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/review.json",
+      "published": "design/agt-P4-D141l-cli-custody-next-review.json",
+      "sha256": "a45c6fde3857691344974cf088108a98d738d3552cdaf3b1046b17228d7897ef",
+      "bytes": 5701,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/findings.md",
+      "published": "design/agt-P4-D141l-cli-custody-next-findings.md",
+      "sha256": "d47a66f6125215739fbf9124cf8b4917c1c650c47bae97cbc696405360ce820d",
+      "bytes": 1695,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/source-map.json",
+      "published": "design/agt-P4-D141l-cli-custody-next-source-map.json",
+      "sha256": "06a40973160a654a33270aba284c68e391b5cd2c68eb0c602435bf5b436d304c",
+      "bytes": 4520,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/source-manifest.json",
+      "published": "design/agt-P4-D141l-cli-custody-next-source-manifest.json",
+      "sha256": "b922950394c7f6a71b6924ebe1f66be673b633ef14a9e372583a54fba959da81",
+      "bytes": 5178,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/validation.md",
+      "published": "design/agt-P4-D141l-cli-custody-next-validation.md",
+      "sha256": "b742426b9607ce0bca26564e1f87a5981b8bddf7416751c55ff8d751119e0be1",
+      "bytes": 4537,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/handoff.md",
+      "published": "design/agt-P4-D141l-cli-custody-next-handoff.md",
+      "sha256": "39b5dd1e7aa6679a29c3a6789bdb7dcad4918b0d57ce2a7c150bbeac0057a00d",
+      "bytes": 1154,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-custody-next/evidence/disk-trace.txt",
+      "published": "design/agt-P4-D141l-cli-custody-next-disk-trace.txt",
+      "sha256": "4c0834d04c76a4fdaed6ff220a56618836c2778648de7bc05eeef398fd2e1d64",
+      "bytes": 801,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.xml",
+      "published": "design/agt-P4-D141l-retained-14092-p4-d141l-cli.xml",
+      "sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+      "bytes": 397,
+      "mode": "0o644",
+      "byte_exact": true,
+      "privacy_check": "inspected entire XML; only test identities/counts/timestamps/durations/hostname, no private payload"
+    }
+  ]
+}

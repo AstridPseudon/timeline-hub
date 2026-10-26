@@ -1,0 +1,47 @@
+{
+  "utc": "2026-10-26T10:45:40.453510+00:00",
+  "kind": "manager byte-exact SAFE summaries/source coordinates/finite disk observations; raw XML/logs private KEEP",
+  "scope": "actual1PASS; independent CLI custody pending; original sampler and native trace limits retained",
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/result.json",
+      "published": "design/agt-P4-D141l-cli-body-continuation-next-result.json",
+      "sha256": "b230dc9ff712ea9d67228997602116a191b30278a9db173cba5393b0b22bfbc0",
+      "bytes": 13325,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/source-manifest.json",
+      "published": "design/agt-P4-D141l-cli-body-continuation-next-source-manifest.json",
+      "sha256": "d450de5ddbe79a3eb33a467e074c4987cfb1a7bfb7e855ef49a2dffd27153613",
+      "bytes": 6812,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/validation.md",
+      "published": "design/agt-P4-D141l-cli-body-continuation-next-validation.md",
+      "sha256": "ac27fcea8292e18c3fa70ea4e96ebc182d269ca9f5da28d0de68a3dff4f9a0ca",
+      "bytes": 2981,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/handoff.md",
+      "published": "design/agt-P4-D141l-cli-body-continuation-next-handoff.md",
+      "sha256": "cd14a135aa64763982f4ac5097ea4d7a6901ef494abe49126c496b74935366b9",
+      "bytes": 1325,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/disk-trace.txt",
+      "published": "design/agt-P4-D141l-cli-body-continuation-next-disk-trace.txt",
+      "sha256": "c106eeab4c95d8404c83b94fa4972fa0ecc93c350d8928c1eecaa4c90334fa0e",
+      "bytes": 676,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}

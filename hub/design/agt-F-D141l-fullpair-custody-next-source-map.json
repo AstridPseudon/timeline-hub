@@ -1,0 +1,51 @@
+{
+  "actual_ids": {
+    "cut": {
+      "requested": "2026-10-26T10:04:28Z",
+      "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026100428-24814",
+      "service_id": "agent-agent-core-full-1026100428-24814"
+    },
+    "pristine": {
+      "requested": "2026-10-26T10:30:30Z",
+      "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026103030-25513",
+      "service_id": "agent-agent-core-full-1026103030-25513"
+    }
+  },
+  "actual_source": {
+    "actual_raw_runs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs",
+    "binding_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+    "binding_source_manifest_sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"
+  },
+  "association": [
+    "request",
+    "returned native ID",
+    "snap",
+    "summary",
+    "status",
+    "exit",
+    "raw/log",
+    "JUnit",
+    "command custody",
+    "source-before/source-after",
+    "row readback",
+    "manifest/tuple"
+  ],
+  "contract_boundary": "request-test is the six-field test-service request, not a Runtime commit-v2 payload; no v2 validator was added here.",
+  "controller": {
+    "branch": "tl/agt-F-D141l-fullpair-controller-next",
+    "evidence": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence",
+    "worktree": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next"
+  },
+  "schema": "timeline.agent.d141l.fullpair-custody-source-map.v1",
+  "source_settings": {
+    "addopts_clear": true,
+    "cut_roots": 22,
+    "no_cacheprovider": true,
+    "pristine_roots": 17,
+    "same_plugin_profile": true,
+    "same_sanitized_environment": true,
+    "same_venv": true,
+    "timeout_seconds": 45,
+    "xdist_workers": 3
+  }
+}

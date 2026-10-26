@@ -1,0 +1,165 @@
+{
+  "dispatch": {
+    "free_bytes": 6479253504,
+    "one_heavy_route": true,
+    "required_bytes": 4714564096,
+    "utc": "2026-10-26T10:04:27.972946+00:00"
+  },
+  "limitations": [
+    "outer whole-worker trace is UNREADABLE and is not native disk evidence",
+    "manager traces are distinct and gaps are not backfilled",
+    "XML declared counts include 173 unnamed aggregate subtests in each member",
+    "product/full-suite qualification is not claimed"
+  ],
+  "manager_traces": [
+    {
+      "first": {
+        "free_bytes": 6489882624,
+        "service_ids": [],
+        "terminal": false,
+        "utc": "2026-10-26T10:04:24.137228+00:00"
+      },
+      "last": {
+        "free_bytes": 7416643584,
+        "service_ids": [],
+        "terminal": false,
+        "utc": "2026-10-26T10:17:54.247490+00:00"
+      },
+      "max_free_bytes": 7585042432,
+      "min_free_bytes": 6477996032,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1003Z-fullpair-manager-disk-trace.jsonl",
+      "samples": 163,
+      "service_ids_seen": [],
+      "sha256": "e7958e520418cce6a60a993e222ef7457645eff54388a50c8890e1f5b26b1078",
+      "terminal_samples": 0
+    },
+    {
+      "first": {
+        "free_bytes": 7481139200,
+        "service_ids": [
+          "agent-agent-core-full-1026100428-24814"
+        ],
+        "terminal": false,
+        "utc": "2026-10-26T10:11:56.993004+00:00"
+      },
+      "last": {
+        "free_bytes": 7414910976,
+        "service_ids": [
+          "agent-agent-core-full-1026100428-24814"
+        ],
+        "terminal": false,
+        "utc": "2026-10-26T10:17:52.079808+00:00"
+      },
+      "max_free_bytes": 7481208832,
+      "min_free_bytes": 7413678080,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1011Z-native-fullpair-manager-disk-trace.jsonl",
+      "samples": 72,
+      "service_ids_seen": [
+        "agent-agent-core-full-1026100428-24814"
+      ],
+      "sha256": "5044e7d6cd02bc39c50145d2c0c652020e5b9a164178b1f057df5e360a5d12f9",
+      "terminal_samples": 0
+    },
+    {
+      "first": {
+        "free_bytes": 7408754688,
+        "services": [
+          {
+            "id": "agent-agent-core-full-1026100428-24814",
+            "status": "running"
+          }
+        ],
+        "stop_requests": [],
+        "terminal": false,
+        "utc": "2026-10-26T10:19:42.780088+00:00"
+      },
+      "last": {
+        "free_bytes": 7538913280,
+        "services": [
+          {
+            "id": "agent-agent-core-full-1026100428-24814",
+            "status": "fail"
+          },
+          {
+            "id": "agent-agent-core-full-1026103030-25513",
+            "status": "fail"
+          }
+        ],
+        "stop_requests": [],
+        "terminal": true,
+        "utc": "2026-10-26T10:39:13.011546+00:00"
+      },
+      "max_free_bytes": 7559630848,
+      "min_free_bytes": 7293227008,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T1019Z-native-fullpair-manager-disk-trace.jsonl",
+      "samples": 235,
+      "service_ids_seen": [
+        "agent-agent-core-full-1026100428-24814",
+        "agent-agent-core-full-1026103030-25513"
+      ],
+      "sha256": "d69bee9de8c0f7699425269557b314ea10040977f6ac3be498039023e0513827",
+      "terminal_samples": 1
+    }
+  ],
+  "members": {
+    "cut": {
+      "admitted": false,
+      "artifact_checks": "PASS",
+      "custody": "PLAIN_ARTIFACT_ASSOCIATION",
+      "exit": 1,
+      "service_id": "agent-agent-core-full-1026100428-24814",
+      "status": "fail"
+    },
+    "pristine": {
+      "admitted": false,
+      "artifact_checks": "PASS",
+      "custody": "PLAIN_ARTIFACT_ASSOCIATION",
+      "exit": 1,
+      "service_id": "agent-agent-core-full-1026103030-25513",
+      "status": "fail"
+    }
+  },
+  "outer_trace": {
+    "first_utc": "2026-10-26T10:04:22.861922177Z",
+    "last_utc": "2026-10-26T10:37:16.990319141Z",
+    "path": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/disk-trace.txt",
+    "qualified": false,
+    "reason": "controller stat arithmetic emitted literal multiplication and UNREADABLE",
+    "samples": 1268,
+    "unreadable_samples": 397
+  },
+  "pair_order": [
+    "cut",
+    "pristine"
+  ],
+  "qualification": "NONE",
+  "reg_credit": "NONE",
+  "schema": "timeline.agent.d141l.fullpair-custody-review.v1",
+  "scope": "one independent terminal review; no repair, rerun, live action, withdrawal, or product credit",
+  "source_before_after": {
+    "cut": {
+      "after_sha256": "e3907e5dcb9c3237e4bc70fac6cf566d885ea973f11a94023f2552fde84827ed",
+      "before_sha256": "e3907e5dcb9c3237e4bc70fac6cf566d885ea973f11a94023f2552fde84827ed",
+      "equal": true
+    },
+    "pristine": {
+      "after_sha256": "64a92a796b3f94e141a9d2c731cdc59d0de4124d6a7cdf9c7415c182bebf8827",
+      "before_sha256": "64a92a796b3f94e141a9d2c731cdc59d0de4124d6a7cdf9c7415c182bebf8827",
+      "equal": true
+    }
+  },
+  "source_review": {
+    "association_cases": 10,
+    "exact_checker": "check-source.py",
+    "fresh_recorded_exit": 0,
+    "lifecycle_cases": 38,
+    "native_admission_expression_cases": 10,
+    "tiny_poison": "exit=1 calls=0",
+    "tiny_positive": "exit=17 calls=1",
+    "verdict": "PASS_SOURCE"
+  },
+  "subject": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next",
+  "task": "F D141l PLAN \u00a73 F/U2 terminal custody review",
+  "verdict": "PASS_EVIDENCE",
+  "withdrawal": "N/A; no actual binding mismatch"
+}

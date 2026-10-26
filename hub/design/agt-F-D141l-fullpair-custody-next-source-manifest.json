@@ -1,0 +1,87 @@
+{
+  "binding_source_manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/source-manifest.json",
+    "sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"
+  },
+  "commit_v2_boundary": "request-test is the six-field test-service request, not a Runtime commit-v2 payload; no v2 validator was added here.",
+  "controller_packet_source_manifest": {
+    "path": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/source-manifest.json",
+    "sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"
+  },
+  "dispatch_witness": {
+    "free_bytes": 6479253504,
+    "path": "/home/user/work/wt/agt-F-D141l-fullpair-controller-next/evidence/pair/dispatch-witness.txt",
+    "required_bytes": 4714564096,
+    "sha256": "3c72bec8beee2a1b00b13bb82bcdf5ca8a2ec435ab5e6b20e497be4946961070",
+    "utc": "2026-10-26T10:04:27.972946+00:00"
+  },
+  "floors": {
+    "continuous_stop": 4000000000,
+    "controller_dispatch": 4714564096,
+    "native_service_admission": 4700000000
+  },
+  "integrated_tuple": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "operational_composition_lineage": {
+    "commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "role": "existing operational lineage; not product tuple",
+    "tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"
+  },
+  "pristine_tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-64197afa",
+      "sha": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+    }
+  },
+  "product_composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "role": "unchanged product tuple",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "request_fields": [
+    "target",
+    "repo",
+    "suite",
+    "files",
+    "nocache",
+    "requested"
+  ],
+  "schema": "timeline.agent.d141l.fullpair-custody-source-manifest.v1",
+  "source_settings": {
+    "addopts_clear": true,
+    "cut_roots": 22,
+    "no_cacheprovider": true,
+    "pristine_roots": 17,
+    "same_plugin_profile": true,
+    "same_sanitized_environment": true,
+    "same_venv": true,
+    "timeout_seconds": 45,
+    "xdist_workers": 3
+  }
+}

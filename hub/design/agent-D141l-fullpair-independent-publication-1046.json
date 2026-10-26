@@ -1,0 +1,63 @@
+{
+  "utc": "2026-10-26T10:45:40.452403+00:00",
+  "kind": "manager byte-exact SAFE summaries/source coordinates/finite disk observations; raw XML/logs private KEEP",
+  "scope": "PASS_EVIDENCE association only; admitted=false in read-only inspector is not a live admission decision; no REG verdict",
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/review.json",
+      "published": "design/agt-F-D141l-fullpair-custody-next-review.json",
+      "sha256": "ad3a7c6537c6ac0a13e05972542db0cafb7c5a446a6373028c07affe95b80ffc",
+      "bytes": 5568,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/findings.md",
+      "published": "design/agt-F-D141l-fullpair-custody-next-findings.md",
+      "sha256": "813c6d05fdc57bdc16df63361763862f9837fbcdf332b25b96e6b3629f6d303d",
+      "bytes": 1880,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/source-map.json",
+      "published": "design/agt-F-D141l-fullpair-custody-next-source-map.json",
+      "sha256": "d560bb3c3187dc9dfa971407dcba58ba05ebbaf886d5a8c0366403329ee1b9c2",
+      "bytes": 2015,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-fullpair-custody-next-source-manifest.json",
+      "sha256": "075d0d6de52910371a99a37b2df3f8bd98e9863a13d868147b4250306b395602",
+      "bytes": 3131,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-fullpair-custody-next-validation.md",
+      "sha256": "6c317049adcb471f5ca63253c081add6e13a4372c05aced38d059b63af4b294b",
+      "bytes": 3559,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-fullpair-custody-next-handoff.md",
+      "sha256": "3541fe164c7c53ce1ca609890dbdbc2a0ee38b0ea9c4028e164d2f4409ee7a8b",
+      "bytes": 934,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-custody-next/evidence/disk-trace.txt",
+      "published": "design/agt-F-D141l-fullpair-custody-next-disk-trace.txt",
+      "sha256": "951b951755b20c6f418528566fe5e91194ac7777b00fa657bcc7cd405e5e2e0a",
+      "bytes": 225,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+schema=timeline.p4.d141l.disk-trace.v1
+stop_bytes=4000000000
+admission_bytes=5000000000
+2026-10-26T10:39:01.935Z sample=0 free_bytes=7539163136 crossed_stop=false crossed_admission=true
+2026-10-26T10:39:02.948Z sample=1 free_bytes=7539154944 crossed_stop=false crossed_admission=true
+2026-10-26T10:39:03.959Z sample=2 free_bytes=7539154944 crossed_stop=false crossed_admission=true
+2026-10-26T10:39:04.969Z sample=3 free_bytes=7539040256 crossed_stop=false crossed_admission=true
+2026-10-26T10:39:05.982Z sample=4 free_bytes=7539040256 crossed_stop=false crossed_admission=true
+2026-10-26T10:39:06.992Z sample=5 free_bytes=7539040256 crossed_stop=false crossed_admission=true

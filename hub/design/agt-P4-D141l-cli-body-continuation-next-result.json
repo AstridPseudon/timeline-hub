@@ -1,0 +1,239 @@
+{
+  "schema": "timeline.p4.d141l.result.v1",
+  "status": "PASS",
+  "behavioral_credit": true,
+  "service_id": "agent-p4-current-becfe-http-3legs-1026103939-14092",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092",
+  "request": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/request",
+    "sha256": "abb0c8d2f4e8d5f292d5617ec8c92b2ed2e1a35ed4110680548a668be8982e7e",
+    "text": "target=integration:agent\nrepo=agent\nsuite=p4-current-becfe-http-3legs\nfiles=''\nnocache=1\nrequested=2026-10-26T10:39:39Z",
+    "target": "integration:agent",
+    "repo": "agent",
+    "suite": "p4-current-becfe-http-3legs",
+    "files": "",
+    "nocache": true
+  },
+  "terminal": {
+    "status": "pass",
+    "exit_code": 0,
+    "summary_sha256": "bc8b69951094046b65f8a3a85b0e541f70df5e663cd69b971172a8d36948fdc1"
+  },
+  "registration": {
+    "registry_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_sha256": "f6996b4f1b5c697762bcad3f7cc725c555cf227460240dd0c48e105ac0a0a027",
+    "after_sha256": "33bcd45de60c5fc5c7be19d12258470d7d7c87919b99952d86b4337314c139c3",
+    "installed_row_sha256": "8ed2482ac63ffc6e3163a4f923b543d5c8f21a5e7856f7bc77be6845b1f600f7",
+    "candidate_exact": true,
+    "outside_rows_byte_identical": true
+  },
+  "snapshot": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/snap",
+    "sha256": "831280c9d1203e5af4fb38f2088c9b0b8830b67c50d7669ae03168e1a1cc04b9",
+    "bytes": 114,
+    "text": "tree=d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735 key=902f9be256ff2623ec1398de5a1901fa worktree=/home/user/work/agent "
+  },
+  "launcher": {
+    "path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "installer_path": "/home/user/work/agent/tools/install_p4_launcher.py",
+    "installer_sha256": "1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805"
+  },
+  "manifest": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.manifest",
+    "sha256": "bcb79de5fae4786dde733cd203b75c3fe39690cc270aa0d7eec22a1863653768",
+    "runmanifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.runmanifest",
+    "runmanifest_sha256": "00d2334472150595d7837379e300ffe9bf61c87822ba716f3d9b96f6257bc29c",
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.xml",
+    "junit_sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+    "command_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.command",
+    "command_sha256": "dce5d9afba00f8e35cdef3f8636d9336167c9729accf4cddb8f562f74b6b866d",
+    "path_alignment": true
+  },
+  "source_before": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "status_porcelain": ""
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "status_porcelain": ""
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "parents": "82e9e13ddf1d7ec6c736521b2eb091dca9877598 4de54db14bdc9ddc2ce2e5887258b03acbffd30d 4937203f545a77fa3ca7597493e009c84eebeffa",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "status_porcelain": ""
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "status_porcelain": ""
+    }
+  },
+  "source_after": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "status_porcelain": ""
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "status_porcelain": ""
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "parents": "82e9e13ddf1d7ec6c736521b2eb091dca9877598 4de54db14bdc9ddc2ce2e5887258b03acbffd30d 4937203f545a77fa3ca7597493e009c84eebeffa",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "status_porcelain": ""
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "status_porcelain": ""
+    }
+  },
+  "selection": {
+    "test": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+    "pytest_argv": [
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45",
+      "-m",
+      "integration"
+    ],
+    "predicates_unchanged": true
+  },
+  "counts": {
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "service_elapsed_seconds": 7,
+    "xml_suite_time_seconds": "4.643",
+    "testcase_time_seconds": "3.436"
+  },
+  "per_id": [
+    {
+      "id": "tests.editing_conformance.test_p4_cli_sheet_v2_runtime::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "status": "passed",
+      "time_seconds": "3.436"
+    }
+  ],
+  "junit": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.xml",
+    "sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "raw_artifacts": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/request": {
+      "sha256": "abb0c8d2f4e8d5f292d5617ec8c92b2ed2e1a35ed4110680548a668be8982e7e",
+      "bytes": 120
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/status": {
+      "sha256": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2",
+      "bytes": 5
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/summary": {
+      "sha256": "bc8b69951094046b65f8a3a85b0e541f70df5e663cd69b971172a8d36948fdc1",
+      "bytes": 1330
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/log.txt": {
+      "sha256": "8b7616183803f388822c2547db1299afe734c447dbca03ec4e82e761fce73f31",
+      "bytes": 98
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/snap": {
+      "sha256": "831280c9d1203e5af4fb38f2088c9b0b8830b67c50d7669ae03168e1a1cc04b9",
+      "bytes": 114
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026103939-14092/ext": {
+      "sha256": "ce7d085ea211435701f0efa83ab29de17e4cea98e90face21f7caf45da469ae0",
+      "bytes": 157
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.manifest": {
+      "sha256": "bcb79de5fae4786dde733cd203b75c3fe39690cc270aa0d7eec22a1863653768",
+      "bytes": 2762
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.runmanifest": {
+      "sha256": "00d2334472150595d7837379e300ffe9bf61c87822ba716f3d9b96f6257bc29c",
+      "bytes": 832
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.command": {
+      "sha256": "dce5d9afba00f8e35cdef3f8636d9336167c9729accf4cddb8f562f74b6b866d",
+      "bytes": 383
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.xml": {
+      "sha256": "7ff7ea370c09f99b9d65bf1acf8beba5eaaee2a97e0071ba00eafdcb03f56891",
+      "bytes": 397
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.body.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.body.log": {
+      "sha256": "8b7616183803f388822c2547db1299afe734c447dbca03ec4e82e761fce73f31",
+      "bytes": 98
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.preflight.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.preflight.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.request-id": {
+      "sha256": "2fb15c148cb41f22f66da70cd77568dd7eed766c156f5229f9ebc6b27826f859",
+      "bytes": 13
+    }
+  },
+  "disk": {
+    "pre_dispatch_trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-cli-body-continuation-next/evidence/disk-trace.txt",
+    "pre_dispatch_trace_sha256": "c106eeab4c95d8404c83b94fa4972fa0ecc93c350d8928c1eecaa4c90334fa0e",
+    "pre_dispatch_min_free_bytes": 7539040256,
+    "admission_floor_bytes": 5000000000,
+    "stop_floor_bytes": 4000000000,
+    "free_bytes_now": 7482875904,
+    "body_disk_trace_present": false,
+    "gap": "dispatcher LIGHT path emitted no disk-trace.tsv; no body-wide disk trace is claimed",
+    "request_stop_test": "not applicable; threshold never crossed"
+  }
+}

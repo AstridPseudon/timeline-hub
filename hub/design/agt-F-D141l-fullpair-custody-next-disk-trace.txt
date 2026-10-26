@@ -1,0 +1,3 @@
+phase=sample	available_bytes=7534993408	utc=2026-10-26T10:40:32.965309945Z
+phase=sample	available_bytes=7534993408	utc=2026-10-26T10:40:37.965574185Z
+phase=sample	available_bytes=7534981120	utc=2026-10-26T10:40:42.965822526Z
