@@ -1476,9 +1476,14 @@ class AdapterRegistry:
     @classmethod
     def resolve(cls, definition: ExecutorDefinition) -> AdapterSpec:
         metadata = definition.metadata
+        for field_name in ("adapter_family", "adapter"):
+            if field_name in metadata and (
+                not isinstance(metadata[field_name], str) or not metadata[field_name].strip()
+            ):
+                raise HostError(f"{definition.id}: adapter {field_name} must be a non-empty string")
         explicit = metadata.get("adapter_family") or metadata.get("adapter")
-        if explicit:
-            family = str(explicit)
+        if explicit is not None:
+            family = explicit
         elif definition.id.startswith("rendering.") or "render" in definition.id:
             family = "render"
         elif definition.id.startswith(("vibecomfy.", "comfy_wrap.")) or metadata.get("vibecomfy_command"):
@@ -1506,10 +1511,19 @@ class AdapterRegistry:
     def from_matrix(cls, definition: ExecutorDefinition, entry: Mapping[str, Any] | None = None) -> AdapterSpec:
         base = cls.resolve(definition)
         entry = entry or {}
+        if "adapter_family" in entry and (
+            not isinstance(entry["adapter_family"], str) or not entry["adapter_family"].strip()
+        ):
+            raise HostError(f"{definition.id}: adapter adapter_family must be a non-empty string")
         family = str(entry.get("adapter_family") or base.family)
         if family not in cls._specs:
             raise HostError(f"unknown adapter family {family!r} for {definition.id!r}")
         builtin = cls._specs[family]
+        for field_name in ("resource_keys", "required_binaries", "required_packages"):
+            if field_name in entry:
+                values = entry[field_name]
+                if not isinstance(values, (list, tuple)) or any(not isinstance(value, str) for value in values):
+                    raise HostError(f"{definition.id}: adapter {field_name} must be a list of strings")
         return AdapterSpec(
             family,
             tuple(entry["resource_keys"] if "resource_keys" in entry else builtin.resource_keys),
@@ -4360,6 +4374,18 @@ class CapabilityRecord:
     # Such a capability is registered as unavailable with this reason; it is
     # never admitted for execution. Other capabilities are unaffected.
     approval_reason: str | None = None
+    adapter_spec: AdapterSpec | None = None
+    adapter_error: str | None = None
+
+    def __post_init__(self) -> None:
+        # Cloned records pass through __dict__, so derive this from the current
+        # definition and matrix rather than retaining stale parse state.
+        object.__setattr__(self, "adapter_spec", None)
+        object.__setattr__(self, "adapter_error", None)
+        try:
+            object.__setattr__(self, "adapter_spec", AdapterRegistry.from_matrix(self.definition, self.matrix))
+        except (HostError, TypeError, ValueError) as exc:
+            object.__setattr__(self, "adapter_error", str(exc) or type(exc).__name__)
 
     @property
     def id(self) -> str:
@@ -4367,17 +4393,27 @@ class CapabilityRecord:
 
     @property
     def resource_keys(self) -> tuple[str, ...]:
+        adapter, error = self._adapter_result()
+        if error:
+            return ()
         metadata = self.definition.metadata
         values = metadata.get("resource_keys", metadata.get("resources", ()))
         if isinstance(values, str):
             values = (values,)
         declared = tuple(str(value) for value in (values or ()))
-        adapter = AdapterRegistry.from_matrix(self.definition, self.matrix)
+        assert adapter is not None
         return tuple(dict.fromkeys((*adapter.resource_keys, *declared)))
+
+    def _adapter_result(self) -> tuple[AdapterSpec | None, str | None]:
+        return self.adapter_spec, self.adapter_error
 
     @property
     def adapter(self) -> AdapterSpec:
-        return AdapterRegistry.from_matrix(self.definition, self.matrix)
+        adapter, error = self._adapter_result()
+        if error:
+            raise HostError(error)
+        assert adapter is not None
+        return adapter
 
     @property
     def estimated_scratch_bytes(self) -> int:
@@ -4389,6 +4425,7 @@ class CapabilityRecord:
 
     def manifest(self) -> dict[str, Any]:
         source_roots = _admitted_source_roots(self.source_root, self.definition)
+        adapter, adapter_error = self._adapter_result()
         return {
             "id": self.id,
             "definition": self.definition.to_dict(),
@@ -4405,7 +4442,8 @@ class CapabilityRecord:
             "resource_keys": list(self.resource_keys),
             "estimated_scratch_bytes": self.estimated_scratch_bytes,
             "estimated_output_bytes": self.estimated_output_bytes,
-            "adapter_family": self.adapter.family,
+            "adapter_family": adapter.family if adapter is not None else None,
+            **({"adapter_error": adapter_error} if adapter_error else {}),
             "disposition": self.matrix.get("disposition", "unclassified"),
             "evidence_reason": self.matrix.get("evidence_reason", ""),
             "preflight": dict(self.preflight),
@@ -6021,6 +6059,13 @@ class GenericPackHost:
                 raise HostError(f"capability not discovered: {capability_id}")
             if record.approval_reason:
                 raise HostError(f"capability {capability_id!r} is unavailable: {record.approval_reason}")
+            _adapter, adapter_error = record._adapter_result()
+            if adapter_error:
+                raise HostError(f"capability {capability_id!r} is unavailable: adapter:reason={adapter_error}")
+            try:
+                _network_policy(record)
+            except (HostError, TypeError, ValueError) as exc:
+                raise HostError(f"capability {capability_id!r} is unavailable: network:reason={exc}") from exc
             return record.definition.to_dict(), {
                 "capability_digest": record.capability_digest,
                 "source_digest": record.source_digest,
@@ -6111,16 +6156,29 @@ class GenericPackHost:
         updated: dict[str, CapabilityRecord] = dict(self.capabilities)
         gpu_detection = None
         remotion_status = None
-        remotion_context = self._remotion_idle_context() if any(record.adapter.remotion != "never" for record in selected) else None
+        remotion_context = self._remotion_idle_context() if any(
+            adapter is not None and adapter.remotion != "never"
+            for record in selected for adapter, _error in (record._adapter_result(),)
+        ) else None
         for record in selected:
             checks: dict[str, Any] = {"source": record.source_root.is_dir(), "definition": True}
+            adapter, adapter_error = record._adapter_result()
+            if adapter_error:
+                checks["adapter"] = {"ok": False, "reason": adapter_error}
+                updated[record.id] = CapabilityRecord(
+                    **{**record.__dict__, "preflight": checks, "ready": False}
+                )
+                continue
+            assert adapter is not None
             gpu = windows_gpu_status(record.id, detection=gpu_detection)
             if gpu is not None:
                 checks["gpu"] = gpu
                 gpu_detection = gpu["device"]
-            adapter = record.adapter
             matrix_binaries = tuple(str(binary) for binary in record.matrix.get("required_binaries", ()))
-            binary_requirements = tuple(dict.fromkeys((*record.definition.isolation.binaries, *matrix_binaries, *adapter.required_binaries)))
+            binary_requirements = tuple(dict.fromkeys((
+                *record.definition.isolation.binaries, *matrix_binaries,
+                *adapter.required_binaries,
+            )))
             missing = list(dict.fromkeys(binary for binary in binary_requirements if shutil.which(binary) is None))
             if missing:
                 checks["binaries"] = {"ok": False, "missing": missing}
@@ -6143,7 +6201,9 @@ class GenericPackHost:
             # Credentials are diagnostic here; the selected cloud provider
             # resolves its key only when a call actually needs it.
             checks["credentials"] = {"ok": True, "missing": missing_env}
-            required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
+            required_packages = record.matrix.get("required_packages") or record.definition.metadata.get(
+                "required_packages", adapter.required_packages
+            )
             missing_packages = [package for package in (required_packages or ()) if importlib.util.find_spec(str(package)) is None]
             checks["packages"] = {"ok": not missing_packages, "missing": missing_packages}
             # Only the final Remotion compositor needs the JavaScript render
@@ -6159,19 +6219,30 @@ class GenericPackHost:
                         if remotion_status is None:
                             remotion_status = remotion_runtime_status(require_explicit_project=True)
                         status = remotion_status
-                    except BaseException:
+                    except HostError:
                         self._forget_failed_remotion_observation(record.id, remotion_context)
                         raise
-                    checks["remotion"] = {
-                        "ok": status.available,
-                        "project_dir": str(status.project_dir) if status.project_dir else None,
-                        "node_executable": str(status.node_executable) if status.node_executable else None,
-                        "node_version": status.node_version,
-                        "remotion_cli": str(status.remotion_cli) if status.remotion_cli else None,
-                        "reason": status.reason,
-                    }
+                    except Exception as exc:
+                        self._forget_failed_remotion_observation(record.id, remotion_context)
+                        status = None
+                        checks["remotion"] = {
+                            "ok": False,
+                            "reason": (
+                                "Remotion validation failed: "
+                                f"{str(exc)[:512] or type(exc).__name__}; check the server-owned Node and Remotion installation"
+                            ),
+                        }
+                    if status is not None:
+                        checks["remotion"] = {
+                            "ok": status.available,
+                            "project_dir": str(status.project_dir) if status.project_dir else None,
+                            "node_executable": str(status.node_executable) if status.node_executable else None,
+                            "node_version": status.node_version,
+                            "remotion_cli": str(status.remotion_cli) if status.remotion_cli else None,
+                            "reason": status.reason,
+                        }
                     after_context = self._remotion_idle_context()
-                    if status.available and remotion_context is not None and after_context == remotion_context:
+                    if status is not None and status.available and remotion_context is not None and after_context == remotion_context:
                         with owner._handoff_condition:
                             self._remotion_full_preflight[record.id] = (remotion_context, dict(checks["remotion"]))
                     else:
@@ -6189,8 +6260,15 @@ class GenericPackHost:
                     )
                 if adapter.remotion == "selected":
                     checks["remotion"] = {**checks["remotion"], "gates": REMOTION_GATE_DESCRIPTION}
-            policy = _network_policy(record)
-            if adapter.requires_network and not record.definition.isolation.network:
+            network_error = None
+            try:
+                policy = _network_policy(record)
+            except (HostError, TypeError, ValueError) as exc:
+                policy = None
+                network_error = str(exc)
+            if network_error is not None:
+                checks["network"] = {"ok": False, "reason": network_error}
+            elif adapter.requires_network and not record.definition.isolation.network:
                 checks["network"] = {"ok": False, "reason": "adapter_requires_network"}
             elif record.definition.isolation.network and adapter.family == "provider" and policy is None:
                 # Provider capabilities must declare their concrete egress
@@ -8869,7 +8947,10 @@ class GenericPackHost:
             self.preflight(capability_id)
             record = self.capabilities[capability_id]
             if not record.ready:
-                raise HostError(f"capability {capability_id!r} is unavailable: {record.preflight}")
+                raise HostError(
+                    f"capability {capability_id!r} is unavailable: "
+                    f"{_preflight_unavailable_reason(record)}"
+                )
             registration_error = self._registration_admission_reason()
             if registration_error:
                 raise HostError(registration_error)
