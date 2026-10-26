@@ -1,0 +1,28 @@
+{
+  "raw_sampler_state_at_terminal_stop": {
+    "pid": 2,
+    "started": 1793006695.1800077,
+    "interval_seconds": 5,
+    "floor_bytes": 4000000000,
+    "state": "running"
+  },
+  "first_tool_started_before_reads": true,
+  "pty_session_id": 88011,
+  "actual_disk": "shutil.disk_usage(/home/user/work).free; available filesystem bytes, not memory",
+  "interval_seconds": 5,
+  "stop_floor_bytes": 4000000000,
+  "samples": 204,
+  "minimum_available_bytes": 4665348096,
+  "maximum_observed_sample_gap_seconds": 5.069400310516357,
+  "first_at": 1793006695.1801941,
+  "last_at": 1793007712.3928902,
+  "keepalive": "KEEP touched at every sample; workerKEEP touched additionally during task, never backdated",
+  "stop_wait_reap": {
+    "stop": "Ctrl-C delivered with write_stdin to persistent PTY session88011 after evidence/source validation finished",
+    "wait": "write_stdin returned terminal completion exit_code=1, no active session ID",
+    "reap": "terminal execution service returned completed session; post-stop /proc audit found no matching sampler",
+    "post_stop_matching_pids": [],
+    "raw_graceful_stop_record": false
+  },
+  "limitations": "PTY cancellation exited 1 without the Python graceful finalizer/stopped-state record. Do not claim graceful sampler exit 0 or a terminal sampler final sample. Raw trace is unchanged and shows continuity through validation and evidence generation; only final metadata/DONE bookkeeping follows the explicit stop. Historical0741 and prior sampler gaps are not backfilled."
+}

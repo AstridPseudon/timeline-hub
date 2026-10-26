@@ -1,0 +1,56 @@
+{
+  "F1": {
+    "inputs": [
+      {
+        "canonical_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py",
+        "exists_at_app_canonical_coordinate": false,
+        "expected_sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+        "published_hash_match": true,
+        "published_readonly_copy": "/home/user/timeline-hub/hub/design/runtime-D141z-final-dependency-0913-run-final-services.py",
+        "published_sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7"
+      },
+      {
+        "canonical_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json",
+        "exists_at_app_canonical_coordinate": false,
+        "expected_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+        "published_hash_match": true,
+        "published_readonly_copy": "/home/user/timeline-hub/hub/design/runtime-D141z-final-dependency-0913-core-inventory.json",
+        "published_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14"
+      },
+      {
+        "canonical_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+        "exists_at_app_canonical_coordinate": false,
+        "expected_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+        "published_hash_match": true,
+        "published_readonly_copy": "/home/user/timeline-hub/hub/design/runtime-D141z-final-dependency-0913-delivery_gate_build.py",
+        "published_sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"
+      }
+    ],
+    "main_absence_inferred": false,
+    "owner": "existing Runtime peer0857; exact 0913 publication is read-only evidence, not an install",
+    "status": "finite_host_coordinate_gap"
+  },
+  "F2": {
+    "detail": "Seven-field device/inode/owner/mode/nlink/parent binding, retained monitoring descriptor, donor append-final and validator --fd preserved. No permissive validator double.",
+    "status": "preserved"
+  },
+  "F3": {
+    "detail": "No private flock/second floor. Exact installed/56f2 suite_lease + supervise and unmodified body/control-pipe block run against tiny private real Store and real leases. Test holds lease while live TERM-ignoring descendant exists and proves release after reap. The dispatcher alone retains heavy/cache/running state and measured 4860000000 floor; no admission was invoked.",
+    "status": "source_applicability_demonstrated; real_dispatch_unverified"
+  },
+  "F4": {
+    "detail": "Unchanged main -> SAFE D68 wrapper -> stub builder over four harmless Git fixtures; repeated through donor mounted controls; 5 poisoned-input guards refuse.",
+    "status": "preserved_and_extended"
+  },
+  "F5": {
+    "detail": "Actual BENCH_CONTROL_FD advertisement and broken-reader handling; donor normal EOF; mounted D/CANCELLED under real suite lease; donor runner death and direct caller death; PR_SET_PDEATHSIG/getppid; inner 1-second TERM/KILL before outer 5-second escalation; live orphan groups waited/reaped. No competing cancellation/admission service.",
+    "status": "corrected_in_bounded_source_controls"
+  },
+  "F6": {
+    "detail": "Exactly four declared source files over 32bc plus two inherited authorized pyc deletions; this repair changes only lifecycle/check/install-map. No new tracked files.",
+    "status": "preserved"
+  },
+  "historical_0741": "original raw CLI exit/reap UNKNOWN; later no-survivors host audit separate; no backfill",
+  "prior_evidence": "Original0847 FAIL6 and independent0920 FAIL retained; independent native wholepath0924 read as a finding against unchanged8e42, not a review of this repair. Return0855 PASS claims are not adopted as qualification.",
+  "result": "SOURCE_CONTROLS_PASS; F1 receiving and actual dispatcher admission unverified"
+}

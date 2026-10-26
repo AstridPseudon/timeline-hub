@@ -1,0 +1,64 @@
+{
+  "utc": "2026-10-26T09:44:40.643725+00:00",
+  "source": "61f91572495f4a5733058f1310055846730d3b9b",
+  "tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+  "result": "AUTHOR_SOURCE_CONTROLS_33_PASS_PENDING_INDEPENDENT",
+  "files": [
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/sampler-lifecycle.json",
+      "published": "design/app-F-D141z-build-stop-sol-0924-sampler-lifecycle.json",
+      "sha256": "c5ff0349bd8d845eda8a12a308cd27c0829e367c80067a523a7d481676c741ff",
+      "bytes": 1523
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/controls.json",
+      "published": "design/app-F-D141z-build-stop-sol-0924-controls.json",
+      "sha256": "23448413741d5d7316042da1fb93ffa4d9101a130464a7ef4ea6a042779f2765",
+      "bytes": 29767
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/source-manifest.json",
+      "published": "design/app-F-D141z-build-stop-sol-0924-source-manifest.json",
+      "sha256": "2831533463e5ee27d06664437835ea4778e9fc1feca15a2384ebc1d7360c6ff1",
+      "bytes": 1739
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/disk-trace.txt",
+      "published": "design/app-F-D141z-build-stop-sol-0924-disk-trace.txt",
+      "sha256": "a73a86750438919e2b4d1b2d3657e0c066b87b90d97ea07827fedd9213bbfeef",
+      "bytes": 12806
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/validation.md",
+      "published": "design/app-F-D141z-build-stop-sol-0924-validation.md",
+      "sha256": "56f6ce9fa30764fb6ad4fa0752d48d38f0a390e2a284684c22a7c55722544b1a",
+      "bytes": 2059
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/handoff.md",
+      "published": "design/app-F-D141z-build-stop-sol-0924-handoff.md",
+      "sha256": "e2318bcb63baf62057558e4dde4ad95e7e069a80900cb122d415f4bafe43aee5",
+      "bytes": 2914
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/report.md",
+      "published": "design/app-F-D141z-build-stop-sol-0924-report.md",
+      "sha256": "21cacdfa60d780764bd933348ee39fa46320776277c62044c582ea9328f70946",
+      "bytes": 2516
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/findings-response.json",
+      "published": "design/app-F-D141z-build-stop-sol-0924-findings-response.json",
+      "sha256": "1a3d2db373f015debd0adcb36fe4c2de339b03cad943ac8ff5b242a9a9cbb627",
+      "bytes": 4097
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-sol-0924/evidence/install-map.json",
+      "published": "design/app-F-D141z-build-stop-sol-0924-install-map.json",
+      "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618",
+      "bytes": 3384
+    }
+  ],
+  "canonical_install": false,
+  "real_body": false
+}

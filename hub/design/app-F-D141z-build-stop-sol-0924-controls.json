@@ -1,0 +1,800 @@
+{
+  "check_sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099",
+  "command": "bash ops-d141z-build-stop/check.sh",
+  "earlier_targeted_iterations": [
+    {
+      "attempt": 1,
+      "result": "FAIL in new test donor path lookup; local controls passed; corrected fixture path to pinned donor_sampler"
+    },
+    {
+      "attempt": 2,
+      "result": "PASS mounted controls before final direct-parent/failure controls added"
+    },
+    {
+      "attempt": 3,
+      "result": "FAIL in test sampler reset after newly-added malformed sampler; corrected reset; raw log retained private-controls/check-attempt-3-failed.log"
+    },
+    {
+      "attempt": 4,
+      "result": "PASS final unchanged 33-purpose acceptance"
+    }
+  ],
+  "exit_code": 0,
+  "fixture_root": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS",
+  "lifecycle_records": {
+    "actual-5s-trace/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 0,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/actual-5s-trace/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        408,
+        410,
+        411,
+        412
+      ],
+      "reaped_pids": [
+        410
+      ],
+      "sampler_binding": "ready\t65024\t1196778\t0\t600\t1\t18d5bc6bb269ffcd7be4472fcd12cf5e82cb07e93b5af1e37a88d40e7d7ccbd2",
+      "sampler_exit": 0,
+      "status": "complete",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": null,
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/actual-5s-trace/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "actual-main/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 0,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/actual-main/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        144,
+        146
+      ],
+      "reaped_pids": [
+        146
+      ],
+      "sampler_binding": "ready\t65024\t1196422\t0\t600\t1\td1c40e5d882738e8fb4767b2c1479a1f9dfedb7b741c3c4c2476e5424122ca57",
+      "sampler_exit": 0,
+      "status": "complete",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": null,
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/actual-main/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "caller-parent-death/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 130,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/caller-parent-death/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 1216,
+      "process_exit": -15,
+      "process_groups": [
+        1274,
+        1276,
+        1385
+      ],
+      "reaped_pids": [
+        1274,
+        1276,
+        1385
+      ],
+      "sampler_binding": "ready\t65024\t1278393\t0\t600\t1\t881502ffce091ba0a7dfe4747b3ad7210a95fddcc26c2182dcc38004b494a45c",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "parent_died",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/caller-parent-death/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "cancel-case/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 130,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/cancel-case/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        385,
+        386,
+        387,
+        388
+      ],
+      "reaped_pids": [
+        385,
+        386,
+        387,
+        388
+      ],
+      "sampler_binding": "ready\t65024\t1196760\t0\t600\t1\tb0315ff4f3f67154da7c8e4f9f0e8f974669f03c3de27665087ce1dd208e4714",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "cancelled",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/cancel-case/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "control-advertise/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": true,
+      "exit": 0,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/control-advertise/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        1402,
+        1404
+      ],
+      "reaped_pids": [
+        1404
+      ],
+      "sampler_binding": "ready\t65024\t1278650\t0\t600\t1\ta60b7452adcac95e4b4398468a47ca99656170977bec924b8a0bc37c7f844e96",
+      "sampler_exit": 0,
+      "status": "complete",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": null,
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/control-advertise/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "control-reader-closed/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": true,
+      "exit": 130,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/control-reader-closed/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        1409,
+        1411
+      ],
+      "reaped_pids": [
+        1411
+      ],
+      "sampler_binding": "ready\t65024\t1278655\t0\t600\t1\t499d6eec8f3e01b8f307cac27c529e2b4bcefec41c7302edc241741cb63cf9ed",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "control_pipe_closed",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/control-reader-closed/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "custody-replacement/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "detail": "trace identity, ownership, mode, or link count changed",
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/custody-replacement/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        419,
+        420
+      ],
+      "reaped_pids": [
+        420
+      ],
+      "reason": "lifecycle_error",
+      "sampler_binding": "ready\t65024\t1196787\t0\t600\t1\t4396b3443a4018d1f694339552e61ba3817f13c2bfb1ecf7e83ed22aa2899e7a",
+      "sampler_exit": 0,
+      "status": "unknown",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sampler_invalid",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/custody-replacement/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_error": "disk trace rejected: final trace sample failed: [Errno 40] Too many levels of symbolic links: 'disk-trace.tsv'",
+      "trace_status": "FAIL"
+    },
+    "early-leader-live-descendant/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 124,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/early-leader-live-descendant/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        310,
+        311,
+        312,
+        313
+      ],
+      "reaped_pids": [
+        310,
+        311,
+        313
+      ],
+      "sampler_binding": "ready\t65024\t1196682\t0\t600\t1\t04cf99e1c62c0400061ffc1642b3f57acb4c0f173a0fcb79169691a88e154f8d",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "timeout",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/early-leader-live-descendant/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "early-leader-mounted-cancel/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 143,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/early-leader-mounted-cancel/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 801,
+      "process_exit": -15,
+      "process_groups": [
+        859,
+        861,
+        970
+      ],
+      "reaped_pids": [
+        859,
+        861,
+        970,
+        980
+      ],
+      "sampler_binding": "ready\t65024\t1197336\t0\t600\t1\t752fd948c4113e5bb0e315ac24e5a49d6f496ed75c0e9a4578a186b6845ce4ad",
+      "sampler_exit": -15,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sigterm",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/early-leader-mounted-cancel/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "equal-after/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-after/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        346,
+        347,
+        348,
+        349
+      ],
+      "reaped_pids": [
+        347
+      ],
+      "sampler_binding": "ready\t65024\t1196717\t0\t600\t1\tdf35d2ee208644297621046bf2bd282f8b8a2726967d31d3b16fc9ffa855f3e6",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk_after",
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-after/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "equal-before/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-before/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_groups": [],
+      "reaped_pids": [],
+      "sampler_binding": "ready\t65024\t1196699\t0\t600\t1\t5281840deab74269d08af9ad1fc98c591ae7f12d22431a36b9c2fe851b193c66",
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk_before",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-before/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "equal-during/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-during/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        332,
+        333,
+        334,
+        335
+      ],
+      "reaped_pids": [
+        333,
+        334,
+        335
+      ],
+      "sampler_binding": "ready\t65024\t1196704\t0\t600\t1\t30a7daef9d9bd957cbe257c0cdd2a37f9f9b2dfb035a46e0292d5014c0d9b870",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/equal-during/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "low-after/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-after/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        339,
+        340,
+        341,
+        342
+      ],
+      "reaped_pids": [
+        340
+      ],
+      "sampler_binding": "ready\t65024\t1196711\t0\t600\t1\t46c65712194c80f93fa89794a43c930ab10a642660938920dd1567b68925f38f",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk_after",
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-after/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "low-before/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-before/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_groups": [],
+      "reaped_pids": [],
+      "sampler_binding": "ready\t65024\t1196689\t0\t600\t1\t88133867131ebac0372fb2ab28b8efb9b836b2d597ed7c4998d1883a213063c2",
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk_before",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-before/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "low-during/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 75,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-during/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        321,
+        322,
+        323,
+        324
+      ],
+      "reaped_pids": [
+        322,
+        323,
+        324
+      ],
+      "sampler_binding": "ready\t65024\t1196694\t0\t600\t1\t1c497760beafc2e121d8c5e42b6183027c7a11afdfe4714d1a78779f8ca596f7",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "low_disk",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/low-during/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "mounted-cancel/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 143,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/mounted-cancel/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 424,
+      "process_exit": -15,
+      "process_groups": [
+        482,
+        484,
+        593
+      ],
+      "reaped_pids": [
+        482,
+        484,
+        593
+      ],
+      "sampler_binding": "ready\t65024\t1196811\t0\t600\t1\t682583b84f0ce4bd0ca1d682b5fda2ac7f50b04955b550f1cec1e7a3f86651fb",
+      "sampler_exit": -15,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sigterm",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/mounted-cancel/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "normal-eof/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 0,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/normal-eof/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 999,
+      "process_exit": 0,
+      "process_groups": [
+        1057,
+        1059
+      ],
+      "reaped_pids": [
+        1059
+      ],
+      "sampler_binding": "ready\t65024\t1278134\t0\t600\t1\t7e242cae73396cd6bc0f17e664902687b1a340bc9e16727ccccf7d4a55f315a3",
+      "sampler_exit": 0,
+      "status": "complete",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": null,
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/normal-eof/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "normal/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 0,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/normal/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": 0,
+      "process_groups": [
+        303,
+        304,
+        305,
+        306
+      ],
+      "reaped_pids": [
+        304
+      ],
+      "sampler_binding": "ready\t65024\t1196676\t0\t600\t1\t571db017d43eb2b7327f7da5cf6df9cf32f0feb1b5f6437c3c9d14ee287d8f1d",
+      "sampler_exit": 0,
+      "status": "complete",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": null,
+      "terminal": "normal",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/normal/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "outer-parent-death/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 143,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/outer-parent-death/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 613,
+      "process_exit": -15,
+      "process_groups": [
+        671,
+        673,
+        782
+      ],
+      "reaped_pids": [
+        671,
+        673,
+        782
+      ],
+      "sampler_binding": "ready\t65024\t1197074\t0\t600\t1\t0ff65c31e2d5daa958429b44c4eed4d2a10b49c5cc5356118bd4ddecd9b4c50e",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sigterm",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/outer-parent-death/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "sampler-failed/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-failed/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        378,
+        379
+      ],
+      "reaped_pids": [
+        378,
+        379
+      ],
+      "sampler_binding": "ready\t65024\t1196750\t0\t600\t1\t6ccb94eba255b5315126039ba04354763e3510508a1500e2e8f26fb9cb171f09",
+      "sampler_exit": 9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sampler_failed",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-failed/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "sampler-frozen/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-frozen/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        358,
+        359,
+        360,
+        361
+      ],
+      "reaped_pids": [
+        358,
+        359,
+        360,
+        361
+      ],
+      "sampler_binding": "ready\t65024\t1196729\t0\t600\t1\t79a29241edf329c85382a6e847cc76a130b6133fa7665b6ae3156715ade964a6",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sampler_frozen",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-frozen/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "sampler-invalid/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-invalid/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        353,
+        354
+      ],
+      "reaped_pids": [
+        354
+      ],
+      "sampler_binding": "ready\t65024\t1196724\t0\t600\t1\tf8f551b00014cb3dca7e3369ae2f7dd82e8f91aa863b7e0e9bfc47c8c9ebea53",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sampler_invalid",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-invalid/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_error": "disk trace rejected: trace rejected: trace row has wrong field count",
+      "trace_status": "FAIL"
+    },
+    "sampler-malformed-binding/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "detail": "disk sampler binding is malformed",
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-malformed-binding/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_groups": [],
+      "reaped_pids": [],
+      "reason": "trace_binding_invalid",
+      "sampler_binding": "ready\tbad",
+      "status": "unknown",
+      "stop_floor_bytes": 4000000000,
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-malformed-binding/timeline-delivery-KEEP/disk-trace.tsv"
+    },
+    "sampler-missing/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "detail": "disk sampler readiness is invalid",
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-missing/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_groups": [],
+      "reaped_pids": [],
+      "reason": "sampler_not_ready",
+      "status": "unknown",
+      "stop_floor_bytes": 4000000000,
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-missing/timeline-delivery-KEEP/disk-trace.tsv"
+    },
+    "sampler-stale/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 125,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-stale/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        365,
+        366
+      ],
+      "reaped_pids": [
+        366
+      ],
+      "sampler_binding": "ready\t65024\t1196735\t0\t600\t1\ta53e5b52b2856217dc32c667b6180041eeaf4de1a05af96f636649c85177e5ba",
+      "sampler_exit": 0,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sampler_frozen",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sampler-stale/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "sigint/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 130,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sigint/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        401,
+        402,
+        403,
+        404
+      ],
+      "reaped_pids": [
+        401,
+        402,
+        403,
+        404
+      ],
+      "sampler_binding": "ready\t65024\t1196772\t0\t600\t1\t3e6585d36d68b92df4b3b91db482592d32a75a1545acf9d5b49a5e8ef9a2325a",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sigint",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sigint/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "sigterm/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 143,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sigterm/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        393,
+        394,
+        395,
+        396
+      ],
+      "reaped_pids": [
+        393,
+        394,
+        395,
+        396
+      ],
+      "sampler_binding": "ready\t65024\t1196766\t0\t600\t1\t06a05a404cc6d3ab4ddaaae70a78da82e0501e2489ccab76fd4e920bdc4f69c2",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "sigterm",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/sigterm/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    },
+    "timeout/timeline-delivery-KEEP/lifecycle.json": {
+      "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+      "control_pipe": false,
+      "exit": 124,
+      "external_dispatch_floor_bytes": 4860000000,
+      "job_id": "delivery-build",
+      "keep": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/timeout/timeline-delivery-KEEP/KEEP",
+      "parent_pid": 3,
+      "process_exit": -15,
+      "process_groups": [
+        371,
+        372,
+        373,
+        374
+      ],
+      "reaped_pids": [
+        371,
+        372,
+        374
+      ],
+      "sampler_binding": "ready\t65024\t1196744\t0\t600\t1\t61cf89d96f4be8074e694d923ce6cd4e2d3cb8107ac874788959893a940e510e",
+      "sampler_exit": -9,
+      "status": "stopped",
+      "stop_floor_bytes": 4000000000,
+      "stop_reason": "timeout",
+      "terminal": "stopped",
+      "trace": "/tmp/w-c3d123c5b0/d141z-check.dPYjJS/timeout/timeline-delivery-KEEP/disk-trace.tsv",
+      "trace_status": "PASS"
+    }
+  },
+  "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-sol-0924/private-controls/check-final.log",
+  "prohibited_actions": {
+    "collection": false,
+    "dry_run": false,
+    "full_suite": false,
+    "install": false,
+    "kit_change": false,
+    "livecaller_change": false,
+    "merge": false,
+    "own_worktree_git_commit": false,
+    "product_change": false,
+    "push": false,
+    "real_builder": false,
+    "rehearsal": false,
+    "runtime_wire_change": false,
+    "service_request": false,
+    "shared_dependency_write": false,
+    "test_run_dispatch": false,
+    "zip": false
+  },
+  "purpose_counts": {
+    "direct_parent_death": 1,
+    "inherited_control_pipe": 2,
+    "local_lifecycle": 20,
+    "main_guard_refusals": 5,
+    "main_normal": 1,
+    "mounted_donor_lease": 4
+  },
+  "qualified_donor": {
+    "bytes_match_qualified_source": true,
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "installed_sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+    "lease_fixture": "tiny synthetic entry in private real bench_store.Store; native flock/acquire unchanged; no copied/shared Store and no reserve override",
+    "mounted_scope": "exact suite_lease/supervise source and exact existing body block, no dispatcher invocation",
+    "path": "privateops-d141-measured-floor/bin/test-run"
+  },
+  "static_checks": {
+    "ast_both_python_and_embedded_check_python": "PASS",
+    "bash_n": "PASS",
+    "git_diff_check_current_and_32bc": "PASS",
+    "redirected_py_compile_both_python": "PASS",
+    "ruff_select_F": "PASS",
+    "typescript": "N/A ops only"
+  },
+  "total_purposes": 33
+}
