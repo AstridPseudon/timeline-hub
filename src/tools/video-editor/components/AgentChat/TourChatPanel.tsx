@@ -141,8 +141,6 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   const conversation = replyFrom < 0 ? renderedTurns : renderedTurns.slice(0, replyFrom);
   const reply = replyFrom < 0 ? [] : renderedTurns.slice(replyFrom);
   const { scrollContainerRef, scrollContentRef, onScroll } = useChatScroll(`tour:${runId}`, true, renderedTurns.length);
-<<<<<<< HEAD
-=======
 
   const renderTurn = (item: RenderedTurn) => (
     <div
@@ -155,7 +153,6 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
     </div>
   );
 
->>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
   const composerText = beat === 'compose' && !sent ? script.prompt.slice(0, progress.typed) : '';
   const busy = beat === 'respond' && !chatReady;
   const thinking = busy && progress.replyChars === 0;
@@ -182,15 +179,6 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
           </div>
         )}
         <div ref={scrollContentRef} className="flex flex-col gap-2.5">
-<<<<<<< HEAD
-          {renderedTurns.map((item) => {
-            const at = item.kind === 'message' ? item.turn.timestamp : item.pairs[0].call.timestamp;
-            return <div key={item.key} className={cn(item.kind === 'message' ? 'flex flex-col gap-2.5' : 'space-y-2', reducedMotion && at >= currentActStart && 'animate-in fade-in duration-300')}>
-              {item.kind === 'message' ? <AgentChatMessage turn={item.turn} /> : <AgentChatToolGroup pairs={item.pairs} defaultOpen />}
-            </div>;
-          })}
-          {thinking && <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Thinking...</div>}
-=======
           {conversation.map(renderTurn)}
           {(reply.length > 0 || thinking) && (
             <div className="flex flex-col gap-2.5" {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.chatReply }}>
@@ -203,7 +191,6 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
               )}
             </div>
           )}
->>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
         </div>
       </div>
       <div className="border-t border-border/70 px-3 py-3">

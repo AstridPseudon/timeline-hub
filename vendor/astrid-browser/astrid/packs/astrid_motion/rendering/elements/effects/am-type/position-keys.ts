@@ -36,7 +36,3 @@ export const interpolateKeys = (
   }
   return last.v;
 };
-<<<<<<< HEAD
-=======
-
->>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df

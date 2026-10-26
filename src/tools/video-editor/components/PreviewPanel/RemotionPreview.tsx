@@ -16,9 +16,7 @@ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts
 import { getAdmittedElementReadiness, refreshAdmittedElements, subscribeAdmittedElementReadiness } from '@/tools/video-editor/runtime/admitted-elements.ts';
 import { PreviewLoadingPlaceholder } from './PreviewLoadingPlaceholder.tsx';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
-<<<<<<< HEAD
 import { previewRevisionLabel, previewUnavailableLabel, type PreviewRevision } from './previewRevision.ts';
-=======
 import { isEditableTarget } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { isActivatableTarget } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 import { PreviewTransport } from './PreviewTransport.tsx';
@@ -29,7 +27,6 @@ import {
   togglePreviewMuted,
   usePreviewPlaybackPreferences,
 } from './previewPlaybackPreferences.ts';
->>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
 
 export interface PreviewHandle {
   seek: (time: number) => void;
@@ -132,9 +129,11 @@ interface RemotionPreviewProps {
   currentTime?: number;
   /** Optional host-owned outlet for transport controls (e.g. public shells). */
   transportOutlet?: HTMLElement | null;
-<<<<<<< HEAD
   /** Provenance of the config that is allowed to reach the Player. */
   previewRevision?: PreviewRevision;
+  /** Volume, speed, loop and fullscreen beside the transport (default). A staged shell that
+   *  sizes the transport itself leaves them out. */
+  playerControls?: boolean;
 }
 
 interface PreviewDelivery {
@@ -144,16 +143,7 @@ interface PreviewDelivery {
 }
 
 const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
-  { config, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
-=======
-  /** Volume, speed, loop and fullscreen beside the transport (default). A staged shell that
-   *  sizes the transport itself leaves them out. */
-  playerControls?: boolean;
-}
-
-const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
-  { config, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0, playerControls = true },
->>>>>>> 7ca61bb3280beca21d98a854af266a382f7ce5df
+  { config, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0, playerControls = true },
   ref,
 ) {
   const runtime = useOptionalVideoEditorRuntime();
