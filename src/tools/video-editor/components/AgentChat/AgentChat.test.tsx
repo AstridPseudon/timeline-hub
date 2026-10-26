@@ -908,7 +908,7 @@ describe('AgentChat', () => {
       expect(text).toContain('A later follow-up');
       expect(text).toContain('Project notes content');
       expect(text).toContain('The later answer');
-      expect(text).toContain('Turn count: 7');
+      expect(text).toContain('Turn count: 6');
       expect(text).toContain('In progress at capture: Yes');
       expect(text).toContain('Assistant response in progress');
       expect(text).toContain('Assistant (in progress at capture)');

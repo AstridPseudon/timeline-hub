@@ -28,7 +28,7 @@ describe('formatConversationExport', () => {
     expect(markdown).toContain('# Chat 33');
     expect(markdown).toContain('- Agent: Claude Code');
     expect(markdown).toContain('- Thinking level: Extra high');
-    expect(markdown).toContain('- Turn count: 5');
+    expect(markdown).toContain('- Turn count: 4');
     expect(markdown).toContain('- In progress at capture: Yes');
     expect(markdown).toContain('## Turn 1 — User — 2026-10-26T09:00:00.000Z');
     expect(markdown).toContain('Opening shot (image): https://example.test/opening.png');

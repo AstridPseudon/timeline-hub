@@ -1067,7 +1067,9 @@ function AvailableAgentChatPanel({
       title: activeChatTitle,
       agent: agentNames[chatAgent],
       model: chatModelName ?? chatModelId,
-      thinkingLevel: chatThoughtLevel?.currentValue,
+      thinkingLevel: chatThoughtLevel
+        ? chatThoughtLevel.options.find(option => option.value === chatThoughtLevel.currentValue)?.name ?? chatThoughtLevel.currentValue
+        : null,
       sessionId: activeSessionId,
       capturedAt,
       inProgress: isProcessing,
@@ -1102,32 +1104,77 @@ function AvailableAgentChatPanel({
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
       {/* Header: the chat menu names the chat (switch, rename, Main, attach); the small line under it is the chat's agent and model; the split button starts a new chat (+ like this one, ▾ with any agent and model). */}
-      <div data-testid="agent-chat-header" className="relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
+      <div data-testid="agent-chat-header" className="relative flex min-w-0 flex-col border-b border-border/70 px-3 py-1.5">
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="-ml-1.5 flex min-w-0 flex-col items-start">
+            <AgentChatMenu
+              sessions={sessionOptions}
+              activeSessionId={activeSessionId}
+              mainSessionId={projectChat.data?.main_session_id ?? null}
+              settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
+              describeSession={describeSession}
+              onSelectSession={(sessionId) => {
+                if (!projectId || !projectChat.data) return;
+                void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => { setSetupRequest(null); setSetupDone(null); setActiveSessionId(sessionId); }).catch(() => undefined);
+              }}
+              onSetMainSession={hasMainContract
+                ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
+                : undefined}
+              onRenameSession={projectChat.data
+                ? (sessionId, title) => renameSession.mutateAsync({ expectedRevision: projectChat.data!.revision, sessionId, title })
+                : undefined}
+              starting={startingAgent !== null}
+              disabled={startingAgent !== null || !hasProject}
+              attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
+              onOpenChange={(open) => setHeaderOverlayOpen('menu', open)}
+              onUseFromTerminal={terminalCommand && activeSessionId
+                ? () => setTerminalNudge({ sessionId: activeSessionId, afterTurns: renderedTurns.length, fromMenu: true })
+                : undefined}
+            />
+          </div>
+          <div className="flex h-7 shrink-0 items-center gap-1 self-start">
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground [&_svg]:size-3.5 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
+              onClick={downloadChat}
+              disabled={!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length}
+              title="Download this chat"
+              aria-label="Download this chat"
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+            <NewChatMenu
+              ref={chatMenuRef}
+              current={activeSessionId && !startingAgent ? {
+                agent: chatAgent,
+                model: chatModelId ?? undefined,
+                modelName: chatModelName,
+                thoughtLevel: chatThoughtLevel?.options.length && !chatThoughtLevelFixed ? chatThoughtLevel.currentValue : undefined,
+              } : null}
+              defaultAgent={defaultAgent}
+              agents={localAgents.data?.agents}
+              agentModelNames={agentModelNames}
+              agentCanBrowse={agentCanBrowse}
+              agentsLoading={localAgents.isLoading}
+              agentsError={localAgents.error instanceof Error ? localAgents.error : null}
+              disabled={startingAgent !== null || !hasProject}
+              newChatDisabled={createNewSession.isPending}
+              onBrowseAgent={setBrowseAgent}
+              agentModels={newChatModels}
+              onSetupAgent={agent => { setSetupDone(null); setSetupRequest({ agent, sessionId: activeSessionId }); }}
+              onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
+              onOpenChange={(open) => {
+                if (open) void localAgents.refetch();
+                setHeaderOverlayOpen('newChat', open);
+              }}
+            />
+            {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
+          </div>
+        </div>
+        {/* The model line runs the full width, under the buttons too, so the thinking level is not cut short. */}
         <div className="-ml-1.5 flex min-w-0 flex-col items-start">
-          <AgentChatMenu
-            sessions={sessionOptions}
-            activeSessionId={activeSessionId}
-            mainSessionId={projectChat.data?.main_session_id ?? null}
-            settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
-            describeSession={describeSession}
-            onSelectSession={(sessionId) => {
-              if (!projectId || !projectChat.data) return;
-              void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => { setSetupRequest(null); setSetupDone(null); setActiveSessionId(sessionId); }).catch(() => undefined);
-            }}
-            onSetMainSession={hasMainContract
-              ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
-              : undefined}
-            onRenameSession={projectChat.data
-              ? (sessionId, title) => renameSession.mutateAsync({ expectedRevision: projectChat.data!.revision, sessionId, title })
-              : undefined}
-            starting={startingAgent !== null}
-            disabled={startingAgent !== null || !hasProject}
-            attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
-            onOpenChange={(open) => setHeaderOverlayOpen('menu', open)}
-            onUseFromTerminal={terminalCommand && activeSessionId
-              ? () => setTerminalNudge({ sessionId: activeSessionId, afterTurns: renderedTurns.length, fromMenu: true })
-              : undefined}
-          />
           <AgentChatModelLine
             agent={startingAgent ?? chatAgent}
             hasChat={Boolean(activeSessionId) && !startingAgent}
@@ -1141,46 +1188,6 @@ function AvailableAgentChatPanel({
             onChooseAnotherModel={() => chatMenuRef.current?.openModels(chatAgent)}
             onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
           />
-        </div>
-        <div className="flex h-7 shrink-0 items-center gap-1 self-start">
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            onClick={downloadChat}
-            disabled={!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length}
-            title="Download this chat"
-            aria-label="Download this chat"
-          >
-            <Download className="h-3.5 w-3.5" />
-          </Button>
-          <NewChatMenu
-            ref={chatMenuRef}
-            current={activeSessionId && !startingAgent ? {
-              agent: chatAgent,
-              model: chatModelId ?? undefined,
-              modelName: chatModelName,
-              thoughtLevel: chatThoughtLevel?.options.length && !chatThoughtLevelFixed ? chatThoughtLevel.currentValue : undefined,
-            } : null}
-            defaultAgent={defaultAgent}
-            agents={localAgents.data?.agents}
-            agentModelNames={agentModelNames}
-            agentCanBrowse={agentCanBrowse}
-            agentsLoading={localAgents.isLoading}
-            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
-            disabled={startingAgent !== null || !hasProject}
-            newChatDisabled={createNewSession.isPending}
-            onBrowseAgent={setBrowseAgent}
-            agentModels={newChatModels}
-            onSetupAgent={agent => { setSetupDone(null); setSetupRequest({ agent, sessionId: activeSessionId }); }}
-            onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
-            onOpenChange={(open) => {
-              if (open) void localAgents.refetch();
-              setHeaderOverlayOpen('newChat', open);
-            }}
-          />
-          {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
         </div>
       </div>
       {startFailure && !showSetupCard && !isAgentSetupError(startFailure.error) && (
