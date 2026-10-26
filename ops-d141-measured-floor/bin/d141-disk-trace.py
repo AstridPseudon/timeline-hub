@@ -28,6 +28,7 @@ def available_bytes(probe: str) -> int:
         check=True,
         capture_output=True,
         text=True,
+        timeout=2,
     )
     rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if len(rows) != 2 or rows[0] != "Avail" or not rows[1].isdigit():

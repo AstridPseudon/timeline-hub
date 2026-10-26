@@ -83,7 +83,13 @@ def write_all(descriptor: int, raw: bytes) -> None:
 
 
 def available_bytes(probe: str) -> int:
-    result = subprocess.run(["df", "-B1", "--output=avail", probe], check=True, capture_output=True, text=True)
+    result = subprocess.run(
+        ["df", "-B1", "--output=avail", probe],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=2,
+    )
     rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     if len(rows) != 2 or rows[0] != "Avail" or not rows[1].isdigit():
         raise RuntimeError(f"unexpected df output: {result.stdout!r}")
@@ -114,6 +120,7 @@ def main(argv: list[str]) -> int:
             pass_fds=(descriptor,),
             text=True,
             capture_output=True,
+            timeout=5,
         )
         if result.stdout:
             print(result.stdout, end="")

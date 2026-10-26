@@ -74,24 +74,21 @@ if [ -z "$RUN" ]; then
 fi
 # Every heavy body owns a durable trace.  The sampler is the child of this
 # exact body and carries both the queued ID and this body's /proc start tick.
-TRACE_PID=; TRACE_FILE=; TRACE_BINDING=; TRACE_READY_OK=0; TRACE_RC=0; TRACE_FINALIZED=0
+TRACE_PID=; TRACE_FILE=; TRACE_BINDING=; TRACE_READY_OK=0; TRACE_RC=0; TRACE_FINALIZED=0; TRACE_CANCELLED=0
 STOP_REQUESTED=0
 request_stop() { STOP_REQUESTED=1; }
 trap request_stop USR1
 run_admission_command() {
+  if [ "$TRACE_CANCELLED" -eq 1 ]; then
+    STOP_REQUESTED=1
+    return 130
+  fi
   timeout -k 60 90m nice -n 5 bash -c "$1" &
   COMMAND_PID=$!
-  while kill -0 "$COMMAND_PID" 2>/dev/null; do
-    if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE.stop" ]; then
-      STOP_REQUESTED=1
-      kill -TERM "$COMMAND_PID" 2>/dev/null || true
-      break
-    fi
-    sleep 0.05
-  done
   wait "$COMMAND_PID" 2>/dev/null
   COMMAND_RC=$?
-  if [ "$STOP_REQUESTED" -eq 1 ]; then
+  if [ "$STOP_REQUESTED" -eq 1 ] || [ "$TRACE_CANCELLED" -eq 1 ] || { [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE.stop" ]; }; then
+    STOP_REQUESTED=1
     kill -TERM "$COMMAND_PID" 2>/dev/null || true
     wait "$COMMAND_PID" 2>/dev/null || true
     return 130
@@ -102,6 +99,11 @@ stop_trace() {
   SAMPLER_RC=0
   if [ -n "$TRACE_PID" ]; then
     kill -TERM "$TRACE_PID" 2>/dev/null
+    for ((TRACE_WAIT=0; TRACE_WAIT<80; TRACE_WAIT++)); do
+      kill -0 "$TRACE_PID" 2>/dev/null || break
+      sleep 0.1
+    done
+    kill -0 "$TRACE_PID" 2>/dev/null && kill -KILL "$TRACE_PID" 2>/dev/null
     wait "$TRACE_PID" 2>/dev/null; SAMPLER_RC=$?
     TRACE_PID=
   fi
@@ -111,7 +113,6 @@ stop_trace() {
   fi
   if [ "$TRACE_RC" -ne 0 ]; then
     echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
-    [ "${rc:-0}" -eq 0 ] && rc=125
   fi
   TRACE_FINALIZED=1
   return "$TRACE_RC"
@@ -127,18 +128,31 @@ finish_trace() {
 }
 if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
   TRACE_FILE=$D/disk-trace.tsv
+  # A visible trace can precede the shell's readiness read. Defer cancellation
+  # until its immutable binding and child PID are retained for finalization.
+  trap finish_trace EXIT
+  trap 'TRACE_CANCELLED=1' HUP TERM INT
   BODY_START_TICKS=$(awk '{print $22}' "/proc/$$/stat") || exit 125
   coproc TRACE_SAMPLER { exec setsid python3 -I "$SELF_DIR/d141-disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" 2> "$D/trace-runner.log"; }
   TRACE_PID=$TRACE_SAMPLER_PID
+  TRACE_READ_FD=${TRACE_SAMPLER[0]}; TRACE_WRITE_FD=${TRACE_SAMPLER[1]}
   echo "$TRACE_PID" > "$D/trace.pid"
-  trap finish_trace EXIT
-  trap 'exit 130' HUP TERM INT
-  if ! IFS= read -r -t 10 TRACE_READY <&"${TRACE_SAMPLER[0]}"; then
+  TRACE_READY=; TRACE_READ_RC=1; TRACE_DEADLINE=$((SECONDS + 10))
+  while [ "$SECONDS" -lt "$TRACE_DEADLINE" ]; do
+    IFS= read -r -t "$((TRACE_DEADLINE - SECONDS))" TRACE_PART <&"$TRACE_READ_FD"
+    TRACE_READ_RC=$?; TRACE_READY+=$TRACE_PART
+    [ "$TRACE_READ_RC" -eq 0 ] && break
+    [ "$TRACE_CANCELLED" -eq 1 ] && [ "$TRACE_READ_RC" -gt 128 ] || break
+  done
+  exec {TRACE_READ_FD}<&-; exec {TRACE_WRITE_FD}>&-
+  if [ "$TRACE_READ_RC" -ne 0 ]; then
     echo "disk trace sampler did not publish its immutable identity" > "$D/trace-error"
     exit 125
   fi
   TRACE_BINDING=$TRACE_READY
   TRACE_READY_OK=1
+  trap 'exit 130' HUP TERM INT
+  [ "$TRACE_CANCELLED" -eq 1 ] && exit 130
 fi
 # BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
 if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then
