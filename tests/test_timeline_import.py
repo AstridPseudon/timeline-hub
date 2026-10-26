@@ -114,6 +114,26 @@ def test_import_pins_fresh_shot_text_and_is_idempotent(tmp_path):
         service.import_timeline(project, changed, idempotency_key="import-one")
 
 
+def test_import_retries_receipt_accepted_on_main_without_provenance(tmp_path):
+    service, project = _service(tmp_path)
+    prepared = _prepared(service, project, timeline="legacy-import")
+    # Main accepted this request before provenance was added to the contract.
+    original_hash = hashlib.sha256(canonical_json({
+        "project_id": project, "prepared": prepared,
+    }).encode()).hexdigest()
+    with service.store._mutex, service.store._transaction():
+        original = service._command_record(
+            "timeline.import", project, "legacy-key", original_hash,
+            {"timeline_id": "legacy-import", "new_head": "legacy-head"}, project_id=project,
+        )
+
+    assert service.import_timeline(project, prepared, idempotency_key="legacy-key") == original
+    assert service.store.conn.execute("SELECT COUNT(*) FROM timelines").fetchone()[0] == 0
+    with pytest.raises(ConflictError, match="idempotency key"):
+        service.import_timeline(project, {**prepared, "source": {"via": "app"}},
+                                idempotency_key="legacy-key")
+
+
 def test_import_accepts_minimal_prepare_binding_descriptor(tmp_path):
     service, project = _service(tmp_path)
     prepared = _prepared(service, project, text=True, timeline="minimal-pin")

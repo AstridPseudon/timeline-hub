@@ -1907,7 +1907,10 @@ class RuntimeService:
         transcripts, text_bindings = prepared["transcripts"], prepared["text_bindings"]
         if not isinstance(transcripts, list) or not isinstance(text_bindings, list):
             raise ValidationError("transcripts and text_bindings must be lists")
-        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "prepared": prepared, "source": source}).encode()).hexdigest()
+        request_identity = {"project_id": project["id"], "prepared": prepared}
+        if source is not None:
+            request_identity["source"] = source
+        request_hash = hashlib.sha256(canonical_json(request_identity).encode()).hexdigest()
         replay = self._command_replay("timeline.import", project["id"], idempotency_key, request_hash, project_id=project["id"])
         if replay is not None:
             return replay
