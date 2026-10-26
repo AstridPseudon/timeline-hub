@@ -1,0 +1,26 @@
+{
+  "task": "D141d",
+  "base_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "inherited_candidate_commit": "ffbe6e2c971d522422a108946fd36891420c9be2",
+  "worktree_head": "ffbe6e2c971d522422a108946fd36891420c9be2",
+  "source": {
+    "absolute_path": "/home/user/work/wt/app-P2-D141-expectation-local-return-0235/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "base_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "base_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "worktree_hash_object": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149",
+    "worktree_sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e",
+    "diff": "82 insertions, 2 deletions; one file"
+  },
+  "authority": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "prior_findings": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-protected-review-0231/evidence/findings.md",
+    "prior_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-protected-review-0231/evidence/review.json",
+    "prior_predicate_map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-D141-expectation-protected-review-0231/evidence/predicate-map.json",
+    "safe_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-safe-history-review-0153-review.json",
+    "runtime_bounded_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-P2-D141-history-final-review-0213-review.json",
+    "d124_agent_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "d124_agent_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a"
+  },
+  "privacy": "No raw values, identifiers, images, credentials, request bodies, or test diff text copied"
+}

@@ -1,0 +1,27 @@
+{
+  "comparison": {
+    "from_last_pass": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "to_actual": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "bounded_history_sources": [
+      {"commit": "2f36246a32f17fa63c97d399360079a004b1dfac", "subject": "Merge tl/app-U3-D135-model-menu-return-2033", "activation_fields": ["requireLocalNetworkPermission", "probeRuntime mayProbeRefusal", "RuntimeConnectionValue.askUnanswered", "RuntimeConnectionValue.confirmPermission", "permissionLost", "everConnectedRef", "EditorConnectionPanel", "TIMELINE_METADATA_POLL_MS", "selectProject"]},
+      {"commit": "263b728f014040afc9c6b3fdfb54963b93b757eb", "subject": "Merge tl/app-U3-D141-tour-gate-return-0014", "ui_fields": ["renderTimeline", "toggleFullscreen", "hostPanelInset", "mainPadding", "gridTemplateColumns"]}
+    ],
+    "canonical_read_projection_change": "none found in the five production caller/renderer source objects and two test source objects"
+  },
+  "intended_contract": {
+    "status": "NOT_ESTABLISHED",
+    "D141d_pattern": "The approved exact records-field update belongs to automatic-child-placement history and does not apply to popup ADD's pre-popup canonical read.",
+    "popup_action": "Keep original selector, setup, request/reply assertions, reload, inverse, undo, and tail unchanged. No expectation update is justified by this packet."
+  },
+  "unintended_regression": {
+    "status": "NOT_ESTABLISHED",
+    "reason": "The actual failure occurs before popup activation, while the canonical occurrence host, useShotGroups, overlay, popup spec, and readiness spec are byte-identical to the authentic pre-cut source. The changed activation/layout sources are not enough to prove causation."
+  },
+  "causal_boundary": {
+    "status": "UNKNOWN",
+    "prior_0226_claim_challenged": true,
+    "exact_missing_record": ["canonical read head continuity", "canonical occurrence presence at accepted setup head", "activeCanonicalOccurrences before useShotGroups", "shot-group result before ShotGroupOverlay"],
+    "timeout_rule": "No inference from timeout, DOM absence alone, or accepted command/HTTP 200 alone.",
+    "new_capture_authority": false
+  }
+}

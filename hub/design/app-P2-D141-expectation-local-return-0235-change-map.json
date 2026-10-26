@@ -1,0 +1,41 @@
+{
+  "task": "D141d",
+  "status": "PASS_BOUNDED",
+  "base": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "candidate_repaired": "ffbe6e2c971d522422a108946fd36891420c9be2",
+  "allowed_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+  "changed_scope": {
+    "gesture": "automatic-child-placement Undo history expectation",
+    "expression": "placementExpectedRecords",
+    "source_lines": "1281-1370 (final file; placement callback only)",
+    "expected_change": "records.commands[0].bindings gains exactly two independently derived commit.materialization objects"
+  },
+  "binding_derivation": {
+    "source": "context.restored canonical occurrence shot and internal timeline roots",
+    "successor": "context.before canonical occurrence shot and internal timeline roots",
+    "direction": "inverse: successor physical roots bind back to source physical roots",
+    "owner": "canonical occurrence owner plus /shot",
+    "identity_helper": "nativeBinding(context.before, successor, successor, boundary)",
+    "received_history_use": "only asserts the retained target has exactly two commit.materialization entries; no received values are copied"
+  },
+  "shared_function_scope": {
+    "assertHistoryEntry": "byte-exact to base",
+    "assertNativeAcceptedReply": "byte-exact to base",
+    "assertNativeHistoryEntry": "byte-exact to base",
+    "assertUndoHistoryEntry": "byte-exact to base",
+    "assertAcceptedReply": "byte-exact to base",
+    "non_target_gestures": "unchanged"
+  },
+  "diff": {
+    "files_changed": 1,
+    "insertions": 82,
+    "deletions": 2,
+    "outside_blobs": "none"
+  },
+  "prohibited_behaviour_absent": [
+    "no shared helper option or branch",
+    "no fallback when the materialization family is missing",
+    "no wildcard, optional, partial, or widened comparison",
+    "no production, schema, pin, guard, request, fixture, or other gesture change"
+  ]
+}

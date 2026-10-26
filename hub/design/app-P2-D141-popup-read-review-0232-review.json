@@ -1,0 +1,114 @@
+{
+  "task": "app-P2-D141-popup-read-review-0232",
+  "verdict": "UNKNOWN",
+  "classification_boundary": {
+    "PROVED_PRODUCT_GAP": "Not established: the retained actual run proves an unchanged pre-popup DOM failure, but no canonical read/projection record ties the accepted setup head to the missing occurrence.",
+    "REG": "Not established: no canonical occurrence/shot-group source changed, and the inspected post-PASS activation/layout changes are not a demonstrated cause.",
+    "INTENDED_CONTRACT": "No popup expectation update is justified. D141d's exact history-record expectation pattern applies to the separate placement case, not to this pre-popup read boundary.",
+    "UNKNOWN": "Returned because the exact producer-read-projection join is missing and timeout/accepted-command evidence cannot supply it."
+  },
+  "actual_run": {
+    "run_id": "app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368",
+    "service_target": "app-pin-867cb273",
+    "service_source_head": "d16b4750d149605de58fad8119e4b362ad34089b",
+    "service_source_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "suite": "p2-popup-add",
+    "readiness": "PASS",
+    "original": {
+      "status": "FAIL",
+      "exit": 1,
+      "failure": "unchanged three-products.p2-popup.spec.ts:356 shared-occurrence shot-group locator before dblclick",
+      "xml_time_seconds": 9.763,
+      "test_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"
+    },
+    "four_way_tuple": {
+      "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+      "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+      "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "spec_identity": {
+      "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6",
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "selector": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "source_line": 941
+    },
+    "artifacts": {
+      "manifest": {"path": "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/manifest.json", "sha256": "b57f7e3852fde048424f4cad1ec5b475bdff737280c54ee8dac7de13dd28a951"},
+      "original_xml": {"path": "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/p2-popup-add.xml", "sha256": "d622cc7910c9bc59bc1ed9435b481de0aa7ea90da459de179f01f66123242665"},
+      "readiness_xml": {"path": "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/d66/readiness.xml", "sha256": "52807570c2209943ab6fddc0a8117066275cb1d4a9b514b530d2b24c0fd7283a"}
+    }
+  },
+  "last_pass": {
+    "run_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "service_target": "app-pin-96d4754b",
+    "suite": "p2",
+    "overall_status": "NO-GO",
+    "overall_exit": 1,
+    "selector_case": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+    "selector_result": "PASS",
+    "selector_time_seconds": 36.819,
+    "four_way_tuple": {
+      "app": {"commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b"},
+      "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd3", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+      "runtime": {"commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "spec_identity": {
+      "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6",
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "xml_sha256": "360e4f07926cfe952f95e48e034d1246dbdde9eb8b3b9290a540abd5aeb3b54d"
+    },
+    "source_author": "App04beedcd18b8abb49502f65cd3facaafbe93db4e",
+    "source_author_tuple": "App04be/Agent070dfc/Runtime d23a8/Composition635f; same popup/readiness blobs as actual App867"
+  },
+  "author_run": {
+    "run_id": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "service_target": "app-pin-04beedcd",
+    "overall_status": "NO-GO",
+    "readiness": "PASS",
+    "popup_add_case": "PASS (same original ADD case; retained overall run had unrelated failures)",
+    "four_way_tuple": {
+      "app": {"commit": "04beedcd18b8abb49502f65cd3facaafbe93db4e", "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d"},
+      "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd3", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+      "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "spec_identity": {
+      "path": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6",
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"
+    }
+  },
+  "boundary_observed": {
+    "setup": "Retained helper evidence asserts both setup commits accepted with exact base pins and no rebase; private phase records show completed provider/receipt/accept/http-response phases with HTTP 200. No request or receipt body is published here.",
+    "agent_production": "Agent occurrence.place-shared source anchor validates explicit occurrence ownership and creates the requested parent occurrence entity; this is source/semantic evidence, not a canonical read result.",
+    "runtime_persist": "The retained actual packet records setup commit lifecycle phases and 200 responses, but not the canonical read body needed to establish occurrence presence at the mounted read boundary.",
+    "app_read_projection": "Current source loads shotComposition, exposes canonicalOccurrences, and passes them to useShotGroups; useShotGroups uses canonicalOccurrences when nonempty and otherwise may use pending placements. The actual packet lacks the value/presence record at this boundary.",
+    "dom": "Connected mounted editor showed No shots yet; unchanged locator [data-shot-group-key^=\"f2-occurrence-copy:\"] found no element at source line 356. Failure precedes dblclick, dialog, ADD, reload, undo, and later assertions."
+  },
+  "causal_challenge": {
+    "prior_claim": "0226 retained PROVED_PRODUCT_GAP at accepted setup head -> mounted canonical occurrence projection.",
+    "challenge": "That claim overreaches the retained record: accepted setup semantics plus a DOM timeout do not prove whether the canonical read omitted the occurrence, App projection omitted it, or an unrecorded intermediate state produced the empty input.",
+    "exact_missing_record": [
+      "accepted setup head continuity at shotComposition.load({ projectId, parentDocumentId, poll: true })",
+      "canonical read occurrence-presence result for the shared occurrence at that head",
+      "activeCanonicalOccurrences value/presence immediately before AstridTimelineEditor passes it to useShotGroups",
+      "useShotGroups input/result presence immediately before ShotGroupOverlay emits data-shot-group-key"
+    ],
+    "capture_authority": "The missing record is not authority for a new capture. No new generic reader, author, body, retry, browser run, or collector is requested."
+  },
+  "contract_preserved": [
+    "request api_version/project_id/timeline_id/base_revision_id/base_publication_id",
+    "commands schema_version/op/version/select/args/created",
+    "label and steps id/label/intent/tags/command_ordinals/patch/reads",
+    "merge fields|atomic and reads",
+    "Idempotency-Key, dry_run, source, rationale, group_id",
+    "accepted|merged data and receipt canonical/digest/normalizedcommands/idmap/base/previous/accepted/landing/rebased_onto/merge_mode/records/bindings/effects/dependencies/history/undo_steps",
+    "conflict reason/head; invalid code/path/hint/suggestedcommand; preview would_status/nullreceipt",
+    "every original tail/input/assertion unchanged"
+  ],
+  "scope": "Read-only source/hash/parse/Git validation. No product/test/fixture/source/pin/registry/kit/queue/hub/Git metadata changes; App5fe was not retargeted."
+}

@@ -1,0 +1,40 @@
+{
+  "task": "D141d",
+  "verdict": "PASS_BOUNDED",
+  "approved_family": "commit.materialization binding",
+  "objects": 2,
+  "paths": [
+    "commands[*].bindings[*].boundary",
+    "commands[*].bindings[*].boundary.base_publication_id",
+    "commands[*].bindings[*].boundary.base_revision_id",
+    "commands[*].bindings[*].boundary.command_ordinal",
+    "commands[*].bindings[*].boundary.evaluated_head",
+    "commands[*].bindings[*].boundary.evaluated_head.publication_id",
+    "commands[*].bindings[*].boundary.evaluated_head.revision_id",
+    "commands[*].bindings[*].boundary.phase",
+    "commands[*].bindings[*].boundary.step_id",
+    "commands[*].bindings[*].content_digest",
+    "commands[*].bindings[*].dependencies",
+    "commands[*].bindings[*].edge_after",
+    "commands[*].bindings[*].edge_before",
+    "commands[*].bindings[*].key",
+    "commands[*].bindings[*].owner",
+    "commands[*].bindings[*].owners",
+    "commands[*].bindings[*].physical_ref",
+    "commands[*].bindings[*].policy",
+    "commands[*].bindings[*].ref",
+    "commands[*].bindings[*].revision_id",
+    "commands[*].bindings[*].step_id",
+    "commands[*].bindings[*].successor"
+  ],
+  "expected_predicates": {
+    "family_presence": "retained target records must contain exactly two commit.materialization bindings",
+    "source_identity": "derived from context.restored canonical shot/internal roots",
+    "successor_identity": "derived from context.before canonical shot/internal roots",
+    "boundary": "derived from inverse post base pin and submitted step",
+    "content_and_owners": "resolved by nativeBinding against context.before",
+    "edge_direction": "successor edges become edge_before and source edges become edge_after",
+    "comparison": "deep exact equality of the complete history entry"
+  },
+  "fallback": "none"
+}

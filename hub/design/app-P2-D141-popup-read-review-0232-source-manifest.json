@@ -1,0 +1,44 @@
+{
+  "plan": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "sections_used": ["§3 P2", "§3 A3", "§2 C0 contract"]
+  },
+  "actual": {
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "last_pass": {
+    "app": {"commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd3", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "author_run": {
+    "run_id": "app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078",
+    "app": {"commit": "04beedcd18b8abb49502f65cd3facaafbe93db4e", "tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd3", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "spec_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6"
+  },
+  "source_identity": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": {"git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"},
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": {"git_blob": "ba85a25085b61bd2e8e3960ab0260a91c6f9650a", "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"},
+    "src/tools/video-editor/adapters/app/useAstridShotsHost.ts": {"git_blob": "3abdbc6c773564708df1ada08e0dfe9cdca2e847"},
+    "src/tools/video-editor/components/AstridTimelineEditor.tsx": {"git_blob": "d508a5e888285accf54d4953520779609b587b53"},
+    "src/tools/video-editor/hooks/useShotGroups.ts": {"git_blob": "6bc64cb6059ba41b0cd04b4f4200f72231c578f7"},
+    "src/tools/video-editor/components/TimelineEditor/TimelineCanvas.tsx": {"git_blob": "b2b45d4f2ff773dce2e3a12a049bdc1429f60633"},
+    "src/tools/video-editor/components/TimelineEditor/ShotGroupOverlay.tsx": {"git_blob": "df0e2ae3e5775a9c510e9ba7fa9c8649b10e6a7b"}
+  },
+  "changed_activation_sources": {
+    "src/app/runtime/RuntimeDocumentBoundary.tsx": {"last_pass_blob": "3e79e679df3bc24f6bb3965e7fc9101069039791", "actual_blob": "9da2e348f68663e0e91d0105cd0556662dcbabfa", "introducing_commit": "2f36246a32f17fa63c97d399360079a004b1dfac"},
+    "src/integrations/runtime/RuntimeConnectionProvider.tsx": {"last_pass_blob": "d7e57cab13b1a37abafa0233f194252667f3913e", "actual_blob": "3d0ad40d8b4c3e71976d807f733c298e424c9cae", "introducing_commit": "2f36246a32f17fa63c97d399360079a004b1dfac"},
+    "src/tools/video-editor/hooks/useRuntimeEditorDiscovery.ts": {"last_pass_blob": "1c86703f8c3b6736f4abe64665cbecd8ba395746", "actual_blob": "55e9b27499fdea9d6377ace78c197f6effe26301", "introducing_commit": "2f36246a32f17fa63c97d399360079a004b1dfac"},
+    "src/tools/video-editor/pages/VideoEditorPage.tsx": {"last_pass_blob": "ea4819b6b32fff59b1aa0637dc6a1f653684a75c", "actual_blob": "e6e8d31f81d5dcd99e22deba57b837f62b9fd17a", "introducing_commit": "2f36246a32f17fa63c97d399360079a004b1dfac"},
+    "src/tools/video-editor/components/TimelineEditorShellCore.tsx": {"last_pass_blob": "b5fb2692faac273d64b8443318039658090be76e", "actual_blob": "e7358e5fbf66a369461deba487cff48d815a6472", "introducing_commits": ["2f36246a32f17fa63c97d399360079a004b1dfac", "263b728f014040afc9c6b3fdfb54963b93b757eb"]}
+  },
+  "not_retargeted": {"commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150", "reason": "later than actual 1368; changed paths are provider/placement/shot-pack and are not evidence for this run"}
+}
