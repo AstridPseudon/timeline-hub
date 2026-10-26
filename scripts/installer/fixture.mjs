@@ -221,7 +221,7 @@ Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_SYSTEM_POWERSHELL_SOU
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', launcherScript], { cwd: repo, env });
         await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', systemPowerShellScript], { cwd: repo, env });
         env.MOCK_UV_SOURCE = executable;
-        const systemPowerShellCommand = "$PowerShell = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'";
+        const systemPowerShellCommand = '$PowerShell = Join-Path $PSHOME $PowerShellName';
         const windowsInstaller = path.join(root, 'windows-install.ps1');
         const installerScript = (await readFile(path.join(repo, 'public/install.ps1'), 'utf8'))
           .replace(systemPowerShellCommand, `$PowerShell = '${systemPowerShell}'`);
