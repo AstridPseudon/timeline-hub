@@ -1,0 +1,81 @@
+{
+  "schema": "timeline.d141.history-final-source-manifest.v1",
+  "task": "rt-P2-D141-history-final-0207",
+  "source_only": true,
+  "review_worktree": {
+    "repo": "runtime",
+    "worktree": "/home/user/work/wt/rt-P2-D141-history-final-0207",
+    "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "head_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "status": "clean before evidence outputs"
+  },
+  "packet": {
+    "extra_fields": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "extra_fields_sha256": "a00e133b60427cba8ec35bdebd792c962629f1edafee8013b0e2d891dce287d1",
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-source-manifest.json",
+    "source_manifest_sha256": "17ade1f2838e075726edd7457bc95e65dbbc6c46ab5193359257ff5769b260c6",
+    "prior_pass": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-prior-pass.json",
+    "prior_pass_sha256": "cfaabe6a29a3cde6e441d4a200768a3c93065889a318512050a8995e4f64fd72",
+    "actual_count": 22,
+    "expected_count": 0,
+    "actual_binding_objects": 2,
+    "expected_binding_objects": 0,
+    "unknown_paths": []
+  },
+  "app_source": {
+    "repo": "/home/user/banodoco/reigh-app",
+    "current_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "historical_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "spec_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "assertion_line": 757,
+    "placement_case_line": 1214
+  },
+  "agent_source": {
+    "repo": "/home/user/peteromallet/astrid-agent",
+    "pass_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd",
+    "d124_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "d124_direct_parent": "5caa12bda353cc46143d3125bce60f8019cf839d",
+    "cut_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "pass_is_ancestor_of_d124": true,
+    "d124_is_ancestor_of_cut": true,
+    "commit_patch_path": "astrid/sdk/timeline/_commit_patch.py",
+    "commit_patch_blob_at_d124": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+    "commit_patch_sha256_at_d124": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "doc_patch_path": "astrid/sdk/timeline/_doc_patch.py",
+    "doc_patch_blob_at_d124": "e55d400c00ed727a244aecdaef95a67205e623fa",
+    "doc_patch_sha256_at_d124": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "emitter_citations": "_commit_patch.py:641-665,701-718; _doc_patch.py:174-181"
+  },
+  "runtime_source": {
+    "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+    "cut_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "pass_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "pass_is_ancestor_of_cut": true,
+    "files": {
+      "runtime_protocol/timeline_commit_auth.py": {"blob": "b2b238a716b55276e63d23d2886ef8542a382faa", "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598"},
+      "runtime_protocol/timeline_commit_store.py": {"blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7", "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99"},
+      "runtime_protocol/timeline_commit_execution.py": {"blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896", "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+      "runtime_protocol/timeline_commit_port.py": {"blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3", "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"}
+    },
+    "role": "validates/projects authenticated provider bindings and persists records/history; no producer writer for this family"
+  },
+  "contract": {
+    "path": "/home/user/work/wt/rt-P2-D141-history-final-0207/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "citations": ["§1 lines 60-155", "§2 lines 287-350", "§2 lines 388-438", "§4 lines 703-715", "§5 lines 1563-1642"]
+  },
+  "historical_receipt": {
+    "verdict": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D118-P2-15203-pass-review-1019-verdict.json",
+    "companion": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D118-P2-15203-pass-review-1019-verdict.md",
+    "case_duration_seconds": 88.78,
+    "case_status": "PASS",
+    "overall_run_status": "NO-GO"
+  },
+  "reviewed_reports": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-producer-sol-1247-report.md", "sha256": "534d7e2477653e224a12432d6486b9b93ce2e43b0d2deb251349ee75ddb74370", "role": "original producer author report"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D124-producer-security-1307-report.md", "sha256": "a9f84406b6404b0aeaa7dbddcf1e4bbd6f0eccfff100dadc9eb2a8ad03fadb56", "role": "producer security review"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D124-union-security-review-1339-report.md", "sha256": "7d7d62f621a04b11690cdea18ebec22961cf1e1e999bb43cf9ec1358ad0d604d", "role": "exact D124 union security review"}
+  ]
+}

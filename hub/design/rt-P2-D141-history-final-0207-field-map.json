@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.d141.history-final-field-map.v1",
+  "task": "rt-P2-D141-history-final-0207",
+  "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-extra-fields.json",
+  "actual_path_count": 22,
+  "expected_path_count": 0,
+  "unknown_paths": [],
+  "source_emitter": "/home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_commit_patch.py:701-718 at 16bbd56dbf016bcddeafa891291129efcfa87196",
+  "entries": [
+    {"path": "commands[*].bindings[*].boundary", "field_name": "boundary", "source_role": "Closure.binding boundary argument", "c0": "§2 lines 324-332"},
+    {"path": "commands[*].bindings[*].boundary.base_publication_id", "field_name": "base_publication_id", "source_role": "evaluation-boundary base pair", "c0": "§2 lines 324-328"},
+    {"path": "commands[*].bindings[*].boundary.base_revision_id", "field_name": "base_revision_id", "source_role": "evaluation-boundary base pair", "c0": "§1 lines 62-66; §2 lines 324-328"},
+    {"path": "commands[*].bindings[*].boundary.command_ordinal", "field_name": "command_ordinal", "source_role": "command attribution in boundary", "c0": "§2 lines 324-328; §1 lines 94-100"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head", "field_name": "evaluated_head", "source_role": "landing/evaluation head in boundary", "c0": "§2 lines 324-328; §4 lines 705-715"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head.publication_id", "field_name": "publication_id", "source_role": "evaluated-head publication identity", "c0": "§1 lines 62-66; §4 lines 705-712"},
+    {"path": "commands[*].bindings[*].boundary.evaluated_head.revision_id", "field_name": "revision_id", "source_role": "evaluated-head revision identity", "c0": "§1 lines 62-66; §2 lines 324-328"},
+    {"path": "commands[*].bindings[*].boundary.phase", "field_name": "phase", "source_role": "input/effect phase attribution", "c0": "§2 lines 324-334; §2 lines 406-412"},
+    {"path": "commands[*].bindings[*].boundary.step_id", "field_name": "step_id", "source_role": "step association", "c0": "§1 lines 94-100, 149-155"},
+    {"path": "commands[*].bindings[*].content_digest", "field_name": "content_digest", "source_role": "physical image content identity", "c0": "§2 lines 324-329"},
+    {"path": "commands[*].bindings[*].dependencies", "field_name": "dependencies", "source_role": "provider binding dependency payload", "c0": "§1 lines 112-155"},
+    {"path": "commands[*].bindings[*].edge_after", "field_name": "edge_after", "source_role": "materialized successor edge", "c0": "§2 lines 343-350; §2 lines 397-405"},
+    {"path": "commands[*].bindings[*].edge_before", "field_name": "edge_before", "source_role": "materialized source edge", "c0": "§2 lines 343-350; §2 lines 397-405"},
+    {"path": "commands[*].bindings[*].key", "field_name": "key", "source_role": "commit.materialization binding family", "c0": "§2 lines 333-336; §2 lines 343-350"},
+    {"path": "commands[*].bindings[*].owner", "field_name": "owner", "source_role": "single occurrence shot owner", "c0": "§2 lines 343-350; §2 lines 397-405"},
+    {"path": "commands[*].bindings[*].owners", "field_name": "owners", "source_role": "physical image ownership set", "c0": "§2 lines 324-329; §2 lines 343-346"},
+    {"path": "commands[*].bindings[*].physical_ref", "field_name": "physical_ref", "source_role": "resolved physical closure image", "c0": "§2 lines 287-305, 324-329"},
+    {"path": "commands[*].bindings[*].policy", "field_name": "policy", "source_role": "authenticated fixed binding policy", "c0": "§2 lines 333-336; §5 lines 1593-1609"},
+    {"path": "commands[*].bindings[*].ref", "field_name": "ref", "source_role": "submitted/source reference retained with physical ref", "c0": "§2 lines 314-329"},
+    {"path": "commands[*].bindings[*].revision_id", "field_name": "revision_id", "source_role": "source image revision identity", "c0": "§2 lines 324-329"},
+    {"path": "commands[*].bindings[*].step_id", "field_name": "step_id", "source_role": "materialization's provider step association", "c0": "§1 lines 94-110, 149-155"},
+    {"path": "commands[*].bindings[*].successor", "field_name": "successor", "source_role": "authenticated source-to-successor relation", "c0": "§2 lines 338-350; §2 lines 397-405"}
+  ],
+  "correspondence": {
+    "base_fields": "Closure.binding() at /home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_doc_patch.py:174-181 supplies ref, physical_ref, revision_id, content_digest, boundary and owners.",
+    "materialization_fields": "materializations() at /home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_commit_patch.py:712-718 adds key=commit.materialization, policy, dependencies, successor, owner, edge_before, edge_after and step_id.",
+    "two_objects": "The two actual binding objects correspond to the paired shot-revision and internal-revision turnover emitted by the two-iteration source/successor loop at _commit_patch.py:712-718.",
+    "exclusive_activation": "D124's complete_stage gate and exclusive/single-owner/shot-preserving checks are at _commit_patch.py:641-665."
+  }
+}

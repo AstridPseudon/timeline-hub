@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.d141.history-final-actual-source-join.v1",
+  "task": "rt-P2-D141-history-final-0207",
+  "classification": "INTENDED_CONTRACT",
+  "classification_scope": "SAFE actual-only history-entry key-path family for run 3118",
+  "source_intent": "INTENDED_CONTRACT",
+  "run_level": {
+    "status": "CLASSIFIED",
+    "actual_extra_binding_objects": 2,
+    "actual_extra_key_paths": 22,
+    "expected_extra_binding_objects": 0,
+    "expected_extra_key_paths": 0,
+    "unknown_paths": [],
+    "family": "commit.materialization",
+    "correspondence": "All 22 retained actual-only paths are the complete binding shape emitted by D124's materializations() call in the exclusive complete_stage branch: physical identity/boundary fields plus successor, ownership, edge and step provenance. The SAFE packet intentionally provides paths, not field values; this verdict is bounded to that exact shape/family correspondence."
+  },
+  "causal_basis": {
+    "reviewed_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "reviewed_subject": "fix(timeline): reconcile D124 producer and inverse custody",
+    "reviewed_source": "/home/user/peteromallet/astrid-agent:astrid/sdk/timeline/_commit_patch.py:641-665,701-718",
+    "direct_parent": "5caa12bda353cc46143d3125bce60f8019cf839d",
+    "ancestor_chain": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd is an ancestor of 16bbd56; 16bbd56 is an ancestor of 28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "predicate": "D124 calls materializations() only for one inverse stage whose before/after documents equal the step endpoints, then retains proposed bindings only when each turnover is exclusive, single-owner, shot-preserving, and has no conflicting endpoint/edge membership.",
+    "source_security_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D124-union-security-review-1339-report.md:1-18"
+  },
+  "contract_basis": {
+    "contract": "/home/user/work/wt/rt-P2-D141-history-final-0207/contract/commit-v2.md",
+    "contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections": [
+      "§1 lines 60-155: request, commands, steps, provider-derived patches/dependencies, and records.steps/history exposure",
+      "§2 lines 324-350: authenticated physical bindings, evaluation boundaries, materialization continuation and verified edges",
+      "§2 lines 388-438: provider-generated closure effects and authenticated materialized successors",
+      "§4 lines 703-715: complete accepted/merged {data, receipt} reply and authoritative records",
+      "§5 lines 1593-1622: authenticated materialization sources for undo/redo and persisted physical bindings"
+    ]
+  },
+  "historical_identity": {
+    "safe_prior_pass": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D141-history-safe-fields-0146-prior-pass.json",
+    "placement_case": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+    "duration_seconds": 88.78,
+    "source_tuple": {
+      "app": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+      "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd",
+      "runtime": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+      "composition": "635f4de06da22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "receipt_note": "Historical case receipt exists and is retained; it is case-level evidence and does not replace the 3118 SAFE actual packet."
+  },
+  "gate_boundary": "This source-only classification does not authorize product, test, expectation, caller, wire-shape, pin, or release changes. Main owns the broader P2 gate."
+}
