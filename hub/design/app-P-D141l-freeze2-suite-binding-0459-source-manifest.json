@@ -1,0 +1,136 @@
+{
+  "schema_version": 4,
+  "task": "app-P-D141l-freeze2-suite-binding-0459",
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "execution": "none",
+  "source_tuple": {
+    "app": {
+      "repository": "/home/user/work/app",
+      "checkout": "/home/user/work/wt/app-pin-5344c53e",
+      "commit": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+      "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+      "parents": ["520d7e4fc12a03392afaed3f486aba34a2b5c319", "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04"],
+      "clean": true,
+      "integration_equals_head": true
+    },
+    "agent": {
+      "repository": "agent",
+      "checkout": "/home/user/work/wt/agt-pin-8585ed9c",
+      "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "clean": true
+    },
+    "runtime": {
+      "repository": "runtime",
+      "checkout": "/home/user/work/wt/rt-pin-6a011d58",
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "clean": true
+    },
+    "composition": {
+      "repository": "composition",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "clean": true
+    }
+  },
+  "selectors": [
+    {
+      "id": "p2-automatic-child-placement",
+      "order": 1,
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149",
+      "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e",
+      "source_lines": "1214-1345 and full file tail",
+      "test_title": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+      "protected_facts": ["real import/auth selection", "occurrence.add-media", "two commit.materialization bindings", "22-path D141d/0243 structural family", "history/reload/guarded undo", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-popup-add",
+      "order": 2,
+      "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6",
+      "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "source_lines": "941-947 and full file tail",
+      "test_title": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "protected_facts": ["unchanged D141j popup ADD", "shared occurrence fork", "A2 commit", "history/reload/guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-parent-move",
+      "order": 3,
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+      "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "source_lines": "746-776 and full file tail",
+      "test_title": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "protected_facts": ["exact doc.patch field guard", "fields merge", "canonical closure", "history/reload/guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-single",
+      "order": 4,
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+      "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "source_lines": "778-796 and full file tail",
+      "test_title": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo",
+      "protected_facts": ["remove before present/value", "raw absence", "opaque/list order", "history/reload/guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-bulk",
+      "order": 5,
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+      "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "source_lines": "798-817 and full file tail",
+      "test_title": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo",
+      "protected_facts": ["ordered two removes", "atomic", "opaque/list order", "history/reload/guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-register-asset",
+      "order": 6,
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "git_blob": "186ba03b6a8bb5d45d2659cf0a1b647b68e5a149",
+      "sha256": "ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e",
+      "source_lines": "1054-1124 and full file tail",
+      "test_title": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo",
+      "protected_facts": ["real file drop", "exact media/registry fields", "history/reload/guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p1",
+      "order": 7,
+      "file": "tests/e2e/local/three-products.p1-chain.spec.ts",
+      "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde",
+      "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "source_lines": "1393-1688 and full file tail",
+      "test_title": "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+      "protected_facts": ["split", "trim new clip", "intervening Agent edit", "lost acknowledgement/restart", "accepted/merged/refused", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p3",
+      "order": 8,
+      "file": "tests/e2e/local/three-products.spec.ts",
+      "git_blob": "ed083c0aab1a3c995be14e5b774fbb1cb877111b",
+      "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "source_lines": "1670 onward through full file tail",
+      "test_title": "M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent",
+      "protected_facts": ["recovery mount", "C0 v2 envelope", "command/step/read/merge", "strict metadata", "canonical history", "restart", "guarded undo", "zero legacy traffic"]
+    }
+  ],
+  "builder_source": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "git_tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "exports_used": ["serviceRecipe"],
+    "diagnostic_helper": null,
+    "execution_mode": "pure-builder-only"
+  },
+  "scope": {
+    "included": ["p2-automatic-child-placement", "p2-popup-add", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset", "p1", "p3"],
+    "excluded": ["p2-popup-swap", "p2-element", "broad p2"],
+    "rule": "Owner-cut exclusions are not skipped predicates or replacement proof."
+  }
+}

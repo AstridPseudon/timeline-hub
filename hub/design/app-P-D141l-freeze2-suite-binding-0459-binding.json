@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "status": "PROSPECTIVE_PRODUCTION_BUILDER",
+  "registration": false,
+  "execution": "none",
+  "target": "app-pin-5344c53e",
+  "repo": "app",
+  "selector": "p2-automatic-child-placement",
+  "suites": {
+    "normal": "d141g-p2-automatic-child-placement-5344c53e-submit",
+    "preflight": "d141g-p2-automatic-child-placement-5344c53e-submit-preflight"
+  },
+  "source_tuple": {
+    "app": {"head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f", "tree": "dd989783046aeff652486a1ba39db42aea86e201"},
+    "agent": {"head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"},
+    "runtime": {"head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-5344c53e",
+    "agent": "/home/user/work/wt/agt-pin-8585ed9c",
+    "runtime": "/home/user/work/wt/rt-pin-6a011d58",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "builder_source": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "repo": "app",
+    "git_head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "git_tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "exports_used": ["serviceRecipe"],
+    "diagnostic_helper": null,
+    "execution_mode": "pure-builder-only"
+  },
+  "full_spec": {
+    "value": {
+      "target": "app-pin-5344c53e",
+      "repo": "app",
+      "selector": "p2-automatic-child-placement",
+      "normal_suite": "d141g-p2-automatic-child-placement-5344c53e-submit",
+      "preflight_suite": "d141g-p2-automatic-child-placement-5344c53e-submit-preflight",
+      "pins": {
+        "app": {"head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f", "tree": "dd989783046aeff652486a1ba39db42aea86e201"},
+        "agent": {"head": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"},
+        "runtime": {"head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+        "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+      },
+      "checkouts": {
+        "app": "/home/user/work/wt/app-pin-5344c53e",
+        "agent": "/home/user/work/wt/agt-pin-8585ed9c",
+        "runtime": "/home/user/work/wt/rt-pin-6a011d58",
+        "composition": "/home/user/work/wt/vw-pin-635f4de0"
+      }
+    },
+    "canonical_utf8": "{\"target\":\"app-pin-5344c53e\",\"repo\":\"app\",\"selector\":\"p2-automatic-child-placement\",\"normal_suite\":\"d141g-p2-automatic-child-placement-5344c53e-submit\",\"preflight_suite\":\"d141g-p2-automatic-child-placement-5344c53e-submit-preflight\",\"pins\":{\"app\":{\"head\":\"5344c53e3063001bb3255bd0c9cd32cc5e77967f\",\"tree\":\"dd989783046aeff652486a1ba39db42aea86e201\"},\"agent\":{\"head\":\"8585ed9c0404d0187b2ce70242d25114a32747c2\",\"tree\":\"92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c\"},\"runtime\":{\"head\":\"6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d\",\"tree\":\"ac5b862744bece65b2e30565db1777bacd60da28\"},\"composition\":{\"head\":\"635f4de06fda22a85fc2e4cfc764d0153a4c9f40\",\"tree\":\"5ab5191a296980a0a6bcd1178ab6902d6478a148\"}},\"checkouts\":{\"app\":\"/home/user/work/wt/app-pin-5344c53e\",\"agent\":\"/home/user/work/wt/agt-pin-8585ed9c\",\"runtime\":\"/home/user/work/wt/rt-pin-6a011d58\",\"composition\":\"/home/user/work/wt/vw-pin-635f4de0\"}}",
+    "sha256": "792dfd48f2fc739eab1cabfe8aa2cd77ddf1473bd7b7e0e9487aba7ff483e027",
+    "bytes": 890
+  },
+  "commands": {
+    "normal": {
+      "sha256_utf8_without_newline": "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6",
+      "bytes_without_newline": 966,
+      "command_file": "normal-command.txt"
+    },
+    "preflight": {
+      "sha256_utf8_without_newline": "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7",
+      "bytes_without_newline": 978,
+      "command_file": "preflight-command.txt"
+    },
+    "row_encoding": "exact row UTF-8 bytes followed by exactly one LF (0x0a); no CRLF",
+    "normal_row_sha256_utf8_with_one_terminal_lf": "0ff8814a6f3a6b62ddff3737aafd2e2d0260b50bc0fb647752f172b2a5de4f5d",
+    "normal_row_bytes_with_one_terminal_lf": 1022,
+    "preflight_row_sha256_utf8_with_one_terminal_lf": "bb42880db0cf7987c74ae7da7b82377b467e0e0c76a5439dedfdd86580facbc1",
+    "preflight_row_bytes_with_one_terminal_lf": 1044
+  },
+  "all_eight_pair_summary": {
+    "p2-automatic-child-placement": {"normal": [966, "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6", 1022, "0ff8814a6f3a6b62ddff3737aafd2e2d0260b50bc0fb647752f172b2a5de4f5d"], "preflight": [978, "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7", 1044, "bb42880db0cf7987c74ae7da7b82377b467e0e0c76a5439dedfdd86580facbc1"]},
+    "p2-popup-add": {"normal": [950, "09775d0fde1785b464ac6b77c7d1afe1d060ae0b720dc8676c37029e009a3fd3", 990, "2c58eebbd0cee3bd16f22f7934bc4b6edd9f00d276eac8cb7ce2af3946354694"], "preflight": [962, "6690bea10e0e5d76c1a71482064d4c2137f95fc0f4bf0fceb51633b2f58081f6", 1012, "dbd775d6fd991bde4b61a4adadded2a1d0dc032a9a88026b04fd819aef7758e0"]},
+    "p2-parent-move": {"normal": [952, "386a219451c30f9476b3f6d48e7a3e4c2b6e18a26ce2d593d2512a2bcbaa2801", 994, "a25dab9d4e08101ed6eb95582335e0f24ec73aea0c067db52db720551dfe1bb2"], "preflight": [964, "90337d05cc90be1630375f63898317e448f1c31dc4273579e540bd13d03d2b07", 1016, "fb216dc22f9877b0173fa61e7ea508c169a52146b2d998ddb6028c9238083d13"]},
+    "p2-transition-none-single": {"normal": [963, "06a27ebc787e76328db0ec6caa643acfa60552565fd1364ec5087e5d95cfdc98", 1016, "b1af2418d1002e8e8ede8b9af04bb122685b2d70318fe108df61bb3ed598a3ab"], "preflight": [975, "7e8444046b13e70239150483560a71454289e1583649efc80ca8cc40e09b07a6", 1038, "0eae454268890ed6b9881f9e75c8725bdc5c38b1a8d7c2f972c04fd7c906239a"]},
+    "p2-transition-none-bulk": {"normal": [961, "2db328242dc763257e3b5f08b8bdebcfb32327ba9fbaa42b4dbb40ea30006535", 1012, "2c97ce72a3fd3dbf3cec0d41bba92721d790d65887dc7175e40466b0fba845fa"], "preflight": [973, "dfd34f2c6e5d6d89b474d554c531bdfaadeef5fd4b5394c1792fb9fd7ab14996", 1034, "708cce9258041405a09a3ffdf643b1d1c88c1cf2b8d937b73d7c21b8d43a3b1d"]},
+    "p2-register-asset": {"normal": [955, "bfa2fca632431ce9e2c3c356493791bf3f021e545c9ee7a4cca543bd50660d83", 1000, "4a8f4b53c8094b6b5e580942b00627c0e0a96d6998709c79ade890826c1e6223"], "preflight": [967, "c3e04a36350014e9e49b2884301d31e48bf41d389d69aa76a636ae06c0d2d6d0", 1022, "9823dfa1cf62e3b80997e1eba7e17d8d0f7f09e967e7a32ff9267d8ae964d2ef"]},
+    "p1": {"normal": [940, "cd2ce76019f252d55255bc10e354aa6971b11c0d10827a9b8763dd1ff72e4d55", 970, "967346401e4dca385fdc1b657e6b1cd5fda2617de8c93430716b9202f42c34c5"], "preflight": [952, "ce4c3d18eafe5207eb01fc6bc85456d950e6390f0412b4ac5bf746df86e24f40", 992, "a667390e5043906c4284c1af5e1e8be35e04cd6359e3f2448736963a3e229aea"]},
+    "p3": {"normal": [940, "5fab1eb953265be30cd0687dd1aa4c44800c63d386c63132e72ed15d4148d932", 970, "3ecb8b36c4c32e56c0b48617baa7ce63795263aeab49832740a00954431fcc33"], "preflight": [952, "69af45350aba55572c489cd708f21c1b89a2a89c7437a0214d9ff993e5962cc6", 992, "237b06247c84752d78dc0aac3e80f12eb466229093e86b8d7d40266da1ebed37"]}
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_sha256": "5ce57b6ee789de40c6d25874a29af37c4fff3d477b913219617eff8b1d01f072",
+    "preimage_bytes": 733149,
+    "prospective_rows_absent": {
+      "d141g-p2-automatic-child-placement-5344c53e-submit": true,
+      "d141g-p2-automatic-child-placement-5344c53e-submit-preflight": true,
+      "d141g-p2-popup-add-5344c53e-submit": true,
+      "d141g-p2-popup-add-5344c53e-submit-preflight": true,
+      "d141g-p2-parent-move-5344c53e-submit": true,
+      "d141g-p2-parent-move-5344c53e-submit-preflight": true,
+      "d141g-p2-transition-none-single-5344c53e-submit": true,
+      "d141g-p2-transition-none-single-5344c53e-submit-preflight": true,
+      "d141g-p2-transition-none-bulk-5344c53e-submit": true,
+      "d141g-p2-transition-none-bulk-5344c53e-submit-preflight": true,
+      "d141g-p2-register-asset-5344c53e-submit": true,
+      "d141g-p2-register-asset-5344c53e-submit-preflight": true,
+      "d141g-p1-5344c53e-submit": true,
+      "d141g-p1-5344c53e-submit-preflight": true,
+      "d141g-p3-5344c53e-submit": true,
+      "d141g-p3-5344c53e-submit-preflight": true
+    },
+    "prior_authentic_rows": {
+      "normal": {"name": "d141-p2-automatic-child-placement-867cb273-submit", "line": 409, "sha256_utf8_with_one_terminal_lf": "c0640bd4f2ef25675681514b6dee4c596ebec2931f7e3527dd4fac1ff48fdd6f", "exact_builder_match": true, "differences": null},
+      "preflight": {"name": "d141-p2-automatic-child-placement-867cb273-submit-preflight", "line": 408, "sha256_utf8_with_one_terminal_lf": "e919663afc6a8637bf9b9e7e81f217f22dd1a69194ccf90b5271cc2891b5a42c", "exact_builder_match": true, "differences": null}
+    }
+  },
+  "source_manifest": {"path": "source-manifest.json", "sha256": "12ee089244d7de487aae8c24fdd5e0e49c7660219725fe445be38bca6a852b76"},
+  "future_actual_plan": "workers/app-P-D141g-final-journeys-controller-0303/evidence/runs/p2-automatic-child-placement/submit-plan.json",
+  "caller_rule": "Later D66 --submit must atomically register the paired recipes after actual kit admission and compare actual registered bytes byte-for-byte with this genuine serviceRecipe output before dispatch. This packet is not installed, registered, submitted, or a body result."
+}

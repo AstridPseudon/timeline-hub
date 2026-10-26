@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T05:04:03.428213+00:00",
+  "files": [
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/binding.json",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-binding.json",
+      "sha256": "53a145f29602a9c5925ed4782fb1d4d7d4dfe3025f78171eee253896bc52a539"
+    },
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/handoff.md",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-handoff.md",
+      "sha256": "8be8ee2db47602f6164a5febc788e9ea87299cf6e89389dd076631c1dd9653ad"
+    },
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/normal-command.txt",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-normal-command.txt",
+      "sha256": "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6"
+    },
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/preflight-command.txt",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-preflight-command.txt",
+      "sha256": "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7"
+    },
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/source-manifest.json",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-source-manifest.json",
+      "sha256": "12ee089244d7de487aae8c24fdd5e0e49c7660219725fe445be38bca6a852b76"
+    },
+    {
+      "source": "workers/app-P-D141l-freeze2-suite-binding-0459/evidence/validation.md",
+      "target": "design/app-P-D141l-freeze2-suite-binding-0459-validation.md",
+      "sha256": "a7290fb090b8a256ee66bec91eed4632617fadb8ef76d9f253e5ba59e70a6b15"
+    }
+  ],
+  "manager_checks": "Four commit/tree facts, actual production module blob/hash, both exact command bytes and row LF hashes, source manifest hash match. Source-only; no registration or body."
+}
