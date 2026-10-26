@@ -1281,13 +1281,93 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId }, publicationId(post));
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [placementPublication] } });
   const undoContext = await nativeUndoContext(harness, seed3, after, original, committed, placementPublication);
-  const undone = assertAcceptedReply(undo, committed.head, undoContext);
+  const placementExpectedRecords = (post: CommitPost, context: NativeUndoContext, expected: { data: JsonObject; records: JsonObject }): JsonObject => {
+    const target = context.priorHistory.items.find((item) => item.publication_id === context.targetPublication)!;
+    const materializations = target.records!.commands.flatMap((record) => record.bindings)
+      .filter((binding) => binding.key === 'commit.materialization');
+    expect(materializations).toHaveLength(2);
+    const sourceChild = nativeChild(context.restored, `occurrence:${seed3.occurrenceId}`);
+    const successorChild = nativeChild(context.before, `occurrence:${seed3.occurrenceId}`);
+    const sourceShot = `shot-revision:${sourceChild.shot.revision_id}`;
+    const successorShot = `shot-revision:${successorChild.shot.revision_id}`;
+    const sourceInternal = `internal-revision:${sourceChild.child.revision_id}`;
+    const successorInternal = `internal-revision:${successorChild.child.revision_id}`;
+    const base = { revision_id: post.body.base_revision_id, publication_id: post.body.base_publication_id };
+    const submitted = post.body.steps![0]!;
+    const boundary = { base_revision_id: base.revision_id, base_publication_id: base.publication_id,
+      evaluated_head: base, step_id: submitted.id, command_ordinal: 0, phase: 'input' };
+    const owner = `occurrence:${seed3.occurrenceId}/shot`;
+    const bindings = [
+      { ...nativeBinding(context.before, successorShot, successorShot, boundary), key: 'commit.materialization', policy: 'fixed', dependencies: [],
+        successor: sourceShot, owner, edge_before: successorInternal, edge_after: sourceInternal, step_id: submitted.id },
+      { ...nativeBinding(context.before, successorInternal, successorInternal, boundary), key: 'commit.materialization', policy: 'fixed', dependencies: [],
+        successor: sourceInternal, owner, edge_before: successorShot, edge_after: sourceShot, step_id: submitted.id },
+    ];
+    expect(bindings).toHaveLength(2);
+    const command = expected.records.commands[0]!;
+    return { ...expected.records, commands: [{ ...command, bindings: [...command.bindings, ...bindings] }] };
+  };
+  const assertPlacementNativeHistoryEntry = (page: HistoryPage, post: CommitPost, result: CommitAcceptedMutation, context: NativeUndoContext): void => {
+    const expected = nativeUndoExpected(post, context);
+    const publication = result.receipt.receipt_id;
+    const previous = context.priorHistory.head;
+    expect(page.head).toEqual({ revision_id: context.restored.parent_revision.revision_id, publication_id: publication });
+    expect(page.next_cursor).toBeNull();
+    expect(page.items.filter((item) => item.publication_id !== publication)).toEqual(context.priorHistory.items);
+    expect(page.items).toHaveLength(context.priorHistory.items.length + 1);
+    const entry = page.items.find((item) => item.publication_id === publication);
+    expect(entry).toEqual({ publication_id: publication, revision_id: context.restored.parent_revision.revision_id,
+      previous, receipt: result.receipt, intent: 'recorded', records: placementExpectedRecords(post, context, expected),
+      provider_version: expected.data.provider_version, compiler_version: expected.data.compiler_version,
+      publisher: expected.data.publisher, source: { via: 'app' }, label: 'Undo timeline', merge: 'fields',
+      merge_mode: 'fields', reads: [], steps: expected.data.steps, recorder_abi: 2 });
+  };
+  const assertPlacementNativeAcceptedReply = (post: CommitPost, before: HeadPin, context: NativeUndoContext): CommitAcceptedMutation => {
+    assertRequestV2(post, before, { project_id: context.before.project_id, timeline_id: context.before.timeline_id }, context.targetPublication);
+    expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
+    const expected = nativeUndoExpected(post, context);
+    const envelope = exactKeys(post.json, ['data', 'receipt'], 'native commit envelope');
+    expect(envelope.data).toEqual(expected.data);
+    expect(context.readback).toEqual(context.restored);
+    expect((envelope.data as JsonObject).canonical_document).toEqual(context.readback);
+    expect((envelope.data as JsonObject).document_digest).toBe(digest(context.readback));
+    const entry = context.history.items.find((item) => item.receipt.idempotency_key === post.key)!;
+    expect(entry, 'independent authenticated history read for this request key').toBeTruthy();
+    const receipt = exactKeys(envelope.receipt, ['command_kind', 'created_at', 'event_ids', 'idempotency_key',
+      'project_id', 'project_seq', 'receipt_id', 'request_hash', 'result'], 'native commit receipt');
+    expect(receipt).toEqual(entry.receipt);
+    expect(receipt.result).toEqual(expected.data);
+    expect(receipt.command_kind).toBe('timeline.commit');
+    expect(receipt.project_id).toBe(context.before.project_id);
+    expect(receipt.idempotency_key).toBe(post.key);
+    expect(receipt.receipt_id).toBe(context.history.head.publication_id);
+    expect(receipt.receipt_id).not.toBe(post.key);
+    expect(context.priorHistory.items.some((item) => item.publication_id === receipt.receipt_id)).toBe(false);
+    expect(receipt.request_hash).toBe(digest({ operation: 'commitTimeline',
+      path: `/v1/projects/${post.body.project_id}/timelines/${post.body.timeline_id}/commit`,
+      publisher: expected.data.publisher, request: post.body }).slice('sha256:'.length));
+    expect(receipt.event_ids).toHaveLength(1);
+    const seq = receipt.project_seq as number[];
+    expect(seq).toEqual([seq[0], seq[0]]);
+    expect(seq[0]).toBeGreaterThan(Math.max(...context.priorHistory.items.map((item) => item.receipt.project_seq[1])));
+    assertPlacementNativeHistoryEntry(context.history, post, envelope as unknown as CommitAcceptedMutation, context);
+    return envelope as unknown as CommitAcceptedMutation;
+  };
+  const assertPlacementUndoHistoryEntry = (page: HistoryPage, undo: CommitPost, target: CommitPost, context: NativeUndoContext): void => {
+    expect(context.targetPublication).toBe(publicationId(target));
+    const original = context.priorHistory.items.find((entry) => entry.publication_id === context.targetPublication)!;
+    expect(original.receipt).toEqual(acceptedMutation(target).receipt);
+    expect(original.receipt.idempotency_key).toBe(target.key);
+    const result = assertPlacementNativeAcceptedReply(undo, context.priorHistory.head, context);
+    assertPlacementNativeHistoryEntry(page, undo, result, context);
+  };
+  const undone = assertPlacementNativeAcceptedReply(undo, committed.head, undoContext);
   assertCanonicalResult(undone, undoContext.readback, harness, seed3);
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   expect(undone.data.canonical_document.shot_revisions).toEqual(original.shot_revisions);
   expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(original.internal_timeline_revisions);
   assertNoLegacy(wire);
-  assertUndoHistoryEntry(undoContext.history, undo, post, undoContext);
+  assertPlacementUndoHistoryEntry(undoContext.history, undo, post, undoContext);
   await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(0);
