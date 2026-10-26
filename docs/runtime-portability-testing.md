@@ -2,8 +2,13 @@
 
 The portability CI job runs the platform boundary, native process custody,
 foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu and macOS.
-Windows is not supported yet and has no CI job. It invokes the selected tests with `-m ""` because pytest's
-default configuration excludes integration-marked tests.
+Runtime's required `windows-realm-publication` job on `windows-latest` exercises
+native realm creation and replacement, owner identity, and M1 security tests.
+Astrid also runs an exploratory Windows install and task-host journey. The
+portability-lifecycle matrix remains Ubuntu/macOS; eight native Windows dir-fd
+tests are not wired into a Windows job and still need qualification. The commands
+below invoke the selected tests with `-m ""` because pytest's default
+configuration excludes integration-marked tests.
 
 Run the same host-specific subset locally after installing the test and
 generated-client packages:
