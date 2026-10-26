@@ -1,1 +1,1 @@
-2026-10-26T01:38:21Z procs: hub-syncd dispatcher run-manager up; disk 10G free; D141 core: census worker 0137 was refused twice (permission: running receive-farm.sh); owner allowed the census script (2 narrow rules in claude-perms.sh); manager re-dispatching census attempt 3
+2026-10-26T02:21:50Z procs: hub-syncd dispatcher run-manager up; disk 10G free; D141 core: owner-approved 10 exact-path worker allow rules applied in claude-perms.sh (kit sync had wiped the first two; re-applied); census attempt 3 being dispatched
