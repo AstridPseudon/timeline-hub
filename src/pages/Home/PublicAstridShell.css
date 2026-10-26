@@ -982,7 +982,8 @@
   opacity: .48;
   pointer-events: none;
 }
-.astrid-public-site[data-audience="app"] .astrid-preview-transport-scrim {
+/* Audience-independent: the scrim is hidden on the homepage in both modes, so it never appears mid-switch. */
+.astrid-public-site .astrid-preview-transport-scrim {
   display: none;
 }
 /* The inspector keeps the shared surface motion; only the collapse toggle times its visibility. */
