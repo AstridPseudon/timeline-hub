@@ -1,0 +1,112 @@
+{
+  "backups": {
+    "README.template.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 39689,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/backups/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a"
+    },
+    "gate-results.md": {
+      "byte_exact_predecessor": true,
+      "bytes": 36699,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/backups/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+    }
+  },
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "cas": {
+    "before_inventory_durable_before_mutation": true,
+    "delivery_directory_fsync": true,
+    "directory_fsync_after_each_replace": true,
+    "exact_backups_fsynced_before_mutation": true,
+    "guarded_staged_atomic_replacements": true,
+    "preimage_cas_before_mutation": true,
+    "readback": true,
+    "replacement_order": [
+      "README.template.md",
+      "gate-results.md"
+    ],
+    "rollback_stages_fsynced": true,
+    "rollback_used": false,
+    "stages_remaining": false,
+    "unknown_preimage_drift_overwritten": false
+  },
+  "conservation": {
+    "32_ids_ledgers_witnesses_limits_old_gaps_preserved": true,
+    "author_monitor_limits_preserved": true,
+    "balanced_fences_and_placeholders": true,
+    "full_preimage_prefix": true,
+    "independent_parent_failure_preserved": true,
+    "main_acceptance_separate": true,
+    "no_body_reproof_custody_pass_or_cause_claim": true,
+    "previous_popup_and_historical_paragraphs": true,
+    "sole_suffix_once_per_document": true
+  },
+  "installed_targets": {
+    "README.template.md": {
+      "bytes": 41963,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "regular_non_symlink": true,
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+    },
+    "gate-results.md": {
+      "bytes": 37956,
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "regular_non_symlink": true,
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+    }
+  },
+  "no_other_canonical_write": true,
+  "no_product_or_full_suite_claim": true,
+  "operation_note": "One guarded CAS completed; no second CAS or canonical rewrite occurred. A false checker interpretation was corrected in read-only finalization.",
+  "outside_inventory": {
+    "after_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/outside-after.json",
+    "before_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/outside-before.json",
+    "count_after": 568,
+    "count_before": 568,
+    "individually_hashed": true,
+    "unchanged": true
+  },
+  "predecessor_publication": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141ff-popup-notes-installed-publication-1157.json",
+    "sha256": "b2c83292d4f147b0e7683f6781a2626f48049afda548440b7d3f961c14b15082",
+    "verdict": "PASS"
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "20bce6c0523656881f0bb70c1c1bf6cc6174bb5db192aa6f9cfa5dc7447c89fb",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "rendered_sha256": "48c1df0389cd5df623abe555c2a8c64b24972a7951be8925372c1dfcf1f0f2dc"
+  },
+  "review_publication": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141gg-parent-notes-review-publication-1155.json",
+    "sha256": "01a853843d870d3ee465d24e433907e79ea9062fbdd7d2c1da37c874ca24aacd",
+    "verdict": "PASS"
+  },
+  "review_verdict": "PASS",
+  "schema": "timeline.d141gg.parent-notes-installation/v1",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES",
+  "task": "rt-F-D141gg-parent-notes-install-1157"
+}

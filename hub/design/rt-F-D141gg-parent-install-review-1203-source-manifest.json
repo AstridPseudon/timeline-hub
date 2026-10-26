@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.d141gg.parent-notes-install-review-source-manifest/v1",
+  "verdict": "PASS",
+  "candidate_sources": {
+    "README.template.md": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-README.template.md", "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84", "bytes": 41963, "suffix_bytes": 2274},
+    "gate-results.md": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-gate-results.md", "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1", "bytes": 37956, "suffix_bytes": 1257}
+  },
+  "immutable_bases": {
+    "README.template.md": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+    "gate-results.md": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+  },
+  "backups": {
+    "README.template.md": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+    "gate-results.md": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+  },
+  "outside_maps": {
+    "count": 568,
+    "before_sha256": "71ef0970c03d77b3889b7e3ba423dbc079cb6ec6281700540478b05ffde63cf0",
+    "after_sha256": "319c9981b855f4b678aaca3c048567c974bdeb0fbc5772e1973615820060675b",
+    "files_equal": true,
+    "individually_recomputed_fullpath_hash_bytes_mode": true
+  },
+  "checker_sha256": "7b2c50ceedb40060e8ed1f0c4a8118a3de47163daf8923d7fb0bc3b1d9c007f5",
+  "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+  "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+  "source_review": "Protected1152 PASS; prior popupCAS1147 and independent1150 publication retained; no semantic/prose review repeated.",
+  "custody_limit": "The historical independent parent result remains FAIL_CUSTODY_NATIVE_TEST_PASS. Later monitor samples and this review sampler do not backfill its missing first-tool window."
+}

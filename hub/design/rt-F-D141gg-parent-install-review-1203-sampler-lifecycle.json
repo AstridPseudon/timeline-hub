@@ -1,0 +1,15 @@
+{
+  "coverage_gap": "Review sampler began after earlier read-only inspection and cannot establish historical CAS custody; samples are discrete 5-second observations and do not establish continuity between samples or after termination.",
+  "ended_ns": 1793016334959955459,
+  "exit_code": -15,
+  "floor_bytes": 4000000000,
+  "interval_seconds": 5,
+  "min_available_bytes": 5603184640,
+  "operation_status": "PASS",
+  "sample_count": 2,
+  "sampler_pid": 4,
+  "schema": "timeline.d141gg.install-review-sampler/v1",
+  "signal_sent": "SIGTERM",
+  "started_ns": 1793016329371134447,
+  "wait_reap_observed": true
+}

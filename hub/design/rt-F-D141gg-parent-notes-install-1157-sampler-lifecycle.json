@@ -1,0 +1,29 @@
+{
+  "cas_sampler_run": {
+    "exit_code": -15,
+    "mutation_window_covered": true,
+    "pid": 4,
+    "readback_window_covered": true,
+    "wait_reap_observed": true
+  },
+  "coverage_gap": "The first sampler began before CAS inspection/mutation and recorded durable samples through CAS/readback; the finalization sampler began before read-only verification and receipt writes. Samples are discrete 5-second observations; no continuous coverage claim is made between samples or after termination.",
+  "ended_ns": 1793016095391818003,
+  "exit_code": -15,
+  "finalization_sampler_run": {
+    "exit_code": -15,
+    "final_receipt_window_covered": true,
+    "pid": 4,
+    "wait_reap_observed": true
+  },
+  "floor_bytes": 4000000000,
+  "interval_seconds": 5,
+  "operation_status": "PASS",
+  "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence",
+  "sampler_pid": 4,
+  "schema": "timeline.d141gg.sampler-lifecycle/v1",
+  "signal_sent": "SIGTERM",
+  "started_ns": 1793016095220888929,
+  "termination": "requested_after_final_receipt",
+  "trace_encoding_repair": "Normalized sampler records from literal escaped delimiters to physical tab/newline delimiters; sample timestamps and available-byte values were unchanged.",
+  "wait_reap_observed": true
+}

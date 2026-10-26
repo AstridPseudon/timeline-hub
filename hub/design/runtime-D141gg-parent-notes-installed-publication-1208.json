@@ -1,0 +1,121 @@
+{
+  "at": "2026-10-26T12:08:38.798215+00:00",
+  "verdict": "PASS_BOUNDED_INSTALLATION",
+  "scope": "Exact reviewed parent notes installed; single guarded CAS and immediate568 outside inventories independently verified; no build",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-report.md",
+      "sha256": "47c8f20dae223d3dafe62702b184f60236be4b548f69e6fcdbeffc3490e3cdd8",
+      "bytes": 1014
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/installation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-installation.json",
+      "sha256": "ae2f6d0805478826b7f0968f72cf8baeda058a47a6c13c3e7bb31ce0bd5f752f",
+      "bytes": 5171
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-source-manifest.json",
+      "sha256": "596e749f775cb8cd69ad490d7bacb37c688e6804e76f3e53ead52860602eceb3",
+      "bytes": 12891
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/outside-before.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-outside-before.json",
+      "sha256": "71ef0970c03d77b3889b7e3ba423dbc079cb6ec6281700540478b05ffde63cf0",
+      "bytes": 172040
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/outside-after.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-outside-after.json",
+      "sha256": "319c9981b855f4b678aaca3c048567c974bdeb0fbc5772e1973615820060675b",
+      "bytes": 172039
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-validation.md",
+      "sha256": "de74f6aff115d30fb6815e9791cb1ee0526687f808312e6b999ddeb8b9ee0fe9",
+      "bytes": 1534
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-handoff.md",
+      "sha256": "18bec6124c167e4cf6e48782865aedf2570901b041e52238c2b0186277dbd97f",
+      "bytes": 898
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-disk-trace.txt",
+      "sha256": "5eb2b5841c7aa8605bcfd801f1a6c7173cdb064e0fb539d35366221a4d7096d8",
+      "bytes": 760
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-sampler-lifecycle.json",
+      "sha256": "180aec20a3793aa54d944f66ffbd780e170a8c7d75ffd632bec453bd268eb6b7",
+      "bytes": 1337
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/backups/README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-backup-README.template.md",
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "bytes": 39689
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence/backups/gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-notes-install-1157-backup-gate-results.md",
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "bytes": 36699
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-report.md",
+      "sha256": "cb4ca17636eb0177030be64915916e87e52f12e0791f65c270a11a341b70fb51",
+      "bytes": 1031
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-review.json",
+      "sha256": "2be9f2df762899627210abb6ea92dcc35d9ff95dd542544409d5972443c7ea99",
+      "bytes": 5180
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-findings.md",
+      "sha256": "027d2af00d0052d85727a85d669f144d55f792bb6dc89042e4f62c8f503d3eab",
+      "bytes": 2071
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-source-manifest.json",
+      "sha256": "e17ac6c2843eb9fb26eb45dc8308773a488b139b09ae591ff99dc0dbb3494f95",
+      "bytes": 2078
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-validation.md",
+      "sha256": "65ce6ffc1b96d5fff7191b25f2934ff57c26a748e9559431a5c363fe84805ded",
+      "bytes": 1242
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-handoff.md",
+      "sha256": "f8181ff428cbb2802928e93cd2092426998c5127a2850285c488b31a41d94f4a",
+      "bytes": 721
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-disk-trace.txt",
+      "sha256": "7f9758784f72d50d989038243cdc03a30696521856bd1fa74601d8749908a462",
+      "bytes": 382
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-install-review-1203/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141gg-parent-install-review-1203-sampler-lifecycle.json",
+      "sha256": "7c34a0f3d570cc85e3d74602c758b0eedba9c593071abb84e367f70e91eace50",
+      "bytes": 607
+    }
+  ]
+}

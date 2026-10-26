@@ -1,0 +1,4 @@
+1793015980990104230	available_bytes=5589565440	root=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence
+1793016012639183276	available_bytes=5585760256	root=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence
+1793016017645044261	available_bytes=5584371712	root=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence
+1793016095250545935	available_bytes=5585694720	root=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/evidence

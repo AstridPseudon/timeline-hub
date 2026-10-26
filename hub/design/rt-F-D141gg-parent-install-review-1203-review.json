@@ -1,0 +1,92 @@
+{
+  "schema": "timeline.d141gg.parent-notes-install-review/v1",
+  "task": "rt-F-D141gg-parent-install-review-1203",
+  "verdict": "PASS_BOUNDED_INSTALLATION",
+  "scope": "Independent read-only review of the completed D141gg two-file CAS; no canonical write, prose repair, semantic re-review, product test, build, service, or ZIP.",
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "canonical": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "bytes": 41963,
+      "mode": "0644",
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "regular_non_symlink": true,
+      "equals_exact_candidate": true
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "bytes": 37956,
+      "mode": "0644",
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "regular_non_symlink": true,
+      "equals_exact_candidate": true
+    }
+  },
+  "backups": {
+    "README.template.md": {"sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a", "bytes": 39689, "mode": "0644", "regular_non_symlink": true, "exact_preimage": true},
+    "gate-results.md": {"sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec", "bytes": 36699, "mode": "0644", "regular_non_symlink": true, "exact_preimage": true}
+  },
+  "outside_inventory": {
+    "count_before": 568,
+    "count_after": 568,
+    "unique_paths": 568,
+    "before_map_sha256": "71ef0970c03d77b3889b7e3ba423dbc079cb6ec6281700540478b05ffde63cf0",
+    "after_map_sha256": "319c9981b855f4b678aaca3c048567c974bdeb0fbc5772e1973615820060675b",
+    "maps_equal": true,
+    "recomputed_current_fullpath_bytes_mode_sha256": true,
+    "all_current_regular_non_symlink": true,
+    "all_current_modes_hashes_bytes_match_both_maps": true
+  },
+  "conservation": {
+    "full_prefix": true,
+    "sole_suffix_once_each": true,
+    "prior_32_ids": true,
+    "ledgers_witnesses_limits": true,
+    "old_gaps_and_popup_history": true,
+    "placeholders_and_balanced_fences": true,
+    "independent_parent_failure_separate": true,
+    "main_acceptance_separate": true,
+    "no_custody_pass_body_reproof_or_cause_claim": true
+  },
+  "checker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/check_notes.py",
+    "sha256": "7b2c50ceedb40060e8ed1f0c4a8118a3de47163daf8923d7fb0bc3b1d9c007f5",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/check_notes.py",
+    "returncode": 0,
+    "result": "PASS_PRIVATE_D141GG_CANDIDATES",
+    "semantic_note": "The checker validates immutable candidate bases; PASS after CAS is expected and does not itself inspect canonical targets. Canonical readback was checked independently."
+  },
+  "render": {
+    "function": "render_readme",
+    "function_only": true,
+    "controlled_repositories": ["agent", "runtime", "app", "composition"],
+    "fallback_missing_gate": true,
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "result": "PASS"
+  },
+  "cas_chronology": {
+    "raw_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-install-1157/log.txt",
+    "preflight_failures_before_mutation": ["review-publication hash drift", "missing worker backup prerequisite"],
+    "one_successful_cas": true,
+    "replacement_order": ["README.template.md", "gate-results.md"],
+    "durable_before_map_and_backups_before_mutation": true,
+    "guarded_staged_atomic_replacements_and_directory_fsync": true,
+    "readback_and_after_map": true,
+    "rollback_used": false,
+    "no_second_cas_or_canonical_rewrite": true,
+    "false_post_cas_checker_interpretation_corrected_read_only": true,
+    "source_log_line_ranges": ["10864-10906", "10955-10969", "11097-11116", "11191-11297"]
+  },
+  "monitor_limits": {
+    "prior_install_lifecycle_sha256": "180aec20a3793aa54d944f66ffbd780e170a8c7d75ffd632bec453bd268eb6b7",
+    "prior_install_trace_sha256": "5eb2b5841c7aa8605bcfd801f1a6c7173cdb064e0fb539d35366221a4d7096d8",
+    "prior_install_claim": "first CAS/readback window plus later finalization window",
+    "prior_install_samples": 4,
+    "prior_install_min_available_bytes": 5584371712,
+    "prior_install_floor_bytes": 4000000000,
+    "prior_install_gap": "Discrete samples only; no continuous coverage between samples or after termination. The retained independent parent custody first-tool gap remains historical and cannot be repaired by this review.",
+    "own_review_sampler": "evidence/sampler-lifecycle.json"
+  },
+  "tests": "Product tests/types/lint/full suite were not run; prose-only bounded installation review made them not applicable."
+}

@@ -1,0 +1,268 @@
+{
+  "candidates": {
+    "candidate-README.template.md": {
+      "bytes": 41963,
+      "input_sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-README.template.md",
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "suffix_bytes": 2274
+    },
+    "candidate-gate-results.md": {
+      "bytes": 37956,
+      "input_sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-gate-results.md",
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "suffix_bytes": 1257
+    }
+  },
+  "conservation": {
+    "32_ids_ledgers_witnesses_limits": true,
+    "balanced_fences_and_placeholders": true,
+    "full_input_prefix": true,
+    "only_intended_suffix_once_per_document": true,
+    "previous_popup_and_historical_paragraphs": true
+  },
+  "inputs": {
+    "candidate-README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-README.template.md",
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a"
+    },
+    "candidate-gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-gate-results.md",
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+    }
+  },
+  "installation_context": {
+    "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "candidate_status": "PASS_PRIVATE_D141GG_CANDIDATES",
+    "candidates": {
+      "README.template.md": {
+        "bytes": 41963,
+        "mode": "0644",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-README.template.md",
+        "regular_non_symlink": true,
+        "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+      },
+      "gate-results.md": {
+        "bytes": 37956,
+        "mode": "0644",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-gate-results.md",
+        "regular_non_symlink": true,
+        "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+      }
+    },
+    "checker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/check_notes.py",
+      "post_cas_result": "PASS_PRIVATE_D141GG_CANDIDATES; immutable bases remain valid after CAS; installed targets checked independently",
+      "pre_cas_command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/check_notes.py",
+      "pre_cas_result": "PASS_PRIVATE_D141GG_CANDIDATES",
+      "sha256": "7b2c50ceedb40060e8ed1f0c4a8118a3de47163daf8923d7fb0bc3b1d9c007f5"
+    },
+    "preimages": {
+      "README.template.md": {
+        "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a"
+      },
+      "gate-results.md": {
+        "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec"
+      }
+    },
+    "render": {
+      "balanced_fences": true,
+      "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+      "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "controlled_inputs": [
+        "agent",
+        "runtime",
+        "app",
+        "composition"
+      ],
+      "disclosure_occurrences": 2,
+      "fallback_placeholder_behavior": true,
+      "fallback_sha256": "20bce6c0523656881f0bb70c1c1bf6cc6174bb5db192aa6f9cfa5dc7447c89fb",
+      "function": "render_readme",
+      "function_only": true,
+      "placeholders_resolved": true,
+      "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+      "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "rendered_sha256": "48c1df0389cd5df623abe555c2a8c64b24972a7951be8925372c1dfcf1f0f2dc"
+    },
+    "scope": "two named canonical documentary files only; no product/repo/test/assertion/generated/pin/schema/kit/queue/registry/service/hub/Git mutation",
+    "source_manifest_json_tool": "PASS",
+    "task": "rt-F-D141gg-parent-notes-install-1157"
+  },
+  "parent_sources": {
+    "custody": {
+      "bytes": 3394,
+      "files": [
+        {
+          "bytes": 1385,
+          "index": 1,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-review.json",
+          "regular_non_symlink": true,
+          "sha256": "68ea90257f65680151defa8712d5c9a99e84557c51c03d2026eb4fdfe3daf92a"
+        },
+        {
+          "bytes": 1586,
+          "index": 2,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-findings.md",
+          "regular_non_symlink": true,
+          "sha256": "85174450e2817a13c7ef2c2a3250d7904f317b4c0733237dc2050018d7b8f9e2"
+        },
+        {
+          "bytes": 2496,
+          "index": 3,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-source-manifest.json",
+          "regular_non_symlink": true,
+          "sha256": "431fe970b9c91365f785123efbdc13189f1ef847eee72ae8e56bc150ad652f08"
+        },
+        {
+          "bytes": 3381,
+          "index": 4,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-validation.md",
+          "regular_non_symlink": true,
+          "sha256": "e77fce840f3ac02bcbcea80f7885d244bebceb316d63001ee7fc3cf7cf2ac321"
+        },
+        {
+          "bytes": 909,
+          "index": 5,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-handoff.md",
+          "regular_non_symlink": true,
+          "sha256": "dc94148df98cd703b5b7d55bb45eeb269599d0ca93d49750335d405b0caa447f"
+        },
+        {
+          "bytes": 1005,
+          "index": 6,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-disk-trace.txt",
+          "regular_non_symlink": true,
+          "sha256": "c3eed661e5591993417ad65469ccf19965f1b2e68f008842564f33ef90464694"
+        },
+        {
+          "bytes": 728,
+          "index": 7,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-custody-review-1130-sampler-lifecycle.json",
+          "regular_non_symlink": true,
+          "sha256": "4116fed68c5b883887d90167ebea5244f33afd12f9c5727a087bb47705400828"
+        }
+      ],
+      "path": "/home/user/timeline-hub/hub/design/app-D141cc-parent-custody-publication-1135.json",
+      "sha256": "1b8ac7717542e52a1527a8f42431ea44707b1931a815221fa99db77fca39868b",
+      "status": "FAIL_CUSTODY_NATIVE_TEST_PASS"
+    },
+    "terminal": {
+      "bytes": 3721,
+      "files": [
+        {
+          "bytes": 9528,
+          "index": 1,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-controller-receipt.json",
+          "regular_non_symlink": true,
+          "sha256": "3bc1bf8b580cbe768366ef741a2497af84f8b6cdf461f7ef21ff15eb5e395f55"
+        },
+        {
+          "bytes": 2840,
+          "index": 2,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-results.json",
+          "regular_non_symlink": true,
+          "sha256": "0c53f0627f9e4de561ea8ce6acd933076a7bfc1dc144e782d647b0964d6eba83"
+        },
+        {
+          "bytes": 6232,
+          "index": 3,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-source-manifest.json",
+          "regular_non_symlink": true,
+          "sha256": "feea73f700a43306e12a511e9c3093b20e348c53f6b8514251648633a0ed7b9d"
+        },
+        {
+          "bytes": 1251,
+          "index": 4,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-trace-measurement.json",
+          "regular_non_symlink": true,
+          "sha256": "79aac0ac0ccb65f11917f2a53d588e867b5e64a0468d4406cb516c81e69ab418"
+        },
+        {
+          "bytes": 744,
+          "index": 5,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-sampler-lifecycle.json",
+          "regular_non_symlink": true,
+          "sha256": "b338c510b4c4304c4c94b0c6b65f229da66ea4c4c6dc4ba98ced305976b7a754"
+        },
+        {
+          "bytes": 1696,
+          "index": 6,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-validation.md",
+          "regular_non_symlink": true,
+          "sha256": "28f043788d166e246f94c44ff200ab9a1f4131b11daa02e88fb8d83e24bd9793"
+        },
+        {
+          "bytes": 1933,
+          "index": 7,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-handoff.md",
+          "regular_non_symlink": true,
+          "sha256": "d02fa6f628b3913ca5956b1075f407bbe0ddf2668831343b4887add5a17cde97"
+        },
+        {
+          "bytes": 4590,
+          "index": 8,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-parent-admitted-1121-progress.json",
+          "regular_non_symlink": true,
+          "sha256": "a7b559cb30ceba394f5932774481dfca6f97192b79eeb8c539d88020fe412d4d"
+        }
+      ],
+      "path": "/home/user/timeline-hub/hub/design/app-D141cc-parent-terminal-publication-1130.json",
+      "sha256": "0825fdad333871a350e65b87fa4b0342d1c3028515e8fe3483a31de548f4c0bb",
+      "status": "SERVICE_PASS_PENDING_CUSTODY"
+    }
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "43c0921cecefcdc5b07e18746dd838c183f52c4507f6a3751f11b67dbaa257f3",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "rendered_sha256": "b698ebde33db4f78944fba3cff202398dfd22e8d6ef39c4c41b4534b7b49bbd3"
+  },
+  "sampler": {
+    "exit_code": 0,
+    "first_action_of_write_mode": true,
+    "gap_disclosure": "This private sampler began with --write after worker inspection; parent acceptance relies on the published D141cc evidence and retains its first-tool custody gap.",
+    "interval_seconds": 5,
+    "last_available_bytes": 5599424512,
+    "last_sample_at": "2026-10-26T11:49:48.006654+00:00",
+    "pid": 8,
+    "reaped": true,
+    "samples": 2,
+    "schema": "d141gg-private-sampler-v1",
+    "started_at": "2026-10-26T11:49:42.981506+00:00",
+    "status": "completed",
+    "stop_free_bytes": 4000000000,
+    "waited": true,
+    "worker_first_tool": false
+  },
+  "scope": "private documentary candidates only; no canonical write, product merge, build, service, diagnostic, REG0, or ZIP",
+  "status": "PASS_PRIVATE_D141GG_CANDIDATES"
+}
