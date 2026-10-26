@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   Activity, ChevronDown, Download, GripHorizontal, History, Lock, Maximize2, Mic, PanelsTopLeft, Play,
-  Plus, PlusCircle, Redo2, Send, Settings, SkipBack, Sparkles, Star, Undo2, Video, Volume2, Wrench, ZoomIn, ZoomOut,
+  Plus, PlusCircle, Redo2, Send, Settings, Sparkles, Star, Undo2, Video, Volume2, Wrench, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -29,8 +29,8 @@ const WORK_AREA_STYLE: CSSProperties = { gridColumn: '1 / span 2', marginInlineE
 const LABEL_WIDTH = 144;
 const RULER_TICKS = ['0:00.00', '0:05.00', '0:10.00', '0:15.00', '0:20.00', '0:25.00'];
 const PANE_CONTROL = 'flex items-center rounded-md border border-border/70 bg-card/90 text-muted-foreground';
-/** RemotionPreview's transport buttons, in the stage's own tokens. */
-const TRANSPORT = 'flex items-center justify-center rounded-full border border-[color:var(--video-editor-stage-control-border)] bg-[var(--video-editor-stage-control-bg)] text-[color:var(--video-editor-stage-fg)]';
+/** RemotionPreview's play disc, in the stage's own tokens. */
+const PLAY_DISC = 'flex items-center justify-center rounded-full bg-[var(--video-editor-stage-dim)] text-[color:var(--video-editor-stage-fg)]';
 
 function Icon({ children }: { children: ReactNode }) {
   return <span className="flex h-6 w-6 items-center justify-center">{children}</span>;
@@ -55,13 +55,11 @@ function Preview() {
   return (
     <div className="relative min-h-0 max-sm:aspect-[4/3]" style={{ gridColumn: 1, gridRow: 1 }}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95">
-        {/* The player letterboxes the 16:9 frame in the card, with the transport over its foot. */}
+        {/* The player letterboxes the 16:9 frame in the card; at rest its bar is play alone. */}
         <div className="relative flex min-h-0 flex-1 items-center justify-center [container-type:size]" style={VIDEO_EDITOR_THEME_VARS}>
           <div className="aspect-video w-[min(100cqw,calc(100cqh*16/9))] bg-[var(--video-editor-stage-bg)]" />
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 px-3 py-3" style={{ backgroundImage: 'linear-gradient(to top, var(--video-editor-stage-gradient-start), transparent)' }}>
-            <span className={`${TRANSPORT} h-8 w-8`}><SkipBack className="h-4 w-4" /></span>
-            <span className={`${TRANSPORT} h-10 w-10`}><Play className="h-4 w-4 fill-current" /></span>
-            <span className="rounded-full bg-background/70 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">1280x720</span>
+          <div className="absolute inset-x-0 bottom-0 flex justify-center px-2 pb-2">
+            <span className={`${PLAY_DISC} h-10 w-10`}><Play className="h-5 w-5 translate-x-px fill-current" strokeWidth={1.5} /></span>
           </div>
         </div>
       </div>

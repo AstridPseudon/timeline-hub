@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('previewPlaybackPreferences', () => {
   it('starts with the viewer defaults', () => {
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, rate: 1 });
   });
 
   it('persists volume and mute and reads them again after resetting module state', () => {
@@ -27,24 +27,24 @@ describe('previewPlaybackPreferences', () => {
     expect(JSON.parse(window.localStorage.getItem(PREVIEW_PLAYBACK_STORAGE_KEY)!)).toEqual({ volume: 0.4, muted: true });
 
     resetPreviewPlaybackPreferencesForTests();
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 0.4, muted: true, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 0.4, muted: true, rate: 1 });
   });
 
-  it('keeps loop and rate in memory without writing them to storage', () => {
-    setPreviewPlaybackPreferences({ loop: true, rate: 1.5 });
+  it('keeps rate in memory without writing it to storage', () => {
+    setPreviewPlaybackPreferences({ rate: 1.5 });
 
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, loop: true, rate: 1.5 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, rate: 1.5 });
     expect(window.localStorage.getItem(PREVIEW_PLAYBACK_STORAGE_KEY)).toBeNull();
   });
 
   it('falls back on corrupt JSON and clamps numeric volumes from storage', () => {
     window.localStorage.setItem(PREVIEW_PLAYBACK_STORAGE_KEY, '{bad json');
     resetPreviewPlaybackPreferencesForTests();
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, rate: 1 });
 
     window.localStorage.setItem(PREVIEW_PLAYBACK_STORAGE_KEY, JSON.stringify({ volume: 2, muted: true }));
     resetPreviewPlaybackPreferencesForTests();
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: true, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: true, rate: 1 });
 
     window.localStorage.setItem(PREVIEW_PLAYBACK_STORAGE_KEY, JSON.stringify({ volume: -0.25 }));
     resetPreviewPlaybackPreferencesForTests();
@@ -53,11 +53,11 @@ describe('previewPlaybackPreferences', () => {
 
   it('keeps reads and writes safe when localStorage throws', () => {
     vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => { throw new Error('storage blocked'); });
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 1, muted: false, rate: 1 });
 
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => { throw new Error('storage blocked'); });
     expect(() => setPreviewPlaybackPreferences({ volume: 0.35, muted: true })).not.toThrow();
-    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 0.35, muted: true, loop: false, rate: 1 });
+    expect(getPreviewPlaybackPreferences()).toEqual({ volume: 0.35, muted: true, rate: 1 });
   });
 
   it('toggles mute back to the previous volume and restores half volume from zero', () => {

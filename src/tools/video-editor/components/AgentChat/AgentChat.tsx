@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Loader2, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
@@ -7,6 +7,8 @@ import { isAcpUnavailable, isAgentSetupError } from '@/integrations/astrid/acpRo
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { downloadBlobAsFile } from '@/shared/runtime/browserDownloadRuntime.ts';
+import { conversationExportFilename, formatConversationExport, type ConversationExportTurn } from '@/shared/components/conversation/conversationExport.ts';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
 import { composerClearAttachments, composerRemoveAttachment } from '@/shared/state/selectionStore.ts';
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
@@ -43,6 +45,7 @@ import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type Ag
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatMenu, type AgentChatMenuHandle, type NewChatAgentModels } from './AgentChatMenu';
+import { NewChatMenu, type NewChatMenuHandle } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentSetupCard } from './AgentSetupCard';
@@ -55,6 +58,8 @@ import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraf
 import { AgentChatComposer } from './AgentChatComposer';
 import { TourChatPanel } from './TourChatPanel';
 import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
+import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
+import { presentEditorRequests } from '../../runtime/editorRequestPresentation';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -390,11 +395,13 @@ function AvailableAgentChatPanel({
   }, [sessions.data, projectChat.data?.sessions]);
   const [browseAgent, setBrowseAgent] = useState<LocalAgentId | null>(null);
   const chatMenuRef = useRef<AgentChatMenuHandle>(null);
-  // The action pane stays shown while either header popover is open.
-  const headerOverlaysRef = useRef({ menu: false, model: false });
-  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model', open: boolean) => {
+  const newChatMenuRef = useRef<NewChatMenuHandle>(null);
+  // The action pane stays shown while any header popover is open.
+  const headerOverlaysRef = useRef({ menu: false, model: false, newChat: false });
+  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model' | 'newChat', open: boolean) => {
     headerOverlaysRef.current[overlay] = open;
-    onSessionSelectorOpenChange?.(headerOverlaysRef.current.menu || headerOverlaysRef.current.model);
+    const overlays = headerOverlaysRef.current;
+    onSessionSelectorOpenChange?.(overlays.menu || overlays.model || overlays.newChat);
   }, [onSessionSelectorOpenChange]);
   const agentCanBrowse = useMemo(() => ({ hermes: Boolean(localAgents.data?.agents.find(agent => agent.id === 'hermes')?.models.length) }), [localAgents.data]);
   const newChatModels = useMemo<NewChatAgentModels | null>(() => {
@@ -576,6 +583,16 @@ function AvailableAgentChatPanel({
   const isCancelled = activeStatus === 'cancelled';
   const isProcessing = activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active);
   const showKillSwitch = !isFollower && (activeStatus === 'processing' || activeStatus === 'continue' || Boolean(sessionControl?.active));
+  /** A saved row awaiting Send now remains visible after a failed attempt, even if its local turn was recorded. */
+  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
+    && optimisticMessage?.id !== item.id
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
+  const stopAgent = useCallback(() => {
+    setQueue([]);
+    setPausedQueueHeadId(null);
+    setOptimisticMessage(null);
+    cancelSession.mutate();
+  }, [cancelSession]);
   const activeAgentRow = localAgents.data?.agents.find(agent => agent.id === chatAgent);
   const agentBroken = Boolean(activeSessionId && localAgents.data && !isAgentUsable(activeAgentRow));
   const composerLockedRef = useRef(false);
@@ -589,6 +606,12 @@ function AvailableAgentChatPanel({
   // composer look busy. Only a row that will be sent when the running turn ends is a real queue.
   const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(item.id));
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
+  const transcriptRequestIds = useMemo(() => new Set(
+    activeSessionData?.turns.flatMap(turn => turn.role === 'user' && turn.request_id ? [turn.request_id] : []) ?? [],
+  ), [activeSessionData?.turns]);
+  const displayedQueue = activeQueue.filter(item => notSent(item) || (item.id !== optimisticMessage?.id
+    && !transcriptRequestIds.has(item.id)
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId)));
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
   const idlePlaceholder = !CHAT_VOICE_ENABLED
@@ -1031,11 +1054,6 @@ function AvailableAgentChatPanel({
     })();
   }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, agentBroken, setupRequest, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
-  /** A saved row that is waiting for the person: not the one in flight, and never auto-sent. */
-  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
-    && optimisticMessage?.id !== item.id
-    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
-
   const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string, isCurrent?: () => boolean): Promise<string | null> => {
     if (!projectId) return null;
     if (!manualCreateOperationIdRef.current || manualCreateOperationIdRef.current.agent !== agent || manualCreateOperationIdRef.current.model !== model) {
@@ -1110,6 +1128,38 @@ function AvailableAgentChatPanel({
   // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
   // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
   const agentWorking = isProcessing || sendMessage.isPending || hasQueuedMessages;
+  const activeSessionOption = sessionOptions.find(session => session.id === activeSessionId);
+  const activeChatTitle = activeSessionOption?.title?.trim() || `Chat ${activeSessionOption?.chatNumber ?? Math.max(sessionOptions.length, 1)}`;
+  const downloadChat = () => {
+    if (!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length) return;
+    const capturedDate = new Date();
+    const capturedAt = capturedDate.toISOString();
+    const turns: ConversationExportTurn[] = activeSessionData.turns.map(turn => {
+      if (turn.role !== 'assistant') return { turn };
+      const presented = presentEditorRequests(turn.content, turn.timestamp, activeSessionData.recordedEditorResults);
+      return { turn: { ...turn, content: presented.prose }, editorActions: presented.pairs };
+    });
+    if (optimisticMessage && optimisticMessage.sessionId === activeSessionId && !optimisticTurnAlreadyMaterialized) {
+      turns.push({ turn: {
+        role: 'user', content: optimisticMessage.text, timestamp: new Date(optimisticMessage.sentAtMs).toISOString(),
+        attachments: optimisticMessage.attachments,
+      } });
+    }
+    if (activeSessionData.assistantDraft?.trim()) {
+      turns.push({ turn: { role: 'assistant', content: activeSessionData.assistantDraft, timestamp: capturedAt }, inProgress: true });
+    }
+    const markdown = formatConversationExport({
+      title: activeChatTitle,
+      agent: agentNames[chatAgent],
+      model: chatModelName ?? chatModelId,
+      thinkingLevel: chatThoughtLevel?.currentValue,
+      sessionId: activeSessionId,
+      capturedAt,
+      inProgress: isProcessing,
+      turns,
+    });
+    downloadBlobAsFile(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }), conversationExportFilename(activeChatTitle, capturedDate));
+  };
 
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
@@ -1193,26 +1243,44 @@ function AvailableAgentChatPanel({
           />
         </div>
         <div className="flex h-7 shrink-0 items-center gap-1 self-start">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={downloadChat}
+            disabled={!activeSessionId || activeSessionData?.id !== activeSessionId || !activeSessionData.turns.length}
+            title="Download this chat"
+            aria-label="Download this chat"
+          >
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+          <NewChatMenu
+            ref={newChatMenuRef}
+            current={activeSessionId && !startingAgent ? {
+              agent: chatAgent,
+              model: chatModelId ?? undefined,
+              modelName: chatModelName,
+              thoughtLevel: chatThoughtLevel?.options.length && !chatThoughtLevelFixed ? chatThoughtLevel.currentValue : undefined,
+            } : null}
+            defaultAgent={defaultAgent}
+            agents={localAgents.data?.agents}
+            agentModelNames={agentModelNames}
+            agentCanBrowse={agentCanBrowse}
+            agentsLoading={localAgents.isLoading}
+            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
+            disabled={startingAgent !== null || !hasProject}
+            newChatDisabled={createNewSession.isPending}
+            onBrowseAgent={setBrowseAgent}
+            agentModels={newChatModels}
+            onSetupAgent={agent => { setSetupDone(null); setSetupRequest({ agent, sessionId: activeSessionId }); }}
+            onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
+            onOpenChange={(open) => {
+              if (open) void localAgents.refetch();
+              setHeaderOverlayOpen('newChat', open);
+            }}
+          />
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
-          {showKillSwitch && (
-            <Button
-              type="button"
-              size="icon"
-              variant="destructive"
-              className="h-7 w-7"
-              onClick={() => {
-                setQueue([]);
-                setPausedQueueHeadId(null);
-                setOptimisticMessage(null);
-                cancelSession.mutate();
-              }}
-              disabled={cancelSession.isPending}
-              title="Stop agent"
-              aria-label="Stop agent"
-            >
-              <Square className="h-3.5 w-3.5" />
-            </Button>
-          )}
         </div>
       </div>
       {startFailure && !showSetupCard && !isAgentSetupError(startFailure.error) && (
@@ -1249,7 +1317,7 @@ function AvailableAgentChatPanel({
         </div>
       )}
       {/* Messages */}
-      <div ref={scrollContainerRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div ref={scrollContainerRef} onScroll={onScroll} {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.chatTranscript }} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {isFollower && (
           // Stays in view while scrolling, just under the header that names the chat's agent.
           <div role="status" className="sticky top-0 z-10 mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-border/70 bg-card px-3 py-2 text-xs text-muted-foreground shadow-sm">
@@ -1394,7 +1462,7 @@ function AvailableAgentChatPanel({
 
       {/* Input bar */}
       <div className="border-t border-border/70 px-3 py-3">
-        {activeQueue.length > 0 && (
+        {displayedQueue.length > 0 && (
           <div className="mb-2 flex flex-col gap-2">
             {draftSaveError && (
               <p className="text-[11px] text-muted-foreground">
@@ -1402,14 +1470,13 @@ function AvailableAgentChatPanel({
                 <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
               </p>
             )}
-            {activeQueue.map((item, index) => (
+            {displayedQueue.map((item, index) => (
               <div
                 key={item.id}
                 className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs"
               >
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
-                  {sessionControl?.active && item.id === sessionControl.activeRequestId && <div className="text-muted-foreground">{isFollower ? 'In progress in another tab' : 'In progress'}</div>}
                   {notSent(item) && <div className="text-muted-foreground">Not sent{item.id === pausedQueueHeadId && !isFollower ? '. Delivery not confirmed: Send now checks saved history first, and may send this message again.' : ''}</div>}
                 </div>
                 {item.attachments.length > 0 && (
@@ -1448,7 +1515,7 @@ function AvailableAgentChatPanel({
                   size="icon"
                   variant="ghost"
                   className="h-6 w-6 shrink-0"
-                  disabled={isFollower || index === activeQueue.length - 1}
+                  disabled={isFollower || index === displayedQueue.length - 1}
                   onClick={() => moveQueuedMessageDown(queue.indexOf(item))}
                   title="Move queued message down"
                 >
@@ -1587,6 +1654,8 @@ function AvailableAgentChatPanel({
           } : undefined}
           onSend={() => void handleSend()}
           sendDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+          onStop={showKillSwitch ? stopAgent : undefined}
+          stopDisabled={cancelSession.isPending}
         />
       </div>
 
