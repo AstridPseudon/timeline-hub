@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T04:22:02Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 1m -->
-# agent board, 2026-10-26T04:21Z
+<!-- agent | 2026-10-26T04:26:02Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 0m -->
+# agent board, 2026-10-26T04:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | Luna and Sol | Freeze1 source review0015 | merged | Final2355 and source0015 | Freeze1 source custody PASS; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP; Bun200 PASS. Current REG verdict pending join. | 28e56cacb4 |
@@ -18,8 +18,8 @@
 | D141i cut | Retain one genuine cut measurement | Luna and HARD Sol | Command0318 PASS | review | Controller0321; actual26496 terminal | Declared9561:9388 concrete plus173 unnamed PASS;204 FAIL196 ERROR. Clean sources, monitor0. Original custody finding retained. | Frozen28e / 6a |
 | D141k join | Compare cut and pristine per ID | Luna | D141p Sol first; D141q disk | ready | Prepared join0349 | Wait behind Sol below4.6GB. Exact candidates by cluster and env_sensitive_undecidable y/n plus reason required. | Pending |
 | D141 REG author | Fix only a proved regression | Luna; Sol after failure | Actual D141k candidate | gated:D141k-candidates | Reserved agt-F-D141k-REG-fix-next | No speculative author. Dispatch only when actual join identifies finite candidate. | None |
-| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | MAIN D141p and D141q | doing | agt-U2-D141m-upstream-merge-sol-0408 | Sanctioned merge applied04:10;10 conflicts. Source checks complete; media ruling pending. Sol5s trace and4GB stop active. | Draft |
-| D141m media | Preserve both alias metadata behaviors | HARD Sol | MAIN semantic ruling | blocked:orchestrator | Same Sol0408 | Existing alias resolution versus native two edit predicate. Both retained; proposed authority discriminator unqualified. | Draft |
+| D141l U2 | Merge sandbox custody and installer changes | HARD Sol | MAIN D141p D141q D141r | doing | Sol0408 finalizing | All source checks complete; harness must stage and commit after worker exit. Manager sent finalization clarification. | Pending harness |
+| D141m media | Preserve both alias metadata behaviors | HARD Sol | MAIN D141r recorded | review | Same Sol0408; independent review next | Existing generationId plus variantId pair only; unmarked aliases use upstream conversion. No new authority input; both assertions retained. | Draft source ready |
 | D141l review | Review complete freeze2 source union | Luna | Actual Sol candidate and normal floor | gated:D141l-source | Brief prepared; no reviewer yet | Whole merge, both test families, e1c installer, canonical15, exact baseline diagnostics and proof scope required. | Pending |
 | D141m proof | Compare new source with matching pristine | Luna and service | Reviewed U2 and actual D141k join | gated:D141m-U2 | Sol0408 scope; future proof owner | Author maps213 test files. Sharedconftest touched: full condition true. D89d wrapper qualification owed; no Farm fallback. | Pending |
 | App U4p input | Supply qualified freeze2 producer | Agent source owner | Reviewed normal Agent home | blocked:agent | Sol0408 and later independent reviewer | App8f278 sole finding is Agent installer e1c dependency. Send actual head/tree/ref/parents/receipts to App and lead together. | Pending |
@@ -43,7 +43,7 @@ D141k: join against exact pristine table7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b
 
 Sol0408: dispatched under ONE D141q4.5GB source exception; own preparation does not re-admit. Lead04:09:21 remote read/fetch confirms64197afa297f86f1e738238d5e80aff6d33e303a/tree6c0488b3efdfa47479b0ad1b7bd20608383be26e, e1c751def ancestor, no drift. Sanctioned bin/merge-forward applied04:10; actual10 conflicts. Source progress04:15:55 reports AST/markers/diff/artifact/vendor15 PASS; Ruff2143 and mypy1902 match baseline counts only, exact diagnostics need independent review. Scope213 testfiles; sharedconftest touch and P4 direct CLI import trigger broader proof subject independent confirmation. No behavioral body. [Author brief](briefs/agt-U2-D141m-upstream-merge-sol-0408.md).
 
-Media ambiguity: upstream existingalias resolution expectation conflicts with native WC6 exacttwoedits/no incidentalregistrypatches. Both assertions stay. No proposed _runtime_document discriminator authorized. [Decision request](../../escalations/agent-20261026T041425Z-D141m-media-semantic-merge.md). Harness bin/dispatch48-51 already stages and commits after worker exits; no manager Gitindexwrite. Independent review verifies final index and parents after harnesscommit.
+Media decision D141r: upstream existingalias metadata must survive, native twoedits only via existing public authenticated discriminator; fallback upstream unconditionally with ownfailurevisible. Author uses existing generationId+variantId pair, no _runtime_document/cache/hook/interface. Both assertions stay; sourcechoice requires independentcheck. [Decision request](../../escalations/agent-20261026T041425Z-D141m-media-semantic-merge.md). Harness bin/dispatch48-51 already stages and commits after worker exits; no manager Gitindexwrite. Independent review verifies final index and parents after harnesscommit.
 
 D141n wrapper seam was reported before any source author: current0309 command hardcodes4.7GB and the exact old0249 receipt/brief/controller/service plus full22 roots and old tuple. It cannot bind a new delta or D89d floor unchanged. Lead received report; no wrapper writer before join. Floor max4.6GB versus4GB plus measured26496 peak growth plus0.2GB; single dispatch check, continuous4GB/5s, one heavy. Farm is not fallback; short disk means wait. KEEP packing item3 withdrawn; D141o hubrepack remains owner morning decision.
 
@@ -53,12 +53,15 @@ H6 receiving04:18: App8f278/d822 has only qualifiedAgentproducer finding; sameSo
 
 Later receiving: App peer0351/0404 requests exact qualified freeze2 Agent head/tree, normalref/parents/tool inputs and receipts; Sol0408 plus one independent reviewer own simultaneous App and lead handback after normalhome. No guessed futurepin, manual manifest or extra producer author. Historical originalTrue redo, graphchildbirth alias, fork18 ABI1 history, transcript authority and missing word/native records remain UNKNOWN; D23/D14 deferred. D69 cut/Windows/wheel/installedrender unqualified; D123 held; D127 missing leaf no profiling. No new investigation under D141.
 
-Blockers: MAIN semantic merge — decide media alias resolution scope in decision041425; Sol0408 retains both test predicates and awaits ruling.
 Blockers: Agent disk — fresh4421128192 bytes; Sol alone under D141q. No join alongside below4.6GB; no eligible ended nonKEEP cleanup target.
 Blockers: SWAP safety — existing Runtime1537 automatic classifier refusal holds recovery, qualification and rollback; no alternate route.
 
-Next ready: media ruling -> Sol completion -> independent review -> normal merge -> simultaneous App and lead freeze2 receipt. Join0349 follows or runs only when admitted; no speculative REG author. live1 / cap1; ready-undispatched1 join held by D141q. No heavy body.
+Next ready: Sol final answer and harness commit -> independent review -> normal merge -> simultaneous App and lead freeze2 receipt. Join0349 follows when admitted. live1 / cap1; ready-undispatched1 join held by D141q. No heavy body.
 
 Disk: compact0 completed0 scratchdirs/0testdirs/0logs; sweep3 removed0. Fresh whole worktree static census found no ended clean nonKEEP candidate. Prior0309/0253 KEEP refusals concern already absent worktrees; evidence markers untouched, no retry. DirtyG2, KEEP0816, currentcutpins, d22/f1012, child3e163 and all rawcustody remain protected. No hand deletion, Store operation or hubrepack. Sol5s trace continuously above4GB.
 
-Inbox consumed through2066532 bytes. Manager writes only board, briefs, peer decisions and exact SAFE byte publications. No product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+Inbox consumed through2067986 bytes. Manager writes only board, briefs, peer decisions and exact SAFE byte publications. No product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+
+Current04:22: D141r media decision received and applied, blocker CLEARED. Sourceauthor04:21:41 finalchecks complete incl finalmypy1902 baseline; allpackets/commit-msg ready. Only operational finalizationwait: dispatchedharness already gitaddA/commits afterworkerexit, managersneverstage. [Mechanics clarification](../../design/peer-agent-to-agent-lead-20261026T042319Z-D141m-harness-finalize-now.md). Source traceabove4GB, freshfree4418883584 bytes.
+
+Finalization clarification04:25 delivered to actual workerbrief and matchingmanagerbrief, preserving original text plus timestamped mechanicnote. PostharnessUempty check cannot be satisfied beforeworkerexit; currentmarkerfreechecks complete. Worker mustcreateDONE/finalreport; existingdispatch stages/commits. Lead04:24 has no liveworkerchannel; ifhungpastthreshold, exactPID2348 goesleadbefore anykill. No stop or kill issued.
