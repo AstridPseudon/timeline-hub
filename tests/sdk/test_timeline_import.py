@@ -91,13 +91,31 @@ def test_import_skips_only_target_project_managed_objects(tmp_path, monkeypatch)
     uploads = []
     prepared = {"timeline_id": "fresh", "name": "Imported", "publication": {"dependency_manifest": {"media": [{"media_id": "sha256:" + digest}]}}, "text_bindings": [], "differences": {"missing_effects": [], "different_effects": []}}
     client, _uploads, _commits, _ = _client(
-        objects=[{"object_id": "sha256:" + digest}], uploads=uploads,
+        objects=[{"object_id": "sha256:" + digest, "digest": digest, "relation": "managed"}], uploads=uploads,
     )
     monkeypatch.setattr(timeline_import, "prepare_import", lambda *args, **kwargs: prepared)
     result = timeline_import.import_timeline(client, path, "target")
     assert uploads == []
     assert result["media"]["uploaded"] == 0
     assert result["media"]["uploaded_bytes"] == 0
+
+
+def test_import_does_not_skip_nonmanaged_or_relationless_project_object(tmp_path, monkeypatch):
+    path = tmp_path / "referenced-only.astrid"
+    _manifest, digest = _archive(path)
+    prepared = {"timeline_id": "fresh", "name": "Imported", "publication": {"dependency_manifest": {"media": [{"media_id": "sha256:" + digest}]}}, "text_bindings": [], "differences": {"missing_effects": [], "different_effects": []}}
+    uploads = []
+    client, _uploads, _commits, _ = _client(
+        objects=[
+            {"object_id": "sha256:" + digest, "digest": digest, "relation": "promoted"},
+            {"object_id": "sha256:" + digest, "digest": digest},
+        ],
+        uploads=uploads,
+    )
+    monkeypatch.setattr(timeline_import, "prepare_import", lambda *args, **kwargs: prepared)
+    result = timeline_import.import_timeline(client, path, "target")
+    assert len(uploads) == 1
+    assert result["media"]["uploaded"] == 1
 
 
 def test_import_uses_project_object_reference_for_large_commit_body(tmp_path, monkeypatch):

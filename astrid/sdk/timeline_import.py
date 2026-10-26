@@ -176,8 +176,18 @@ def _existing_objects(transport: Any, project_id: str) -> set[str]:
     rows = paged_rows(transport.list_project_objects, project_id, limit=100)
     if rows is None:
         raise ValueError("Runtime could not list target project objects")
-    return {str(row.get("digest") or row.get("object_id") or "").removeprefix("sha256:")
-            for row in rows if isinstance(row, Mapping)}
+    existing: set[str] = set()
+    for raw in rows:
+        row = _plain(raw)
+        # A project may reference an object for other reasons (for example as
+        # a promoted output); only a managed relation satisfies import's
+        # commit dependency check. Missing relation metadata is not sufficient.
+        if not isinstance(row, Mapping) or row.get("relation") != "managed":
+            continue
+        digest = row.get("digest") or row.get("object_id")
+        if isinstance(digest, str) and digest:
+            existing.add(digest.removeprefix("sha256:"))
+    return existing
 
 
 def _derived_key(key: str, operation: str, identity: str) -> str:
