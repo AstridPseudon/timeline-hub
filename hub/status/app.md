@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T00:42:12Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
-# app board, 2026-10-26T00:39Z
+<!-- app | 2026-10-26T00:46:49Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+# app board, 2026-10-26T00:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Historical source proofs; cut source below | 263b728f0140 |
@@ -13,13 +13,13 @@
 | D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime notes owner | blocked:runtime | Notes 2354; review 0003; peer 0006 | [Reviewed paragraphs](../../design/app-D141-known-gap-notes-return-2354-known-gaps.md); byte published | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full 2354; review 0003 | Exact recipes qualified; final tuple and MAIN GO required | Evidence only |
 | D141 journeys prep | Prepare P1 P2 six and P3 | Luna and independent Luna | None | merged | Journey 2346; review 0003 | Existing D66 and D73 routes qualified as preparation only | Evidence only |
-| D141 full | Run cut App full suite | Luna and test service | All cut heads and MAIN GO | gated:D141-GO | Existing full service; controller next | NOTRUN on cut; heavy admission 5.2 GB and one body at a time | Cut pending |
-| D141 pristine | Run exact frozen full comparator | Luna and test service | Final heads and MAIN GO | gated:D141-GO | Pristine receiver 0007 complete | Exact 7ca source and tree PASS; unchanged full suite body owed | 7ca61bb3280b |
-| D141 P1 | Qualify original dependent chain | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe 2346 | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
-| D141 P2 six | Qualify six original passing gestures | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe 2346 | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
-| D141 P3 | Qualify original Gate 5 journey | Luna and test service | Final tuple and MAIN GO | gated:D141-GO | Existing recipe 2346 | Original full tail preserved; NOTRUN on cut | Cut pending |
-| D141 P4 | Receive CLI Python sheet cut proof | Agent and service | Same final tuple and MAIN GO | gated:D141-GO | Agent existing prep 0026 | App owns cumulative verdict; no duplicate App controller | Cut pending |
-| D141 P5 | Receive Runtime cut proof | Runtime and service | Same final tuple and MAIN GO | gated:D141-GO | Runtime source return 0018 | App owns cumulative verdict; no duplicate App controller | Cut pending |
+| D141 full | Run cut App full suite | Luna and test service | MAIN GO D141c | doing | app-F-D141-full-pristine-controller-0043 | Actual app-full-1026004326-12174 running; admission 5.433 GB; terminal pending | 867cb2737af1 |
+| D141 pristine | Run exact frozen full comparator | Luna and test service | Full controller serial slot | ready | app-F-D141-full-pristine-controller-0043 | Existing receiver 0007 exact 7ca; follows full without concurrent body | 7ca61bb3280b |
+| D141 P1 | Qualify original dependent chain | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
+| D141 P2 six | Qualify six original passing gestures | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
+| D141 P3 | Qualify original Gate 5 journey | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Original full tail preserved; NOTRUN on cut | Cut pending |
+| D141 P4 | Receive CLI Python sheet cut proof | Agent and service | MAIN GO D141c | ready | Agent existing prep 0026 | App owns cumulative verdict; no duplicate App controller | Cut pending |
+| D141 P5 | Receive Runtime cut proof | Runtime and service | MAIN GO D141c | ready | Runtime source return 0018 | App owns cumulative verdict; no duplicate App controller | Cut pending |
 | D141 core | Receive ship core and REG comparison | Farm and Runtime | Final tuple and complete recipe | blocked:farm | Farm core; Runtime recipe reviewer 0021 | No child or core receipt on current Farm board; no App duplicate | Cut pending |
 | D141 SWAP | Retain documented known gap | Service and Luna | D130 safety disposition | gated:safety-D130 | Actual 3250; refusal 1537 | Original NO GO retained; no recovery retry or alternative qualification | Historical tuple |
 | D141 Element | Retain documented known gap | Service and Luna | D141 stop | gated:D141-stop | Actual 32016 and 15200 | Original 5 s predicate FAIL; Runtime HTTP 200 boundary; caller outcome UNKNOWN | Historical tuples |
@@ -30,16 +30,16 @@
 | D74 old graph | Preserve refused orphan graph | Lead kit | Guarded route disposition | gated:disk-emergency | Existing lead disposition | Exact 1.107 GB graph retained; no denied route retry or invented metadata | No source edits |
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer 1944 | Prior archive qualified; DIRTY recycle refusal retained; targets untouched | No source edits |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim; upstream tips fixed | Cut pending |
+| D74 old source pins | Release two superseded clean source pins | Manager and lead | Host process use audit | blocked:app-lead | Peer 0045; static receipt 0045 | Only Agent 070dfc and Runtime ab1e; raw and all branches retained | No source edits |
 
 Integration: FROZEN App 867cb2737af1b46dc608c7cd37c349e920fe9422 / tree 2b44a46ca51d880c6a00da4c19aa8629b55eb7dd. Normal merge receipt queue/done/merge-app-U4p-D141-Agent-final-vendor-0022. Whole integrated tree equals final reviewed 9ada. Frozen upstream 7ca61bb3280beca21d98a854af266a382f7ce5df ancestor PASS. Final Agent 28e56 and Runtime 6a011 normal tool adoption complete. Source reviews 0017 and 0029 PASS; exact immutable identity correction 0033 PASS. [Full final home receipt](../../design/app-D141-final-source-home-0039.json). No full, pristine, gate or REG0 credit from source custody.
 
-D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required cut proof: P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures remain unchanged, visible and listed. One independent review for source and notes; unchanged reruns require receipts only. Bodies wait all final heads and recorded MAIN GO.
+D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required cut proof: P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures remain unchanged, visible and listed. One independent review for source and notes; unchanged reruns require receipts only. MAIN GO D141c recorded in INBOX at 00:42Z. Bodies now run serially on the exact final heads; original full tails unchanged.
 
-Blockers: Final cut GO — MAIN now has all three final heads. App final 867cb2737af1 is frozen and reported by peer 0039. No full, comparator or journey body before recorded GO.
 Blockers: Farm core — Runtime owns complete receiving recipe; Farm owns child, import check, preflight and core. Runtime review 0021 active; no App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery and related qualification. Existing Runtime escalation owns disposition; no retry.
-Next ready: Recorded MAIN GO -> exact final tuple controllers for App full, pristine, P1, P2 six and P3; receive P4/P5 from owners. One heavy body at a time.
-live 0 / cap 6; ready-undispatched 0. Final source is normal HOME and FROZEN; prepared proof controllers are MAIN GO held. No heavy body.
+Next ready: Full and pristine controller 0043 active; serial heavy slot then P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
+live 1 / cap 1 heavy; source cap 6; ready-undispatched 1 controller waiting on the occupied heavy slot. Full/pristine 0043 dispatched immediately on MAIN GO; journeys next. No independent source work ready.
 
 H6: Runtime 00:21:56, Agent 00:26 and Farm 00:10 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes Sol 0018 owns installation of App paragraphs; clear this wait on its receipt. Farm has no new body. No decision escalation owed.
 
@@ -61,4 +61,8 @@ Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/fil
 
 Pass 2026-10-26T00:37Z: Resumed from prior status. Actual 0033 is running with progress, not dead. Read only source identity correction remains sole ready source item. Approved sweep 3 and compact scratch terminal: removed 0 temporary dirs, packed 0 scratch or test dirs, gzipped 0 logs; all raw KEEP unchanged. No eligible merged non KEEP App worktree found for recycle. Final source and functional checks are qualified; final merge 0022 normal HOME/FROZEN867cb reported by peers0039. Manager controller briefs prepared but undispatched until MAIN GO. No proof body started.
 
-INBOX consumed through 2589185 bytes.
+INBOX consumed through 2595543 bytes.
+
+Current pass 2026-10-26T00:43Z: MAIN GO D141c consumed. Controller 0043 queued with exact final head and admission 5433016320 bytes; D89c checked once. REG comparison must rerun any pristine environment failure in the same environment kind before classification. No full-suite result yet.
+
+Capacity pass 00:45Z: Asked host audit ONLY superseded Agent070dfc and Runtimeab1e source pins; both static clean/noncurrent/no live plans or lease. Historical registrations disclosed. No source KEEP release or recycle before CLEAR and repeated guards. Current full body admitted at5.433GB; D89c no prep recheck.
