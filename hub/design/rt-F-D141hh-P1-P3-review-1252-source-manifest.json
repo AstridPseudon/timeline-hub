@@ -1,0 +1,82 @@
+{
+  "verdict": "FAIL",
+  "review_scope": "Protected documentary review of private D141hh P1/P3 successors; no source or canonical edit.",
+  "author_source_publication": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-source-publication-1249.json",
+    "bytes": 4841,
+    "sha256": "d7e9794c15af7949bab9335b2e5adf1b91e09b656cf258d174a2cd15e8d1a41b",
+    "status": "AUTHOR_TERMINAL_UNREVIEWED"
+  },
+  "four_publications": [
+    {"name":"p1_terminal","file":"app-D141hh-p1-terminal-publication-1218.json","bytes":3812,"sha256":"37dc94953e61ecea458864795a124992296ef483c399adb82e6f17df074b278f","declared_match":true},
+    {"name":"p1_custody","file":"app-D141hh-p1-custody-publication-1223.json","bytes":4078,"sha256":"489148bf489d4cc9b2fafe9f70372a961f7dc33aa0aa527805f8241d94eedd1d","declared_match":true},
+    {"name":"p3_terminal","file":"app-D141hh-p3-terminal-publication-1232.json","bytes":3963,"sha256":"d010df5ca02ffde7967e731228c831a2af1cba7c75049e7393bf4a8e95142888","declared_match":true},
+    {"name":"p3_custody","file":"app-D141hh-p3-custody-publication-1231.json","bytes":4072,"sha256":"bd26ce90d90f2699f26449479e3db2daf3a236d619c6c5a47b998232b5659483","declared_match":true}
+  ],
+  "originals": {
+    "count_declared": 32,
+    "count_actual": 32,
+    "unique_basenames": 32,
+    "all_declared_bytes_and_sha256_match": true,
+    "all_json_originals_parse": true,
+    "files": [
+      ["app-P-D141hh-p1-custody-review-1218-report.md",705,"b7d41c004954c8c55a79e5a3ab961056ce6d403d9fe472e5855bf8933ebcaaaf"],
+      ["app-P-D141hh-p1-custody-review-1218-review.json",5988,"210455eb0b84804d05ab8c736a3d3c8ccc49eeb76fee7c86241a58e4cc737243"],
+      ["app-P-D141hh-p1-custody-review-1218-findings.md",1401,"fd537a54eb40a5bf5c8b5ae842a59095e7a52bba269fc8290bb54e938292d9c6"],
+      ["app-P-D141hh-p1-custody-review-1218-source-manifest.json",3006,"cfc736f91d71a97e1649b305853352576f56745f96c85b79ebe822f87abe08df"],
+      ["app-P-D141hh-p1-custody-review-1218-validation.md",2167,"e4e84c25394f6333d3a10e8f081c7c0be29d2d4c57ce88de469bdbd6003e3a8b"],
+      ["app-P-D141hh-p1-custody-review-1218-handoff.md",672,"f7a2f6cbe88aac48ee98de0d7e7a4f4fe082e1b33660fe9c08b427f47057e795"],
+      ["app-P-D141hh-p1-custody-review-1218-disk-trace.txt",675,"1b1bf6c48951309d50d4446e02f41abea7ed75c27cb0c2f358c0ecb2663aa67c"],
+      ["app-P-D141hh-p1-custody-review-1218-sampler-lifecycle.json",766,"f7d741e826c0ffcbb45978ade6b8a3e60f05059f3a5fd7a46f3526e2821dbeb8"],
+      ["app-P-D141cc-p1-controller-next-controller-receipt.json",19067,"2e41d89ca52a6f1851ff1229b72617ae5c056df5b5cb1016a36df45007e5d47a"],
+      ["app-P-D141cc-p1-controller-next-results.json",8147,"596c8783eef1b29a1f7656a2474934792542787739815b92c6ecd8dc9b315690"],
+      ["app-P-D141cc-p1-controller-next-source-manifest.json",4867,"2eb3b3e437e0279833feabaefceff4bcdbdddf923e1d03f0310a295cef35d96e"],
+      ["app-P-D141cc-p1-controller-next-trace-measurement.json",786,"69d913b3277665b89a0d99de000da6b49fc59d06cd1f524c51aeada8cd8ec07b"],
+      ["app-P-D141cc-p1-controller-next-sampler-lifecycle.json",644,"535a2d23815eba12a148c57b4b047af7aa2f0bb56357882da71d21e8195d3350"],
+      ["app-P-D141cc-p1-controller-next-progress.json",9906,"f9bf838c2149d07764886bf9f4fca10f1f015a4c0bc507e92c2944270e94b5b0"],
+      ["app-P-D141cc-p1-controller-next-validation.md",2049,"416229270bc17b97dceb3f8e8be448d571fe9af1e785de5b0496ccd9837d1898"],
+      ["app-P-D141cc-p1-controller-next-handoff.md",1142,"ce573b3d119cf216e679290c1b0713d1f5a56d8f0754749bad77f68fd6a47cf0"],
+      ["app-P-D141hh-p3-custody-review-1226-report.md",885,"3648506851d658a3d674c509291a6e9c77da320501380a479cd958c3511b9eb6"],
+      ["app-P-D141hh-p3-custody-review-1226-review.json",4653,"32b9119c89cf56a8c7d0e0ca040949f7220ca5c098eba88b9a74ea3e26306b8f"],
+      ["app-P-D141hh-p3-custody-review-1226-findings.md",2012,"ab2cdb2aea709bb3f51176b8687609e35c48a449a47fb8ce0c78ecc380d44b4b"],
+      ["app-P-D141hh-p3-custody-review-1226-source-manifest.json",2997,"1a860af9b978f29b1cdc33c6415a5637560317cdb306e4a27b7b799c2132d35a"],
+      ["app-P-D141hh-p3-custody-review-1226-validation.md",2960,"fe7de94c852af823c16b0e89426b24eaaf8a318ab4a50ad9b5cbcdba90d5e187"],
+      ["app-P-D141hh-p3-custody-review-1226-handoff.md",1191,"c56e69c5e5c83ac9855d003de8336c826fd9575357f5c9eea19bfed0239afbf2"],
+      ["app-P-D141hh-p3-custody-review-1226-disk-trace.txt",2158,"7a2437c33ef0ba8017620151d35293d23cdf5390090bfc23cde72a458d9baf30"],
+      ["app-P-D141hh-p3-custody-review-1226-sampler-lifecycle.json",2324,"52f51619c2379f6f72f26592f96b28249e1970d7c3680c02193998101000c029"],
+      ["app-P-D141cc-p3-controller-next-controller-receipt.json",8017,"36950602b2cdc5c0854951977fa989d462132265837f95b0fc75ba5bb3ee275a"],
+      ["app-P-D141cc-p3-controller-next-results.json",14055,"4d90ef208f0fbe4658c69199ae204c3b341c30900c56a6a44292c72d38474fcd"],
+      ["app-P-D141cc-p3-controller-next-source-manifest.json",14141,"5af0cecd3025e7bbbaaf79c2871d5af374b8ec259256520626a0f22d8dd1bce0"],
+      ["app-P-D141cc-p3-controller-next-trace-measurement.json",6444,"41c2fd24276ad02e99fc938a2eec059a491e8dc23d6c1e2f67e06f15c80fe105"],
+      ["app-P-D141cc-p3-controller-next-sampler-lifecycle.json",725,"ce63b984f87b89cff1ab5db5c3ecb8a09fd97314f04a193f59927486e1812392"],
+      ["app-P-D141cc-p3-controller-next-validation.md",2345,"257636bdffffb7bc1fe9bfd3343b80bd3c24691e925adee56c652b35315315cc"],
+      ["app-P-D141cc-p3-controller-next-handoff.md",974,"096c7ae569c6e89c0ceb12a33f551b81b86af783bf974e1508f86ca6f1268182"],
+      ["app-P-D141cc-p3-controller-next-disk-trace.txt",13065,"dd9f0821d34991124dd9c2aa8759218055a22c65251ca899cfa3922e38df55c8"]
+    ]
+  },
+  "accepted_bases_and_candidates": {
+    "candidate-README.template.md": {"base_bytes":43978,"base_sha256":"715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071","candidate_bytes":47004,"candidate_sha256":"cd6f1fa7879abddbc160c69e5d3f9618282833e214d25dd4009b5f84c744a3f6","prefix_exact":true,"suffix_bytes":3026,"suffix_occurrences":1},
+    "candidate-gate-results.md": {"base_bytes":39916,"base_sha256":"d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d","candidate_bytes":43192,"candidate_sha256":"630050cdc83ecb713468f558b348fff48e1d1e053a14ba903e00d1ff21ba691a","prefix_exact":true,"suffix_bytes":3276,"suffix_occurrences":1},
+    "gate_numbered_ids":32,
+    "all_32_ids_conserved_in_immutable_prefix":true,
+    "balanced_fences_and_placeholders":true
+  },
+  "measured_tuple": {
+    "app":["82e9e13ddf1d7ec6c736521b2eb091dca9877598","6a6e49eb4461b5ca1a7fa1247653bc794f26d710"],
+    "agent":["ecdc242ed9b673f641759ecf029f95e89a2c6f92","d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"],
+    "runtime":["95d98f038320d5d46bd679ac000ab3e15825c935","78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+    "composition":["635f4de06fda22a85fc2e4cfc764d0153a4c9f40","5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "production_render_control": {
+    "function":"render_readme",
+    "function_only":true,
+    "caller_sha256":"ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs":["agent","runtime","app","composition"],
+    "fallback_placeholder_behavior":true,
+    "placeholders_resolved":true,
+    "balanced_fences":true
+  },
+  "author_checker": {"command":"PYTHONDONTWRITEBYTECODE=1 python3 .../rt-F-D141hh-P1-P3-notes-1249/evidence/check_notes.py","result":"PASS_PRIVATE_D141HH_P1_P3_CANDIDATES","readonly_default_verified":true},
+  "json_tool": {"command":"python3 -m json.tool .../rt-F-D141hh-P1-P3-notes-1249/evidence/source-manifest.json","result":"PASS"},
+  "current_time_scope_finding": "The appended sentence saying Agent's 55-test owner decision and App upstream choice remain pending is not explicitly historical; D141ii owner decision is recorded at 12:55Z and the Board records App target latest upstream."
+}

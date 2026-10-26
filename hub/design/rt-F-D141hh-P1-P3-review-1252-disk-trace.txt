@@ -1,0 +1,24 @@
+reviewer_first_probe_utc=2026-10-26T13:04:07.432Z
+reviewer_first_probe_requested_stop=4000000000
+reviewer_first_probe_pid=5
+reviewer_first_probe_pid_observable_initial=0
+reviewer_first_probe_child_exit=0
+reviewer_first_probe_wait_status=0
+reviewer_first_probe_reaped=true
+reviewer_first_probe_gap=first tool recorded lifecycle only; it did not record available-byte samples
+
+reviewer_later_available_trace_utc=2026-10-26T13:05:13Z
+stop_threshold_bytes=4000000000
+sample_path=/home/user/work/wt/rt-F-D141hh-P1-P3-review-1252
+sampler_pid=5
+sampler_started_utc=2026-10-26T13:05:13Z
+sample=0 utc=2026-10-26T13:05:13.676038+00:00 available_bytes=5552971776
+sample=1 utc=2026-10-26T13:05:14.676300+00:00 available_bytes=5552967680
+sample=2 utc=2026-10-26T13:05:15.676723+00:00 available_bytes=5552967680
+sample=3 utc=2026-10-26T13:05:16.677100+00:00 available_bytes=5552967680
+sample=4 utc=2026-10-26T13:05:17.678868+00:00 available_bytes=5552967680
+sample=5 utc=2026-10-26T13:05:18.680660+00:00 available_bytes=5552967680
+sampler_finished_utc=2026-10-26T13:05:18Z
+wait_status=0
+sampler_reaped=true
+later_trace_gap=not first-tool coverage; later trace is disclosed separately

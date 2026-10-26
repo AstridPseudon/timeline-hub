@@ -1,0 +1,58 @@
+{
+  "utc": "2026-10-26T13:08:36.456366+00:00",
+  "status": "FAIL",
+  "worker": "rt-F-D141hh-P1-P3-review-1252",
+  "findings": [
+    "F-001: added suffixes and handoff have unscoped pending-owner and upstream-choice assertions after D141ii. All byte/source/render checks pass."
+  ],
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-disk-trace.txt",
+      "bytes": 1170,
+      "sha256": "1ea0da975b3d2cc08727e89c8f12127ff77191758afdff1e317a76dce192ae35"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-findings.md",
+      "bytes": 1347,
+      "sha256": "ade94db83305e59bd6763018bf2d945d9e2187c450da7126d8bdf1999219133b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-handoff.md",
+      "bytes": 618,
+      "sha256": "b004176242db92331e8ddd955d610f343197e1a6aaa4cbfa79de8788099727e5"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-review.json",
+      "bytes": 3134,
+      "sha256": "0265dd0743a715d94bdd4987bec328c1e38b24f83929e87dbef71c04ecc928b9"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-sampler-lifecycle.json",
+      "bytes": 610,
+      "sha256": "b0d339d28eb540e9d42e7099aaebc1274eae59a6bded1b432565f1d62a4dadfc"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-source-manifest.json",
+      "bytes": 7913,
+      "sha256": "fb2d744c1a87914a1e32d5ae9ee711bfb8e0d88cca0e89373b05d5ab5f669a6c"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-validation.md",
+      "bytes": 1310,
+      "sha256": "4edf880987862f99d44bac4e32a863eb5f27b98eb63fd71a8e69c21ee8dd533e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-review-1252/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-P1-P3-review-1252-report.md",
+      "bytes": 694,
+      "sha256": "463cb975fac7f20e6e7b6c46ca440e3832b705f17e545bfceac36fc1ae39c841"
+    }
+  ]
+}

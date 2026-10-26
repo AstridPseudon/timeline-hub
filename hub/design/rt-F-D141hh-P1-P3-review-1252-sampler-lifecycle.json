@@ -1,0 +1,24 @@
+{
+  "schema": "d141hh-p1-p3-review-sampler-v1",
+  "first_probe": {
+    "pid": 5,
+    "exit_code": 0,
+    "waited": true,
+    "reaped": true,
+    "stop_threshold_bytes": 4000000000,
+    "available_samples": false,
+    "gap": "First tool captured PID/exit/wait/reap but did not capture available-byte samples."
+  },
+  "later_available_trace": {
+    "pid": 5,
+    "exit_code": 0,
+    "waited": true,
+    "reaped": true,
+    "sample_count": 6,
+    "minimum_available_bytes": 5552967680,
+    "stop_threshold_bytes": 4000000000,
+    "stop_reached": false,
+    "span_seconds": 5.004622,
+    "first_tool": false
+  }
+}

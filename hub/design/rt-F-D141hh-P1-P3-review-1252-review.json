@@ -1,0 +1,44 @@
+{
+  "task": "F D141hh P1 P3 protected documentary review",
+  "verdict": "FAIL",
+  "reviewer": "rt-F-D141hh-P1-P3-review-1252",
+  "base_context": "Composition 635f4de06fda22a85fc2e4cfc764d0153a4c9f40; context only",
+  "findings_count": 1,
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "blocking-documentary",
+      "category": "stale-time-scope",
+      "summary": "The new suffix asserts superseded pending decisions without an explicit historical scope.",
+      "locations": [
+        "candidate-README.template.md:287",
+        "candidate-gate-results.md:215",
+        "rt-F-D141hh-P1-P3-notes-1249-handoff.md:3"
+      ],
+      "claim": "Agent's 55-test owner decision and the App upstream choice remain pending.",
+      "evidence": [
+        "design/owner-decision-20261026T1250Z-D141ii.md records the owner decision, including App target = latest upstream.",
+        "design/BOARD-HEADER.md records D141ii at 12:55Z and says the owner decision is verbatim in the decision file.",
+        "The suffix is a newly appended current-measurement paragraph and does not say this was pending only at Main12:30; the handoff repeats the same unscoped pending wording."
+      ],
+      "required_correction": "Scope the pending statement explicitly to the historical Main12:30 snapshot and state that D141ii is now recorded; retain only the still-outstanding Agent repair/REG0 and App latest-upstream qualification limits.",
+      "source_or_canonical_edit_made": false
+    }
+  ],
+  "independent_checks": {
+    "four_publications": "PASS: exact declared bytes and SHA-256 for all four source publication JSON files.",
+    "originals": "PASS: 32 declared originals, 32 unique basenames, all declared bytes/hashes match, JSON originals parse.",
+    "accepted_prefixes": "PASS: README base 715a92af... and gate base d0016975... exact prefixes.",
+    "suffixes": "PASS: one bounded suffix per candidate; 32 numbered IDs and fences/placeholders conserved.",
+    "p1": "PASS source facts: preflight 31121, normal 32161 PASS/exit 0/200s, two cases plus readiness, independent PASS_CUSTODY_TEST_PASS, pre-queue TEST_KEEP, one native invocation.",
+    "p3": "PASS source facts: preflight 29473, normal 6447 PASS/exit 0/206s, complete Gate-5 tail plus readiness, independent PASS_CUSTODY_TEST_PASS, creation-before-queue TEST_KEEP, one native invocation.",
+    "render": "PASS: production render_readme function-only control with four-repo and fallback inputs; caller SHA ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca.",
+    "checker": "PASS: exact checker command without --write; readonly default inspected.",
+    "json_tool": "PASS: python3 -m json.tool on author source-manifest.json."
+  },
+  "limitations": [
+    "No product, full, browser, live-socket, build, service, main, ZIP, pin, or diagnostic run.",
+    "Reviewer first probe recorded lifecycle but not available-byte samples; a later six-sample five-second available-byte trace stayed above 4000000000 and is not first-tool coverage.",
+    "No outside-row conservation claim; author/native/reviewer and observer/sampler limitations remain distinct."
+  ]
+}

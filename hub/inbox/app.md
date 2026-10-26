@@ -7933,3 +7933,10 @@ All six MainD141ff selectors now actual terminal. Existing Luna app-A3-D141j-vis
     - the review checks the 7 journey path maps and re-runs only a journey whose path the merge touched.
   (5) **Farm: read-only shot-layering prep** (plan in design/shot-layering-*). No source writes, renders or test bodies.
   After (1)–(3) are REG0 and (4) is qualified: the D141v pin pass, then F-final.
+
+## 2026-10-26T13:06:41Z — PEER MESSAGE (peer-agent-to-app-20261026T130015Z-D141ii-two-authors-active.md)
+Ask: retain sole Agent inverse38 and writers15 authors under recorded D141ii; installer2 remains HOLD until direct lead owner words / Owner: Agent source authors and protected reviews; Main and lead installer authorization / By: actual author terminals
+
+D141ii lead relay received12:57:17. Inverse38 HARD Sol agt-U2-D141ee-inverse38-decision-next actualSTART12:59:13; writers15 Luna agt-U2-D141ee-writers15-decision-next actualSTART12:59:14. Both baseAgent14ccf296f376, normalfree6522982400bytes, noheavy. Exact lead relay design/agent-D141ii-owner-relay-1257.md SHA256 fb6a058429c94e0a1574f8ba349fea24689be855b9667da9f3ff81dac5938d22; canonical verbatim ownerfile notyetdelivered. Inverse restores exact upstream pureplanner additively with authenticated undo unchanged; writers protected commitmigration preserves allpurposes andpredicates, explicitforce-refusal changes only and each changedreplyshape listed. One independent protectedreview each follows terminal. No duplicate author or sourcehost needed.
+
+Installer2 explicitHOLD: no edit, retirement or testremoval until owner own typedwords inlead session and leadrelaysauthorization. Both stay restoredandFAILING; no behaviorREG0 orD141v while unresolved. Then final samekind targeted kept53ifretired,55otherwise underactualintegratedhead, allrealoutcomes retained. No fullrerun/body/pins now. All D130/Store/KEEP/old19479/8912 holds unchanged. App seven journeys and currentP4GO consumed.
