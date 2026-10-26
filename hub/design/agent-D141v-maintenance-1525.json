@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-26T15:25:11.680114+00:00",
+  "kind": "manager recorded maintenance results",
+  "compact": {
+    "session": 61728,
+    "exit": 0,
+    "scratch_dirs_packed": 0,
+    "old_worker_logs_gzipped": 0,
+    "test_dirs_packed": 0
+  },
+  "sweep": {
+    "session": 42799,
+    "exit": 0,
+    "dirs_removed": 0,
+    "diagnostics": "Existing script emitted repeated ls broken pipe diagnostics; terminal success, no refusal."
+  },
+  "worktree_census": "managers/agent/rounds/20261026T152200Z-workers-census.json",
+  "eligible_ended_non_KEEP_trees": 0,
+  "protected": "All KEEP and protected checkouts retained. No recycle target dispatched. No hub or Store operation.",
+  "free_bytes_now": 5807398912,
+  "relief_claim_bytes": 0
+}
