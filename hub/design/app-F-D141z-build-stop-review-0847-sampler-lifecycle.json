@@ -1,0 +1,8 @@
+{
+  "format": "timeline-d141z-review-sampler-lifecycle-v1",
+  "required_start": "first terminal tool",
+  "start": {"command": "ulimit -v 4194304; sample every 5 seconds", "pid": 4, "started_before_reads": true, "trace_path": "evidence/disk-trace.txt"},
+  "observed": {"trace_lines": 1, "trace_alive_check_after_reads": false, "reason": "terminal sandbox reaped the background process when the first shell ended; persistence across tool calls was not achieved", "continuous_5s_trace": false},
+  "explicit_stop_wait_reap": {"stop_result": "already-exited", "wait_attempted": true, "reap_check": "not-alive"},
+  "honesty": "This review does not claim a continuous own-trace PASS."
+}

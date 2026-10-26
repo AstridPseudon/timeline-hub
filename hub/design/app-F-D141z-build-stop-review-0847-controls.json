@@ -1,0 +1,9 @@
+{
+  "format": "timeline-d141z-independent-controls-v1",
+  "result": "FAIL",
+  "exact_shared_acceptance": {"command": "bash ops-d141z-build-stop/check.sh", "result": "PASS", "elapsed_seconds": 41.4},
+  "static": {"python_compile": "PASS", "ast_parse": "PASS", "bash_n": "PASS", "ruff_select_F": "PASS", "git_diff_check": "PASS"},
+  "acceptance_claimed_cases": ["normal exit", "descendant TERM/KILL/reap", "low disk before/during/after", "invalid/frozen/missing sampler", "timeout", "SIGTERM/SIGINT/cancel", "5-second donor trace periodic sample", "KEEP", "basic source/hash guards"],
+  "missing_or_insufficient_cases": ["production candidate main and real D68 wrapper", "early leader exit with live descendants", "mounted cancellation/parent-death/control-pipe semantics", "immutable donor binding and append-final descriptor custody", "shared heavy admission with normal test-run service", "unreadable sampler and terminal validator custody using real validator"],
+  "prohibited_actions": {"delivery_build": false, "rehearsal": false, "zip": false, "canonical_install": false, "service_queue_registry_write": false, "large_suite": false}
+}

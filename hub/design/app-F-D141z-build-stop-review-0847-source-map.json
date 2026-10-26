@@ -1,0 +1,33 @@
+{
+  "format": "timeline-d141z-review-source-map-v1",
+  "candidate": {
+    "caller": "ops-d141z-build-stop/run-final-delivery.py",
+    "lifecycle": "ops-d141z-build-stop/delivery_lifecycle.py",
+    "acceptance": "ops-d141z-build-stop/check.sh",
+    "install_map": "ops-d141z-build-stop/install-map.json"
+  },
+  "original": {
+    "caller": "design/runtime-D141z-input-0812-run-final-delivery.py",
+    "sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191"
+  },
+  "donors": {
+    "wrapper": "design/runtime-D141z-input-0812-delivery_gate_build.py",
+    "disk_sampler": "scratchpad/orch/bin/d141-disk-trace.py",
+    "validator": "scratchpad/orch/bin/d141-validate-trace.py",
+    "append_final": "scratchpad/orch/bin/d141-append-final.py",
+    "normal_heavy_service": "scratchpad/orch/bin/test-run"
+  },
+  "critical_seams": {
+    "caller_to_lifecycle": "run-final-delivery.py:171-191",
+    "admission_lock": "delivery_lifecycle.py:17-31,203-222",
+    "sampler_binding": "delivery_lifecycle.py:156-165,229-244",
+    "process_group_stop": "delivery_lifecycle.py:246-317",
+    "terminal_validation": "delivery_lifecycle.py:321-346",
+    "acceptance_caller_use": "check.sh:121-142"
+  },
+  "absent_runtime_dependencies": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py"
+  ]
+}

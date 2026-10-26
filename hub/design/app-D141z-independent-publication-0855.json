@@ -1,0 +1,68 @@
+{
+  "utc": "2026-10-26T08:56:12.633308+00:00",
+  "result": "FAIL",
+  "safe_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-report.md",
+      "sha256": "5bad299ef4c7267f87d4b26cfd5773f4c61576ff46d6bd085b8944772d576610",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-review.json",
+      "sha256": "d8eca278eee953c00804e1941581562ced763feba7c82fde858b1769fc551e19",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-findings.md",
+      "sha256": "3acfcb23162d19c2b72989f8034c4b6968160c99f54555fe04c0a45a30ec90ff",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-source-map.json",
+      "sha256": "18cb83d954f68c51650a058bd0184764d5c4b7d14472f3006dfe3a82ea1414ca",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-source-manifest.json",
+      "sha256": "a1c79ae4f4395f8c066db2d9fc203bf699f6e4959820d08822b75145fa642ff3",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-controls.json",
+      "sha256": "073474ee51b5d35c22d7e51f8e8ee7f11312a31be504988ea6956d59fc1c5eb4",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-validation.md",
+      "sha256": "b1d2487bc10b19c499e513215681048787d1a5c1b565b7789a34e75d21e4c8f3",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-handoff.md",
+      "sha256": "27a1706b6f9e6402e031b84f833f6917a5bf133c6ee2870b48623b0715dfa2d8",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-disk-trace.txt",
+      "sha256": "0eec92fdb7500f4edc7ce226e98db0d2db0f6de60347b6ff0de022eb89da1228",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-D141z-build-stop-review-0847/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141z-build-stop-review-0847-sampler-lifecycle.json",
+      "sha256": "be3ffa1cedef346ef0f99287a30543b9d5c162ca3464595396686db471315627",
+      "mode": "0o644"
+    }
+  ],
+  "actual_build": false,
+  "install": false
+}

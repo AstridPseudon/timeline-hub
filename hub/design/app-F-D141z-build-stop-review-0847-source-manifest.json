@@ -1,0 +1,29 @@
+{
+  "format": "timeline-d141z-independent-source-census-v1",
+  "candidate_head": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+  "declared_author_files": [
+    "ops-d141z-build-stop/run-final-delivery.py",
+    "ops-d141z-build-stop/delivery_lifecycle.py",
+    "ops-d141z-build-stop/check.sh",
+    "ops-d141z-build-stop/install-map.json"
+  ],
+  "tracked_candidate_files": [
+    "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc",
+    "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc",
+    "ops-d141z-build-stop/check.sh",
+    "ops-d141z-build-stop/delivery_lifecycle.py",
+    "ops-d141z-build-stop/install-map.json",
+    "ops-d141z-build-stop/run-final-delivery.py"
+  ],
+  "unmanifested_tracked_files": [
+    {"path": "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc", "type": "CPython timestamp bytecode"},
+    {"path": "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc", "type": "CPython timestamp bytecode"}
+  ],
+  "author_manifest_sha256": {
+    "ops-d141z-build-stop/run-final-delivery.py": "51bd31303eaab1cb91e0ff9af51b74cd55bca0b08a3a208602c96dc69f00fdec",
+    "ops-d141z-build-stop/delivery_lifecycle.py": "84f3e18e56b295f6e751428c929775c7dfccd01a5d2f9230be636beba8227658",
+    "ops-d141z-build-stop/check.sh": "9626a89385b06768ca3f445354964a8cc09493da7dbca65ba71730f026dd6525",
+    "ops-d141z-build-stop/install-map.json": "454fe0e6caf953ff89844b299791010df547d14336f163006a45289b9df8af10"
+  },
+  "review_scope": "read-only source review; no deletion or install authorized"
+}

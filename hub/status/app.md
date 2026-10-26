@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T08:52:49Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 4m -->
-# app board, 2026-10-26T08:48:20.463852+00:00
+<!-- app | 2026-10-26T08:58:50Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-26T08:57:07.949899+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -12,7 +12,8 @@
 | D141 REG history | Retain proved read count correction | HARD Sol and Luna | Independent0203 PASS | merged | 0149;0203 | Exact upstream loads=2; interface support only.32 own failures and collection error visible unchanged. | 5fe3e4debec5 |
 | D141 placement | Retain exact intended history oracle | Luna and protected Luna | Main D141d;0243 PASS | merged | 0235;0243 | Only placement expected records:2 objects22 paths. Helpers, all other gestures and predicates exact. | 520d7e4fc12a |
 | D141 hosted custody | Review interrupted Runtime rehearsal | Luna | Runtime0756 transfer | merged | app-F-D141yb-custody-review-0756 | FAIL CUSTODY all7 findings; partial Agent Runtime only. Main original exit and reaping UNKNOWN. No replay. | Evidence only |
-| D141z hosted author | Review final build process group stop | Luna and Luna | Author0812 terminal | review | app-F-D141z-build-stop-review-0847 | Author same script PASS; all final caller and lifecycle findings in one independent pass. No build or install. | Private32bc911a |
+| D141z hosted author | Repair six build stop review findings | Luna and Luna | Independent0847 FAIL6 | doing | app-F-D141z-build-stop-return-0855 | First bounded return on same32bc. Intrinsic custody, heavy ownership and caller controls; App-only missing input gap kept separate. | Private32bc911a |
+| D141z whole path | Compare failed final caller with passing donor | Luna read only | Independent0847 FAIL6 | doing | app-F-D141z-build-stop-wholepath-0855 | Mandatory independent path investigation alongside sole return. Existing56f2 and0015 paths; no body or new mechanism. | Evidence only |
 | D141 P4 hosted source | Deliver qualified CLI source coordinates | Luna and Luna | Independent0842 source PASS | merged | Author0838; independent0842 | Same checker logic PASS prepare and check; positive17 call1, poison1 call0. Profile input gap is App venue only; no body. | Agent ecdc |
 | D141 Agent binding review | Return Agent0735 finite FAIL | Luna | Agent0817 transfer | merged | app-F-D141l-Agent-binding-review-0820 | Checker78 due45 absent App inputs; isolated10 and36 PASS. Native path questions remain; actual source not qualified. | Evidence only |
 | D141 Agent native path | Deliver complete second failure facts | Luna | Review0820 FAIL | merged | app-F-D141l-Agent-native-path-0828 | Five native findings returned. Direct test-run races daemon; cut FAIL skips pristine. Scope and trace limits explicit. | Evidence only |
@@ -79,11 +80,11 @@ Blockers: Agent — Intrinsic0735 failures and native whole-path findings delive
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Prepared app-P-D141w-final-journeys-controller ONLY when actual post-prep available>5200000000. All4 checkouts and recipes qualify. App finite REG JOIN closed0736; final pins wait Agent and all-lane REG closure. Journeys bind actual82e9 after normal admission; no second heavy body or paired exception. Final pin pass D141v waits all-lane REG closure. Reserved HARD Sol0149 lineage app-A2-D141l-proved-REG-sol remains undispatched until independently proved new REG.
-live 1 / cap 3; ready-undispatched 0. D141z independent source review0847 queued; CLI source review0842 PASS delivered. All four unit phases terminal; App finite REG JOIN closed. Journeys need actual post-prep5.2GB; no heavy body.
+live 2 / cap 3; ready-undispatched 0. D141z same-source return0855 and independent wholepath0855 queued after first review FAIL6. CLI source PASS delivered. App finite REG JOIN closed; journeys still need post-prep5.2GB. No heavy body.
 
 Later: Runtime final-unit notes0820 hosting offered0845, not dispatched without exclusive transfer and exact supported inputs. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through 2847898 bytes; board rewritten 2026-10-26T08:44:14.098289+00:00.
+INBOX consumed through 2852960 bytes; board rewritten 2026-10-26T08:44:14.098289+00:00.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.
 
@@ -102,3 +103,6 @@ Pass 2026-10-26T08:44:14.098289+00:00: Read PLAN, common rules, current header D
 
 
 H6 2026-10-26T08:48:20.463852+00:00: New inbox0815 CLI host and0819 native observations are already fulfilled by hosted0825/0838/0842 and existing0820/0828, no duplicate. Agent0824 and Runtime0825 retain own full/P4/finalnotes waits; ordinary App receives qualified CLI packet only. Independent0842 source PASS published with trace and local input limits. D141z author0812 terminal source32bc; independent0847 queued immediately at4772483072 bytes. Tracked pycache omission and genuine heavy-lock/cancellation seams included in one review. No body, source/pin merge, kit install or final build. Runtime notes0820 hosting offered0845 with no dispatch pending exclusive transfer.
+
+
+Pass 2026-10-26T08:57:07.949899+00:00: Read new Runtime0831 and0839 asks, already fulfilled by exclusive author0812 and firstactual independent0847. No duplicate0839 review. Independent0847 FAIL6 retained; same sharedscript passed41.4s but custody/lock/caller/coverage defects remain. Immediately queued one first-return Luna and mandatory readonly wholepath on exact32bc; no new logic authority or build. F1 Apphost absence separately sent to Runtime for exact genuine input readback/publication, not Main absence. Later author/independent acceptance still required. Eleven historical service status=running records have no runnerPID; no live testbody observed and no historical status rewritten.
