@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T09:12:29Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 3 | status age 0m -->
-# agent board, 2026-10-26T09:11:56.958740+00:00
+<!-- agent | 2026-10-26T09:17:06Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-26T09:15:44.922999+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -30,7 +30,8 @@
 | D141l checkout | Prepare exact final proof inputs | Manager normal route | Binding0718 and D89d | gated:D89d | Existing controller lineage | Current ecdc and95d homes; pristine64197/fa9 present. Source PASS0707; no body. | Pending |
 | D139 Farm | Resolve only current undecidable candidates | Runtime and Farm | Definitive freeze2 join | gated:D141k-candidates | Runtime GroupA0300 | Early15 flagged, unreviewed. No current Farm request or original input hunt; kit pair/67wheel EXACT MISSING. | Pending |
 | P4 freeze1 | Retain authentic original3 GO | Agent and App | Correction0202 and App0254 | merged | Actual10086; receipt0159; App0254 | Actual3 PASS23.668s; XMLafca45/correctionb7be exact. App520d path independent. No retarget. | Actual frozen tuple |
-| P4 freeze2 | Review owning CLI receiving | Luna; existing controller | Author0907 source return | review | agt-P4-D141l-owning-review-next | Author positive17/call1 and poison1/call0. Review queued09:11 at4656267264 bytes. Native5GB body admission still owed. | Evidence only |
+| P4 receiving | Qualify owning CLI source | Luna and independent Luna | App0842 source | merged | Author0907; owning review-next | Independent PASS_SOURCE; original checker0; positive17/1 poison1/0. Fixed-root and bounded trace limits retained. | Evidence only |
+| P4 freeze2 | Run changed CLI reproof | Existing controller | Native named floor5GB | gated:native-disk | Original0055/0105 continuation | Current source qualified; no actual request or body. Native5GB floor retained; controller4.7146GB is not override. | Pending |
 | D134 behavior | Retain own failures visibly | Existing owners | Current per ID proof | gated:D141-results | Existing measured sources | Managed105,media48/30,CLI22,fork18,identity16,PARAM andword groups keep actual limits. No source-only deduction. | Frozen sources |
 | D73 own nodes | Retain ordinary service route | Luna | Full outcomes and real receipts | gated:D141-results | Return2318 and independent2318 | Rows and five refusal classes qualified; historical own5 NOTRUN. Prefer genuine current full outcomes. | cf7faa0054 |
 | D141v pins | Run one final metadata adoption pass | Luna and metadata review | All REG fixes merged and pre F final | gated:F-final | Existing U4a normal tool lineage | Agent adopts final Runtime, then App adopts both. Current App8585 versus Agentecdc is expected; no repeated re-pin. | Pending |
@@ -42,6 +43,8 @@
 Current pass 2026-10-26T09:10:50.292802+00:00: INBOX unchanged2163576bytes. Both local source authors genuinely running: Sol binding08:54:08 and Luna owningCLI09:06:29. Sol operational source changed09:08; no terminal report. Two exact independent review briefs prepared, not dispatched before source terminal. Free 4655370240bytes; fullpair4714564096 and actual namedCLIservice5000000000 admission unmet. Source live 2 / cap 3; ready-undispatched 0. No heavy body. Native installed floors remain authoritative, no override inferred from controller floor.
 
 H6 read Runtime08:53 and App08:57 actual normal hub boards. Runtime95d REG closure retained; App82e catch-up and unitREG0 retained. D141z first source reviewFAIL6 has one existing return and independent wholepath underApp; no Agent duplicate. App journeys remain postprep>5200000000. No new cross-lane ask or decision. Fresh40present localmetadata trees:37KEEP,2live,dirtyG2protected; zero ended nonKEEP eligible. Compact0/sweep3 in progress, ordinary known brokenpipe diagnostics only. Present-time manager disk observation resumed separately for both authors; CLI own trace currently only5seconds, no continuous authorhistory claim. Neither source result is behavior or final proof.
+
+09:16 source handoff: CLI receiving independently PASS_SOURCE, exact14SAFE outputs published0916 and peer0916 sent App/Runtime/lead. No source or integration merge owed: operational-only packet outside repos. Body native5GB-gated. Sol source remains active, independent brief ready. Maintenance compact0 terminal0 packed0/gzip0/tests0; sweep3 terminal0 removed0 with known brokenpipe diagnostics. No refusal or protected cleanup.
 
 Integration: Agent ecdc242ed9b673f641759ecf029f95e89a2c6f92 / tree d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735, clean. Product source unchanged since8585; accepted two case-local Session setup method renames and normal Runtime95d lock provenance retained. Frozen upstream64197afa297f86f1e738238d5e80aff6d33e303a / tree6c0488b3efdfa47479b0ad1b7bd20608383be26e, freshly confirmed by lead04:09:21. Runtime95d98f038320d5d46bd679ac000ab3e15825c935 / tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40.
 
@@ -68,10 +71,10 @@ Hub-repack dryrun0653 was read-only104248 loose objects/3.23GiB/free4497534976, 
 Later: original9/B022,Gate3,D118,Element,cost,D77 and own investigations STOPPED. Historical originalTrue redo, graph child birth alias, fork18 ABI1 history, transcript authority and missing word/native records UNKNOWN. Managed105,media48/30,CLI22,fork18,identity16,PARAM/word groups retain actual limits; no weakening or retirement. D23/D14 deferred; D69 Windows/wheel/installed render unqualified; D123 held; D127 no profiling. D130 SWAP classifier refusal absolute: no retry, transfer, alternate qualification or rollback; existing Runtime1537 escalation controls.
 
 Blockers: Agent controller — HARD Sol native return is queued locally at4531699712 bytes. Same independent review follows; no live request or body.
-Blockers: CLI controller — Owning author0907 terminal source PASS; independent owning review queued09:11. Native service floor5000000000 unchanged; no body.
+Blockers: CLI native disk — Owning receiving independently PASS_SOURCE; named service requires5000000000 bytes. No installed override or body.
 Blockers: Proof headroom — full pair and CLI body require4714564096 bytes; current local floor unmet.
 Blockers: SWAP safety — existing Runtime1537 classifier refusal remains held, no retry or alternate route.
-Next ready: Independent binding review after Sol terminal; CLI owning review queued. Local live 2 / cap 3; ready-undispatched 0. No heavy body.
+Next ready: Independent binding review after Sol terminal; CLI body at native5GB. Local live 1 / cap 3; ready-undispatched 0. No heavy body.
 
 Inbox consumed through2151928 bytes. Runtime0803 author precedence consumed;0735 terminal already published. App08:06 wholepath0752 queued under ordinary4.951GB, clearing its host wait this pass. H6 read Runtime08:05 and App08:06 hub boards: Runtime no source admission; App0752 is the existing wholepath continuation now queued, unitREG0 retained, journeys headroom-held. No new peer need remains only in prose: review/wholepath rows carry existing owners; stale author-host request is moot. Manager writes only board, briefs, peers, SAFE byte publications and permitted maintenance. No product, test, generated pin, Git internal, hub or upstream mutation; no credentials or M5 action.
 

@@ -1,0 +1,123 @@
+{
+  "utc": "2026-10-26T09:15:44.785033+00:00",
+  "kind": "manager byte-exact SAFE operational source publication; no private controls or raw body data",
+  "status": "independent PASS_SOURCE; no behavioral credit",
+  "checker_limit": "fixed-root checker run at original path; no independent-root invocation",
+  "trace_limits": "author own five-second trace only; reviewer bounded samples09:11:37..09:12:22; no whole-worker or body coverage inferred",
+  "native_P4_floor_bytes": 5000000000,
+  "controller_floor_bytes": 4714564096,
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/recipe.json",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-recipe.json",
+      "sha256": "da02e009cc135ca0c63bdbb123e6cdaab833263a6af1c8728e08209d19c3c5a3",
+      "bytes": 2688,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/candidate-row.txt",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-candidate-row.txt",
+      "sha256": "8ed2482ac63ffc6e3163a4f923b543d5c8f21a5e7856f7bc77be6845b1f600f7",
+      "bytes": 879,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/source-manifest.json",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-source-manifest.json",
+      "sha256": "a444c6aef5a6c32b69d6f0e0c2e4f7bed243f5ff39164eb322a6b56a45000b56",
+      "bytes": 3464,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/check-source.py",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-check-source.py",
+      "sha256": "c7acbd334dc4e5408bc1a567b94c1b1982f8cb071afad7b7180e1e01da13df19",
+      "bytes": 4750,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/controls.json",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-controls.json",
+      "sha256": "84b299051e71e47202d972a8e46de04ea6b1cd936462cee48dbc199c62a83b13",
+      "bytes": 2249,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/validation.md",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-validation.md",
+      "sha256": "00b8e689d811bad8c9b05cbc82a229e373f6c87c940adc9f6e5068f7d0c1cd84",
+      "bytes": 1845,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/handoff.md",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-handoff.md",
+      "sha256": "4cf74d14190c576de536930d88c02ab66b0467f1cfa522e6851a994420822e69",
+      "bytes": 1142,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/evidence/disk-trace.txt",
+      "published": "design/agt-P4-D141l-owning-receiving-0907-disk-trace.txt",
+      "sha256": "32c203c2a4fa3d302c84c0e5107e39bafbe730f88aff7a3d1167e800271c6b69",
+      "bytes": 1513,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/review.json",
+      "published": "design/agt-P4-D141l-owning-review-next-review.json",
+      "sha256": "d996c781518dbad6ae15f42a48a71c95bf0f6207bd4b0814bcf13e260d3a6004",
+      "bytes": 2899,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/findings.md",
+      "published": "design/agt-P4-D141l-owning-review-next-findings.md",
+      "sha256": "c7d718158eb5b9f4691d99ea09471f5389d985985f4360b2eb072376b5405ffb",
+      "bytes": 2517,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/source-manifest.json",
+      "published": "design/agt-P4-D141l-owning-review-next-source-manifest.json",
+      "sha256": "2369bb10c4aa42cd9f72fa811253c8ff70fbe29a6749e07dad679f9f8623efe2",
+      "bytes": 3979,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/validation.md",
+      "published": "design/agt-P4-D141l-owning-review-next-validation.md",
+      "sha256": "396784f0ea3b0ab5c0ffb25913df15da26676e276283398915f31aece59145c4",
+      "bytes": 1797,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/handoff.md",
+      "published": "design/agt-P4-D141l-owning-review-next-handoff.md",
+      "sha256": "e9f8abd843a3d725d9b8296d18cd4ab1f5b55c04728055b975052cd74a0a93e8",
+      "bytes": 838,
+      "mode": "0o644",
+      "byte_exact": true
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-review-next/evidence/disk-trace.txt",
+      "published": "design/agt-P4-D141l-owning-review-next-disk-trace.txt",
+      "sha256": "a5e364b6da0f4ad786a58c2c9026fba49dc073f7d5e54b67fd5b0309e5f06c36",
+      "bytes": 2540,
+      "mode": "0o644",
+      "byte_exact": true
+    }
+  ]
+}

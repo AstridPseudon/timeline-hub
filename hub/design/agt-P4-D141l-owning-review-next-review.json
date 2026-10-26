@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.p4.d141l.owning-receiving.review.v1",
+  "result": "PASS_SOURCE",
+  "scope": "independent bounded owning receiving review; source and operational controls only",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "author_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907",
+  "checks": {
+    "author_checker_original_packet": {"exit": 0, "output": "PASS: current source tuple, profile custody, launcher controls, and one-selector row"},
+    "checker_independent_path_support": false,
+    "checker_limitation": "check-source.py has no CLI arguments or independent-root/output-path support; it resolves ROOT from its own parent and reads fixed sibling inputs/private controls. It was run only at its original absolute path against the author packet; no copy or root substitution was made.",
+    "launcher_bash_n": "PASS",
+    "installer_ast": "PASS",
+    "checker_ast": "PASS",
+    "target_test_ast": "PASS",
+    "source_git_authentication": "PASS",
+    "profile_custody": "PASS",
+    "manifest_materialization": "PASS",
+    "argv_review": "PASS",
+    "native_classification_review": "PASS_SOURCE_ONLY"
+  },
+  "controls": {
+    "positive": {"mode": "run", "preflight_exit": 0, "body_exit": 17, "counter_lines": 1, "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"},
+    "poison": {"only_changed": "agent_sha", "exit": 1, "counter_lines": 0, "observed": "D73 launcher: agent SHA mismatch", "body_receipts": false},
+    "behavior_credit": false,
+    "pytest": false,
+    "collection": false,
+    "install": false,
+    "service_request": false,
+    "cas": false,
+    "shared_profile_mutation": false
+  },
+  "admission": {
+    "named_p4_class": "LIGHT",
+    "named_p4_floor_bytes": 5000000000,
+    "recorded_controller_floor_bytes": 4714564096,
+    "continuous_stop_bytes": 4000000000,
+    "installed_override": false,
+    "forced_run": false,
+    "status": "unresolved_native_admission_for_later_body",
+    "interpretation": "The named P4 row remains subject to the installed LIGHT/5GB classification. The recorded D89d4714564096 controller floor is source evidence only and does not override the installed row. A later body requires genuine native admission, one-heavy ownership, and 4GB continuous/5s coverage."
+  },
+  "findings": [
+    {"id": "R1", "severity": "limitation", "status": "reported", "summary": "Author checker cannot be independently rooted; exact limitation is recorded above."},
+    {"id": "R2", "severity": "informational", "status": "unresolved", "summary": "Later native body admission is not established; no behavior credit is claimed."}
+  ],
+  "decision": "Source and receiving packet are qualified for the existing normal continuation; do not run the body under a forced, renamed, substituted, or floor-modified route."
+}

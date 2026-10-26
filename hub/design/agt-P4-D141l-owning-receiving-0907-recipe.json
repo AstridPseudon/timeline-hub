@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.p4.d141l.owning-receiving.recipe.v1",
+  "task": "P4 D141l ONE owning Agent operational receiving",
+  "status": "PASS_OPERATIONAL_SOURCE",
+  "source_coordinate": {
+    "agent": {"path": "/home/user/work/agent", "commit": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"path": "/home/user/work/runtime", "commit": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "app": {"path": "/home/user/work/app", "commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "composition": {"path": "/home/user/work/composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "selection": {
+    "suite": "p4-current-becfe-http-3legs",
+    "files": ["tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back"],
+    "predicates_unchanged": true,
+    "pytest_argv": ["-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45", "-m", "integration"],
+    "original_three_test_aggregate_guarded": true,
+    "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence/p4-d141l-cli.xml"
+  },
+  "contract_c0": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args]", "label", "steps[id,label,intent,tags,command_ordinals,patch,reads?]", "merge", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "reply_forms": ["accepted", "merged", "conflict(reason,head)", "invalid(code,path,hint,suggested_command)", "preview(would_status,null_receipt,no_writes)"],
+    "service_orchestration_fields_separate": ["target", "repo", "suite", "files", "nocache", "requested"]
+  },
+  "controls": {
+    "input_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/inputs/p4-d141l-receiving.manifest",
+    "materialization_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141l-owning-receiving-0907/private controls/launcher-evidence",
+    "production_launcher": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+    "production_caller_unchanged": true,
+    "pytest_collection_or_body": false,
+    "service_request_or_install": false,
+    "profile_mutation": false
+  },
+  "body_credit": false
+}

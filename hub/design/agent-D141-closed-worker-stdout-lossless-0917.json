@@ -1,0 +1,93 @@
+{
+  "utc": "2026-10-26T09:16:54.050252+00:00",
+  "kind": "lossless compression of closed Agent worker stdout over24h, nonKEEP, no running, no current refs; source/test raw and protected evidence excluded",
+  "free_before_bytes": 4647518208,
+  "free_after_bytes": 4648173568,
+  "bytes_saved": 652445,
+  "entries": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-D110-review-0908/log.txt.gz",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-D110-review-0908/log.txt.xz",
+      "original_compressed_sha256": "d2fba3abfbe9d512c5eb9f13f95f22ced45171ed72e79dbd41794ace2ba14a77",
+      "new_compressed_sha256": "4169b2e7bf446bbc059d866206bfc2371da0cbaa2f93294f78effde60429943c",
+      "decoded_sha256": "ffb9a6c41621ec01fd7ffb553c778b82a9d6aa3e4cd91c0faca6e627fd552e06",
+      "bytes_before": 201523,
+      "bytes_after": 158936,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792919211351291834
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-complete-union-final-eof-handoff/log.txt",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-m2-complete-union-final-eof-handoff/log.txt.xz",
+      "original_compressed_sha256": "b665890d8db6754b19b4faad9de9844f02dd2c57d47c835c364b7c874f1fdba1",
+      "new_compressed_sha256": "65ad0b66dcee1776a329070f74e4c79e51de146d5b06b811b4c424784f4e6d91",
+      "decoded_sha256": "b665890d8db6754b19b4faad9de9844f02dd2c57d47c835c364b7c874f1fdba1",
+      "bytes_before": 46063,
+      "bytes_after": 15960,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792559932413995224
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-provider-1236/log.txt.gz",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-provider-1236/log.txt.xz",
+      "original_compressed_sha256": "c3956548a66c279a30383ba104e13d668aaf3e51d203803cbb91de4bfda12d70",
+      "new_compressed_sha256": "1c66c00e8c4b7b69110b50168d6169fe8d066027f017d1d7d524769843fb39fc",
+      "decoded_sha256": "41585aef9f9fea8424c13384938d06ebd4435f8d676999cc6a41860d2699d72d",
+      "bytes_before": 94213,
+      "bytes_after": 60000,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792845323872176580
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-word95-source-0908/log.txt.gz",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-word95-source-0908/log.txt.xz",
+      "original_compressed_sha256": "6139321d18f34f95c545d5004f3d23f6c7086d6b265fb79f6f148c78bb0511c1",
+      "new_compressed_sha256": "6961ea2e45e906d02715b78a56182c772f14adfe7ece5c078eeaf40c7ad04bd5",
+      "decoded_sha256": "84b120a787a1f6a3f6bed1a8d1cfcd3d326b37d95278b8e43806105a7ed5932a",
+      "bytes_before": 212118,
+      "bytes_after": 129976,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792919244620570649
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-D69-writers-map-0918/log.txt.gz",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-D69-writers-map-0918/log.txt.xz",
+      "original_compressed_sha256": "8d6c9939e034ae304746abefd733818910d86e95dc9c6d52278b9ee2b19368f9",
+      "new_compressed_sha256": "cb99ed37cad62d813b2058d48c78db85f43b8294ce4713633e8aef55be65b028",
+      "decoded_sha256": "3ceaeb7d615ae22b199d5a1b760336e0040c0c20aeedc62770c9401aa288e20e",
+      "bytes_before": 483626,
+      "bytes_after": 285568,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792919590616591216
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-hello/log.txt",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-hello/log.txt.xz",
+      "original_compressed_sha256": "0ecc4f2b25051327eb5b11a5568940a8f13d3625396f7c2c44cfd84d859614c8",
+      "new_compressed_sha256": "c2901bef6561a972aeaa7620a94884c698237eb568958d5672371ee0e9a081f9",
+      "decoded_sha256": "0ecc4f2b25051327eb5b11a5568940a8f13d3625396f7c2c44cfd84d859614c8",
+      "bytes_before": 31138,
+      "bytes_after": 12224,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792530370230940869
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-swap24-review-0900/log.txt.gz",
+      "new_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-swap24-review-0900/log.txt.xz",
+      "original_compressed_sha256": "57d64ea56b2573b895c6635452ddac19c75e5fb5a46c0a7b2b84f3bee7476896",
+      "new_compressed_sha256": "41240a2e7fd4dd24c6ef934aff10a454bf4027f6614d0314ed432ab05e0690f3",
+      "decoded_sha256": "d08023e4c9af51412d67e87d318039805e1566488053247dcf126fecc0fdf147",
+      "bytes_before": 458720,
+      "bytes_after": 212292,
+      "decoded_hash_verified": true,
+      "mode": "0o644",
+      "mtime_ns": 1792918988120555401
+    }
+  ]
+}
