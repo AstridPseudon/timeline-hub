@@ -1,0 +1,61 @@
+{
+  "time": "2026-10-26T07:11:27.729096+00:00",
+  "scope": "SAFE source and synthetic control JSON only; no raw stdout/stderr/XML or credentials",
+  "qualification": "unreviewed current source originals; controls PASS does not mean executable pair READY",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/command-cut.sh",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-command-cut.sh",
+      "bytes": 10456,
+      "sha256": "ed21d1b4b389fe6b698e79098b274bdab832524a3a05c1cdea17c789890fad79"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/command-pristine.sh",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-command-pristine.sh",
+      "bytes": 10236,
+      "sha256": "cb5da12fd40cca77effd53252080e0e7d1e46b97f384716bbaa374ebe9e6fcfd"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/check-source.py",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-check-source.py",
+      "bytes": 27645,
+      "sha256": "39b16a3e324e61c8baed8b13a2e04a7642062fe77063e590582f11f0f24b26fc"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/tiny-controls.sh",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-tiny-controls.sh",
+      "bytes": 1282,
+      "sha256": "771ded1f3dab45f8a240d144df97be9e71261dd68338ffe93f0916de1ccb51a9"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/positive-stub.sh",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-positive-stub.sh",
+      "bytes": 67,
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/positive.manifest",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-positive.manifest",
+      "bytes": 2649,
+      "sha256": "bab9b4c24715b85e3f7e2a2ff064be430cbfe0943762996bb20518c9349de9f1"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/poison.manifest",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-poison.manifest",
+      "bytes": 2649,
+      "sha256": "bcb23dd7bfe663e2a7ced1548b69c329a610164d09cb0517b671253e60bf2355"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/rows.txt",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-rows.txt",
+      "bytes": 661,
+      "sha256": "52c3b74478c0b434ecafcd32d61ee5c6dbd41a57b4275e27d898f66d781a5675"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/controls.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-controls.json",
+      "bytes": 22557,
+      "sha256": "f5c360f7b1c36b1131b060232f89902ccee8f8f95f9e7acdea32d0c987d27f44"
+    }
+  ]
+}

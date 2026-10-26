@@ -1,0 +1,707 @@
+{
+  "control_status": "PASS",
+  "pair_status": "BLOCKED_EXISTING_CONTROLLER_BINDING_MISSING",
+  "real_pair_started": false,
+  "tiny": [
+    "case=positive exit=17 calls=1 expected_exit=17 expected_calls=1",
+    "case=poison exit=1 calls=0 expected_exit=1 expected_calls=0"
+  ],
+  "admission_controls": [
+    {
+      "case": "malformed",
+      "refused": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+    },
+    {
+      "case": "missing",
+      "refused": "[Errno 2] No such file or directory: '/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/missing.json'"
+    },
+    {
+      "case": "self-authorized",
+      "refused": "'manager_dispatch_witness'"
+    },
+    {
+      "case": "service_id",
+      "refused": "wrong original service"
+    },
+    {
+      "case": "controller",
+      "refused": "wrong original controller"
+    },
+    {
+      "case": "schema",
+      "refused": "unknown original receipt schema"
+    },
+    {
+      "case": "receipt-hash",
+      "refused": "original admission receipt binding mismatch"
+    },
+    {
+      "case": "brief-hash",
+      "refused": "original manager brief binding mismatch"
+    },
+    {
+      "case": "cut-old-service-not-current-admission",
+      "refused": "suites.conf agent agent-core-full still invokes0309 with fixed0249 receipt/brief, service24049 terminal refusal; no existing current-pair row/receipt/brief binding. Source author cannot create controller admission."
+    },
+    {
+      "case": "pristine-old-service-not-current-admission",
+      "refused": "suites.conf agent agent-core-full still invokes0309 with fixed0249 receipt/brief, service24049 terminal refusal; no existing current-pair row/receipt/brief binding. Source author cannot create controller admission."
+    }
+  ],
+  "lifecycle_controls": [
+    {
+      "mode": "cut",
+      "case": "success",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-success/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "body17",
+      "exit": 17,
+      "status": {
+        "state": "FAIL",
+        "exit": "17",
+        "body_started": "1",
+        "runner_exit": "17",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-body17/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "missing-junit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-missing-junit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "bad-junit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-bad-junit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "failed-junit-zero-exit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-failed-junit-zero-exit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "empty-raw",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-empty-raw/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "keep-tamper",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-keep-tamper/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "source-tamper",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-source-tamper/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "floor-below",
+      "exit": 124,
+      "status": {
+        "state": "REFUSED",
+        "exit": "124",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "124",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-floor-below/driver.sh",
+      "driver_sha256": "f9964f5f13dd7835d5bee11b2f902f3fa649319a4b3782a294dda0e3bf3041f4"
+    },
+    {
+      "mode": "cut",
+      "case": "floor-equal",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-floor-equal/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "cut",
+      "case": "floor-above",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-floor-above/driver.sh",
+      "driver_sha256": "e6ea5a096a1d26e2a87210c457d8b0c3b785efeb1c44068e9b126365985ae13c"
+    },
+    {
+      "mode": "cut",
+      "case": "disk-unreadable",
+      "exit": 97,
+      "status": {
+        "state": "REFUSED",
+        "exit": "97",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "97",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-disk-unreadable/driver.sh",
+      "driver_sha256": "60f43856f1361b323b23d1f0a9ca52079a8e65d65cadf0022460f830402ddf5f"
+    },
+    {
+      "mode": "cut",
+      "case": "disk-unwritable",
+      "exit": 98,
+      "status": {
+        "state": "REFUSED",
+        "exit": "98",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "98",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-disk-unwritable/driver.sh",
+      "driver_sha256": "8ad2cf058fe2a67967283ad0a3024e7d17f061d78aa4dac7d6d26856bfaa1d58"
+    },
+    {
+      "mode": "cut",
+      "case": "monitor-stop",
+      "exit": 124,
+      "status": {
+        "state": "FAIL",
+        "exit": "124",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "124",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-monitor-stop/driver.sh",
+      "driver_sha256": "cec731e24783237c8c6db76da8c0e01584bc78dad3b4c8cc7e9ed927fa923ac5"
+    },
+    {
+      "mode": "cut",
+      "case": "monitor-read",
+      "exit": 97,
+      "status": {
+        "state": "FAIL",
+        "exit": "97",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "97",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-monitor-read/driver.sh",
+      "driver_sha256": "fccd27b04ba96bba4919752c23cb8dc7e04ab837367fb8fdff202e25b71158cf"
+    },
+    {
+      "mode": "cut",
+      "case": "monitor-write",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "98",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-monitor-write/driver.sh",
+      "driver_sha256": "23d147189fdd86922f325cc3edfe96c2828d5212aa1771348015d56355451178"
+    },
+    {
+      "mode": "cut",
+      "case": "cadence",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-cadence/driver.sh",
+      "driver_sha256": "e8b13b48309bbb35bfd09ac887aa3a200b89d2ade0929caecb347f6bd480d8b6"
+    },
+    {
+      "mode": "cut",
+      "case": "term",
+      "exit": 143,
+      "status": {
+        "state": "FAIL",
+        "exit": "143",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/cut-term/driver.sh",
+      "driver_sha256": "7fc61df73c79d6a83fa8a6528a4386ca9517e9b3ec07595fbe168a2826b823ec"
+    },
+    {
+      "mode": "pristine",
+      "case": "success",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-success/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "body17",
+      "exit": 17,
+      "status": {
+        "state": "FAIL",
+        "exit": "17",
+        "body_started": "1",
+        "runner_exit": "17",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-body17/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "missing-junit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-missing-junit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "bad-junit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-bad-junit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "failed-junit-zero-exit",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-failed-junit-zero-exit/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "empty-raw",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-empty-raw/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "keep-tamper",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-keep-tamper/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "source-tamper",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-source-tamper/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "floor-below",
+      "exit": 124,
+      "status": {
+        "state": "REFUSED",
+        "exit": "124",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "124",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-floor-below/driver.sh",
+      "driver_sha256": "f9964f5f13dd7835d5bee11b2f902f3fa649319a4b3782a294dda0e3bf3041f4"
+    },
+    {
+      "mode": "pristine",
+      "case": "floor-equal",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-floor-equal/driver.sh",
+      "driver_sha256": "3f28d062ad308fa8399d9dffdb6c4900742bfebbe81764cbc0f0f3c68afde390"
+    },
+    {
+      "mode": "pristine",
+      "case": "floor-above",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-floor-above/driver.sh",
+      "driver_sha256": "e6ea5a096a1d26e2a87210c457d8b0c3b785efeb1c44068e9b126365985ae13c"
+    },
+    {
+      "mode": "pristine",
+      "case": "disk-unreadable",
+      "exit": 97,
+      "status": {
+        "state": "REFUSED",
+        "exit": "97",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "97",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-disk-unreadable/driver.sh",
+      "driver_sha256": "60f43856f1361b323b23d1f0a9ca52079a8e65d65cadf0022460f830402ddf5f"
+    },
+    {
+      "mode": "pristine",
+      "case": "disk-unwritable",
+      "exit": 98,
+      "status": {
+        "state": "REFUSED",
+        "exit": "98",
+        "body_started": "0",
+        "runner_exit": "not-started",
+        "monitor_exit": "not-started",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "98",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-disk-unwritable/driver.sh",
+      "driver_sha256": "8ad2cf058fe2a67967283ad0a3024e7d17f061d78aa4dac7d6d26856bfaa1d58"
+    },
+    {
+      "mode": "pristine",
+      "case": "monitor-stop",
+      "exit": 124,
+      "status": {
+        "state": "FAIL",
+        "exit": "124",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "124",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-monitor-stop/driver.sh",
+      "driver_sha256": "cec731e24783237c8c6db76da8c0e01584bc78dad3b4c8cc7e9ed927fa923ac5"
+    },
+    {
+      "mode": "pristine",
+      "case": "monitor-read",
+      "exit": 97,
+      "status": {
+        "state": "FAIL",
+        "exit": "97",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "97",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-monitor-read/driver.sh",
+      "driver_sha256": "fccd27b04ba96bba4919752c23cb8dc7e04ab837367fb8fdff202e25b71158cf"
+    },
+    {
+      "mode": "pristine",
+      "case": "monitor-write",
+      "exit": 98,
+      "status": {
+        "state": "FAIL",
+        "exit": "98",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "98",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "98"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-monitor-write/driver.sh",
+      "driver_sha256": "23d147189fdd86922f325cc3edfe96c2828d5212aa1771348015d56355451178"
+    },
+    {
+      "mode": "pristine",
+      "case": "cadence",
+      "exit": 0,
+      "status": {
+        "state": "PASS",
+        "exit": "0",
+        "body_started": "1",
+        "runner_exit": "0",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-cadence/driver.sh",
+      "driver_sha256": "e8b13b48309bbb35bfd09ac887aa3a200b89d2ade0929caecb347f6bd480d8b6"
+    },
+    {
+      "mode": "pristine",
+      "case": "term",
+      "exit": 143,
+      "status": {
+        "state": "FAIL",
+        "exit": "143",
+        "body_started": "1",
+        "runner_exit": "143",
+        "monitor_exit": "0",
+        "source_before_exit": "0",
+        "source_after_exit": "0",
+        "cleanup_exit": "0",
+        "evidence_exit": "0"
+      },
+      "driver": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97/pristine-term/driver.sh",
+      "driver_sha256": "7fc61df73c79d6a83fa8a6528a4386ca9517e9b3ec07595fbe168a2826b823ec"
+    }
+  ],
+  "source_manifest_sha256": "ad1d044c423ffe027704bf33675358c9f544ee811940b5a6250c65b9d070965f",
+  "fixture_root": "/tmp/w-bcc5e5c800/d141l-controls-qjmjk_97",
+  "command": "/home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/check-source.py check",
+  "final_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/control-logs/check-1792997848191899560.json",
+  "final_log_sha256": "636ec72e4aee56da71696a92f943d3be755e7ef70fbb404753f4a7e47b900c8d",
+  "scope": "tiny launcher and isolated operational fixtures only; no current admission, full pair, collection, or P4 body"
+}
