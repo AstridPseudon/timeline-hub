@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T08:53:46Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
-# agent board, 2026-10-26T08:48:08.867257+00:00
+<!-- agent | 2026-10-26T08:58:15Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 3m -->
+# agent board, 2026-10-26T08:54:36.614653+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -21,7 +21,7 @@
 | D141l U2 | Preserve custody and installer source | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408; reviewer0432 | Whole54path union,906 own/26 upstream blobs and both test families conserved. e1c installer ancestor. | 5d202569f3 |
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
 | D141l proof source | Qualify repaired full pair controls | Sol and independent Luna | Independent0707 PASS_COMMAND | merged | Sol0638 and reviewer0707 | 10 admission and36 lifecycle; tiny17/1 and1/0 PASS. Source only; actual controller binding owed. | Evidence only |
-| D141l binding | Repair confirmed native controller defects | HARD Sol after second Luna failure | App0828 five intrinsic findings | ready | Existing binding Sol next; App host offered0848 | Direct test run races daemon; failed cut skips pristine. All five native findings in brief; full home check still owed. | Absolute ORCH packet |
+| D141l binding | Repair confirmed native controller defects | HARD Sol after second Luna failure | App0828 five intrinsic findings | doing | agt-F-D141l-binding-sol-next | Queued0853 at4531699712 bytes. All five native findings and full local checker in brief; no live request or body. | Absolute ORCH packet |
 | D141l native path | Retain five native execution findings | Luna | App0820 terminal | merged | app-F-D141l-Agent-native-path-0828 | Five source findings returned; correct6a2d tree57f68e. Host missingness separate. No body or qualification. | Evidence only |
 | D141l whole path | Retain finite controller ordering facts | App Luna; Runtime0640 lineage | App0752 terminal source | merged | app-F-D141l-runtime-wholepath-0752 | Six0718 findings and native route map returned. App registry/missing inputs venue-specific; late trace disclosed. | Evidence only |
 | D141u selection | Apply recorded comparable full scope | MAIN and Luna | D141u-a05:13 | merged | Existing command return0515 | Confirmed22 cut/17 pristine roots; same settings, every present ID compared; source-backed N/A for absent own IDs. | Decision only |
@@ -63,11 +63,11 @@ Hub-repack dryrun0653 was read-only104248 loose objects/3.23GiB/free4497534976, 
 
 Later: original9/B022,Gate3,D118,Element,cost,D77 and own investigations STOPPED. Historical originalTrue redo, graph child birth alias, fork18 ABI1 history, transcript authority and missing word/native records UNKNOWN. Managed105,media48/30,CLI22,fork18,identity16,PARAM/word groups retain actual limits; no weakening or retirement. D23/D14 deferred; D69 Windows/wheel/installed render unqualified; D123 held; D127 no profiling. D130 SWAP classifier refusal absolute: no retry, transfer, alternate qualification or rollback; existing Runtime1537 escalation controls.
 
-Blockers: Agent controller — owning home checker awaits4500000000 bytes; actual4456562688. App0820 host limited FAIL retained; no local source failure inferred.
-Blockers: App — CLI source0825 now review0831. Native reader0828 complete; existing HARD Sol return offered0848. No competing local author.
+Blockers: Agent controller — HARD Sol native return is queued locally at4531699712 bytes. Same independent review follows; no live request or body.
+Blockers: App — CLI first return0838 owns source coordinates after0831 FAIL. Native reader0828 complete. Sol host offer withdrawn after actual local0853 start.
 Blockers: Proof headroom — full pair and CLI body require4714564096 bytes; current local floor unmet.
 Blockers: SWAP safety — existing Runtime1537 classifier refusal remains held, no retry or alternate route.
-Next ready: HARD Sol native binding return via App ordinary host or local4500000000 admission, then same independent home check. Local live0 / cap0; hosted CLI review1; ready-undispatched1, admitted0.
+Next ready: Independent binding review after Sol terminal; current CLI source return remains App owned. Local live1 / cap1; ready-undispatched0. No heavy body.
 
 Inbox consumed through2151928 bytes. Runtime0803 author precedence consumed;0735 terminal already published. App08:06 wholepath0752 queued under ordinary4.951GB, clearing its host wait this pass. H6 read Runtime08:05 and App08:06 hub boards: Runtime no source admission; App0752 is the existing wholepath continuation now queued, unitREG0 retained, journeys headroom-held. No new peer need remains only in prose: review/wholepath rows carry existing owners; stale author-host request is moot. Manager writes only board, briefs, peers, SAFE byte publications and permitted maintenance. No product, test, generated pin, Git internal, hub or upstream mutation; no credentials or M5 action.
 
@@ -86,3 +86,5 @@ Standing next-pass dispatch rule: host offers alone are not a new approval gate.
 2026-10-26T08:43:20.636404+00:00 H6: App08:29 board confirms0820 terminal FAIL with host missingness,0828 nativepath investigator and0825 CLI source author at ordinary host admission. Original findings read from normal hub, no hand copy of source. Local finite census45/45 exact historical/control hashes, both pristine paths and current0309 row, Node/profile files all present; this is custody only, no checker PASS. Conditional Sol remains unstarted unless intrinsic defects confirmed. No local worker below4.5GB. Peer0844 gives exact facts and ownership; all author/review/raw originals retained.
 
 2026-10-26T08:48:08.867257+00:00 H6: Appnative0828 terminal confirms5 intrinsic sourcefindings, including nativequeue/directtest-run race and cutFAILpreventingpristine. Allfive inexistingHARD Solbrief, preparednotdispatchedbelow4.5GB; sourcehostingofferedApp0848afterreaderterminal. AppCLI0825authorcomplete, samecheckerindependent0831active. Localoriginal45hashes/pins/profile/rowpresentfactsremaincustodyonly. No duplicate investigator/sourceauthor/body, no source/kit/registry/pinchange.
+
+2026-10-26T08:54:36.614653+00:00 dispatch: lossless closed stdout maintenance saved85077340 bytes across248 nonKEEP ended-over24h logs, decoded hashes and modes/mtime verified; receipt0853. Actual4531699712 admitted ONE existing HARD Sol binding return at08:53:57.088586, all App0828 inputs now physically ORCH. No published earlier hosted Sol; first dispatcher precedence peer0854 withdraws unaccepted offer. Source only/default180/net,4GB5s stop, no other local task below4.6GB. CLI0825 first return0838 remains App owner. No product, pin, registry, service, hub or protected evidence mutation.
