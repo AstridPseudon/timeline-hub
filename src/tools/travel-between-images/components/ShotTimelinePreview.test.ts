@@ -1200,9 +1200,9 @@ describe('shot timeline popup persistence', () => {
     } as unknown as ShotCompositionAdapter);
     await provider.saveTimeline('popup-session', projected, 1);
     const savedGraph = published[0]?.graph as typeof fixture;
-    const savedOccurrence = savedGraph.occurrences.find((item) => item.occurrence_id === 'occ-1')!;
+    const savedDisabledOccurrence = savedGraph.occurrences.find((item) => item.occurrence_id === 'occ-1')!;
     const savedRevision = savedGraph.shot_revisions.find((item) => (
-      item.shot_id === savedOccurrence.shot_id && item.revision_id === savedOccurrence.revision_id
+      item.shot_id === savedDisabledOccurrence.shot_id && item.revision_id === savedDisabledOccurrence.revision_id
     ))!;
     const savedClips = savedRevision.internal_timeline_revision.timeline.clips;
     expect(savedClips.find((clip) => clip.id.endsWith(':disabled-long-clip'))).toMatchObject({
