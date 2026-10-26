@@ -877,10 +877,12 @@ def tree_exited(process):
 
 
 def tree_drained(process):
-    """Close and confirm a Windows process tree once its Job has no members."""
+    """Confirm a Windows process tree once its retained Job has no members."""
     job = getattr(process, "_runtime_job", None)
     if job is None:
         raise ProcessLookupError("process has no Windows Job Object")
+    if not job.handle:
+        return True
     if job.active_processes():
         return False
     job.close()
