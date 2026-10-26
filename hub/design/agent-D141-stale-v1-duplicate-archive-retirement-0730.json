@@ -1,0 +1,36 @@
+{
+  "utc": "2026-10-26T07:28:18.930069+00:00",
+  "authority": "Explicit owner Manager common stale v1 archive cleanup; only redundant local copy removed, retained read-only hub original unchanged",
+  "pre_free_bytes": 4490031104,
+  "files": [
+    {
+      "local_copy": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-TREE.tar.gz",
+      "retained_readonly_original": "/home/user/timeline-hub/hub/design/handoff-vw-m3-pcm-caller-current-land-unit-TREE.tar.gz",
+      "sha256": "307a6bfc41528207cdde1aa429067a49ffe514e71073783554148d79627f5533",
+      "bytes": 63765389,
+      "mtime": 1792520396.384387,
+      "nlink": 1,
+      "guards": "No KEEP, active board/suite/env/lease/running brief/queued request/openfd; byte-identical retained original"
+    },
+    {
+      "local_copy": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz",
+      "retained_readonly_original": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz",
+      "sha256": "6b89215fd014a062a2590c9739e39efd656effec0aefae45b6afa0db0ac4d96d",
+      "bytes": 59134823,
+      "mtime": 1792520395.356387,
+      "nlink": 1,
+      "guards": "No KEEP, active board/suite/env/lease/running brief/queued request/openfd; byte-identical retained original"
+    },
+    {
+      "local_copy": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-node20.19.4-retained-app.tgz",
+      "retained_readonly_original": "/home/user/timeline-hub/hub/design/handoff-vw-m3-node20.19.4-retained-app.tgz",
+      "sha256": "e481653ec961f88c9cb8f034740afca3ed1bbc5fa3f9d56efde0eb502372481f",
+      "bytes": 35729844,
+      "mtime": 1792537009.3513355,
+      "nlink": 1,
+      "guards": "No KEEP, active board/suite/env/lease/running brief/queued request/openfd; byte-identical retained original"
+    }
+  ],
+  "post_free_bytes": 4648669184,
+  "removed_duplicate_bytes": 158630056
+}
