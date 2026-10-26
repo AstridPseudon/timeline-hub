@@ -5,5 +5,11 @@
   "before": 4820643840,
   "after": 4820430848,
   "compact": "terminal PASS: 0 scratch dirs, 1 old worker log gzipped, 0 test dirs",
-  "sweep": "still running; scanner emits broken-pipe diagnostics"
+  "sweep": "terminal PASS removed0; scanner broken-pipe diagnostics disclosed",
+  "available_after_all_helpers": 4591378432,
+  "new_KEEP_disclosure": [
+    "workers/app-F-D141l-unit-witness-return-0549/KEEP",
+    "workers/app-F-D141l-unit-normalization-review-0600/KEEP",
+    "tests/app-full-1026060654-8638/KEEP"
+  ]
 }
