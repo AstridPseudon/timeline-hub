@@ -67,8 +67,14 @@ def _runtime_json(output: str) -> dict:
 
 
 class Backend:
-    def __init__(self, root: Path, log: Path, uv: Path, *, say=print):
+    def __init__(self, root: Path, log: Path, uv: Path, *, say=print, process_control: str | None = None):
         self.root, self.log, self.uv, self.say = root, log, uv, say
+        # None keeps the workspace's current setting (strict on a new one).
+        self.process_control = process_control
+        if process_control:
+            from runtime_protocol import platform
+
+            platform.configure_process_control(process_control)  # this process signals too
         self.service = Service(root, log, self.run, say=say)
 
     def run(self, argv, *, extra_env=None, cwd=None, timeout=1800, clean_bun_env=False) -> str:
@@ -96,14 +102,17 @@ class Backend:
         lock_hash = hashlib.sha256((remotion / "package-lock.json").read_bytes()).hexdigest()
         modules = remotion / "node_modules"
         marker = modules / ".astrid-package-lock.sha256"
-        if (modules.is_dir() and marker.is_file()
+        if not (modules.is_dir() and marker.is_file()
                 and marker.read_text(encoding="ascii").strip() == lock_hash):
-            return
-        # Node's official archives expose npm through this JavaScript entrypoint
-        # on every OS; neither shell shims nor an ambient npm are required.
-        self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
+            # Node's official archives expose npm through this JavaScript entrypoint
+            # on every OS; neither shell shims nor an ambient npm are required.
+            self.run([env["ASTRID_NODE_EXECUTABLE"], npm, "ci", "--no-audit", "--no-fund"],
+                     cwd=remotion, extra_env=env)
+            marker.write_text(lock_hash + "\n", encoding="ascii")
+        # Renders never download: fetch Remotion's browser now, once per Remotion
+        # version into the shared cache (a no-op when it is already there).
+        self.run([env["ASTRID_NODE_EXECUTABLE"], remotion / "scripts" / "fetch-shared-browser.mjs"],
                  cwd=remotion, extra_env=env)
-        marker.write_text(lock_hash + "\n", encoding="ascii")
 
     def runtime(self, version: Version | None, data: Path, *args, profile=False, timeout=1800) -> dict:
         python = version.python if version else Path(sys.executable)
@@ -253,6 +262,12 @@ class Backend:
     def stop(self, version: Version | None, data: Path) -> None:
         self.service.disable()
         if version is not None and not version.python.is_file():
+            version = None
+        if self.process_control == "sandbox":
+            # An install from before sandbox mode cannot signal inside the
+            # sandbox, so it cannot stop itself. Record the mode now and stop
+            # with this installer's own Runtime, which reads it.
+            self._write_process_control(data)
             version = None
         discovery = data / "runtime" / "discovery.json"
         owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
@@ -463,12 +478,23 @@ class Backend:
     def create(self, version: Version, data: Path) -> dict:
         realm_id = str(uuid.uuid4())
         return self.runtime(version, data, "workspace", "create", "--realm-root",
-                            str(data / "runtime" / "realms" / realm_id), "--realm-id", realm_id, profile=True)
+                            str(data / "runtime" / "realms" / realm_id), "--realm-id", realm_id,
+                            *self._process_control_args(), profile=True)
 
     def attach_existing(self, version: Version, data: Path) -> dict:
         realm = self.workspace(version, data)
         return self.runtime(version, data, "workspace", "attach", "--realm-root", realm["realm_root"],
-                            "--realm-id", realm["realm_id"], profile=True)
+                            "--realm-id", realm["realm_id"], *self._process_control_args(), profile=True)
+
+    def _write_process_control(self, data: Path) -> None:
+        from runtime_protocol import process_control
+
+        support = data / "runtime"
+        if support.is_dir() and process_control.read_setting(support) != self.process_control:
+            process_control.write_setting(support, self.process_control)
+
+    def _process_control_args(self) -> tuple[str, ...]:
+        return ("--process-control", self.process_control) if self.process_control else ()
 
     def doctor(self, version: Version, data: Path, bundle: Path) -> Path:
         bundle = absolute(bundle)
@@ -486,6 +512,10 @@ class Backend:
 
     def upgrade(self, version: Version, data: Path) -> None:
         self.runtime(version, data, "upgrade", profile=True)
+        if self.process_control:
+            # Runtime upgrade preserves support metadata. Apply the latest
+            # install flag before the candidate is started by the service.
+            self._write_process_control(data)
 
     def register(self, version: Version, data: Path) -> None:
         chat_cwd, chat_options = self._prior_chat_settings(version)

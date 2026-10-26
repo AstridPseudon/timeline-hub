@@ -169,8 +169,10 @@ and `import_authoring_media(plan, transport)` implement this preparation. Import
 uses `WorkspaceClient.import_project_media`; it does not create a second media
 store or claim a provider generated an upload. The existing Runtime import
 publishes managed project bytes and an ordinary catalog Generation/original
-Variant with `external_upload`/`imported` provenance. Audio imports keep audio
-MIME/type and duration and omit visual dimensions.
+Variant with `external_upload`/`imported` provenance. Registry metadata follows
+the editor shape: visual dimensions use a `resolution` string such as `1280x720`,
+and `duration` is a number of seconds. Audio imports keep their MIME/type and
+duration and omit `resolution`.
 
 The prepared document uses durable managed media IDs. Local registry locators
 and stale selected-object hashes are removed; matching shot items, audio

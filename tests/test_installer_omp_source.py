@@ -49,7 +49,8 @@ def fixture(tmp_path, monkeypatch):
     payloads = {source_url: source, recipe["native"]["linux-x64"]["url"]: native}
     requests, calls = [], []
 
-    def response(url, timeout):
+    def response(request, timeout):
+        url = request.full_url
         requests.append(url)
         return io.BytesIO(payloads[url])
 
