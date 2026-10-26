@@ -228,6 +228,31 @@ describe('shot timeline popup real recovery integration', () => {
       .toHaveAttribute('data-shot-timeline-clip-assets', expect.stringContaining(':0:'));
   });
 
+  it('keeps the timeline drop target mounted for long shots', async () => {
+    const graph = structuredClone(fixture);
+    const revision = graph.shot_revisions.find((candidate) => candidate.shot_id === 'shot-alpha'
+      && candidate.revision_id === 'rev-a')!;
+    const sourceClip = structuredClone(revision.internal_timeline_revision.timeline.clips[0]!);
+    for (let index = 2; index <= 25; index += 1) {
+      revision.internal_timeline_revision.timeline.clips.push({
+        ...sourceClip,
+        id: `alpha-video-${index}`,
+        at_ms: 0,
+      });
+    }
+
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
+    const composition = adapter.prepare(graph);
+    render(
+      <ShotTimelinePreview composition={composition} occurrenceId="occ-1" shotCompositionAdapter={adapter} />,
+      { wrapper: wrapper() },
+    );
+
+    await waitFor(() => expect(document.querySelector('.timeline-wrapper')).toBeTruthy());
+    expect(screen.getByText(/drop media below to add it/)).toBeInTheDocument();
+    expect(document.querySelector('[data-shot-timeline-overview="true"]')).toBeNull();
+  });
+
   it('renders projected visual and audio tracks before the popup provider finishes loading', async () => {
     const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
     const composition = adapter.prepare(fixture);

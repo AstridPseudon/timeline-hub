@@ -52,6 +52,7 @@ import type {
 import type { CanonicalShotTimelinePublication } from '@/tools/video-editor/runtime/ports.ts';
 import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
+import { usePanesStore } from '@/shared/state/panesStore.ts';
 
 interface AstridTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
@@ -102,6 +103,9 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
   const { navigateToShot } = useShotNavigation();
   const { selectedProjectId } = useProjectSelectionContext();
   const { shots } = useShots();
+  const isGenerationsPaneLocked = usePanesStore((state) => state.isGenerationsPaneLocked);
+  const isGenerationsPaneOpen = usePanesStore((state) => state.isGenerationsPaneOpen);
+  const effectiveGenerationsPaneHeight = usePanesStore((state) => state.effectiveGenerationsPaneHeight);
   const runtime = useVideoEditorRuntime();
   // The hosted build's "Astrid stopped" / "restarted" card is what tells the person what to do; this banner stays quiet then.
   const recoveryCardShowing = useRecoveryCardShowing();
@@ -615,12 +619,21 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
 
       <Dialog
         open={Boolean(canonicalShotEditor)}
+        modal={false}
+        disablePointerDismissal
         onOpenChange={(open) => {
           if (!open) setCanonicalShotEditor(null);
         }}
       >
         <DialogContent
+          modal={false}
+          showBackdrop={false}
           className="h-[min(90vh,900px)] max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-hidden p-0"
+          style={{
+            top: '1rem',
+            transform: 'translateX(-50%)',
+            maxHeight: `calc(100dvh - ${isGenerationsPaneLocked || isGenerationsPaneOpen ? effectiveGenerationsPaneHeight : 0}px - 1rem)`,
+          }}
           finalFocus={false}
           onKeyDown={(event) => {
             // This dialog has no trigger element. Handle Escape here so the
