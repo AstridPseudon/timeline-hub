@@ -1,0 +1,111 @@
+{
+  "schema": "timeline.agent.d141l.freeze2-proof-review.v1",
+  "verdict": "FAIL",
+  "scope": "independent source/control/custody review only; no product tests or bodies",
+  "reviewed_utc": "2026-10-26",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-source-0500/evidence",
+  "reviewed_inputs": [
+    "command-cut.sh",
+    "command-pristine.sh",
+    "rows.txt",
+    "controls.json",
+    "admission-derivation.json",
+    "source-manifest.json",
+    "validation.md",
+    "readiness.json",
+    "handoff.md",
+    "disk-trace.txt",
+    "positive.manifest",
+    "poison.manifest",
+    "positive-stub.sh"
+  ],
+  "tuple": {
+    "agent_integrated": {"sha": "8585ed9c0404d0187b2ce70242d25114a32747c2", "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"},
+    "agent_pristine_authoritative": {"sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"},
+    "runtime_integrated": {"sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "runtime_pristine": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"},
+    "composition_integrated": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "app": "pending genuine freeze-2 receiving receipt"
+  },
+  "arithmetic": {
+    "manager_dispatch_bytes": 4826488832,
+    "source_admission_bytes": 4692029440,
+    "actual_min_bytes": 4311924736,
+    "trace_samples": 254,
+    "trace_seconds": 5,
+    "x_bytes": 514564096,
+    "floor_bytes": 4714564096,
+    "formula": "max(4600000000, 4000000000 + max(4826488832-4311924736,4692029440-4311924736) + 200000000)"
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "severity": "blocking",
+      "subject": "pristine comparator lacks required custody controls",
+      "evidence": "command-pristine.sh:36-61",
+      "detail": "It checks only one pre-run disk value, then directly execs pytest. It has no exact checkout SHA/tree/path or clean guard, no before/after source witnesses, no interpreter realpath/version witness, no raw stdout/stderr or pytest log custody, no after-body disk check, no continuous monitor, no one-heavy lock, and no status/exit/evidence propagation. This cannot satisfy the required full before/during/after pristine proof."
+    },
+    {
+      "id": "F-002",
+      "severity": "blocking",
+      "subject": "pristine route does not apply the D89d full-pair floor",
+      "evidence": "command-pristine.sh:10,45-50; controls.json:pristine",
+      "detail": "The pristine script enforces only 4000000000 bytes and has no 4714564096-byte source admission floor or body-dispatch witness. D89d applies to the required Agent 8585/pristine 64197 full rerun pair."
+    },
+    {
+      "id": "F-003",
+      "severity": "blocking",
+      "subject": "pristine JUnit custody is not runnable as authored",
+      "evidence": "command-pristine.sh:11,60; source filesystem inspection",
+      "detail": "The script writes to evidence/private/pristine/agent-core-full.xml but never creates its parent directory. The source packet has no such directory. It also does not pre-create or retain raw output files. A later service may provide incidental directories, but the authored command does not own the promised XML/raw custody."
+    },
+    {
+      "id": "F-004",
+      "severity": "blocking",
+      "subject": "controller admission is not genuinely authenticated or tuple-bound",
+      "evidence": "command-cut.sh:137-168",
+      "detail": "admitted_dispatch reads an arbitrary JSON path and brief, checks only a schema, nonempty controller, service_id prefix, four witness fields, and a substring in the brief. It does not verify the existing request-test/test-run receipt identity or hash, exact service/request ID, controller receipt status, source tuple/tree, manifest, command, or brief hash. A stale or self-authored receipt/brief with the expected substring can pass. This is not the required binding through the existing authenticated route."
+    },
+    {
+      "id": "F-005",
+      "severity": "blocking-receiving",
+      "subject": "cut cannot consume the genuine future App receipt",
+      "evidence": "command-cut.sh:12-16,92-97; positive.manifest; source-manifest.json:app",
+      "detail": "The cut hardcodes a nonexistent sentinel App path and sentinel SHA/tree/parents. The positive manifest carries the same placeholders. No receipt path or authenticated App binding input is accepted. Until the App owner supplies the genuine freeze-2 receiving receipt and the normal controller binds it, the cut must refuse; this is a later receiving requirement, not source approval."
+    },
+    {
+      "id": "F-006",
+      "severity": "source-provenance",
+      "subject": "source packet misattributes the pristine SHA discrepancy",
+      "evidence": "source-manifest.json:agent_pristine.task_text_typo; source worker brief.md; git object check",
+      "detail": "The genuine source-worker manager brief records the authoritative pristine SHA ending 303a and does not contain 303e. Git confirms 303a exists and 303e is absent. The source-manifest field claiming that the task text ended 303e is unsupported by that manager brief and should not be carried as an input-history fact. The authoritative 303a object/tree are otherwise correct."
+    },
+    {
+      "id": "F-007",
+      "severity": "custody",
+      "subject": "KEEP and dependent-directory custody are asserted, not enforced",
+      "evidence": "command-cut.sh:268-278; command-pristine.sh; positive.manifest; controls.json",
+      "detail": "The cut creates a writable text KEEP marker, but neither route protects the run/evidence directory or verifies file modes, inode/path identity, dependent directory custody, or post-run raw/XML dataflow. The pristine route has no KEEP marker at all. Launcher hashes cover selected manifest inputs, not the promised complete raw/dependent custody."
+    },
+    {
+      "id": "F-008",
+      "severity": "control-parity",
+      "subject": "pristine environment is not the same operational settings",
+      "evidence": "command-cut.sh:346-355; command-pristine.sh:54-61",
+      "detail": "The cut environment includes the toolchain Node path and ASTRID_RUNTIME_SOURCE_ROOT; the pristine environment omits both. The pristine script also does not verify the venv interpreter realpath/version. This prevents the requested same-venv/settings parity from being evidenced."
+    },
+    {
+      "id": "F-009",
+      "severity": "trace-gap",
+      "subject": "source-work trace has a disclosed pre-trace gap",
+      "evidence": "disk-trace.txt; source worker log/brief; admission-derivation.json",
+      "detail": "The genuine source-work trace has 44 samples at exact 5-second intervals from 05:00:57Z through 05:04:32Z, minimum 4693712896 bytes, all above 4 GB. The source dispatch witness was 04:57:57.501Z and the manager recorded no trace at 04:59:57Z, so custody before 05:00:57Z is unavailable. The older 254-sample trace belongs to retained receipt 26496 and is not backfilled as current source-work evidence."
+    }
+  ],
+  "later_receiving_requirements": [
+    "Obtain and verify the genuine App freeze-2 receiving head/tree/parents receipt, then bind it through the existing normal route; do not use 520d, 8f278, 547e, or placeholders.",
+    "Issue exactly one normal controller admission receipt at >=4714564096 bytes and bind its exact request/service/source tuple and brief through existing authenticated receipt validation.",
+    "Run the Agent 8585 full body and the plain pristine 64197 full comparator with the corrected custody controls, then run the explicitly authorized selected CLI P4 reproof."
+  ],
+  "source_only_disposition": "No source approval, REG, gate, or ship credit. Historical receipts remain unchanged."
+}
