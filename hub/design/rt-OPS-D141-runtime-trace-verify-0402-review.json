@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.ops.d141.runtime-trace-verify.v1",
+  "task": "rt-OPS-D141-runtime-trace-verify-0402",
+  "scope": "One bounded independent closure check of source rt-OPS-D141-runtime-trace-return-0349 after terminal",
+  "candidate": {
+    "repo": "composition",
+    "head": "f0ef96c415ff299b1456ed71b695000afd2165b9",
+    "tree": "2e12d3f102ee067b24068aa169d840d38ed77fa7",
+    "source_path": "privateops-d141-measured-floor"
+  },
+  "prior_review": {
+    "worker": "rt-OPS-D141-runtime-split-review-0340",
+    "finding": "D141H-SEC-001",
+    "verdict": "FAIL",
+    "immutable_source": "5113868cc3"
+  },
+  "verdict": "FAIL",
+  "findings": [
+    {
+      "id": "D141H-VERIFY-001",
+      "status": "OPEN",
+      "summary": "The required cancellation/reaping preservation check did not complete.",
+      "evidence": "The exact real-controls.py command exited 1 at line 478: body-cancel remained running, disk-trace.tsv contained only the first sample, and trace-validation was absent after the 30-second bound.",
+      "impact": "Terminal/cancel/reap/KEEP trace and exit semantics are not currently qualified.",
+      "next_owner": "Main/Sol per the brief's second-failure escalation rule"
+    },
+    {
+      "id": "D141H-SEC-001",
+      "status": "UNVERIFIED",
+      "summary": "The prior append/validator custody finding is addressed in the inspected source shape but was not behaviorally re-verified because the same author control script aborted before its seven attack cases.",
+      "evidence": "Static inspection finds no-follow descriptor opens, fstat device/inode/owner/mode/link checks, physical-parent binding, and same-descriptor validation. No trace-attack-* or validator-attack-* case ran in this verification fixture.",
+      "impact": "No independent PASS is claimed for symlink/FIFO/regular replacement refusal, boundedness, or zero redirected writes.",
+      "next_owner": "Main/Sol after D141H-VERIFY-001 is corrected"
+    }
+  ],
+  "decisions": [
+    "No source edits were made.",
+    "The same real-controls.py command was not rerun after failure.",
+    "No full suite, product test, live dispatcher, queue, installation, CAS, body, network, or release claim was made."
+  ]
+}

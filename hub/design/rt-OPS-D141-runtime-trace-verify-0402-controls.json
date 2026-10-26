@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.ops.d141.runtime-trace-verify.controls.v1",
+  "command": "TMPDIR=/tmp/d141h-verify-0402-controls-2 PYTHONDONTWRITEBYTECODE=1 python3 -I privateops-d141-measured-floor/controls/real-controls.py",
+  "result": "FAIL",
+  "exit_code": 1,
+  "failure": "real-controls.py:478: AssertionError: cancelled installed runner did not finalize its own trace",
+  "observed_before_abort": {
+    "exact_runtime_p5_6934": "pass with trace PASS and 4 samples",
+    "exact_targeted15": "pass with trace PASS and 4 samples",
+    "normal_generated_targeted15_full_id": "pass",
+    "app_paired_kit_refusal": "pass",
+    "floor_default_global_stop_and_one_heavy_controls": "reached without assertion",
+    "failure_body_trace": "reached without assertion",
+    "cancel_start": "pass",
+    "cancel_terminal_reap": "FAIL"
+  },
+  "trace_security_attacks": {
+    "status": "NOT_REACHED",
+    "cases": ["symlink-before-final", "fifo-before-final", "regular-before-final", "parent-substitution-before-final", "symlink-before-validation", "fifo-before-validation", "regular-before-validation"]
+  },
+  "prior_37_preserved": "NOT_ESTABLISHED",
+  "publication_smoke": "PASS separately; exact five installed/published/received files had identical hashes and 0755 modes, with no controls sibling",
+  "scope_limits": ["no full suite", "no product tests/import/collection", "no live request/queue/dispatcher/body", "no installation/CAS", "no network/package/build/ZIP"]
+}

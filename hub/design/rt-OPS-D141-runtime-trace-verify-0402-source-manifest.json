@@ -1,0 +1,23 @@
+{
+  "schema": "timeline.ops.d141.runtime-trace-verify.source-manifest.v1",
+  "task": "rt-OPS-D141-runtime-trace-verify-0402",
+  "repo": "composition",
+  "head": "f0ef96c415ff299b1456ed71b695000afd2165b9",
+  "tree": "2e12d3f102ee067b24068aa169d840d38ed77fa7",
+  "base_candidate_commit": "d63d413da6a9bd8e02596198ca907dbc46c9fd4d",
+  "private_root": "privateops-d141-measured-floor",
+  "source_status": "clean",
+  "production_files": [
+    {"path": "bin/d141-append-final.py", "mode": "755", "sha256": "1a9a6340f5cfc9b9b5f68e93cb99b2ab279fdd5f9a9a2b7d81ccdcacfe322ac5", "precondition": "absent_including_dangling_symlink"},
+    {"path": "bin/d141-disk-trace.py", "mode": "755", "sha256": "d0eea1f945b1a89c279bb5c6214b93532c907a1e18ffce369a2da91f313330bb", "precondition": "absent_including_dangling_symlink"},
+    {"path": "bin/d141-validate-receipt.py", "mode": "755", "sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6", "precondition": "absent_including_dangling_symlink"},
+    {"path": "bin/d141-validate-trace.py", "mode": "755", "sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5", "precondition": "absent_including_dangling_symlink"},
+    {"path": "bin/test-run", "mode": "755", "sha256": "339d44b4852a69b6733a32f78b8ae7933c7d579368a64b207633fb9070f79987", "precondition": {"sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe", "mode": "755", "type": "regular_nofollow"}}
+  ],
+  "private_files": {
+    "controls/real-controls.py": {"mode": "755", "sha256": "a41f01ab32889d1fc76e62f535a475fc0cdc08cb5b317fbd8b66b1d01fbcd00e"},
+    "install-manifest.json": {"mode": "644", "sha256": "5a0b38e05c1bf58ccdc16ad127a6308df19d5e6cd7c6f3756c548cb3ef53b572"}
+  },
+  "publication": {"status": "NOT_INSTALLED", "controls_excluded": true, "parent_ops_d141_measured_floor_unchanged": true},
+  "supported_scope": {"runtime": ["exact P5 service 6934", "normal generated targeted15 path", "default floors", "source/snapshot/cache/lease/one-heavy/4GB stop/trace controls"], "app": "explicit paired-kit-pending refusal"}
+}
