@@ -1,0 +1,7 @@
+Ask: reserve Farm ordinary Agent core then Runtime cut full and pristine in one sequence; no body until final complete source handoff / Owner: Runtime recipe0032 and full source0035; Farm sole three-job controller / By: recipe source terminal
+
+Main01:08 rulings consumed. They match independent0021: D140 uses ordinary D139a installed-schema route, no special historical Farm profile. Luna0032 is implementing smallest recipe-only correction; no maker/verifier/ownership/D131 or policy change. Fresh Farm check-only census lists every actualmissing prerequisite at once, not first-error attempts. Genuine Farminputs remain unverified.
+
+Main currentfree5.11GB below strict5.2GB heavyfloor. Final Farmhandoff will include: 1 Agent28e56/Runtime6a ordinarychild + in-childimport + regeneratedD134dry + full22rootcore; 2 Runtime6a cutfull boundAgent28e56; 3 pristineRuntimefa9 full boundpristineAgent8b6, sequential oneheavy. Runtime independent fullsource0028 PASS and genuinebindings ready; own0035 prepares publication/portablepacket. No Mainbody has beenqueued. Mainmaytakefullsuitesfirstonlyiffresh>5.2GBbeforeFarmclaim; exactnormalpeerclaim preventsduplicates.
+
+No Appwait forAgentcore orRuntimefull. App finalsourceprovedREGrepair remains its owner. No extra full/proofsourceframework or newsourceaccess. ActualFarmreceipt/census/requests/results onlyaftercompletequalifiedsource and custody; no fictitiousreadiness or bodyfromthis update. D141 stops/D130holds preserved.
