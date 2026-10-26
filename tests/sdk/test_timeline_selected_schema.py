@@ -98,6 +98,44 @@ def test_new_valid_selected_param_compiles_commits_reloads_and_roundtrips(select
     assert redone['data']['canonical_document'] == document
 
 
+def test_admitted_element_can_be_placed_on_occurrence_clip_without_prior_ref(selected_effect):
+    realm, selected, _ = selected_effect
+    original = current(realm)
+    shot_id = 'shot-placement'
+    occurrence_id = 'occ-placement'
+    target = f'occurrence:{occurrence_id}/clip:discord'
+    original['placements'] = [{
+        'occurrence_id': occurrence_id, 'shot_id': shot_id,
+        'placement': {'start_ms': 0}, 'duration_ms': 2000,
+    }]
+    original['source_mapping']['placements'] = {
+        occurrence_id: copy.deepcopy(original['placements'][0]),
+    }
+    original['source_mapping']['shots'] = {
+        shot_id: {'shot_id': shot_id, 'revision_id': 'shot-revision',
+                  'content_digest': 'sha256:' + 'a' * 64},
+    }
+    original['shots'] = {
+        shot_id: {
+            'payload': {},
+            'internal_timeline': {
+                'tracks': [{'id': 'picture', 'kind': 'visual'}],
+                'clips': [{'id': 'discord', 'clipType': 'am-discord',
+                           'track': 'picture', 'at': 0, 'hold': 2, 'params': {}}],
+            },
+        },
+    }
+
+    command = capture_clip_set_element(
+        original, target, element=selected, **realm.schema_options)
+    assert command['select'] == target
+    assert command['args']['schema_source'] == realm.schema_options['schema_source']
+    plan = execute(original, [command],
+                   schema_inputs=realm.schema_options['schema_inputs'],
+                   realm_id=realm.schema_options['realm_id'])
+    assert State(plan.bundle).entity(target)['elementRef'] == selected
+
+
 @pytest.mark.parametrize('stage', ['capture', 'compile', 'provider'])
 # Retained-input qualification: test_timeline_selected_schema_runtime.py uses
 # actual admission + paired Runtime custody through restart/replay/inverse.
