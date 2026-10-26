@@ -104,8 +104,8 @@ describe('AstridStatusSection', () => {
     expect(document.querySelector('svg.lucide-circle-alert')).not.toBeNull();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
     expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
-    expect(screen.getByText('Reason: startup_failed')).toBeInTheDocument();
-    expect(screen.getByText('Last exit: 2')).toBeInTheDocument();
+    expect(screen.getByText(/Reason: startup_failed/)).toBeInTheDocument();
+    expect(screen.getByText(/Last exit code: 2/)).toBeInTheDocument();
     expect(screen.getByText(/service-chat\.log/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
@@ -130,8 +130,8 @@ describe('AstridStatusSection', () => {
     const customWorker = await screen.findByText('custom-worker');
     expect(customWorker.closest('li')).toHaveTextContent(/service-custom-worker\.log/);
     const retryingWorker = screen.getByText('retrying-worker').closest('li');
-    expect(retryingWorker).toHaveTextContent('Previous reason: exited');
-    expect(retryingWorker).toHaveTextContent('Last exit: 1');
+    expect(retryingWorker).toHaveTextContent('Last stop reason: exited');
+    expect(retryingWorker).toHaveTextContent('Last exit code: 1');
     expect(retryingWorker).toHaveTextContent(/service-retrying-worker\.log/);
     expect(retryingWorker).toHaveTextContent('Running');
     expect(screen.queryByRole('button', { name: 'Copy command' })).not.toBeInTheDocument();
@@ -148,7 +148,7 @@ describe('AstridStatusSection', () => {
     const brief = String(mocks.clipboard.mock.calls[0][0]);
     expect(brief).toContain('chat: failed');
     expect(brief).toContain('Reason: startup_failed');
-    expect(brief).toContain('Last exit: 2');
+    expect(brief).toContain('Last exit code: 2');
     expect(brief).toContain('service-chat.log');
     expect(brief).toContain('curl -s');
   });

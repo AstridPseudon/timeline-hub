@@ -148,31 +148,31 @@ export function describeFailure(value: unknown, platform: Platform = detectPlatf
     const reason = typeof value.reason === 'string' ? value.reason.trim() : '';
     const lastExit = value.last_exit;
     const summary = reason
-      ? `${value.state === 'failed' ? 'Reason' : 'Previous reason'}: ${reason}`
-      : value.state === 'failed' ? 'The service is failed.'
-        : lastExit !== null ? 'The service exited previously.' : null;
+      ? `${value.state === 'failed' ? 'Reason' : 'Last stop reason'}: ${reason}`
+      : value.state === 'failed' ? "It stopped and isn't running."
+        : lastExit !== null ? 'It stopped earlier.' : null;
     return { summary, lastExit, logPath: serviceLogPath(value.name, platform) };
   }
   if (value instanceof RuntimeAuthenticationError) {
-    return { summary: 'The Runtime rejected or revoked its connector credential.', lastExit: null, logPath: null };
+    return { summary: "Astrid Runtime didn't accept this editor's credential.", lastExit: null, logPath: null };
   }
   if (value instanceof RuntimeUnavailableError) {
     const summary = value.failureKind === 'storage'
-      ? 'The Runtime reported a storage problem.'
+      ? 'Astrid Runtime reported a problem with its storage.'
       : value.failureKind === 'admission'
-        ? 'The Runtime failed its startup or integrity checks.'
+        ? "Astrid Runtime didn't pass its startup or integrity checks."
         : value.failureKind === 'transport'
-          ? 'The configured Runtime did not respond.'
-          : 'The Runtime returned an unavailable response.';
+          ? "Astrid Runtime didn't respond."
+          : 'Astrid Runtime reported that it is unavailable.';
     return { summary, lastExit: null, logPath: null };
   }
   if (value instanceof RuntimeCompatibilityError) {
-    return { summary: 'The Runtime does not match the selected workspace or App contract.', lastExit: null, logPath: null };
+    return { summary: "This Astrid Runtime doesn't match this workspace or this version of the editor.", lastExit: null, logPath: null };
   }
   if (value instanceof Error && value.message.trim()) {
     return { summary: value.message.trim(), lastExit: null, logPath: null };
   }
-  return { summary: 'The Runtime connection failed.', lastExit: null, logPath: null };
+  return { summary: "Couldn't connect to Astrid Runtime.", lastExit: null, logPath: null };
 }
 
 export function healthCheckCommand(apiBase: string, origin?: string, platform: Platform = detectPlatform()): string {
@@ -192,13 +192,13 @@ function serviceBrief(services: readonly ServiceStatus[] | undefined, platform: 
     const details = [
       `${service.name}: ${service.state}`,
       failure.summary,
-      failure.lastExit === null ? null : `Last exit: ${failure.lastExit}`,
+      failure.lastExit === null ? null : `Last exit code: ${failure.lastExit}`,
       failure.logPath ? `Log: ${failure.logPath}` : null,
     ].filter((part): part is string => Boolean(part));
     return details.join(' · ');
   }) ?? [];
   return recorded.length
-    ? `Runtime services from health:\n${recorded.join('\n')}`
+    ? `Services reported by the Runtime health check:\n${recorded.join('\n')}`
     : `If a service fails, inspect its service-<name>.log under ${runtimeLogDirectory(platform)}.`;
 }
 
@@ -345,7 +345,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   panelLabel: 'Connect to Astrid',
 
-  windowsBeta: 'Windows: beta',
+  windowsBeta: 'Windows support is in beta.',
 
   waiting: 'Waiting for Astrid on this computer…',
 

@@ -112,7 +112,7 @@ describe('failure diagnostics', () => {
   it('uses one service description with the platform log path and historical exit', () => {
     const service = { name: 'pack-host', state: 'running', reason: 'readiness_timeout', last_exit: 7, restart_count: 2 } as const;
     expect(describeFailure(service, 'windows')).toEqual({
-      summary: 'Previous reason: readiness_timeout',
+      summary: 'Last stop reason: readiness_timeout',
       lastExit: 7,
       logPath: '%LOCALAPPDATA%\\Astrid Runtime\\logs\\service-pack-host.log',
     });
@@ -131,7 +131,7 @@ describe('failure diagnostics', () => {
     const brief = agentInstructions('install', 'https://astrid.haus', false, [
       { name: 'pack-host', state: 'restarting', reason: 'readiness_timeout', last_exit: 7, restart_count: 1 },
     ]);
-    expect(brief).toContain('pack-host: restarting · Previous reason: readiness_timeout · Last exit: 7');
+    expect(brief).toContain('pack-host: restarting · Last stop reason: readiness_timeout · Last exit code: 7');
     expect(brief).toContain('service-pack-host.log');
 
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');

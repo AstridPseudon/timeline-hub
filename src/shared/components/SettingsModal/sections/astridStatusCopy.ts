@@ -29,7 +29,7 @@ export const ASTRID_STATUS_COPY = {
     restarting: 'Restarting…',
     failed: 'Failed',
   },
-  lastExit: (code: number) => `Last exit: ${code}`,
+  lastExit: (code: number) => `Last exit code: ${code}`,
   serviceLog: (path: string) => `Log: ${path}`,
   serviceName: (name: string) => {
     switch (name) {
