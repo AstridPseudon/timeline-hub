@@ -1,0 +1,299 @@
+{
+  "$schema": "timeline.shot-layering/v1",
+  "schema_version": 1,
+  "units": {
+    "authored_timing": "milliseconds",
+    "projected_timing": "seconds",
+    "track_order": "top-first"
+  },
+  "representation": {
+    "group_track_id": "<occurrence_id>~<inner_track_id>",
+    "group_tag": {
+      "path": "track.app.group",
+      "shape": {
+        "id": "<occurrence_id>",
+        "sourceTrack": "<inner_track_id>"
+      }
+    },
+    "placement": "A visual group is contiguous immediately above its occurrence row.",
+    "inner_audio": "Audio tracks keep their authored id and merge with the parent audio track.",
+    "empty_area": {
+      "mode": "transparent",
+      "parent_content_visible": true,
+      "opaque_background": false
+    },
+    "runtime_read_path": "Runtime reads this file at conformance/fixtures/shot-layering-v1.json; Agent and App consumers own projection behaviour."
+  },
+  "input_shape": {
+    "main_tracks": [
+      {"id": "picture", "kind": "visual"},
+      {"id": "type", "kind": "visual"},
+      {"id": "audio", "kind": "audio"}
+    ],
+    "shots": [
+      {
+        "occurrence": {
+          "id": "occ-vision",
+          "track": "picture",
+          "at_ms": 9100,
+          "duration_ms": 19600
+        },
+        "timeline": {
+          "tracks": [
+            {"id": "plate", "kind": "visual"},
+            {"id": "type", "kind": "visual"},
+            {"id": "audio", "kind": "audio"}
+          ],
+          "clips": [
+            {"id": "vision-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 12000, "asset_id": "vision-footage"},
+            {"id": "vision-title", "clip_type": "text", "track": "type", "at_ms": 4000, "duration_ms": 4000, "text": {"content": "The Vision"}},
+            {"id": "vision-audio", "clip_type": "media", "track": "audio", "at_ms": 0, "duration_ms": 19600, "asset_id": "vision-audio"}
+          ]
+        }
+      }
+    ],
+    "loose_clips": [
+      {"id": "clip-0", "clip_type": "media", "track": "type", "at_ms": 23867, "duration_ms": 5000, "asset_id": "otter-crate", "opacity": 1}
+    ]
+  },
+  "cases": [
+    {
+      "id": "film-picture-over-type",
+      "plan": "The film case: a shot on picture and clip-0 on type.",
+      "input": {
+        "main_tracks": [
+          {"id": "picture", "kind": "visual"},
+          {"id": "type", "kind": "visual"},
+          {"id": "audio", "kind": "audio"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-vision", "track": "picture", "at_ms": 9100, "duration_ms": 19600},
+            "timeline": {
+              "tracks": [
+                {"id": "plate", "kind": "visual"},
+                {"id": "type", "kind": "visual"},
+                {"id": "audio", "kind": "audio"}
+              ],
+              "clips": [
+                {"id": "vision-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 12000, "asset_id": "vision-footage"},
+                {"id": "vision-title", "clip_type": "text", "track": "type", "at_ms": 4000, "duration_ms": 4000, "text": {"content": "The Vision"}},
+                {"id": "vision-audio", "clip_type": "media", "track": "audio", "at_ms": 0, "duration_ms": 19600, "asset_id": "vision-audio"}
+              ]
+            }
+          }
+        ],
+        "loose_clips": [
+          {"id": "clip-0", "clip_type": "media", "track": "type", "at_ms": 23867, "duration_ms": 5000, "asset_id": "otter-crate", "opacity": 1}
+        ]
+      },
+      "expected": {
+        "track_order": ["occ-vision~plate", "occ-vision~type", "picture", "type", "audio"],
+        "group_tracks": [
+          {"id": "occ-vision~plate", "app": {"group": {"id": "occ-vision", "sourceTrack": "plate"}}},
+          {"id": "occ-vision~type", "app": {"group": {"id": "occ-vision", "sourceTrack": "type"}}}
+        ],
+        "clip_tracks": {
+          "clip-0": "type",
+          "vision-plate": "occ-vision~plate",
+          "vision-title": "occ-vision~type",
+          "vision-audio": "audio"
+        },
+        "transparent_windows_ms": [[21100, 28700]],
+        "warnings": []
+      }
+    },
+    {
+      "id": "loose-above-shot",
+      "plan": "A loose visual clip on a row above the occurrence row.",
+      "input": {
+        "main_tracks": [
+          {"id": "overlay", "kind": "visual"},
+          {"id": "picture", "kind": "visual"},
+          {"id": "type", "kind": "visual"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-above", "track": "picture", "at_ms": 1000, "duration_ms": 3000},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}],
+              "clips": [{"id": "above-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 3000, "asset_id": "above-footage"}]
+            }
+          }
+        ],
+        "loose_clips": [{"id": "above-clip", "clip_type": "media", "track": "overlay", "at_ms": 1000, "duration_ms": 3000, "asset_id": "overlay-art"}]
+      },
+      "expected": {
+        "track_order": ["overlay", "occ-above~plate", "picture", "type"],
+        "group_tracks": [{"id": "occ-above~plate", "app": {"group": {"id": "occ-above", "sourceTrack": "plate"}}}],
+        "clip_tracks": {"above-clip": "overlay", "above-plate": "occ-above~plate"},
+        "warnings": []
+      }
+    },
+    {
+      "id": "loose-below-shot",
+      "plan": "A loose visual clip on a row below the occurrence row.",
+      "input": {
+        "main_tracks": [
+          {"id": "picture", "kind": "visual"},
+          {"id": "type", "kind": "visual"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-below", "track": "picture", "at_ms": 1000, "duration_ms": 3000},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}],
+              "clips": [{"id": "below-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 3000, "asset_id": "below-footage"}]
+            }
+          }
+        ],
+        "loose_clips": [{"id": "below-clip", "clip_type": "media", "track": "type", "at_ms": 1000, "duration_ms": 3000, "asset_id": "type-art"}]
+      },
+      "expected": {
+        "track_order": ["occ-below~plate", "picture", "type"],
+        "group_tracks": [{"id": "occ-below~plate", "app": {"group": {"id": "occ-below", "sourceTrack": "plate"}}}],
+        "clip_tracks": {"below-clip": "type", "below-plate": "occ-below~plate"},
+        "warnings": []
+      }
+    },
+    {
+      "id": "loose-same-row",
+      "plan": "A loose visual clip on the same row as the occurrence; the editor avoids creating this input.",
+      "input": {
+        "main_tracks": [
+          {"id": "picture", "kind": "visual"},
+          {"id": "type", "kind": "visual"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-same", "track": "picture", "at_ms": 1000, "duration_ms": 3000},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}],
+              "clips": [{"id": "same-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 3000, "asset_id": "same-footage"}]
+            }
+          }
+        ],
+        "loose_clips": [{"id": "same-clip", "clip_type": "media", "track": "picture", "at_ms": 1000, "duration_ms": 3000, "asset_id": "same-row-art"}]
+      },
+      "expected": {
+        "track_order": ["occ-same~plate", "picture", "type"],
+        "group_tracks": [{"id": "occ-same~plate", "app": {"group": {"id": "occ-same", "sourceTrack": "plate"}}}],
+        "clip_tracks": {"same-clip": "picture", "same-plate": "occ-same~plate"},
+        "same_row_warning": false,
+        "warnings": []
+      }
+    },
+    {
+      "id": "shot-only-suffix-tracks",
+      "plan": "A shot-only suffix track stays with its group instead of being appended below unrelated parent tracks.",
+      "input": {
+        "main_tracks": [
+          {"id": "picture", "kind": "visual"},
+          {"id": "plate", "kind": "visual"},
+          {"id": "music", "kind": "audio"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-suffix", "track": "picture", "at_ms": 2000, "duration_ms": 3000},
+            "timeline": {
+              "tracks": [
+                {"id": "plate", "kind": "visual"},
+                {"id": "title", "kind": "visual"}
+              ],
+              "clips": [
+                {"id": "suffix-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 3000, "asset_id": "suffix-footage"},
+                {"id": "suffix-title", "clip_type": "text", "track": "title", "at_ms": 0, "duration_ms": 3000, "text": {"content": "Title"}}
+              ]
+            }
+          }
+        ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": ["occ-suffix~plate", "occ-suffix~title", "picture", "plate", "music"],
+        "group_tracks": [
+          {"id": "occ-suffix~plate", "app": {"group": {"id": "occ-suffix", "sourceTrack": "plate"}}},
+          {"id": "occ-suffix~title", "app": {"group": {"id": "occ-suffix", "sourceTrack": "title"}}}
+        ],
+        "clip_tracks": {"suffix-plate": "occ-suffix~plate", "suffix-title": "occ-suffix~title"},
+        "warnings": []
+      }
+    },
+    {
+      "id": "two-shots-one-row",
+      "plan": "Two occurrences share a row; stable occurrence order is input/ordinal order, first group first.",
+      "input": {
+        "main_tracks": [
+          {"id": "picture", "kind": "visual"},
+          {"id": "type", "kind": "visual"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-first", "track": "picture", "at_ms": 0, "duration_ms": 2000, "ordinal": 0},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}],
+              "clips": [{"id": "first-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 2000, "asset_id": "first-footage"}]
+            }
+          },
+          {
+            "occurrence": {"id": "occ-second", "track": "picture", "at_ms": 2500, "duration_ms": 2000, "ordinal": 1},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}, {"id": "type", "kind": "visual"}],
+              "clips": [
+                {"id": "second-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 2000, "asset_id": "second-footage"},
+                {"id": "second-title", "clip_type": "text", "track": "type", "at_ms": 0, "duration_ms": 2000, "text": {"content": "Second"}}
+              ]
+            }
+          }
+        ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": ["occ-first~plate", "occ-second~plate", "occ-second~type", "picture", "type"],
+        "group_tracks": [
+          {"id": "occ-first~plate", "app": {"group": {"id": "occ-first", "sourceTrack": "plate"}}},
+          {"id": "occ-second~plate", "app": {"group": {"id": "occ-second", "sourceTrack": "plate"}}},
+          {"id": "occ-second~type", "app": {"group": {"id": "occ-second", "sourceTrack": "type"}}}
+        ],
+        "clip_tracks": {
+          "first-plate": "occ-first~plate",
+          "second-plate": "occ-second~plate",
+          "second-title": "occ-second~type"
+        },
+        "warnings": []
+      }
+    },
+    {
+      "id": "shot-row-missing",
+      "plan": "A missing occurrence row falls back to the top of the stack and emits the established target-not-found warning shape.",
+      "input": {
+        "main_tracks": [
+          {"id": "type", "kind": "visual"},
+          {"id": "audio", "kind": "audio"}
+        ],
+        "shots": [
+          {
+            "occurrence": {"id": "occ-missing", "track": "picture", "at_ms": 1000, "duration_ms": 3000},
+            "timeline": {
+              "tracks": [{"id": "plate", "kind": "visual"}],
+              "clips": [{"id": "missing-plate", "clip_type": "media", "track": "plate", "at_ms": 0, "duration_ms": 3000, "asset_id": "missing-row-footage"}]
+            }
+          }
+        ],
+        "loose_clips": []
+      },
+      "expected": {
+        "track_order": ["occ-missing~plate", "type", "audio"],
+        "group_tracks": [{"id": "occ-missing~plate", "app": {"group": {"id": "occ-missing", "sourceTrack": "plate"}}}],
+        "clip_tracks": {"missing-plate": "occ-missing~plate"},
+        "warnings": [
+          {
+            "severity": "warning",
+            "code": "timeline-patch/target-not-found",
+            "message": "shot-layering: track \"picture\" not found — placing occurrence \"occ-missing\" at top of stack"
+          }
+        ]
+      }
+    }
+  ]
+}
