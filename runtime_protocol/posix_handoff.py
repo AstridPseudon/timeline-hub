@@ -176,6 +176,7 @@ def inspect_socket(descriptor: int, *, listener: bool) -> tuple[int, int, Any]:
                         "-sTCP:LISTEN",
                         "-Ff",
                     ],
+                    stdin=subprocess.DEVNULL,
                     capture_output=True,
                     text=True,
                     check=False,

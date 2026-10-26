@@ -22,6 +22,35 @@ from tests.lanes import (
 from runtime_protocol import platform
 
 
+@pytest.mark.parametrize("stdin", ["omitted", None])
+def test_spawn_tree_defaults_missing_stdin_to_devnull(monkeypatch, stdin):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    kwargs = {} if stdin == "omitted" else {"stdin": stdin}
+    platform.spawn_tree(["child"], **kwargs)
+    assert calls[0]["stdin"] == subprocess.DEVNULL
+
+
+@pytest.mark.parametrize("stdin", [subprocess.PIPE, subprocess.DEVNULL])
+def test_spawn_tree_preserves_explicit_stdin(monkeypatch, stdin):
+    calls = []
+
+    def popen(_argv, **kwargs):
+        calls.append(kwargs)
+        return object()
+
+    monkeypatch.setattr(platform.sys, "platform", "linux")
+    monkeypatch.setattr(platform.subprocess, "Popen", popen)
+    platform.spawn_tree(["child"], stdin=stdin)
+    assert calls[0]["stdin"] == stdin
+
+
 def test_windows_durable_replace_retries_only_transient_sharing_failures(monkeypatch):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
     attempts = []

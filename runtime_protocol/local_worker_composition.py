@@ -988,6 +988,7 @@ def _listening_socket_owner(pid: int, endpoint: str) -> tuple[int, str]:
     expected = (ipaddress.ip_address(parsed.hostname or ""), int(parsed.port or 0))
     result = subprocess.run(
         ["lsof", "-a", "-p", str(int(pid)), "-n", "-P", "-iTCP", "-sTCP:LISTEN", "-Fpn"],
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         check=False,

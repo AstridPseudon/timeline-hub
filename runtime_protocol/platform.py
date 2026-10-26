@@ -740,6 +740,8 @@ def spawn_tree(argv, *, detached=False, hidden=False, **kwargs):
     Detached Windows daemons and retained Workers inherit their Job handles,
     preserving custody across an orderly owner exit.
     """
+    if kwargs.get("stdin") is None:
+        kwargs["stdin"] = subprocess.DEVNULL
     if sys.platform != "win32":
         kwargs.setdefault("start_new_session", True)
         return subprocess.Popen(argv, **kwargs)
@@ -812,7 +814,7 @@ def _posix_group_holds_only_zombies(pgid):
     An empty listing, a failed `ps`, or any non-zombie row returns False.
     """
     try:
-        listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="],
+        listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="], stdin=subprocess.DEVNULL,
                                  capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.SubprocessError):
         return False
