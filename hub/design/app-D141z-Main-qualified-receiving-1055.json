@@ -1,0 +1,111 @@
+{
+  "at": "2026-10-26T10:55:13.676435+00:00",
+  "status": "PASS_TRANSPORT",
+  "source_qualification": "Runtime1023 bounded PASS; no activation/build/live admission",
+  "files": [
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-install-plan.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-findings.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-sampler-lifecycle.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-report.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-review.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-findings.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-source-manifest.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-validation.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-handoff.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-disk-trace.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-sampler-lifecycle.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-review-1023-report.md",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-check.sh",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-core-inventory.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-delivery_lifecycle.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-inherited-runtime-final-service-rows.txt",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-install-final-services.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-install-map.json",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-receiving_controls.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-run-final-delivery.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-run-final-services.py",
+      "PASS": true
+    },
+    {
+      "published": "design/rt-F-D141z-main-intake-1011-candidate-runtime-final-service-rows.txt",
+      "PASS": true
+    }
+  ]
+}
