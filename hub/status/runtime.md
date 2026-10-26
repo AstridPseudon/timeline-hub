@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T04:57:26Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
+<!-- main | 2026-10-26T05:02:32Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 3m -->
 # runtime board, 2026-10-26T04:50:27Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -33,8 +33,8 @@
 | D141 REG comparison | Retain actual15 proved regression join | Luna | Independent0445 terminal | merged | rt-F-D141-REG-join-P5-review-0445 | Exact15 pristine PASS;13 upgrade and2 generated output REG.38 own bad records remain unchanged. [Evidence](../../design/rt-F-D141-REG-join-P5-review-0445-reg.md). | Frozen sources |
 | D141k schema receiving | Retain verified schema transport closure | Farm lead | Farm lead actual transport verification | merged | Farm lead PASS TRANSPORT CLOSURE | Farm04:00 records packet verified and0335 redundant. No extraction stage binding child census or body. Original permission refusal retained. | c1c2 /729e8 |
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
-| D141 REG upgrade | Fix13 proved upgrade regressions | Luna | Independent0445 proved REG | review | Author fix-next; prepared review0458 | Author13 PASS4.12s; db_path and production RLock initialized. Exact13 independent review ready but disk below4.6GB. | 012889c1 |
-| D141 REG TypeScript | Regenerate two stale conformance outputs | Luna | Independent0445 proved REG | doing | rt-F-D141-REG-typescript-fix-next | Own2 failed nodes; normal generator only. Contract inputs and tests unchanged. | Base6a011 |
+| D141 REG upgrade | Fix13 proved upgrade regressions | Luna | Independent0445 proved REG | review | Author fix-next; prepared review0458 | Author13 PASS4.12s; db_path and production RLock initialized. Independent0458 active on exact13 unchanged cases. | 012889c1 |
+| D141 REG TypeScript | Regenerate two stale conformance outputs | Luna | Independent0445 proved REG | review | Author fix-next; independent0458 | Author2 PASS; generatorcheck and TypeScript PASS. Only two generated outputs changed; review active. | Author terminal |
 | F-final and ZIP | Build exact cut and verify fresh patches | Luna and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP. Qualified private packaging route awaits final tuple, install and actual proofs. | No delivery artifact |
 | D141 other proofs | Receive core and P1 to P4 | Farm App Agent | Main D141i and D141k | doing | Agent0321 actual26496; App0303 | Agent26496 terminal with400 nonpass; controller custody and per ID join pending. Farm chain conditional on unresolved environment sensitive candidates. P4 scoped GO; App reproof owed. | Frozen cut and App520d |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
@@ -49,10 +49,12 @@ Blockers: App — Final paired kit0435 FAIL retained. Main D141s author0453 port
 Blockers: P5 metadata — Actual38PASS and source custody retained; finite derivative must replace abbreviated JSON node IDs and witness metadata. No original edits or new body.
 Blockers: Safety — D130, old venvs, runtimes/agent-remotion and sealed fixtures remain held. No owner-approved actual hub repack in this session. Dropped smoke stays unrun.
 Next ready: Review each REG fix on terminal; review final pair port once. Dispatch finite metadata correction when disk admits a source slot. Final build waits qualified post-fix heads and actual gates.
-live 2 / cap 0 for new dispatch; ready-undispatched 1 review held by4.6GB floor. Fresh4585582592 bytes. Upgrade author012889c1 PASS13; review0458 prepared; no heavy body.
+live 3 / cap 3; ready-undispatched 0. Both REG reviews0458 dispatched at4714029056 bytes. Kit port0453 active. Metadata correction prepared for next admitted slot. No heavy body.
 Runtime6a011 and Composition635f remain frozen pending REG normal merge. Header04:46 records Agent8585ed9c/tree92a3ffdb freeze2; full matching pair and changed-path P4 Agent-owned. App normal manifest return and new builder binding owed. No upstream chasing.
 Runtime18778 actual7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121 actual15PASS; P56934 actual38PASS. Raw XML and trace KEEP retained. Original receipts keep original scopes. Old8912 and P419479 unstarted.
 Farm child chain conditional on Agent join. Schema verified; original kit pair and67wheel seed EXACT MISSING, no hunt/rebuild. Planned F-final separately gated; no smoke or ZIP.
 INBOX consumed through1785837 bytes. Peer boards Agent04:41, App04:29, Farm04:25; newer Agent HOME authoritative header04:46. D141s decision applied, prior escalation disposition cleared.
-Disk: fresh4573106176 bytes. Fresh Runtime recycle census finds only three prior dirty ended trees, no clean eligible nonKEEP worktree. Sweep3 removed0; compact packed0scratch/0tests and gzipped2logs. Protected data unchanged.
+Disk: fresh4573106176 bytes. Fresh Runtime recycle census finds only three prior dirty ended trees, no clean eligible nonKEEP worktree. Sweep3 removed0. Compact MIN1 reached held sealed fixtures and got Permission denied; stopped SIGINT130. No retry or alternate cleanup; refusal escalated0459.
 
+
+Cleanup refusal: [exact record](../../escalations/runtime-20261026T045900Z-compact-held-fixture-refusal.md). Sealed originals and adjacent archives retained as found; no further compaction on these paths. Tool49 pack counter is not verified removal count.

@@ -6,6 +6,9 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; MIN=${1:-50}; cut=$(date -d '-1 hour' +%s)
 case "$MIN" in ""|*[!0-9]*) echo "usage: compact-scratch [MIN_MB]  (MIN_MB must be a whole number of MB; got: $MIN). Nothing done." >&2; exit 2;; esac   # 02:30Z 26 Oct: reject non-numeric args (an App lead ran --help; it ran with MIN=--help)
 B=$(df -BM --output=avail /home/user | tail -1 | tr -d ' M'); n=0
+# 05:05Z 26 Oct: sealed fixtures (a read-only dir anywhere inside, or a held .sealed marker) are never packed, because removal would fail after
+# packing and leave a half-removed tree (Runtime rt-OPS-child-reuse-return-1811). Skip them whole.
+sealed() { [ -e "$1/.sealed" ] || [ -n "$(find "$1" ! -writable -print -quit 2>/dev/null)" ]; }   # access(2): catches read-only mounts and immutable entries, even for root
 REF=$(cat $O/tests/suites.conf $O/tests/*.env $O/managers/*/STATUS.md 2>/dev/null)
 for d in $O/workers/*/; do w=$(basename $d)
   [ -f $d/running ] || [ -f $d/KEEP ] && continue; [ -f $d/ended ] && [ $(stat -c %Y $d/ended) -lt $cut ] || continue
@@ -13,7 +16,8 @@ for d in $O/workers/*/; do w=$(basename $d)
   grep -qw -- "$w" <<< "$REF" && continue
   for s in $(find $d -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
     [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
-    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && n=$((n+1)); done; done
+    sealed "$s" && { echo "compact-scratch: $s is sealed (read-only inside), skipped" >&2; continue; }
+    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && { rm -rf "$s" && n=$((n+1)) || echo "compact-scratch: removing $s failed after packing; $s.tgz holds the full copy" >&2; }; done; done
 # 13:12Z 25 Oct: the ~/.codex session gzip was REMOVED. The owner rule is "do not touch ~/.codex", and managers refused to run this tool because of it.
 echo "packed $n scratch dirs; free ${B}M -> $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
 
@@ -35,6 +39,7 @@ for t in $O/tests/*/; do r=$(basename $t); [ -f $t/exit ] || continue; [ "$(cat 
   [ $(stat -c %Y $t/exit) -lt $(date -d "-15 min" +%s) ] || continue; grep -qw -- "$r" <<< "$REF" && continue   # 01:35Z 25 Oct: 15 min, not 1 h (Agent disk +1.1 GB per 30 min)
   for s in $(find $t -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
     [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
-    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && tp=$((tp+1)); done
+    sealed "$s" && { echo "compact-scratch: $s is sealed (read-only inside), skipped" >&2; continue; }
+    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && { rm -rf "$s" && tp=$((tp+1)) || echo "compact-scratch: removing $s failed after packing; $s.tgz holds the full copy" >&2; }; done
   find $t -type f -size +5M ! -name '*.gz' ! -name '*.tgz' -print0 2>/dev/null | xargs -0 -r gzip -q 2>/dev/null; done
 echo "packed $tp finished test-run dirs; free now $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
