@@ -1,0 +1,23 @@
+{
+  "original_purpose_count": 15,
+  "actual_targeted_node_count": 22,
+  "mappings": [
+    {"original": "test_publish_still_requires_a_revision_message", "final": "tests/packs/timeline/test_cli_status_publish.py::test_commit_still_requires_a_revision_message", "disposition": "adapted command/reply name only"},
+    {"original": "test_publish_forwards_key_and_force_to_sdk_once", "final": "tests/packs/timeline/test_cli_status_publish.py::test_commit_migration_forwards_key_once_and_refuses_force", "disposition": "commit envelope; force refusal"},
+    {"original": "test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False/True]", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry[False/True]", "disposition": "same receipt/error/no-retry purpose"},
+    {"original": "test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_output_keeps_summary_and_receipt", "disposition": "human summary and pre-commit ordering restored; JSON envelope checked in accepted migration case"},
+    {"original": "test_publish_cas_refusal_is_not_retried_or_reported_as_success[False/True]", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_cas_refusal_preserves_file_and_does_not_retry[False/True]", "disposition": "typed conflict with exactly one transport attempt"},
+    {"original": "test_publish_of_a_clean_working_copy_publishes_nothing", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_of_a_clean_working_copy_writes_nothing", "disposition": "unchanged status and zero mutation calls restored"},
+    {"original": "test_publish_conflict_names_the_writer_and_offers_discard_first[editor/authoring]", "final": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[editor/authoring]", "disposition": "both actors through _document_error"},
+    {"original": "test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke", "final": "tests/packs/video_editing/test_runtime_publication_chain.py::test_commit_render_publication_preserves_runtime_authority_without_local_save_or_invoke", "disposition": "supported requester commit path"},
+    {"original": "test_publish_conflict_409_maps_to_conflict_and_keeps_its_details", "final": "tests/sdk/test_runtime_response_conformance.py::test_commit_conflict_409_migration_keeps_details_request_id_and_request", "disposition": "supported commit_timeline contract"},
+    {"original": "test_approval_is_bound_to_candidate_and_base_revision", "final": "tests/timeline/test_authoring_bundle.py::test_approval_migration_is_bound_to_candidate_and_base_revision", "disposition": "supported authoring commit caller"},
+    {"original": "test_frozen_render_restart_then_approval_promotion_is_single_generation", "final": "tests/timeline/test_authoring_bundle.py::test_frozen_render_restart_then_approval_promotion_is_single_generation", "disposition": "preserved approval/restart/single-generation purpose"},
+    {"original": "test_remote_create_empty_creates_shell_then_empty_head", "final": "tests/v10/test_timelines_create.py::test_remote_create_empty_migration_preserves_shell_and_empty_head", "disposition": "all original empty-create predicates restored"},
+    {"original": "authenticated accepted-head authority companion", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_forwards_key_through_the_authenticated_closure", "disposition": "preserved existing accepted base/head authority"},
+    {"original": "one-call idempotency companion", "final": "tests/packs/timeline/test_cli_status_publish.py::test_normal_commit_retry_reuses_the_same_receipt_without_a_second_write[False/True]", "disposition": "preserved exact replay/no second write"},
+    {"original": "force refusal companion", "final": "tests/packs/timeline/test_verbs_working_copy.py::test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite plus parser retired-option cases", "disposition": "force remains refused and history/head unchanged"}
+  ],
+  "all_original_assertions_compared": true,
+  "approved_assertion_changes_only": ["publish -> commit supported method/reply shape", "force explicitly refuses instead of forwarding force"]
+}

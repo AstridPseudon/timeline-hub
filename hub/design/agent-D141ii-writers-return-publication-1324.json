@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-26T13:24:37.353438+00:00",
+  "author": "3638da72332dee5ffccacb704c9ac3c794b7c959",
+  "tree": "6983046d907b9ec8f745a27a178b0413a66a2a45",
+  "files": [
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-1319/evidence/disposition.json",
+      "published": "design/agt-U2-D141ii-writers15-return-1319-disposition.json",
+      "sha256": "dc96f43111dafc35c9fbb5b04477473bb430bf83d2ce6ad559c9d203e59a3c48",
+      "bytes": 3077
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-1319/evidence/per-id.json",
+      "published": "design/agt-U2-D141ii-writers15-return-1319-per-id.json",
+      "sha256": "a3a1902ebe8d1ea82ff74808bd85f14d8f7b906f7e757f8bf1eeb85629b14db5",
+      "bytes": 4401
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-1319/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ii-writers15-return-1319-source-manifest.json",
+      "sha256": "6eb5fdb035bc1049de53197bfa325c51adba850b8d204b66082fb650b326383d",
+      "bytes": 642
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-1319/evidence/validation.md",
+      "published": "design/agt-U2-D141ii-writers15-return-1319-validation.md",
+      "sha256": "1615e20797c435c457c6d71eec5ea877567c7525eb2d048ab328a5cdd3f4302e",
+      "bytes": 2358
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers15-return-1319/evidence/handoff.md",
+      "published": "design/agt-U2-D141ii-writers15-return-1319-handoff.md",
+      "sha256": "416b5efbd2f0c191900ab40d7c60129e577f3b4c87a9c8639092966443f08d5d",
+      "bytes": 732
+    }
+  ],
+  "claim": "Author22PASS execution only; protected review active; no REG0",
+  "raw": "originals under worker KEEP, no XML/log/trace publication"
+}

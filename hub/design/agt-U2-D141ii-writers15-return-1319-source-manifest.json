@@ -1,0 +1,17 @@
+{
+  "worker": "agt-U2-D141ii-writers15-return-1319",
+  "repo": "agent",
+  "base_commit": "c61c56d2f2b926febde4dad67d83d114790766ab",
+  "runtime_checkout": "/home/user/work/runtime",
+  "runtime_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "changed_files": [
+    "tests/packs/timeline/test_cli_status_publish.py",
+    "tests/packs/timeline/test_verbs_working_copy.py",
+    "tests/v10/test_timelines_create.py"
+  ],
+  "product_files_changed": [],
+  "protected_original_purposes": 15,
+  "targeted_nodes": 22,
+  "targeted_result": "22 passed",
+  "source_scope": "D141ii owner relay; writers15 only; inverse38 and installer2 untouched"
+}

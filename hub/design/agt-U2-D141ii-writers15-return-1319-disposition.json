@@ -1,0 +1,56 @@
+{
+  "status": "protected_migration_complete",
+  "changed_reply_shapes": [
+    {
+      "purpose": "publish_forwards_key_and_force",
+      "old": "publish returned a legacy new_head/narration payload and forwarded force",
+      "new": "commit returns the five-key envelope with accepted data, receipt, accepted_revision_id, accepted_publication_id, canonical_document; --force is parser-refused with no transport call"
+    },
+    {
+      "purpose": "partial_publication_error",
+      "old": "legacy publish partial error retained receipt in error.details",
+      "new": "commit returns ok=false, data=null, typed partial_publication error, receipt details, and the original idempotency key; one attempt only"
+    },
+    {
+      "purpose": "human_summary_and_json_envelope",
+      "old": "publish human summary and legacy JSON payload",
+      "new": "commit human output is bounded published/changed/next summary; edits and cut counts are read before the single commit transport call; JSON uses the exact five-key envelope and receipt.result matches canonical data apart from presentation fields"
+    },
+    {
+      "purpose": "cas_refusal",
+      "old": "publish raised/refused on CAS conflict without retry",
+      "new": "commit returns typed conflict in both human and JSON modes, preserves the file/history, and makes exactly one transport attempt per mode"
+    },
+    {
+      "purpose": "clean_working_copy",
+      "old": "publish returned published=false and made no write",
+      "new": "commit returns status=unchanged with null receipt, empty commands/steps, unchanged file/history, and zero mutation transport calls"
+    },
+    {
+      "purpose": "conflict_actor_message",
+      "old": "private publish presenter named editor/other actor and offered force overwrite",
+      "new": "authenticated _document_error caller covers both actor revisions, gives discard-first guidance, and explicitly refuses force overwrite"
+    },
+    {
+      "purpose": "runtime_render_publication",
+      "old": "generic host publication hook called Runtime publish_timeline_render",
+      "new": "supported requester-owned commit_document path emits one guarded commit and one render request; no local save/invoke"
+    },
+    {
+      "purpose": "runtime_response_conflict",
+      "old": "publish endpoint conflict fixture",
+      "new": "commit_timeline conflict preserves exact request, details, request id, and idempotency header"
+    },
+    {
+      "purpose": "approval_binding",
+      "old": "promote_approved_authoring_candidate private writer",
+      "new": "publish_authoring_candidate authenticates candidate/base approval and uses the supported commit writer once"
+    },
+    {
+      "purpose": "empty_create",
+      "old": "create shell then publish_parent_composition with legacy payload",
+      "new": "create shell then timeline.init/doc.patch commit; assertions retain name, config/default output, registry, occurrences, exact envelope, bootstrap/base pair, history, and step reads"
+    }
+  ],
+  "product_change": "none; retained behavior is proven by restored assertions"
+}
