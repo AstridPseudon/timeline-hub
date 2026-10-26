@@ -1,0 +1,87 @@
+name: Windows journey (exploratory)
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_ref:
+        description: banodoco/astrid-runtime ref to install
+        default: windows/task-host
+        required: true
+        type: string
+      app_ref:
+        description: banodoco/astrid-app ref supplying install.ps1 and the tool manifest
+        default: windows/task-host
+        required: true
+        type: string
+  push:
+    branches: ["windows/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-journey:
+    name: Windows journey / ${{ matrix.installer-shell }} (exploratory)
+    runs-on: windows-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        installer-shell: [powershell.exe, pwsh.exe]
+    steps:
+      - name: Check out this Agent commit
+        uses: actions/checkout@v4
+
+      - name: Check out the matching Runtime
+        uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-runtime
+          ref: ${{ inputs.runtime_ref || 'windows/task-host' }}
+          path: journey-runtime
+
+      - name: Check out the App installer
+        uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-app
+          ref: ${{ inputs.app_ref || 'windows/task-host' }}
+          path: journey-app
+
+      - name: Set up the journey driver (not the installed Python)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install with the real App install.ps1 / ${{ matrix.installer-shell }}
+        run: python -u scripts/ci_windows_journey.py install --installer-shell ${{ matrix.installer-shell }}
+
+      - name: Start Runtime through its installed Scheduled Task
+        run: python -u scripts/ci_windows_journey.py start
+
+      - name: Wait for health on 127.0.0.1:17340
+        run: python -u scripts/ci_windows_journey.py health
+
+      - name: Wait for pack-host running and its ready file
+        run: python -u scripts/ci_windows_journey.py host
+
+      - name: Run a local pack task through the CLI to settlement
+        run: python -u scripts/ci_windows_journey.py task
+
+      - name: Disable Scheduled Task restarts and run Runtime down
+        if: always()
+        run: python -u scripts/ci_windows_journey.py down
+
+      - name: Verify no Astrid or Runtime processes remain
+        if: always()
+        run: python -u scripts/ci_windows_journey.py stopped
+
+      - name: Collect install logs, Runtime logs, health and process lists
+        if: always()
+        run: python -u scripts/ci_windows_journey.py collect
+
+      - name: Upload Windows journey evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: X5-windows-journey-${{ matrix.installer-shell }}
+          path: ${{ runner.temp }}/X5-windows-journey/
+          if-no-files-found: error
