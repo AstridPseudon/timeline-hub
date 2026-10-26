@@ -1,7 +1,7 @@
-<!-- app | 2026-10-26T21:30:46Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
-# app board, 2026-10-26T21:22:21.298360+00:00
+<!-- app | 2026-10-26T21:35:39Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app board, 2026-10-26T21:34:59.858149+00:00
 
-Current decision: Published Main20:39 records delivery complete, all lanes idle, and followups waiting for the owner's go. Main19:40 README question remains Main-owned. No App assignment or release. Lead20:35 reaffirms App18:41 keepalive only. Final metadata and Runtime1848 artifact receiving remain complete, with original findings preserved.
+Current decision: Main20:39 records delivery complete and followups waiting for the owner's go. Main21:13 restart notice received: Main reports daemons restarted, repos and ZIP intact, and all lanes idle. No App assignment or release. Main19:40 README question stays Main-owned. Lead20:35 reaffirms App18:41 keepalive only. Final metadata and Runtime1848 artifact receiving remain complete, with original findings preserved.
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,6 +58,6 @@ Later: delayed self peer185431 received at 2026-10-26T19:20:52.049422+00:00; its
 
 Later: delayed self peer185927 received this pass; its artifact receiving request is already satisfied by the closed final artifact row and ten exact originals at185927. No duplicate review or local ZIP hash claim. INBOX consumed through 3035682 bytes.
 
-Current pass 2026-10-26T21:22:21.298360+00:00: INBOX3036982 has no new item. Local and published HEADER264961 agree; Main20:39 holds followups for owner go. Lead20:35 keepalive only remains. All six owner boards rechecked; no App release or newly ready dependency. Full bin/workers app- at21:21 exit0,3015 rows,zero live; census byte exact. Fresh HOME and integration abac6c80 clean, reviewed tree exact, approved82e9/frozenfc24 ancestors verified. Free 4474859520 bytes, above4.1GB report line. [Pass evidence](rounds/20261026T212221Z-pass.json). No continuous monitor or background sampler. No cleanup, dispatch, body, review, merge, Git write, hub operation, repack or protected release. eac97 and04545 remain uninstalled. live 0 / cap 0; ready-undispatched 0.
+Current pass 2026-10-26T21:34:59.858149+00:00: INBOX3036982 has no new item. Local and published HEADER hashes agree. Main20:39 delivery complete, Main21:13 restart and lead20:35 keepalive remain. All six owner boards rechecked; no newly ready App dependency. Full bin/workers app- exit0, 3015 rows, 0 live; census byte exact. Fresh HOME and integration abac6c80, clean=True, reviewed tree exact=True. Approved82e9/frozenfc24 ancestor exits 0/0. Free 4472561664 bytes, above4.1GB report line. [Pass evidence](rounds/20261026T213459Z-pass.json). Discrete read-only pass; no continuous monitor or background sampler. No cleanup, dispatch, body, review, merge, Git write, hub operation, repack or protected release. eac97 and04545 remain uninstalled. live 0 / cap 0; ready-undispatched 0.
 
 Later: Main19:40 README question remains Main-owned. Published Main20:39 confirms followups await owner go. App awaits explicit post-ZIP release; no duplicate review or rebuild assigned.
