@@ -1,0 +1,196 @@
+{
+  "body_results": {
+    "cut": {
+      "errors": 0,
+      "exit": 1,
+      "failures": 2,
+      "skipped": 0,
+      "status": "FAIL",
+      "tests": 2
+    },
+    "pristine": {
+      "errors": 0,
+      "exit": 0,
+      "failures": 0,
+      "skipped": 0,
+      "status": "PASS",
+      "tests": 2
+    }
+  },
+  "cut": {
+    "agent": {
+      "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "expected_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "expected_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "parents": [
+        "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "5d202569f3af3852476d182ff49683787bb1e881"
+      ],
+      "path": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+      "realpath": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+      "status_porcelain": "",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"
+    },
+    "environment": {
+      "ASTRID_INTERNAL_INVOCATION": null,
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-6a011d58",
+      "ASTRID_RUNTIME_SOURCE_ROOT": "/home/user/work/wt/rt-pin-6a011d58",
+      "PYTHONPATH": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510:/home/user/work/wt/rt-pin-6a011d58",
+      "argv": [
+        "-",
+        "cut",
+        "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+        "/home/user/work/wt/rt-pin-6a011d58",
+        "8585ed9c0404d0187b2ce70242d25114a32747c2",
+        "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+        "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "ac5b862744bece65b2e30565db1777bacd60da28",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-timeline-repro-0510/evidence/source-manifest-cut.json"
+      ],
+      "cwd": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+      "python": "/usr/bin/python3.13",
+      "python_implementation": "CPython",
+      "python_version": "3.13.16"
+    },
+    "module_origins": {
+      "astrid": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510/astrid/__init__.py",
+      "astrid.core.timeline.authoring_bundle": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510/astrid/core/timeline/authoring_bundle.py",
+      "astrid.sdk.timeline.commit": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510/astrid/sdk/timeline/commit.py",
+      "astrid.sdk.timeline.sync": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510/astrid/sdk/timeline/sync.py",
+      "runtime_protocol": "/home/user/work/wt/rt-pin-6a011d58/runtime_protocol/__init__.py",
+      "runtime_protocol.service": "/home/user/work/wt/rt-pin-6a011d58/runtime_protocol/service.py",
+      "runtime_protocol.timeline_commit": "/home/user/work/wt/rt-pin-6a011d58/runtime_protocol/timeline_commit.py"
+    },
+    "pair": "cut",
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "expected_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "expected_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "parents": [
+        "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+        "24107e83b096264e59f64ed5bd65e00650567f22"
+      ],
+      "path": "/home/user/work/wt/rt-pin-6a011d58",
+      "realpath": "/home/user/work/wt/rt-pin-6a011d58",
+      "status_porcelain": "",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "schema": "timeline.agent.d141u.two-node.source-manifest.v1",
+    "status": "pre-body"
+  },
+  "disk": {
+    "final_free_bytes": 4374450176,
+    "minimum_observed_bytes": 4374601728,
+    "stop_bytes": 4000000000,
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141u-timeline-repro-0510/evidence/disk-trace.txt"
+  },
+  "interpreter_invocation": {
+    "path": "/home/user/work/venv-agent/bin/python",
+    "realpath": "/usr/bin/python3.13",
+    "version": "3.13.16"
+  },
+  "pristine": {
+    "agent": {
+      "commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "expected_commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "expected_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "parents": [
+        "d02bcfb66c895b8889aedefbfc732c42f0ab372b"
+      ],
+      "path": "/home/user/work/wt/agt-pin-64197afa",
+      "realpath": "/home/user/work/wt/agt-pin-64197afa",
+      "status_porcelain": "",
+      "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+    },
+    "environment": {
+      "ASTRID_INTERNAL_INVOCATION": null,
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-fa9cd546",
+      "ASTRID_RUNTIME_SOURCE_ROOT": "/home/user/work/wt/rt-pin-fa9cd546",
+      "PYTHONPATH": "/home/user/work/wt/agt-pin-64197afa:/home/user/work/wt/rt-pin-fa9cd546",
+      "argv": [
+        "-",
+        "pristine",
+        "/home/user/work/wt/agt-pin-64197afa",
+        "/home/user/work/wt/rt-pin-fa9cd546",
+        "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+        "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+        "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+        "/dev/stdout"
+      ],
+      "cwd": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+      "python": "/usr/bin/python3.13",
+      "python_implementation": "CPython",
+      "python_version": "3.13.16"
+    },
+    "module_origin_errors": {
+      "astrid.sdk.timeline.commit": "ModuleNotFoundError: No module named 'astrid.sdk.timeline.commit'",
+      "astrid.sdk.timeline.sync": "ModuleNotFoundError: No module named 'astrid.sdk.timeline.sync'",
+      "runtime_protocol.timeline_commit": "ModuleNotFoundError: No module named 'runtime_protocol.timeline_commit'"
+    },
+    "module_origins": {
+      "astrid": "/home/user/work/wt/agt-pin-64197afa/astrid/__init__.py",
+      "astrid.core.timeline.authoring_bundle": "/home/user/work/wt/agt-pin-64197afa/astrid/core/timeline/authoring_bundle.py",
+      "astrid.sdk.timeline.commit": null,
+      "astrid.sdk.timeline.sync": null,
+      "runtime_protocol": "/home/user/work/wt/rt-pin-fa9cd546/runtime_protocol/__init__.py",
+      "runtime_protocol.service": "/home/user/work/wt/rt-pin-fa9cd546/runtime_protocol/service.py",
+      "runtime_protocol.timeline_commit": null
+    },
+    "pair": "pristine",
+    "runtime": {
+      "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "expected_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "expected_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "parents": [
+        "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+      ],
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "realpath": "/home/user/work/wt/rt-pin-fa9cd546",
+      "status_porcelain": "",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+    },
+    "schema": "timeline.agent.d141u.two-node.source-manifest.v1",
+    "status": "pre-body"
+  },
+  "schema": "timeline.agent.d141u.two-node.source-manifest.v1",
+  "selectors": [
+    "tests.timeline.test_authoring_feedback::test_document_publish_stdout_and_durable_receipt_contain_shared_feedback",
+    "tests.timeline.test_authoring_media::test_document_publish_forwards_new_stale_head_to_runtime"
+  ],
+  "source_after": {
+    "cut": {
+      "agent": {
+        "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+        "path": "/home/user/work/wt/agt-F-D141u-timeline-repro-0510",
+        "status_porcelain": "",
+        "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"
+      },
+      "runtime": {
+        "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "path": "/home/user/work/wt/rt-pin-6a011d58",
+        "status_porcelain": "",
+        "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+      }
+    },
+    "pristine": {
+      "agent": {
+        "commit": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "path": "/home/user/work/wt/agt-pin-64197afa",
+        "status_porcelain": "",
+        "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+      },
+      "runtime": {
+        "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+        "path": "/home/user/work/wt/rt-pin-fa9cd546",
+        "status_porcelain": "",
+        "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+      }
+    }
+  },
+  "status": "body-complete"
+}
