@@ -304,7 +304,12 @@ def _bounded_pinokio_discovery(
     list[dict[str, Any]],
 ]:
     """Run the optional Pinokio lookup and probes within one wall-clock budget."""
-    empty = (None, {}, [], [])
+    empty: tuple[
+        dict[str, Any] | None,
+        dict[int, list[str]],
+        list[dict[str, Any]],
+        list[dict[str, Any]],
+    ] = (None, {}, [], [])
     if not _PINOKIO_SCAN_LOCK.acquire(blocking=False):
         return empty
 

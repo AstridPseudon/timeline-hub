@@ -890,13 +890,21 @@ def test_bootstrap_refuses_worker_credential_outside_the_pack_host_contract(
 
 
 def _validating_launch(monkeypatch, tmp_path):
-    """Run the host launch transaction with the validator's real environment refusal and no spawned probes."""
+    """Run the host launch transaction and record projected contexts without spawning probes."""
     from astrid.core.rendering import remotion_runtime
+    from astrid.core.subprocess_env import build_child_subprocess_env
 
+    captured = []
     def validate_contexts(*, host_environment, python_executable, contexts, **_kwargs):
-        for value in contexts.values():
+        projection = {}
+        for role, value in contexts.items():
+            projection[role] = []
             for environment in ([value] if isinstance(value, dict) else value):
-                remotion_runtime.probe_context(environment=environment, python_executable=python_executable)
+                probe = remotion_runtime.probe_context(environment=environment, python_executable=python_executable)
+                registry = remotion_runtime._registry_context(environment, generator=False)
+                child = build_child_subprocess_env(base=environment, parent=environment)
+                projection[role].append((probe, registry, child))
+        captured.append(projection)
         return {}
 
     monkeypatch.setattr(remotion_runtime, "prepare_remotion_validation", validate_contexts)
@@ -908,14 +916,24 @@ def _validating_launch(monkeypatch, tmp_path):
         launch = host_bootstrap._prepare_render_validation(tmp_path, env, tmp_path / "support", sys.executable)
         return launch, env
 
-    return prepare
+    return prepare, captured
 
 
-def test_host_launch_drops_shell_loader_keys_but_still_refuses_interpreter_overrides(monkeypatch, tmp_path):
-    prepare = _validating_launch(monkeypatch, tmp_path)
+def test_host_launch_drops_shell_loader_keys(monkeypatch, tmp_path):
+    prepare, _captured = _validating_launch(monkeypatch, tmp_path)
     launch, env = prepare({"LD_LIBRARY_PATH": "/opt/hostedtoolcache/lib", "DYLD_LIBRARY_PATH": "/x", "LD_PRELOAD": "/y"})
     assert launch is not None
     assert not [key for key in env if key.startswith(("LD_", "DYLD_"))]
-    for name in ("NODE_OPTIONS", "PYTHONHOME"):
-        with pytest.raises(RemotionValidationError, match="unsupported loader/interpreter overrides"):
-            prepare({"LD_LIBRARY_PATH": "/opt/lib", name: "x"})
+
+
+@pytest.mark.parametrize("name", ["NODE_OPTIONS", "PYTHONHOME", "PYTHONUTF8", "GIT_CONFIG_GLOBAL"])
+def test_host_launch_ignores_controls_omitted_from_child_projections(monkeypatch, tmp_path, name):
+    prepare, captured = _validating_launch(monkeypatch, tmp_path)
+    ambient_value = str(tmp_path / "ambient-control") if name == "GIT_CONFIG_GLOBAL" else "x"
+    _launch, env = prepare({name: ambient_value})
+    assert env[name] == ambient_value
+    ambient_projection = captured[-1]
+
+    _clean_launch, clean_env = prepare({})
+    assert name not in clean_env
+    assert captured[-1] == ambient_projection
