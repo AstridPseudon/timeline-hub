@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.d141l.binding-review-completion.v1",
+  "task": "F D141l bounded acceptance completion of one reserved independent final review",
+  "subject": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+  "verdict": "PASS_SOURCE",
+  "source_status": "READY_SOURCE_D141aa_NOT_RUN_LIVE",
+  "exact_checker": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/check-source.py check",
+    "exit": 0,
+    "control_status": "PASS",
+    "pair_status": "READY_SOURCE_D141aa_NOT_RUN_LIVE",
+    "association_cases": 10,
+    "lifecycle_cases": 38,
+    "native_admission_expression_cases": 10,
+    "tiny_positive": {"exit": 17, "calls": 1},
+    "tiny_poison": {"exit": 1, "calls": 0},
+    "control_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/check-1793008726782191470.json",
+    "stdout_sha256": "135525af7c71a421b8c86dbe448cbcf296b1b1e661ee33a86a2cbce801508a08",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_hashes": {
+    "check-source.py": "3add53f0c0f75c8f877757ec860924cd3085d8ea9cd88c9cd18b93afbabcbba2",
+    "source-manifest.json": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+    "subject_control_log": "895b5feea43e7102499feb3239bd110b12d3386f1f1c18a5500dc3025f08560d"
+  },
+  "limitations": [
+    "Subject trace gaps of 26.079119s at handoff and 15.966516s after reap remain disclosed and prevent an uninterrupted worker-trace claim.",
+    "Live native admission, measurement, REG evidence, and product/full-suite qualification remain unverified by design."
+  ],
+  "immutability": "Prior review originals and the publication JSON were not rewritten; no source, manifest, prior output, product, or operational checkout was modified."
+}

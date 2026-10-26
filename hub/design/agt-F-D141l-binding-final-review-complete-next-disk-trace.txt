@@ -1,0 +1,23 @@
+2026-10-26T09:57:46Z sampler_pid=3 threshold_bytes=4000000000 interval_seconds=5
+2026-10-26T09:57:46Z command_start plan_targeted_read
+2026-10-26T09:57:46Z available_bytes=4612358144 threshold_bytes=4000000000
+2026-10-26T09:57:46Z command_end plan_targeted_read
+2026-10-26T09:57:46Z command_start contract_read
+2026-10-26T09:57:46Z command_end contract_read
+2026-10-26T09:57:46Z command_start repo_status_and_files
+2026-10-26T09:57:46Z command_end repo_status_and_files
+2026-10-26T09:57:46Z command_start wait_for_sustained_sample
+2026-10-26T09:57:51Z available_bytes=4614144000 threshold_bytes=4000000000
+2026-10-26T09:57:52Z command_end wait_for_sustained_sample
+2026-10-26T09:57:52Z terminal_sampler_complete
+2026-10-26T09:58:13Z sampler_pid=3 threshold_bytes=4000000000 interval_seconds=5
+2026-10-26T09:58:13Z command_start exact_checker
+2026-10-26T09:58:13Z available_bytes=4613914624 threshold_bytes=4000000000
+2026-10-26T09:58:18Z available_bytes=4612530176 threshold_bytes=4000000000
+2026-10-26T09:58:23Z available_bytes=4612386816 threshold_bytes=4000000000
+2026-10-26T09:58:28Z available_bytes=4612386816 threshold_bytes=4000000000
+2026-10-26T09:58:33Z available_bytes=4610981888 threshold_bytes=4000000000
+2026-10-26T09:58:38Z available_bytes=4610801664 threshold_bytes=4000000000
+2026-10-26T09:58:43Z available_bytes=4610801664 threshold_bytes=4000000000
+2026-10-26T09:58:46Z command_end exact_checker exit=0
+2026-10-26T09:58:46Z terminal_sampler_complete

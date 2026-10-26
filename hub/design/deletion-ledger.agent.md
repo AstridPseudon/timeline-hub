@@ -500,3 +500,7 @@ trust surface, source guard, or product implementation was added.
 The author's disk trace is retained historical reproduction0510 evidence, not
 this author's custody trace; the manager trace began later. This review does
 not infer continuous historic custody or backfill that gap.
+
+### 2026-10-26T10:06Z — hub-repack (D141o, owner-approved in the agent session)
+
+Lossless: 36 batches; loose objects 106244 -> 0 (packed and verified before removal by git prune-packed); free 4611821568 -> 7586885632 B. Repo /home/user/timeline-hub.
