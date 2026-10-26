@@ -1,0 +1,42 @@
+trace_started_utc=2026-10-26T13:17:16Z
+parent_pid=2
+sampler_pid=2
+initial_sampler_launch_note=first_attempt_terminated_before_sample
+sampler_started_utc=2026-10-26T13:21:48Z pid=2 interval_seconds=5 stop_free_bytes=4000000000
+sample=0 utc=2026-10-26T13:21:48Z free_bytes=5537734656 pid=2
+sample=1 utc=2026-10-26T13:21:53Z free_bytes=5537730560 pid=2
+sample=2 utc=2026-10-26T13:21:58Z free_bytes=5537619968 pid=2
+sample=3 utc=2026-10-26T13:22:03Z free_bytes=5537726464 pid=2
+sample=4 utc=2026-10-26T13:22:08Z free_bytes=5537718272 pid=2
+sample=5 utc=2026-10-26T13:22:13Z free_bytes=5537714176 pid=2
+sample=6 utc=2026-10-26T13:22:18Z free_bytes=5537615872 pid=2
+sample=7 utc=2026-10-26T13:22:23Z free_bytes=5537681408 pid=2
+sample=8 utc=2026-10-26T13:22:28Z free_bytes=5537669120 pid=2
+sample=9 utc=2026-10-26T13:22:33Z free_bytes=5537759232 pid=2
+sample=10 utc=2026-10-26T13:22:38Z free_bytes=5537751040 pid=2
+sample=11 utc=2026-10-26T13:22:43Z free_bytes=5537742848 pid=2
+sample=12 utc=2026-10-26T13:22:48Z free_bytes=5537738752 pid=2
+sample=13 utc=2026-10-26T13:22:53Z free_bytes=5537726464 pid=2
+sample=14 utc=2026-10-26T13:22:58Z free_bytes=5537722368 pid=2
+sample=15 utc=2026-10-26T13:23:03Z free_bytes=5537689600 pid=2
+sample=16 utc=2026-10-26T13:23:08Z free_bytes=5537677312 pid=2
+sample=17 utc=2026-10-26T13:23:13Z free_bytes=5537673216 pid=2
+sample=18 utc=2026-10-26T13:23:18Z free_bytes=5537673216 pid=2
+sample=19 utc=2026-10-26T13:23:23Z free_bytes=5537665024 pid=2
+sample=20 utc=2026-10-26T13:23:28Z free_bytes=5537665024 pid=2
+sample=21 utc=2026-10-26T13:23:33Z free_bytes=5537656832 pid=2
+sample=22 utc=2026-10-26T13:23:38Z free_bytes=5537652736 pid=2
+sample=23 utc=2026-10-26T13:23:43Z free_bytes=5537644544 pid=2
+sample=24 utc=2026-10-26T13:23:48Z free_bytes=5537644544 pid=2
+sample=25 utc=2026-10-26T13:23:53Z free_bytes=5537640448 pid=2
+sample=26 utc=2026-10-26T13:23:58Z free_bytes=5537505280 pid=2
+sample=27 utc=2026-10-26T13:24:03Z free_bytes=5537607680 pid=2
+sample=28 utc=2026-10-26T13:24:08Z free_bytes=5537607680 pid=2
+sample=29 utc=2026-10-26T13:24:13Z free_bytes=5537599488 pid=2
+sample=30 utc=2026-10-26T13:24:18Z free_bytes=5537595392 pid=2
+sample=31 utc=2026-10-26T13:24:23Z free_bytes=5537677312 pid=2
+sample=32 utc=2026-10-26T13:24:28Z free_bytes=5537660928 pid=2
+sample=33 utc=2026-10-26T13:24:33Z free_bytes=5537656832 pid=2
+sample=34 utc=2026-10-26T13:24:38Z free_bytes=5537533952 pid=2
+sample=35 utc=2026-10-26T13:24:43Z free_bytes=5537083392 pid=2
+sampler_exit_utc=2026-10-26T13:25:08Z exit=1 pid=2 waited=true reaped=true

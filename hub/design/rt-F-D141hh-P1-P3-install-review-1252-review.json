@@ -1,0 +1,183 @@
+{
+  "checks": {
+    "canonical_targets": {
+      "README.template.md": {
+        "backup": {
+          "bytes": 43978,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-install-1252/evidence/backups/README.template.md",
+          "regular_non_symlink": true,
+          "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071"
+        },
+        "backup_equals_predecessor": true,
+        "candidate": {
+          "bytes": 47478,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-README.template.md",
+          "regular_non_symlink": true,
+          "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4"
+        },
+        "candidate_hash_expected": true,
+        "current": {
+          "bytes": 47478,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+          "regular_non_symlink": true,
+          "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4"
+        },
+        "current_equals_candidate": true,
+        "fence_balance": true,
+        "numbered_ids": null,
+        "prefix_bytes": 43978,
+        "prefix_exact": true,
+        "suffix_bytes": 3500,
+        "suffix_occurrences": 1
+      },
+      "gate-results.md": {
+        "backup": {
+          "bytes": 39916,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-install-1252/evidence/backups/gate-results.md",
+          "regular_non_symlink": true,
+          "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d"
+        },
+        "backup_equals_predecessor": true,
+        "candidate": {
+          "bytes": 43666,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/candidate-gate-results.md",
+          "regular_non_symlink": true,
+          "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb"
+        },
+        "candidate_hash_expected": true,
+        "current": {
+          "bytes": 43666,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+          "regular_non_symlink": true,
+          "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb"
+        },
+        "current_equals_candidate": true,
+        "fence_balance": true,
+        "numbered_ids": 32,
+        "prefix_bytes": 39916,
+        "prefix_exact": true,
+        "suffix_bytes": 3750,
+        "suffix_occurrences": 1
+      }
+    },
+    "checker": {
+      "board_header_observation": {
+        "fresh_board_header_sha256": "790d238564246d6a904d1517809af22c0d334f3f8a7122bee287d8d04357fb2c",
+        "fresh_checker_still_passed": true,
+        "interpretation": "Current control-document hash differs from the installer-recorded post-CAS observation; fresh readonly validation still passes. This is a temporal control-doc drift note, not a canonical target mismatch.",
+        "recorded_post_board_header_sha256": "78ef32bed8166f45e4c2da2335f91022cebb123a9dee8cf5f7f97e32c033ba09"
+      },
+      "command": "python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/check_notes.py",
+      "exit_code": 0,
+      "json_tool_command": "python3 -m json.tool /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-return-1307/evidence/source-manifest.json",
+      "json_tool_exit_code": 0,
+      "output_status": "PASS_PRIVATE_D141HH_P1_P3_CANDIDATES",
+      "readonly_default": true
+    },
+    "conservation": {
+      "all32_originals_resolved_and_hashed": true,
+      "bounded_suffix_once_per_document": true,
+      "complete32_ids": true,
+      "exact_immutable_prefix": true,
+      "historical_prefix_unchanged": true,
+      "outside_row_conservation_claim": false
+    },
+    "installer_mutation_order": {
+      "before_map_and_backup_fsync_before_atomic_replace": true,
+      "durable_order_monotonic": true,
+      "log_line_markers": {
+        "atomic_replace": 7923,
+        "backup_fsync": 7910,
+        "backup_write": 7907,
+        "before_map": 7902,
+        "post_readback_map": 7937,
+        "preimage_guard": 7920,
+        "stage_fsync": 7917,
+        "stage_write": 7916
+      },
+      "no_silent_rewrite": true,
+      "one_guarded_atomic_cas_loop": true,
+      "readback_and_after_map_present": true,
+      "source_log_excerpt_sha256": "a91f5736d8391f9b7d99fe336d5b1368c579a5e4f723c8ad1f80040063854e07"
+    },
+    "outside_inventory": {
+      "durable_after_count": 568,
+      "durable_before_count": 568,
+      "every_current_outside_tuple_equals_after_map": true,
+      "every_current_outside_tuple_equals_before_map": true,
+      "maps_equal": true,
+      "recomputed_current_count": 568
+    },
+    "production_renderer": {
+      "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "caller_uses_render_readme": true,
+      "controlled_four_repo_and_fallback": true,
+      "expected_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "function_only": true,
+      "production_bin_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "render_function_present": true
+    },
+    "publications": {
+      "author_return": {
+        "all_files_match": true,
+        "file_count": 10,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-return-source-publication-1310.json",
+        "sha256": "50ca5f6660194d9823e76912a2fc2d4787ee0ebb8944e0ca013d2226bef3f520",
+        "status": "AUTHOR_RETURN_TERMINAL_UNREVIEWED",
+        "worker": "rt-F-D141hh-P1-P3-return-1307"
+      },
+      "installer_cas": {
+        "all_files_match": true,
+        "file_count": 11,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-CAS-source-publication-1326.json",
+        "sha256": "9ea8e4207c79b803e0edfffc325a7c4b99adced9ac94e26e4e2268d3451d3fed",
+        "status": "INSTALLER_TERMINAL_PENDING_INDEPENDENT",
+        "worker": "rt-F-D141hh-P1-P3-install-1252"
+      },
+      "protected_review": {
+        "all_files_match": true,
+        "file_count": 8,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-return-review-publication-1316.json",
+        "sha256": "853d76f0d6ec5fcb3bf4bf76179c69ca7afd84872fb9f69dc88fbf16c534dd4f",
+        "status": "PASS",
+        "worker": "rt-F-D141hh-P1-P3-return-review-1310"
+      }
+    },
+    "sampler": {
+      "duration_seconds": 5.028179883956909,
+      "exit_code": 0,
+      "minimum_available_bytes": 5532332032,
+      "pid": 4,
+      "reaped": true,
+      "sample_count": 1,
+      "stop_free_bytes": 4000000000,
+      "stop_reached": false,
+      "waited": true
+    }
+  },
+  "controlling_bindings": {
+    "author_source_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-return-source-publication-1310.json",
+    "author_status": "AUTHOR_RETURN_TERMINAL_UNREVIEWED",
+    "installer_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-CAS-source-publication-1326.json",
+    "original_candidate_not_installed": true,
+    "protected_review_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141hh-P1-P3-return-review-publication-1316.json",
+    "protected_review_status": "PASS",
+    "protected_review_verdict": "PASS"
+  },
+  "findings": [],
+  "limitations": [
+    "Installer initial inventory guard refused before writes when it counted the two authorized targets; the corrected qualified method excluded those targets and completed one CAS.",
+    "Installer, author-return, and protected-review histories retain initial sampler/first-tool coverage gaps; no historical monitor PASS is inferred.",
+    "No product tests, types, lint, full suite, build, REG0, final pin, service, or ZIP claim was made."
+  ],
+  "schema": "timeline.d141hh.p1-p3-install-review/v1",
+  "scope": "One independent bounded installation check of the actual guarded CAS installation; no source, canonical, product, test, build, pin, service, or ZIP edits/actions.",
+  "task": "rt-F-D141hh-P1-P3-install-review-1252",
+  "verdict": "PASS"
+}

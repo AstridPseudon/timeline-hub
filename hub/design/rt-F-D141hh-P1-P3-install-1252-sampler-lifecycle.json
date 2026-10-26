@@ -1,0 +1,23 @@
+{
+  "corrected_sampler": {
+    "exit_code": 1,
+    "interval_seconds": 5,
+    "minimum_available_bytes": 5537083392,
+    "reaped": true,
+    "sample_count": 36,
+    "sampler_pid": 2,
+    "status": "PASS_BOUNDED_TRACE",
+    "stop_free_bytes": 4000000000,
+    "stop_reached": false,
+    "tmpdir_metadata": "regular file pointer; no mkdir performed",
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-install-1252/evidence/disk-trace.txt",
+    "waited": true
+  },
+  "first_tool": {
+    "reason": "The initial bounded-loop sampler attempt terminated before emitting a sample; no first-tool monitoring claim is made.",
+    "status": "GAP",
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-P1-P3-install-1252/evidence/disk-trace.txt"
+  },
+  "schema": "timeline.d141hh.p1-p3-install-sampler/v1",
+  "trace_lines": 42
+}

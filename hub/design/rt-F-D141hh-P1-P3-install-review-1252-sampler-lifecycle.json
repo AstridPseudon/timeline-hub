@@ -1,0 +1,9 @@
+{
+  "sampler_pid": 4,
+  "spawn_epoch": 1793021254.2360356,
+  "wait_called": true,
+  "exit_code": 0,
+  "reaped": true,
+  "wait_epoch": 1793021259.2642155,
+  "duration_seconds": 5.028179883956909
+}
