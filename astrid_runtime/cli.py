@@ -413,7 +413,7 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
                         result = bootstrap(paths, boundary, config)
                         cancellation.check()
                         boundary.check_running()
-                        if config.door is not None:
+                        if config.door is not None or result.door_endpoint or result.door_origin:
                             _wait_for_door(paths, result, boundary)
                         startup_ready = True
                         cancellation.check()

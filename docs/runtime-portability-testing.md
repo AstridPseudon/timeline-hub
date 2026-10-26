@@ -2,8 +2,9 @@
 
 The portability CI job runs the platform boundary, native process custody,
 foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu and macOS.
-Windows is supported as a beta and has no CI job yet. The job invokes the selected
-tests with `-m ""` because pytest's default configuration excludes
+The `windows-realm-publication` job runs native Windows realm publication,
+console-signal, and foreground cleanup checks. The portability job invokes its
+selected tests with `-m ""` because pytest's default configuration excludes
 integration-marked tests.
 
 Run the same host-specific subset locally after installing the test and
@@ -19,6 +20,7 @@ python -m pytest -q -m "" \
   tests/test_platform_filesystem.py \
   tests/test_m1_review.py \
   tests/test_foreground.py \
+  tests/test_runtime_cli_serve_cleanup.py \
   tests/test_native_custody.py \
   tests/test_portable_lifecycle.py
 ```

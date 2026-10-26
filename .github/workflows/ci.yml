@@ -21,6 +21,11 @@ jobs:
           tests/test_realm_creation_publication.py
           tests/test_realm_replacement_publication.py
           tests/test_platform_windows.py::test_windows_directory_mutex_uses_global_user_scoped_identity
+      - name: Verify native Windows signal and foreground cleanup paths
+        run: >-
+          python -m pytest -q
+          tests/test_platform_signaling.py
+          tests/test_runtime_cli_serve_cleanup.py
 
   unit:
     runs-on: ${{ matrix.os }}
