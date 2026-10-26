@@ -1,0 +1,43 @@
+{
+  "utc": "2026-10-26T14:21:43.670397+00:00",
+  "kind": "manager maintenance terminal receipt",
+  "compact_exit": 0,
+  "sweep_exit": 0,
+  "compact_scratch_dirs_packed": 1,
+  "compact_logs_gzipped": 1,
+  "compact_test_dirs_packed": 0,
+  "sweep_dirs_removed": 0,
+  "free_bytes_observed": 5548834816,
+  "census": {
+    "present_worktrees": 57,
+    "KEEP": 48,
+    "nonhome_without_meta": 8,
+    "protected_dirty_G2": 1,
+    "eligible_ended_nonKEEP": 0
+  },
+  "no_recycle_attempt": true,
+  "no_cleanup_only_free_space_claim": true,
+  "no_pre_inventory_KEEP_byte_equality_claim": true,
+  "original_outputs": {
+    "managers/agent/rounds/20261026T1418Z-compact.stdout": {
+      "bytes": 133,
+      "sha256": "1cfcd13fb0ccc54aa73e81ff664617cbbdd6064a1e879eb8d39b6e3d3481218d",
+      "text": "packed 1 scratch dirs; free 5294M -> 5291M\ngzipped 1 old worker logs; free now 5292M\npacked 0 finished test-run dirs; free now 5292M\n"
+    },
+    "managers/agent/rounds/20261026T1418Z-compact.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "text": ""
+    },
+    "managers/agent/rounds/20261026T1418Z-sweep.stdout": {
+      "bytes": 99,
+      "sha256": "de5857f5b7d76690fa51dec2bcaa98f659edda06a9af53685bba53b94520f121",
+      "text": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5294M -> 5292M\n"
+    },
+    "managers/agent/rounds/20261026T1418Z-sweep.stderr": {
+      "bytes": 82041,
+      "sha256": "7b6b9995fb0a2a5136659ef66c28c0058b44cb183eeaeee0fc05b8b7ceab9c7b",
+      "text": "Ordinary ls broken-pipe scan diagnostics only"
+    }
+  }
+}
