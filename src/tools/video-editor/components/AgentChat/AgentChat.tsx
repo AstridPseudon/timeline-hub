@@ -53,6 +53,8 @@ import { CommandLine } from './CommandLine';
 import { AgentIcon, agentNames, isAgentUsable } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 import { AgentChatComposer } from './AgentChatComposer';
+import { TourChatPanel } from './TourChatPanel';
+import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
 
 export type ToolCallPair = {
   call: AgentTurn;
@@ -227,6 +229,10 @@ const CHAT_UNAVAILABLE = "Chat isn't running on this computer right now.";
 export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
+  const tourRunning = useEditorTourRunning();
+
+  // The first-run tour shows a scripted conversation in place of the real chat: no session hooks, no agent.
+  if (tourRunning) return <TourChatPanel isExpanded={isExpanded} />;
 
   if (!isTimelineAgentSessionsAvailable()) {
     return (
