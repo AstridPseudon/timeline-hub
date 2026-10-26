@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T00:51:31Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
+<!-- app | 2026-10-26T00:55:55Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
 # app board, 2026-10-26T00:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -36,12 +36,12 @@ Integration: FROZEN App 867cb2737af1b46dc608c7cd37c349e920fe9422 / tree 2b44a46c
 
 D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Required cut proof: P1/P3/P4/P5 GO, six P2 originals, zero REG versus frozen upstream. Own nonREG failures remain unchanged, visible and listed. One independent review for source and notes; unchanged reruns require receipts only. MAIN GO D141c recorded in INBOX at 00:42Z. Bodies now run serially on the exact final heads; original full tails unchanged.
 
-Blockers: Farm core — Runtime owns complete receiving recipe; Farm owns child, import check, preflight and core. Runtime review 0021 active; no App duplicate.
+Blockers: Farm core — Runtime owns complete receiving recipe; Farm owns child, import check, preflight and core. Runtime source 0032 and independent follow; complete Farm handoff due about 01:10Z; no App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery and related qualification. Existing Runtime escalation owns disposition; no retry.
 Next ready: Full and pristine controller 0043 active; serial heavy slot then P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
 live 1 / cap 1 heavy; ready-undispatched 1 heavy controller waits occupied slot. Full/pristine 0043 active; final journey binding 0047 complete. No independent ready source work.
 
-H6: Runtime 00:21:56, Agent 00:26 and Farm 00:10 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes Sol 0018 owns installation of App paragraphs; clear this wait on its receipt. Farm has no new body. No decision escalation owed.
+H6: Runtime 00:38:26, Agent 00:43 and Farm 00:50 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes independent 0032 PASS; installer 0038 active with exact App paragraphs. Farm waits complete recipe due about 01:10Z; no body. No decision escalation owed.
 
 Safety: Manager writes only ORCH boards, briefs, peers and byte publications of worker authored safe evidence. No manager product, test, generated or pin edits; no direct Git writes, upstream push, M5 or credentials. Dirty U3 and orphan guards and refused targets remain untouched. D130 hold absolute.
 Later: Gate 3 corrected D133B deferred unchanged; D23 and D14 retained; D79 ZIP held; E4 dropped. Shared 105 and media 48 source release is Agent normal c585; behavior awaits Farm core. Missing native records stay UNKNOWN. D141 stops all own test investigations.
@@ -61,7 +61,7 @@ Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/fil
 
 Pass 2026-10-26T00:37Z: Resumed from prior status. Actual 0033 is running with progress, not dead. Read only source identity correction remains sole ready source item. Approved sweep 3 and compact scratch terminal: removed 0 temporary dirs, packed 0 scratch or test dirs, gzipped 0 logs; all raw KEEP unchanged. No eligible merged non KEEP App worktree found for recycle. Final source and functional checks are qualified; final merge 0022 normal HOME/FROZEN867cb reported by peers0039. Manager controller briefs prepared but undispatched until MAIN GO. No proof body started.
 
-INBOX consumed through 2603910 bytes.
+INBOX consumed through 2606045 bytes.
 
 Current pass 2026-10-26T00:43Z: MAIN GO D141c consumed. Controller 0043 queued with exact final head and admission 5433016320 bytes; D89c checked once. REG comparison must rerun any pristine environment failure in the same environment kind before classification. No full-suite result yet.
 
