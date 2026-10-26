@@ -1,0 +1,102 @@
+{
+  "author_checker": {
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-inverse38-review-next/evidence/isolatedlogs/author-check.log",
+    "relocated_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-inverse38-review-next/evidence",
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-preserve-inverse38-1104/evidence/check.py",
+    "source_sha256": "cb67efd51e8ea60e04d6c9489205455ad0ff55e2fcde40956b2a8e9c70a96498",
+    "status": "PASS"
+  },
+  "full_pair_context": {
+    "cut_bad": 397,
+    "cut_concrete": 9388,
+    "cut_declared": 9561,
+    "cut_error": 196,
+    "cut_fail": 201,
+    "fails_both": 19,
+    "note": "Retained visible context only; no numerical deduction or REG0 claim.",
+    "pristine_concrete": 3082,
+    "pristine_declared": 3255
+  },
+  "git": {
+    "agent_repo": "/home/user/peteromallet/astrid-agent",
+    "current_inverse_file_present": false,
+    "current_ref": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "current_source_tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+    "current_test_file_present": false,
+    "old_inverse_source": {
+      "bytes": 30911,
+      "git_blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+      "path": "astrid/core/timeline/inverses.py",
+      "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "sha256": "e67002be0ddf041cfc4e80ee23e727d2d4f0479c11fec07f387e349c657b530c"
+    },
+    "old_test_source": {
+      "bytes": 17327,
+      "git_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "path": "tests/timeline/test_inverses.py",
+      "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+    },
+    "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_source_tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+    "removal_commit": "fc33e0e76ca1c29cb64f574acdab6770eb3303d0",
+    "reviewed_merge_claim": "756233ec4be0381d10c9e6e6597a627a1ad3631d"
+  },
+  "json_inventory": {
+    "accounting_count": 64,
+    "accounting_groups": {
+      "CLI/publish/native create": 18,
+      "inverse": 38,
+      "schema/installer": 8
+    },
+    "accounting_map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/pristine-only-map.json",
+    "accounting_map_sha256": "da93faa23302345bfa29912cf8e0b15dd490d579f3e9406a3602868ff4ed5b26",
+    "counts_checked": {
+      "inverse_group": 38,
+      "pristine_only_behavior_unresolved": 64,
+      "pristine_only_mapped": 64
+    },
+    "counts_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-fullpair-source-accounting-review-next/evidence/counts.json",
+    "counts_json_sha256": "e0636522cc4ec0574958afa66264e9ac52061274da087a179e1ab6d2202fd340",
+    "packet_map_sha256": "e4210cd424476263d3d3f94c5398f99da03201d0b866836dead6f1bdc58b45d3"
+  },
+  "owner_ruling": {
+    "lines": "7546-7551",
+    "sha256": "5c5773446e70575e8d1de6467338e200f061c4b47d43609db9c6202446b7d7e0",
+    "source": "/home/user/timeline-hub/hub/inbox/agent.md",
+    "text": "D141ee requires per-ID same-body/current-PASS rename, genuine owner-approved retirement, or DROPPED_BY_OUR_PATCHES treated as REG and restored; no new retirement is assumed."
+  },
+  "parse_failures": [],
+  "prior_retirement_claims": {
+    "adjudication": "The D141ee ruling controls this review. The D05 ledger/source-commit claim is not treated as a new owner approval for these 38 IDs.",
+    "ledger": {
+      "citation": "row D05",
+      "path": "/home/user/timeline-hub/hub/design/deletion-ledger.agent.md",
+      "sha256": "dc9ff7dabf0078f7e9b9d1ec6b9ff176abcfe9e78995fb9b0a558b4ca5d905b7"
+    },
+    "qualification": {
+      "finding": "legacy behavior gap blocked DELETED at qualification time",
+      "path": "/home/user/timeline-hub/hub/workers/agt-qual-d05/report.md",
+      "sha256": "a2794a80f2dde6f3f507932b00bf338851d649f9c15c1e62a22e57aebd9ab451"
+    }
+  },
+  "schema": "timeline.f.d141l.inverse38.independent-review-next.v2",
+  "scope": "exactly the 38 inverse pristine-only IDs; no other groups reviewed",
+  "verdict": "FAIL_REGRESSION_RESTORATION_REQUIRED",
+  "xml": {
+    "assigned_exact_ids_in_cut": 0,
+    "assigned_exact_ids_in_pristine": 0,
+    "cut": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/agent-core-full.xml",
+      "service_id": "agent-agent-core-full-1026100428-24814",
+      "sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+      "testcases": 9388
+    },
+    "pristine": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/agent-core-full.xml",
+      "service_id": "agent-agent-core-full-1026103030-25513",
+      "sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba",
+      "testcases": 3082
+    }
+  }
+}

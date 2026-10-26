@@ -1,0 +1,90 @@
+{
+  "utc": "2026-10-26T11:21:43.456016+00:00",
+  "scope": "full recorded OR rule, inverse38droppedREG; schema6moves2droppedREG; zero owner retirements; no REG0",
+  "files": [
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/review.json",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-review.json",
+      "sha256": "eb720581cb66cbaa458a40c9305dabffe0fe91b83669a5d3c3c4d6ea7402c422",
+      "bytes": 113250
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/findings.md",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-findings.md",
+      "sha256": "031909104f090d1c5d73c62bdc2c5540a95be097905230c7c3551f6125069c48",
+      "bytes": 1764
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/map.json",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-map.json",
+      "sha256": "8cc3cf0e07ab15af6c47cf6a33b1eff3ea5152523278d3b7d997fabb7d5340f3",
+      "bytes": 112087
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/restoration-manifest.json",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-restoration-manifest.json",
+      "sha256": "d1a866d96ed726de985ff27cd7cca496703b57d578d561f3ddca28f1fde52b18",
+      "bytes": 27271
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-source-manifest.json",
+      "sha256": "fddc970f32d55a69d7c6ac20eadeb4ba733de17ed15a7b9760d769173c5c6ff2",
+      "bytes": 5289
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/validation.md",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-validation.md",
+      "sha256": "a87b6c115eb0bb1b8cc9074540fcd89c5ee6b72baeb13a5cc5ce6c3abe4b5b5f",
+      "bytes": 1143
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-inverse38-review-next/evidence/handoff.md",
+      "destination": "design/agt-F-D141l-preserve-inverse38-review-next-handoff.md",
+      "sha256": "b683e17c7f75c5fdb9c6693089459c42bd5f88c416ad56104e6064a75013e6ca",
+      "bytes": 512
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/review.json",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-review.json",
+      "sha256": "e2e07e658dd19853fa4f077e3d72dde98aed711acbb121b8c3577d03c719c29b",
+      "bytes": 2982
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/findings.md",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-findings.md",
+      "sha256": "57b51f126492e8b036c43fc633d4f1b0bf31e4504b77cf40949f436e307722cd",
+      "bytes": 1485
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/map.json",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-map.json",
+      "sha256": "bbceef229cb9b8214111833014f46ce1111b46aba3ac619f8031ee47c770faab",
+      "bytes": 28599
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/restoration-manifest.json",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-restoration-manifest.json",
+      "sha256": "ebfa4f9def71aa3bf7656a31ea759068bd6946e735f5e007040048c5b61bea2d",
+      "bytes": 995
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-source-manifest.json",
+      "sha256": "870a4bf6b4f4ce3ca3db1104e1edfa2979dc872275815dc42526db6bf795ec66",
+      "bytes": 4547
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/validation.md",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-validation.md",
+      "sha256": "c3f2b448b1236cb92572cab094d173e044ddd13624085052ec3fd7c67769272b",
+      "bytes": 820
+    },
+    {
+      "source": "workers/agt-F-D141ee-schema8-full-decision-next/evidence/handoff.md",
+      "destination": "design/agt-F-D141ee-schema8-full-decision-next-handoff.md",
+      "sha256": "2e99eb86fe9f6ccc0df7b84abf6244175f0e0db82e84ace716acd5bb53178111",
+      "bytes": 886
+    }
+  ]
+}

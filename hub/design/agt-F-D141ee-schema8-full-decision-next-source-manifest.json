@@ -1,0 +1,66 @@
+{
+  "agent": {
+    "current": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "current_installer_blob": "00ba669033726fc84b305144acd2c9c40eb314df",
+    "current_installer_sha256": "04816de33b09557c7416730395987698eecccc79cb5e9cc482e0e90702a8ed41",
+    "current_render_blob": "23885f8f6ee62ca9a85fadff4ff32cdf4b1350b0",
+    "current_render_sha256": "5b7a4c3a80daf2a2ceb0830dfca3d1ddc16b24cf66e496f11c3ae0b16bd381ce",
+    "pristine": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "pristine_installer_blob": "ede759060078ab18a9eac75fd682ddb429073518",
+    "pristine_installer_sha256": "f2ac2a403afa2e834706a768439d8a3a3a641565f0fe054bd777cd905988fcb5",
+    "pristine_render_blob": "e7d4a17c78999dd04339b0a0af1259e2c8922047",
+    "pristine_render_sha256": "0c56e06911e8c994978fb721f07a11f50dd67af90b33112f4ffb5a7b5d033b89",
+    "repo": "/home/user/peteromallet/astrid-agent"
+  },
+  "git_coordinates": {
+    "current_installer": "/home/user/peteromallet/astrid-agent@ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/test_installer_schema.py",
+    "current_render": "/home/user/peteromallet/astrid-agent@ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/packs/rendering/test_render_export_task_adapter.py",
+    "pristine_installer": "/home/user/peteromallet/astrid-agent@64197afa297f86f1e738238d5e80aff6d33e303a:tests/test_installer_schema.py",
+    "pristine_render": "/home/user/peteromallet/astrid-agent@64197afa297f86f1e738238d5e80aff6d33e303a:tests/packs/rendering/test_render_export_task_adapter.py"
+  },
+  "runtime": {
+    "current": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "pristine": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "repo": "/home/user/banodoco/banodoco-workspace-runtime"
+  },
+  "schema": "timeline.f.d141ee.schema8.source-manifest.v1",
+  "scope": "exactly eight schema8 IDs; no overlap with inverse38 or writers18",
+  "source_files": {
+    "current_installer": "/home/user/peteromallet/astrid-agent/tests/test_installer_schema.py",
+    "current_render": "/home/user/peteromallet/astrid-agent/tests/packs/rendering/test_render_export_task_adapter.py",
+    "pristine_installer": "/home/user/peteromallet/astrid-agent/tests/test_installer_schema.py",
+    "pristine_render": "/home/user/peteromallet/astrid-agent/tests/packs/rendering/test_render_export_task_adapter.py"
+  },
+  "xml": {
+    "assigned_pristine_ids": [
+      "test_trusted_schema_readiness_requires_complete_install[__init__.py]",
+      "test_trusted_schema_readiness_requires_complete_install[generated.py]",
+      "test_trusted_schema_readiness_requires_complete_install[materialize.py]",
+      "test_trusted_schema_readiness_requires_complete_install[theme.py]",
+      "test_trusted_schema_readiness_requires_complete_install[timeline.schema.json]",
+      "test_trusted_schema_readiness_requires_complete_install[validate.py]",
+      "test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "test_remotion_lock_pins_the_transitive_schema_package"
+    ],
+    "cut": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-cut/agent-core-full.xml",
+    "cut_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+    "cut_testcases": 9388,
+    "installer_current_ids": [
+      "test_staging_verifies_the_local_schema_before_declaring_services",
+      "test_local_schema_verification_rejects_a_changed_schema",
+      "test_remotion_lock_pins_the_immutable_composition_public_entry",
+      "test_d66_upstream_remotion_lock_pins_the_transitive_schema_package"
+    ],
+    "pristine": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/run-pristine/agent-core-full.xml",
+    "pristine_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba",
+    "pristine_testcases": 3082,
+    "render_current_ids": [
+      "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]",
+      "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]",
+      "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]",
+      "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]",
+      "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]",
+      "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]"
+    ]
+  }
+}

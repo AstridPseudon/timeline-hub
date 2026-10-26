@@ -1,0 +1,416 @@
+{
+  "assigned_ids": [
+    "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+    "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+    "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+    "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+    "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+    "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+    "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+    "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+    "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]"
+  ],
+  "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+  "counts": {
+    "assigned": 38,
+    "dropped_by_our_patches_regression": 38,
+    "owner_approved_retirement": 0,
+    "rename_move_current_pass": 0
+  },
+  "one_author_action": {
+    "acceptance": "Run only after exact restoration on the current Agent head; report actual PASS/FAIL/ERROR and retain any failure as visible evidence.",
+    "owner": "Agent manager-owned restoration author",
+    "preserve": "All 38 original IDs, parameter values, inputs and assertions byte-for-byte; no xfail, skip, deletion, assertion adaptation or semantic substitute.",
+    "restore_exact_blobs": [
+      {
+        "blob": "5d2514841e6cbb3e8cd7172b59dbd315f5bf8bd1",
+        "bytes": 30911,
+        "path": "astrid/core/timeline/inverses.py",
+        "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "sha256": "e67002be0ddf041cfc4e80ee23e727d2d4f0479c11fec07f387e349c657b530c"
+      },
+      {
+        "blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "bytes": 17327,
+        "path": "tests/timeline/test_inverses.py",
+        "ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      }
+    ],
+    "targeted_command": "python -m pytest -q tests/timeline/test_inverses.py"
+  },
+  "rows": [
+    {
+      "base_function": "test_erased_payload_does_not_expose_content",
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "d95f125a7b6fafa1567687fd0fc038c9c6597fc6cc2e48fafc17bd5bd4710e9d",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 344
+    },
+    {
+      "base_function": "test_erased_payload_non_invertible",
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "13d8cda1624afbcc0639b4952983b89dbfb0262f3be6c87615986d218f21db37",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 328
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_plan_inverse_is_pure",
+      "id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "a2d9bf17a28dab8157f53b2c0ecdfa8102c5d561d89dd51e0801cd01e13f62ca",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 441
+    },
+    {
+      "base_function": "test_plan_inverses_is_pure",
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "f1f8e69308e48678c64a08047de68cf40738879da1fca26af976967b69b396ca",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 458
+    },
+    {
+      "base_function": "test_plan_inverses_mixed_reversible_non_reversible",
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "a5015b87cb4fae6aac93096c1b4e425c2f0a41b9d8a3a313325e7728660000a5",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 400
+    },
+    {
+      "base_function": "test_plan_inverses_walk_sequence",
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "4ae31b25c7f796a7f6958d6d8c6907316e39f4d3f42cde5e642de056c4953df2",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 373
+    },
+    {
+      "base_function": "test_plan_inverses_with_erased_event",
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "2df2487ee8e0fac08577b20fd8ebfc8a1d0cd600893766bc1f8315cbf16171b3",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 415
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "minimum_action": "Included in the one exact source restoration and same-kind targeted run; no per-row adaptation.",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "source_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    }
+  ],
+  "schema": "timeline.f.d141l.inverse38.restoration-manifest.v1"
+}

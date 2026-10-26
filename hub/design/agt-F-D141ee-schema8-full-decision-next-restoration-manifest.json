@@ -1,0 +1,19 @@
+{
+  "classification_rule": "c only; no restoration entry for rendering (a)",
+  "owner_approved_retirements": [],
+  "restorations": [
+    {
+      "action": "restore exact pristine test body/assertions under original ID, then run targeted installer selector",
+      "id": "tests.test_installer_schema::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "pristine_blob": "ede759060078ab18a9eac75fd682ddb429073518",
+      "source_file": "/home/user/peteromallet/astrid-agent/tests/test_installer_schema.py"
+    },
+    {
+      "action": "restore exact pristine test body/assertions under original ID, then run targeted installer selector",
+      "id": "tests.test_installer_schema::test_remotion_lock_pins_the_transitive_schema_package",
+      "pristine_blob": "ede759060078ab18a9eac75fd682ddb429073518",
+      "source_file": "/home/user/peteromallet/astrid-agent/tests/test_installer_schema.py"
+    }
+  ],
+  "schema": "timeline.f.d141ee.schema8.restoration-manifest.v1"
+}

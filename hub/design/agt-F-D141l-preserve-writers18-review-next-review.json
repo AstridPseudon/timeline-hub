@@ -1,0 +1,38 @@
+{
+  "schema": "timeline.f.d141l.preserve-writers18.independent-review-next.v1",
+  "scope": "Exactly the 18 assigned pristine-only CLI/publish/native-create IDs",
+  "verdict": "REG_REQUIRED_FOR_15_ROWS",
+  "assigned": 18,
+  "assigned_unique": 18,
+  "rename_move_only": 3,
+  "dropped_by_our_patches_reg": 15,
+  "owner_approved_retirement": 0,
+  "current_counterpart_rows": 18,
+  "current_counterpart_unique_ids": 17,
+  "current_primary_status": "18 PASS in supplied cut XML",
+  "pristine_status": "18 PASS in supplied pristine XML",
+  "duplicate_current_counterpart": "Rows 12 and 13 both point to one generic current conflict test; this is not credited as two preserved assertions.",
+  "controlling_decision": "MAIN D141ee in AgentINBOX2026-10-26T11:04:51Z, as supplied in the task brief: generic migration/G5 scope is not owner approval; preservation requires same body and assertions on ours under a new ID.",
+  "owner_retirements": {
+    "count": 0,
+    "status": "none assumed; no exact owner retirement decision was found in the available records",
+    "proposed_retirements": "pending owner decision"
+  },
+  "source_refs": {
+    "current_agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+    "pristine_agent": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "runtime_cut": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "runtime_pristine": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "operational_composition": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "product_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "raw_xml": {
+    "cut_sha256": "6710f7fe1b4b1a0b4d43614f0fe58d437b0b6fff76990e4a717022cef773fcd5",
+    "pristine_sha256": "9d36fcecf662cc9138cd30cb6ad674a57db30209b18593f29da08ed961792bba"
+  },
+  "non_claims": [
+    "No product acceptance, REG0, D141v, or ship verdict.",
+    "The supplied 397 cut bad outcomes and 19 FAILS_BOTH remain visible.",
+    "No pytest, provider/import collection, request-test, browser, live socket, full suite, or product change was performed."
+  ]
+}

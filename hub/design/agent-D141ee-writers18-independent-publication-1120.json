@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-26T11:20:15.726578+00:00",
+  "scope": "3passing moves and15droppedtests; sole restoration author active; no REG0",
+  "files": [
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/review.json",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-review.json",
+      "sha256": "9bb60681cdff5853c5a8742fa3eab55d5fe91e29cf65d68a1fe2ef33a7224cef",
+      "bytes": 2023
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/findings.md",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-findings.md",
+      "sha256": "23cfb8c28d6f0571daf6a88daaa2009d62ff6ecb853210aec4045a5173adc184",
+      "bytes": 3521
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/map.json",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-map.json",
+      "sha256": "fe01a0d44d938aa51d7d0106421f4dce951119e7edd130d57b69e05a50db11ad",
+      "bytes": 13340
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/restoration-manifest.json",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-restoration-manifest.json",
+      "sha256": "3cec3ec2c2aebfc140611b9b8430982c285bea76aa3535abaff3ef0a87549ec2",
+      "bytes": 7254
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/source-manifest.json",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-source-manifest.json",
+      "sha256": "79d489930b07e6e86b344ab289e4d1ddf6cd9df1ebbb698a4e943feed4feb8bb",
+      "bytes": 3836
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/validation.md",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-validation.md",
+      "sha256": "4cda89462124507a83f141088868265f8cefdf03bb83d0cd08e32e63bd51d890",
+      "bytes": 2145
+    },
+    {
+      "source": "workers/agt-F-D141l-preserve-writers18-review-next/evidence/handoff.md",
+      "destination": "design/agt-F-D141l-preserve-writers18-review-next-handoff.md",
+      "sha256": "9c009ef8a06ffe262ed3e0f59ca614ff2e1257bcb43a5609c6d090700ff53ac4",
+      "bytes": 1137
+    }
+  ]
+}

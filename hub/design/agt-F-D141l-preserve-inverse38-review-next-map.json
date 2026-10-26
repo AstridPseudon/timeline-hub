@@ -1,0 +1,1538 @@
+{
+  "rows": [
+    {
+      "base_function": "test_erased_payload_does_not_expose_content",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_does_not_expose_content",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "inverse is non-invertible/reverted and the erased reason is present without exposing content",
+      "original_body_sha256": "d95f125a7b6fafa1567687fd0fc038c9c6597fc6cc2e48fafc17bd5bd4710e9d",
+      "original_input": "construct a TimelineEvent carrying ErasedPayload; one case supplies no projections and one supplies a secret clip projection",
+      "original_source_identity": {
+        "function_source": "def test_erased_payload_does_not_expose_content():\n    \"\"\"Erased payload inversion does not expose erased content in projections.\"\"\"\n    erased = ErasedPayload(\n        erased=True,\n        reason=\"policy\",\n        erased_at=\"2026-05-21T00:00:00Z\",\n        erased_by=\"admin\",\n    )\n    event = _make_event(\"clip.removed\", erased)\n\n    before = {\"clips\": [{\"id\": \"c1\", \"kind\": \"visual\", \"asset_id\": \"secret.mp4\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    # Should be non-invertible even though before state has the clip\n    assert result.invertible is False\n    assert \"erased\" in result.revert_reason.lower()",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 344
+    },
+    {
+      "base_function": "test_erased_payload_non_invertible",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_erased_payload_non_invertible",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "inverse is non-invertible/reverted and the erased reason is present without exposing content",
+      "original_body_sha256": "13d8cda1624afbcc0639b4952983b89dbfb0262f3be6c87615986d218f21db37",
+      "original_input": "construct a TimelineEvent carrying ErasedPayload; one case supplies no projections and one supplies a secret clip projection",
+      "original_source_identity": {
+        "function_source": "def test_erased_payload_non_invertible():\n    \"\"\"Events with ErasedPayload are treated as non-invertible.\"\"\"\n    erased = ErasedPayload(\n        erased=True,\n        reason=\"policy\",\n        erased_at=\"2026-05-21T00:00:00Z\",\n        erased_by=\"admin\",\n    )\n    event = _make_event(\"clip.added\", erased)\n\n    result = plan_inverse(event)\n    assert result.invertible is False\n    assert result.revert_kind == \"timeline.reverted\"\n    assert \"erased\" in result.revert_reason.lower()",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 328
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.branched_from-payload5]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.branched_from' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.branched_from', {'branch_timeline_id': '00000000-0000-0000-0000-000000000002', 'anchor_event_id': '01J00000000000000000000001'})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.created-payload0]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.created' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.created', {'timeline_id': '00000000-0000-0000-0000-000000000001', 'slug': 'test', 'name': 'Test'})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.deleted-payload1]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.deleted' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.deleted', {})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.erased-payload3]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.erased' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.erased', {'selector_summary': {}, 'reason': 'test', 'affected_count': 1})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.recovered-payload4]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.recovered' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.recovered', {'anchor_event_id': '01J00000000000000000000001', 'anchor_type': 'event', 'reason': 'test'})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.reverted-payload6]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.reverted' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.reverted', {'target_event_id': '01J00000000000000000000001', 'reason': 'test'})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_non_reversible_event_kinds",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_non_reversible_event_kinds[timeline.tombstoned-payload2]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=False, revert_kind=timeline.reverted, both projections, and event_id in reason",
+      "original_body_sha256": "fe795eed676be0414f142b6ddf080e762bcda6b424fd02b42477fb39689bb8a8",
+      "original_input": "construct TimelineEvent kind='timeline.tombstoned' with its parameterized lifecycle payload and fixed before={'clips': [{'id': 'c1'}]}, after={'clips': []}",
+      "original_source_identity": {
+        "function_source": "def test_non_reversible_event_kinds(kind, payload):\n    \"\"\"Non-reversible kinds fall back to timeline.reverted with before/after projections.\"\"\"\n    event = _make_event(kind, payload)\n    before = {\"clips\": [{\"id\": \"c1\"}]}\n    after = {\"clips\": []}\n\n    result = plan_inverse(\n        event,\n        before_projection=before,\n        after_projection=after,\n    )\n\n    assert result.invertible is False, f\"{kind} should NOT be invertible\"\n    assert result.revert_kind == \"timeline.reverted\"\n    assert result.before_projection is not None\n    assert result.after_projection is not None\n    # Should include the event_id in the reason\n    assert event.event_id in result.revert_reason",
+        "parameter_tuple_source": "('timeline.tombstoned', {'reason': 'test'})",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 303
+    },
+    {
+      "base_function": "test_plan_inverse_is_pure",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_plan_inverse_is_pure",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "matching invertibility, kind, and payload outputs",
+      "original_body_sha256": "a2d9bf17a28dab8157f53b2c0ecdfa8102c5d561d89dd51e0801cd01e13f62ca",
+      "original_input": "call plan_inverse twice with identical event and before/after projections",
+      "original_source_identity": {
+        "function_source": "def test_plan_inverse_is_pure():\n    \"\"\"plan_inverse is a pure function \u2014 same inputs, same outputs.\"\"\"\n    event = _make_event(\n        \"clip.added\",\n        ClipAddedPayload(clip_id=\"c1\", kind=\"visual\", asset_id=\"a1\", track_id=\"visual\"),\n    )\n    before = {\"clips\": []}\n    after = {\"clips\": [{\"id\": \"c1\"}]}\n\n    r1 = plan_inverse(event, before_projection=before, after_projection=after)\n    r2 = plan_inverse(event, before_projection=before, after_projection=after)\n\n    assert r1.invertible == r2.invertible\n    assert r1.inverse_kind == r2.inverse_kind\n    assert r1.inverse_payload == r2.inverse_payload",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 441
+    },
+    {
+      "base_function": "test_plan_inverses_is_pure",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_is_pure",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "same length and matching result fields",
+      "original_body_sha256": "f1f8e69308e48678c64a08047de68cf40738879da1fca26af976967b69b396ca",
+      "original_input": "call plan_inverses twice with identical two-event input",
+      "original_source_identity": {
+        "function_source": "def test_plan_inverses_is_pure():\n    \"\"\"plan_inverses is a pure function \u2014 same inputs, same outputs.\"\"\"\n    e1 = _make_event(\n        \"clip.added\",\n        ClipAddedPayload(clip_id=\"c1\", kind=\"visual\", asset_id=\"a1\", track_id=\"visual\"),\n    )\n    e2 = _make_event(\n        \"track.added\",\n        TrackAddedPayload(track_id=\"t1\", kind=\"visual\", label=\"Track 1\"),\n    )\n\n    r1 = plan_inverses([e1, e2])\n    r2 = plan_inverses([e1, e2])\n\n    assert len(r1) == len(r2)\n    for a, b in zip(r1, r2):\n        assert a.invertible == b.invertible\n        assert a.inverse_kind == b.inverse_kind\n        assert a.inverse_payload == b.inverse_payload",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 458
+    },
+    {
+      "base_function": "test_plan_inverses_mixed_reversible_non_reversible",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_mixed_reversible_non_reversible",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "one invertible and one non-invertible result",
+      "original_body_sha256": "a5015b87cb4fae6aac93096c1b4e425c2f0a41b9d8a3a313325e7728660000a5",
+      "original_input": "pass clip.added and timeline.deleted to plan_inverses",
+      "original_source_identity": {
+        "function_source": "def test_plan_inverses_mixed_reversible_non_reversible():\n    \"\"\"plan_inverses handles mixed reversible and non-reversible events.\"\"\"\n    e1 = _make_event(\n        \"clip.added\",\n        ClipAddedPayload(clip_id=\"c1\", kind=\"visual\", asset_id=\"a1\", track_id=\"visual\"),\n    )\n    e2 = _make_event(\"timeline.deleted\", {})\n\n    results = plan_inverses([e1, e2])\n\n    assert len(results) == 2\n    assert results[0].invertible is True  # clip.added \u2192 clip.removed\n    assert results[1].invertible is False",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 400
+    },
+    {
+      "base_function": "test_plan_inverses_walk_sequence",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_walk_sequence",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "three invertible results with clip.removed, track.removed, pool.asset_removed",
+      "original_body_sha256": "4ae31b25c7f796a7f6958d6d8c6907316e39f4d3f42cde5e642de056c4953df2",
+      "original_input": "pass three events (clip.added, track.added, pool.asset_added) to plan_inverses",
+      "original_source_identity": {
+        "function_source": "def test_plan_inverses_walk_sequence():\n    \"\"\"plan_inverses walks a sequence and produces one inverse per event.\"\"\"\n    e1 = _make_event(\n        \"clip.added\",\n        ClipAddedPayload(clip_id=\"c1\", kind=\"visual\", asset_id=\"a1\", track_id=\"visual\"),\n    )\n    e2 = _make_event(\n        \"track.added\",\n        TrackAddedPayload(track_id=\"t1\", kind=\"visual\", label=\"Track 1\"),\n    )\n    e3 = _make_event(\n        \"pool.asset_added\",\n        PoolAssetAddedPayload(asset_id=\"img1.png\"),\n    )\n\n    results = plan_inverses([e1, e2, e3])\n\n    assert len(results) == 3\n    # All should be invertible\n    for r in results:\n        assert r.invertible is True\n\n    assert results[0].inverse_kind == \"clip.removed\"\n    assert results[1].inverse_kind == \"track.removed\"\n    assert results[2].inverse_kind == \"pool.asset_removed\"",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 373
+    },
+    {
+      "base_function": "test_plan_inverses_with_erased_event",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_plan_inverses_with_erased_event",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "first result invertible and erased result non-invertible",
+      "original_body_sha256": "2df2487ee8e0fac08577b20fd8ebfc8a1d0cd600893766bc1f8315cbf16171b3",
+      "original_input": "pass clip.added and an erased clip.moved to plan_inverses",
+      "original_source_identity": {
+        "function_source": "def test_plan_inverses_with_erased_event():\n    \"\"\"plan_inverses handles erased events in sequence.\"\"\"\n    e1 = _make_event(\n        \"clip.added\",\n        ClipAddedPayload(clip_id=\"c1\", kind=\"visual\", asset_id=\"a1\", track_id=\"visual\"),\n    )\n    erased = ErasedPayload(\n        erased=True,\n        reason=\"policy\",\n        erased_at=\"2026-05-21T00:00:00Z\",\n        erased_by=\"admin\",\n    )\n    e2 = _make_event(\"clip.moved\", erased)\n\n    results = plan_inverses([e1, e2])\n\n    assert len(results) == 2\n    assert results[0].invertible is True\n    assert results[1].invertible is False",
+        "parameter_tuple_source": null,
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 415
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[arrangement.replaced-payload22-before_state22-after_state22-arrangement.replaced]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('arrangement.replaced', ArrangementReplacedPayload(arrangement={'clips': [{'id': 'c2'}]}), {'arrangement': {'clips': [{'id': 'c1'}]}}, {'arrangement': {'clips': [{'id': 'c2'}]}}, 'arrangement.replaced')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.bound-payload15-before_state15-after_state15-audio.unbound]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('audio.bound', AudioBoundPayload(clip_id='c1', asset_id='song.mp3'), {'clips': []}, {'clips': [{'id': 'c1', 'asset_id': 'song.mp3'}]}, 'audio.unbound')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[audio.unbound-payload16-before_state16-after_state16-audio.bound]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('audio.unbound', AudioUnboundPayload(clip_id='c1'), {'clips': [{'id': 'c1', 'asset_id': 'song.mp3'}]}, {'clips': [{'id': 'c1', 'asset_id': ''}]}, 'audio.bound')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.added-payload0-before_state0-after_state0-clip.removed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.added', ClipAddedPayload(clip_id='c1', kind='visual', asset_id='a1', track_id='visual'), {'clips': []}, {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1'}]}, 'clip.removed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.annotated-payload7-before_state7-after_state7-clip.annotated]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.annotated', ClipAnnotatedPayload(clip_id='c1', note='new note'), {'clips': [{'id': 'c1', 'note': 'old note'}]}, {'clips': [{'id': 'c1', 'note': 'new note'}]}, 'clip.annotated')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.moved-payload2-before_state2-after_state2-clip.moved]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.moved', ClipMovedPayload(clip_id='c1', position=ClipPosition(mode='index', index=5)), {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1'}]}, {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1'}]}, 'clip.moved')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.removed-payload1-before_state1-after_state1-clip.added]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.removed', ClipRemovedPayload(clip_id='c1'), {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1'}]}, {'clips': []}, 'clip.added')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.replaced-payload5-before_state5-after_state5-clip.replaced]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.replaced', ClipReplacedPayload(clip_id='c1', with_asset_id='new_a1'), {'clips': [{'id': 'c1', 'asset_id': 'old_a1'}]}, {'clips': [{'id': 'c1', 'asset_id': 'new_a1'}]}, 'clip.replaced')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.retimed-payload3-before_state3-after_state3-clip.retimed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.retimed', ClipRetimedPayload(clip_id='c1', start=10.0, duration=5.0), {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1', 'start': 0.0, 'duration': 3.0}]}, {'clips': [{'id': 'c1', 'kind': 'visual', 'asset_id': 'a1', 'start': 10.0, 'duration': 5.0}]}, 'clip.retimed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.swapped-payload4-before_state4-after_state4-clip.swapped]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.swapped', ClipSwappedPayload(clip_a_id='c1', clip_b_id='c2'), {'clips': [{'id': 'c1'}, {'id': 'c2'}]}, {'clips': [{'id': 'c2'}, {'id': 'c1'}]}, 'clip.swapped')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[clip.text_set-payload6-before_state6-after_state6-clip.text_set]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('clip.text_set', ClipTextSetPayload(clip_id='c1', text='new text'), {'clips': [{'id': 'c1', 'text': 'old text'}]}, {'clips': [{'id': 'c1', 'text': 'new text'}]}, 'clip.text_set')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.added-payload10-before_state10-after_state10-effect.removed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('effect.added', EffectAddedPayload(clip_id='c1', effect_id='blur'), {'clips': []}, {'clips': [{'id': 'c1', 'effects': [{'effect_id': 'blur'}]}]}, 'effect.removed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.removed-payload11-before_state11-after_state11-effect.added]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('effect.removed', EffectRemovedPayload(clip_id='c1', effect_id='blur'), {'clips': [{'id': 'c1', 'effects': [{'effect_id': 'blur', 'params': {'radius': 5}}]}]}, {'clips': [{'id': 'c1', 'effects': []}]}, 'effect.added')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[effect.tuned-payload12-before_state12-after_state12-effect.tuned]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('effect.tuned', EffectTunedPayload(clip_id='c1', effect_id='blur', param='radius', value=10), {'clips': [{'id': 'c1', 'effects': [{'effect_id': 'blur', 'params': {'radius': 5}}]}]}, {'clips': [{'id': 'c1', 'effects': [{'effect_id': 'blur', 'params': {'radius': 10}}]}]}, 'effect.tuned')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_added-payload19-before_state19-after_state19-pool.asset_removed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('pool.asset_added', PoolAssetAddedPayload(asset_id='img1.png'), {'pool': {'entries': []}}, {'pool': {'entries': [{'asset_id': 'img1.png', 'score': 0.0}]}}, 'pool.asset_removed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_removed-payload20-before_state20-after_state20-pool.asset_added]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('pool.asset_removed', PoolAssetRemovedPayload(asset_id='img1.png'), {'pool': {'entries': [{'asset_id': 'img1.png', 'score': 0.5}]}}, {'pool': {'entries': []}}, 'pool.asset_added')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[pool.asset_scored-payload21-before_state21-after_state21-pool.asset_scored]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('pool.asset_scored', PoolAssetScoredPayload(asset_id='img1.png', score=0.9), {'pool': {'entries': [{'asset_id': 'img1.png', 'score': 0.5}]}}, {'pool': {'entries': [{'asset_id': 'img1.png', 'score': 0.9}]}}, 'pool.asset_scored')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.overridden-payload18-before_state18-after_state18-theme.overridden]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('theme.overridden', ThemeOverriddenPayload(override_id='color.primary', value='#000'), {'theme': 'dark', 'theme_overrides': {'color.primary': '#fff'}}, {'theme': 'dark', 'theme_overrides': {'color.primary': '#000'}}, 'theme.overridden')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[theme.set-payload17-before_state17-after_state17-theme.set]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('theme.set', ThemeSetPayload(theme_id='dark'), {'theme': 'light', 'theme_overrides': {}}, {'theme': 'dark', 'theme_overrides': {}}, 'theme.set')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[timeline.config_replaced-payload23-before_state23-after_state23-timeline.config_replaced]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('timeline.config_replaced', TimelineConfigReplacedPayload(config={'tracks': [], 'clips': []}), {'tracks': [{'id': 'v1', 'kind': 'visual', 'label': 'Video'}], 'clips': []}, {'tracks': [], 'clips': []}, 'timeline.config_replaced')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.added-payload13-before_state13-after_state13-track.removed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('track.added', TrackAddedPayload(track_id='t1', kind='visual', label='Track 1'), {'tracks': []}, {'tracks': [{'id': 't1', 'kind': 'visual'}]}, 'track.removed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[track.removed-payload14-before_state14-after_state14-track.added]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('track.removed', TrackRemovedPayload(track_id='t1'), {'tracks': [{'id': 't1', 'kind': 'audio', 'label': 'music'}]}, {'tracks': []}, 'track.added')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.removed-payload9-before_state9-after_state9-transition.set]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('transition.removed', TransitionRemovedPayload(left_clip_id='c1', right_clip_id='c2'), {'clips': [{'id': 'c1', 'transition': {'kind': 'cross-fade', 'right_clip_id': 'c2', 'duration_seconds': 1.0}}]}, {'clips': [{'id': 'c1'}]}, 'transition.set')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    },
+    {
+      "base_function": "test_reversible_event_kind",
+      "classification": "DROPPED_BY_OUR_PATCHES_REGRESSION",
+      "current_exact_xml": {
+        "cut_status": "ABSENT",
+        "id": null,
+        "pristine_status": "ABSENT"
+      },
+      "current_source": {
+        "old_file_git_check": "git cat-file -e ecdc242ed9b673f641759ecf029f95e89a2c6f92:tests/timeline/test_inverses.py",
+        "old_file_present": false,
+        "same_body_and_assertions_candidate": false,
+        "same_body_candidates": []
+      },
+      "id": "tests/timeline/test_inverses.py::test_reversible_event_kind[transition.set-payload8-before_state8-after_state8-transition.removed]",
+      "minimum_restoration": "One manager-owned author restores the exact pristine inverse implementation and test source, then runs the targeted same-kind test without adapting assertions or inputs.",
+      "original_assertion": "plan_inverse returns invertible=True, expected inverse_kind, and a non-null inverse_payload",
+      "original_body_sha256": "16659da8e7ec907651f41996c265b1ed6da02031370afb56cd5e409f0a22db41",
+      "original_input": "construct one TimelineEvent with the parameterized payload and before/after projection",
+      "original_source_identity": {
+        "function_source": "def test_reversible_event_kind(\n    kind, payload, before_state, after_state, expected_inverse_kind\n):\n    \"\"\"Every m2/m3 reversible event kind produces a mechanical inverse.\"\"\"\n    event = _make_event(kind, payload)\n    result = plan_inverse(\n        event,\n        before_projection=before_state,\n        after_projection=after_state,\n    )\n    assert result.invertible is True, (\n        f\"{kind} should be invertible, got: {result.revert_reason}\"\n    )\n    assert result.inverse_kind == expected_inverse_kind, (\n        f\"{kind} inverse should be {expected_inverse_kind}, got {result.inverse_kind}\"\n    )\n    assert result.inverse_payload is not None",
+        "parameter_tuple_source": "('transition.set', TransitionSetPayload(left_clip_id='c1', right_clip_id='c2', kind='cross-fade', duration_seconds=1.0), {'clips': []}, {'clips': [{'id': 'c1', 'transition': {'kind': 'cross-fade', 'right_clip_id': 'c2', 'duration_seconds': 1.0}}]}, 'transition.removed')",
+        "pristine_blob": "941bcfb803b94f9765ac7b71dc88163010cc86cd",
+        "pristine_ref": "64197afa297f86f1e738238d5e80aff6d33e303a",
+        "source_sha256": "904063b9fb6c2ad7ae6f318070d4ebd522c3e17df5c6022d1d6cdf58e5f0a025"
+      },
+      "owner_decision": {
+        "citation": "/home/user/timeline-hub/hub/inbox/agent.md:7546-7551",
+        "prior_claim_rejected": "D05 ledger/source commits and generic G5/D52 wording do not themselves satisfy owner approval",
+        "ruling": "MAIN D141ee 2026-10-26T11:04:41Z; D141v/REG0 remain gated",
+        "status": "NO_OWNER_APPROVED_RETIREMENT_UNDER_D141EE"
+      },
+      "parameters": [
+        "kind",
+        "payload",
+        "before_state",
+        "after_state",
+        "expected_inverse_kind"
+      ],
+      "source_file": "tests/timeline/test_inverses.py",
+      "source_line": 267
+    }
+  ],
+  "schema": "timeline.f.d141l.inverse38.map.v2"
+}

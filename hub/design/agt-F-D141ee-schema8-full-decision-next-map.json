@@ -1,0 +1,534 @@
+{
+  "coverage": {
+    "assigned": [
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[__init__.py]",
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[generated.py]",
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[materialize.py]",
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[theme.py]",
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json]",
+      "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[validate.py]",
+      "tests.test_installer_schema::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "tests.test_installer_schema::test_remotion_lock_pins_the_transitive_schema_package"
+    ],
+    "count": 8,
+    "unique": true
+  },
+  "rows": [
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[__init__.py]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "__init__.py",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/__init__.py]"
+    },
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[generated.py]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "generated.py",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/__init__.py]"
+    },
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[materialize.py]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "materialize.py",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/banodoco_schema.py]"
+    },
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[theme.py]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "theme.py",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/_local_schema.py]"
+    },
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[timeline.schema.json]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "timeline.schema.json",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/timeline/__init__.py]"
+    },
+    {
+      "classification": "RENAME_OR_MOVE",
+      "current_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "556c6568b7cf32337708ed02d7cdf7e2768f9d45445dfae287722c2071e0b228",
+        "end_line": 546,
+        "function_source_sha256": "0633ef0ee3f3482c5acfd006a765961847dd6bef9ca6f31d8685e3522c3a4ab1",
+        "line": 516,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "current_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]",
+      "current_status": "PASS",
+      "id": "tests.packs.rendering.test_render_export_task_adapter::test_trusted_schema_readiness_requires_complete_install[validate.py]",
+      "migration_limit": "current _local_schema.READER_INPUTS member is a canonical reader input; no old basename is claimed individually equivalent",
+      "original_function": {
+        "assertions": [
+          "assert not status.available",
+          "assert missing_file in (status.reason or '')"
+        ],
+        "assertions_ast_sha256": "ec78858dfb22038736f354578707a485f27fbdf9533ad7ecd222b117dfe48fe8",
+        "body_ast_sha256": "d7a4727fbd4707b7549849324fa11a953b56f3d743b714f22fac9331977b305b",
+        "end_line": 500,
+        "function_source_sha256": "6ae42fd5423661999bb7220cf4961f2e23664f50151714725b4d12fed464be6a",
+        "line": 460,
+        "name": "test_trusted_schema_readiness_requires_complete_install",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch",
+          "missing_file"
+        ]
+      },
+      "original_input": "validate.py",
+      "rule_branch": "a",
+      "same_assertions": true,
+      "same_body": false,
+      "xml_id": "test_trusted_schema_readiness_requires_complete_install[astrid/core/rendering/__init__.py]"
+    },
+    {
+      "classification": "DROPPED_BY_OUR_PATCHES_REG",
+      "current_candidate_statuses": {
+        "test_local_schema_verification_rejects_a_changed_schema": "PASS",
+        "test_staging_verifies_the_local_schema_before_declaring_services": "PASS"
+      },
+      "current_candidates": [
+        {
+          "assertions": [
+            "assert not any(('timeline-schema' in value for value in initial_install))",
+            "assert python_installs[0] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--require-hashes', '-r', str(version.root / 'a/requirements/runtime.lock')]",
+            "assert python_installs[1] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--no-deps', str(version.root / 'r'), str(version.root / 'r/packages/python'), str(version.root / 'a'), str(version.root / 'v')]",
+            "assert len(python_installs) == 2",
+            "assert npm_index < calls.index(['declare-services'])",
+            "assert schema_path.endswith('/a/astrid/core/timeline/schema/timeline-config.schema.json')",
+            "assert version.profile.is_file()",
+            "assert schema.is_file()"
+          ],
+          "assertions_ast_sha256": "a466bc3e07110a397c84c9a6592731ce0b852be93d808e7765274286e6b5df5b",
+          "body_ast_sha256": "b904b4972e63a05e6152a896942c42a8d1a1c736cec041f63b9b968c438af512",
+          "end_line": 116,
+          "function_source_sha256": "a9fb4fd8a033f64731f091a7cb44eace5871f5e7e9ad8a0405cc8f896f2bef2e",
+          "line": 34,
+          "name": "test_staging_verifies_the_local_schema_before_declaring_services",
+          "parameters": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "assertions": [],
+          "assertions_ast_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "body_ast_sha256": "5079edefa197e80da9b0a07f467bf8d22333a744423b0ac1f1ace29c8f7168ed",
+          "end_line": 127,
+          "function_source_sha256": "c0dbf44a5405d03080d6d5a886d16b5b8f628c40c5d5ea59e7ad9214163deabb",
+          "line": 119,
+          "name": "test_local_schema_verification_rejects_a_changed_schema",
+          "parameters": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_function": [
+        {
+          "assertions": [
+            "assert not any(('timeline-schema' in value for value in initial_install))",
+            "assert python_installs[0] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--require-hashes', '-r', str(version.root / 'a/requirements/runtime.lock')]",
+            "assert python_installs[1] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--no-deps', str(version.root / 'r'), str(version.root / 'r/packages/python'), str(version.root / 'a'), str(version.root / 'v')]",
+            "assert len(python_installs) == 2",
+            "assert npm_index < calls.index(['declare-services'])",
+            "assert schema_path.endswith('/a/astrid/core/timeline/schema/timeline-config.schema.json')",
+            "assert version.profile.is_file()",
+            "assert schema.is_file()"
+          ],
+          "assertions_ast_sha256": "a466bc3e07110a397c84c9a6592731ce0b852be93d808e7765274286e6b5df5b",
+          "body_ast_sha256": "b904b4972e63a05e6152a896942c42a8d1a1c736cec041f63b9b968c438af512",
+          "end_line": 116,
+          "function_source_sha256": "a9fb4fd8a033f64731f091a7cb44eace5871f5e7e9ad8a0405cc8f896f2bef2e",
+          "line": 34,
+          "name": "test_staging_verifies_the_local_schema_before_declaring_services",
+          "parameters": [
+            "tmp_path",
+            "monkeypatch"
+          ]
+        },
+        {
+          "assertions": [],
+          "assertions_ast_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "body_ast_sha256": "5079edefa197e80da9b0a07f467bf8d22333a744423b0ac1f1ace29c8f7168ed",
+          "end_line": 127,
+          "function_source_sha256": "c0dbf44a5405d03080d6d5a886d16b5b8f628c40c5d5ea59e7ad9214163deabb",
+          "line": 119,
+          "name": "test_local_schema_verification_rejects_a_changed_schema",
+          "parameters": [
+            "tmp_path"
+          ]
+        }
+      ],
+      "current_status": "ABSENT",
+      "current_xml_ids": [
+        "test_staging_verifies_the_local_schema_before_declaring_services",
+        "test_local_schema_verification_rejects_a_changed_schema"
+      ],
+      "id": "tests.test_installer_schema::test_staging_installs_the_npm_locked_schema_before_declaring_services",
+      "minimum_action": "restore the exact pristine test body/assertions under its original ID, then run the targeted installer selector; owner retirement is not assumed",
+      "original_function": {
+        "assertions": [
+          "assert npm_index < schema_install_index < calls.index(['declare-services'])",
+          "assert schema_path.endswith('/a/remotion/node_modules/@banodoco/timeline-schema/python')",
+          "assert not any(('timeline-schema' in value for value in initial_install))",
+          "assert python_installs[0] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--require-hashes', '-r', str(version.root / 'a/requirements/runtime.lock')]",
+          "assert python_installs[1] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--no-deps', str(version.root / 'r'), str(version.root / 'r/packages/python'), str(version.root / 'a'), str(version.root / 'v')]",
+          "assert python_installs[2] == [str(backend.uv), 'pip', 'install', '--python', str(version.python), '--no-deps', schema_path]",
+          "assert version.profile.is_file()",
+          "assert (schema / 'pyproject.toml').is_file()"
+        ],
+        "assertions_ast_sha256": "ef484b35bece08c86494684c9353eff0ed72e553115565071f61929703ca65ab",
+        "body_ast_sha256": "293cfe2270f6bbde6165145bfa1467081682e589bc59660973f058d149ebea09",
+        "end_line": 95,
+        "function_source_sha256": "a918238932392fdab15be4cd797092af1d14853e3060a9efab48dfb4d43c60d6",
+        "line": 11,
+        "name": "test_staging_installs_the_npm_locked_schema_before_declaring_services",
+        "parameters": [
+          "tmp_path",
+          "monkeypatch"
+        ]
+      },
+      "rule_branch": "c",
+      "same_assertions": false,
+      "same_body": false,
+      "xml_id": "test_staging_installs_the_npm_locked_schema_before_declaring_services"
+    },
+    {
+      "classification": "DROPPED_BY_OUR_PATCHES_REG",
+      "current_candidate_statuses": {
+        "test_d66_upstream_remotion_lock_pins_the_transitive_schema_package": "PASS",
+        "test_remotion_lock_pins_the_immutable_composition_public_entry": "PASS"
+      },
+      "current_candidates": [
+        {
+          "assertions": [
+            "assert package['dependencies']['@banodoco/timeline-composition'] == 'file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz'",
+            "assert composition['version'] == '0.0.14'",
+            "assert composition['resolved'] == 'file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz'",
+            "assert composition['integrity'] == 'sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=='",
+            "assert 'node_modules/@banodoco/timeline-schema' not in lock['packages']",
+            "assert 'node_modules/@banodoco/timeline-theme-2rp' not in lock['packages']",
+            "assert manifest['name'] == '@banodoco/timeline-composition'",
+            "assert manifest['version'] == '0.0.14'",
+            "assert target.startswith('./dist/')",
+            "assert 'package/' + target.removeprefix('./') in files"
+          ],
+          "assertions_ast_sha256": "b6083ed2a8caf5cd0a1c8a679d6be46b7d73f3d4922f19023f12ea315e159ac1",
+          "body_ast_sha256": "0e9fb2a4afa52e4bf4f9144160961e9a5fea26a90dc0469c2093ed1f37379472",
+          "end_line": 160,
+          "function_source_sha256": "b9aa804d746dde99e5f286ccc9a6c5ed0445f879de1b09d556533bd6e869a59a",
+          "line": 130,
+          "name": "test_remotion_lock_pins_the_immutable_composition_public_entry",
+          "parameters": []
+        },
+        {
+          "assertions": [
+            "assert composition_spec.startswith('file:artifacts/')",
+            "assert composition['version'] == '0.0.14'",
+            "assert composition['resolved'] == composition_spec",
+            "assert composition['integrity'] == _integrity(artifact)",
+            "assert composition['integrity'] == 'sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=='",
+            "assert schema_pin['from'] == 'contract/schemas/timeline-config.schema.json'",
+            "assert schema_pin['sha256'] == 'sha256:' + hashlib.sha256(canonical_schema.read_bytes()).hexdigest()",
+            "assert schema_pin['sha256'] == 'sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd'",
+            "assert not _contains_obsolete_external(package)",
+            "assert not _contains_obsolete_external(lock)",
+            "assert not _contains_obsolete_external(member.name)",
+            "assert not any((token.encode() in content.lower() for token in _OBSOLETE_EXTERNALS))"
+          ],
+          "assertions_ast_sha256": "d9278d45bd3546b75264f2df3c87560a5579f646eccb0511ff38c32d4fbe6845",
+          "body_ast_sha256": "8f5aee1d45a3ca53fd4a356686f24f1c063c640ce2b653add1dd9b92d903bf0b",
+          "end_line": 196,
+          "function_source_sha256": "14de8f2cddec2c90f7f2d82a9ea744085e392de59f8f1ec29415ce3ab0d771a8",
+          "line": 165,
+          "name": "test_d66_upstream_remotion_lock_pins_the_transitive_schema_package",
+          "parameters": []
+        }
+      ],
+      "current_function": [
+        {
+          "assertions": [
+            "assert package['dependencies']['@banodoco/timeline-composition'] == 'file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz'",
+            "assert composition['version'] == '0.0.14'",
+            "assert composition['resolved'] == 'file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz'",
+            "assert composition['integrity'] == 'sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=='",
+            "assert 'node_modules/@banodoco/timeline-schema' not in lock['packages']",
+            "assert 'node_modules/@banodoco/timeline-theme-2rp' not in lock['packages']",
+            "assert manifest['name'] == '@banodoco/timeline-composition'",
+            "assert manifest['version'] == '0.0.14'",
+            "assert target.startswith('./dist/')",
+            "assert 'package/' + target.removeprefix('./') in files"
+          ],
+          "assertions_ast_sha256": "b6083ed2a8caf5cd0a1c8a679d6be46b7d73f3d4922f19023f12ea315e159ac1",
+          "body_ast_sha256": "0e9fb2a4afa52e4bf4f9144160961e9a5fea26a90dc0469c2093ed1f37379472",
+          "end_line": 160,
+          "function_source_sha256": "b9aa804d746dde99e5f286ccc9a6c5ed0445f879de1b09d556533bd6e869a59a",
+          "line": 130,
+          "name": "test_remotion_lock_pins_the_immutable_composition_public_entry",
+          "parameters": []
+        },
+        {
+          "assertions": [
+            "assert composition_spec.startswith('file:artifacts/')",
+            "assert composition['version'] == '0.0.14'",
+            "assert composition['resolved'] == composition_spec",
+            "assert composition['integrity'] == _integrity(artifact)",
+            "assert composition['integrity'] == 'sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=='",
+            "assert schema_pin['from'] == 'contract/schemas/timeline-config.schema.json'",
+            "assert schema_pin['sha256'] == 'sha256:' + hashlib.sha256(canonical_schema.read_bytes()).hexdigest()",
+            "assert schema_pin['sha256'] == 'sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd'",
+            "assert not _contains_obsolete_external(package)",
+            "assert not _contains_obsolete_external(lock)",
+            "assert not _contains_obsolete_external(member.name)",
+            "assert not any((token.encode() in content.lower() for token in _OBSOLETE_EXTERNALS))"
+          ],
+          "assertions_ast_sha256": "d9278d45bd3546b75264f2df3c87560a5579f646eccb0511ff38c32d4fbe6845",
+          "body_ast_sha256": "8f5aee1d45a3ca53fd4a356686f24f1c063c640ce2b653add1dd9b92d903bf0b",
+          "end_line": 196,
+          "function_source_sha256": "14de8f2cddec2c90f7f2d82a9ea744085e392de59f8f1ec29415ce3ab0d771a8",
+          "line": 165,
+          "name": "test_d66_upstream_remotion_lock_pins_the_transitive_schema_package",
+          "parameters": []
+        }
+      ],
+      "current_status": "ABSENT",
+      "current_xml_ids": [
+        "test_remotion_lock_pins_the_immutable_composition_public_entry",
+        "test_d66_upstream_remotion_lock_pins_the_transitive_schema_package"
+      ],
+      "id": "tests.test_installer_schema::test_remotion_lock_pins_the_transitive_schema_package",
+      "minimum_action": "restore the exact pristine test body/assertions under its original ID, then run the targeted installer selector; owner retirement is not assumed",
+      "original_function": {
+        "assertions": [
+          "assert package['dependencies']['@banodoco/timeline-composition'] == 'https://github.com/banodoco/timeline-composition/archive/refs/tags/v0.0.6.tar.gz'",
+          "assert composition['dependencies']['@banodoco/timeline-schema'] == 'https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz'",
+          "assert schema['version'] == '0.0.1'",
+          "assert schema['resolved'] == 'https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz'",
+          "assert schema['integrity'] == 'sha512-m7oUjUV+q1dPb78N6+5B3iayTXkV/WBrQLxNDrlt32j4GXY2sQOIOwpGBw4kNjjngVpSwSaAGneQKUWCgUS8lQ=='"
+        ],
+        "assertions_ast_sha256": "ef01256b108237ab89cbedd42a006d7ed3cd9ab0e53528c6f1a261f8ac129763",
+        "body_ast_sha256": "d6b4dbfb3d1cba2ae944b20b418e15cbd307f921005468182346ae4be6a713c5",
+        "end_line": 116,
+        "function_source_sha256": "c10befe3af82a12a9bb69c04a7fc919506ac6bef39341576c254b14c99540069",
+        "line": 98,
+        "name": "test_remotion_lock_pins_the_transitive_schema_package",
+        "parameters": []
+      },
+      "rule_branch": "c",
+      "same_assertions": false,
+      "same_body": false,
+      "xml_id": "test_remotion_lock_pins_the_transitive_schema_package"
+    }
+  ],
+  "schema": "timeline.f.d141ee.schema8.map.v1",
+  "source_rule": "OR: exact body OR exact assertions under new ID plus current PASS; no owner retirement assumed"
+}

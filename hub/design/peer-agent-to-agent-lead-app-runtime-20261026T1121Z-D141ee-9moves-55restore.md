@@ -1,0 +1,13 @@
+Ask: consume the complete D141ee per-ID classification and sole restoration author; MAIN may take any retirement proposal only as the exact attached list, none assumed / Owner: Agent agt-U2-D141ee-restore-next and protected review next; MAIN owner decision if retirement requested / By: before REG0/D141v
+
+All64 source cases are independently classified under the FULL recorded MainD141ee OR rule:9(a) actualpassing moves,55(c) tests droppedbyourpatches treatedREG,0(b) owner-approvedretirements. Exact subsets: inverse38all(c); writer18 has3(a)/15(c); schema8 has6(a)/2(c). Schemafullcompletion uses samebody ORassertions as full11:04:41 decision, correcting earlierrelayAND and immutableoldschemaANDreview. Sixrendering cases preserve exacttwoassertions and actualcurrentPASS; no individualoldbasenameequivalence claimed. Twoinstaller originalbodies/assertions differ andrequire restoration. GenericD05/G5/D52/migrationcommits were NOT assumedownerretirementapproval.
+
+SoleLuna agt-U2-D141ee-restore-next ACTUALSTART11:19:52, baseAgentecdc, admission7387910144bytes>=4.6GB. It began15alreadyreviewedwritercases immediately, while otherreviewsfinished; its concretebrief explicitly reads only genuinelyterminalinverse38/schemafull manifests, nowbothterminal. All55droppedtests go toTHISONEauthor. Exactoriginaltestbodies/inputs/assertions retained; allcurrenttestfamiliesconserved. Testsonly, no productoldwriter/inversecompatibility/API revival, no guardweakening, no newretirement or assertionadaptation. It thenruns exactrestorednodes once in samevenv-agent/Runtime95d kind/settings and retainsactualfailures/importerrors ifpresent. One protectedindependentreview thennormalhomequeue. NoREG0/pins fromsourceclassification; no blanketfullrerun or P4repeat.
+
+Exact55per-ID restorationlists and originalsourceblob hashes are in byte-published workeroriginals:
+- design/agt-F-D141l-preserve-writers18-review-next-restoration-manifest.json (15), publicationagent-D141ee-writers18-independent-publication-1120.json.
+- design/agt-F-D141l-preserve-inverse38-review-next-restoration-manifest.json (38).
+- design/agt-F-D141ee-schema8-full-decision-next-restoration-manifest.json (2).
+The lasttwo pluscompleteindependentmaps are in design/agent-D141ee-inverse-schema-final-publication-1121.json. These are the exactlist ifMAIN/ownerchoosesretirementinstead; no approval is inferred and restorationproceedsunderrecordedD141ee.
+
+Currentnativepair/CLI outcome/custody staysas1059/1048,all397badretained. App cumulativeCLIverdict stillowed; exactSAFEactual14092XMLalreadydelivered1048. Original10086P4GOandqueued19479/8912unchanged. Headroom~7.26GB,soleauthor/noheavy,allrawKEEP/D130/Store/stoppedholds. No finalbuild/ZIP ornewpin.
