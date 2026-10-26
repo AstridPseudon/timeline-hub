@@ -255,7 +255,7 @@ class ServiceSupervisor:
                 ready = ready_path is not None and ready_path.is_file() and not ready_path.is_symlink()
                 if running_since is None and (ready or (ready_path is None and current - started >= _STARTUP_STABLE_SECONDS)):
                     running_since = current if ready else started
-                    self._update(item, state="running", reason=None)
+                    self._update(item, state="running")
                 if ready_path is not None and running_since is None and current - started >= spec.ready_timeout:
                     reason = "readiness_timeout"
                     break
@@ -280,7 +280,7 @@ class ServiceSupervisor:
         try:
             with RotatingLog(self.logs / ("service-" + item.spec.name + ".log")) as log:
                 while not self._stop.is_set():
-                    self._update(item, state="starting", reason=None)
+                    self._update(item, state="starting")
                     try:
                         code, stable_for, reason = self._attempt(item, log)
                     except OSError:
@@ -300,7 +300,7 @@ class ServiceSupervisor:
                         delay = self.initial_backoff
                     failed_fast = fast_failures >= _FAST_FAILURE_LIMIT
                     self._update(item, state="failed" if failed_fast else "restarting",
-                        reason="startup_failed" if failed_fast else (reason or "exited"))
+                        reason=reason or "exited")
                     log.write(f"Service exited ({code}); retrying in {delay:g}s ({reason or 'exited'}).\n")
                     if self._stop.wait(delay):
                         break
