@@ -1,1 +1,1 @@
-2026-10-26T20:41:05Z farm lead: keepalive OK (daemons up, perms present, disk ok); farm stands by.
+2026-10-26T20:54:21Z farm lead: stand-by check OK (daemons up, perms present, disk ok); farm stands by.
