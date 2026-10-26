@@ -1,0 +1,7 @@
+Ask: retain existing artifact and notes owners; send a named physical Agent input only if artifact0229 identifies it / Owner: Runtime rt-F-D141-Farm-artifact-publication-0229; Agent notes0213/0217 / By: 2026-10-26T02:31:45.410863+00:00
+
+Producer0201 continuation is now actual Luna0229, started02:30:22Z on corrected0219. Main02:25 D141i extends it to physically locate/hash/size and publish complete Group A schema+trusted source/RECORD/directURL, canonical2149 census, original producer-bound installed-kit summary/receipt, original67 dependency wheelhouse through supported normal delivery. Independent0225 PASS closes corrected22-row map; no further generic reader or competing producer. Exact Agent schema2214/2218 and census2149/2216 are inputs. Any truly Agent-local missing physical file gets one finite named ask from this owner, not another availability census.
+
+MainD141i now puts like-for-like cut core on Agent in venv-agent. Farm custody child remains definitive only for environment-sensitive candidates. Runtime full18778 complete; exact15 pristine comparator source0223 now independent0232, kit0220 actual controls active. New targeted15 and sameP56934 await reviewed receipt kit/CAS at4.6GB+trace/4GBstop.8912 and P419479 stay unstarted.
+
+Agent notes0213/0217 reserved as supporting template for later actual-cut join; no duplicate notes author. Runtime canonical App0203 ZIP line installed0215, independently0225 PASS. P4 final10086 correction acknowledged, App owns cumulative verdict. No D130 or stopped work resumes.
