@@ -195,13 +195,13 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_export(parsed: argparse.Namespace) -> int:
-    from astrid.sdk.timeline_transfer import export_timeline
     from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import export_timeline
 
     try:
         receipt = export_timeline(parsed.client, parsed.project, parsed.ref, parsed.out)
         return print_result(DomainResult.success(receipt), as_json=parsed.json)
-    except Exception as exc:
+    except (ValueError, OSError) as exc:
         return print_result(DomainResult.failure(ErrorObject(
             "validation_error", str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
         )), as_json=parsed.json)
@@ -216,13 +216,13 @@ def _configure_export(subparser: argparse.ArgumentParser) -> None:
 
 
 def _cmd_import(parsed: argparse.Namespace) -> int:
-    from astrid.sdk.timeline_transfer import import_timeline
     from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import import_timeline
 
     try:
         receipt = import_timeline(parsed.client, parsed.file, parsed.project, name=parsed.name)
         return print_result(DomainResult.success(receipt), as_json=parsed.json)
-    except Exception as exc:
+    except (ValueError, OSError) as exc:
         return print_result(DomainResult.failure(ErrorObject(
             "validation_error", str(exc), {"file": str(parsed.file), "project": parsed.project}
         )), as_json=parsed.json)
@@ -3352,7 +3352,6 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     """Apply the operations in order: timeline-level ops first, then the selected clip (move, length, set, look, swap)."""
     from astrid.sdk.timeline_editing import TimelineEditError
 
-    line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
     line_only_args = bool(
         parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
         or parsed.line_text or parsed.takes or parsed.script_gaps

@@ -1,14 +1,11 @@
 """Read-only Runtime timeline export planner."""
 from __future__ import annotations
 
-from astrid.core.pack.entrypoint import guard_canonical_entrypoint
-
-guard_canonical_entrypoint("rendering.timeline_export_plan")
-
 import argparse
 from pathlib import Path
 from typing import Any
 
+from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 from astrid.packs.rendering.actions.timeline_transfer_common import (
     open_worker_runtime_client,
     output_root,
@@ -17,6 +14,8 @@ from astrid.packs.rendering.actions.timeline_transfer_common import (
     write_receipt,
 )
 from astrid.sdk.timeline_transfer import export_plan
+
+guard_canonical_entrypoint("rendering.timeline_export_plan")
 
 
 def _summary(plan: dict[str, Any], *, project: str, timeline: str) -> dict[str, Any]:

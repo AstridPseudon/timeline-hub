@@ -1,14 +1,11 @@
 """Read-only timeline import preflight and commit-body preparation."""
 from __future__ import annotations
 
-from astrid.core.pack.entrypoint import guard_canonical_entrypoint
-
-guard_canonical_entrypoint("rendering.timeline_prepare_import")
-
 import argparse
 from pathlib import Path
 from typing import Any
 
+from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 from astrid.packs.rendering.actions.timeline_transfer_common import (
     MAX_MANIFEST_INLINE_BYTES,
     decode_manifest,
@@ -19,6 +16,8 @@ from astrid.packs.rendering.actions.timeline_transfer_common import (
     write_receipt,
 )
 from astrid.sdk.timeline_transfer import check_import_manifest, prepare_import
+
+guard_canonical_entrypoint("rendering.timeline_prepare_import")
 
 
 def build_prepare_import_artifacts(
