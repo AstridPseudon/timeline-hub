@@ -27,6 +27,9 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['GET', runtime(`/v1/projects/${P}/timelines?limit=50`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'],
   ['PATCH', runtime(`/v1/projects/${P}/timelines/${T}`), 'runtime'], // renameTimeline
+  ['POST', runtime(`/v1/projects/${P}/timelines/import`), 'runtime'],
+  ['GET', runtime(`/v1/projects/${P}/timelines/import`), 'runtime'],
+  ['PATCH', runtime(`/v1/projects/${P}/timelines/import`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/revisions/${R}`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/timelines/${T}/composition-revisions?limit=50`), 'runtime'],
@@ -42,6 +45,7 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['GET', runtime(`/v1/projects/${P}/thumbnails/source-frame?media_id=m1&time=1`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/thumbnails/source-frame`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/objects`), 'runtime'],
+  ['GET', runtime(`/v1/projects/${P}/objects?limit=100`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/objects/obj-1/location`), 'runtime'],
   ['POST', runtime(`/v1/projects/${P}/media-imports`), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}/media-imports/op-1`), 'runtime'],

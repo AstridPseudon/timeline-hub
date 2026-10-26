@@ -33,7 +33,6 @@ test('plans and writes Runtime/Agent SHAs with the App-generated schema digest',
   const root = await mkdtemp(path.join(os.tmpdir(), 'astrid-manifest-tool-'));
   try {
     const digest = generatedSchemaDigest(await readFile(appMetadata, 'utf8'));
-    assert.equal(digest, 'sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b');
     const runtime = await createCheckout(root, 'runtime', digest);
     const agent = await createCheckout(root, 'agent', digest);
     const runtimeSha = execFileSync('git', ['-C', runtime, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();

@@ -15,6 +15,14 @@ export interface QuickDescriptor {
   headRevisionId: string;
   realmId: string;
   runtimeInstanceId: string;
+  /** N4 acceptance provenance for the already-imported CLI archive. */
+  sourceArchiveBytes?: number;
+  freeBytesBefore?: number;
+  /** Physical short TMPDIR used by the N4 fixture children. */
+  shortTmpDir?: string;
+  /** Optional empty project provisioned by the N4 Runtime fixture for the UI archive round trip. */
+  transferProjectId?: string;
+  transferProjectName?: string;
   revisions: { astrid: string; runtime: string; app: string };
   resultFile: string;
 }
@@ -30,6 +38,19 @@ export function parseQuickDescriptor(text: string): QuickDescriptor {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('ASTRID_QUICK_DESCRIPTOR must be a JSON object');
   const record = value as Record<string, unknown>;
   if (record.version !== 1) throw new Error('ASTRID_QUICK_DESCRIPTOR version must be 1');
+  for (const key of ['sourceArchiveBytes', 'freeBytesBefore'] as const) {
+    if (record[key] !== undefined && (typeof record[key] !== 'number' || !Number.isSafeInteger(record[key]) || record[key] <= 0)) {
+      throw new Error(`ASTRID_QUICK_DESCRIPTOR ${key} must be a positive safe integer`);
+    }
+  }
+  if (record.shortTmpDir !== undefined && (typeof record.shortTmpDir !== 'string' || !isAbsolutePath(record.shortTmpDir))) {
+    throw new Error('ASTRID_QUICK_DESCRIPTOR shortTmpDir must be an absolute path when present');
+  }
+  for (const key of ['transferProjectId', 'transferProjectName'] as const) {
+    if (record[key] !== undefined && (typeof record[key] !== 'string' || !record[key])) {
+      throw new Error(`ASTRID_QUICK_DESCRIPTOR ${key} must be a nonempty string`);
+    }
+  }
   for (const key of pathKeys) {
     if (typeof record[key] !== 'string' || !record[key]) throw new Error(`ASTRID_QUICK_DESCRIPTOR ${key} must be a nonempty absolute path`);
     if (!isAbsolutePath(record[key] as string)) throw new Error(`ASTRID_QUICK_DESCRIPTOR ${key} must be an absolute path`);

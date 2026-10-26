@@ -21,6 +21,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type MutableRefObject,
 } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useLocation, useSearchParams } from "react-router-dom";
@@ -37,6 +38,8 @@ import {
 import { useOptionalAgentChatRegistry } from "@/shared/contexts/AgentChatContext.tsx";
 import { useOptionalGlobalHeaderSlot } from "@/shared/contexts/ToolPageHeaderContext.tsx";
 import { toast } from "@/shared/components/ui/toast.tsx";
+import { useTimelineChromeContextSafe } from "@/tools/video-editor/hooks/timelineStore.ts";
+import { exportTimelineArchive, importTimelineArchive } from "@/tools/video-editor/lib/timeline-transfer.ts";
 import type { DataProvider } from "@/tools/video-editor/data/DataProvider.ts";
 import { VideoEditorProvider } from "@/tools/video-editor/contexts/VideoEditorProvider.tsx";
 import { devLocalExtensions } from "@/tools/video-editor/dev/localExtensions.ts";
@@ -99,6 +102,25 @@ export const LAST_OPENED_PROJECT_STORAGE_KEY =
 
 /** Root class that turns off Chrome's horizontal overscroll swipe-back while the editor is mounted (see index.css). */
 export const VIDEO_EDITOR_SWIPE_LOCK_CLASS = "video-editor-swipe-lock";
+
+function TimelineTransferSaveBridge({ target }: { target: MutableRefObject<(() => Promise<unknown>) | null> }) {
+  const chrome = useTimelineChromeContextSafe();
+  target.current = chrome?.flushPendingSave ?? null;
+  return null;
+}
+
+// Progress toasts stay until the transfer finishes (duration 0); results use the app's usual lengths.
+function transferToast() {
+  const fail = (message: string, id?: unknown, description?: string) =>
+    toast.error(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 8_000 });
+  return {
+    loading: (message: string) => toast(message, { duration: 0 }),
+    update: (id: unknown, message: string) => { if (typeof id === 'string') toast(message, { id, duration: 0 }); },
+    success: (message: string, id?: unknown, description?: string) => toast.success(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 5_000 }),
+    warning: (message: string, id?: unknown, description?: string) => toast.warning(message, { ...(typeof id === 'string' ? { id } : {}), ...(description ? { description } : {}), duration: 0 }),
+    error: fail,
+  };
+}
 
 type EditorProject = {
   slug: string;
@@ -294,6 +316,7 @@ export default function VideoEditorPage() {
 
   const [mountedSaveStatus, setMountedSaveStatus] =
     useState<SaveStatus>("saved");
+  const flushTimelineSaveRef = useRef<(() => Promise<unknown>) | null>(null);
   const [settingPrimaryTimelineId, setSettingPrimaryTimelineId] = useState<
     string | null
   >(null);
@@ -762,6 +785,31 @@ export default function VideoEditorPage() {
       await new AstridRuntimeClient().renameTimeline(selectedProject.project_id, timelineId, name);
       await runtimeDiscovery.timelinesQuery.refetch();
     },
+    onExportTimeline: (timelineId: string, timelineName: string) => {
+      const flushPendingSave = flushTimelineSaveRef.current;
+      if (!flushPendingSave) { toast.error("The timeline editor is still loading. Try again in a moment."); return; }
+      void exportTimelineArchive({ projectId: projectId ?? "", timelineId, timelineName, flushPendingSave }, { toast: transferToast() });
+    },
+    onImportTimeline: (file: File) => {
+      if (!projectId || tourHeader?.disabled) return;
+      const startedOn = { ...timelineSelectionRef.current };
+      void importTimelineArchive(file, projectId, {
+        toast: transferToast(),
+        existingNames: (runtimeDiscovery.timelinesQuery.data ?? []).filter((t) => !t.is_shot).flatMap((t) => (t.name ? [t.name] : [])),
+        // Open the imported timeline only if the user is still where they started
+        // and the same save guard as a manual switch allows it.
+        onImported: async (importedId) => {
+          try { await runtimeDiscovery.timelinesQuery.refetch(); } catch { return false; }
+          const current = timelineSelectionRef.current;
+          if (current.projectId !== startedOn.projectId || current.timelineId !== startedOn.timelineId || !confirmRemountRef.current()) return false;
+          setSearchParams((search) => {
+            if (search.get("project") !== projectId) return search;
+            const next = new URLSearchParams(search); next.set("timeline", importedId); return next;
+          });
+          return true;
+        },
+      }).catch(() => undefined);
+    },
     onCreateTimeline: timelines?.some(t => !t.is_shot) ? handleCreateAdditionalTimeline : handleCreateFirstTimeline,
     creatingTimeline: creatingFirstTimeline,
     onSetPrimaryTimeline: handleSetPrimaryTimeline,
@@ -870,6 +918,7 @@ export default function VideoEditorPage() {
             extensionHostEnabled
             extensionReleaseRevision="shipped"
           >
+            <TimelineTransferSaveBridge target={flushTimelineSaveRef} />
             {tourSelection && <EditorTourTimelineDriver />}
             <AstridVideoEditorShell
               mode="full"

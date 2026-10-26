@@ -847,9 +847,17 @@ export class AstridRuntimeClient {
     return this.withMutation(() => this.client.ingestProjectObject(projectId, data, mediaType, idempotencyKey(), filename));
   }
 
+  /** Commit an already Runtime-prepared import body (or target-project managed object reference). */
+  async importTimeline(projectId: string, prepared: Record<string, unknown>, key = idempotencyKey()): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withMutation(() => this.client.importTimeline(projectId, prepared, key));
+  }
+
   /** Project-scoped object authority check; the local path is never exposed. */
   async getProjectObjectLocation(projectId: string, objectId: string): Promise<ObjectLocation> {
     return this.withSession(() => this.client.getProjectObjectLocation(projectId, objectId));
+  }
+  async listProjectObjects(projectId: string, cursor?: string, limit = 50) {
+    return this.withSession(() => this.client.listProjectObjects(projectId, cursor, limit));
   }
   async importProjectMedia(
     projectId: string,

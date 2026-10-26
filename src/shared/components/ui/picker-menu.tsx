@@ -1,5 +1,5 @@
 import { forwardRef, useId, useRef, useState, type ButtonHTMLAttributes, type ComponentPropsWithoutRef, type ReactNode } from 'react';
-import { Check, ChevronDown, Pencil, Star, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, FileOutput, Pencil, Star, type LucideIcon } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -183,15 +183,19 @@ interface PickerRowProps {
   /** Renames the item; offered on the current row only. */
   onRename?: () => void;
   renameLabel?: string;
+  /** Exports the current timeline; shown on the current row beside star/rename. */
+  onExport?: () => void;
+  exportLabel?: string;
 }
 
 /** A picker row: the tick, the title and detail lines, then the star and rename actions. */
 export function PickerRow({
   value, keywords, current = false, onSelect, title, detail, detailIcon, detailTitle,
-  starred = false, starLabel, onStar, starActionLabel, starPending = false, starDisabled = false, onRename, renameLabel,
+  starred = false, starLabel, onStar, starActionLabel, starPending = false, starDisabled = false, onRename, renameLabel, onExport, exportLabel,
 }: PickerRowProps) {
   const canStar = !starred && !!onStar;
   const canRename = current && !!onRename;
+  const canExport = current && !!onExport;
   return (
     <CommandItem value={value} keywords={keywords} aria-current={current ? 'true' : undefined} data-current={current || undefined}
       className={cn(
@@ -208,7 +212,7 @@ export function PickerRow({
           </span>
         )}
       </span>
-      {(starred || canStar || canRename) && (
+      {(starred || canStar || canRename || canExport) && (
         <span className="ml-auto flex shrink-0 items-center gap-0.5">
           {starred ? (
             <StarMark label={starLabel ?? 'Starred'} className="h-6 w-6" />
@@ -223,6 +227,12 @@ export function PickerRow({
             <button type="button" aria-label={renameLabel} title={renameLabel} className={cn(ROW_BUTTON, REVEAL)}
               onClick={(event) => { event.preventDefault(); event.stopPropagation(); onRename(); }}>
               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+          {canExport && (
+            <button type="button" aria-label={exportLabel ?? 'Export timeline'} title="Export as .astrid file" className={cn(ROW_BUTTON, REVEAL)}
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); onExport(); }}>
+              <FileOutput className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
         </span>
