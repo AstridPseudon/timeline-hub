@@ -285,21 +285,6 @@ function AvailableAgentChatPanel({
   }, [startingAgent]);
 
 
-  // A prefilled prompt is a draft, never sent. It never overwrites an unsent draft: it goes after it. The cursor
-  // lands at the end, so the user continues the sentence.
-  useEffect(() => {
-    if (!pendingComposerPrompt) return;
-    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${pendingComposerPrompt}` : pendingComposerPrompt));
-    clearPendingComposerPrompt?.();
-    requestAnimationFrame(() => {
-      const input = inputRef.current;
-      if (!input) return;
-      input.focus();
-      const end = input.value.length;
-      input.setSelectionRange(end, end);
-    });
-  }, [clearPendingComposerPrompt, pendingComposerPrompt]);
-
   const activeSession = useAgentSession(activeSessionId, projectId);
   // Non-editor hosts may still provide the legacy settings-backed timeline
   // bridge. Preserve that path with a timeline-only context while the loaded
@@ -574,6 +559,27 @@ function AvailableAgentChatPanel({
   const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
   const currentSetupRequest = setupRequest?.sessionId === activeSessionId ? setupRequest : null;
   const showSetupCard = writableChat && (currentSetupRequest !== null || (!activeSessionId && !hasAvailableProjectSession && Boolean(localAgents.data) && !defaultAgentReady));
+  const inputDisabled = agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing;
+  // A prefilled prompt is a draft, never sent. It never overwrites an unsent draft: it goes after it. The cursor
+  // lands at the end, so the user continues the sentence. Focus waits for an enabled composer: focus() on a disabled
+  // textarea does nothing, and a click can arrive while the composer is still locked (starting, no session yet).
+  const composerFocusPendingRef = useRef(false);
+  useEffect(() => {
+    if (pendingComposerPrompt) {
+      setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${pendingComposerPrompt}` : pendingComposerPrompt));
+      clearPendingComposerPrompt?.();
+      composerFocusPendingRef.current = true;
+    }
+    if (!composerFocusPendingRef.current || inputDisabled) return;
+    composerFocusPendingRef.current = false;
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end, end);
+    });
+  }, [clearPendingComposerPrompt, inputDisabled, pendingComposerPrompt]);
   const showSetupOnHost = !writableChat && (agentBroken || isAgentSetupError(turnFailure) || currentSetupRequest !== null);
   useEffect(() => {
     setupErrorScopes.current.forEach((source, error) => {
@@ -1569,7 +1575,7 @@ function AvailableAgentChatPanel({
           }}
           rows={isExpanded ? 8 : 4}
           placeholder={inputPlaceholder}
-          inputDisabled={agentBroken || showSetupCard || startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+          inputDisabled={inputDisabled}
           voice={CHAT_VOICE_ENABLED ? {
             isRecording: voice.isRecording,
             onToggle: () => voice.isRecording ? voice.stopRecording() : voice.startRecording(),

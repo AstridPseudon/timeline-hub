@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shar
 
 /** The drafts the footer tools put into the agent composer (not sent). One definition each, so the canvas and
  *  the shell's sequence-creator entry cannot drift apart. */
-export const AI_GENERATION_DRAFT = 'Generate a new image or video of "';
+export const AI_GENERATION_DRAFT = 'Generate a new image or video of ';
 export const EXTENSION_DRAFT = 'Build a new extension that ';
 export const EFFECT_OR_ANIMATION_DRAFT = 'Create a custom effect or animation that ';
 export const CREATE_ANIMATION_PROMPT = "I'd like to create an animation.";

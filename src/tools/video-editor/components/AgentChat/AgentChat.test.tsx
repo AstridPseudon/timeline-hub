@@ -3,13 +3,24 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentProps } from 'react';
+import { useSyncExternalStore, type ComponentProps } from 'react';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import type { LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
 import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
+
+// A tiny store standing in for the bridge's pending composer prompt, so a test can click a draft button twice.
+const composerPrompt = vi.hoisted(() => {
+  let value: string | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set(next: string | null) { value = next; listeners.forEach((listener) => listener()); },
+    subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
+  };
+});
 
 const mocks = vi.hoisted(() => ({
   useAgentChatBridge: vi.fn(),
@@ -204,6 +215,8 @@ function mockFromState(state: ReturnType<typeof createState>) {
   mocks.useAgentChatBridge.mockImplementation(() => ({
     timelineId: state.timelineId,
     editorContext: state.projectId ? { tool: 'video-editor', projectId: state.projectId, projectSlug: 'project-one', timelineId: state.timelineId, timelineName: null } : null,
+    pendingComposerPrompt: useSyncExternalStore(composerPrompt.subscribe, composerPrompt.get),
+    clearPendingComposerPrompt: () => composerPrompt.set(null),
   }));
   mocks.useAgentChatActionsRegistry.mockImplementation(() => ({
     registerHandlers: vi.fn(),
@@ -313,6 +326,54 @@ describe('AgentChat', () => {
       primary_variant_id: null,
       name: 'Shared image',
     });
+  });
+
+  it('focuses the composer with the cursor at the end on every draft click', async () => {
+    mockFromState(createState());
+    const prompt = 'Build a new extension that ';
+    render(
+      <>
+        <button type="button" onClick={() => composerPrompt.set(prompt)}>Draft extension</button>
+        <AgentChatPanel isExpanded />
+      </>,
+    );
+    const draftButton = screen.getByRole('button', { name: 'Draft extension' });
+    const composer = screen.getByRole('textbox') as HTMLTextAreaElement;
+    for (let click = 1; click <= 2; click += 1) {
+      // A real click moves focus onto the button before the handler runs.
+      act(() => { draftButton.focus(); });
+      await userEvent.click(draftButton);
+      await waitFor(() => expect(composer).toHaveFocus());
+      expect(composer.value).toContain(prompt);
+      expect(composer.selectionStart).toBe(composer.value.length);
+    }
+  });
+
+  it('focuses the composer once it unlocks, when a draft click landed while it was locked', async () => {
+    const prompt = 'Create a custom effect or animation that ';
+    const locked = createState();
+    locked.activeSessionData.status = 'cancelled';
+    mockFromState(locked);
+    const panel = () => (
+      <>
+        <button type="button" onClick={() => composerPrompt.set(prompt)}>Draft effect</button>
+        <AgentChatPanel isExpanded />
+      </>
+    );
+    const view = render(panel());
+    const draftButton = screen.getByRole('button', { name: 'Draft effect' });
+    act(() => { draftButton.focus(); });
+    await userEvent.click(draftButton);
+    const composer = screen.getByRole('textbox') as HTMLTextAreaElement;
+    await waitFor(() => expect(composer.value).toContain(prompt));
+    expect(composer).toBeDisabled();
+    expect(composer).not.toHaveFocus();
+
+    mockFromState(createState());
+    view.rerender(panel());
+    await waitFor(() => expect(screen.getByRole('textbox')).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+    expect((screen.getByRole('textbox') as HTMLTextAreaElement).selectionStart).toBe(composer.value.length);
   });
 
   describe('setup recovery', () => {
@@ -1943,4 +2004,5 @@ describe('local Astrid update flag', () => {
     view.rerender(page());
     await waitFor(() => expect(screen.getByTestId('out-of-date')).toHaveTextContent('false'));
   });
+
 });

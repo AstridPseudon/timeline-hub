@@ -86,7 +86,7 @@ describe('TimelineCreateTools', () => {
     ].map((file) => readFileSync(join(dir, file), 'utf8'));
     const occurrences = (needle: string) => sources.reduce((count, source) => count + source.split(needle).length - 1, 0);
 
-    expect(AI_GENERATION_DRAFT).toBe('Generate a new image or video of "');
+    expect(AI_GENERATION_DRAFT).toBe('Generate a new image or video of ');
     expect(EXTENSION_DRAFT).toBe('Build a new extension that ');
     expect(EFFECT_OR_ANIMATION_DRAFT).toBe('Create a custom effect or animation that ');
     expect(CREATE_ANIMATION_PROMPT).toBe("I'd like to create an animation.");
