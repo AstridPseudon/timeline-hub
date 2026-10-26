@@ -1211,6 +1211,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         writes happen afterwards: an unread client must not hold the database
         lock and stall every other request, including health checks.
         """
+        timing = token = None
+        wire_started = False
+        if self._is_timeline_commit():
+            from .timeline_commit_execution import start_commit_timing
+            timing, token = start_commit_timing()
+            timing.begin("handler")
         try:
             self._pending_response = None
             self._pending_file_response = None
@@ -1242,23 +1248,50 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             if self._pending_response is not None:
                 status, payload, kwargs = self._pending_response
                 self._pending_response = None
-                self._send(status, payload, **kwargs)
+                if timing is not None:
+                    timing.begin("wire_response")
+                    wire_started = True
+                try:
+                    self._send(status, payload, **kwargs)
+                finally:
+                    if timing is not None:
+                        timing.end("wire_response")
+                        wire_started = False
             if self._pending_file_response is not None:
                 pending = self._pending_file_response
                 self._pending_file_response = None
                 self._send_file(*pending)
         except (ConnectionError, TimeoutError):
+            if timing is not None:
+                timing.outcome = "failure"
+                if wire_started:
+                    timing.end("wire_response")
             self.close_connection = True
         except Exception as exc:
+            if timing is not None:
+                timing.outcome = "failure"
+                timing.begin("wire_response")
+                wire_started = True
             if getattr(self, "_response_started", False):
                 self.close_connection = True
             else:
-                self._error(exc)
+                try:
+                    self._error(exc)
+                finally:
+                    if timing is not None:
+                        timing.end("wire_response")
+                        wire_started = False
         finally:
             pending = getattr(self, "_pending_file_response", None)
             if pending is not None:
                 pending[1].close()
                 self._pending_file_response = None
+            if timing is not None:
+                if wire_started:
+                    timing.end("wire_response")
+                timing.end("handler")
+                from .timeline_commit_execution import finish_commit_timing
+                finish_commit_timing(timing, token)
 
     def do_GET(self):
         self._dispatch()
