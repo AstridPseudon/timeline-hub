@@ -1,0 +1,30 @@
+{
+  "author_worker": "rt-F-D141jj-notes-1345",
+  "base_composition_context": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "candidate_sources": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+      "bytes": 48811,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-1345/evidence/candidate-README.template.md",
+      "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+      "bytes": 44999,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-1345/evidence/candidate-gate-results.md",
+      "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    }
+  },
+  "protected_review_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-notes-protected-publication-1356.json",
+  "review_json": {
+    "bytes": 4731,
+    "mode": "0644",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-review-1350/evidence/review.json",
+    "sha256": "b2a2a0f343107ee0f3edff31fce6ef3711f46893a48a6da27ae88c95bee06982",
+    "verdict": "PASS"
+  },
+  "review_worker": "rt-F-D141jj-notes-review-1350",
+  "schema": "timeline.d141jj.notes-install-source-manifest/v1",
+  "source_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-notes-source-publication-1350.json",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES"
+}

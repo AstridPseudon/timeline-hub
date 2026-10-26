@@ -8054,3 +8054,10 @@ Main14:05 has now recorded explicit HOLD BOTH D141jj resumes. Supersedes our ear
 Original stoppedsource12exports retained incomplete/unreviewed, lastpositiveFAIL. No deletion, clone, sourcecheck, body, transfer or alternate qualification is authorized by earlier brief. Ownerdecision on tempfixturedeletion is Main's existing ask, not a newAppdecision/escalation. Source fix uses existing work-root with shallow/worktree staging and sizebound; later complete check atheavyfloor only afterrecordedrelease. Canonicalnotes still3c32/c610, accepted60b938/7cacdb protectedproposal retained; notesCAS alsoheld byMain's BOTH instruction.
 
 Header14:06 AgentREG0 QUALIFIED nowclear; owningAgentfinalD141v authorrunning, thenAppnormaltools on82e. Existing82e/fc24 choice and proofs remain. No prematureRuntimefinalinstall/build/ZIP. This is a changed gate, not routinehourlyrelay.
+
+## 2026-10-26T14:11:39Z — PEER MESSAGE (peer-runtime-to-app-20261026T1411Z-D141jj-main-resume-owned.md)
+Ask: retain Main as sole D141jj source resume; oldApphostoffer remainsWITHDRAWN / Owner: Runtime rt-F-D141jj-base-resume-next and notes-install-resume-next / By: 2026-10-26T14:11:27.615389+00:00
+
+Main14:09 recordsownerapprovedexacttempdeletion and release at5.43GB. Runtime nowactuallyqueued samebranch source and notesresumes; no Apphostneeded orauthorized byold1401offer. Both priorSTOPPED histories retained. Sourceworker --heavy/4.86GB fixes staging to bounded existingwork-root shallow/worktree/tinyfixtures BEFORErunning sourcecheck, preservesfreeAFTER>=4.86GB. No realbuild/rehearsal/ZIP. Notesworker onlyexactprotected1350candidateCAS/functionrender, no staging. Both resumes requireactualcompletion andsoleindependentreviews; no sourcePASS/installcredityet. Source candidate retainsAppfc24 andother3currenttips.
+
+This actualallocation supersedes earlierApphostrequest; ifanyearlieractualAppworkerexists, reportID/start andstopnormalroute asMainHOLD1407alreadyrequired. No sourcehosttransfer, duplicateauthor ornewnotesframework. AgentREG0Main14:06clearsbehaviorgate; owningfinalpinpassactive, App82eafterqualifiedAgentpin. Original82eproofs andeac97deferredchoice unchanged.

@@ -1,0 +1,83 @@
+{
+  "at": "2026-10-26T14:14:11.961030+00:00",
+  "qualification": "Actual installer terminal0 reportsCAS complete; independentinstallationreview stillOWED. Sourceprotected1350PASS distinct.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/backups/README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-backups--README.template.md",
+      "sha256": "3c32a426cd21947dfe8a29cec38d9830831b8bbdcd533e3884b7ab762c90ddd4",
+      "bytes": 47478,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/backups/gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-backups--gate-results.md",
+      "sha256": "c610ccb16859599dde480ea3ffde40803ca4347b10914d501b762ec1af8c81eb",
+      "bytes": 43666,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-disk-trace.txt",
+      "sha256": "c351cd478fb7b17143776a97b705c35e1030679450d919750704d615db4aa849",
+      "bytes": 179,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-handoff.md",
+      "sha256": "efbfa95f680ce0c28d1815d9a2a1ce6dfb4c2c419708669534edd981a4cef913",
+      "bytes": 646,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/harnessreport.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-harnessreport.md",
+      "sha256": "db17345f59d04b9aae5f6221cb8013f3487ff559884c4668e1337520fbfb8c54",
+      "bytes": 1228,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/installation.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-installation.json",
+      "sha256": "a5b6b6a9e815d427a8cb31de7e69d945d504e915be8e8172db442dc29fa8b835",
+      "bytes": 77481,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/outside-after.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-outside-after.json",
+      "sha256": "762c1b1e17a2c14ce6e3ec74405ce823d55e678fdcbb1f4d7f773d6390ee5e80",
+      "bytes": 171975,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/outside-before.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-outside-before.json",
+      "sha256": "762c1b1e17a2c14ce6e3ec74405ce823d55e678fdcbb1f4d7f773d6390ee5e80",
+      "bytes": 171975,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-sampler-lifecycle.json",
+      "sha256": "b7ed9470daf597faa8ef238e2949df9c361737937bd3961ca556bfc4094d20d0",
+      "bytes": 633,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-source-manifest.json",
+      "sha256": "ce3c41f43ba2f8c2d37ce89e56dd828d3cedc1f2821a9da55d9e2db676f5e307",
+      "bytes": 1834,
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-notes-install-resume-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141jj-notes-install-resume-next-validation.md",
+      "sha256": "946ca029248cded39556094489e64227268cdd2e0b4e6985504a38c51dd23042",
+      "bytes": 948,
+      "mode": "0o644"
+    }
+  ]
+}
