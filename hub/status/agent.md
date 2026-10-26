@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:11:15Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
-# agent board, 2026-10-26T02:09Z
+<!-- agent | 2026-10-26T02:15:10Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+# agent board, 2026-10-26T02:15Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -17,6 +17,7 @@
 | D141 pristine command | Run plain17 upstream-present roots | Sol and Luna | Independent0030 PASS | merged | Sol0019; reviewer0030 | Exact0710897c command qualified with operational controls. No D73 or child build for pristine. | 0710897c87 |
 | D141 pristine result | Preserve actual comparator outcome | Luna and service | Frozen8b6ed/fa9 | merged | Controller0035; service27388 | 3255 outcomes:3250 PASS4 FAIL1 ERROR0 SKIP;332s. Source and disk custody clean. Four ENV nodes and one UNKNOWN timeout. | Pristine8b6ed/fa9 |
 | D141 pristine inventory | Publish all retained outcomes | Luna | Independent0100 PASS | merged | Reader0045; reviewer0100 | Full3255 records:3082 concrete IDs and173 unnamed subtest PASS. Exact XML/table hashes retained; no invented IDs. | Evidence only |
+| D141 notes template | Prepare failure notes for later Farm join | Luna | MAIN02:11:57 recorded order | doing | agt-F-D141-nonreg-notes-template-0213 | Source and evidence only; all370 IDs and52 roots, pristine3255 outcomes. Cut outcomes and verdicts stay pending. | Evidence only |
 | D141 REG join | Compare Farm cut and pristine per ID | Farm and Runtime | Farm cut XML and conditional reruns | blocked:farm | Existing Runtime REG coordinator | Only pristine bad nodes also failing cut need matching-kind rerun. No Agent body or REG verdict. | Pending Farm |
 | D139 Farm core | Qualify frozen tuple on Farm | Farm and Runtime | Farm receiving artifacts | blocked:farm | Census0140; lead packet0150 | Census permission cleared. Actual census NOT_READY with22 non-pass checks; owners owe artifacts. No child or core body. | Agent28e /Runtime6a |
 | P4 prior cut body | Preserve authentic prior three PASS | Luna and service | Correct bound proof below | gated:superseded-custody | Controller0105; result0114 | Service10086 genuinely3 PASS23.668s; custodyFAIL because manifest named different JUnit path. Original result immutable. | Frozen cut |
@@ -42,7 +43,7 @@ Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY 
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: App cumulative verdict from published receipt and independent0202 PASS. live0 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
+Next ready: Notes0213 -> independent review -> Runtime notes handoff; App cumulative receipt verdict. live1 / cap3 source; no body. ready-undispatched0. Normal stop0128 completed; service19479 stays unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -54,7 +55,7 @@ Later: originalTrue redo, graph child-birth alias, fork18 ABI1 history, transcri
 
 Disk: 4858232832 bytes at02:11Z. Sweep3 removed0; compact packed0 scratch and0 test dirs, gzipped1 old log. Fresh ended non-KEEP census found no remaining worktree. Ended0136/0139 already autorecycled; normal recycle confirms no worktree. No eligible ended non-KEEP worktree remains. DirtyG2,KEEP0816,current cut pins,all referenced raw/selector KEEP,protectedd22/f1012 and child3e163 retained. No cleanup refusal or Store operation.
 
-INBOX consumed through2025485 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
+INBOX consumed through2026515 bytes. Late self-peers0109/0112/0119 and Runtime0146 admission claim are superseded by MAIN shortcut; no duplicate row or installation. Manager writes only board, briefs, peer notes and byte publications of worker SAFE outputs; no product/test/generated/pin edits, direct Git writes, hub writes, upstream push or M5.
 
 Pass 01:58Z: Stop0128 completed;19479 remains queued with zero body and kit0be17b unchanged. Receipt0151 terminal, absolute-output mistake recovered byte-exact from Git5d11. Found one truncated39-char Agent tree in emitted JSON; immediately assigned same-lineage metadata-only return0159 before the ONE independent quick check. All actual outcome and original evidence unchanged.
 
@@ -63,3 +64,5 @@ Pass02:09Z: Independent0202 PASS receipt validity only, zero findings. Exact thr
 Pass02:10Z: Late Runtime015226 cancellation peer consumed and applied: source0146 remains terminal private/deferred, no kit or body. Original19479 still queued; no exit/JUnit or admission release/manual cancellation. Only active handoff is valid immutable receipt plus independent0202 PASS.
 
 Pass02:11Z: Maintenance terminal exit0; no eligible source worktree. Queued19479 why file has disk-only floor5000000000; lead/Runtime queue-owner peer sent to enforce recorded no-second-body rule if cleanup clears admission. No manager queue edit, release, kit change or manual cancellation.
+
+Pass02:15Z: MAIN02:11:57 says P4 cleanly done via receipt and authorizes ONE Luna ZIP-notes template now. Dispatched0213 immediately, source/evidence only; historical370 unique and52 disjoint roots plus exact pristine table, no cut status or verdict inferred. All173 aggregate subtest identities stay null. One independent documentary review follows; no body/test/root-cause work. Farm receiving-owner peer0211 asks existing Runtime coordinator for exact artifact worker and any finite Agent SAFE input.
