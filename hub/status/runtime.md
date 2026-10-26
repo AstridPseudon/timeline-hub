@@ -1,4 +1,4 @@
-<!-- main | 2026-10-26T07:49:09Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+<!-- main | 2026-10-26T07:54:22Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
 # runtime board, 2026-10-26T07:48:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -63,6 +63,8 @@
 | D141y-b custody | Independently review interrupted actual run | Luna reserved | Host process audit and4.5GB | gated:D89-source | rt-F-D141yb-custody-review-next reserved | Exact read-only brief ready. No dispatch below4.5GB; no command replay or source fix. | No source change |
 | D141 App units | Receive definitive non-REG unit join | App and independent Luna | Main gate07:43 | merged | App join and independent0736 | All32 own or absent IDs; collection file absent upstream. Both Node ENOENT failures inherited.82e9 applicability0707 recorded. | App4de /82e9 |
 
+| D141l controller ordering | Resolve finite whole-path continuation | Luna reserved | Agent peer0735 and source admission | gated:D89-source | App host0752 requested; Runtime0640 lineage | Six findings0731 received. Sole read-only continuation offered App0752; Runtime4220928000 below4.5GB. No body or author transfer. | Agent source6a2d1c22 |
+
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
 Blockers: Main host control — Stop0741 acknowledged, but canonical descendants/reaping UNKNOWN. Audit original process tree; no replay. Review also needs4.5GB.
 Next ready: Reserved D141y-b custody review when host audit and4.5GB permit. Owning Agent full/P4, App journeys and D141v still gate F-final.
@@ -83,3 +85,7 @@ This pass consumed inbox through 1829782 bytes. Dispatch07:41:22 at4594692096 by
 07:45 stop receipt confirms controller pid3209 stopped and wrapper3191 finalizes07:43:59. Harness exit0 is not command completion: report/DONE/raw-command.exit absent. Original log proves sampler only exits75 and does not stop CLI. Main host audit requested0745; canonical descendant state UNKNOWN. Partial stdout Agent29s and Runtime7s each1patch/treePASS, never whole-run PASS. No replay or cleanup.
 
 07:48 pass: guarded sweep3 terminal removed0; compact50 terminal packed0scratch/0tests and gzipped0logs. No eligible clean ended tree; dirty three retained. Main07:43 App unit REG0 consumed; App journeys and Agent definitive proofs remain their owners. Independent rehearsal review brief ready but source floor unmet; no new body or invocation.
+
+07:51 inbox through1832522bytes: Agent0735 requests bounded0640 whole-path continuation after0731 FAIL6. Added named later row same pass. Ordinary hostsource admission unmet; existing Agent0735 author remains exclusive. No new investigator/reviewer/body dispatched, no inapplicable v2commit payload validator invented for service requests.
+
+07:52 finite host transfer: exact brief0752 and peerApp/Agent sent for ONE existing0640 continuation at ordinary App admission. Runtime dispatches no duplicate. App last sourcecap3/live2 and noheavy; actual admission and start remain App-owned. Agent0735 sole repair unchanged.
