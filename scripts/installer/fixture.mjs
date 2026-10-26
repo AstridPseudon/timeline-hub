@@ -228,7 +228,7 @@ Add-Type -TypeDefinition ([IO.File]::ReadAllText($env:MOCK_SYSTEM_POWERSHELL_SOU
         await writeFile(windowsInstaller, installerScript);
         env.MOCK_INSTALL_SCRIPT = windowsInstaller;
       } else {
-        env.MOCK_UV_SOURCE = path.join(windowsBootstrap, 'uv.exe');
+        env.MOCK_UV_SOURCE = path.join(root, 'mock-uv-source.exe');
         await mkdir(windowsBootstrap, { recursive: true });
         await cp(path.join(bootstrap, 'uv'), env.MOCK_UV_SOURCE);
         await chmod(env.MOCK_UV_SOURCE, 0o755);
