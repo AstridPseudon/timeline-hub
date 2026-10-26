@@ -7,6 +7,6 @@
 Each lane: ONE final merge-forward of integration to its tip above, through the normal reviewed route; then integration is FROZEN for the cut. Record the resulting integration heads below as they land.
 
 ## Integration heads after the final merge-forward
-- agent: (pending)
+- agent: 28e56cacb42d3da85b02e5b3543895b44f3d0f70 (tree 2ebe2ddf5a61; final merge-forward to upstream 8b6ed211 plus Runtime 6a011 provenance; bounded review 0015 PASS; FROZEN 00:27Z 26 Oct)
 - app: (pending)
 - runtime: 6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d (frozen; upstream fa9cd5464a8b; independent rt-U1-D141-final-review-2350 PASS; author119 PASS)
