@@ -47,10 +47,11 @@ def run(argv, name, *, env=None, timeout=300, show=True):
     return (EVIDENCE / name).read_text(encoding="utf-8-sig", errors="replace")
 
 
-def powershell(code, name, *, show=True):
+def powershell(code, name, *, show=True, timeout=300):
     return run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
                 "$ErrorActionPreference='Stop'; "
-                "[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); " + code], name, show=show)
+                "[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false); " + code], name,
+               show=show, timeout=timeout)
 
 
 def source(repo):
@@ -200,7 +201,17 @@ def task():
     try:
         cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
                        "--timeout-seconds", "900", "--json"], "task-follow.jsonl", timeout=960)
-    except RuntimeError as follow_error:
+    except (RuntimeError, subprocess.TimeoutExpired) as follow_error:
+        process_rows = best_effort("processes-after-task-follow.json", lambda: snapshot(
+            "processes-after-task-follow.json"))
+        if process_rows is not None:
+            best_effort("task-sfx-output-evidence.json", lambda: capture_sfx_output(task_id, process_rows))
+        best_effort("task-logs-before-cancel", capture_task_logs)
+        try:
+            cli("astrid", ["tasks", "events", task_id, "--project", project, "--json"],
+                "task-events-before-cancel.json", timeout=30)
+        except (RuntimeError, subprocess.TimeoutExpired):
+            pass
         observed = json.loads(cli(
             "astrid", ["tasks", "show", task_id, "--project", project, "--json"],
             "task-after-follow-failure.json",
@@ -209,8 +220,12 @@ def task():
         if row.get("state") not in {"succeeded", "failed", "cancelled"}:
             cli("astrid", ["tasks", "cancel", task_id, "--project", project, "--json"],
                 "task-cancel.json")
-            cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
-                           "--timeout-seconds", "300", "--json"], "task-cancel-follow.jsonl", timeout=360)
+            try:
+                cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
+                               "--timeout-seconds", "300", "--json"], "task-cancel-follow.jsonl", timeout=360)
+            except (RuntimeError, subprocess.TimeoutExpired):
+                # Follow returns nonzero for cancelled tasks; the public task state is authoritative.
+                pass
         settled_after_failure = json.loads(cli(
             "astrid", ["tasks", "show", task_id, "--project", project, "--json"],
             "task-after-cancel.json",
@@ -242,6 +257,76 @@ def process_key(row):
     return (row["pid"], row["created"])
 
 
+def best_effort(label, action):
+    try:
+        return action()
+    except Exception as exc:
+        save(f"{label.removesuffix('.json')}-error.json", {"error": str(exc)})
+        return None
+
+
+def capture_task_logs():
+    logs = data_root() / "logs"
+    copied = []
+    paths = [logs / "service-pack-host.log", logs / "service-worker.log", *logs.glob("worker*.log")]
+    for path in paths[:21]:
+        if not path.is_file():
+            continue
+        try:
+            with path.open("rb") as source, (EVIDENCE / path.name).open("wb") as target:
+                source.seek(max(0, path.stat().st_size - 262144))
+                target.write(source.read(262144))
+            copied.append(path.name)
+        except OSError:
+            continue
+    save("task-logs-before-cancel.json", {
+        "logs": copied,
+        "missing": [name for name in ("service-pack-host.log", "service-worker.log")
+                    if name not in copied],
+        "task_child_output": {
+            "available": False,
+            "reason": "The task child stdout/stderr are held in pipes and consumed after exit; "
+                      "there is no on-disk per-task worker log to collect while it is running.",
+        },
+    })
+
+
+def capture_sfx_output(task_id, process_rows):
+    """Record only the known journey SFX attempt's small metadata files."""
+    expected_prefix = ntpath.normcase(f"astrid-attempt-{task_id}-")
+    output_root = None
+    for process in process_rows:
+        command = process.get("command") or ""
+        if "astrid.packs.chiptune.actions.sfx.run" not in command:
+            continue
+        match = re.search(r'--out\s+(?:"([^"]+)"|(\S+))', command)
+        if not match:
+            continue
+        candidate = match.group(1) or match.group(2)
+        normalized = ntpath.normcase(candidate.replace("/", "\\"))
+        if expected_prefix in normalized and normalized.endswith("\\outputs"):
+            output_root = Path(candidate)
+            break
+
+    evidence = {"found": output_root is not None, "files": {}}
+    if output_root is not None:
+        for name in ("manifest.json", "sfx.json", "sfx.wav"):
+            path = output_root / name
+            try:
+                size = path.stat().st_size
+            except OSError:
+                evidence["files"][name] = {"exists": False}
+                continue
+            entry = {"exists": True, "size": size}
+            if name.endswith(".json") and size <= 65536:
+                try:
+                    entry["content"] = json.loads(path.read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    entry["content"] = "unreadable or invalid JSON"
+            evidence["files"][name] = entry
+    save("task-sfx-output-evidence.json", evidence)
+
+
 def astrid_processes(rows, roots, tracked=()):
     roots = [ntpath.normcase(str(root)).rstrip("\\/") + "\\" for root in roots]
     selected = {process_key(row) for row in rows if process_key(row) in tracked or
@@ -268,15 +353,21 @@ def snapshot(name):
 $rows = @(Get-CimInstance Win32_Process | ForEach-Object {
     [pscustomobject]@{pid=[int]$_.ProcessId; ppid=[int]$_.ParentProcessId;
         created=$(if ($_.CreationDate) { $_.CreationDate.ToUniversalTime().ToString('o') } else { '' });
-        exe=[string]$_.ExecutablePath; command=[string]$_.CommandLine}
+        exe=[string]$_.ExecutablePath; command=[string]$_.CommandLine;
+        cpu_seconds=[math]::Round((([double]$_.UserModeTime + [double]$_.KernelModeTime) / 10000000), 3);
+        thread_count=[int]$_.ThreadCount; handle_count=[int]$_.HandleCount}
 })
 ConvertTo-Json -InputObject @{collector_pid=$PID; processes=$rows} -Depth 4
-""", name, show=False))
+""", name, show=False, timeout=30))
     rows = [row for row in value["processes"] if row["pid"] not in {os.getpid(), value["collector_pid"]}]
     tracked_file = EVIDENCE / "tracked-processes.json"
     tracked = json.loads(tracked_file.read_text(encoding="utf-8")) if tracked_file.exists() else []
     selected = astrid_processes(rows, [program_root(), data_root(), program_root().parent / "Astrid Installer"],
                                {process_key(row) for row in tracked})
+    selected = [dict(row) for row in selected]
+    for row in rows:
+        for key in ("cpu_seconds", "thread_count", "handle_count"):
+            row.pop(key, None)
     save("tracked-processes.json", list({process_key(row): row for row in tracked + selected}.values()))
     save(name, {"processes": rows, "astrid_processes": selected})
     return selected

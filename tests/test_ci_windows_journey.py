@@ -89,7 +89,8 @@ def test_admission_is_not_task_settlement(monkeypatch, state, outputs, expected)
             journey.task()
 
 
-def test_failed_follow_cancels_and_settles_before_returning_failure(monkeypatch):
+def test_failed_follow_cancels_and_settles_before_returning_failure(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
     calls = []
     state = "running"
     follow_count = 0
@@ -106,7 +107,7 @@ def test_failed_follow_cancels_and_settles_before_returning_failure(monkeypatch)
             if follow_count == 1:
                 raise RuntimeError("task-follow.jsonl: exit 1")
             state = "cancelled"
-            return ""
+            raise RuntimeError("task-cancel-follow.jsonl: exit 1")
         if argv[:2] == ["tasks", "show"]:
             return json.dumps({"ok": True, "data": {"state": state, "result": {"outputs": []}}})
         if argv[:2] == ["tasks", "cancel"]:
@@ -117,12 +118,69 @@ def test_failed_follow_cancels_and_settles_before_returning_failure(monkeypatch)
         raise AssertionError(argv)
 
     monkeypatch.setattr(journey, "cli", cli)
+    monkeypatch.setattr(journey, "snapshot", lambda name: [process(
+        22, 21, "10:02", command=(r"C:\Users\runner\py\Scripts\python.exe -X utf8 -m "
+                                   r"astrid.packs.chiptune.actions.sfx.run --out "
+                                   r"C:\Users\runner\AppData\Local\Temp\astrid-attempt-task-1-token\outputs")
+    )])
+    monkeypatch.setattr(journey, "capture_sfx_output", lambda task_id, rows: None)
     with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
         journey.task()
 
     assert ("tasks", "cancel") in calls
     assert follow_count == 2
+    assert calls.index(("tasks", "events")) < calls.index(("tasks", "cancel"))
     assert calls[-2:] == [("tasks", "show"), ("tasks", "events")]
+
+
+def test_timeout_diagnostics_are_best_effort_before_cancellation(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    calls = []
+    state = "running"
+
+    def cli(module, argv, name, **kwargs):
+        nonlocal state
+        calls.append(tuple(argv[:2]))
+        if argv[:2] == ["projects", "create"]:
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "create"]:
+            return json.dumps({"ok": True, "data": {"task_id": "task-1"}})
+        if argv[:2] == ["tasks", "follow"]:
+            raise RuntimeError("follow timed out")
+        if argv[:2] == ["tasks", "show"]:
+            return json.dumps({"ok": True, "data": {"state": state}})
+        if argv[:2] == ["tasks", "cancel"]:
+            state = "cancelled"
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "events"]:
+            return json.dumps({"ok": True, "data": []})
+        raise AssertionError(argv)
+
+    monkeypatch.setattr(journey, "cli", cli)
+    monkeypatch.setattr(journey, "snapshot", lambda name: (_ for _ in ()).throw(RuntimeError("snapshot failed")))
+    with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
+        journey.task()
+
+    assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
+    assert (tmp_path / "processes-after-task-follow-error.json").is_file()
+
+
+def test_sfx_output_capture_restricts_path_to_the_journey_attempt(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    command = (r"C:\Users\runner\py\Scripts\python.exe -X utf8 -m "
+               r"astrid.packs.chiptune.actions.sfx.run --out "
+               r"C:\Users\runner\AppData\Local\Temp\astrid-attempt-task-1-token\outputs")
+    journey.capture_sfx_output("task-1", [process(22, 21, "10:02", command=command)])
+    evidence = json.loads((tmp_path / "task-sfx-output-evidence.json").read_text())
+    assert evidence == {
+        "found": True,
+        "files": {name: {"exists": False} for name in ("manifest.json", "sfx.json", "sfx.wav")},
+    }
+
+    unrelated = command.replace("astrid-attempt-task-1-token", "other-task")
+    journey.capture_sfx_output("task-1", [process(22, 21, "10:02", command=unrelated)])
+    evidence = json.loads((tmp_path / "task-sfx-output-evidence.json").read_text())
+    assert evidence == {"found": False, "files": {}}
 
 
 def test_native_failure_keeps_log_and_fails_journey(tmp_path, monkeypatch):
