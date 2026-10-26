@@ -28,7 +28,8 @@ export type CanonicalProjectionFailureCode =
   | 'missing_dependency'
   | 'unsupported_nesting'
   | 'blank_child_output'
-  | 'asset_conflict';
+  | 'asset_conflict'
+  | 'unsupported_placement';
 
 export class CanonicalCompositionProjectionError extends Error {
   readonly code: CanonicalProjectionFailureCode;
@@ -52,8 +53,15 @@ export type CanonicalClipIdentity = Readonly<{
   outputIdentity: string;
 }>;
 
+export type CanonicalProjectionWarning = Readonly<{
+  severity: 'warning';
+  code: 'timeline-patch/target-not-found';
+  message: string;
+}>;
+
 export type CanonicalCompositionProjection = Readonly<{
   config: ResolvedTimelineConfig;
+  warnings: readonly CanonicalProjectionWarning[];
   clipIdentities: ReadonlyMap<string, CanonicalProjectedClipIdentity>;
   occurrenceIdentities: ReadonlyMap<string, CanonicalClipIdentity>;
 }>;
@@ -277,14 +285,13 @@ function assetRegistryFor(
   return { registry, assetAliases };
 }
 
-function tracksFor(
+function groupedTracksFor(
   composition: PreparedShotComposition,
   baseConfig?: ResolvedTimelineConfig | null,
   occurrences: readonly CanonicalShotOccurrence[] = composition.occurrences,
+  warnings: CanonicalProjectionWarning[] = [],
 ): TrackDefinition[] {
-  // Keep parent-owned lanes (frame overlays, FX, terminal activity, VO, etc.)
-  // alongside the projected shot child lanes. The canonical graph owns shot
-  // content, but it does not replace unrelated parent timeline content.
+  // Merge audio with the existing neighbour rule before inserting visual blocks.
   const tracks = [...(baseConfig?.tracks ?? [])];
   const trackIds = new Set(tracks.map((track) => track.id));
   for (const occurrence of occurrences) {
@@ -293,13 +300,12 @@ function tracksFor(
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
       const id = text(track?.id);
-      if (!id || trackIds.has(id)) continue;
+      if (!id || trackIds.has(id) || track?.kind !== 'audio') continue;
       if (trackRole({
         id,
         role: track?.role as TrackDefinition['role'],
       }) === 'source') continue;
-      const kind = track?.kind === 'audio' ? 'audio' : 'visual';
-      const definition = { ...track, id, kind, label: text(track?.label) ?? id } as TrackDefinition;
+      const definition = { ...track, id, kind: 'audio', label: text(track?.label) ?? id } as TrackDefinition;
       const shotTrackOrder = rawTracks.map((raw) => text(record(raw)?.id)).filter((value): value is string => Boolean(value));
       const position = shotTrackOrder.indexOf(id);
       let insertAt = tracks.length;
@@ -318,10 +324,55 @@ function tracksFor(
       trackIds.add(id);
     }
   }
-  if (tracks.length === 0) {
-    tracks.push({ id: 'video', kind: 'visual', label: 'Video' });
+  const blocks = new Map<string | null, TrackDefinition[]>();
+  for (const occurrence of occurrences) {
+    const timeline = outputTimeline(childTimeline(occurrence));
+    const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
+    const visualTracks: TrackDefinition[] = [];
+    const sourceIds = new Set<string>();
+    const addVisual = (id: string, track: JsonObject = {}): void => {
+      if (sourceIds.has(id)) return;
+      sourceIds.add(id);
+      visualTracks.push({
+        ...track,
+        id: `${occurrence.occurrenceId}~${id}`,
+        kind: 'visual',
+        label: text(track.label) ?? id,
+        app: { ...record(track.app), group: { id: occurrence.occurrenceId, sourceTrack: id } },
+      } as TrackDefinition);
+    };
+    for (const rawTrack of rawTracks) {
+      const track = record(rawTrack);
+      const id = text(track?.id);
+      if (!id || trackRole({ id, role: track?.role as TrackDefinition['role'] }) === 'source') continue;
+      if (track?.kind !== 'audio') addVisual(id, track ?? {});
+    }
+    // Legacy clips may omit a track definition. Keep them renderable within
+    // their occurrence rather than letting them escape onto a parent row.
+    for (const rawClip of Array.isArray(timeline.clips) ? timeline.clips : []) {
+      const clip = record(rawClip);
+      if (!clip) continue;
+      const id = text(clip.track) ?? occurrence.trackId ?? 'video';
+      if (!rawTracks.some((raw) => text(record(raw)?.id) === id)
+        && !tracks.some((track) => track.id === id && track.kind === 'audio')) addVisual(id);
+    }
+    if (visualTracks.length === 0) continue;
+    const row = occurrence.trackId ?? 'video';
+    const key = tracks.some((track) => track.id === row) ? row : null;
+    if (key === null) {
+      warnings.push({
+        severity: 'warning',
+        code: 'timeline-patch/target-not-found',
+        message: `shot-layering: track "${row}" not found — placing occurrence "${occurrence.occurrenceId}" at top of stack`,
+      });
+    }
+    blocks.set(key, [...(blocks.get(key) ?? []), ...visualTracks]);
   }
-  return tracks;
+  const grouped = [
+    ...(blocks.get(null) ?? []),
+    ...tracks.flatMap((track) => [...(blocks.get(track.id) ?? []), track]),
+  ];
+  return grouped.length > 0 ? grouped : [{ id: 'video', kind: 'visual', label: 'Video' }];
 }
 
 function projectClip(
@@ -331,6 +382,7 @@ function projectClip(
   clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
   clampToOccurrenceDuration: boolean,
   storedOccurrenceDurationMs: number,
+  audioTrackIds: ReadonlySet<string>,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
   const rawClipId = text(rawClip.id) ?? null;
@@ -380,7 +432,8 @@ function projectClip(
   const muted = rawClip.muted === true || rawClip.mute === true || occurrence.muted === true;
   const hasAuthoredGain = [rawClip.gain, rawClip.volume, occurrence.gain]
     .some((value) => typeof value === 'number' && Number.isFinite(value));
-  const track = text(rawClip.track) ?? occurrence.trackId ?? 'video';
+  const sourceTrack = text(rawClip.track) ?? occurrence.trackId ?? 'video';
+  const track = audioTrackIds.has(sourceTrack) ? sourceTrack : `${occurrence.occurrenceId}~${sourceTrack}`;
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
   const asset = text(rawClip.asset_id) ?? text(rawClip.asset);
   const params = record(rawClip.params);
@@ -433,6 +486,7 @@ function projectClip(
         gain,
         muted,
         durationMs,
+        occurrenceTrackId: occurrence.trackId ?? 'video',
         occurrenceStartMs: occurrence.atMs,
         occurrenceDurationMs: occurrence.durationMs,
         storedOccurrenceDurationMs,
@@ -503,8 +557,19 @@ export function projectCanonicalComposition(
   const clips: TimelineClip[] = [];
   const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
+  const warnings: CanonicalProjectionWarning[] = [];
 
   for (const occurrence of outputOccurrences) {
+    const authored = composition.contract.occurrences.find((entry) => entry.occurrence_id === occurrence.occurrenceId);
+    const nonEmpty = (value: unknown): boolean => value !== undefined && value !== null && value !== ''
+      && (typeof value !== 'object' || Object.keys(value).length > 0);
+    if (nonEmpty(occurrence.transform) || nonEmpty(authored?.transform) || nonEmpty(authored?.opacity)) {
+      throw new CanonicalCompositionProjectionError(
+        'unsupported_placement',
+        'Shot opacity and transforms are not supported yet. Remove them from the shot placement to render this timeline.',
+        occurrence.occurrenceId,
+      );
+    }
     const identity = identityForOccurrence(occurrence);
     occurrenceIdentities.set(occurrence.occurrenceId, identity);
     const timeline = outputTimeline(childTimeline(occurrence));
@@ -516,6 +581,14 @@ export function projectCanonicalComposition(
     );
     const effectiveOccurrence = { ...occurrence, durationMs: effectiveDurationMs };
     const rawClips = Array.isArray(timeline.clips) ? timeline.clips : [];
+    const childTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
+    const childTrackIds = new Set(childTracks.map((track) => text(record(track)?.id)));
+    const audioTrackIds = new Set([
+      ...childTracks.filter((track) => record(track)?.kind === 'audio')
+        .flatMap((track) => text(record(track)?.id) ?? []),
+      ...(outputBaseConfig?.tracks ?? []).filter((track) => track.kind === 'audio' && !childTrackIds.has(track.id))
+        .map((track) => track.id),
+    ]);
     if (rawClips.length === 0) {
       throw new CanonicalCompositionProjectionError(
         'blank_child_output',
@@ -533,6 +606,7 @@ export function projectCanonicalComposition(
           clipIdentities,
           options.clampToOccurrenceDuration !== false,
           occurrence.durationMs,
+          audioTrackIds,
         );
         if (projected) {
           if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {
@@ -575,7 +649,7 @@ export function projectCanonicalComposition(
   const configBase: ResolvedTimelineConfig = {
     ...(outputBaseConfig ? cloneTimelineExtras(outputBaseConfig) : {}),
     output,
-    tracks: tracksFor(composition, outputBaseConfig, outputOccurrences),
+    tracks: groupedTracksFor(composition, outputBaseConfig, outputOccurrences, warnings),
     clips: projectedClips,
     registry,
     ...(outputBaseConfig?.effects ? {effects: outputBaseConfig.effects} : {}),
@@ -589,6 +663,7 @@ export function projectCanonicalComposition(
         parentDocumentId: composition.parentDocumentId,
         headRevisionId: composition.headRevisionId,
         occurrenceIds: outputOccurrences.map((occurrence) => occurrence.occurrenceId),
+        warnings,
       },
     },
   };
@@ -609,6 +684,7 @@ export function projectCanonicalComposition(
 
   return Object.freeze({
     config,
+    warnings: Object.freeze(warnings),
     clipIdentities,
     occurrenceIdentities,
   });
