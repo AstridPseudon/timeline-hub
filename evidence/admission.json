@@ -1,6 +1,6 @@
 {
   "task": "F/D141b",
-  "status": "PASS_SOURCE_READY",
+  "status": "PASS_SOURCE_READY_REVIEW_PENDING",
   "admission": {
     "source_guard": "exact frozen tuple and exact pinned checkout paths",
     "agent_sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
@@ -24,16 +24,21 @@
       "current authoring base c585cb2aa73c5298d474e614cb2144f58f27e605",
       "the test-run snapshot of the target worker",
       "a D73 launcher or any overlay"
-    ]
+    ],
+    "terminal_states": "NOTRUN before dispatch or absent body XML; FAIL for nonzero after body evidence; PASS only with zero body/monitor/custody/evidence statuses",
+    "process_ownership": "setsid --wait with job control disabled; supervise only this body PID/process group; stop/reap before final source/log capture; never claim clean after-state while group remains",
+    "return_priority": "preserve entry/signal or monitor failure before body failure; custody/cleanup/evidence failure replaces only a zero return; actual body and monitor exits always recorded separately"
   },
-  "command_sha256": "75e11e1a1a45b878b11ab68b0431152266c5f3948261c4427e11dd55ac0e053e",
-  "service_row_sha256": "5d8a263b1919302b398f7f4d2eac3de5b80baeebe0f1b04f1a9af703fe5853c1",
+  "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+  "service_row_sha256": "c3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7",
   "durable_publication": {
-    "worker_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-return-0008/evidence",
+    "worker_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence",
     "command_path_verified_before_body": true,
     "service_row_path_verified_before_body": true
   },
   "review_requirement": "one independent command review must PASS before a controller installs or submits the row",
   "freeze_requirement": "U2 final freeze must PASS before body execution",
-  "no_body_evidence": true
+  "no_body_evidence": true,
+  "independent_review": "pending for corrected Sol command; wholepath0019 is a review of the prior a8118e9a51 packet, not approval of this command",
+  "reg_or_ship_credit": false
 }

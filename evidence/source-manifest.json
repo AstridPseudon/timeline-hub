@@ -1,10 +1,10 @@
 {
   "task": "F/D141b",
-  "verdict": "PASS_SOURCE_READY",
+  "verdict": "PASS_SOURCE_READY_REVIEW_PENDING",
   "label": "PRISTINE COMPARATOR",
   "worker_base": {
-    "sha": "c585cb2aa73c5298d474e614cb2144f58f27e605",
-    "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "sha": "a8118e9a51ccb629e88cb6dcde981b22ba448b98",
+    "tree": "f648eef205bd9fe39cc12e52eea0322d71a2215b",
     "status_before": "clean",
     "source_role": "read-only authoring base; never the comparator source"
   },
@@ -107,7 +107,8 @@
         "git_ls_tree_lines": 0
       }
     ],
-    "absent_disposition": "NOT APPLICABLE at pristine; Farm retains every project test"
+    "absent_disposition": "NOT APPLICABLE at pristine; Farm retains every project test",
+    "upstream_present_inventory_hash_format": "SHA-256 of git ls-tree -r --name-only HEAD -- <17 approved roots> stdout, including trailing LF; expanded tracked file inventory, not the 17 root names"
   },
   "execution_contract": {
     "runner_target": "agt-F-D141b-plain-command-2358",
@@ -155,14 +156,32 @@
       "monitor_exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/monitor-exit.txt",
       "disk": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/disk.txt",
       "source_before": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-before.txt",
-      "source_after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt"
+      "source_after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after.txt",
+      "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/status.txt",
+      "source_after_errors": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/run-pristine-comparator/source-after-errors.txt"
     },
-    "body_gate": "requires manager-installed PASS markers for U2 final freeze and independent command review"
+    "body_gate": "requires manager-installed PASS markers for U2 final freeze and independent command review",
+    "body_process_ownership": "setsid --wait with job control disabled; supervise only this body PID/process group; stop/reap before final source/log capture; never claim clean after-state while group remains",
+    "output_unwritable": "nonzero NOTRUN with all-four before/after custody and attempted witness contents on service stderr; no durable-path claim; controller must reject stale status/XML on any nonzero attempt",
+    "concurrency": "exclusive existing heavy.lock acquired before witness initialization; a contender emits stderr custody only and never overwrites the active run",
+    "xml_freshness": "truncate JUnit output before admission; missing/empty body XML never yields PASS or behavioral credit"
   },
   "scope_exclusions": [
     "no pytest, collection, imports, or body execution in this source worker",
     "no D73 launcher, schema overlay, package acquisition, child, Store, fixture, or product-test alteration",
     "no suite installation, request-test, request-checkout, or live sockets",
     "no inferred REG or ship credit; later comparison is per-ID against Farm"
-  ]
+  ],
+  "prior_command_review": {
+    "original": "agt-F-D141b-command-review-0003",
+    "residual": "agt-F-D141b-final-command-review-0014",
+    "wholepath": "agt-F-D141b-wholepath-0019",
+    "wholepath_command_sha256": "75e11e1a1a45b878b11ab68b0431152266c5f3948261c4427e11dd55ac0e053e"
+  },
+  "durable_publication": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence",
+    "command_sha256": "db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e",
+    "service_row_sha256": "c3ef3edaaf5250bbe14fa94a7625a5bb17154f82d01a14d9a80f479bae474fd7",
+    "byte_exact_worktree_copies": true
+  }
 }
