@@ -1,0 +1,68 @@
+{
+  "utc": "2026-10-26T12:18:49.741230+00:00",
+  "worker": "rt-F-D141hh-single-notes-next",
+  "status": "AUTHOR_PRIVATE_CANDIDATES_CHECKS_PASS_INDEPENDENT_REVIEW_PENDING",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-report.md",
+      "sha256": "ee2aad3c9d26099fbfed621560ce8fc5e79e6f90b2e5338395215c09fb3374b0",
+      "bytes": 1073
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-candidate-README.template.md",
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "bytes": 43978
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-candidate-gate-results.md",
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "bytes": 39916
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/single-note.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-single-note.md",
+      "sha256": "391a0e39638fd3de3c79727d0c2354fc0482d7e6daebb0a33056e958be6eaf2c",
+      "bytes": 730
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/check_notes.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-check_notes.py",
+      "sha256": "1eceb923ac6100c4b84f0a41c394850e713835168a13a65d58d7f5c905fcd658",
+      "bytes": 22317
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-source-manifest.json",
+      "sha256": "da565c32ca4e485147aef5d13362751d5e72d9c67db8257e0188ebb29ee92606",
+      "bytes": 21221
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-validation.md",
+      "sha256": "2c19244845bdcd9b670bec83ceb5c0c531da8a271c4e8bbf83556cd75dc5e6b5",
+      "bytes": 1295
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-handoff.md",
+      "sha256": "f7c6450f0853237fdf1013f6d1c20383b965c984714e3fb6391560a8d757f21f",
+      "bytes": 462
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-disk-trace.txt",
+      "sha256": "1e0b6909a735ac8ef957e046d32fbb6d6d169f6377727e8d8ab534dd90186b28",
+      "bytes": 224
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141hh-single-notes-next-sampler-lifecycle.json",
+      "sha256": "846b4633ad3b10b07d5fccc764bcb38e38742fc07eba7fd931c87c675f5db9e9",
+      "bytes": 839
+    }
+  ],
+  "monitor_limit": "First tool tmpdir regular-file error; later two samples only, not whole worker trace. Original author report and lifecycle exact."
+}

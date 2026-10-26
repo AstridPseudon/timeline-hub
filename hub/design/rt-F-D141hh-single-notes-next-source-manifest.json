@@ -1,0 +1,323 @@
+{
+  "board_header_sha256": "77c4e04105a7f2b787be44f554934301f0fd7e436bf8706cafefdb5c1f411c40",
+  "candidates": {
+    "candidate-README.template.md": {
+      "bytes": 43978,
+      "input_sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-README.template.md",
+      "sha256": "715a92af643749be18e92391a7c6793790ceb9dd38301808eee95ca2048e9071",
+      "suffix_bytes": 2015
+    },
+    "candidate-gate-results.md": {
+      "bytes": 39916,
+      "input_sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/evidence/candidate-gate-results.md",
+      "sha256": "d0016975dc18212d40f3e53359f0606611e28f4f600109bd6be2f66fee45ef5d",
+      "suffix_bytes": 1960
+    }
+  },
+  "conservation": {
+    "32_ids_ledgers_witnesses_limits": true,
+    "balanced_fences_and_placeholders": true,
+    "full_input_prefix": true,
+    "only_intended_suffix_once_per_document": true,
+    "prior_lineage": true,
+    "published_originals_resolved_by_local_basename": true
+  },
+  "inputs": {
+    "candidate-README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-README.template.md",
+      "sha256": "90f8bab9d056eecc04ce390d996ab3dd03782200ce83e8b6c67f4b1e103e7b84"
+    },
+    "candidate-gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141gg-parent-notes-1148/evidence/candidate-gate-results.md",
+      "sha256": "ddebb463b95df97f077236a8e6cbfe5c560dcb7effc8d48af4efcaa22e500bc1"
+    }
+  },
+  "publications": {
+    "custody": {
+      "bytes": 3871,
+      "files": [
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-report.md",
+          "bytes": 2192,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-report.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-report.md",
+          "sha256": "c164fdcf5177b8485ef7347d208b86e13b5918b9c38a99c3b2d6150a5e1bf477"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-review.json",
+          "bytes": 3682,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-review.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-review.json",
+          "sha256": "b2e5c131d931dc6909aa54048b20323733424dcc9ed46f9b2eef88e6581486a5"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-findings.md",
+          "bytes": 2176,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-findings.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-findings.md",
+          "sha256": "7b4fcf0f34b1b005f17c54d72bf7bc934332c2201de24d1eaabbb3f5fce975be"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-source-manifest.json",
+          "bytes": 3089,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-source-manifest.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-source-manifest.json",
+          "sha256": "00ef84d35783e46c4ee27d71cf60ebc636eaefa5a21f84ec92cc73dcea55929f"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-validation.md",
+          "bytes": 2026,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-validation.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-validation.md",
+          "sha256": "408dadc6d4c9c6021f6462e822648038e16b27466f1e9e232d65dc72a13451c8"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-handoff.md",
+          "bytes": 1100,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-handoff.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-handoff.md",
+          "sha256": "477b58c9dd2be30b328e5e353b0959420b83618d0c09c02944cb39dca26ce237"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-disk-trace.txt",
+          "bytes": 900,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-disk-trace.txt",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-disk-trace.txt",
+          "sha256": "fa88cd0ea6e954aa60b0c31c34de02778437568c38cddd307d66536efddbc221"
+        },
+        {
+          "basename": "app-P-D141gg-single-custody-review-1156-sampler-lifecycle.json",
+          "bytes": 1629,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-sampler-lifecycle.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-custody-review-1156-sampler-lifecycle.json",
+          "sha256": "1a2505d4a7b2f8280b23c7c7430524cb748406cf45230a5b8ed434a2793631c7"
+        }
+      ],
+      "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-custody-publication-1159.json",
+      "publication": {
+        "files": [
+          {
+            "bytes": 2192,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-report.md",
+            "sha256": "c164fdcf5177b8485ef7347d208b86e13b5918b9c38a99c3b2d6150a5e1bf477",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/report.md"
+          },
+          {
+            "bytes": 3682,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-review.json",
+            "sha256": "b2e5c131d931dc6909aa54048b20323733424dcc9ed46f9b2eef88e6581486a5",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/review.json"
+          },
+          {
+            "bytes": 2176,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-findings.md",
+            "sha256": "7b4fcf0f34b1b005f17c54d72bf7bc934332c2201de24d1eaabbb3f5fce975be",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/findings.md"
+          },
+          {
+            "bytes": 3089,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-source-manifest.json",
+            "sha256": "00ef84d35783e46c4ee27d71cf60ebc636eaefa5a21f84ec92cc73dcea55929f",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/source-manifest.json"
+          },
+          {
+            "bytes": 2026,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-validation.md",
+            "sha256": "408dadc6d4c9c6021f6462e822648038e16b27466f1e9e232d65dc72a13451c8",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/validation.md"
+          },
+          {
+            "bytes": 1100,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-handoff.md",
+            "sha256": "477b58c9dd2be30b328e5e353b0959420b83618d0c09c02944cb39dca26ce237",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/handoff.md"
+          },
+          {
+            "bytes": 900,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-disk-trace.txt",
+            "sha256": "fa88cd0ea6e954aa60b0c31c34de02778437568c38cddd307d66536efddbc221",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/disk-trace.txt"
+          },
+          {
+            "bytes": 1629,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-custody-review-1156-sampler-lifecycle.json",
+            "sha256": "1a2505d4a7b2f8280b23c7c7430524cb748406cf45230a5b8ed434a2793631c7",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-custody-review-1156/evidence/sampler-lifecycle.json"
+          }
+        ],
+        "normal_result": "PASS0/257s",
+        "original_preserved": true,
+        "utc": "2026-10-26T11:58:59.282812+00:00",
+        "verdict": "FAIL_CUSTODY",
+        "worker": "app-P-D141gg-single-custody-review-1156"
+      },
+      "sha256": "c67e717facfc968a584a489e86b1e24b49840a1dc10f029c62187568255ff928"
+    },
+    "terminal": {
+      "bytes": 4246,
+      "files": [
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+          "bytes": 7250,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+          "sha256": "225aa85c7175eccba945c169ff7769e292485510bc74624c442aa937f758e778"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-results.json",
+          "bytes": 6608,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-results.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-results.json",
+          "sha256": "2d992bb92a092d52b822d98927e8e1c890c3e3c6afd7307d75deeaef3082e288"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+          "bytes": 25056,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+          "sha256": "8c6042b7c8e669b463a89c7db876cfb683a30aba9f8d206e161623e5c908acaf"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+          "bytes": 2367,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+          "sha256": "fd1a9fc05fb2ca0956dfca2239fcb0167407863caf5d346445e140407265657d"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+          "bytes": 822,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+          "sha256": "4fc5d69add87cab4fa230b062357b7d382482336e7ef8bdf8e52d222a21d7da0"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-progress.json",
+          "bytes": 4915,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-progress.json",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-progress.json",
+          "sha256": "165f5a5c1662cb45c563a91a880293afa6d8226948bd322f0639c6e7c7fde7d8"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-validation.md",
+          "bytes": 2719,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-validation.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-validation.md",
+          "sha256": "d9c9a4e46858ed5f39d1a98d32e4ddede52c88f70e0b75ffdbef9ad900572f88"
+        },
+        {
+          "basename": "app-P-D141gg-single-scoped-controller-1145-handoff.md",
+          "bytes": 1349,
+          "declared_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-handoff.md",
+          "path": "/home/user/timeline-hub/hub/design/app-P-D141gg-single-scoped-controller-1145-handoff.md",
+          "sha256": "4e7d30788e62a7ca24d2045218b0644a92e86ae517d668c7166e75298e9d74e3"
+        }
+      ],
+      "path": "/home/user/timeline-hub/hub/design/app-D141gg-single-terminal-publication-1157.json",
+      "publication": {
+        "actual_worker_exit": 0,
+        "body_verdict": "PASS pending independent custody",
+        "files": [
+          {
+            "bytes": 7250,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-controller-receipt.json",
+            "sha256": "225aa85c7175eccba945c169ff7769e292485510bc74624c442aa937f758e778",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/controller-receipt.json"
+          },
+          {
+            "bytes": 6608,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-results.json",
+            "sha256": "2d992bb92a092d52b822d98927e8e1c890c3e3c6afd7307d75deeaef3082e288",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/results.json"
+          },
+          {
+            "bytes": 25056,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-source-manifest.json",
+            "sha256": "8c6042b7c8e669b463a89c7db876cfb683a30aba9f8d206e161623e5c908acaf",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/source-manifest.json"
+          },
+          {
+            "bytes": 2367,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-trace-measurement.json",
+            "sha256": "fd1a9fc05fb2ca0956dfca2239fcb0167407863caf5d346445e140407265657d",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/trace-measurement.json"
+          },
+          {
+            "bytes": 822,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-sampler-lifecycle.json",
+            "sha256": "4fc5d69add87cab4fa230b062357b7d382482336e7ef8bdf8e52d222a21d7da0",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/sampler-lifecycle.json"
+          },
+          {
+            "bytes": 4915,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-progress.json",
+            "sha256": "165f5a5c1662cb45c563a91a880293afa6d8226948bd322f0639c6e7c7fde7d8",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/progress.json"
+          },
+          {
+            "bytes": 2719,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-validation.md",
+            "sha256": "d9c9a4e46858ed5f39d1a98d32e4ddede52c88f70e0b75ffdbef9ad900572f88",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/validation.md"
+          },
+          {
+            "bytes": 1349,
+            "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scoped-controller-1145-handoff.md",
+            "sha256": "4e7d30788e62a7ca24d2045218b0644a92e86ae517d668c7166e75298e9d74e3",
+            "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scoped-controller-1145/evidence/handoff.md"
+          }
+        ],
+        "normal_short_id": 24271,
+        "packet_path_deviation": "Private future paths relocated by worker; independent1156 owns exact comparison. No manager source alteration.",
+        "preflight_short_id": 9320,
+        "raw_KEEP": "Manager prospective at11:49:29.082850Z; no historical marker claim.",
+        "utc": "2026-10-26T11:55:53.333287+00:00",
+        "worker": "app-P-D141gg-single-scoped-controller-1145"
+      },
+      "sha256": "08d6573b2d1c00223ac306b8caf9caaaa8e047803d51f202e4e97a330515af97"
+    }
+  },
+  "render": {
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "63b23a3e3b7285317771171f69268a1705a56c085d4782c7bfcffed137f6f9dc",
+    "function": "render_readme",
+    "function_only": true,
+    "placeholders_resolved": true,
+    "rendered_sha256": "a1fefbdf0b97434bd832b94006c2770b636ba67c72f6c6bf2b82fc917d6c3a40"
+  },
+  "sampler": {
+    "exit_code": 0,
+    "first_tool_gap": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+      "reason": "The first-tool trace target could not be created because the pre-existing tmpdir path was a regular file.",
+      "status": "FAIL"
+    },
+    "gap_disclosure": "This later private sampler is not substituted for first-tool coverage; the first-tool path error is disclosed.",
+    "interval_seconds": 5,
+    "last_available_bytes": 5591433216,
+    "last_sample_at": "2026-10-26T12:17:43.900087+00:00",
+    "pid": 3,
+    "reaped": true,
+    "samples": 2,
+    "schema": "d141hh-private-sampler-v1",
+    "started_at": "2026-10-26T12:17:38.874562+00:00",
+    "status": "completed",
+    "stop_free_bytes": 4000000000,
+    "waited": true,
+    "worker_first_tool_trace": false
+  },
+  "scope": "private documentary candidates only; no canonical write, product merge, build, service, diagnostic, REG0, or ZIP",
+  "status": "PASS_PRIVATE_D141HH_CANDIDATES"
+}

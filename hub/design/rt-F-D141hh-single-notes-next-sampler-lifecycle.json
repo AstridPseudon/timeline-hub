@@ -1,0 +1,21 @@
+{
+  "exit_code": 0,
+  "first_tool_gap": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141hh-single-notes-next/tmpdir",
+    "reason": "The first-tool trace target could not be created because the pre-existing tmpdir path was a regular file.",
+    "status": "FAIL"
+  },
+  "gap_disclosure": "This later private sampler is not substituted for first-tool coverage; the first-tool path error is disclosed.",
+  "interval_seconds": 5,
+  "last_available_bytes": 5591433216,
+  "last_sample_at": "2026-10-26T12:17:43.900087+00:00",
+  "pid": 3,
+  "reaped": true,
+  "samples": 2,
+  "schema": "d141hh-private-sampler-v1",
+  "started_at": "2026-10-26T12:17:38.874562+00:00",
+  "status": "completed",
+  "stop_free_bytes": 4000000000,
+  "waited": true,
+  "worker_first_tool_trace": false
+}
