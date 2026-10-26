@@ -21,7 +21,7 @@ function imageFixture(overrides: Partial<GeneratedImageWithMetadata> = {}): Gene
   } as GeneratedImageWithMetadata;
 }
 
-function renderPeek(options: { image?: GeneratedImageWithMetadata; onOpenLightbox?: () => void; isVideo?: boolean } = {}) {
+function renderPeek(options: { image?: GeneratedImageWithMetadata; onOpenLightbox?: () => void; isVideo?: boolean; onOpenChange?: (open: boolean) => void } = {}) {
   const onOpenLightbox = options.onOpenLightbox ?? vi.fn();
   const utils = render(
     <HoverPeekButton
@@ -33,6 +33,7 @@ function renderPeek(options: { image?: GeneratedImageWithMetadata; onOpenLightbo
       metadataAspectRatio={null}
       projectAspectRatio={null}
       onOpenLightbox={onOpenLightbox}
+      onOpenChange={options.onOpenChange}
     />,
   );
   const eye = screen.getByLabelText('Preview');
@@ -180,6 +181,22 @@ describe('HoverPeekButton', () => {
 
     advance(1);
     expect(peekEl()).toBeNull();
+  });
+
+  it('reports open and close through onOpenChange so the tile can hide its timestamp', () => {
+    const onOpenChange = vi.fn();
+    const { eye } = renderPeek({ onOpenChange });
+    onOpenChange.mockClear();
+    fireEvent.pointerEnter(eye);
+    advance(120);
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+
+    fireEvent.pointerLeave(eye);
+    fireEvent.pointerEnter(peekEl() as HTMLElement);
+    fireEvent.pointerLeave(peekEl() as HTMLElement);
+    advance(120);
+    expect(peekEl()).toBeNull();
+    expect(onOpenChange).toHaveBeenLastCalledWith(false);
   });
 
   it('cancels a pending open when the pointer leaves the eye early', () => {

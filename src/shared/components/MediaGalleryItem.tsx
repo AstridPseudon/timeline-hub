@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import { DraggableImage } from "@/shared/components/DraggableImage";
 import { TimeStamp } from "@/shared/components/TimeStamp";
@@ -124,6 +124,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   projectAspectRatio,
 }) => {
   useRenderBudget('MediaGalleryItem', 5);
+  const [isPeekOpen, setIsPeekOpen] = useState(false);
   const {
     selectedShotIdLocal,
     simplifiedShotOptions,
@@ -513,7 +514,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
             position="top-right"
             showOnHover={false}
             hideOnHover={!isVideoContent || Boolean(onAddToTimeline)}
-            className=""
+            className={isPeekOpen ? '!opacity-0' : ''}
           />
           {/* Add to Timeline - Top Right, in place of the timestamp when it is shown on hover */}
           {onAddToTimeline && actualGenerationId && (
@@ -528,6 +529,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
                   metadataAspectRatio={metadataAspectRatio}
                   projectAspectRatio={Number.isFinite(peekProjectAspectRatio) ? peekProjectAspectRatio : null}
                   onOpenLightbox={onOpenLightbox}
+                  onOpenChange={setIsPeekOpen}
                 />
               )}
               <AddToTimelineButton

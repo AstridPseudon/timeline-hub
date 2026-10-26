@@ -25,6 +25,8 @@ interface HoverPeekButtonProps {
   /** Aspect ratio of the project, used until the media's own size is known. */
   projectAspectRatio: number | null;
   onOpenLightbox: (image: GeneratedImageWithMetadata) => void;
+  /** Called whenever the peek opens or closes. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -41,9 +43,14 @@ export const HoverPeekButton: React.FC<HoverPeekButtonProps> = ({
   metadataAspectRatio,
   projectAspectRatio,
   onOpenLightbox,
+  onOpenChange,
 }) => {
   const { open, close, eyeHandlers, peekHandlers } = useHoverPeek(isVideo ? null : fullSrc);
   const eyeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    onOpenChange?.(open);
+  }, [open, onOpenChange]);
 
   const openLightbox = () => {
     close();
