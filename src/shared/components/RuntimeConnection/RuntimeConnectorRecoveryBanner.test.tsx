@@ -144,6 +144,7 @@ describe('RuntimeConnectorRecoveryBanner', () => {
     expect(brief).toContain('Current editor diagnostic: readiness_timeout');
     expect(brief).toContain('service-<name>.log under %LOCALAPPDATA%\\Astrid Runtime\\logs');
     expect(brief).toContain("Invoke-RestMethod -Uri 'http://127.0.0.1:17340/api/runtime/v1/health'");
+    expect(brief).toContain(`-Headers @{ Origin = '${window.location.origin}' }`);
   });
 
   it('includes the current project and timeline route identity in the agent brief', () => {

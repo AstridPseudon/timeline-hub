@@ -142,7 +142,7 @@ function serviceStatus(value: unknown): value is ServiceStatus {
     && (typeof service.last_exit === 'number' || service.last_exit === null);
 }
 
-/** Describes known Runtime failures and service history without exposing arbitrary error text. */
+/** Classifies known Runtime failures and service history for shared status and recovery displays. */
 export function describeFailure(value: unknown, platform: Platform = detectPlatform()): FailureDescription {
   if (serviceStatus(value)) {
     const reason = typeof value.reason === 'string' ? value.reason.trim() : '';
@@ -235,7 +235,7 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string, localBu
       : null,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
     serviceBrief(services, platform),
-    `Check Runtime health: \`${healthCheckCommand(`${runtimeOrigin() || pageOrigin}/api/runtime`, undefined, platform)}\`.`,
+    `Check Runtime health: \`${healthCheckCommand(`${runtimeOrigin() || pageOrigin}/api/runtime`, pageOrigin, platform)}\`.`,
     `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
     "If the installer couldn't open a browser, open https://astrid.haus/?connect=1.",
     'My astrid.haus tab connects by itself once Astrid answers; if it shows a Connect button, click it.',

@@ -49,6 +49,7 @@ export function buildWorkspaceRestartBrief({
     || 'The editor cannot reach its configured Astrid Runtime.';
   const safeUrl = safeConnectionUrl(connectionUrl);
   const platform = detectPlatform();
+  const pageOrigin = typeof window === 'undefined' ? undefined : window.location.origin;
   return [
     'Please restore this editor’s existing Astrid Runtime connection.',
     'Keep the current installation, Runtime profile, data root, workspace files, credentials, and agent instructions. Do not reset, reinstall, create a new data root, or switch to the bundled demo bridge.',
@@ -57,7 +58,7 @@ export function buildWorkspaceRestartBrief({
     `Current editor diagnostic: ${diagnostic}`,
     ...(safeUrl ? [`Configured editor origin for the workspace connection: ${safeUrl}`] : []),
     `Service logs are named service-<name>.log under ${runtimeLogDirectory(platform)}.`,
-    ...(safeUrl ? [`Check Runtime health: \`${healthCheckCommand(safeUrl, undefined, platform)}\`.`] : []),
+    ...(safeUrl ? [`Check Runtime health: \`${healthCheckCommand(safeUrl, pageOrigin, platform)}\`.`] : []),
     'Verify that the same configured Runtime is healthy, editor project and timeline discovery return the same selections, and the existing configured agent responds without changing its instructions. Leave the existing processes available after verification.',
   ].join('\n\n');
 }
