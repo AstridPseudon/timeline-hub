@@ -1254,43 +1254,43 @@
   color: color-mix(in oklab, color-mix(in oklab, rgb(184, 82, 27), rgb(242, 138, 78) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-dusk] {
-  --astrid-panel: color-mix(in oklab, #fffefa, #221f1a calc(var(--astrid-dusk) * 100%));
+  --astrid-panel: color-mix(in oklab, #fffefa, #171a29 calc(var(--astrid-dusk) * 100%));
   --astrid-ink: color-mix(in oklab, #25241f, #f3eee4 calc(var(--astrid-dusk-ink) * 100%));
   --astrid-muted: color-mix(in oklab, color-mix(in oklab, #615e55, #aca395 calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
-  --astrid-line: color-mix(in oklab, #d5d0c5, #413a30 calc(var(--astrid-dusk) * 100%));
+  --astrid-line: color-mix(in oklab, #d5d0c5, #343a52 calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-hero-subtitle {
   color: color-mix(in oklab, color-mix(in oklab, rgb(51, 49, 44), rgb(221, 214, 201) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-audience-switch {
-  border-color: color-mix(in oklab, rgb(201, 193, 181), rgb(65, 58, 48) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(26, 24, 20) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(201, 193, 181), rgb(56, 62, 88) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(21, 24, 38) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-audience-switch button {
   color: color-mix(in oklab, color-mix(in oklab, rgb(37, 36, 31), rgb(221, 214, 201) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-editor-stage {
-  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(58, 52, 43) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(22, 20, 16) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(46, 51, 74) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(12, 14, 26) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] :is(.astrid-player-surface, .astrid-inspector-surface, .astrid-timeline-surface) {
-  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(74, 67, 55) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(29, 26, 22) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(56, 62, 88) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(23, 26, 41) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-chat-surface {
-  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(90, 80, 66) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(36, 33, 27) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(213, 208, 197), rgb(64, 70, 98) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(26, 29, 46) calc(var(--astrid-dusk) * 100%));
 }
 /* The agent launcher is a panel too, so its disc darkens with the others. */
 .astrid-public-site[data-dusk] .astrid-agent-launcher {
-  border-color: color-mix(in oklab, #d4c8b7, #5c5345 calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, #fffefa, #2e2a23 calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, #d4c8b7, #424862 calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, #fffefa, #21253a calc(var(--astrid-dusk) * 100%));
   box-shadow: 0 4px 14px rgb(0 0 0 / calc(.14 + .3 * var(--astrid-dusk)));
 }
 .astrid-public-site[data-dusk] .astrid-agent-launcher:focus-visible { outline-color: color-mix(in oklab, #a94714, #f28a4e calc(var(--astrid-dusk) * 100%)); }
 .astrid-public-site[data-dusk] .astrid-callout {
-  border-color: color-mix(in oklab, rgb(214, 202, 184), rgb(92, 83, 69) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 255, 255), rgb(46, 42, 35) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(214, 202, 184), rgb(70, 77, 106) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 255, 255), rgb(32, 36, 56) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-callout h2 { color: color-mix(in oklab, color-mix(in oklab, rgb(29, 26, 21), rgb(251, 247, 239) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%)); }
 .astrid-public-site[data-dusk] .astrid-callout p { color: color-mix(in oklab, color-mix(in oklab, rgb(87, 83, 74), rgb(194, 185, 169) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%)); }
@@ -1299,7 +1299,7 @@
 }
 .astrid-public-site[data-dusk] .astrid-callout-connectors circle {
   fill: color-mix(in oklab, rgb(184, 79, 24), rgb(240, 124, 58) calc(var(--astrid-dusk) * 100%));
-  stroke: color-mix(in oklab, rgb(184, 79, 24), rgb(22, 20, 16) calc(var(--astrid-dusk) * 100%));
+  stroke: color-mix(in oklab, rgb(184, 79, 24), rgb(14, 16, 28) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-callout-connectors .astrid-callout-ping {
   fill: none;
@@ -1307,14 +1307,14 @@
 }
 .astrid-public-site[data-dusk] :is(.astrid-scripted-conversation, .astrid-scripted-conversation [data-conversation-presentation]) {
   color: color-mix(in oklab, color-mix(in oklab, rgb(40, 36, 31), var(--astrid-ink) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(36, 33, 27) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(26, 29, 46) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-scripted-conversation [data-conversation-presentation] > div:first-child {
-  border-color: color-mix(in oklab, rgb(228, 221, 208),  calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(228, 221, 208), rgb(56, 62, 88) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-example-result {
-  border-color: color-mix(in oklab, rgb(228, 221, 208), rgb(74, 67, 55) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(247, 244, 237), rgb(44, 40, 34) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(228, 221, 208), rgb(56, 62, 88) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(247, 244, 237), rgb(32, 36, 56) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-example-result strong {
   color: color-mix(in oklab, color-mix(in oklab, rgb(37, 36, 31), var(--astrid-ink) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
@@ -1323,24 +1323,24 @@
   color: color-mix(in oklab, color-mix(in oklab, rgb(97, 94, 85), var(--astrid-muted) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-composer-field {
-  border-color: color-mix(in oklab, rgb(217, 208, 194), rgb(74, 67, 55) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(27, 25, 21) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(217, 208, 194), rgb(56, 62, 88) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(19, 22, 36) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-composer-note {
-  border-color: color-mix(in oklab, rgb(228, 219, 205), rgb(90, 80, 66) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(46, 42, 35) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(228, 219, 205), rgb(70, 77, 106) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(33, 37, 57) calc(var(--astrid-dusk) * 100%));
   color: color-mix(in oklab, color-mix(in oklab, rgb(79, 74, 65), rgb(216, 208, 194) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-composer-field:focus-within {
   border-color: color-mix(in oklab, rgb(201, 138, 92), rgb(138, 90, 54) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-result-handoff-button {
-  border-color: color-mix(in oklab, rgb(201, 193, 181), rgb(90, 80, 66) calc(var(--astrid-dusk) * 100%));
-  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(44, 40, 34) calc(var(--astrid-dusk) * 100%));
+  border-color: color-mix(in oklab, rgb(201, 193, 181), rgb(70, 77, 106) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, rgb(255, 254, 250), rgb(33, 37, 57) calc(var(--astrid-dusk) * 100%));
   color: color-mix(in oklab, color-mix(in oklab, rgb(37, 36, 31), var(--astrid-ink) calc(var(--astrid-dusk-ink) * 100%)), var(--astrid-ink) calc(var(--astrid-dusk-firm) * 100%));
 }
 .astrid-public-site[data-sky-frame="open"][data-dusk] .astrid-editor-stage {
-  background-color: color-mix(in oklab, color(srgb 1 0.996078 0.980392 / 0.8), color-mix(in srgb, rgb(22, 20, 16) 82%, transparent 18%) calc(var(--astrid-dusk) * 100%));
+  background-color: color-mix(in oklab, color(srgb 1 0.996078 0.980392 / 0.8), color-mix(in srgb, rgb(8, 10, 21) 70%, transparent) calc(var(--astrid-dusk) * 100%));
 }
 
 /* The hero copy sits straight on the page background, so its text turns with the page (which reaches
@@ -1369,7 +1369,22 @@
 .astrid-public-site[data-theme="dark"] .astrid-chat-surface {
   box-shadow: rgba(255, 255, 255, 0.07) 0px 1px 0px inset, rgba(237, 107, 35, 0.22) 0px 0px 0px 1px, rgba(0, 0, 0, 0.3) 0px 2px 4px, rgba(0, 0, 0, 0.55) 0px 18px 34px -12px, rgba(0, 0, 0, 0.75) 0px 64px 110px -34px;
 }
-.astrid-public-site[data-theme="dark"] .astrid-callout { box-shadow: rgba(0, 0, 0, 0.55) 0px 18px 40px; }
+.astrid-public-site[data-theme="dark"] .astrid-callout {
+  box-shadow: rgba(255, 255, 255, 0.06) 0px 1px 0px inset, rgba(2, 3, 12, 0.5) 0px 2px 4px, rgba(2, 3, 12, 0.6) 0px 18px 40px;
+}
+/* By night the stage's editor and conversation take the same cool slate as the cards and the sky, rather
+   than the app's warm charcoal, so the whole showcase reads as one night palette (the app keeps its own). */
+.astrid-public-site[data-theme="dark"] .astrid-editor-stage {
+  --background: 230 34% 9%;
+  --card: 229 27% 15%;
+  --popover: 229 27% 15%;
+  --secondary: 229 24% 18%;
+  --muted: 229 24% 17%;
+  --border: 229 22% 27%;
+  --input: 229 22% 27%;
+  --sidebar-background: 230 30% 11%;
+  --sidebar-border: 229 22% 27%;
+}
 .astrid-public-site[data-theme="dark"] .astrid-callout-connectors path { stroke-width: 1.6; }
 .astrid-public-site[data-theme="dark"] .astrid-composer-note { box-shadow: rgba(0, 0, 0, 0.45) 0px 10px 24px; }
 .astrid-public-site[data-theme="dark"] .astrid-composer-field:focus-within { box-shadow: rgba(237, 107, 35, 0.18) 0px 0px 0px 3px; }
@@ -1409,6 +1424,22 @@
 :root:not([data-astrid-page-transition])::view-transition-group(*.astrid-rider),
 :root:not([data-astrid-page-transition])::view-transition-new(*.astrid-rider) { animation: none; }
 :root:not([data-astrid-page-transition])::view-transition-old(*.astrid-rider) { display: none; }
+/* Dusk wash (publicAstridSkySession): when the sky itself carries the page across mid-twilight, the reading
+   palette changes once, and every layer, the panels, labels and riders included, crossfades slowly from
+   its old colours to its new ones rather than flipping. */
+@keyframes astrid-dusk-wash-out { to { opacity: 0; } }
+@keyframes astrid-dusk-wash-in { from { opacity: 0; } }
+/* The wash starts on its own, so clicks and scrolls carry on to the page beneath it. */
+:root[data-astrid-dusk-wash]::view-transition { pointer-events: none; }
+:root[data-astrid-dusk-wash]::view-transition-group(*),
+:root[data-astrid-dusk-wash]::view-transition-group(*.astrid-rider) { animation: none; }
+:root[data-astrid-dusk-wash]::view-transition-old(*),
+:root[data-astrid-dusk-wash]::view-transition-old(*.astrid-rider) {
+  display: block;
+  animation: astrid-dusk-wash-out 2400ms cubic-bezier(.4, 0, .2, 1) both;
+}
+:root[data-astrid-dusk-wash]::view-transition-new(*),
+:root[data-astrid-dusk-wash]::view-transition-new(*.astrid-rider) { animation: astrid-dusk-wash-in 2400ms cubic-bezier(.4, 0, .2, 1) both; }
 @supports not (view-transition-name: none) {
   .astrid-public-site { transition: background-color 600ms ease, color 600ms ease; }
   .astrid-editor-stage { transition: box-shadow 600ms ease, background-color 600ms ease, border-color 600ms ease; }

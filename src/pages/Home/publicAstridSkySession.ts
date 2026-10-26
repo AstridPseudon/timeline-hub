@@ -247,6 +247,27 @@ function writePalette(target: HTMLElement | null, palette: PublicAstridSkyPalett
   target.style.setProperty('--astrid-dusk-ink-page', String(palette.inkPage));
   target.style.setProperty('--astrid-dusk-firm', String(palette.firm));
   for (const [name, value] of Object.entries(palette.tokens)) target.style.setProperty(name, value);
+  // Written here too (React renders the same value after), so a dusk wash's new image already has it.
+  target.dataset.theme = palette.theme;
+}
+
+type DuskWashDocument = Document & { startViewTransition?: (update: () => void) => { finished: Promise<void> } };
+
+/**
+ * When the sky itself carries the page across mid-twilight, its reading palette changes in one step (see
+ * pageDusk). Rather than flip within a minute, the whole page crossfades from the old palette to the new
+ * one in a single slow view transition (the dusk wash in PublicAstridShell.css).
+ */
+function washPalette(update: () => void): void {
+  const root = document.documentElement;
+  const done = () => { delete root.dataset.astridDuskWash; };
+  root.dataset.astridDuskWash = '';
+  try {
+    void (document as DuskWashDocument).startViewTransition!(update).finished.then(done, done);
+  } catch {
+    update();
+    done();
+  }
 }
 
 /**
@@ -282,6 +303,7 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
   let paletteTarget: { element: HTMLElement; owner: string } | null = null;
   let previousSettingsKey = settingsKey(settings);
   let previousPaletteKey = '';
+  let washing = false;
   const geometry: PublicAstridSkyGeometry = createPublicAstridSkyGeometry();
   const renderer = createPublicAstridSkyRenderer();
   const listeners = new Set<() => void>();
@@ -325,26 +347,43 @@ export function createPublicAstridSkySession(options: PublicAstridSkySessionOpti
       reducedMotion: environment.reducedMotion,
       phone: environment.phone,
     };
-    const nextSettingsKey = settingsKey(settings);
-    const nextPaletteKey = paletteKey(snapshot.palette);
-    if (nextPaletteKey !== previousPaletteKey) writePalette(paletteTarget?.element ?? null, snapshot.palette);
-    const shouldNotifyControls = controlsChanged || nextSettingsKey !== previousSettingsKey || nextPaletteKey !== previousPaletteKey;
-    if (shouldNotifyControls) {
-      controlsSnapshot = {
-        settings,
-        palette: snapshot.palette,
-        darkness: snapshot.darkness,
-        hours: snapshot.hours,
-        location: snapshot.location,
-        times: snapshot.times,
-        phase: snapshot.phase,
-      };
-      previousSettingsKey = nextSettingsKey;
-      previousPaletteKey = nextPaletteKey;
-      controlListeners.forEach((listener) => listener());
+    // While a dusk wash waits for its old image, the page keeps its old palette; the wash commits the latest.
+    if (!washing) {
+      // The sky's own clock crossing mid-twilight washes the page into its new palette; a replay, a chosen
+      // hour or a hidden or reduced-motion page changes at once.
+      const washes = paletteTarget !== null && snapshot.palette.theme !== controlsSnapshot.palette.theme && !replay
+        && settings.hours === null && environment.visible && !environment.reducedMotion
+        && typeof (document as DuskWashDocument).startViewTransition === 'function';
+      if (washes) {
+        washing = true;
+        washPalette(() => {
+          washing = false;
+          if (!destroyed) commitControls(true);
+        });
+      } else {
+        commitControls(controlsChanged);
+      }
     }
     if (rasterChanged) listeners.forEach((listener) => listener());
   };
+  function commitControls(controlsChanged: boolean) {
+    const nextSettingsKey = settingsKey(settings);
+    const nextPaletteKey = paletteKey(snapshot.palette);
+    if (nextPaletteKey !== previousPaletteKey) writePalette(paletteTarget?.element ?? null, snapshot.palette);
+    if (!controlsChanged && nextSettingsKey === previousSettingsKey && nextPaletteKey === previousPaletteKey) return;
+    controlsSnapshot = {
+      settings,
+      palette: snapshot.palette,
+      darkness: snapshot.darkness,
+      hours: snapshot.hours,
+      location: snapshot.location,
+      times: snapshot.times,
+      phase: snapshot.phase,
+    };
+    previousSettingsKey = nextSettingsKey;
+    previousPaletteKey = nextPaletteKey;
+    controlListeners.forEach((listener) => listener());
+  }
 
   const cancelFrame = (frame: number) => { if (frame) window.cancelAnimationFrame(frame); };
   const stopReplay = (notify = true) => {

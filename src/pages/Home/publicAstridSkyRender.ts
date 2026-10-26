@@ -80,8 +80,8 @@ export function themeForDarkness(darkness: number): PublicAstridSkyTheme {
  * The page's colours skip the middle of twilight. However quickly a gradual blend runs, it has to pass
  * through a mid-tone where text and page are the same colour (about ten real minutes of muddy taupe). So
  * the page dims gently until `hold`, keeps that look until `at`, then switches straight to how it looks at
- * `resume` and carries on from there; the page crossfades that one switch (see PublicAstridSite's dusk
- * crossfade). The sky itself still darkens continuously.
+ * `resume` and carries on from there; the page crossfades that one switch (the dusk wash, see washPalette in
+ * publicAstridSkySession). The sky itself still darkens continuously.
  */
 export const DUSK_SWITCH = { hold: 0.42, at: 0.46, resume: 0.52 } as const;
 
