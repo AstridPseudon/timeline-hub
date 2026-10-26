@@ -1,0 +1,39 @@
+{
+  "utc": "2026-10-26T16:03:28.749101+00:00",
+  "scope": "Existing1439 route; only three named closed unreferenced Runtime manager stdout logs, each ended, older than1h, regular single link and no open fd; decoded hashes, modes and mtime exact. No worker/test/raw KEEP/source/hub or held target touched.",
+  "before_available": 4864552960,
+  "after_available": 4866838528,
+  "saved_payload_bytes": 2293254,
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1330Z.log",
+      "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1330Z.log.gz",
+      "bytes": 903952,
+      "archived_bytes": 238169,
+      "decoded_sha256": "fbb4963302e1095c11c7d975524577a04b8abfbcaec9826d23fbc24e6e5a8902",
+      "mode": "0o644",
+      "mtime_ns": 1793022942609500212,
+      "exit": "1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1356Z.log",
+      "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1356Z.log.gz",
+      "bytes": 1001257,
+      "archived_bytes": 250084,
+      "decoded_sha256": "3b0c60e842f78ecc1b2f67d975063a70d60f1834308b90d8280ccc90a2b1472b",
+      "mode": "0o644",
+      "mtime_ns": 1793025050921625536,
+      "exit": "124"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1431Z.log",
+      "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T1431Z.log.gz",
+      "bytes": 1165138,
+      "archived_bytes": 288840,
+      "decoded_sha256": "9eca91ebc2ecbda19916006887ea68cab1f5d0b6fa6f961e3fd9b8655fffbdfd",
+      "mode": "0o644",
+      "mtime_ns": 1793025706649664515,
+      "exit": "1"
+    }
+  ]
+}
