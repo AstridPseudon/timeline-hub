@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -u
+: "${D66_OUTPUT_DIR:?D66_OUTPUT_DIR is required}"
+argv_file="$D66_OUTPUT_DIR/stub-argv"
+xml_path=""
+node_count=0
+for arg in "$@"; do
+  printf '%s\n' "$arg" >> "$argv_file"
+  case "$arg" in
+    --junitxml=*) xml_path=${arg#--junitxml=} ;;
+    tests/*) node_count=$((node_count + 1)) ;;
+  esac
+done
+test -n "$xml_path"
+printf '<testsuite tests="%s" failures="0" errors="0" skipped="0"></testsuite>\n' "$node_count" > "$xml_path"
+exit "${STUB_PYTHON_EXIT:-0}"
