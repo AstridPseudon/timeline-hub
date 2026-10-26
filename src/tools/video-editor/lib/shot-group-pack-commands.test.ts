@@ -62,6 +62,22 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
         graph: {},
       };
     }
+    async loadTimelineCommandBasisWithDisplay(timelineId: string) {
+      const basis = await this.loadTimelineCommandBasis(timelineId);
+      if (basis.head.revisionId !== runtime.head || basis.head.publicationId !== `pub-${runtime.head}`) {
+        throw new TimelineVersionConflictError('Timeline document changed while pairing authoring basis and display');
+      }
+      return {
+        basis,
+        timeline: {
+          config: structuredClone(runtime.config),
+          configVersion: runtime.version,
+          head: { projectId: this.options.projectId, timelineId,
+            headRevisionId: runtime.head, headPublicationId: `pub-${runtime.head}` },
+        },
+        registry: structuredClone(runtime.registry),
+      };
+    }
     async getRecoverableIdentity() {
       return { realmId: 'realm', actorId: 'actor' };
     }

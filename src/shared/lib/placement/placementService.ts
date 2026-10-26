@@ -244,12 +244,17 @@ export async function loadTimelineDocument(projectSlug: string, timelineRef: str
   };
 }
 
-function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
+function createDocumentStore(
+  target: ActiveTimelineTarget,
+  provider = new RuntimeDataProvider({ projectId: target.projectSlug }),
+  initialBasis?: TimelineCommandBasis,
+): DocumentStore {
   const ref = target.timelineRef;
-  const provider = new RuntimeDataProvider({ projectId: target.projectSlug });
   return {
     async load() {
-      const basis = await provider.loadTimelineCommandBasis(ref);
+      const captured = initialBasis;
+      initialBasis = undefined;
+      const basis = captured ?? await provider.loadTimelineCommandBasis(ref);
       // Validate the complete pinned closure before authoring any local transform. The
       // placement operation below owns only the explicit parent physical root; child and
       // occurrence images are validated dependencies and remain untouched.
@@ -330,6 +335,28 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
   };
 }
 
+/** Keep the cold verified read private until the caller finishes any asynchronous preflight. */
+export async function prepareTimelineDocumentMutation(target: ActiveTimelineTarget): Promise<LoadedDocument & {
+  mutate<T>(mutate: (document: PlacementDocument) => T): Promise<{ result: T; configVersion: number }>;
+}> {
+  const selected = { ...target };
+  const provider = new RuntimeDataProvider({ projectId: selected.projectSlug });
+  const { basis, timeline, registry } = await provider.loadTimelineCommandBasisWithDisplay(selected.timelineRef);
+  const store = createDocumentStore(selected, provider, basis);
+  let consumed = false;
+  return {
+    config: timeline.config,
+    registry,
+    expectedVersion: timeline.configVersion,
+    headRevisionId: timeline.head?.headRevisionId,
+    mutate(mutate) {
+      if (consumed) return Promise.reject(new TimelineVersionConflictError('Timeline mutation was already consumed'));
+      consumed = true;
+      return mutateTimelineDocumentFromStore(selected, mutate, store);
+    },
+  };
+}
+
 async function resolveDefaultTimelineRef(client: AstridLocalClient, projectSlug: string): Promise<string> {
   const timelines = (await client.timelines.list()).timelines ?? [];
   if (timelines.length === 0) throw new PlacementProjectMissingError(projectSlug);
@@ -342,7 +369,14 @@ export async function mutateTimelineDocument<T>(
   target: ActiveTimelineTarget,
   mutate: (document: PlacementDocument) => T,
 ): Promise<{ result: T; configVersion: number }> {
-  const store = createDocumentStore(target);
+  return mutateTimelineDocumentFromStore(target, mutate, createDocumentStore(target));
+}
+
+async function mutateTimelineDocumentFromStore<T>(
+  target: ActiveTimelineTarget,
+  mutate: (document: PlacementDocument) => T,
+  store: DocumentStore,
+): Promise<{ result: T; configVersion: number }> {
   const ref = target.timelineRef;
 
   for (let attempt = 0; attempt < PLACEMENT_RETRY_ATTEMPTS; attempt += 1) {

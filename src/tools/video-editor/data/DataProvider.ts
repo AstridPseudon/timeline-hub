@@ -112,6 +112,13 @@ export interface LoadedReferencedTimeline {
   resolveAssetUrl: (file: string) => Promise<string>;
 }
 
+/** Verified authoring closure paired with this provider's actual display/version observation. */
+export interface TimelineCommandBasisWithDisplay {
+  basis: TimelineCommandBasis;
+  timeline: LoadedTimeline;
+  registry: AssetRegistry;
+}
+
 export class TimelineNotFoundError extends Error {
   code = 'timeline_not_found' as const;
 
