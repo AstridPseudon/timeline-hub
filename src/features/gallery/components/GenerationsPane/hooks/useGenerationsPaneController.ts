@@ -14,7 +14,6 @@ import { type GalleryFilterState } from '@/shared/components/MediaGallery';
 import { useContainerWidth } from '@/shared/components/MediaGallery/hooks/useContainerWidth';
 import { calculateGalleryLayout } from '@/shared/components/MediaGallery/utils';
 import { useGalleryPageState } from '@/features/gallery/hooks/useGalleryPageState';
-import { useProjectGenerations } from '@/shared/hooks/projects/useProjectGenerations';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useCurrentShot } from '@/shared/state/selectionStore';
 import { usePanesStore } from '@/shared/state/panesStore';
@@ -49,7 +48,7 @@ function readSessionMediaType(): MediaTypeFilter | null {
   if (typeof window === 'undefined') return null;
   try {
     const value = window.sessionStorage.getItem(MEDIA_TYPE_SESSION_KEY);
-    return value === 'image' || value === 'video' || value === 'audio' ? value : null;
+    return value === 'all' || value === 'image' || value === 'video' || value === 'audio' ? value : null;
   } catch {
     return null;
   }
@@ -66,15 +65,12 @@ function saveSessionMediaType(value: MediaTypeFilter): void {
 
 type BooleanStateSetter = (value: boolean) => void;
 type GalleryPageState = ReturnType<typeof useGalleryPageState>;
-type SelectedProjectId = ReturnType<typeof useProjectSelectionContext>['selectedProjectId'];
 type ProjectAspectRatio = ReturnType<typeof useProjectCrudContext>['projects'][number]['aspectRatio'];
 
 interface GenerationDataParams {
   itemsPerPage: number;
   mediaTypeFilter: MediaTypeFilter;
-  isDiscoveringMediaType: boolean;
   shouldEnableDataLoading: boolean;
-  selectedProjectId: SelectedProjectId;
   runtimeProjectId: string | null;
   runtimeAuthority: boolean;
 }
@@ -82,9 +78,7 @@ interface GenerationDataParams {
 const useGenerationData = ({
   itemsPerPage,
   mediaTypeFilter,
-  isDiscoveringMediaType,
   shouldEnableDataLoading,
-  selectedProjectId,
   runtimeProjectId,
   runtimeAuthority,
 }: GenerationDataParams) => {
@@ -97,25 +91,12 @@ const useGenerationData = ({
     ...(runtimeProjectId ? { runtimeProjectId } : {}),
     runtimeAuthority,
   });
-  const mediaAvailabilityQuery = useProjectGenerations(
-    shouldEnableDataLoading && !runtimeProjectId ? selectedProjectId : null,
-    1,
-    1,
-    shouldEnableDataLoading && isDiscoveringMediaType,
-    { mediaType: mediaTypeFilter },
-    { disablePolling: true, runtimeProjectId, runtimeAuthority },
-  );
-
   const shotsForFilter = (galleryPageState.shotsData && galleryPageState.shotsData.length > 0)
     ? galleryPageState.shotsData
     : (contextShots || []);
 
   return {
     ...galleryPageState,
-    mediaAvailabilityCount: mediaAvailabilityQuery.data?.total,
-    isMediaAvailabilityLoading: mediaAvailabilityQuery.isLoading,
-    isMediaAvailabilityFetching: mediaAvailabilityQuery.isFetching,
-    mediaAvailabilityError: mediaAvailabilityQuery.error,
     shotsForFilter,
   };
 };
@@ -352,83 +333,22 @@ export const useGenerationsPaneController = () => {
   // closed tab, so keep its Runtime gallery query enabled in that state too.
   const shouldEnableDataLoading = !isOnImageGenerationPage
     && (isGenerationsPaneOpen || isGenerationsPaneLocked);
-  const galleryProjectIdentity = resolvedGalleryProject.projectId ?? selectedProjectId;
 
   const { galleryContainerRef, isMobile, paneLayout } = usePaneLayout(projectAspectRatio, isEditorPaneLocked);
 
   const [savedMediaTypeFilter] = useState(readSessionMediaType);
-  const [mediaTypeFilter, setMediaTypeFilterState] = useState<MediaTypeFilter>(savedMediaTypeFilter ?? 'image');
-  const [isDiscoveringMediaType, setIsDiscoveringMediaType] = useState(savedMediaTypeFilter === null);
-  const [emptyProjectIdentity, setEmptyProjectIdentity] = useState<string | null>(null);
-  const userSelectedMediaType = useRef(savedMediaTypeFilter !== null);
-  const discoveryProjectIdentity = useRef(galleryProjectIdentity);
+  const [mediaTypeFilter, setMediaTypeFilterState] = useState<MediaTypeFilter>(savedMediaTypeFilter ?? 'all');
   const setMediaTypeFilter = useCallback((next: MediaTypeFilter) => {
-    userSelectedMediaType.current = true;
-    setIsDiscoveringMediaType(false);
-    setEmptyProjectIdentity(null);
     saveSessionMediaType(next);
     setMediaTypeFilterState(next);
   }, []);
-  useEffect(() => {
-    if (discoveryProjectIdentity.current === galleryProjectIdentity) return;
-    discoveryProjectIdentity.current = galleryProjectIdentity;
-    setEmptyProjectIdentity(null);
-    if (!userSelectedMediaType.current) {
-      setMediaTypeFilterState('image');
-      setIsDiscoveringMediaType(true);
-    }
-  }, [galleryProjectIdentity]);
   const generationData = useGenerationData({
     itemsPerPage: paneLayout.itemsPerPage,
     mediaTypeFilter,
-    isDiscoveringMediaType,
     shouldEnableDataLoading,
-    selectedProjectId,
     runtimeProjectId: resolvedGalleryProject.projectId,
     runtimeAuthority: resolvedGalleryProject.runtimeAuthority,
   });
-
-  useEffect(() => {
-    if (
-      !isDiscoveringMediaType
-      || userSelectedMediaType.current
-      || !shouldEnableDataLoading
-      || !galleryProjectIdentity
-      || resolvedGalleryProject.isResolving
-      || generationData.isMediaAvailabilityLoading
-      || generationData.isMediaAvailabilityFetching
-      || generationData.mediaAvailabilityError
-      || resolvedGalleryProject.error
-      || generationData.mediaAvailabilityCount === undefined
-    ) {
-      return;
-    }
-
-    if (generationData.mediaAvailabilityCount > 0) {
-      setIsDiscoveringMediaType(false);
-      return;
-    }
-
-    if (mediaTypeFilter === 'image') {
-      setMediaTypeFilterState('video');
-    } else if (mediaTypeFilter === 'video') {
-      setMediaTypeFilterState('audio');
-    } else if (mediaTypeFilter === 'audio') {
-      setEmptyProjectIdentity(galleryProjectIdentity ?? null);
-      setIsDiscoveringMediaType(false);
-    }
-  }, [
-    generationData.isMediaAvailabilityFetching,
-    generationData.isMediaAvailabilityLoading,
-    generationData.mediaAvailabilityCount,
-    generationData.mediaAvailabilityError,
-    isDiscoveringMediaType,
-    mediaTypeFilter,
-    galleryProjectIdentity,
-    resolvedGalleryProject.error,
-    resolvedGalleryProject.isResolving,
-    shouldEnableDataLoading,
-  ]);
 
   const filters = useGenerationFilters({
     mediaTypeFilter,
@@ -518,13 +438,9 @@ export const useGenerationsPaneController = () => {
       shotsData: generationData.shotsData,
       totalCount: generationData.totalCount,
       readOnly: resolvedGalleryProject.runtimeAuthority,
-      emptyStateMessage: isDiscoveringMediaType
-        ? undefined
-        : emptyProjectIdentity !== null && emptyProjectIdentity === galleryProjectIdentity
-          ? 'No generations yet.'
-          : mediaTypeFilter === 'all'
-            ? 'No generations in this view.'
-            : `No ${mediaTypeFilter === 'image' ? 'images' : mediaTypeFilter === 'video' ? 'videos' : 'audio'} in this view.`,
+      emptyStateMessage: mediaTypeFilter === 'all'
+        ? 'No generations in this view.'
+        : `No ${mediaTypeFilter === 'image' ? 'images' : mediaTypeFilter === 'video' ? 'videos' : 'audio'} in this view.`,
       config: resolvedGalleryProject.runtimeAuthority ? {
         showDelete: false,
         showStar: false,

@@ -244,7 +244,7 @@ describe('useGenerationsPaneController', () => {
 
     expect(mocks.useGalleryPageState).toHaveBeenCalledWith({
       itemsPerPage: 6,
-      mediaType: 'image',
+      mediaType: 'all',
       enableDataLoading: true,
       runtimeAuthority: false,
     });
@@ -252,7 +252,7 @@ describe('useGenerationsPaneController', () => {
     expect(result.current.layout.projectAspectRatio).toBe(1.6);
     expect(result.current.filters.shotsForFilter).toEqual([{ id: 'fallback-shot' }]);
     expect(result.current.filters.generationFilters).toEqual({
-      mediaType: 'image',
+      mediaType: 'all',
       shotId: undefined,
       excludePositioned: undefined,
       starredOnly: false,
@@ -355,27 +355,41 @@ describe('useGenerationsPaneController', () => {
     }));
   });
 
-  it('opens on the first media kind with results, keeping images as the first choice', async () => {
-    mocks.useProjectGenerations.mockImplementation((
-      _projectId: unknown,
-      _page: unknown,
-      _limit: unknown,
-      _enabled: unknown,
-      filters: { mediaType: string },
-    ) => ({
-      data: { total: filters.mediaType === 'image' ? 0 : 4 },
-      isLoading: false,
-      isFetching: false,
-      error: null,
-    }));
+  it('defaults the media type to all and stores nothing until the user picks one', () => {
+    const { result } = renderHook(() => useGenerationsPaneController());
+
+    expect(result.current.filters.mediaTypeFilter).toBe('all');
+    expect(mocks.useGalleryPageState).toHaveBeenLastCalledWith(expect.objectContaining({ mediaType: 'all' }));
+    expect(sessionStorage.getItem('astrid.generationsPane.mediaType')).toBeNull();
+  });
+
+  it('restores a saved all as the media type', () => {
+    sessionStorage.setItem('astrid.generationsPane.mediaType', 'all');
 
     const { result } = renderHook(() => useGenerationsPaneController());
 
-    await waitFor(() => expect(result.current.filters.mediaTypeFilter).toBe('video'));
-    expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['image', 'video']);
+    expect(result.current.filters.mediaTypeFilter).toBe('all');
+    expect(mocks.useGalleryPageState).toHaveBeenLastCalledWith(expect.objectContaining({ mediaType: 'all' }));
   });
 
-  it('shows the project empty state only after all three media kinds return zero', async () => {
+  it('restores a saved video as the media type', () => {
+    sessionStorage.setItem('astrid.generationsPane.mediaType', 'video');
+
+    const { result } = renderHook(() => useGenerationsPaneController());
+
+    expect(result.current.filters.mediaTypeFilter).toBe('video');
+    expect(mocks.useGalleryPageState).toHaveBeenLastCalledWith(expect.objectContaining({ mediaType: 'video' }));
+  });
+
+  it('ignores an unrecognised saved media type and falls back to all', () => {
+    sessionStorage.setItem('astrid.generationsPane.mediaType', 'documents');
+
+    const { result } = renderHook(() => useGenerationsPaneController());
+
+    expect(result.current.filters.mediaTypeFilter).toBe('all');
+  });
+
+  it('never switches media type on its own when a project has no images', async () => {
     mocks.useProjectGenerations.mockImplementation(() => ({
       data: { total: 0 },
       isLoading: false,
@@ -385,8 +399,10 @@ describe('useGenerationsPaneController', () => {
 
     const { result } = renderHook(() => useGenerationsPaneController());
 
-    await waitFor(() => expect(result.current.gallery.emptyStateMessage).toBe('No generations yet.'));
-    expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['image', 'video', 'audio']);
+    await waitFor(() => expect(result.current.gallery.emptyStateMessage).toBe('No generations in this view.'));
+    expect(result.current.filters.mediaTypeFilter).toBe('all');
+    expect([...new Set(mocks.useGalleryPageState.mock.calls.map(([args]) => args.mediaType))]).toEqual(['all']);
+    expect(mocks.useProjectGenerations).not.toHaveBeenCalled();
   });
 
   it('remembers an explicit media tab for the rest of the session', () => {
