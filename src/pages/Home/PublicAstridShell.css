@@ -450,6 +450,7 @@
     height var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) var(--astrid-surface-ease) var(--astrid-surface-start),
     transform var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) var(--astrid-surface-ease) var(--astrid-surface-start),
     opacity calc(var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) * .7) ease var(--astrid-surface-start),
+    filter calc(var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) * .7) ease var(--astrid-surface-start),
     box-shadow var(--astrid-surface-duration, var(--astrid-motion-duration, 600ms)) var(--astrid-surface-ease) var(--astrid-surface-start),
     visibility 0s linear var(--astrid-motion-duration, 600ms);
 }
@@ -1373,8 +1374,14 @@
 .astrid-public-site[data-theme="dark"] .astrid-composer-note { box-shadow: rgba(0, 0, 0, 0.45) 0px 10px 24px; }
 .astrid-public-site[data-theme="dark"] .astrid-composer-field:focus-within { box-shadow: rgba(237, 107, 35, 0.18) 0px 0px 0px 3px; }
 
-/* In Agent the editor recedes behind the conversation, whatever the palette. */
-.astrid-public-site[data-audience="agent"] :is(.astrid-player-surface, .astrid-inspector-surface, .astrid-timeline-surface) { opacity: .55; }
+/* In Agent the editor recedes behind the conversation, whatever the palette: it fades towards the stage, so
+   it takes on the hour's own light (softer by day, darker by night) rather than a grey, and falls slightly
+   out of focus, so its text reads as shape and never competes with the conversation and labels in front.
+   Both ride the panels' own opacity timing and stagger. */
+.astrid-public-site[data-audience="agent"] :is(.astrid-player-surface, .astrid-inspector-surface, .astrid-timeline-surface) {
+  opacity: .5;
+  filter: blur(1.5px);
+}
 
 /* Theme switch: where View Transitions exist the whole page crossfades as one (see runThemeFade), so
    nothing may crossfade underneath it. Elsewhere, flat elements crossfade on their own. */
