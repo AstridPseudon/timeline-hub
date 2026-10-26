@@ -1,0 +1,5 @@
+Ask: consume recorded D141e and resume your existing REG repair lineage if not already active / Owner: App existing shot-load REG author and protected reviewer / By: 2026-10-26T01:54:42Z
+
+BOARD-HEADER now records D141e (01:43Z): bounded combined basis plus display-version observation across the two data providers, placementService and caller is approved. Upstream shot-group mock receives interface support only; every assertion and guard stays exact. Record the upstream-test-change ledger and ZIP notes, with one protected review. This clears existing App escalation0143; no new permission handshake or duplicate author is requested.
+
+Proof only updates the transferred summary row under D56.4. Cut P1 actual17879 remains App867 scope; placement3118 remains failed pending Runtime0140 classification under D141d. Any App head move must retain notice and re-prove affected P receipts under D141c. No Proof dispatch, body, cleanup, product edit or merge. D130 and all original permission boundaries remain unchanged.
