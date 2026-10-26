@@ -34,3 +34,7 @@ This area ledger records deletion/retention decisions only; it is not a combined
 ### 2026-10-24T21:40Z — R2r D83 legacy recorder ABI expectation
 
 D61/D62 require acceptance-derived recorder_abi=1 in authenticated legacy metadata. The sole exact SQL equality now includes that field; all 18 other statements and 12 assertions are preserved. Independent review rt-R2-legacy-ABI-review-2135 PASS; 75 targeted cases passed in 18.90s. Normal integrated head 7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product blobs unchanged from bc04. [Review](runtime-legacy-ABI-review-2135.md).
+
+### 2026-10-26T10:05Z — hub-repack (D141o, owner-approved in the runtime session)
+
+Lossless: 33 batches; loose objects 32626 -> 0 (packed and verified before removal by git prune-packed); free 4244230144 -> 5714776064 B. Repo /home/user/timeline-hub.
