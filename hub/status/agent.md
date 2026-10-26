@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:43:32Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# agent board, 2026-10-26T01:40Z
+<!-- agent | 2026-10-26T01:47:29Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 2m -->
+# agent board, 2026-10-26T01:45Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
