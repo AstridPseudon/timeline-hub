@@ -1,9 +1,36 @@
 import { readFileSync, statfsSync, writeFileSync } from 'node:fs';
-import { expect } from '@playwright/test';
+import { expect, type Page, type TestInfo } from '@playwright/test';
 import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
 import { browserEvidencePath } from './support/evidence.ts';
 import { test } from './support/app.ts';
 
+
+// Resolve with the success toast, or fail at once with the error toast's text. Toasts auto-dismiss after 5 s, so poll fast.
+async function settleTransfer(page: Page, testInfo: TestInfo, label: 'Export' | 'Import', success: RegExp, timeout = 600_000) {
+  const ok = page.getByText(success);
+  const failed = page.locator('.group.destructive');
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    if (await ok.first().isVisible().catch(() => false)) return;
+    if (await failed.first().isVisible().catch(() => false)) {
+      const message = ((await failed.first().innerText().catch(() => '')) || '(no text)').trim();
+      // Evidence for the Activity panel: does a failed task ever leave "Running"? Sample 30 s.
+      const samples: string[] = [];
+      const shot = browserEvidencePath(testInfo, `timeline-transfer/${label.toLowerCase()}-failed-activity.png`);
+      for (let second = 0; second <= 30; second += 1) {
+        const text = await page.locator('body').innerText().catch(() => '');
+        const rows = text.split('\n').filter((line) => /Export plan|Import|Running|Failed|Error/i.test(line)).join(' | ');
+        samples.push(`${second}s: ${rows}`);
+        if (second === 30) await page.screenshot({ path: shot, fullPage: true }).catch(() => undefined);
+        await page.waitForTimeout(1000);
+      }
+      writeFileSync(browserEvidencePath(testInfo, `timeline-transfer/${label.toLowerCase()}-failed-activity.txt`), `${message}\n${samples.join('\n')}\n`);
+      throw new Error(`${label} failed in the UI after ${((Date.now() - started) / 1000).toFixed(1)} s: ${message}`);
+    }
+    await page.waitForTimeout(200);
+  }
+  throw new Error(`${label} neither succeeded nor failed within ${timeout} ms`);
+}
 test.describe.configure({ mode: 'serial' });
 
 test.afterEach(async ({ page }) => {
@@ -96,7 +123,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await picker.click();
   const exportStarted = await page.evaluate(() => performance.now());
   await page.getByRole('button', { name: 'Export timeline', exact: true }).click();
-  await expect(page.getByText(/^Exported /)).toBeVisible({ timeout: 600_000 });
+  await settleTransfer(page, testInfo, 'Export', /^Exported /);
   const archive = await page.evaluate(async () => {
     const saved = (window as any).__n4Archive;
     if (!saved?.handle) throw new Error('export did not open the OPFS destination');
@@ -143,7 +170,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
     const timelineId = new URL(page.url()).searchParams.get('timeline');
     return timelineId && timelineId !== descriptor!.timelineId ? timelineId : null;
   }, { message: 'the editor selects a new timeline imported into the fresh project', timeout: 600_000 }).toBeTruthy();
-  await expect(page.getByText(/^Imported /)).toBeVisible({ timeout: 600_000 });
+  await settleTransfer(page, testInfo, 'Import', /^Imported /);
   const importElapsedMs = await page.evaluate((started) => performance.now() - started, importStarted);
   await expect.poll(() => new URL(page.url()).searchParams.get('project')).toBe(targetProjectId);
   const roundTripTimelineId = new URL(page.url()).searchParams.get('timeline');
