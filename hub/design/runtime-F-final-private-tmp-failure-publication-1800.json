@@ -1,0 +1,140 @@
+{
+  "time": "2026-10-26T18:00:45.067358+00:00",
+  "worker": "rt-F-final-private-tmp-1800",
+  "service_id": "runtime-delivery-v2-final-1026175800-20980",
+  "status": "STOPPED_AFTER_AUTHORIZED_FAILURE",
+  "exit": 2,
+  "private_tmp_mode": "0700",
+  "private_tmp_uid": 0,
+  "staging_completed": true,
+  "zip_created": false,
+  "failure_detail": "D68 delivery FAIL, lifecycle process exit2 after four-repo staging; specific cause UNKNOWN in supplied receipts",
+  "published_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-report.md",
+      "bytes": 1113,
+      "sha256": "973b2dfafd67a38964b68ee4af188d6bf88e901721ac8cc8145d955015ea6cce"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/result.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-result.json",
+      "bytes": 2101,
+      "sha256": "0b364f872dfbcc77134597374d8ac502ae91e6fc0fd1ed4847482b838fe86eab"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/request-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-request-receipt.json",
+      "bytes": 1182,
+      "sha256": "5617c8d2285e00bfc3e3686eb22aee189972e0a71e147a0c37e372e60b2ab058"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-source-manifest.json",
+      "bytes": 1533,
+      "sha256": "3f8c066ab9824eb0e269fdf712770c569dc539b70e3953f793f0dfe93158f16a"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-validation.md",
+      "bytes": 1195,
+      "sha256": "646d809b147a6c7b0c0b353cb3de2d5e00dbcecf292fc264d60263f7c6470a87"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-handoff.md",
+      "bytes": 403,
+      "sha256": "c303b811f874361a15ff501471be17d903085d369024b507ec95fdf545df31d2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-disk-trace.txt",
+      "bytes": 1038,
+      "sha256": "03574a2745232b27a09fd4428303b5ee842db3d8d3a03c6ed2c087951e41af57"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-sampler-lifecycle.json",
+      "bytes": 731,
+      "sha256": "ae7262f436e6569a74117ef5715f6844b816645d327997d0c6360f4bb7a913a6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-d68-receipt-5r1xf8ka/wrapper.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-wrapper_receipt.json",
+      "bytes": 5810,
+      "sha256": "9585a05b8f945e87dfd6691ac9f5426e52e07b56957adc754874a470466a8ea5"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery-v2-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-builder_receipt.json",
+      "bytes": 132583,
+      "sha256": "d01b36afe8196b50096418569b78beb8d81d92871b36e861120e90d505e2981d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-private-tmp-1800-lifecycle.json",
+      "bytes": 961,
+      "sha256": "b4f5e38461065616dddcf749c0ec4de2420484d17cf4d8a019f8feb581363298"
+    }
+  ],
+  "raw_originals": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/request",
+      "bytes": 262,
+      "sha256": "77219452b0ce9774fad6f6495bfe6aef9f9872c557dae80aa0eeafe0366a90ef"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/summary",
+      "bytes": 2907,
+      "sha256": "d1b55738d5ed8cb1c2473328e8470e6eef05895ee5ef2e425e7c7b44a88741e0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/status",
+      "bytes": 5,
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/exit",
+      "bytes": 2,
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/log.txt",
+      "bytes": 196,
+      "sha256": "9a40e7499ba1f84f76f6f3d6c68dcf5fa04ed5658a808ed0a45320d6807d2432"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/KEEP",
+      "bytes": 104,
+      "sha256": "1481a2887e62f20da0e79a4a080ffbe55b478c45ab42a8340c8383f85e9fc1f6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/snap",
+      "bytes": 116,
+      "sha256": "3599a6866b62492a882a878f19996a162262863d84c23121b8d79e8ed6fc2d8a"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/lifecycle.json",
+      "bytes": 961,
+      "sha256": "b4f5e38461065616dddcf749c0ec4de2420484d17cf4d8a019f8feb581363298"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/disk-trace.tsv",
+      "bytes": 298,
+      "sha256": "1fb98fa0a4b3e8629b021711cfc907c01065682df79fbe44dce377117287dc83"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-d68-receipt-5r1xf8ka/wrapper.json",
+      "bytes": 5810,
+      "sha256": "9585a05b8f945e87dfd6691ac9f5426e52e07b56957adc754874a470466a8ea5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery-v2-receipt.json",
+      "bytes": 132583,
+      "sha256": "d01b36afe8196b50096418569b78beb8d81d92871b36e861120e90d505e2981d"
+    }
+  ],
+  "manager_action": "STOP; no retry, repair, cleanup, investigation worker or artifact review",
+  "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+  "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8"
+}

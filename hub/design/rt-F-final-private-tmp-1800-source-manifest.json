@@ -1,0 +1,30 @@
+{
+  "schema": "timeline.f-final.source-manifest.v1",
+  "status": "preflight-pass-builder-fail",
+  "heads": {
+    "app": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067",
+    "agent": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "trees": {
+    "app": "e2632a4fbe63cadbd03b03edc5d34196a37304fd",
+    "agent": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "runtime": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "upstream_bases": {
+    "app": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "agent": "64197afa297f86f1e738238d5e80aff6d33e303a",
+    "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "composition": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+  },
+  "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+  "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "registry_postimage_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+  "canonical_notes": {
+    "README.template.md": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+    "gate-results.md": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+  },
+  "controlling_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-install-review-next/evidence/review.json"
+}

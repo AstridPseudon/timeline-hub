@@ -1,0 +1,11 @@
+2026-10-26T17:57:30Z pid=2 event=monitor-restarted
+2026-10-26T17:57:30Z available_bytes=5108166656 worker_bytes=253952 stop_threshold_bytes=4294967296
+2026-10-26T17:57:35Z available_bytes=5108166656 worker_bytes=253952 stop_threshold_bytes=4294967296
+2026-10-26T17:57:40Z available_bytes=5108154368 worker_bytes=262144 stop_threshold_bytes=4294967296
+2026-10-26T17:57:45Z available_bytes=5108125696 worker_bytes=290816 stop_threshold_bytes=4294967296
+2026-10-26T17:57:50Z available_bytes=5108125696 worker_bytes=290816 stop_threshold_bytes=4294967296
+2026-10-26T17:57:55Z available_bytes=5108080640 worker_bytes=335872 stop_threshold_bytes=4294967296
+2026-10-26T17:58:00Z available_bytes=5108080640 worker_bytes=335872 stop_threshold_bytes=4294967296
+2026-10-26T17:58:05Z available_bytes=5086334976 worker_bytes=339968 stop_threshold_bytes=4294967296
+2026-10-26T17:58:10Z available_bytes=5105958912 worker_bytes=344064 stop_threshold_bytes=4294967296
+2026-10-26T17:58:10Z monitor_session=62275 event=wait-reap tool_exit=1 stop_trip=false

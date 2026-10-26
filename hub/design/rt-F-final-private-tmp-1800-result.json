@@ -1,0 +1,38 @@
+{
+  "status": "BLOCKED",
+  "classification": "normal service delivery body failure after staging; not TMPDIR refusal",
+  "service_id": "runtime-delivery-v2-final-1026175800-20980",
+  "exit": 2,
+  "builder_invoked": true,
+  "staging_created": true,
+  "zip_created": false,
+  "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+  "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+  "wrapper_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+  "staging": {
+    "admission_free_bytes": 5086334976,
+    "free_bytes_after": 5084434432,
+    "min_free_after_bytes": 4860000000,
+    "max_stage_bytes": 100000000,
+    "measured_bytes": 1126665,
+    "method": "alternates-backed private Git no-checkout worktree"
+  },
+  "lifecycle": {
+    "status": "failed",
+    "terminal": "normal",
+    "process_exit": 2,
+    "sampler_exit": 0,
+    "reaped_pids": [6322],
+    "stop_reason": null,
+    "stop_floor_bytes": 4000000000,
+    "trace_status": "PASS"
+  },
+  "raw_service_paths": {
+    "request_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980",
+    "lifecycle": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/lifecycle.json",
+    "service_trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/disk-trace.tsv",
+    "wrapper_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-d68-receipt-5r1xf8ka/wrapper.json",
+    "builder_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence/candidate/delivery-v2-receipt.json"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "worker_monitor": {
+    "session_id": 62275,
+    "cadence_seconds": 5,
+    "stop_threshold_bytes": 4294967296,
+    "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-private-tmp-1800/evidence/disk-trace.txt",
+    "terminal_tool_exit": 1,
+    "reaped": true,
+    "stop_trip": false
+  },
+  "service_lifecycle": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/lifecycle.json",
+  "service_lifecycle_status": "PASS trace; normal process failure exit 2",
+  "service_sampler_exit": 0,
+  "service_reaped_pids": [6322],
+  "service_stop_floor_bytes": 4000000000
+}

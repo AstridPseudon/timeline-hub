@@ -1,0 +1,25 @@
+{
+  "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+  "control_pipe": false,
+  "exit": 2,
+  "external_dispatch_floor_bytes": 4860000000,
+  "job_id": "delivery-build",
+  "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/KEEP",
+  "parent_pid": 6214,
+  "process_exit": 2,
+  "process_groups": [
+    6320,
+    6322
+  ],
+  "reaped_pids": [
+    6322
+  ],
+  "sampler_binding": "ready\t65024\t1764062\t0\t600\t1\t9c334ca10971f2f81a61a5f6fdfd9dd4d29bf1c77e81ef7d190464a01c65a60b",
+  "sampler_exit": 0,
+  "status": "failed",
+  "stop_floor_bytes": 4000000000,
+  "stop_reason": null,
+  "terminal": "normal",
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026175800-20980/tmp/timeline-delivery-KEEP/disk-trace.tsv",
+  "trace_status": "PASS"
+}

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T17:58:38Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-26T17:57:11.481140+00:00
+<!-- main | 2026-10-26T18:04:12Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-26T18:04:01.225637+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -35,7 +35,7 @@
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
 | D141 REG upgrade | Retain merged13 case upgrade correction | Luna | Independent0458 and0505 PASS | merged | Author fix-next; review0458; identity0505 | Author13 and independent13 PASS; exact source merged95d. Integrated15 actual0508 and independent0513 PASS. | 012889c1 /95d98 |
 | D141 REG TypeScript | Retain regenerated conformance outputs | Luna | Independent0458 PASS | merged | Author fix-next; independent0458 | Exact2pytest, generatorcheck and TS PASS. Normal857e joined95d; integrated15 actual0508 and independent0513 PASS. | 4a66dee1 /857e |
-| F-final and ZIP | Run sole owner-authorized private tmp body | Luna | Owner disposition 17:55 | doing | rt-F-final-private-tmp-1800 | Original 3359 refusal retained. New normal request uses TEST_PRIVATE_TMP=1 and TEST_KEEP; same source, tuple and guards. | Final tuple unchanged |
+| F-final and ZIP | Retain failed owner-authorized rerun | Luna | Recorded failure disposition | blocked:orchestrator | rt-F-final-private-tmp-1800 | [Actual 20980 exit 2 after four-repo staging](../../design/runtime-F-final-private-tmp-failure-publication-1800.json). Private tmp accepted; no ZIP. Cause unknown. | Final tuple unchanged |
 | D141 other proofs | Retain accepted original App journeys | App and Runtime | Owner D141jj frozen App choice | merged | App original controllers and custody | Seven original journeys qualified with disclosed gaps; popup known gap. No deferred catch-up enters this ZIP. Final metadata successor separate. | App82e / Agentecdc |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
 | D136 original nine | Retain independently qualified failure | App and Runtime | D141 stop | gated:D141-stop | Actual 2330; independent 2335 | Nine setup errors in 39.34 seconds; cause UNKNOWN. No reporting fix, producer investigation or next body. | Captured ab1e delta |
@@ -95,11 +95,11 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: Independent artifact review after the sole authorized body succeeds.
-live 1 / cap 6; ready-undispatched 0. One heavy body; no source, cleanup or second build dispatched.
+Next ready: None. Sole authorized rerun failed; artifact review remains gated and all further action awaits recorded disposition.
+live 0 / cap 6; ready-undispatched 0. Owner-required stop after the authorized failure. No repair or second rerun dispatched.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
-Blockers: None awaiting a decision. Owner 17:55 resolved service 3359 refusal for exactly one private temporary directory rerun. Any new refusal or failure stops the lane.
+Blockers: Main and owner — authorized service 20980 failed exit 2 after staging; no ZIP, cause unknown. [Disposition request](../../escalations/runtime-20261026T180045Z-F-final-authorized-rerun-failed.md). No further action dispatched.
 Blockers: Safety — D130 and protected targets stay held. Main16:18 no further cleanup on a floor trip; raw KEEP and held19479 remain.
 
 Current source tuple: Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1; Agentec0a9f5baef2c31bc5179087b83f044524575182/tree83b84c79941917fde535ee3ddba5533a776cace3; Appabac6c809da25f4c6cc7cce61a7d5ea2ac067067/treee2632a4fbe63cadbd03b03edc5d34196a37304fd againstfc24f84994dc36cfae9349112782ab4d91dbc73b; Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40/tree5ab5191a296980a0a6bcd1178ab6902d6478a148. All four final clean clone heads and metadata hashes independently read back1453. No upstream chasing or deferredAppadoption.
@@ -160,3 +160,6 @@ Current pass 2026-10-26T17:55:05.594958+00:00: PLAN and MANAGER-COMMON read; INB
 
 
 Current pass 2026-10-26T17:57:11.481140+00:00: Read PLAN and MANAGER-COMMON; consumed INBOX1937254 and HEADER261586. Recorded owner17:55 authorizes exactly one private0700root temp rerun through TEST_PRIVATE_TMP=1 plus TEST_KEEP, no code or guard change. Sole rt-F-final-private-tmp-1800 queued17:56:42 and actualSTART17:56:50 at5109698560 bytes, --net --heavy/default180. Existing3359 and10589 originals retained; source11, registry2df2, notes and finaltuple unchanged. Independent artifact review follows actual success; any further refusal or failure STOP/report. No cleanup or alternate route.
+
+
+Current pass 2026-10-26T18:04:01.225637+00:00: PLAN and MANAGER-COMMON read. INBOX1937254 and HEADER261586 unchanged; no new recorded disposition. Full bin/workers rt- census completed; Runtime running markers0. All33 original, published and raw evidence byte/hash checks PASS, including KEEP. Authorized20980 remains actual exit2 after four-repo staging; no ZIP, specific cause UNKNOWN. Owner17:55 one-rerun authorization consumed; existing18:00 escalation controls. No retry, repair, configuration change, investigation, artifact review, cleanup or alternate route dispatched. Free5119873024bytes. live0 / cap6; ready-undispatched0. Stop/report retained pending Main and owner disposition.
