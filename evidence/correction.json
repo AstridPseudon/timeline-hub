@@ -1,0 +1,80 @@
+{
+  "schema": "timeline.f.d141.farm-input-return.correction/v1",
+  "task": "rt-F-D141-Farm-input-return-0219",
+  "mode": "evidence_only_derivative",
+  "base_commit": "2912e517da83e087e8cbc31a62a499f5e681b65d",
+  "base_parent": "1b709a7965",
+  "overall": "PASS_AFTER_MINIMUM_CORRECTION",
+  "venue_status": "NOT_READY",
+  "actual_census": {
+    "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-farm-to-lead-runtime-20261026T0150Z-core-census-NOT_READY-full-packet.md",
+    "packet_sha256": "4393b2dbd985573eece7314a50543ecb599064a387f0e052b762bd27fac79631",
+    "output_sha256": "8532e8de9f0cf38ae281aa0097e1ab2c0d705d9a6877babc40a0522db45dc7f2",
+    "exit": 1,
+    "nonpass_checks": 22,
+    "receipt_facts": {
+      "agent": "PASS",
+      "runtime": "PASS",
+      "app": "PASS",
+      "composition": "MISMATCH"
+    },
+    "composition_mismatch": {
+      "cause": "The earlier receipt filename used a 39-hex commit prefix.",
+      "action_already_taken": "Farm requested the normal checkout again with the full 40-hex Composition commit.",
+      "next_action": "Bind the corrected receipt on the next normal Farm census.",
+      "do_not_repeat": ["Agent receipt request", "Runtime receipt request", "App receipt request"]
+    },
+    "row_count_rule": "22 means the original census checks, including Composition; passed Agent/Runtime/App receipts are not phantom missing rows."
+  },
+  "finding_closure": {
+    "review_task": "rt-F-D141-Farm-input-review-0208",
+    "finding_id": "F-D141-REVIEW-001",
+    "finding": "stale Runtime/App receipt-closure absence claim",
+    "status": "CLOSED",
+    "closure": "Removed the false absence claims from the derivative findings, handoff, commands, and map metadata. The actual receipt facts are recorded without changing the receiver or receipt protocol.",
+    "independent_review_artifacts": {
+      "source_manifest_sha256": "c41b1919c9fa3296e158f40df997dd62b76f0afe9235fcf1c8637b5a2a9e1e7d",
+      "review_sha256": "e60e326a5cf4a84e22494290626b0c68dac0318c7afe465fa08d20232acf10f7",
+      "validation_sha256": "7deb68f808ab27af32c7d647b7fe11bf7574db4a841885fec943f5067d74ba2a",
+      "findings_sha256": "c417cc77ba709bb37bd65292ff3999e38af2ffe3992536a4376be02fff23250c",
+      "handoff_sha256": "63e2b5cab8fba59c2a3712f63ca55642f6bec04d8db3116a6e7fa283c371876a"
+    }
+  },
+  "preservation": {
+    "original_author": "Claude <noreply@anthropic.com>",
+    "original_author_date_utc": "2026-10-26T02:07:17Z",
+    "original_nine_payloads_unchanged": true,
+    "original_nine_payload_sha256": {
+      "evidence/commands.md": "63dd7c1356260da732ca24cb5a6180ed6435ee37e5b6a5868fa2f41d1e05fb69",
+      "evidence/findings.md": "7ba61d46d429fcc2f2355e223862dbfeed5dbf0bbc8a3a89c16a2550fb94aac6",
+      "evidence/handoff.md": "98d703c6715a3e4e09029a222133063f445384c3247a3765140aaa492dc8e35c",
+      "evidence/input-map.json": "4f7b1a484d2b52bea962e61f6ecb313aef56cc6f490d505a307763634acaa01c",
+      "evidence/source-manifest.json": "0366897a8f6454f49a354f269d6aed4cd52e2e49387dcb4db3c639b6b9e1d5c3",
+      "evidence/validation.md": "12e09fa4ef78f21c745d47b5f6b1964291368160d1d726c81a416b8f00177704",
+      "evidence/qualified-inputs/composition-receipt.sha256": "81dd4f2578d630329c6171678ea205b541b4144db4a58dddda0b8d4db8831a56",
+      "evidence/qualified-inputs/composition-receipt.txt": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+      "evidence/qualified-inputs/provenance.json": "905ca0a346d2f406974a89bd89f9d7e3cc9a3fe86acfbc02313ba26ca29c46d1"
+    },
+    "unchanged_recipe_and_controls": {
+      "receive_farm_sha256": "f506a7e5d24e03fcc1af745c66a5ca0a5ec48ce8029d01fd04e682c86c83cff7",
+      "receipts_sha256": "c5531c7c75db63dd99016c8b4337dda41295a69f57dcf10f3a679d2a1b182b99",
+      "test_recipe_sha256": "b9fd807e8e0699a3502ad42b4a9c70deb079ba20b6927ef64f67defaf9512919",
+      "commands_sha256": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3",
+      "existing_result": "97 passed in 168.38s (0:02:48)"
+    }
+  },
+  "changed_documents": [
+    "evidence/input-map.json",
+    "evidence/commands.md",
+    "evidence/source-manifest.json",
+    "evidence/findings.md",
+    "evidence/validation.md",
+    "evidence/handoff.md"
+  ],
+  "limits": [
+    "No Farm census was rerun by this derivative.",
+    "No child request, import, control, service, core, install, acquisition, network, Store, product, or Git operation was performed.",
+    "No production code, test, pin, guard, recipe, source adapter, generic reader, or registry changed.",
+    "C0 request/reply shapes and all remaining owner, provenance, and parser mappings remain unchanged."
+  ]
+}

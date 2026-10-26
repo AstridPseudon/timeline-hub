@@ -2,6 +2,11 @@
 
 Status: `SOURCE_PASS / VENUE_NOT_READY`.
 
+The 01:50Z Farm census had 22 non-pass checks. Agent, Runtime, and App
+checkout receipts were `PASS`; only the Composition receipt was `MISMATCH`
+because its earlier filename used 39 hex characters. Farm already requested
+the corrected normal checkout with the full 40-hex Composition commit.
+
 Use `input-map.json` as the complete 22-row map and `commands.md` as the
 owner-command packet. The receiver remains the production caller:
 `ops-d140-farm/receive-farm.sh --check-only`, with producer closure delegated
@@ -18,8 +23,9 @@ The next legitimate sequence is:
 4. Farm control-plane owners bind the original dependency wheelhouse, central
    service/suite, D73 dry route, D124 core route, current profile, disk
    witness destination and retained root.
-5. Farm receipt owner binds the corrected Composition receipt and obtains
-   genuine Runtime/App queue receipts through normal make-checkout.
+5. Farm receipt owner binds the already-requested corrected full-40-hex
+   Composition receipt and its digest. Do not request Agent, Runtime, or App
+   receipts again; those closures passed in the actual census.
 6. Run the existing pre-child check-only census. Only if it is READY may the
    lead issue the one normal installed-schema child request from
    `ops-d140-farm/commands.md`.
@@ -33,4 +39,6 @@ metadata, KEEP marker and clean checkout.
 
 Blocked precisely on the external venue/owners listed above. No adapter is
 necessary: the existing normal producer supports the portable output shape,
-but its actual schema carrier and venue receipts are absent.
+but its actual schema carrier and remaining venue inputs are absent. The
+Composition receipt remains pending normal Farm admission; the Agent,
+Runtime, and App receipt closures are not blockers.

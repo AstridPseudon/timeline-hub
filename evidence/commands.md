@@ -83,10 +83,11 @@ bytes, 0755), `60d2238a…` (18066 bytes, 0755), and `8215f5d9…` (14033 bytes,
    `tools/p4-d73-pinned-launch.sh` (SHA `9f668e39…`), and CORE_ROUTE must use
    the unchanged D124 command in `ops-d140-farm/commands.md:201-232`.
 
-5. Farm receipt owner: bind the corrected full-SHA Composition receipt and
-   digest from `evidence/qualified-inputs/`; request genuine Runtime/App
-   checkout receipts through the normal `make-checkout` route rather than
-   fabricating queue files.
+5. Farm receipt owner: bind the already-requested corrected full-SHA
+   Composition receipt and digest from `evidence/qualified-inputs/`; do not
+   request the Agent, Runtime, or App checkout receipts again. The 01:50Z
+   census recorded those three receipt closures as `PASS`; only the prior
+   39-hex Composition filename was `MISMATCH`.
 
 ## Normal route, once all pre-child inputs are real
 

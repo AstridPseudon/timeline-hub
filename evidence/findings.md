@@ -4,12 +4,13 @@
 
 The complete 01:50Z packet is addressed in one source pass. The frozen
 Agent/Runtime/App/Composition source objects are present and their current
-checkouts are clean. The corrected full-40-hex Composition queue receipt is
-portable and ready for a new Farm census. The venue remains `NOT_READY`:
-there is no D141 installation summary, physical D139a schema carrier/RECORD/
-direct_url/trusted manifest, Farm-bound 2149 census, original dependency
-wheelhouse, current control-plane routes/profile, or Runtime/App normal queue
-receipt closure.
+checkouts are clean. The actual census recorded Agent, Runtime, and App
+checkout receipts as `PASS`; only the Composition receipt was mismatched
+because the earlier filename used 39 hex characters. Farm already requested
+the normal checkout again with the full 40-hex Composition commit. The venue
+remains `NOT_READY`: there is no D141 installation summary, physical D139a
+schema carrier/RECORD/direct_url/trusted manifest, Farm-bound 2149 census,
+original dependency wheelhouse, or current control-plane routes/profile.
 
 The 22 rows are intentionally split into two categories:
 
@@ -38,10 +39,18 @@ The 22 rows are intentionally split into two categories:
 - C0 request/reply shapes were read and preserved; no product, schema, client,
   pin, test, receipt protocol, or guard was changed.
 
+## Review finding closure
+
+The independent 0208 review found one stale documentation claim: Runtime/App
+receipt closure was incorrectly described as absent. That claim is removed in
+this derivative. The 22-row map remains the original census-check list; it
+does not grow to 24 rows for the three receipts already marked `PASS`. The
+remaining receipt item is only the Composition full-40-hex recheck.
+
 ## Genuine absent prerequisites
 
 The exact owner and next command for every row are in `input-map.json` and
-`commands.md`. The only prepared portable artifact is the corrected
-Composition receipt. Runtime/App checkout receipts must be obtained through
-the normal `make-checkout` producer; the current checkout directories alone
-are not receipt closure. No guessed Farm paths are presented as inputs.
+`commands.md`. The only prepared portable artifact awaiting admission is the
+corrected Composition receipt. Agent/Runtime/App receipt closure is already
+PASS in the actual census and must not be requested again. No guessed Farm
+paths are presented as inputs.

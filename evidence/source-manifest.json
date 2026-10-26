@@ -1,7 +1,45 @@
 {
   "schema": "timeline.d141.farm-source-manifest/v1",
   "status": "SOURCE_PASS_VENUE_NOT_READY",
-  "scope": "original sources, hashes, formats, owners and portable receipt inputs; no Farm execution claim",
+  "scope": "derivative correction of the 0201 source packet after the independent 0208 review; no Farm execution claim",
+  "derivation": {
+    "base_commit": "2912e517da83e087e8cbc31a62a499f5e681b65d",
+    "base_parent": "1b709a7965",
+    "base_author": "Claude <noreply@anthropic.com>",
+    "base_author_date_utc": "2026-10-26T02:07:17Z",
+    "original_packet_scope": "the nine producer outputs authored under repo-relative evidence/ paths",
+    "original_packet_files_and_sha256": {
+      "evidence/commands.md": "63dd7c1356260da732ca24cb5a6180ed6435ee37e5b6a5868fa2f41d1e05fb69",
+      "evidence/findings.md": "7ba61d46d429fcc2f2355e223862dbfeed5dbf0bbc8a3a89c16a2550fb94aac6",
+      "evidence/handoff.md": "98d703c6715a3e4e09029a222133063f445384c3247a3765140aaa492dc8e35c",
+      "evidence/input-map.json": "4f7b1a484d2b52bea962e61f6ecb313aef56cc6f490d505a307763634acaa01c",
+      "evidence/source-manifest.json": "0366897a8f6454f49a354f269d6aed4cd52e2e49387dcb4db3c639b6b9e1d5c3",
+      "evidence/validation.md": "12e09fa4ef78f21c745d47b5f6b1964291368160d1d726c81a416b8f00177704",
+      "evidence/qualified-inputs/composition-receipt.sha256": "81dd4f2578d630329c6171678ea205b541b4144db4a58dddda0b8d4db8831a56",
+      "evidence/qualified-inputs/composition-receipt.txt": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+      "evidence/qualified-inputs/provenance.json": "905ca0a346d2f406974a89bd89f9d7e3cc9a3fe86acfbc02313ba26ca29c46d1"
+    },
+    "independent_review": {
+      "task": "rt-F-D141-Farm-input-review-0208",
+      "source_manifest_sha256": "c41b1919c9fa3296e158f40df997dd62b76f0afe9235fcf1c8637b5a2a9e1e7d",
+      "review_sha256": "e60e326a5cf4a84e22494290626b0c68dac0318c7afe465fa08d20232acf10f7",
+      "validation_sha256": "7deb68f808ab27af32c7d647b7fe11bf7574db4a841885fec943f5067d74ba2a",
+      "findings_sha256": "c417cc77ba709bb37bd65292ff3999e38af2ffe3992536a4376be02fff23250c",
+      "handoff_sha256": "63e2b5cab8fba59c2a3712f63ca55642f6bec04d8db3116a6e7fa283c371876a",
+      "finding_closed": "F-D141-REVIEW-001 stale Runtime/App receipt-closure absence claim"
+    },
+    "actual_farm_census": {
+      "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-farm-to-lead-runtime-20261026T0150Z-core-census-NOT_READY-full-packet.md",
+      "packet_sha256": "4393b2dbd985573eece7314a50543ecb599064a387f0e052b762bd27fac79631",
+      "status": "NOT_READY",
+      "exit": 1,
+      "nonpass_checks": 22,
+      "census_output_sha256": "8532e8de9f0cf38ae281aa0097e1ab2c0d705d9a6877babc40a0522db45dc7f2",
+      "receipt_results": {"agent": "PASS", "runtime": "PASS", "app": "PASS", "composition": "MISMATCH"},
+      "composition_followup": "Farm already requested the corrected normal checkout receipt with the full 40-hex Composition commit; no passed receipt is requested again."
+    },
+    "correction_scope": "documentation-only; remove false Runtime/App absence wording, retain the original 22 non-pass ids, and preserve all owners, provenance, parser references, C0 shapes, and recipe/control hashes"
+  },
   "frozen_tuple": {
     "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "path": "/home/user/work/wt/agt-pin-28e56cac", "origin": "https://github.com/peteromallet/astrid-agent"},
     "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "path": "/home/user/work/runtime", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
@@ -59,7 +97,17 @@
     "directory": "evidence/qualified-inputs",
     "manifest": "evidence/qualified-inputs/provenance.json",
     "items": ["composition-receipt.txt", "composition-receipt.sha256"],
-    "limitation": "These are authentic queue text and digest, but direct receiver admission still requires the normal Farm queue/done path, worker meta and KEEP closure; copying them does not make the venue READY"
+    "limitation": "These are authentic Composition queue text and digest, but direct receiver admission still requires the normal Farm queue/done path, worker meta and KEEP closure; copying them does not make the venue READY",
+    "receipt_facts": "Agent, Runtime, and App checkout receipts passed the actual 01:50Z census; only Composition remains pending recheck"
+  },
+  "preserved_controls": {
+    "recipe_sha256": {
+      "ops-d140-farm/receive-farm.sh": "f506a7e5d24e03fcc1af745c66a5ca0a5ec48ce8029d01fd04e682c86c83cff7",
+      "ops-d140-farm/receipts.py": "c5531c7c75db63dd99016c8b4337dda41295a69f57dcf10f3a679d2a1b182b99",
+      "ops-d140-farm/test_recipe.py": "b9fd807e8e0699a3502ad42b4a9c70deb079ba20b6927ef64f67defaf9512919",
+      "ops-d140-farm/commands.md": "f6804f6b4ad52b0108169e8b125b238307f82764ad835e95404da214286fd7f3"
+    },
+    "existing_control_result": "97 passed in 168.38s (0:02:48); unchanged and not rerun for this metadata-only correction"
   },
   "not_sources": ["historical D137 installed-kit JSON as D141 proof", "oldvenv or shared dependency installs", "bootstrap tgz as DEPENDENCY_SEED", "2149/2216 historical census as a current D141 census", "synthetic Farm receipts", "alternate schema source or acquisition"]
 }

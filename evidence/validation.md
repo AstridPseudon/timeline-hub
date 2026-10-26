@@ -1,4 +1,48 @@
-# D141 Farm input-producer validation
+# D141 Farm input-return correction validation
+
+## Derivative correction result
+
+This is a metadata-only derivative of the 0201 packet. The 0208 independent
+review finding is closed: the actual 01:50Z census records Agent, Runtime, and
+App checkout receipts as `PASS`; only Composition remains mismatched pending
+the already-requested corrected full-40-hex receipt. The original 22 census
+non-pass checks remain 22, with no phantom receipt rows added.
+
+## Correction acceptance checks
+
+| Check | Result |
+| --- | --- |
+| Actual Farm packet facts | PASS; `NOT_READY`, exit 1, 22 non-pass, Agent/Runtime/App `PASS`, Composition `MISMATCH` |
+| Corrected map cardinality | PASS; 22 original rows, no passed-receipt rows added |
+| Corrected Composition receipt | PASS; full 40-hex filename, 87 bytes, SHA `ea43438c…` |
+| Review finding closure | PASS; F-D141-REVIEW-001 closed without receiver/protocol changes |
+| Recipe/control preservation | PASS; existing 97-control result and hashes retained |
+| Product/code/test/pin/guard/recipe changes | PASS; none |
+
+```sh
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/input-map.json
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/source-manifest.json
+/home/user/work/venv-runtime/bin/python -m json.tool evidence/correction.json
+/home/user/work/venv-runtime/bin/python - <<'PY'
+import json
+from pathlib import Path
+mapping = json.loads(Path('evidence/input-map.json').read_text())
+correction = json.loads(Path('evidence/correction.json').read_text())
+assert len(mapping['checks']) == 22
+assert correction['actual_census']['nonpass_checks'] == 22
+assert correction['actual_census']['receipt_facts'] == {
+    'agent': 'PASS', 'runtime': 'PASS', 'app': 'PASS', 'composition': 'MISMATCH'
+}
+assert mapping['checks'][-1]['status'] == 'MISMATCH_AWAITING_RECHECK'
+PY
+test "$(wc -c < evidence/qualified-inputs/composition-receipt.txt)" -eq 87
+git diff --check
+git diff --quiet -- ops-d140-farm/receive-farm.sh ops-d140-farm/receipts.py ops-d140-farm/test_recipe.py ops-d140-farm/commands.md
+```
+
+PASS: all derivative JSON parses; map cardinality and receipt facts match the
+actual Farm packet; the portable Composition receipt is the full-40-hex,
+87-byte artifact; and the production recipe/control files are unchanged.
 
 ## Read-only source checks
 

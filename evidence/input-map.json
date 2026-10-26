@@ -18,6 +18,23 @@
       "ops-d140-farm/receipts.py:381-438"
     ]
   },
+  "actual_census_receipts": {
+    "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-farm-to-lead-runtime-20261026T0150Z-core-census-NOT_READY-full-packet.md",
+    "status": "NOT_READY",
+    "exit": 1,
+    "nonpass_checks": 22,
+    "output_sha256": "8532e8de9f0cf38ae281aa0097e1ab2c0d705d9a6877babc40a0522db45dc7f2",
+    "receipt_closure": {
+      "agent": "PASS",
+      "runtime": "PASS",
+      "app": "PASS",
+      "composition": "MISMATCH",
+      "composition_reason": "The earlier receipt filename used a 39-hex commit prefix.",
+      "composition_action": "Farm already requested the normal checkout again with the full 40-hex Composition commit; bind that receipt on the next census.",
+      "passed_receipts_must_not_be_requested_again": ["Agent", "Runtime", "App"]
+    },
+    "row_count_note": "The 22 rows below are the original census checks, including the Composition receipt mismatch; passed Agent/Runtime/App receipts are not added as phantom rows."
+  },
   "checks": [
     {
       "id": "operational.installation-summary",
@@ -273,15 +290,15 @@
     },
     {
       "id": "receipt.FARM_CURRENT_COMPOSITION_RECEIPT",
-      "status": "READY_TO_RECHECK",
+      "status": "MISMATCH_AWAITING_RECHECK",
       "owner": "Farm receipt owner",
       "kind": "supplied_producer_artifact",
       "parser_field": "FARM_CURRENT_COMPOSITION_RECEIPT plus FARM_CURRENT_COMPOSITION_RECEIPT_SHA256",
       "parser_ref": "ops-d140-farm/receive-farm.sh:464; ops-d140-farm/receipts.py:116-136",
       "required_format": "normal make-checkout queue/done text at the exact 40-hex commit filename, with worker meta and KEEP closure",
       "known_source": "queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40; SHA ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1; bytes 87",
-      "next_command": "Farm receipt owner: bind this corrected full-SHA receipt and its digest, then rerun D140_PHASE=pre-child receive-farm.sh --check-only",
-      "absent_prerequisite": "The prior 39-hex receipt is invalid; the corrected receipt exists but has not yet been admitted by a new Farm census"
+      "next_command": "Farm receipt owner: bind the already-requested corrected full-SHA receipt and its digest, then rerun D140_PHASE=pre-child receive-farm.sh --check-only; do not request Agent, Runtime, or App receipts again",
+      "absent_prerequisite": "The prior 39-hex receipt is invalid; the corrected full-40-hex receipt exists but has not yet been admitted by a new Farm census"
     }
   ]
 }
