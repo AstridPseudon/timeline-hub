@@ -1019,10 +1019,17 @@ def _admitted_timeline_element_resources(config: Mapping[str, Any], *, registry=
     if packs is None:
         packs = [row.pack for row in discover_pack_metadata(project_root=Path(REPO_ROOT))]
     bound = {}
+    from astrid.core.rendering.project_elements import selection_key, selections
+
+    project_selections = {selection_key(row["reference"]) for row in selections(config)}
     for clip in candidates:
         ref = clip.get("elementRef")
         explicit = isinstance(ref, Mapping)
         ref = ref if explicit else {"kind": "effects", "id": clip.get("clipType")}
+        if explicit and all(key in ref for key in ("packId", "kind", "id", "revision")) and selection_key(ref) in project_selections:
+            # Project source is staged by the Remotion renderer. It does not
+            # nominate checkout-local native motion modules for review tools.
+            continue
         clip_id, element_id, kind = clip.get("id"), ref.get("id"), ref.get("kind")
         if not all(isinstance(value, str) and value for value in (clip_id, element_id, kind)):
             raise CapabilityValidationError("element resource binding requires exact clip/element/kind identities")
@@ -1461,6 +1468,11 @@ def _prepare_managed_render_inputs(
                 "expanded_config_hash": _expanded_config_hash(expanded_config),
             },
         )
+        if authoring_preview is not None:
+            from astrid.core.rendering.project_elements import resolve_project_elements
+
+            config = resolve_project_elements(snapshot.config, project=snapshot.project_id, client=_client)
+            snapshot = replace(snapshot, config=config, config_hash=_expanded_config_hash(config))
         validate_managed_render_snapshot(snapshot)
     except ManagedRenderValidationError as exc:
         raise CapabilityValidationError(str(exc), details=exc.details) from exc
