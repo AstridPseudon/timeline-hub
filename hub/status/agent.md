@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:31:57Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# agent board, 2026-10-26T01:30Z
+<!-- agent | 2026-10-26T01:35:47Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+# agent board, 2026-10-26T01:33Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -44,7 +44,7 @@
 | D100 projection source | Qualify held donor applicability | Runtime Luna read only | Complete finite source assessment | merged | Author1713; independent1727 PASS | PASS_SOURCE_ASSESSMENT | Proved Agent State item identity seam, held d3b5 applicable. Product and own9 remain unqualified; two old inputs EXACTMISSING, no reconstruction needed. | Evidence only |
 | D100 item birth source | Preserve authenticated first source items | HARD Sol and Luna | Typed FPS return then genuine original9 | review | Runtime42040; App2056; Sol2108 | Corrected27 GREEN at bounded scope; original9 still9 setup ERROR. Product source held pending meaningful next proof. | 9486 /42040 held |
 | D107 current source | Preserve genuine setup history | Runtime Luna and protected Luna | Exact protected1550 source | merged | rt-D107-current-baseline-1530 | Integrated blob equals reviewed | Source-only normal9350; originalM1 blob exact. Eight genuine entries,131assert/5raises preserved. Both later pin failures remain under shared root row. | 9350a674a8 / b4b380 |
-| D117 installed render | Qualify genuine installed render | Farm and Runtime | Applied child and stage qualification | blocked:farm | Farm D77; Runtime portable1624 | Exact checkouts and lock verified | Farm Agent91398 tree523893 and Runtime1daca treea522 received. Correct18d lock proven. Lead profiles/stage and actual render still owed. | Applied tree523893 |
+| D117 installed render | Preserve known render gap | Farm and Runtime | D141 stop | gated:D141-stop | Existing stopped D77 owners | Source and lock evidence only | D141 cuts installed render. Historical applied tuple retained; no stage, render or new investigation. | Applied tree523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Pending or no diff | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 | D122 host proof | Preserve superseded9ea proof preparation | Farm service | Host fallback already HOME | gated:superseded | Farm lead14:41 | No original body executed | Farm lead dropped9ea proof; historical refusal and preparation retained. Host96df bounded14 PASS; full core confirms REG closure. | 9ea held |
 | D118a inverse packet | Preserve exact guarded boundary evidence | App Luna read only | Complete retained evidence | merged | app-D118a-inverse-boundary-packet-1212 | Exact missing records retained | Packaging complete. Stage and physical records EXACTMISSING; no product attribution or replay. Shared source1417 owns next meaningful fix. | Evidence only |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Run proof with bound JUnit path | Luna and service | Independent0124 source PASS | doing | Controller0128 after0119/0124 | Final source PASS; exact95f5ce manifest and630bb row. Admitted5016035328 bytes; normal CAS then corrected proof. Old10086 and custodyFAIL retained. | Frozen28e/867c/6a |
+| P4 D141 cut rerun | Run proof with bound JUnit path | Luna and service | Independent0124 source PASS | doing | Controller0128 after0119/0124 | Source PASS; CAS only owned row, outside bytes exact. Service19479 queued at fixed5GB floor, zero body. Dispatch5016035328; old10086 custodyFAIL retained. | Frozen28e/867c/6a |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
@@ -142,13 +142,13 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm — qualified complete recipe received; genuine census, child, imports, controls and cut core still owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Controller0128 normal CAS/readback and corrected bound P4 proof. live 1 / cap 3 source; one heavy controller, no body claimed yet. ready-undispatched 0.
+Next ready: Existing service19479 after normal admission clears; independent result review on terminal. live 1 / cap 3 source; one controller, zero body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
 D100a: normal c585 includes exact provider09cbeedd/test39ed571d. Independent2341 custody PASS plus owner2320 release gates consumed. Managed105/media48/managed30 source wait cleared; Farm cut full-core per-ID proof owed. Original9 retained nine setup errors separately; further investigation stopped.
 
-Disk: 4885778432 bytes currently. No eligible ended unprotected worktree remains; dirty G2, KEEP records, old child3e163 and all current cut pins stay. Ordinary maintenance has no refusals.
+Disk: 4891828224 bytes currently. Sweep3 removed0; compact gzipped6 logs, no scratch/test dirs packed. No eligible ended unprotected worktree remains; dirty G2, KEEP records, old child3e163 and all current cut pins stay. Ordinary maintenance has no refusals.
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
@@ -187,3 +187,7 @@ Pass 2026-10-26T01:24Z: Author0119 terminal sourcePASS and wholepath0119 complet
 Pass 2026-10-26T01:28Z: Independent0124 terminal PASS_OPERATIONAL_SOURCE; immediately dispatched existing controller0128 at5016035328 bytes, no other worker/heavy body. New normal manifest/runmanifest/argv have one JUnit destination; previous10086 outcome and custodyFAIL remain unchanged. Final source review also qualified whole-path evidence within its stated bounds. No new telemetry requirement, product change or own-test investigation.
 
 Pass 2026-10-26T01:30Z: H6 Runtime01:15 and Farm01:30 actual source boards clear recipe blocker: complete qualified1b709a handoff011036 received, Farm sole census0130 active. Changed receiving/core row to doing and removed stale Runtime source blocker. Runtime cut full has actual outcomes, pristine still serial; no REG inference. P4 controller0128 active, no actual new service receipt yet.
+
+Blockers: Runtime kit — existing P4 service19479 waits fixed5GB service floor despite recorded D141c4.7GB admission. Peer peer-agent-to-runtime-lead-20261026T0133Z-D141-P4-service-admission.md sent; no bypass or second request.
+
+Pass 01:33Z: Plan, common rules, header and new inbox read (no new bytes). H6 actual Farm01:30/Runtime01:15/App01:17 read. P4 row CAS succeeded;19479 queued at fixed service floor, zero body. Ordinary sweep3/compact active; Runtime/lead peer requests normal implementation of existing D141c admission. All raw KEEP and frozen sources retained.
