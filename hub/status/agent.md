@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T00:06:19Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
+<!-- agent | 2026-10-26T00:10:09Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
 # agent board, 2026-10-26T00:04Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -124,12 +124,14 @@
 | D100a source intake | Receive qualified first item birth source | Luna | Independent receiving PASS | merged | Intake2336; receiver2341 | PASS_RECEIVING_CUSTODY | Exact two blobs and approved delta HOME; prior27/security/noB022 PASS. Farm behavior pending. | c585cb2aa7 / bbeea |
 | D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 | D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
-| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Correct generated provenance | doing | Author2355; review2357 FAIL; return0001; provenance0005 | Source preservation PASS; tools failed | Artifact fixed normally. Actual frozen Runtime6a011 received; normal15-byte provenance adoption0005 active. | aa5a91 /15ce1a |
+| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Correct generated provenance | doing | Author2355; firstfix0001/0005; cumulative0008 | Normaltools PASS; final review active | Artifact and normal Runtime6a011 provenance now PASS; canonical15 exact. Cumulative reviewer0008 active, no freeze yet. | aa5a91 /15ce1a |
 | F D141 pristine comparator | Resolve exact upstream measurement recipe | Luna | MAIN pristine scope | gated:D141-freeze | Prep2350; independent2353 | NOT_READY; source review active | D141b authorizes17 roots and plain pytest,noD73 controls. Old recipe superseded; source2358 active,no body. | 1de87d source |
 | F D141 own failure notes | List unchanged own failures by root cluster | Luna | Notes source review complete | merged | Prep2350; reviewer2353 | Documentary conservation PASS | All370 IDs and52 clusters exact; media48 nested in105. Old executable recipe FAIL is superseded. No behavior credit. | Evidence only |
 
-| F D141b command | Prepare reviewed plain pristine pytest | Luna | Independent command review | review | Author2358; reviewer0003 | Author PASS_SOURCE_READY | Plain17-root source6274 ready; no controls/body. Exactcheckouts and source/disk/after-status guards; review active. | 6274c362f9 |
+| F D141b command | Prepare reviewed plain pristine pytest | Luna | Independent command review | review | Author2358; review0003 FAIL; return0008 | Author PASS_SOURCE_READY | First return fixes durable exit/log and diskmonitor false-pass.17 roots unchanged; no body before review/freeze. | 6274c362f9 |
 | U4 App cut handoff | Supply exact frozen Agent receiving inputs | Manager | Final reviewed freeze | blocked:agent | Agent manager after2357 | No handoff yet | Send SHA/tree/ref/parents/receipts and Runtimefa9 cut tuple to App and lead together at freeze. | Cut pending |
+
+| P4 D141 cut rerun | Reserve existing P4 controller | Luna / service | Journey recipe,finalheads,MAIN GO | gated:MAIN-GO | Existing P4 continuation; Agent sole owner | NOT_READY; no body | App2346 recipe absent,Agent freeze pending. Explicit MAIN GO and oneheavy sequence required; App owns verdict. | Cut pending |
 
 Integration: c585cb2aa73c5298d474e614cb2144f58f27e605; tree81999820a81432c06ef7aefc4519dc84e71f56f7. D100a exact reviewed own delta merged normally. Previous identity16 normal9521 retained. Final U2 freeze pending exact upstream8b6ed received object and reviewed join. Nothing merges after final freeze without MAIN ruling.
 
@@ -153,3 +155,5 @@ Later: transcript authority,originalTrue redo,graph child birth and fork18 retai
 INBOX consumed through 1963016 bytes. [Latest handoff](../../design/peer-agent-to-agent-lead-runtime-20261025T2348Z-D141-source-and-D100a-home.md).
 
 Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime final normal6a011 and independent2350 PASS received from actual published board/peer. Agent firstreturn0001 normally fixed stale am-footage artifact; provenance0005 immediately dispatched on that branch. Initial2357 FAIL retained with full source conservation and missing/wrong-environment tests. Bun2357 borrowed App node_modules (missing zod); final qualification must use actual existing Agent profile dependency tree. No source overwrite or test weakening.
+
+Pass00:10Z: P4 reservation added per MAIN00:43, future body held for explicit GO and actual App2346 recipe. Existing controller lineage will be continued, no duplicate. Runtime6a011 exact normal receiving and all15 canonicalbytes verified by author0005; final cumulative0008 source/tests active. Comparator firstreturn0008 active after command0003 FAIL; no heavy body.
