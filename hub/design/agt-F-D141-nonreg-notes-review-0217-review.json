@@ -1,0 +1,82 @@
+{
+  "schema": "timeline.agent.f.d141.nonreg.notes_template.independent_review.v1",
+  "artifact": "agt-F-D141-nonreg-notes-template-0213",
+  "verdict": "PASS",
+  "scope": "Independent documentary review of source/evidence-only D141 notes template; no product adoption or behavior credit.",
+  "sources": {
+    "hub_design_root": "/home/user/timeline-hub/hub/design",
+    "author_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141-nonreg-notes-template-0213/evidence",
+    "source_inputs": 14,
+    "pristine_per_id_sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5",
+    "cut_tuple": {
+      "agent": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "app": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "pristine_tuple": {
+      "agent": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "app": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "composition": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+    }
+  },
+  "checks": {
+    "source_hashes": "PASS: all 14 source_manifest entries match retained hub/design bytes",
+    "d134_rows": "PASS: 370 unique IDs, exact D134 TSV field copies and exact first frames",
+    "root_membership": "PASS: 52 disjoint groups, 370 members, no duplicate or omitted ID",
+    "named_slices": "PASS: managed105/root-019, media48 nested and non-additive, CLI22/root-045, fork18/root-008, identity16/root-004 with root-005 separate, selectedPARAM14/root-022 with roots 020/021/023 separate, legacyword35/root-048, and all other roots retained",
+    "notes_input": "PASS: notes-input2350 root sections reproduce all 52 source-defined memberships and 370 IDs",
+    "pristine_inventory": "PASS: 3,082 concrete IDs + 173 explicit null-ID aggregate records = 3,255; statuses PASS 3,250 / FAIL 4 / ERROR 1",
+    "exact_pristine_rows": "PASS: 21 exact D134-row matches: 17 PASS, 3 FAIL, 1 ERROR; unmatched rows remain UNKNOWN",
+    "upstream_presence": "PASS: y=21, n=3, UNKNOWN=346; n only uses exact retained test-file absence, not inventory absence",
+    "environment_policy": "PASS: four bad environment nodes are REQUIRED_IF_CUT_NONPASS; fifth timeout remains UNKNOWN",
+    "c0_wire_inventory": "PASS: review2353 retains the unchanged request/reply/preview field inventory",
+    "current_cut_boundary": "PASS: all 370 cut_status and final_classification values are PENDING; no current failure deduction",
+    "historical_boundary": "PASS: D134 failed/error statuses and classifications remain measurement-only",
+    "source_only_scope": "PASS: no tests, imports, collection, product execution, acquisition, or join performed"
+  },
+  "finite_findings": [
+    {
+      "id": "F-D141-REV-001",
+      "severity": "none",
+      "result": "PASS",
+      "finding": "The JSON table and Markdown table both retain every D134 ID exactly once with exact retained frames, root, and source measurements."
+    },
+    {
+      "id": "F-D141-REV-002",
+      "severity": "none",
+      "result": "PASS",
+      "finding": "The template conserves the historical scope and named-slice boundaries without double-counting media48."
+    },
+    {
+      "id": "F-D141-REV-003",
+      "severity": "none",
+      "result": "PASS",
+      "finding": "Pristine exact matching is status-faithful; null-ID aggregates are not converted into IDs or matches."
+    },
+    {
+      "id": "F-D141-REV-004",
+      "severity": "none",
+      "result": "PASS",
+      "finding": "Upstream absence is narrowly evidenced only by exact frozen-source test-file absence; all other no-match rows stay UNKNOWN."
+    },
+    {
+      "id": "F-D141-REV-005",
+      "severity": "none",
+      "result": "PASS",
+      "finding": "The later join contract preserves same-kind REG, NEW_OURS, FAILS_BOTH, conditional rerun, and timeout-UNKNOWN rules without executing them."
+    },
+    {
+      "id": "F-D141-REV-006",
+      "severity": "retained-boundary",
+      "result": "RETAINED",
+      "finding": "The retained D141 prep review is FAIL/not-ready for its prep artifacts; the template does not convert that into a current verdict and correctly keeps the join pending. The retained D141c per-ID independent review is PASS_EVIDENCE."
+    }
+  ],
+  "nonclaims": [
+    "No current cut XML or cut outcome exists in this packet.",
+    "No REG/nonREG verdict, behavior credit, product-fault inference, or count closure is issued.",
+    "App owns P4; Farm/Runtime own the eventual final REG join."
+  ]
+}

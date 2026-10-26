@@ -1,0 +1,150 @@
+{
+  "admission": {
+    "body_executed_by_this_task": false,
+    "continuous_stop_floor_bytes": 4000000000,
+    "heavy_body_or_dependency_acquisition": false,
+    "qualified": true,
+    "retained_pristine_comparator_minimum_observed_bytes": 5277556736,
+    "retained_pristine_comparator_source_admission_bytes": 5295308800,
+    "source_admission_floor_bytes": 4600000000,
+    "task_recorded_source_only_bytes": 4854050816
+  },
+  "artifact": "agt-F-D141-nonreg-notes-template-0213",
+  "membership": {
+    "d134_root_clusters": 52,
+    "d134_unique_ids": 370,
+    "double_count_guard": "media48 is nested in managed105/root-019 and is not additive",
+    "root_ids_conserved_once": true
+  },
+  "pristine_inventory": {
+    "concrete_ids": 3082,
+    "null_id_aggregate_records": 173,
+    "outcome_conservation": "3255 = 3082 + 173",
+    "per_id_sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5",
+    "records": 3255,
+    "status_counts": {
+      "ERROR": 1,
+      "FAIL": 4,
+      "PASS": 3250,
+      "SKIP": 0
+    }
+  },
+  "retained_artifact_hashes": {
+    "pristine_raw_stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pristine_raw_stdout": {
+      "bytes": 49032,
+      "sha256": "dfe9005382ebcea40cadc5cf0491751122bec6a703f39f484bade637019f0b4b"
+    },
+    "pristine_source_before_after": {
+      "byte_equal": true,
+      "sha256": "6a460b1eedf4478da4652bc5bbd2f43961b5e489f24b5b5fb6b201a6860d70f5"
+    },
+    "pristine_xml": {
+      "bytes": 4690547,
+      "sha256": "ceeb66095a1e00929da0007639dd3d7c8267126b4541c0da2c86011dab63009a"
+    }
+  },
+  "safety": {
+    "hub_writes": false,
+    "imports_collection_typecheck_lint_product_execution": false,
+    "product_source_modified": false,
+    "raw_xml_or_heavy_body_copied": false,
+    "tests_executed": false
+  },
+  "schema": "timeline.agent.f.d141.nonreg.notes_template.source_manifest.v1",
+  "source_authority": {
+    "actual_pristine_tuple": {
+      "agent_commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "app_commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "composition_commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "runtime_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+    },
+    "cut_tuple": {
+      "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "app_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d"
+    },
+    "historical_d134": {
+      "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+    }
+  },
+  "source_inputs": [
+    {
+      "bytes": 109618,
+      "path": "design/agt-F-D134-root-clusters-2022-root-clusters.json",
+      "sha256": "789f644fa3d0ab3aaf009073657c4437505024b3898162e1cbb5d304c6b18e7e"
+    },
+    {
+      "bytes": 227438,
+      "path": "design/agt-F-D134-root-clusters-2022-per-id.tsv",
+      "sha256": "4cfe0a5fedd24f31e6c438d3a5240d61ae7fcebfe117a2c24589f0959b78ef3e"
+    },
+    {
+      "bytes": 2727,
+      "path": "design/agt-F-D134-root-clusters-2022-source-manifest.json",
+      "sha256": "db9e3d70fbc0e2ac640f2ca9d0e5675bd32c47e9c30d712208ffbe2097a3a2f0"
+    },
+    {
+      "bytes": 2709,
+      "path": "design/agt-F-D134-root-review-2029-review.json",
+      "sha256": "8d9796c64a04c0dbf81dbda41e3d85435ba6521b6c7bcaf6df6c9efc0b13e1e4"
+    },
+    {
+      "bytes": 1742,
+      "path": "design/agt-F-D134-root-review-2029-source-manifest.json",
+      "sha256": "f9493d4fd3175f2ebebd43cfda0646065c86787a44964e3dc0244df324fa0353"
+    },
+    {
+      "bytes": 64330,
+      "path": "design/agt-F-D141-pristine-prep-2350-notes-input.md",
+      "sha256": "f7e3ff8af88f6187f06da85247c9829f68590d127392a684e2f93512c5b938c1"
+    },
+    {
+      "bytes": 3996,
+      "path": "design/agt-F-D141-pristine-prep-2350-preflight-inventory.json",
+      "sha256": "8393206ccdd829ef9396c99fec6c893175fbba704bdc9be44d676cd937bf097f"
+    },
+    {
+      "bytes": 3523,
+      "path": "design/agt-F-D141-pristine-prep-2350-source-manifest.json",
+      "sha256": "8cfd6c3fc321901d36b850e92e48a18b2e6425b129410d443394d8e1fad4a992"
+    },
+    {
+      "bytes": 8586,
+      "path": "design/agt-F-D141-pristine-review-2353-review.json",
+      "sha256": "f89244a5579aac0626cc3111edce9b6cc22339e8dbf852257af6cd8e7462525a"
+    },
+    {
+      "bytes": 15645481,
+      "path": "design/agt-F-D141c-pristine-perid-0045-per-id.json",
+      "sha256": "7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5"
+    },
+    {
+      "bytes": 978,
+      "path": "design/agt-F-D141c-pristine-perid-0045-counts.json",
+      "sha256": "6ab5a708dca78ae45cba41362d81f65bc9b703b53be0fe9d7d86334455a63644"
+    },
+    {
+      "bytes": 8442,
+      "path": "design/agt-F-D141c-pristine-perid-0045-env-rerun.json",
+      "sha256": "62d4b969e0690f673df529e73c9facbc9ebc272821d05fee34515714ba2c79b4"
+    },
+    {
+      "bytes": 8203,
+      "path": "design/agt-F-D141c-pristine-perid-0045-source-manifest.json",
+      "sha256": "799b2a62017e88d5ef26e03086d4a3c15b20fbf37131b0602ad061375323ae00"
+    },
+    {
+      "bytes": 9449,
+      "path": "design/agt-F-D141c-perid-review-0100-review.json",
+      "sha256": "310980d1666e0927559885c4135f7a720b0e748897ff2ad6c8209afd0ba7750e"
+    }
+  ],
+  "status": "SOURCE_ONLY_NO_BODY"
+}

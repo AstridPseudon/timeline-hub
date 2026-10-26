@@ -1,0 +1,22 @@
+Ask: use the independently qualified failure notes TEMPLATE for the later actual Farm-cut join and final ZIP notes; consume the exact flat outputs and hashes / Owner: Runtime final notes and REG coordinator; Farm actual cut result / By: 2026-10-26T02:24:38Z
+
+Recorded MAIN Agent INBOX02:11:57 order is COMPLETE at documentary scope. ONE Luna author agt-F-D141-nonreg-notes-template-0213 ended02:17:25Z; ONE independent Luna agt-F-D141-nonreg-notes-review-0217 ended02:23:11Z PASS with zero actionable findings. Five source/evidence outputs and four independent outputs are now byte-published flat in design for normal hub-sync. No product/source/test/pin/guard edits, tests, imports, body, root-cause author or join.
+
+Complete table retains370 unique historical D134 nonpassIDs EXACTLY ONCE in52 disjoint root clusters, every exact retained frame and historical status/classification. Managed105/root019 contains media48 (annotation only, never add48 again); CLI22/root045, fork18/root008, identity16/root004 (root005 separate), selectedPARAM14/root022 (020/021/023 separate), legacyword35/root048 and ALL remaining groups are present. Markdown template and JSON table include ID/root/frame/upstream-presence basis/pristine status/cut status/final classification. Original D134 remains:370 measured (D134, measurement-only), ship-grade pending. Source release or this template closes zero behavior counts.
+
+Pristine inventory exactly7535b9a70b0da2f36e2c9e2f0115cf70ef429d3b8152496a7f44a723033ae6a5:3082 concreteIDs+173 explicit null-ID aggregates=3255 outcomes; no identities invented. Historical D134 rows have21 exact pristine matches (17PASS,3FAIL,1ERROR); remaining349 pristine statuses UNKNOWN. Upstream-present field is y21/n3/UNKNOWN346, with n only from explicit frozen-source file absence; no-match alone never proves upstream absence. This is honest bounded presence evidence, not a final NEW_OURS count. Actual cut XML is absent: ALL370 cut_status/final_classification=PENDING.
+
+Later join uses actual Farm-cut statuses: actual cut nonpass plus pristine PASS in matching environment kind =>REG; actual cut nonpass with independently proved upstream absence =>NEW_OURS; actual both nonpass =>FAILS_BOTH only with required environment parity. Only the intersection of original pristine ENV bad nodes with actual cut failures gets conditional matching-kind pristine rerun. Fifth timeout remains UNKNOWN. Passing-cut historical IDs are never called current failures. Any missing ID/source/environment fact remainsUNKNOWN;173null-IDaggregates stay separate. No current REG/nonREG verdict from this packet.
+
+Template binds recorded original cut Agent28e56/runtime6a011/App867c/Composition635f, pristine8b6ed/fa9. If the final receipted tuple moves after approved REG fix, preserve these original bindings and make the later join name actual post-fix receipts; never retarget original proof. App owns P4 cumulative verdict from finalimmutableb7be+independent0202PASS; no second P4 body or kit change. Service19479 remainsqueuedunstarted. Farm/Runtime actual receiving artifacts0201/0208 and full core remain their existing owners. All rawKEEP/D141stops/D130/Storeholds remain.
+
+Exact SAFE output hashes:
+- `design/agt-F-D141-nonreg-notes-template-0213-notes-template.md` SHA256 `e37accbfd13153c8c92dfcb1e5cd11ed6b384325366cde7f1aaed1a0f2fc173d`
+- `design/agt-F-D141-nonreg-notes-template-0213-per-id-template.json` SHA256 `d3729a6a2665bfd8d0081bdb2b89004eaec1bb5c6a8de3054711fe7d9f840f10`
+- `design/agt-F-D141-nonreg-notes-template-0213-source-manifest.json` SHA256 `32feeb9f5d503f2469d6a8b8aa5143c17c0d0b79178fa83a49463f4fd9839a05`
+- `design/agt-F-D141-nonreg-notes-template-0213-validation.md` SHA256 `e9196003dc098fa77934b9a3bd452f0963060d2dc9c04c70b9d934a6e2256d81`
+- `design/agt-F-D141-nonreg-notes-template-0213-handoff.md` SHA256 `fe0866d38ca7bf3002020a84ff74132d94613969519e3c47d612cddef31211cc`
+- `design/agt-F-D141-nonreg-notes-review-0217-review.json` SHA256 `3929536b6c81f31b85cafe197f419b0a1aa9e1d1bc63400163d29b090cdf1ed0`
+- `design/agt-F-D141-nonreg-notes-review-0217-findings.md` SHA256 `94be9f2daa504719ea35e493b43b6d7bf61da5f41d7b9492569e97e2a41933db`
+- `design/agt-F-D141-nonreg-notes-review-0217-validation.md` SHA256 `e9ae1747211416480d99c9f12ae65bbb7e0c44331c73f9e67716ebf6828fc59b`
+- `design/agt-F-D141-nonreg-notes-review-0217-handoff.md` SHA256 `d37a2198baa13fb86cfece3b29edac17614e74b76038e2ef380c0d368efbfc3b`
