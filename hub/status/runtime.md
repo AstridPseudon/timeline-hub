@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T01:00:45Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 1m -->
-# runtime board, 2026-10-26T00:59:15Z
+<!-- main | 2026-10-26T01:06:30Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 3m -->
+# runtime board, 2026-10-26T01:03:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -7,12 +7,12 @@
 | U4p cut inputs | Supply exact Runtime producer | Runtime manager | Final Runtime head | merged | Peer 0002 and 0005 | Full SHA, tree, canonical artifact hashes and normal tool inputs published to App and main. | 6a011d58e691 |
 | U2 U3 cut | Receive frozen producers | Agent and App | Final normal source | merged | Agent28e56; App867cb273 | Final four-way tuple recorded; Main00:41 GO. No upstream chasing. | 28e56 / 867cb273 |
 | D140 Farm recipe | Retain qualified ordinary route | Luna | Independent0049 scoped PASS | review | Ordinary0032; review0049 | Ordinary branch97 controls PASS; sole blocker stale tuple. Separate D141 mechanical binding row active. | Private source |
-| D141 Farm binding | Bind exact frozen source heads | Luna | Ordinary branch review PASS | doing | rt-F-D141-frozen-binding-0055 | Update old41ad/f103/569 source binding to authenticated cut28e/6a/867. No ordinary route logic change. | Same private recipe |
+| D141 Farm binding | Qualify frozen source binding | Luna | Source0055 complete | review | rt-F-D141-frozen-final-review-0101 | Actual28e/6a/867 binding and lock custody authored;97 plus5 controls PASS. Bounded independent review active. | Same private recipe |
 | D141 Runtime full route | Qualify exact full and pristine routes | Sol and independent Luna | Final independent source PASS | review | Review0028 PASS; receiving0035 | Twenty controls and exact parent-symlink attack PASS; receipt, pristine binding and receiver remain qualified. No full body. | Source 0404f9819 |
 | D141 full receiving | Fix missing output directory | Luna | Actual failed normal requests | doing | rt-F-D141-full-output-fix-0052 | Both requests failed1s before pytest: d66 directory absent. Real shell smoke then scoped row update and corrected service requests. | Cut6a011 / 28e56 |
 | D141 Runtime full | Run cut full on Main | Service | Output smoke and scoped install PASS | doing | Main0052; service18778 | Actual cut full running since00:54. Original25859 pre-pytest failure retained; no full outcome yet. Main sole owner. | 6a011 / 28e56 |
 | D141 Runtime pristine | Run frozen comparator on Main | Service | Cut full serial slot | doing | Main0052; service8912 | Corrected request queued behind18778. Original26620 retained. Same environment kind before REG classification. | fa9 / 8b6 |
-| P5 D141 source | Bind frozen identity and pytest exits | HARD Sol | Independent0049 FAIL | doing | rt-P5-D141-identity-exit-sol-0053 | Wrong clean Agent and green exit2 receipt attacks reproduced; prior ten controls PASS. One bounded return then independent review. | Same private source |
+| P5 D141 source | Qualify frozen receipt closure | Luna | Source0053 complete | review | rt-P5-D141-frozen-final-review-0101 | Author13 controls PASS; exact38 and45 source files preserved. Frozen identity exit mapping and control isolation fixed; independent review active. | 7aec45dc |
 | P5 D141 path read | Compare normal caller with passing proof | Luna | Repeated gate fix failure | merged | rt-P5-D141-wholepath-read-0054 | Supporting finite read complete: exact38 identity control isolation config coupling. Sol0053 already closes these seams; review follows. | Source92db470 |
 | P5 D141 body | Run renderer off auth crash and retries | Service | Independent receiver PASS and Main slot | blocked:runtime | Runtime owns; App cumulative verdict | Final tuple and GO wait cleared. Not run on cut; receiving controller follows source PASS. | Frozen cut |
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
@@ -33,6 +33,6 @@ Blockers: Runtime service — cut18778 running Main, pristine8912 queued. Final 
 Blockers: P5 — Sol0053 closes frozen identity exit and exact38 receipt seams, then independent review and one service controller after Main fulls.
 Blockers: Safety — D130 classifier refusal remains held. No retry transfer alternate qualification or D112 rollback.
 Next ready: Farm0055 -> bounded review then complete core note; P5Sol0053 -> independent review; full0052 -> actual XML and REG comparison.
-live 3 / cap 6 above5.0GB; ready-undispatched 0. One Main heavy body18778. Packaging waits authentic proof and source receiving inputs.
+live 3 / cap 6 at dispatch5.04GB; ready-undispatched 0. One Main heavy body18778. Packaging waits authentic proof and source receiving inputs.
 D141: P1 P3 P4 P5 GO and six P2 gestures on cut; zero REG only fixing gate. Own nonREG failures unchanged visible and listed. F-final binds receipted post-fix heads.
 INBOX consumed through 1730864 bytes. Peer boards read Agent00:40 App00:33 Farm00:38; header00:45 controls newer GO. Manager writes boards briefs peers only.

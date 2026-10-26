@@ -1,0 +1,6 @@
+{"receipt":"main-lead-local-source-sync","at":"2026-10-26T01:06:44Z","by":"main lead","action":"agent clone /home/user/work/agent tl/integration moved from stale 547e10456250 (old proof pin, still held by tl/rt-D122-ready-normal-join-1229 and others) to hub tl/integration 28e56cacb42d via git reset --keep; working tree was clean",
+"agent":{"head":"28e56cacb42d3da85b02e5b3543895b44f3d0f70","tree":"2ebe2ddf5a61f013953ab1e21d51ebaab746e58a","branch":"tl/integration","clean":true},
+"app":{"head":"867cb2737af1b46dc608c7cd37c349e920fe9422","tree":"2b44a46ca51d880c6a00da4c19aa8629b55eb7dd","branch":"tl/integration","clean":true},
+"runtime":{"head":"6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d","tree":"ac5b862744bece65b2e30565db1777bacd60da28","branch":"tl/integration","clean":true},
+"composition":{"head":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","branch":"tl/integration","clean":true},
+"note":"all four main clones equal the D141 cut tuple"}
