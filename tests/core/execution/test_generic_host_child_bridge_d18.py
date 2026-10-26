@@ -2963,7 +2963,9 @@ def _real_receiver_url(host, launched, processes, future):
     while time.monotonic() < deadline:
         snapshot = _observe_owned_review_session(process, host.attempt_root)
         if snapshot is not None:
-            return json.loads(snapshot[2])["receiver_url"]
+            row = json.loads(snapshot[2])
+            assert len(row["launch_nonce"]) == 64
+            return row["receiver_url"]
         if future.done():
             pytest.fail(f"receiver exited before startup: {future.result()}")
         time.sleep(0.05)
