@@ -1587,6 +1587,7 @@ def _terminate_process_group(process: subprocess.Popen, *, grace_seconds: float 
 
 
 _REVIEW_SESSION_NAME = ".astrid-human-review-session.json"
+_REVIEW_LAUNCH_NONCE_ENV = "ASTRID_HUMAN_REVIEW_LAUNCH_NONCE"
 
 
 def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
@@ -1613,12 +1614,19 @@ def _observe_owned_review_session(process: subprocess.Popen, attempt: Path,
     try:
         row = json.loads(raw)
         url = urlsplit(row["receiver_url"])
-        valid = (set(row) == {"schema", "receiver_url", "process_pid", "process_birth_id"}
-                 and row["schema"] == "astrid.human-review-session/v1"
-                 and type(row["process_pid"]) is int and row["process_pid"] == process.pid
-                 and row["process_birth_id"] == getattr(process, "_astrid_process_birth", None)
-                 and bool(row["process_birth_id"])
-                 and _process_birth_identity(process.pid) == row["process_birth_id"]
+        expected_nonce = getattr(process, "_astrid_review_launch_nonce", None)
+        nonce = row.get("launch_nonce")
+        receiver_pid = row.get("process_pid")
+        receiver_birth = row.get("process_birth_id")
+        valid = (set(row) == {"schema", "receiver_url", "process_pid", "process_birth_id", "launch_nonce"}
+                 and row["schema"] == "astrid.human-review-session/v2"
+                 and type(receiver_pid) is int and receiver_pid > 0
+                 and isinstance(receiver_birth, str) and bool(receiver_birth)
+                 and _process_birth_identity(receiver_pid) == receiver_birth
+                 and isinstance(expected_nonce, str) and isinstance(nonce, str)
+                 and re.fullmatch(r"[0-9a-f]{64}", expected_nonce) is not None
+                 and re.fullmatch(r"[0-9a-f]{64}", nonce) is not None
+                 and hmac.compare_digest(nonce, expected_nonce)
                  and url.scheme == "http" and url.hostname == "127.0.0.1" and bool(url.port)
                  and url.path == "/" and not url.fragment and not url.username and not url.password
                  and re.fullmatch(r"token=[0-9a-f]{32}", url.query) is not None)
@@ -8145,6 +8153,13 @@ class GenericPackHost:
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),
             },
         )
+        review_session = record.id == "editorial.human_review" and child_bridge is not None
+        review_nonce = secrets_module.token_hex(32) if review_session else None
+        if review_nonce is not None:
+            # This is launch-scoped observation authority, never process cleanup
+            # authority. Keep it out of diagnostics emitted from child output.
+            env[_REVIEW_LAUNCH_NONCE_ENV] = review_nonce
+            secrets[_REVIEW_LAUNCH_NONCE_ENV] = review_nonce
         # Pack runtime modules reserve their direct module entry points for
         # the canonical runner.  GenericPackHost is that runner's process
         # boundary, so mark the child invocation just as executor_runner does.
@@ -8228,12 +8243,12 @@ class GenericPackHost:
         if remotion_lease is not None:
             remotion_lease.launched()
         self._track_process(process)
-        review_session = record.id == "editorial.human_review" and child_bridge is not None
         review_snapshot = None
         execution_error = None
-        if review_session:
-            process._astrid_process_birth = process_birth_identity(process.pid)
         try:
+            if review_session:
+                process._astrid_process_birth = process_birth_identity(process.pid)
+                process._astrid_review_launch_nonce = review_nonce
             guards_due = 0.0
             while process.poll() is None:
                 if render_scope:
@@ -12935,9 +12950,11 @@ class _NativeEngineGraph:
         env.update(self.engine.child_environment(argv, start_new_session=True))
         with (root / "daemon.log").open("xb") as log:
             self._engine_spawn_started = True
-            self.process = subprocess.Popen(custody_module.custody_wrapper_argv(profile["engine_executable"]),
-                                            cwd=str(root.parents[2]), env=env, stdin=subprocess.DEVNULL,
-                                            stdout=subprocess.DEVNULL, stderr=log, close_fds=True)
+            self.process = platform.spawn_tree(
+                custody_module.custody_wrapper_argv(profile["engine_executable"]),
+                cwd=str(root.parents[2]), env=env, stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, stderr=log, close_fds=True,
+            )
         self.process._astrid_custody = self.custody
         self.process._astrid_process_group_id = self.process.pid
         self.custody._launch_broker = self.engine
