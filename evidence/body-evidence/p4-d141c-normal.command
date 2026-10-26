@@ -1,0 +1,1 @@
+-c import\ os\;\ os.execv\(\"/bin/sh\"\,\ \[\"sh\"\,\ \"/home/user/work/wt/agt-P4-D141-operational-review-0101/evidence/inputs/p4-d141c-control-stub-2234.sh\"\]\) 
