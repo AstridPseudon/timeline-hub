@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/private/tmp/claude-501/-Users-hannahomalley/1a2a4133-9ec7-458b-903e-ad2e6e4cc77a/scratchpad/win/.venv/bin/python",
+    "python",
     "-m",
     "ruff",
     "check",
