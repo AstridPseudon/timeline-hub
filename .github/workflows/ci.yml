@@ -15,6 +15,9 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -e '.[test]'
+      - run: python -m pip install -e packages/python
+      - name: Verify Windows update backup daemon from a selected venv
+        run: python -m pytest -q -rP -m "" tests/test_windows_runtime_launch.py
       - name: Verify native realm creation, ownership, and rollback
         run: >-
           python -m pytest -q

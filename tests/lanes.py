@@ -114,6 +114,10 @@ requires_windows_security = _declare(
     "windows-security", "sys_platform != 'win32'",
     "native Windows socket exclusivity and file DACL APIs", ("windows-realm-publication",),
 ).mark()
+requires_windows_runtime_venv = _declare(
+    "windows-runtime-venv", "sys_platform != 'win32'",
+    "native Windows venv redirector and Runtime Job Object custody", ("windows-realm-publication",),
+).mark()
 requires_linux_tree_custody = _declare(
     "linux-tree-custody", "sys_platform != 'linux'",
     "Linux waitid WNOWAIT process-group custody", ("unit", "portability-lifecycle", "integration"),

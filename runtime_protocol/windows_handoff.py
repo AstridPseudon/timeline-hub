@@ -456,7 +456,7 @@ def peer_token(channel):
 
 
 def python_executable(requested):
-    """Bypass CPython's venv redirector so Popen retains the actual Worker PID.
+    """Bypass CPython's venv redirector so Popen retains the interpreter PID.
 
     This is the same __PYVENV_LAUNCHER__ boundary used by the stdlib's Windows
     multiprocessing launcher. The lexical venv executable remains sys.executable.

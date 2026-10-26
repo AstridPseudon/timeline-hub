@@ -11,6 +11,14 @@ Ubuntu/macOS; eight native Windows dir-fd tests are not wired into a Windows job
 and still need qualification. The selected tests use `-m ""` because pytest's
 default configuration excludes integration-marked tests.
 
+`tests/test_windows_runtime_launch.py` also runs in `windows-realm-publication`.
+It demonstrates the Windows venv redirector's different PID, then runs the
+selected venv's neutral `up --hosted-origin off`, authenticated backup, and
+`down` without Pinokio or a prior forced stop. The native case is skipped off
+Windows with the registered reason `[declared:windows-runtime-venv] native
+Windows venv redirector and Runtime Job Object custody`. Portable launch tests
+also check that bypassing the redirector retains the selected environment.
+
 Run the same host-specific subset locally after installing the test and
 generated-client packages:
 

@@ -370,8 +370,21 @@ class LocalRuntimeBoundary:
     def _spawn_runtime(self, argv: list[str], *, support_root: Path, stdout):
         """Publish exact child custody before any admission wait can fail."""
         if sys.platform != "darwin":
+            options = {}
+            if sys.platform == "win32":
+                from runtime_protocol.windows_handoff import python_executable
+
+                # Keep discovery and custody on the interpreter's PID, rather
+                # than the venv redirector that waits for it on Windows.
+                executable = python_executable(argv[0])
+                environment = dict(os.environ)
+                environment.pop("__PYVENV_LAUNCHER__", None)
+                if executable != argv[0]:
+                    environment["__PYVENV_LAUNCHER__"] = str(argv[0])
+                argv = [executable, *argv[1:]]
+                options["env"] = environment
             process = platform.spawn_tree(argv, detached=True, stdout=stdout,
-                stderr=subprocess.STDOUT, text=True, close_fds=True)
+                stderr=subprocess.STDOUT, text=True, close_fds=True, **options)
             process._runtime_stop_grace = SERVICE_OWNER_STOP_GRACE_SECONDS if "--service-declaration" in argv else 5.0
             process._runtime_boundary_sole_reaper = True
             self._process = process
