@@ -1,0 +1,31 @@
+{
+  "review": "F D141l command review",
+  "verdict": "FAIL",
+  "author_packet": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence",
+    "command_cut_sha256": "b3693e96c02cfbe89e094c2013370fcf4feb2e8f386a98860ecec4c2a30d11d2",
+    "command_pristine_sha256": "17800a0228c98c1859c55ea5f5b0ef08fe8824295c3dc40a9fcbef079259b2f9",
+    "check_source_sha256": "c5afc8a5b06a8ab9c068f628178224442ef19277d7094bae2dfebd7c3988c128",
+    "positive_stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+  },
+  "qualified": {
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "path": "/home/user/work/agent"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "path": "/home/user/work/runtime"},
+    "app": {"sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa", "path": "/home/user/work/app"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "path": "/home/user/work/composition"}
+  },
+  "pristine": {
+    "agent": {"sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e", "path": "/home/user/work/wt/agt-pin-64197afa"},
+    "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "path": "/home/user/work/wt/rt-pin-fa9cd546"}
+  },
+  "selection": {
+    "cut_claimed": 22,
+    "pristine_claimed": 17,
+    "pristine_missing_source": "tests/v10/timelines_create.py",
+    "pristine_actual_name": "tests/v10/test_timelines_create.py",
+    "settings": ["-n3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"]
+  },
+  "retained_receipts": ["26496", "27388", "10086"],
+  "historical_gap_disclosed": true,
+  "behavioral_qualification": false
+}

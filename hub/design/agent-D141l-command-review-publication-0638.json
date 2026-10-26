@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-26T06:38:07.225593+00:00",
+  "verdict": "FAIL7",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/review.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-review-0626-review.json",
+      "sha256": "52770fddefe00420394b64de6226a3b2a808636ab66ce70baa6b8fa4402d66dc"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/findings.md",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-review-0626-findings.md",
+      "sha256": "ad677528eb1f866b7c5a71b0b52a015d4540daa0245123f72ae2311fcb871c7f"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/source-manifest.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-review-0626-source-manifest.json",
+      "sha256": "6f3c70ff462d00955b8dde0f3d7851ac71acf55a1c1b1919dd072fcc5499f1e2"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/validation.md",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-review-0626-validation.md",
+      "sha256": "60d1a9bad181b6dc0fec94e041552aa9bcba6a768a9abc6e33dfb1cffe0fff93"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/handoff.md",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-review-0626-handoff.md",
+      "sha256": "e6ec6bb1518589ab6c926851ab08df7d653c4396a220f0262f3550814ce4dcee"
+    }
+  ]
+}
