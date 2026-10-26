@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T01:35:07Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-26T01:33:57Z
+<!-- main | 2026-10-26T01:39:48Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-26T01:37:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -19,7 +19,7 @@
 | F-final source | Retain qualified complete packaging chain | Luna and independent Luna | Final tuple and actual proof receipts | gated:D141-cut | rt-F-final-lineage-review-0015 PASS | Full chain, 101 Python plus TS, 41 matrix blobs and scoped CAS controls PASS. No install, capture, build or ZIP. | Private candidate |
 | F-final install | Receive exact final packaging inputs | Luna | Actual gate tuple and pristine results | gated:D141-results | Installer resume0129 complete | All four source guards PASS; only three disjoint registry rows differ. No install: immutable tuple and actual gates remain missing. | Qualified chain0015 |
 | F-final notes | Install reviewed D141 notes | Luna | Independent0032 PASS | merged | rt-F-D141-notes-install-0038 | Exact pair installed;568 outside files unchanged; App paragraphs unchanged; render PASS. No ZIP claim. | 5738d66d / f4bb7346 |
-| D141 REG comparison | Prepare exact per-ID comparison | Luna | Cut18778 actual receipt | doing | rt-F-D141-cut-failure-census-0132 | Cut bad IDs and finite pristine selector mapping only. Actual pristine8912 still unrun; no behavioral REG verdict or own-test investigation. | Frozen sources |
+| D141 REG comparison | Review exact per-ID census | Luna | Cut18778 actual receipt | review | Census0132; independent0137 | Count7392 reconciled;53 bad IDs:15 source mapped and38 new ours, provisional until review. Pristine unrun; no behavioral verdict. | Frozen sources |
 | F-final and ZIP | Build exact cut and verify fresh patches | Luna and Farm | Required gates and zero REG | gated:D141-cut | Runtime final coordinator | No final build or ZIP. Qualified private packaging route awaits final tuple, install and actual proofs. | No delivery artifact |
 | D141 other proofs | Receive core and P1 to P4 | Farm App Agent | Final cut and GO | doing | Farm waits; App0043; Agent0035 then P4 | App full/pristine dispatched; Agent pristine27388 running. Farm source review0049 active. No duplicate Runtime body. | Frozen cut |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Farm cut core, with no duplicate cohort body. | Agent c585 |
