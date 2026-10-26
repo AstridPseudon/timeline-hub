@@ -252,7 +252,7 @@ def test_follow_rebases_original_choice_after_source_move_and_reorder(recipe):
     # exact stable word. The command must retain the originally clicked clip.
     assert retained_inputs.first_selection(bundle(case)).source[-1] == "other"
     accepted = case.submit(case.request([captured], base), "stale-anchor")
-    assert accepted["data"]["status"] == "rebased"
+    assert accepted["data"]["status"] == "merged"
     assert authored(bundle(case))[KEY] == captured["args"]
     expected = projected(case).timings[TARGET]
     assert expected["start"] > 8
@@ -736,9 +736,78 @@ def test_first_anchor_inverse_recovers_literal_timing_and_exact_absence(recipe):
     before = copy.deepcopy(bundle(case)['parent']['clips'][0])
     accepted = case.submit(case.request([pick(case, 1)]), 'first-anchor')
     inverted = undo(case, accepted, 'undo-first-anchor')
+    case.restart()
     assert bundle(case)['parent']['clips'][0] == before
     redone = undo(case, inverted, 'redo-first-anchor')
     assert redone['data']['canonical_document'] == accepted['data']['canonical_document']
+
+
+def test_first_anchor_redo_rejects_corrupt_derived_history(recipe):
+    from astrid.sdk.timeline._step_undo import validate_nested_history
+
+    case = recipe
+    accepted = case.submit(case.request([pick(case, 1)]), 'anchor-history')
+    undo(case, accepted, 'undo-anchor-history')
+    entries = {entry['publication_id']: entry for entry in history(case)}
+    original = entries[case.head()['publication_id']]
+    validate_nested_history(original, entries.__getitem__)
+    for damage in ('before', 'after', 'path', 'cause', 'missing'):
+        corrupted = copy.deepcopy(original)
+        writes = corrupted['records']['commands'][0]['derived_writes']
+        timing = next(write for write in writes
+                      if write['ref'] == REF and write['path'] == ['at'])
+        if damage in ('before', 'after'):
+            timing[damage] = {'state': 'present', 'value': 99}
+        elif damage == 'path':
+            timing['path'] = ['opacity']
+        elif damage == 'cause':
+            timing['cause'] = 99
+        else:
+            writes.remove(timing)
+        with pytest.raises(CommandError):
+            validate_nested_history(corrupted, entries.__getitem__)
+
+
+def test_anchor_inverse_rejects_forged_timing_and_matching_effects(recipe, monkeypatch):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    from astrid.core.timeline.authoring_bundle import _digest
+
+    case = recipe
+    case.submit(case.request([pick(case)]), 'prior-anchor')
+    accepted = case.submit(case.request([pick(case, 1)]), 'changed-anchor')
+    head, retained_history = case.head(), history(case)
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def forged(port, prepared):
+        value = copy.deepcopy(prepared)
+        record = value['records']['commands'][0]
+        timing = next(write for write in record['derived_writes']
+                      if write['ref'] == REF and write['path'] == ['at'])
+        timing['after']['value'] = 99
+        for step in value['records']['steps']:
+            for effect in step['patch']:
+                if effect['path'][-1:] == ['at']:
+                    effect['value'] = 99
+        document = value['canonical_document']
+        parent = document['parent_revision']
+        for clips in (parent['payload']['clips'], parent['payload']['config']['clips']):
+            next(clip for clip in clips if clip['id'] == 'card')['at'] = 99
+        parent['content_digest'] = _digest(parent['payload'])
+        parent['revision_id'] = 'forged-anchor-inverse-timing'
+        value['document_digest'] = _digest(document)
+        reached.append(True)
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, 'accept', forged)
+    with pytest.raises(RuntimeErrorBase, match='sequential execution capture does not bind') as error:
+        undo(case, accepted, 'forged-anchor-inverse')
+    assert error.value.details['reason'] == 'invalid_records'
+    assert reached == [True]
+    assert case.head() == head
+    assert history(case) == retained_history
 
 
 @pytest.mark.parametrize('damage', ['missing-version', 'wrong-digest', 'foreign-document'])

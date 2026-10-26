@@ -42,7 +42,7 @@ def _merge_mode(commands):
     return "atomic" if any(command["op"] == "doc.patch" for command in commands) else "fields"
 
 
-def first_selection(bundle):
+def first_selection(bundle, declaration=DECLARATION):
     """Select once from this fixture's sole verified source using main's grammar.
 
     No binding is accepted from a caller. This intentionally has no replay
@@ -52,7 +52,8 @@ def first_selection(bundle):
     assert len(captures) == 1
     capture = captures[0]
     pin, document = capture["pin"], capture["document"]
-    declaration = bundle["parent"]["clips"][0]["app"]["astrid"]["on"]
+    # The current fixture starts with literal timing and no authored anchor.
+    # Reselection compares the requested picker declaration at each source head.
     moment = moments.parse(declaration)
     words = []
     for row in bundle["placements"]:
