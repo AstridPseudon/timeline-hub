@@ -1,0 +1,573 @@
+{
+  "at": "2026-10-26T01:32:36.054015+00:00",
+  "authorization": "owner manager rules delete old v1 test outputs, caches and stale archives under ORCH",
+  "guard": "all112 files pre22Oct v1, regular singlelink nonKEEP, exactchildren absent current boards,leases,livebriefs,pendingqueue,suites and env",
+  "root_preserved": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts",
+  "deleted_files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/app-public13-main-node-modules-r25.tgz",
+      "bytes": 130648897,
+      "sha256": "a1ef11b292548c22caa36cc38c683a67b01d9244f8389aade9405e5a7dca581e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-draft-opaque-roots-e2e-m1-mixed-1019232730-26277/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-draft-opaque-roots-e2e-m1-mixed-1019232730-26277/three-products-summary.json",
+      "bytes": 6969,
+      "sha256": "5d130b42d3b339a31c4a99167e16c1a44de705d65bd2a65aa3261f3140ab0066"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019215301-12570/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019215301-12570/three-products-summary.json",
+      "bytes": 58420,
+      "sha256": "a3f6e93c2a07a46df00d2d6fd0b4a43272553a39c8755ef348b39a5e60fa1e09"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233026-27354/.last-run.json",
+      "bytes": 96,
+      "sha256": "2b31f327abde661e4073d55e4362922b6e55349407dbbcacfb323871aa1a913c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233026-27354/three-products-summary.json",
+      "bytes": 50311,
+      "sha256": "d3bd968a1b5c0f5837fb05feeab660d22fb4e3c3718ac330389de3d41577e80d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233026-27354/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/error-context.md",
+      "bytes": 11443,
+      "sha256": "a51ecb6a9916d12cbafc6c51b2a53c17537568ff229c405e17ea95c46c0662a1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233026-27354/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/trace.zip",
+      "bytes": 4321389,
+      "sha256": "22de00f46b5ce9aa5bcdfd80c9c1eb01dd7e8d1973ad0a9938b87c9a882e8e7e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-e2e-m1-mixed-1019234330-27568/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-e2e-m1-mixed-1019234330-27568/three-products-summary.json",
+      "bytes": 6980,
+      "sha256": "6ef2d626abd277af89e24bf1f102edaf5a4cad81d254cdadb88f73801eef6985"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210801-16705/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210801-16705/three-products-summary.json",
+      "bytes": 67810,
+      "sha256": "647b28af84cb5d6ce7a907e05b72d9ad94cef9f05a1aef02ecdd395babf65a20"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232535-22188/.last-run.json",
+      "bytes": 96,
+      "sha256": "2b31f327abde661e4073d55e4362922b6e55349407dbbcacfb323871aa1a913c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232535-22188/three-products-summary.json",
+      "bytes": 49620,
+      "sha256": "88e229050b980ed6ae12693c8ca460d091754bc0851c792092894607ae765b0f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232535-22188/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/error-context.md",
+      "bytes": 17886,
+      "sha256": "ef548c6578decde795fb1415e47937a5768ca7feb805f40e495764877ce8444b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232535-22188/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/trace.zip",
+      "bytes": 87918,
+      "sha256": "5f5cbdd157bba7d6ce9bfcaab5fae2fa22111f164fb269cf61a5bcc4187122b2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014729-5160/.last-run.json",
+      "bytes": 96,
+      "sha256": "d31892ebb8510c4aea65cb766598e09c5cb6aaa747e03d33b7d054e91a7d1478"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014729-5160/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/error-context.md",
+      "bytes": 19184,
+      "sha256": "856d4addfa766849d01946ef2b59c1ab4d285e553bab9ab80f3d28eb0160a7c8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014729-5160/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/trace.zip",
+      "bytes": 7918469,
+      "sha256": "348cfdabd90f3396779ed2437d079b817ca1e6817151b57a3ca70ca35f598e78"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210344-27709/.last-run.json",
+      "bytes": 96,
+      "sha256": "0191bebd6429b68f401c06512f15bd23717b054475cc60a143ff019491919159"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210344-27709/three-products-summary.json",
+      "bytes": 2091,
+      "sha256": "c28a693de4dbd161b9f341b3946259437b0f2105afa126df2a6e82ad93b041f6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210344-27709/three-products-M1-real-dep-c9d27-guards-and-pending-identity/error-context.md",
+      "bytes": 11180,
+      "sha256": "eb2cb3ce6faf04b8ff4e72a9888117b827b820d110bb4f4bf8e692c90fc74212"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210344-27709/three-products-M1-real-dep-c9d27-guards-and-pending-identity/trace.zip",
+      "bytes": 22617,
+      "sha256": "b82ba55b5697b8c8065427cfa8aa821f816a6142481e5a71d6943be4fd66c44e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-native-close-drain-e2e-m2-outbox-1019231903-6762/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-label-browser-qualify-e2e-m2-label-bundle1-1020002514-28109/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210309-13110/.last-run.json",
+      "bytes": 96,
+      "sha256": "0191bebd6429b68f401c06512f15bd23717b054475cc60a143ff019491919159"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210309-13110/three-products-summary.json",
+      "bytes": 41331,
+      "sha256": "7a2cf4980de34cafeaea31fffa767d372c89113b4ae1d5beb3db49ac5142d2e8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210309-13110/three-products-M1-real-dep-c9d27-guards-and-pending-identity/error-context.md",
+      "bytes": 9471,
+      "sha256": "49b13667fb45c794ca7da8d03e1eac4d6f321b0343239aa610ccec5be9ada58c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210309-13110/three-products-M1-real-dep-c9d27-guards-and-pending-identity/trace.zip",
+      "bytes": 8311923,
+      "sha256": "766ad6003d3b689ec1adc92247c6fc4a5c1fba6fa167803587ab419b36992205"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019205127-24462/.last-run.json",
+      "bytes": 96,
+      "sha256": "52f07571794a74cece7c08c76cceb3cea31e92c6d5004dd1709bace548cf3757"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019205127-24462/three-products-summary.json",
+      "bytes": 3872,
+      "sha256": "491e8433bd2d4868732ca50305efe567b4c90b036ea01a0182d3514ff1f8f8c8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019205127-24462/three-products-M1-real-ges-752e0-erve-independent-Agent-work/error-context.md",
+      "bytes": 13918,
+      "sha256": "54fee79a7b35876bb2b1d41ba312cc1cf135528bd2c285e54bc758d9ddeabc50"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019205127-24462/three-products-M1-real-ges-752e0-erve-independent-Agent-work/trace.zip",
+      "bytes": 5621030,
+      "sha256": "6429945b0657a03a988f50a41d231d68466fb6cac13bcdf8c7593c8362913b3d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019214911-31131/.last-run.json",
+      "bytes": 96,
+      "sha256": "e6762bfba8054b4f50ed331c252ff77aa5fe9ac5ce5e3fb47455e9a0a296ed63"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019214911-31131/three-products-summary.json",
+      "bytes": 12463,
+      "sha256": "a321cc70ad06024d2c6ad574d31375f3e8c9460c6c3f9776c669b37314a16f56"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019214911-31131/three-products-concurrent--81b8f-onflict-and-keeps-its-draft/error-context.md",
+      "bytes": 16514,
+      "sha256": "ca24fdfa78524a867443f24fbabd8a1aa38c9324c9d7070cf0bed290aab24fcd"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-closure-compose-e2e-m1-closure-1019214911-31131/three-products-concurrent--81b8f-onflict-and-keeps-its-draft/trace.zip",
+      "bytes": 7404694,
+      "sha256": "a8e0d467cad5c524405580c8d2575c9f6c19ef1d8a5823533585d6bcd723c037"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019230811-14966/.last-run.json",
+      "bytes": 96,
+      "sha256": "0191bebd6429b68f401c06512f15bd23717b054475cc60a143ff019491919159"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019230811-14966/three-products-summary.json",
+      "bytes": 3810,
+      "sha256": "5b7188e2a7a794eb0e0186dbd69f3da7b74a476dfdd52761690baf6948e9e916"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019230811-14966/three-products-M1-real-dep-c9d27-guards-and-pending-identity/error-context.md",
+      "bytes": 14845,
+      "sha256": "0cdedb66e4e4853309e01ef1a926e92b115bb365f1242310e6aa8341c79129e4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019230811-14966/three-products-M1-real-dep-c9d27-guards-and-pending-identity/trace.zip",
+      "bytes": 2533794,
+      "sha256": "c686e5bbf8e9cb55d693ee9d8df62e5daedb4fdff5fa8c0a9d2dec0eebdd370d"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/clean-proxy-env.json",
+      "bytes": 383016,
+      "sha256": "a5f8cebc9d36eb436050bc0d1b8e51a86af8f8cf3ca8b41e73b5e3f8adb87c53"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/without-space-override.json",
+      "bytes": 371944,
+      "sha256": "3d0f1a1693f5af1b8258687c76d06d25a44aadb2ca82fe5592b9854376624be7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/baseline-netlog.json",
+      "bytes": 428511,
+      "sha256": "b1be134b5a1a618c9fb47eac9979520de3093b91068f1ffc2971fbaa03245af0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/attachments/baseline-netlog-f1f963e3dbec73afe36bab8bb3d06ebc9955fd3b.json",
+      "bytes": 428511,
+      "sha256": "b1be134b5a1a618c9fb47eac9979520de3093b91068f1ffc2971fbaa03245af0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/attachments/clean-proxy-env-cb9f7c8a5508d2573699261164325367f4583f06.json",
+      "bytes": 383016,
+      "sha256": "a5f8cebc9d36eb436050bc0d1b8e51a86af8f8cf3ca8b41e73b5e3f8adb87c53"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204627-5667/navigation-diagnostic-hosted-navigation-diagnostic/attachments/without-space-override-d7f342ae40d3cf34870c33b5569a4779c757f7c6.json",
+      "bytes": 371944,
+      "sha256": "3d0f1a1693f5af1b8258687c76d06d25a44aadb2ca82fe5592b9854376624be7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-final-compose-e2e-m1-gesture-1019205501-22527/.last-run.json",
+      "bytes": 96,
+      "sha256": "52f07571794a74cece7c08c76cceb3cea31e92c6d5004dd1709bace548cf3757"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-final-compose-e2e-m1-gesture-1019205501-22527/three-products-summary.json",
+      "bytes": 11145,
+      "sha256": "3b5cdd0266685f03abcd370dc580e13eb082368d7c26100dbbddd135b2946d78"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-final-compose-e2e-m1-gesture-1019205501-22527/three-products-M1-real-ges-752e0-erve-independent-Agent-work/error-context.md",
+      "bytes": 20143,
+      "sha256": "69f705c8f70bf8e6113a33045e84a9da174ce55448c4d58d1d382d59ae5883c3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-final-compose-e2e-m1-gesture-1019205501-22527/three-products-M1-real-ges-752e0-erve-independent-Agent-work/trace.zip",
+      "bytes": 4443446,
+      "sha256": "970d6a14cb135625fa6ea2174b76c7acbf667289f1aeedf0a5bc8d55fd33a8b7"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232149-21918/.last-run.json",
+      "bytes": 96,
+      "sha256": "2b31f327abde661e4073d55e4362922b6e55349407dbbcacfb323871aa1a913c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232149-21918/three-products-summary.json",
+      "bytes": 49586,
+      "sha256": "66aa0621f7272a9c2d33dc2b989b5da57b63cd895d21b815bd3adf8eaf24f926"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232149-21918/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/error-context.md",
+      "bytes": 18622,
+      "sha256": "7dbe6e5bb84b91c4d20e87603ca6e35c44718a8081a63e47fe94a6cfcb79ecb1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019232149-21918/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/trace.zip",
+      "bytes": 88167,
+      "sha256": "3aac2efe1a28f40c46a62e443dbf5fb4d4b58defd131928a34011a69c9b214d0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019205038-8323/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019205038-8323/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/clean-proxy-env.json",
+      "bytes": 79108,
+      "sha256": "684b9d2eb528238645d8f68484365f6688728a50c2c8c379f461c250b2a34098"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019205038-8323/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/default-shell.json",
+      "bytes": 78861,
+      "sha256": "f8026e5e93d5e60d2dfcd7a6221fb65ea88e746a9318df606ef992d237d17a7b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019205038-8323/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/attachments/clean-proxy-env-c7ff25c63c8f83faa4aa972552245722b8be0cd7.json",
+      "bytes": 79108,
+      "sha256": "684b9d2eb528238645d8f68484365f6688728a50c2c8c379f461c250b2a34098"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019205038-8323/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/attachments/default-shell-8177dfe5e0b678fd5cf214d289b896cc2f35c8fc.json",
+      "bytes": 78861,
+      "sha256": "f8026e5e93d5e60d2dfcd7a6221fb65ea88e746a9318df606ef992d237d17a7b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210720-15690/.last-run.json",
+      "bytes": 96,
+      "sha256": "52f07571794a74cece7c08c76cceb3cea31e92c6d5004dd1709bace548cf3757"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210720-15690/three-products-summary.json",
+      "bytes": 11397,
+      "sha256": "1fc9889f211ca99a796f514a173b37093f60d83c8e765fa9ceb334e0fedae4a9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210720-15690/three-products-M1-real-ges-752e0-erve-independent-Agent-work/error-context.md",
+      "bytes": 19885,
+      "sha256": "3d1ac0e8c22a32fdad12a77a6dd16d515be1ac94f94087d3e5d5272ec6f1a0e4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-gesture-1019210720-15690/three-products-M1-real-ges-752e0-erve-independent-Agent-work/trace.zip",
+      "bytes": 4182856,
+      "sha256": "48aeea52b2ab14061eea75cc7f5da857dbd6087b7d5cbbcdde6c337df8a1ce16"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020015153-21384/.last-run.json",
+      "bytes": 96,
+      "sha256": "6ea8263766aa01eb4c48035f0d0920db8f83b21985e38b623145404ce6804fa3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020015153-21384/track-label-command-M2-rea-0a8fb-se-latest-publishes-nothing/error-context.md",
+      "bytes": 25711,
+      "sha256": "ad482e5a8b7f2de564eadbbde44fe16bf222bddd0e6ca4ca666e8a2481a3f949"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020015153-21384/track-label-command-M2-rea-0a8fb-se-latest-publishes-nothing/trace.zip",
+      "bytes": 4725889,
+      "sha256": "3633bce456b1c7823e15d94498d775bf8dd31013951f58e38017981d2f48a7c4"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204032-19934/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019205739-29700/.last-run.json",
+      "bytes": 96,
+      "sha256": "0191bebd6429b68f401c06512f15bd23717b054475cc60a143ff019491919159"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019205739-29700/three-products-summary.json",
+      "bytes": 3818,
+      "sha256": "4a333f753b55747d0da2fa01b5437dc1061c78d862cbade3029010066b9424f6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019205739-29700/three-products-M1-real-dep-c9d27-guards-and-pending-identity/error-context.md",
+      "bytes": 10576,
+      "sha256": "10f1c8c617cda444df33ebf9688881a9e12c6993228c09c76db0d0c846fe3204"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019205739-29700/three-products-M1-real-dep-c9d27-guards-and-pending-identity/trace.zip",
+      "bytes": 8094675,
+      "sha256": "ab72690aef090c51269bd44d46def7e3c49e15d0c523b41f1f9dfdcfa1c845af"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020015435-31410/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-preserve-journeys-e2e-m1-preserved-1019213633-7339/.last-run.json",
+      "bytes": 45,
+      "sha256": "e22df5d0991eb28c09093b1e678b3fa8cd1fab48185d38e67cf79fb6e63ad5ea"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019231517-14863/.last-run.json",
+      "bytes": 96,
+      "sha256": "2b31f327abde661e4073d55e4362922b6e55349407dbbcacfb323871aa1a913c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019231517-14863/three-products-summary.json",
+      "bytes": 50327,
+      "sha256": "6ac8f7975d6b398879a069c19fc835d4746bcfaca5e01be276707f00e91802d9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019231517-14863/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/error-context.md",
+      "bytes": 9817,
+      "sha256": "3202b82986aa989ac921f1dfa291cf06246b902a824a58ad40f0cc83e998158f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-ui-batch-compose-e2e-m2-history-conflict-1019231517-14863/three-products-M2-real-his-59c0c-ns-visible-with-one-Current/trace.zip",
+      "bytes": 4433992,
+      "sha256": "bee5576a9fa92eaeae43ae72b4fb9083212586306224083137980288ae4f2d39"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233543-6375/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-history-read-traffic-e2e-m2-history-conflict-1019233543-6375/three-products-summary.json",
+      "bytes": 52904,
+      "sha256": "4397df164286576f47a0568ead60881276bcd7205e334a4c1217b0d63ae73908"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020013858-24569/.last-run.json",
+      "bytes": 96,
+      "sha256": "d31892ebb8510c4aea65cb766598e09c5cb6aaa747e03d33b7d054e91a7d1478"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020013858-24569/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/error-context.md",
+      "bytes": 23955,
+      "sha256": "5ffff1903780efa86f3f4b41963acc30ffe40576dab8486377504ea1f337d8d5"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020013858-24569/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/trace.zip",
+      "bytes": 2223136,
+      "sha256": "145208dc9a582c9d0b02688a2be496c7571e3381ed41aab284326cef86de33f1"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-edit-safety-e2e-m1-mixed-1019225541-12045/.last-run.json",
+      "bytes": 96,
+      "sha256": "c6b3dfcec8d2bf628d3a7285b959bf8667e57f4429a6d95d757af2d8b6dda67b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-edit-safety-e2e-m1-mixed-1019225541-12045/three-products-summary.json",
+      "bytes": 4582,
+      "sha256": "2b203fb97f62948b4a619bfd3776dff1d9cb0a609e3c97e3061cb36c837dd990"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-edit-safety-e2e-m1-mixed-1019225541-12045/three-products-M1-mixed-ed-114ed--an-exact-recoverable-draft/error-context.md",
+      "bytes": 20862,
+      "sha256": "4a6f3cfeb707aaaca674567bfff9734c835d4d7ce9ad619cd8a214937f2a5ebb"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-edit-safety-e2e-m1-mixed-1019225541-12045/three-products-M1-mixed-ed-114ed--an-exact-recoverable-draft/trace.zip",
+      "bytes": 4120049,
+      "sha256": "f290f97d709fe9961c9a4488bcd843958f99a7971eea02dc415baf45e09e4483"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210718-13326/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-python-basis-e2e-m1-gesture-1019210718-13326/three-products-summary.json",
+      "bytes": 45584,
+      "sha256": "04fcbbb5c23b345fc4ccaae51c1724bc267b3cc21599e2da76bbfd2257fd9164"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-draft-opaque-roots-e2e-m1-mixed-1019233523-2561/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-draft-opaque-roots-e2e-m1-mixed-1019233523-2561/three-products-summary.json",
+      "bytes": 6962,
+      "sha256": "3c868d37dd1df454498763ca180393fdcf738066774421071109a5b94e67411e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204346-26980/.last-run.json",
+      "bytes": 96,
+      "sha256": "2644f9e8000f74ffcbe03dd39e7ec09a176e51d1f6796865459cc638761fd674"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204346-26980/navigation-diagnostic-hosted-navigation-diagnostic/error-context.md",
+      "bytes": 6171,
+      "sha256": "87a0dc68db5f03c3aa39debbbae290bf3cb2f359666857657eec68706e20fdd3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204346-26980/navigation-diagnostic-hosted-navigation-diagnostic/trace.zip",
+      "bytes": 9658,
+      "sha256": "75e0bf24fc5ca2832d57f526d7054e0ecf7421c3398eea8238dac91b33a946fe"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-safety-qualify-e2e-m1-mixed-1019230026-13403/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-mixed-safety-qualify-e2e-m1-mixed-1019230026-13403/three-products-summary.json",
+      "bytes": 6976,
+      "sha256": "4e90e5f886235ed948ed6682949c496ddbe5a1a6b2f5b69c3cde65d5931b710c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210022-32388/.last-run.json",
+      "bytes": 96,
+      "sha256": "0191bebd6429b68f401c06512f15bd23717b054475cc60a143ff019491919159"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210022-32388/three-products-summary.json",
+      "bytes": 10838,
+      "sha256": "068549a861a339d14c86db3f6e217560fe9818b59ba7e29d0d7665a9d748340c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210022-32388/three-products-M1-real-dep-c9d27-guards-and-pending-identity/error-context.md",
+      "bytes": 20090,
+      "sha256": "6eeaa63780b8be2e07e55c2a802454f177f87eca4498afc2b149f5c3c2370761"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-m1-dependency-diagnostic-1019210022-32388/three-products-M1-real-dep-c9d27-guards-and-pending-identity/trace.zip",
+      "bytes": 8705795,
+      "sha256": "868e8220ede80b2064d0f24fd1cbe0aedd2040384f9a6e2b058f9a44fa52896c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014350-10819/.last-run.json",
+      "bytes": 96,
+      "sha256": "d31892ebb8510c4aea65cb766598e09c5cb6aaa747e03d33b7d054e91a7d1478"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014350-10819/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/error-context.md",
+      "bytes": 24011,
+      "sha256": "74068261bc4f94346ed759f47d206f1219eb4c83ac517219cc2e38b6fab8864a"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m2-conflict-label-compose-e2e-m2-label-bundle1-1020014350-10819/track-label-command-M2-rea-54566-tly-after-reload-and-undoes/trace.zip",
+      "bytes": 1893469,
+      "sha256": "692c2fbcd3eab15d80bb545f7e31810b6b4351959ab062d2aa27483182171896"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-e2e-m1-closure-1019215846-11716/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-e2e-m1-closure-1019215846-11716/three-products-summary.json",
+      "bytes": 58421,
+      "sha256": "bb3ee5cdea07233dc413e25511ac1b4446a59280518b5f4e07a1c66a594299db"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204942-3735/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204942-3735/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/full-chromium.json",
+      "bytes": 429425,
+      "sha256": "38f12ddc9a2427a8413d929da49e163c897773ee0d5c33a3c00b3237342929b8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204942-3735/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/default-shell.json",
+      "bytes": 79028,
+      "sha256": "2bd1384cd6ab63781b67ab21642f395381272e4dd6495964b33107c689820ced"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204942-3735/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/attachments/full-chromium-9eee7a1ce6ff56e6e8203ae09f69cf2723a5db5f.json",
+      "bytes": 429425,
+      "sha256": "38f12ddc9a2427a8413d929da49e163c897773ee0d5c33a3c00b3237342929b8"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/browser-artifacts/.test-app-m1-journey-navigation-e2e-navigation-diagnostic-1019204942-3735/navigation-diagnostic-comp-93fc0-ith-installed-full-Chromium/attachments/default-shell-fec5ffd0ce868b6a6293191c2456bb89fe38a5f9.json",
+      "bytes": 79028,
+      "sha256": "2bd1384cd6ab63781b67ab21642f395381272e4dd6495964b33107c689820ced"
+    }
+  ],
+  "logical_bytes": 214424739,
+  "available_before": 5035577344,
+  "available_after": 5249953792,
+  "protected_v2_raw_untouched": true,
+  "source_worktrees_untouched": true
+}
