@@ -25,13 +25,11 @@ type SetupChoice = typeof SETUP_CHOICES[number];
 type Props = {
   agents: LocalAgentChoice[];
   defaultAgent: LocalAgentId;
-  initialChoice?: 'other';
   initialAgent?: LocalAgentId;
   initialError?: unknown;
   refetchAgents: (options?: { cancelRefetch: boolean }) => Promise<unknown> | unknown;
   startChatWith: (agent: LocalAgentId, model?: string, isCurrent?: () => boolean) => Promise<{ error?: unknown; sessionId?: string | null } | void>;
   onSetup?: (agent: LocalAgentId) => void;
-  onClose?: () => void;
   onComplete: (agent: LocalAgentId, sessionId?: string | null) => void;
 };
 
@@ -43,18 +41,16 @@ function status(agent: LocalAgentChoice | undefined, id: LocalAgentId) {
 }
 
 /** Inline setup owns its steps; AgentChat owns session creation and recovery. */
-export function AgentSetupCard({ agents, defaultAgent, initialChoice, initialAgent, initialError, refetchAgents, startChatWith, onSetup, onClose, onComplete }: Props) {
+export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialError, refetchAgents, startChatWith, onSetup, onComplete }: Props) {
   const refreshAgents = useCallback(() => refetchAgents({ cancelRefetch: false }), [refetchAgents]);
   const [selected, setSelected] = useState<LocalAgentId>(() => {
     const last = readNewChatChoice()?.agent ?? defaultAgent;
     return initialAgent ?? (isAgentUsable(agents.find(agent => agent.id === last)) ? last
       : LOCAL_AGENT_IDS.find(id => id !== 'astrid' && agents.some(agent => agent.id === id && agent.signIn === 'signed-in')) ?? 'astrid');
   });
-  const agentsRef = useRef(agents);
-  agentsRef.current = agents;
   const [otherSelected, setOtherSelected] = useState(false);
   const selectedChoice = otherSelected ? 'other' : selected;
-  const [step, setStep] = useState<'choose' | 'setup' | 'starting' | 'failed' | 'other'>(initialChoice === 'other' ? 'other' : initialAgent ? 'setup' : 'choose');
+  const [step, setStep] = useState<'choose' | 'setup' | 'starting' | 'failed' | 'other'>(initialAgent ? 'setup' : 'choose');
   const integrationCopy = useCopyAction(AGENT_INTEGRATION_PROMPT);
   const [agentFailure, setAgentFailure] = useState({ agent: initialAgent ?? selected, error: initialError });
   const failure = agentFailure.agent === selected ? agentFailure.error : null;
@@ -79,7 +75,7 @@ export function AgentSetupCard({ agents, defaultAgent, initialChoice, initialAge
     setOtherSelected(false);
     if (initialError) {
       setAgentFailure({ agent: initialAgent, error: initialError });
-      setFailedRow({ id: initialAgent, state: setupState(agentsRef.current.find(row => row.id === initialAgent)) });
+      setFailedRow({ id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) });
     }
     setStep(isAgentSetupError(initialError) === 'agent_runtime_missing' ? 'failed' : 'setup');
   }, [initialAgent, initialError]);
@@ -93,8 +89,6 @@ export function AgentSetupCard({ agents, defaultAgent, initialChoice, initialAge
     refetchInterval: step === 'setup' && selected === 'astrid' ? 3000 : false,
     refetchOnWindowFocus: true,
   });
-  const refetchModels = useRef(models.refetch);
-  refetchModels.current = models.refetch;
   const begin = useCallback(async (model?: string) => {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -117,16 +111,12 @@ export function AgentSetupCard({ agents, defaultAgent, initialChoice, initialAge
       if (isAgentSetupError(error) && isAgentSetupError(error) !== 'agent_runtime_missing') {
         setStep('setup');
         void refreshAgents();
-        if (selected === 'astrid') void refetchModels.current();
+        if (selected === 'astrid') void models.refetch();
       } else setStep('failed');
     } finally { inFlight.current = false; }
-  }, [onComplete, refreshAgents, selected, startChatWith]);
+  }, [models.refetch, onComplete, refreshAgents, selected, startChatWith]);
 
-  const back = () => {
-    attempt.current += 1;
-    if (initialChoice === 'other') { onClose?.(); return; }
-    setStep('choose');
-  };
+  const back = () => { attempt.current += 1; setStep('choose'); };
   useEffect(() => {
     setShowStartingBack(false);
     if (step !== 'starting') return;
@@ -146,11 +136,11 @@ export function AgentSetupCard({ agents, defaultAgent, initialChoice, initialAge
   useEffect(() => {
     if (step !== 'setup') return;
     const refresh = () => { void refreshAgents(); };
-    const focus = () => { refresh(); if (selected === 'astrid') void refetchModels.current(); };
+    const focus = () => { refresh(); if (selected === 'astrid') void models.refetch(); };
     const timer = window.setInterval(refresh, 3000);
     window.addEventListener('focus', focus);
     return () => { window.clearInterval(timer); window.removeEventListener('focus', focus); };
-  }, [refreshAgents, selected, step]);
+  }, [models.refetch, refreshAgents, selected, step]);
   useEffect(() => {
     if (failedRow?.id === selected && failedRow.state !== setupState(agent)) setFailedRow(null);
   }, [agent, failedRow, selected]);

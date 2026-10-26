@@ -1,9 +1,11 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { Blocks, Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { Blocks, Check, ChevronDown, ChevronRight, Copy, Plus } from 'lucide-react';
 import { Command, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { AGENT_CHAT_COPY as copy, AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
+import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { PICKER_GROUP, PICKER_PANEL, PickerSearch, ROW_BUTTON, matches } from '@/shared/components/ui/picker-menu.tsx';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
@@ -25,8 +27,6 @@ export interface NewChatMenuHandle {
 /** What the + button starts: the open chat's agent, model and thinking level. */
 export interface NewChatLike { agent: LocalAgentId; model?: string; modelName?: string | null; thoughtLevel?: string }
 
-export type NewChatSetupTarget = LocalAgentId | 'other';
-
 interface NewChatMenuProps {
   /** The open chat, which + repeats unless a choice was made in the menu; without one, + starts the default agent with its default model. */
   current?: NewChatLike | null;
@@ -44,8 +44,8 @@ interface NewChatMenuProps {
   newChatDisabled?: boolean;
   /** Start a chat: no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
-  /** Opens setup for an agent that is not ready, or the Another agent instructions. */
-  onSetupAgent?: (agent: NewChatSetupTarget) => void;
+  /** Opens setup for an agent that is not ready. */
+  onSetupAgent?: (agent: LocalAgentId) => void;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
@@ -68,6 +68,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   ) as Record<LocalAgentId, Record<string, string>>);
   const [highlighted, setHighlighted] = useState('');
   const [query, setQuery] = useState('');
+  const [otherExpanded, setOtherExpanded] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const landOnModel = useRef(false);
@@ -93,6 +94,9 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const quickAgent = effective.agent;
   const quickModel = choice ? choice.modelName ?? agentModelNames?.[choice.agent] : current ? current.modelName : agentModelNames?.[defaultAgent];
   const quickLabel = `New chat · ${[agentNames[quickAgent], quickModel].filter(Boolean).join(' · ')}`;
+  const instruction = copy.anotherAgentInstruction(agents?.find(agent => agent.id === 'astrid')?.terminal?.command || 'astrid');
+  const instructionCopy = useCopyAction(instruction);
+  const integrationCopy = useCopyAction(AGENT_INTEGRATION_PROMPT);
 
   const browse = (agent: LocalAgentId | null) => {
     landOnModel.current = agent !== null;
@@ -108,7 +112,10 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const changeOpen = (next: boolean) => {
     setOpen(next);
     if (next) { setHighlighted(homeValue); setQuery(''); }
-    else if (browsing) browse(null);
+    else {
+      setOtherExpanded(false);
+      if (browsing) browse(null);
+    }
     onOpenChange?.(next);
   };
   useImperativeHandle(ref, () => ({
@@ -271,17 +278,43 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
                 </CommandGroup>
                 <CommandSeparator />
                 <CommandGroup className={PICKER_GROUP}>
-                  <CommandItem value="setup:other" disabled={newChatDisabled}
+                  <CommandItem value="setup:other" disabled={newChatDisabled} aria-expanded={otherExpanded}
                     className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]"
-                    onSelect={() => { changeOpen(false); onSetupAgent?.('other'); }}>
+                    onSelect={() => setOtherExpanded(expanded => !expanded)}>
                     <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 opacity-0" aria-hidden="true" />
                     <Blocks className="mt-[3px] h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                    <span className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-baseline gap-2">
                         <span>Another agent</span>
                         <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">Gemini CLI, OpenCode…</span>
                       </span>
-                    </span>
+                      {otherExpanded && <div className="mt-1 flex flex-col gap-0.5 text-[11px] leading-4 text-muted-foreground">
+                        <span className="flex items-center justify-between gap-2">
+                          <span>{copy.anotherAgentTerminal}</span>
+                          <button type="button" tabIndex={0} aria-label={instructionCopy.status === 'copied' ? 'Instruction copied' : copy.copyAgentInstruction} title={copy.copyAgentInstruction}
+                            className="inline-flex shrink-0 items-center gap-1 rounded-sm whitespace-nowrap text-foreground/80 underline decoration-border underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
+                            onClick={event => { event.preventDefault(); event.stopPropagation(); void instructionCopy.copy(); }}>
+                            {instructionCopy.status === 'copied' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+                            {instructionCopy.status === 'copied' ? 'Copied' : copy.copyAgentInstructionShort}
+                          </button>
+                        </span>
+                        <span className="flex items-center justify-between gap-2">
+                          <span>{copy.anotherAgentIntegrationShort}</span>
+                          <button type="button" tabIndex={0} aria-label={integrationCopy.status === 'copied' ? copy.integrationPromptCopied : 'Copy integration prompt'} title="Copy integration prompt"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-sm whitespace-nowrap text-foreground/80 underline decoration-border underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onPointerDown={event => { event.preventDefault(); event.stopPropagation(); }}
+                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
+                            onClick={event => { event.preventDefault(); event.stopPropagation(); void integrationCopy.copy(); }}>
+                            {integrationCopy.status === 'copied' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+                            {integrationCopy.status === 'copied' ? copy.integrationPromptCopied : copy.copyIntegrationPromptShort}
+                          </button>
+                        </span>
+                        {instructionCopy.status === 'failed' && <CopyFallback text={instruction} label={copy.copyAgentInstruction} />}
+                        {integrationCopy.status === 'failed' && <CopyFallback text={AGENT_INTEGRATION_PROMPT} label="Copy integration prompt" />}
+                      </div>}
+                    </div>
                   </CommandItem>
                 </CommandGroup>
               </>

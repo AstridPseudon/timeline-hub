@@ -357,34 +357,6 @@ describe('AgentChat', () => {
       expect(screen.queryByRole('dialog', { name: 'New chat' })).toBeNull();
       expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
     });
-    it('opens Another agent from the menu and returns to the unchanged active chat on Back', async () => {
-      const { state } = setupState();
-      const existingReply = 'Existing assistant reply';
-      state.activeSessionData.turns = [{ role: 'assistant', content: existingReply, timestamp: iso(2_000) }];
-      renderSetupChat();
-      await screen.findByText(existingReply);
-      await getInput();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
-      fireEvent.click(screen.getByRole('option', { name: /Another agent/ }));
-
-      const card = screen.getByRole('region', { name: 'How do you want Astrid to think?' });
-      expect(within(card).getByRole('heading', { name: 'Use it from your terminal' })).toBeInTheDocument();
-      expect(within(card).getByRole('button', { name: 'Copy instruction for your agent' })).toBeInTheDocument();
-      expect(within(card).getByRole('heading', { name: 'Or build an integration so it chats right here' })).toBeInTheDocument();
-      expect(within(card).getByRole('button', { name: 'Copy a prompt to build the integration' })).toBeInTheDocument();
-      expect(screen.getByText(existingReply)).toBeInTheDocument();
-      expect(state.activeSessionData.id).toBe('codex:session-1');
-      expect(state.projectChats['project-1'].selected_session_id).toBe('codex:session-1');
-      expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
-      expect(state.cancelSession.mutate).not.toHaveBeenCalled();
-
-      fireEvent.click(within(card).getByRole('button', { name: 'Back' }));
-      await waitFor(() => expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull());
-      expect(screen.getByText(existingReply)).toBeInTheDocument();
-      expect(screen.getByRole('textbox')).toBeEnabled();
-      expect(state.activeSessionData.id).toBe('codex:session-1');
-    });
     it.each(['broken', 'setup-error', 'both'] as const)('shows one muted host line for a follower with %s', async kind => {
       const { state, localAgents } = setupState();
       const view = renderSetupChat();

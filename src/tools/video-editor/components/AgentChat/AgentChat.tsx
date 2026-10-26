@@ -42,7 +42,7 @@ import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type Ag
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
 import { AgentChatMenu } from './AgentChatMenu';
-import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle, type NewChatSetupTarget } from './NewChatMenu';
+import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentSetupCard } from './AgentSetupCard';
@@ -252,7 +252,7 @@ function AvailableAgentChatPanel({
   const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
-  const [setupRequest, setSetupRequest] = useState<{ agent: NewChatSetupTarget; sessionId: string | null; error?: unknown } | null>(null);
+  const [setupRequest, setSetupRequest] = useState<{ agent: LocalAgentId; sessionId: string | null; error?: unknown } | null>(null);
   // Mutation errors can outlive the chat they came from.
   const setupErrorScopes = useRef(new Map<unknown, { agent: LocalAgentId; sessionId: string | null }>());
   const dismissedSetupErrors = useRef(new Set<unknown>());
@@ -1268,12 +1268,10 @@ function AvailableAgentChatPanel({
         {showSetupCard && <AgentSetupCard
           agents={localAgents.data?.agents ?? []}
           defaultAgent={defaultAgent}
-          initialChoice={currentSetupRequest?.agent === 'other' ? 'other' : undefined}
-          initialAgent={currentSetupRequest?.agent === 'other' ? undefined : currentSetupRequest?.agent}
+          initialAgent={currentSetupRequest?.agent}
           initialError={currentSetupRequest?.error}
           refetchAgents={localAgents.refetch}
           onSetup={agent => setSetupRequest({ agent, sessionId: activeSessionId })}
-          onClose={() => setSetupRequest(null)}
           startChatWith={async (agent, model, isCurrent) => {
             setSetupRequest(current => current ?? { agent, sessionId: activeSessionId });
             hasAutoCreatedSessionRef.current = true;

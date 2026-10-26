@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import userEvent from '@testing-library/user-event';
 import { createRef, type ComponentProps } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { AGENT_CHAT_COPY, AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
 import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
@@ -206,14 +207,17 @@ describe('NewChatMenu agent rows', () => {
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Install with hermes install.');
   });
 
-  it('offers Another agent after the choices and opens it with keyboard navigation', async () => {
+  it('expands Another agent in place with the keyboard and keeps the menu open while copying both instructions', async () => {
     const user = userEvent.setup();
     const onSetupAgent = vi.fn();
     const onOpenChange = vi.fn();
-    openMenu({ onSetupAgent, onOpenChange });
+    const agents = ready.map(agent => agent.id === 'astrid' ? { ...agent, terminal: { command: 'astrid-dev', skillSynced: false } } : agent);
+    openMenu({ agents, onSetupAgent, onOpenChange });
     const other = screen.getByRole('option', { name: /Another agent/ });
     expect(other).toHaveTextContent('Gemini CLI, OpenCode…');
     expect(other.querySelector('svg.lucide-check')).toHaveClass('opacity-0');
+    expect(other).toHaveAttribute('aria-expanded', 'false');
+    expect(within(other).queryByRole('button', { name: AGENT_CHAT_COPY.copyAgentInstruction })).toBeNull();
 
     const command = screen.getByRole('dialog', { name: 'New chat' }).querySelector('[cmdk-root]') as HTMLElement;
     command.focus();
@@ -223,9 +227,30 @@ describe('NewChatMenu agent rows', () => {
     expect(other).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{Enter}');
 
-    expect(onSetupAgent).toHaveBeenCalledExactlyOnceWith('other');
-    expect(onOpenChange).toHaveBeenLastCalledWith(false);
-    expect(screen.queryByRole('dialog', { name: 'New chat' })).toBeNull();
+    expect(other).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('dialog', { name: 'New chat' })).toBeInTheDocument();
+    expect(onSetupAgent).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenLastCalledWith(true);
+    const instruction = AGENT_CHAT_COPY.anotherAgentInstruction('astrid-dev');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+
+    const instructionButton = within(other).getByRole('button', { name: AGENT_CHAT_COPY.copyAgentInstruction });
+    await user.tab();
+    expect(instructionButton).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('button', { name: 'Instruction copied' })).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith(instruction);
+    await user.tab();
+    expect(within(other).getByRole('button', { name: 'Copy integration prompt' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('button', { name: AGENT_CHAT_COPY.integrationPromptCopied })).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith(AGENT_INTEGRATION_PROMPT);
+
+    command.focus();
+    await user.keyboard('{Enter}');
+    expect(other).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('dialog', { name: 'New chat' })).toBeInTheDocument();
   });
 });
 
