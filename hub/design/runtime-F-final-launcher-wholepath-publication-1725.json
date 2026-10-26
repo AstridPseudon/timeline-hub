@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-26T17:25:08.295066+00:00",
+  "scope": "Finite complete pre-builder audit; original real10589 import failure and protected inprocess-vs-row mismatch confirmed. No additional argv/sourceguard issue found, no runtime/lifecycle/build PASS.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-findings.md",
+      "sha256": "b8c6fb2da9de9c02b938b1c25a1ef89e8f811f9734971ad81dd0be5c0c62a2bd",
+      "bytes": 5807
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-source-map.json",
+      "sha256": "90c60af2260c525efb6b03b306cf76b7a3d610559e884be943f46c608c7fbd95",
+      "bytes": 2605
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-validation.md",
+      "sha256": "8787067b916d251dac54468ec33c944488f5505b620812b77062c8498281a108",
+      "bytes": 1511
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-handoff.md",
+      "sha256": "25bbd06ada2ff8b7adeae92b0783e05b3f9b438a7116ba9cec403d9e7a3426c2",
+      "bytes": 1061
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-disk-trace.txt",
+      "sha256": "74f0cdb1aedef5bc069af2604d357664cee7dc3a288c87421a7fa4fce4a6f192",
+      "bytes": 279
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-wholepath-1719/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1719-sampler-lifecycle.json",
+      "sha256": "824af1adca7a7907cccef1b2e0e749d14fd32e3f28a7f532c7fd3735ed81038e",
+      "bytes": 443
+    }
+  ]
+}

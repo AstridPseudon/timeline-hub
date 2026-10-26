@@ -1,0 +1,36 @@
+{
+  "status": "BLOCKED_BEFORE_BUILDER",
+  "service": "runtime-delivery-v2-final-1026171722-10589",
+  "request": {
+    "target": "integration:runtime",
+    "repo": "runtime",
+    "suite": "delivery-v2-final",
+    "no_cache": true,
+    "exit": 1
+  },
+  "actual_inputs": {
+    "registry_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "candidate_rows_sha256": "251dc22826a7b42314c77b51e49b5e7cc3f44a9a17246eb3c92e40c370ecad81",
+    "installed_delivery_row_sha256": "95714eb061e7a1c7093be48046ea01e8d0eb4af47c35d76d3e36656a2994d050",
+    "caller_sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+    "lifecycle_sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+    "wrapper_sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+    "builder_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  },
+  "path": [
+    {"id": "request", "status": "PASS", "detail": "request-test created the protected service directory and queued the exact named suite"},
+    {"id": "test-run-row", "status": "PASS", "detail": "test-run selected the exact runtime delivery-v2-final row"},
+    {"id": "snapshot-shell", "status": "PASS", "detail": "body runs under bash -c after cd to detached Runtime snapshot with PYTHONPATH=$SNAP"},
+    {"id": "hashchecked-exec", "status": "PASS", "detail": "regular-file and SHA256 check passed; argv rewrite preserved caller arguments"},
+    {"id": "caller-import", "status": "FAIL", "detail": "run-final-delivery.py:23 cannot import sibling delivery_lifecycle because caller parent is absent from sys.path"},
+    {"id": "lifecycle", "status": "NOT_REACHED", "detail": "run_delivery was never entered"},
+    {"id": "D68", "status": "NOT_REACHED", "detail": "run_wrapper and delivery_gate_build.py were never entered"},
+    {"id": "builder", "status": "NOT_REACHED", "detail": "builder_invoked=false and zip_written=false"}
+  ],
+  "findings": [
+    {"id": "F1", "severity": "blocker", "summary": "production hashchecked exec omits caller sibling import path"},
+    {"id": "F2", "severity": "coverage", "summary": "positive harness and installer loader inject candidate path, so they cannot detect F1"},
+    {"id": "F3", "severity": "coverage", "summary": "installer validates marker-bearing candidate row, not the concrete substituted installed row"}
+  ],
+  "recommended_real_entry": "request-test integration:runtime delivery-v2-final --no-cache after the loader seam is repaired; require lifecycle, D68 staging, builder-entry, and source-identity evidence"
+}

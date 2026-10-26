@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T17:19:58Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# runtime board, 2026-10-26T17:16:38.771003+00:00
+<!-- main | 2026-10-26T17:25:21Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 5m -->
+# runtime board, 2026-10-26T17:20:27.447560+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -35,7 +35,7 @@
 | D141m packaging smoke | Retain dropped refused smoke | Main and owner | Main04:03 DROPPED | gated:dropped | Farm0345 refused; no Runtime dispatch | Main withdrew transfer; smoke not run anywhere. Planned F-final remains separately gated at original venue. | No smoke or ZIP |
 | D141 REG upgrade | Retain merged13 case upgrade correction | Luna | Independent0458 and0505 PASS | merged | Author fix-next; review0458; identity0505 | Author13 and independent13 PASS; exact source merged95d. Integrated15 actual0508 and independent0513 PASS. | 012889c1 /95d98 |
 | D141 REG TypeScript | Retain regenerated conformance outputs | Luna | Independent0458 PASS | merged | Author fix-next; independent0458 | Exact2pytest, generatorcheck and TS PASS. Normal857e joined95d; integrated15 actual0508 and independent0513 PASS. | 4a66dee1 /857e |
-| F-final and ZIP | Build exact final tuple and verify patches | Luna and independent Luna | Main GO and installed route PASS | doing | rt-F-final-build-next | Single actual build queued at 5150625792 bytes. App base fc24; other three frozen upstream tips. Artifact review follows actual result. | No delivery artifact yet |
+| F-final and ZIP | Retain failed actual normal startup | Luna | Installed route readback PASS | review | rt-F-final-build-next; actual10589 | [Actual pre-builder import FAIL](../../design/runtime-F-final-startup-failure-publication-1719.json). Service exit1 in0s; no builder, staging or ZIP. | No delivery artifact |
 | D141 other proofs | Retain accepted original App journeys | App and Runtime | Owner D141jj frozen App choice | merged | App original controllers and custody | Seven original journeys qualified with disclosed gaps; popup known gap. No deferred catch-up enters this ZIP. Final metadata successor separate. | App82e / Agentecdc |
 | D100a | Retain decoupled item birth release | Agent Luna | Independent release 2320 and custody 2341 | merged | Agent normal c585 | Source dependency cleared. Managed and media behavior is measured in Agent cut core, with no duplicate cohort body. | Agent c585 |
 | D136 original nine | Retain independently qualified failure | App and Runtime | D141 stop | gated:D141-stop | Actual 2330; independent 2335 | Nine setup errors in 39.34 seconds; cause UNKNOWN. No reporting fix, producer investigation or next body. | Captured ab1e delta |
@@ -95,8 +95,8 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: Independent artifact review after the sole actual F-final result is terminal.
-live 1 / cap 6; ready-undispatched 0. Sole F-final heavy build queued; no other independent ready task.
+Next ready: Protected review of complete launcher successor, then scoped activation and readback; actual build remains gated by those results.
+live 2 / cap 6; ready-undispatched 0. One complete launcher author and one finite read-only whole-path investigator queued; no heavy body.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
@@ -137,3 +137,8 @@ Current pass 2026-10-26T17:07:11.020197+00:00: Prior installer proposed tuple gl
 Current pass 2026-10-26T17:12:02.856514+00:00: Actual installer terminal exit0. Canonical original destinations, exact backup, source11 and all priorregistry bytes conserved. Independent installed-route reviewer queued immediately; no body yet. Free5156536320. No cleanup or floortrip.
 
 Current pass 2026-10-26T17:16:38.771003+00:00: Actual independent installation review terminal exit0 and bounded PASS. Source11, actual tuple hashes and exact predecessor plus three rows independently conserved; four protected Runtime rows and outside bytes exact. Structured evidence bundle absent; actual safe report and raw log control, monitor PTY/wait limits retained. Sole rt-F-final-build-next queued immediately at5150625792 under Main GO, --net --heavy, unchanged4.86GB/wholegroup4GB route. No cleanup or second checker. INBOX 1936116 HEADER 256846 consumed.
+
+| F-final launcher | Correct actual registered import path | Luna | Actual10589 startup failure | doing | rt-F-final-launcher-fix-1719 | Private row successor and scoped CAS only. SAME production python-c launch from Runtime cwd, guarded startup and tiny fullpath controls required. | No canonical write |
+| F-final launcher path | Investigate complete pre-builder path | Luna read only | Actual10589 vs protected source fixture | doing | rt-F-final-launcher-wholepath-1719 | Finite all-findings source map, comparing registered exec and qualified harness. No builder, clone, install or new body. | Evidence only |
+
+Current pass 2026-10-26T17:20:27.447560+00:00: Actual normal10589 service FAIL exit1 in0s, ModuleNotFoundError delivery_lifecycle under hashchecked python-c exec; builder NOTRUN, no staging or ZIP. Worker report exit0 separately. Published originals1719. Two Luna source workers queued immediately at5147631616: complete minimal production-launch row/CAS author plus independent finite wholepath reader. Protected successor review then scoped install/readback before another build; no source tuple, canonical source11, live registry or notes change by manager; no cleanup. Main16:18 floors retained.

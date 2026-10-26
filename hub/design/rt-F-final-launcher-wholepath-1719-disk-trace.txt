@@ -1,0 +1,8 @@
+sample=2026-10-26T17:22:47.608Z available_bytes=5143875584 stop_line_bytes=4000000000
+sample=2026-10-26T17:22:52.615Z available_bytes=5143855104 stop_line_bytes=4000000000
+start=2026-10-26T17:22:47Z
+sampler_pid=4
+sampler_exit=0
+wait_status=0
+reaped=true
+end=2026-10-26T17:22:52Z

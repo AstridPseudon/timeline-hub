@@ -1,0 +1,15 @@
+{
+  "kind": "real_available_bytes_control",
+  "path": "evidence/disk-trace.txt",
+  "started": "2026-10-26T17:22:47Z",
+  "ended": "2026-10-26T17:22:52Z",
+  "pid": 4,
+  "samples": 2,
+  "interval_seconds": 5,
+  "available_bytes": [5143875584, 5143855104],
+  "stop_line_bytes": 4000000000,
+  "exit_code": 0,
+  "wait_status": 0,
+  "waited_and_reaped": true,
+  "service_lifecycle": "NOT_REACHED_BY_10589: caller import failed before run_delivery"
+}
