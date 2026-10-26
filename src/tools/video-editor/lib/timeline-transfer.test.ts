@@ -34,12 +34,15 @@ async function archiveBlob(media = true, extraEntries: Array<{ name: string; val
 
 function fakeClient(options: { checkFails?: boolean; existingMedia?: boolean; missing?: string[]; different?: string[] } = {}) {
   const admissions: Array<Record<string, unknown>> = [];
-  const uploads: Array<{ digest: string; blob: Blob; url: string; mediaType: string; expectedDigest: string }> = [];
+  const admissionKeys: string[] = [];
+  const uploads: Array<{ digest: string; blob: Blob; url: string; mediaType: string; expectedDigest: string; idempotencyKey: string }> = [];
   const commits: unknown[] = [];
+  const commitKeys: string[] = [];
   const client = {
     listCapabilities: vi.fn(async () => ({ items: [{ capability_id: 'rendering.timeline_prepare_import', definition_digest: 'sha256:capability', status: 'ready', estimated_scratch_bytes: 10, estimated_output_bytes: 20 }], next_cursor: null })),
-    admitTask: vi.fn(async (input: Record<string, unknown>) => {
+    admitTask: vi.fn(async (input: Record<string, unknown>, idempotencyKey: string) => {
       admissions.push(input);
+      admissionKeys.push(idempotencyKey);
       const params = ((input.spec as { inputs: Record<string, unknown> }).inputs);
       const fail = params.check_only === true && options.checkFails;
       const taskId = params.check_only === true ? 'check-task' : 'prepare-task';
@@ -53,15 +56,16 @@ function fakeClient(options: { checkFails?: boolean; existingMedia?: boolean; mi
     }),
     ingestProjectObject: vi.fn(async (_project: string, _body: Blob) => ({ object_id: `sha256:${'c'.repeat(64)}` })),
     listProjectObjects: vi.fn(async () => ({ items: [{ object_id: `sha256:${mediaSha}`, digest: `sha256:${mediaSha}`, relation: options.existingMedia ? 'managed' : 'available' }], next_cursor: null })),
-    importTimeline: vi.fn(async (_project: string, prepared: Record<string, unknown>) => {
+    importTimeline: vi.fn(async (_project: string, prepared: Record<string, unknown>, idempotencyKey: string) => {
       commits.push(prepared);
+      commitKeys.push(idempotencyKey);
       return { timeline_id: 'new-timeline', name: 'Imported Cut', transcript_conflicts: [{ media_id: 'sha256:conflict', message: 'kept project version' }] };
     }),
   };
-  return { client, admissions, uploads, commits };
+  return { client, admissions, admissionKeys, uploads, commits, commitKeys };
 }
 
-function xhrFactory(uploaded: Array<{ digest: string; blob: Blob; url: string; mediaType: string; expectedDigest: string }>) {
+function xhrFactory(uploaded: Array<{ digest: string; blob: Blob; url: string; mediaType: string; expectedDigest: string; idempotencyKey: string }>) {
   return () => {
     const headers: Record<string, string> = {};
     const xhr = {
@@ -70,7 +74,7 @@ function xhrFactory(uploaded: Array<{ digest: string; blob: Blob; url: string; m
       open: vi.fn((_method: string, url: string) => { xhr.url = url; }),
       setRequestHeader: vi.fn((key: string, value: string) => { headers[key] = value; }),
       send: vi.fn((blob: Blob) => {
-        uploaded.push({ digest: headers['X-Expected-Digest']!, expectedDigest: headers['X-Expected-Digest']!, blob, url: xhr.url, mediaType: headers['Content-Type']! });
+        uploaded.push({ digest: headers['X-Expected-Digest']!, expectedDigest: headers['X-Expected-Digest']!, blob, url: xhr.url, mediaType: headers['Content-Type']!, idempotencyKey: headers['Idempotency-Key']! });
         xhr.onload?.(new ProgressEvent('load'));
       }),
       onerror: null as ((event: ProgressEvent) => void) | null,
@@ -211,7 +215,7 @@ describe('timeline transfer workflows', () => {
   });
 
   it('preflights before uploads, sends expected digests, and commits the prepared artifact', async () => {
-    const { client, admissions, uploads, commits } = fakeClient();
+    const { client, admissions, admissionKeys, uploads, commits, commitKeys } = fakeClient();
     const fetchImpl = actionFetch({ format: 'astrid.timeline/1', elements: [] });
     let actionIndex = 0;
     fetchImpl.mockImplementation(async (_input, init) => {
@@ -229,9 +233,13 @@ describe('timeline transfer workflows', () => {
     expect((admissions[0]!.spec as { inputs: Record<string, unknown> }).inputs).toEqual({ project: 'target-project', manifest: { format: 'astrid.timeline/1', elements: [] }, check_only: true });
     expect((admissions[1]!.input_object_ids as string[])).toContain(`sha256:${'c'.repeat(64)}`);
     expect((admissions[1]!.spec as { input_digests: Array<{ name: string; digest: string }> }).input_digests).toContainEqual({ name: 'payload', digest: `sha256:${'c'.repeat(64)}` });
-    expect(uploads).toEqual([{ digest: `sha256:${mediaSha}`, expectedDigest: `sha256:${mediaSha}`, blob: expect.any(Blob), url: expect.stringContaining('/v1/projects/target-project/objects'), mediaType: 'video/mp4' }]);
+    expect(uploads).toEqual([{ digest: `sha256:${mediaSha}`, expectedDigest: `sha256:${mediaSha}`, blob: expect.any(Blob), url: expect.stringContaining('/v1/projects/target-project/objects'), mediaType: 'video/mp4', idempotencyKey: expect.stringMatching(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/) }]);
+    expect(admissionKeys).toHaveLength(2);
+    admissionKeys.forEach((key) => expect(key).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/));
     expect(client.listProjectObjects).toHaveBeenCalledWith('target-project', undefined, 100);
     expect(commits).toHaveLength(1);
+    expect(commitKeys).toHaveLength(1);
+    commitKeys.forEach((key) => expect(key).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/));
     expect(imported.timeline_id).toBe('new-timeline');
     expect((client.ingestProjectObject as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
   });

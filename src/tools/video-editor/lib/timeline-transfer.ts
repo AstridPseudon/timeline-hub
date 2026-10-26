@@ -20,7 +20,7 @@ export type TransferToast = { loading(message: string): unknown; update(id: unkn
 type TransferOptions = { client?: TaskClient; fetchImpl?: typeof fetch; xhrFactory?: () => XMLHttpRequest; onProgress?: (progress: TransferProgress) => void; toast?: TransferToast };
 
 function randomKey(prefix: string): string {
-  return `${prefix}:${crypto.randomUUID()}`;
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
