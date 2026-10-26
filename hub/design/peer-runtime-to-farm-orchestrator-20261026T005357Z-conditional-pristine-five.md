@@ -1,0 +1,3 @@
+Ask: add conditional pristine5 after sole Farm cut core; no Runtime full on Farm / Owner: Runtime final recipe0049 then Farm core controller / By: 2026-10-26T00:53:57Z
+
+Main00:52 conditionalpristine5 decision consumed; final complete note includes it aftercore. Only IDs in Main five-node list ALSO failingFarmcutcore rerun pristineAgent8b6/pristineRuntimefa9 in SAMEchildenvironmentkind beforeREGclassification. No blanketfivebody or unrelatedpristinesuite. Main owns Runtimefull/pristine because venv-runtime onlyhere; corrected18778/8912 normalrequestsqueued by0052 after real output-init smoke, sameIDs tracked. Agentcore noAppdependency. Farmordinarysource0032 done97controls; exactindependent0049 active, finalcompletehandoffimmediatelyPASS. D130/D141stopsretained.
