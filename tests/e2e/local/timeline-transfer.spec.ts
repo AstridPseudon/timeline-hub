@@ -209,6 +209,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await expect.poll(async () => position.getAttribute('aria-valuenow'), {
     message: 'playback frame advances on the CLI-imported timeline', timeout: 15_000,
   }).not.toBe(before);
+  const after = await position.getAttribute('aria-valuenow');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const playbackEvidence = browserEvidencePath(testInfo, 'timeline-transfer/ui-round-trip-playback.png');
   await page.screenshot({ path: playbackEvidence, fullPage: true });
@@ -248,7 +249,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
     performance_status: 'pending-aggregate-browser-peak-memory-measurement',
     allowed_origins: [...allowedOrigins],
     playback_position_before: before,
-    playback_position_after: await position.getAttribute('aria-valuenow'),
+    playback_position_after: after,
     forbidden_ports: [...blockedPorts],
     requests: observedRequests,
   };
