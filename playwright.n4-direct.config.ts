@@ -10,6 +10,7 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: 0,
+  expect: { timeout: 30_000 }, // the shared 5 s is too tight for a memory-starved machine; real stalls still fail well inside the test timeout
   use: { ...directConfig.use, trace: process.env.N4_TRACE === 'off' ? 'off' : directConfig.use?.trace, actionTimeout: 120_000, navigationTimeout: 120_000 },
   forbidOnly: true,
 });
