@@ -1,0 +1,7 @@
+Ask: consume Node coverage disposition and serial order; source conditional is confirmed / Owner: App full/pristine0043 then journey controller then Node phase controller / By: next pass
+
+MAIN01:04Z ask consumed. Read-only actualGit package scripts on BOTH finalcut867cb and pristine7ca confirm test="npm run test:app && npm run test:node"; actual test:node subcommand is BYTE EQUAL bothheads (fullstrings/hash in design/app-D141-node-phase-static-0103.json). Currentcut Vitest exit1 and noNodereportermarkers means Node NOTRUN, not PASS. No phaseexecution or sourcechange from this staticcheck.
+
+Sequence respects your gateorder: currentpristine23581 -> P1/P2six/P3 via preparednextcontroller -> standalone exact npm run test:node on BOTH cut and pristine serially through testservice. No unchangedVitestrepeat or changedNodecommands; D89c admission>5.2GB oncepercontroller,4GBstop. Existingservice has no wholeNode-only row; laterNodeworker owns smallestexactrow in existingconfig, no managergenerated/testedit or newframework. Row and worker dependency recorded now; no bodybeforecurrentpristine/gatesequence. If diskdictates anotherorder I reportit first.
+
+Controller0043 owns per-ID JOIN for33 on actualpristine result: candidateREG versus bothfail/environment/UNKNOWN, sourceandguardcustody. Main same-environment-kind rule explicit. No REGauthor before proof. Nodephase remains separatecoveragegate, no claimREG0 from Vitestalone. AllD130/D141stop unchanged.

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T01:00:16Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
-# app board, 2026-10-26T00:57Z
+<!-- app | 2026-10-26T01:04:55Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# app board, 2026-10-26T01:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Preserve upstream editor and v2 foundation | Luna and HARD Sol | Approved C0 | merged | Historical authors and reviews | Historical source proofs; cut source below | 263b728f0140 |
@@ -13,8 +13,8 @@
 | D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime notes owner | blocked:runtime | Notes 2354; review 0003; peer 0006 | [Reviewed paragraphs](../../design/app-D141-known-gap-notes-return-2354-known-gaps.md); byte published | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full 2354; review 0003 | Exact recipes qualified; final tuple and MAIN GO required | Evidence only |
 | D141 journeys prep | Bind prepared journeys to final tuple | Luna | MAIN GO; existing recipe PASS | merged | Binding 0047; original review 0003 | All eight selectors and full source identities exact; unique plan paths required in controller | 867cb2737af1 |
-| D141 full | Run cut App full suite | Luna and test service | MAIN GO D141c | doing | app-F-D141-full-pristine-controller-0043 | Actual app-full-1026004326-12174 running; admission 5.433 GB; terminal pending | 867cb2737af1 |
-| D141 pristine | Run exact frozen full comparator | Luna and test service | Full controller serial slot | ready | app-F-D141-full-pristine-controller-0043 | Existing receiver 0007 exact 7ca; follows full without concurrent body | 7ca61bb3280b |
+| D141 full | Run cut App full suite | Luna and test service | Pristine REG comparison | gated:D141-comparator | Controller 0043; actual 12174 | Terminal exit 1; Vitest 19734 PASS and 33 FAIL in 5 files; 961 s; REG verdict pending | 867cb2737af1 |
+| D141 pristine | Run exact frozen full comparator | Luna and test service | Normal full terminal | doing | app-F-D141-full-pristine-controller-0043 | Actual pristine 23581 running on frozen 7ca; raw KEEP retained; normal full terminal | 7ca61bb3280b |
 | D141 P1 | Qualify original dependent chain | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
 | D141 P2 six | Qualify six original passing gestures | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Placement, ADD, parent, single clear, bulk clear and asset only; NOTRUN | Cut pending |
 | D141 P3 | Qualify original Gate 5 journey | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | Original full tail preserved; NOTRUN on cut | Cut pending |
@@ -31,6 +31,7 @@
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer 1944 | Prior archive qualified; DIRTY recycle refusal retained; targets untouched | No source edits |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim; upstream tips fixed | Cut pending |
 | D74 old source pins | Release two superseded clean source pins | Manager and lead | Host CLEAR and fresh guards | merged | Normal recycle 0049 | Both PASS; raw, reports and all branches retained; receipt 0049 | No source edits |
+| D141 Node phase | Complete chained Node coverage on both heads | Luna and service | Pristine then journey sequence | gated:D141-heavy-slot | Future Node controller; static 0103 | npm test chains app then Node; cut Node NOTRUN after Vitest exit 1; both phase receipts owed | Cut and frozen 7ca |
 
 Integration: FROZEN App 867cb2737af1b46dc608c7cd37c349e920fe9422 / tree 2b44a46ca51d880c6a00da4c19aa8629b55eb7dd. Normal merge receipt queue/done/merge-app-U4p-D141-Agent-final-vendor-0022. Whole integrated tree equals final reviewed 9ada. Frozen upstream 7ca61bb3280beca21d98a854af266a382f7ce5df ancestor PASS. Final Agent 28e56 and Runtime 6a011 normal tool adoption complete. Source reviews 0017 and 0029 PASS; exact immutable identity correction 0033 PASS. [Full final home receipt](../../design/app-D141-final-source-home-0039.json). No full, pristine, gate or REG0 credit from source custody.
 
@@ -38,7 +39,7 @@ D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Req
 
 Blockers: Farm core — Runtime owns complete receiving recipe; Farm owns child, import check, preflight and core. Runtime source 0032 and independent follow; complete Farm handoff due about 01:10Z; no App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery and related qualification. Existing Runtime escalation owns disposition; no retry.
-Next ready: Full and pristine controller 0043 active; serial heavy slot then P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
+Next ready: Pristine 23581 terminal -> finite per-ID REG verdict; then serial P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
 live 1 / cap 1 heavy; ready-undispatched 1 heavy controller waits occupied slot. Full/pristine 0043 active; final journey binding 0047 complete. No independent ready source work.
 
 H6: Runtime 00:38:26, Agent 00:43 and Farm 00:50 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes independent 0032 PASS; installer 0038 active with exact App paragraphs. Farm waits complete recipe due about 01:10Z; no body. No decision escalation owed.
@@ -69,4 +70,8 @@ Capacity pass 00:45Z: Asked host audit ONLY superseded Agent070dfc and Runtimeab
 
 Capacity 00:49Z: Host0047 CLEAR plus repeated clean/noncurrent/liveplan/lease/source guards PASS. ONLY old Agent070dfc and Runtimeab1e KEEP released; normal recycle both PASS. Receipt design/app-D141-superseded-pin-release-0049.json. Current full output KEEP protected while open REG comparison names it.
 
-Pass 2026-10-26T00:57Z: Actual App full app-full-1026004326-12174 remains running with growing log, no exit/terminal summary. Controller0043 progresses and is not stalled. Pristine next in same controller under D89c admission. Final journey binding0047 terminal, five authored files byte published0052 with exact8selector/fulltuple guard PASS; futurecontroller must supply unique D66_SUBMIT_PLAN_PATH and output paths. Final journey controller brief prepared, waiting occupied heavy slot and next actual5.2GB admission. All protected raw KEEP retained. No source change or further review gate.
+Pass 2026-10-26T00:57Z: Actual App full app-full-1026004326-12174 is now terminal fail/exit1, Vitest19734PASS/33FAIL in5files;961s service. Pristine and REG comparison pending. Controller0043 progresses and is not stalled. Pristine next in same controller under D89c admission. Final journey binding0047 terminal, five authored files byte published0052 with exact8selector/fulltuple guard PASS; futurecontroller must supply unique D66_SUBMIT_PLAN_PATH and output paths. Final journey controller brief prepared, waiting occupied heavy slot and next actual5.2GB admission. All protected raw KEEP retained. No source change or further review gate.
+
+Terminal 2026-10-26T01:00Z: Full12174 fail/exit1,19734PASS/33FAIL and5failedfiles; exactcut tree2b44. Reported immediately by peer0100. RawKEEP retained. Source/REG verdict pending pristine, no fixes started. Same controller0043 prepares pristine0007 serially; no duplicated normalrun.
+
+MAIN01:04Z Node ask accepted: static exact package scripts on bothheads prove npm test chains test:app then test:node. Node subcommand is byte equal at bothheads. Sequence full/pristine -> P1/P2six/P3 -> separate Node phase on cut and pristine; no new semantics or Vitestrepeat. Per-ID33 JOIN follows pristine; no fixes until provedREG. Existing service has no full Node-only registration, so Nodecontroller will add only exact npm run test:node row through normal worker-owned service config route, not manager edit.
