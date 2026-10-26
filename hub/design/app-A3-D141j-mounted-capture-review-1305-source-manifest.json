@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-review-manifest.v1",
+  "verdict": "FAIL",
+  "candidate": {"commit": "ad651d89d3db583351a99d35cf791726b4c096bd", "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857", "private": true},
+  "changed_files": [
+    {"path": "tests/e2e/local/support/d141j-visibility.ts", "sha256": "97cb782069904555f66ce389edc344076a533497a388c6117c03b4463e1d5dce"},
+    {"path": "tests/e2e/local/support/d141j-visibility.test.ts", "sha256": "6176468933f404ad870e5c9407e987bc700a90b4ff2d96548ef8f9d97155b6f4"}
+  ],
+  "protected_unchanged": [
+    {"path": "tests/e2e/local/support/app.ts", "sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f"},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9"},
+    {"path": "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts", "sha256": "504088ca11b9522f39e38328cfcd636f621768387c4dc2b5c461a76ab9856e56"},
+    {"path": "scripts/testing/check-d141j-visibility.mjs", "sha256": "bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27"}
+  ],
+  "native": {"status": "NOTRUN", "registration": false, "cause": "UNKNOWN"},
+  "route_packet": {"route_1256_coordinate_and_recipe_findings": "unrelated to this candidate helper review"}
+}

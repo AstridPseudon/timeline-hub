@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-26T13:08:29.784499+00:00",
+  "upstream": "00a014e2a393ebfb080c4fd85d5a08bc97bc6671",
+  "tree": "2d148030f81e8522a7751577037232f9de29f9d9",
+  "lead_fresh_reply": "INBOX13:07Z fetch==ls-remote",
+  "route": "bin/merge-forward",
+  "exit": 1,
+  "status": "merge-forward completed; resolve every conflict per brief; preserve MAIN pin rule"
+}

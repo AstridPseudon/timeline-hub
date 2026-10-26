@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-26T13:06:42.365984+00:00",
+  "free_before": 4529717248,
+  "eligible_app": [],
+  "keep_count": 42,
+  "results": [
+    {
+      "command": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/sweep-tmp",
+        "3"
+      ],
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4320M -> 4313M\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/compact-scratch",
+        "1"
+      ],
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 4313M -> 4295M\ngzipped 0 old worker logs; free now 4453M\npacked 0 finished test-run dirs; free now 4469M\n",
+      "stderr": ""
+    }
+  ],
+  "keep_exact": true,
+  "free_after": 4685254656
+}

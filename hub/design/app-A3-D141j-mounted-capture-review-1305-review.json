@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-review.v1",
+  "verdict": "FAIL",
+  "classification": "FAIL_FINITE_MOUNTED_WIRING",
+  "scope": "A3/P2 D141j independent protected source review",
+  "candidate": {
+    "commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+    "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857",
+    "private": true,
+    "unmerged": true
+  },
+  "native": {
+    "status": "NOTRUN",
+    "registration": false,
+    "browser": false,
+    "service": false,
+    "request": false,
+    "body": false,
+    "cause": "UNKNOWN"
+  },
+  "source_controls": {
+    "installer_module_import_snapshot": "PASS",
+    "empty_artifact_retention": "PASS",
+    "failure_retention_before_cleanup": "PASS",
+    "finally_uninstall": "PASS",
+    "positive_checker": "PASS",
+    "stale_checker": "EXPECTED_FAIL",
+    "timeline_editor_core": "PASS 13/13"
+  },
+  "finding": {
+    "id": "D141J-REVIEW-001",
+    "severity": "finite-correctness",
+    "status": "confirmed",
+    "summary": "The candidate exports a mounted collector helper but does not call it from the real mounted App lifecycle.",
+    "evidence": [
+      "withMountedD141jVisibilityCollector occurs only in tests/e2e/local/support/d141j-visibility.test.ts",
+      "tests/e2e/local/three-products.p2-popup.spec.ts has no candidate helper call",
+      "tests/e2e/local/support/app.ts has no candidate helper import or call",
+      "production observer callbacks are present at the four existing boundaries and remain inert until installation"
+    ],
+    "impact": "Synthetic finite controls do not establish mounted emitter visibility or retained native custody."
+  },
+  "protected": {
+    "popup_assertions_unchanged": true,
+    "app_fixture_unchanged": true,
+    "collector_blob_unchanged": true,
+    "checker_blob_unchanged": true,
+    "original_visibility_review": "PASS_SOURCE_VISIBILITY; immutable"
+  }
+}

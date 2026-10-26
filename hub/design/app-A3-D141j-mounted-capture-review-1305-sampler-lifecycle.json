@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-review-sampler-lifecycle.v1",
+  "first_tool": {
+    "created": ["evidence/", "workerKEEP"],
+    "sampler_pid": 3,
+    "foreground_observation_seconds": 5,
+    "initial_available_kb": 4425080,
+    "final_poll": "pid was no longer present; no 4GB stop trip"
+  },
+  "followup_poll": {
+    "session": 44722,
+    "observations": ["4414904 KB", "4414892 KB"],
+    "stop": "Ctrl-C after <=60s poll interval",
+    "reaped": true,
+    "process_remaining": false,
+    "shell_exit": 1,
+    "shell_exit_note": "terminal interrupt; sampler process was absent on final process poll"
+  },
+  "admission": {"future_threshold_bytes": 5200000000, "current_final_available_bytes": 4519968768, "stop_floor_kb": 4194304, "native_run": "NOTRUN"}
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "timeline.app.d141j.mounted-capture-review-source-map.v1",
+  "candidate": {
+    "commit": "ad651d89d3db583351a99d35cf791726b4c096bd",
+    "tree": "519d82d96626a83d2727a81f753ec77a5ddfa857"
+  },
+  "changed": [
+    "tests/e2e/local/support/d141j-visibility.ts",
+    "tests/e2e/local/support/d141j-visibility.test.ts"
+  ],
+  "helper": {
+    "module_specifier": "/src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts",
+    "browser_import": "page.evaluate(async ({moduleSpecifier}) => import(moduleSpecifier) ...)",
+    "install": "installD141jVisibilityCollector(collector)",
+    "extract": "collector.snapshot()",
+    "retention": "testInfo.outputPath('d141j-visibility.json') + writeFile + testInfo.attach",
+    "cleanup": "session.snapshot() and retain in finally, then session.uninstall()"
+  },
+  "production_boundaries": [
+    {"file": "src/tools/video-editor/adapters/app/useAstridShotsHost.ts", "line": 210, "event": "accepted-canonical-read"},
+    {"file": "src/tools/video-editor/hooks/useShotGroups.ts", "line": 188, "event": "active-occurrences-before-useShotGroups"},
+    {"file": "src/tools/video-editor/hooks/useShotGroups.ts", "lines": [273, 336], "event": "useShotGroups-input-and-result"},
+    {"file": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx", "line": 931, "event": "before-shot-group-overlay"}
+  ],
+  "usage_census": {
+    "mounted_spec_call": false,
+    "app_fixture_call": false,
+    "finite_test_call": true,
+    "production_installer_call": false,
+    "production_observers": true
+  },
+  "native_semantics": "NOT_PROVEN; source controls do not synthesize mounted emitter values"
+}
