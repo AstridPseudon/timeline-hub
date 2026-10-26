@@ -18,7 +18,7 @@ There is **no top-level shots family**.
 
 Verbs (the product routes plus the nested ``shots`` mount; reads resolve the
 Runtime-owned canonical current head. The detached working-copy verbs use the
-existing timeline SDK checkout and publish semantics; they do not write a
+existing timeline SDK checkout and commit semantics; they do not write a
 parallel product store):
 
 - ``create`` via ``client.timelines.create_empty`` creates the runtime identity
@@ -1205,11 +1205,12 @@ def _timeline_editing_resources() -> dict[str, Any]:
     }
 
 
-def _document_edit_commands(file_path: str) -> dict[str, str]:
+def _document_edit_commands(file_path: str, ref: str | None = None, project: str | None = None) -> dict[str, str]:
     argv = ["python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document"]
     return {
         "check": shlex.join([*argv, "check", "--file", file_path]),
-        "commit": shlex.join([*argv, "commit", "--file", file_path,
+        "commit": shlex.join(["python3", "-m", "astrid", "timelines", "commit", ref or "<timeline>",
+                              "--project", project or "<project>", "--file", file_path, "-m", "Timeline edit",
                               "--idempotency-key", "timeline-edit-1"]),
     }
 
@@ -1224,7 +1225,10 @@ def _editing_navigation(
         "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
         "--file", file_path,
     ])
-    resources["commands"] = {"checkout": checkout, **_document_edit_commands(file_path)}
+    resources["commands"] = {
+        "checkout": checkout,
+        **_document_edit_commands(file_path, timeline or "<timeline>", project or "<project>"),
+    }
     resources["retry"] = "Use a fresh idempotency key for new intent; reuse the same file and key for a retry. The file pins the project, timeline and exact base."
     return resources
 
@@ -2309,7 +2313,7 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
                                 "and built-in literal params in canvas units; replaces the previous export.")
     subparser.epilog = (
         "Next: use `timelines visualize` for composed pixels. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
+        "timeline_editing guide. Literal numeric moves/trims use `timelines edit`. "
         "Use `timelines visualize --help` for the visual controls."
     )
     _add_project_arg(subparser, required=False)
@@ -2488,7 +2492,7 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     subparser.epilog = (
         "Next: use `timelines show` for authored rows and timing. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
+        "timeline_editing guide. Literal numeric moves/trims use `timelines edit`. "
         "Use this help page for component, sampling, frame, and resolution controls."
     )
     _add_project_arg(subparser, required=False)
@@ -3246,7 +3250,8 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         source, candidate,
     ])
     print("next: export the complete JSON candidate (project, timeline and base stay pinned): " + prepare)
-    for command in _document_edit_commands(candidate).values():
+    for command in _document_edit_commands(candidate, parsed.ref or tl.bundle.get("timeline_id"),
+                                            parsed.project or tl.bundle.get("project_id")).values():
         print("next: " + command)
     print("Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.")
     if target is not None:
@@ -3688,7 +3693,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--retime", action="store_true", help="Move every anchored clip back onto its word.")
     subparser.add_argument("--insert", type=_parse_insert, default=None, metavar="TIME:SECONDS",
                            help="Insert silence/time at TIME (e.g. 1:02:0.5), moving everything after it later.")
-    subparser.add_argument("--keep", action="store_true", help="Accept an orphaned clip where it is (a fixed time, no moment); it stops blocking publish.")
+    subparser.add_argument("--keep", action="store_true", help="Accept an orphaned clip where it is (a fixed time, no moment); it stops blocking commit.")
     subparser.add_argument("--clear-asset", dest="clear_asset", action="store_true",
                            help="Empty the clip's asset (it stays on the timeline).")
     subparser.add_argument("--allow-new-params", dest="allow_new_params", action="store_true",
@@ -3833,7 +3838,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("edit", help="Commit a clip move or trim, or edit a legacy detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
-    CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
+    CommandSpec("apply", help="Apply supported cut-sheet rows through Runtime, or edit a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo local edits, or an accepted Runtime commit with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
     CommandSpec("redo", help="Redo local edits, or reverse an accepted undo with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),

@@ -1367,9 +1367,13 @@ def test_timeline_editing_guidance_consumes_its_json(
     def run(command):
         argv = shlex.split(command)
         assert argv[:2] == ["python3", "-m"]
-        assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
-        monkeypatch.setattr(sys, "argv", argv[2:])
-        helper.main()
+        if argv[2:4] == ["astrid", "timelines"]:
+            parsed = cli.build_parser(client).parse_args([*argv[4:], "--json"])
+            assert parsed.handler(parsed) == 0
+        else:
+            assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
+            monkeypatch.setattr(sys, "argv", argv[2:])
+            helper.main()
         return json.loads(capsys.readouterr().out)
 
     if mode == "checkout":
@@ -1387,6 +1391,7 @@ def test_timeline_editing_guidance_consumes_its_json(
         commands = navigation["commands"]
     else:
         checkout = Checkout(bundle_from_document(original))
+        checkout.bundle["base_parent"]["publication_id"] = original_head["publication_id"]
         checkout.save(path, quiet=True)
         monkeypatch.setattr(cli, "_edit_checkout", lambda parsed: Checkout.load(path))
         monkeypatch.setattr("astrid.packs.timeline.cli_sweep.auto_sweep_after_edit", lambda *a, **kw: 0)
@@ -1401,7 +1406,10 @@ def test_timeline_editing_guidance_consumes_its_json(
         prepared = shlex.split(prepare)
         assert prepared[-2:] == [str(path), str(path) + ".commit.json"]
         subprocess.run([sys.executable, *prepared[1:]], check=True)
-        commands = dict(zip(("check", "commit"), [line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")]))
+        commands = {
+            "check": next(line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")),
+            "commit": next(line[6:] for line in lines if line.startswith("next: python3 -m astrid timelines commit ")),
+        }
         if mode == "draft":
             shown = shlex.split(next(line[6:].removesuffix(" (your change)") for line in lines if line.startswith("next: python3 -m astrid timelines show")))
             assert shown[5] == timeline_ref and shown[7] == project_ref
@@ -1409,13 +1417,13 @@ def test_timeline_editing_guidance_consumes_its_json(
     checked = run(commands["check"])
     assert checked["validation"]["valid"]
     committed = run(commands["commit"])
-    result = committed["publication"]
+    result = committed
     assert result["data"]["status"] == "accepted" and result["receipt"]
     body = bodies[-1]
     head = client.timelines.history(project, "t", limit=100).data
     assert body["base_revision_id"] == original["parent_revision"]["revision_id"]
     assert body["base_publication_id"] == original_head["publication_id"]
-    assert body["merge"] == "atomic" and body["label"] == "Publish document"
+    assert body["merge"] == "atomic" and body["label"] == "Timeline edit"
     assert body["steps"][0]["command_ordinals"] == [0]
     assert body["steps"][0]["patch"] == body["commands"][0]["args"]["changes"]
     assert body["commands"][0]["op"] == "doc.patch"
@@ -1425,7 +1433,7 @@ def test_timeline_editing_guidance_consumes_its_json(
     if mode == "checkout":
         assert landed["parent_revision"]["payload"]["config"]["opaque_guidance"] == [None, False, "kept"]
         assert landed["shot_revisions"][0]["payload"]["name"] == "Edited shot"
-    assert run(commands["commit"])["publication"] == result
+    assert run(commands["commit"]) == result
     assert client.timelines.history(project, "t", limit=100).data == head
     assert document("t") == landed
 

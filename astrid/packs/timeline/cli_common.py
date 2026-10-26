@@ -179,7 +179,7 @@ def checkout_summary(parsed: argparse.Namespace, tl: Any, *, existed: bool) -> l
         f"           or  timelines edit {where} --clip c30.cover --until Astrid",
         f'           or  Python: tl = Checkout.draft("{parsed.project}", "{parsed.ref}"); tl.clip("c30.cover").until("Astrid"); tl.save()',
         f"  look     timelines visualize {where} --preset motion --at Astrid   (--compare published: before/after)",
-        f"  commit   {_document_edit_commands(str(getattr(tl, 'path', None) or 'FILE'))['commit']}",
+        f"  commit   {_document_edit_commands(str(getattr(tl, 'path', None) or 'FILE'), parsed.ref, parsed.project)['commit']}",
     ]
 
 
@@ -244,6 +244,6 @@ def status_text(parsed: argparse.Namespace, project_id: str, timeline_id: str, h
         print(f"the published head moved to {head}; commit will merge guarded edits or report conflicts")
     print(render_line(parsed, project_id, timeline_id, head) if want_render
           else "latest render: --render to look it up (it scans the run history, ~10 s)")
-    print(f"next: {_document_edit_commands(str(path))['commit']}" if changes
+    print(f"next: {_document_edit_commands(str(path), parsed.ref, parsed.project)['commit']}" if changes
           else f"next: timelines show {where} --as sheet   ·   timelines edit {where} --clip c22.rocket --on viral")
     return 0 if report.valid else 1

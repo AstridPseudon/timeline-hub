@@ -231,17 +231,25 @@ python3 -m astrid timelines commit <timeline> --project <project> \
   --idempotency-key commit-42 --json
 ```
 
-`show` is the read-only scope/head lookup. The direct `edit` forms above call
-the existing `TimelineSession.move` or `TimelineSession.trim` caller. A sheet
-with supported clip/track rows calls `NativeSheet.load(session).apply`; an
-unsupported or detached sheet stays a working-copy operation and must be
-reported as such. `commit --file` is the complete detached-document caller:
-it sends the candidate through the same `TimelineSession` commit boundary.
+`show` is the read-only scope/head lookup. The direct `edit` forms above route
+literal numeric moves and source trims through the Runtime-backed timeline
+session. Symbolic moments and other edit shapes continue through the detached
+working copy. A connected `apply` with supported clip/track rows commits via
+the native sheet adapter; unsupported sheets remain detached-draft operations.
+`commit --file` is the complete detached-document caller through Runtime.
 `undo --commit` sends one guarded `timeline.inverse`; `redo --commit` selects
 the receipt created by that undo. Use `--steps '{"<receipt-id>":["<step-id>"]}'`
 with either command to request per-step reversal. Use the command-specific
 `--help` output for the exact flags; these are the only caller forms shown
-here.
+here. The SDK exposes the same session as `timeline.open(...).commit(...)`:
+
+```python
+from astrid.sdk import timeline
+
+tl = timeline.open(project, timeline_id, client=client)
+tl.move("parent/clip:<id>", 1.5)
+result = tl.commit("Move clip", idempotency_key="move-42")
+```
 
 All of these connected writes use the durable session outbox. The frozen
 request keeps the exact `api_version`, `project_id`, `timeline_id`,

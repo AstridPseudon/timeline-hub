@@ -23,35 +23,36 @@ command commit. Python and CLI undo send a guarded inverse through the same
 crash-safe outbox; redo reverses the **undo publication**, using its new ID:
 
 ```python
-from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk import timeline
 
-checkout = Checkout.open(project_id, timeline_ref, client=client)
-undone = checkout.undo(publications=[publication_id], client=client)
-redone = checkout.redo(publications=[undone["receipt"]["receipt_id"]], client=client)
+tl = timeline.open(project_id, timeline_ref, client=client)
+undone = tl.undo(publications=[receipt_id], idempotency_key="undo-42")
+redone = tl.redo(publications=[undone["receipt"]["receipt_id"]], idempotency_key="redo-42")
 ```
 
 ```sh
-astrid timelines undo TL --project PROJECT --publication PUBLICATION
-astrid timelines redo TL --project PROJECT --publication UNDO_PUBLICATION
+astrid timelines undo TL --project PROJECT --commit RECEIPT_ID --idempotency-key undo-42
+astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotency-key redo-42
 ```
 
 Both commands accept `--dry-run`, `--idempotency-key`, and `--json`. Repeat
-`--publication` oldest first to reverse a group. Runtime checks intervening
+`--commit` oldest first to reverse a group. Runtime checks intervening
 writes and retains the original revisions. Reopen the timeline to read the new
 head; publication undo leaves detached working copies untouched.
 
 `checkout.undo()` / `redo()` without publication IDs, and the CLI equivalents
-without `--publication`, operate on unsent draft edits. Their snapshots stop at
+without `--commit`, operate on unsent draft edits. Their snapshots stop at
 the draft's published base, so an old file is never used to restore accepted
 history. New unsent edits on that base remain locally undoable.
 
 The legacy cut sheet still edits a detached draft. `apply_sheet(checkout, text,
 client=client)` can recover an older sheet's basis from retained Runtime
 revisions; local snapshots and exported copies are used only within the current
-base. It does not publish or restore an accepted revision. `apply --native` is
-available only for sheet operations already covered by the native adapter. The
-remaining sheet three-way merge and detached-draft publication are held for
-migration; do not use them as the general timeline writer.
+base. It does not publish or restore an accepted revision. `timelines apply`
+uses the native adapter for supported clip and track rows when connected to
+Runtime; unsupported sheets remain detached-draft operations. The remaining
+sheet three-way merge and detached-draft publication are held for migration;
+do not use them as the general timeline writer.
 
 ## Shared timeline and shot contracts
 
@@ -251,16 +252,18 @@ Python. Read the exact selector from `show` first:
 
 ```bash
 python3 -m astrid timelines show <timeline> --project <project> --json
-python3 -m astrid timelines edit move <timeline> --project <project> \
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
-python3 -m astrid timelines edit track-label <timeline> --project <project> \
-  --track parent/track:<id> --set "Dialogue" --idempotency-key label-42 --json
+python3 -m astrid timelines edit <timeline> --project <project> \
+  --clip parent/clip:<id> --trim-in 0.5 --trim-out 3.0 \
+  --idempotency-key trim-42 --json
 ```
 
-`edit move`, `edit track-label`, and native literal trims capture original
-guards and use a fresh caller key for a new intent. Repeating the same command
-with the same key retries the persisted request; it does not recapture against
-a newer head. `--dry-run` validates without accepting a publication.
+Literal numeric moves and source trims with these forms capture original
+guards and use a caller key for a new intent. Repeating the same command with
+the same key retries the persisted request; it does not recapture against a
+newer head. `--dry-run` validates without accepting a publication. Symbolic
+moments such as `--on 'after "Astrid"'` continue through the detached editor.
 
 The remaining detached working-copy surface is retained for capabilities that
 have not migrated:
@@ -270,9 +273,8 @@ python3 -m astrid timelines status <timeline> --project <project>
 python3 -m astrid timelines checkout <timeline> --project <project>
 python3 -m astrid timelines edit <timeline> --project <project> --replace-line vo-1 --take vo/vo-1.wav --words vo/vo-1.words.json
 python3 -m astrid timelines edit <timeline> --project <project> --insert-line vo-2 --after vo-1 --take vo/vo-2.wav --words vo/vo-2.words.json
-python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json
+python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json --takes vo/
 python3 -m astrid timelines check <timeline> --project <project>
-python3 -m astrid timelines publish <timeline> --project <project> --idempotency-key edit-42
 ```
 
 `status` reads the current published head and, if present, the selected
@@ -280,21 +282,34 @@ working copy's base, changed paths, and validation result. It does not create a
 working copy or render. There is no passive timeline-scoped latest-render
 reader in this CLI, so `status` does not claim render state. A working copy
 based on an older head is reported with `head_moved: true` and should be
-reconciled before using its legacy publish path.
+reviewed before committing; Runtime merges disjoint guarded changes and refuses
+conflicts.
 
 `checkout --fresh` refreshes the selected working copy from the current head.
 If that copy has edits, the CLI refuses to replace it; choose a new name with
 `--draft recovered --fresh` to keep the old draft available. `edit` can also
 apply `--replace-line`, `--insert-line`, or a JSON `--from-script` using the
-existing SDK operations and local take/word-timing files. Repeat
+existing SDK operations and local take/word-timing files. `--takes` supplies
+the take directory for script application. Repeat
 `--gap-after LINE=SECONDS` to declare multiple line gaps.
 
-`publish` remains the legacy detached-draft/whole-candidate writer and is held
-pending migration. Its three-way merge, `--force`, and broad Checkout mutation
-surface must not be presented as the native command path. Use it only when the
-requested edit is explicitly within that legacy capability, and report that
-limitation; otherwise refuse visibly and keep the draft. `apply --native` is the
-only sheet publication route currently migrated for its covered operations.
+After checking the draft, save an explicit candidate file with its original
+revision/publication pair, then commit it through Runtime:
+
+```python
+from astrid.sdk.timeline_checkout import Checkout
+Checkout.draft("PROJECT", "TL").save("candidate.json", quiet=True)
+```
+
+```bash
+python3 -m astrid timelines commit TL --project PROJECT --file candidate.json \
+  -m "Edit timeline" --idempotency-key edit-42
+```
+
+The `edit` command also prints candidate export and commit commands. New intent
+needs a new key; retry the exact file and key after an ambiguous outcome.
+Unsupported document changes are refused by the command emitter. There is no
+separate whole-document overwrite or force path.
 
 ```bash
 python3 -m astrid timelines check <timeline> --project <project> --sweep
@@ -317,16 +332,16 @@ validation, but it does not render pixels or create a publication:
 ```bash
 python3 -m astrid timelines visualize <timeline> --project <project> \
   --revision-id <revision> --mode composed --json
-python3 -m astrid timelines edit move <timeline> --project <project> \
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --dry-run --json
-python3 -m astrid timelines edit move <timeline> --project <project> \
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
 ```
 
 The detached authoring-bundle preview/render helpers remain available for
-inspection and specific render workflows, but their whole-candidate publish
-writer is held on this base. Do not use a frozen candidate digest as a native
-commit key or claim that it gives the session's original guards. If a required
+inspection and specific render workflows. Accepted edits must carry the original
+revision/publication pair through the Runtime commit boundary; a frozen candidate
+digest alone does not supply those guards. If a required
 preview is unavailable, report that limitation before committing.
 
 ## Opening sources and returned artifacts

@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import shlex
 
 import pytest
 
@@ -500,6 +501,9 @@ def test_checkout_and_status_hints_use_the_existing_document_commit(tmp_path, mo
     monkeypatch.setattr(Checkout, "load", classmethod(lambda *_args: local))
     assert status_text(parsed, "p1", "t1", "head-2", "working", path) == 0
     output = summary + capsys.readouterr().out
-    expected = timeline_cli._document_edit_commands(str(path))["commit"]
+    expected = timeline_cli._document_edit_commands(str(path), "main", "p1")["commit"]
     assert output.count(expected) == 2
+    commit = timeline_cli.build_parser(object()).parse_args(shlex.split(expected)[4:])
+    assert (commit.ref, commit.project, commit.file, commit.message, commit.idempotency_key) == (
+        "main", "p1", path, "Timeline edit", "timeline-edit-1")
     assert "timelines publish" not in output and "three-way" not in output
