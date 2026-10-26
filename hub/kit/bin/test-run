@@ -286,7 +286,33 @@ BENCH_LEASE_PY
 else
 echo ${BENCH_RUNNER_PID:-$$} > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
 COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; exit 1; }
-NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $repo in app|composition) [ -e $SNAP/node_modules ] || ln -s "$(readlink -f $NM)" $SNAP/node_modules;; esac
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules
+case $repo in
+  app)
+    # App staging pins Composition in a repository-local archive. Keep the shared
+    # install read-only while giving the snapshot that pinned package precedence.
+    SHARED_NM=$(readlink -f "$NM")
+    mkdir -p "$SNAP/node_modules"
+    for module in "$SHARED_NM"/.[!.]* "$SHARED_NM"/*; do
+      [ -e "$module" ] || continue
+      name=$(basename "$module")
+      if [[ $name = @* && -d $module ]]; then
+        mkdir -p "$SNAP/node_modules/$name"
+        for scoped in "$module"/.[!.]* "$module"/*; do
+          [ -e "$scoped" ] || continue
+          ln -s "$(readlink -f "$scoped")" "$SNAP/node_modules/$name/$(basename "$scoped")"
+        done
+      else
+        ln -s "$(readlink -f "$module")" "$SNAP/node_modules/$name"
+      fi
+    done
+    COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/package.json")
+    [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/$COMPOSITION_ARCHIVE" ] || bad "staging Composition archive missing"
+    mkdir -p "$SNAP/node_modules/@banodoco/timeline-composition"
+    tar -xzf "$SNAP/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/node_modules/@banodoco/timeline-composition"
+    ;;
+  composition) [ -e "$SNAP/node_modules" ] || ln -s "$(readlink -f "$NM")" "$SNAP/node_modules";;
+esac
 # agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
 if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
