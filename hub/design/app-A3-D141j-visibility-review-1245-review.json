@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.app.d141j.visibility-review.v1",
+  "verdict": "PASS_SOURCE_VISIBILITY",
+  "scope": "A3/P2 D141j independent source visibility review",
+  "candidate": {
+    "terminal_ref": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+    "tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+    "base_ref": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "candidate_unmerged": true
+  },
+  "prior_finding": {
+    "id": "D141J-VIS-001",
+    "status": "resolved",
+    "resolution": "Each accepted read receives an identity correlated by the exact occurrences-array object through active occurrences, useShotGroups input/result, and the pre-overlay seam; the repeated-read control proves the second head and rejects a stale second association."
+  },
+  "finding_count": 0,
+  "source_only": true,
+  "cause": "UNKNOWN",
+  "diagnostic_body": "NOTRUN",
+  "original_predicates_conserved": true,
+  "new_case_additive": true,
+  "no_product_edits_by_reviewer": true
+}

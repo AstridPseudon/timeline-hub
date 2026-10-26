@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.app.d141j.visibility-review-sampler.v1",
+  "sampler": "foreground 5s df sampler",
+  "evidence_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/disk-trace.txt",
+  "started": "2026-10-26T12:48:10Z",
+  "sample_interval_seconds": 5,
+  "last_sample": "2026-10-26T12:51:20Z",
+  "lowest_available_gb_observed": 4.4,
+  "stop": "Ctrl-C sent after validation completed",
+  "stop_session_exit": 1,
+  "wait_reap": "follow-up poll returned unknown process id because the stopped session was already reaped",
+  "first_error": null,
+  "gaps": [],
+  "four_gb_stop_triggered": false
+}

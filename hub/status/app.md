@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T12:55:48Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 6m -->
-# app board, 2026-10-26T12:49:45.755352+00:00
+<!-- app | 2026-10-26T13:01:40Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 3m -->
+# app board, 2026-10-26T12:58:20.775026+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -44,8 +44,9 @@
 | D141 P2 six | Retain original gesture results | Luna and independent Luna | Main accepted finite custody gaps | merged | Source controllers and reviews | Placement9168, parent16601, single24271, bulk27060 and asset10328 PASS. Popup27026 documented known gap. | App82e9 |
 | D141 P2 ADD | Retain qualified popup known gap | Luna and independent Luna | D141ff and independent1121 PASS | merged | Popup next; custody1121 | 27026 FAIL1/207s; custody PASS. Native44/min5.472GB. Cause UNKNOWN; four fields absent. Nonblocking gap per Main. | App82e9 |
 | D141ff notes | Retain installed popup gap paragraph | Runtime Luna and review | Independent1150 PASS install | merged | Runtime1133 and CAS1147; review1150 | Exact installed popup known gap qualifies; source/install monitor limits disclosed, actual1368/27026 and cancelled IDs distinct. | Evidence only |
-| D141j diagnostic | Review per-read visibility correction | Luna and independent Luna | Return1240 terminal3bb | review | Source1240; independent1245 | Author13/types/scopedlint/check PASS; stale association refused. First1234 FAIL retained. No actual diagnostic body. | Private3bb09fc6 |
-| D141j route | Prepare supported actual capture route | Luna | Source3bb available; no body | doing | app-P-D141j-diagnostic-route-source-1249 | Read-only native route and private operational controls. No source repair, registry, request, preflight or browser body. | Evidence only |
+| D141j visibility | Retain qualified per-read source visibility | Luna and independent Luna | Independent1245 PASS source | merged | Return1240; independent1245 | Two-read artifact regenerated, stale association refused, full13/types/scopedlint PASS. Private source only; no diagnostic body. | Private3bb09fc6 |
+| D141j capture | Connect private mounted observation | Luna | Source3bb qualified; exact finite gap | doing | app-A3-D141j-mounted-capture-source-1255 | Existing collector installer/snapshot through observational test fixture only. Original popup source/assertions untouched; no body. | Private branch |
+| D141j route | Qualify finite native capture gap | Luna and independent Luna | Source1249 terminal | review | Source1249; independent1256 | Pure builder correct;3bb collector has no mounted installer or snapshot transfer. Sole1255 adds private observational fixture wiring. | Evidence only |
 | D141 parent | Accept scoped parent pass with trace gap | Luna and independent Luna | Main D141gg | merged | Author1121; review1130; Main | Main accepts16601 PASS0/237s; F001 first sampler failure and later72sample trace disclosed. Original review FAIL retained; no reproof. | App82e9 |
 | D141 single | Retain first no-body invocation failure | Luna and independent Luna | Independent1135 FAIL | gated:superseded-scope | First single; custody1135 | Wrong SHA and four path deltas refused before request. No body; all5 findings retained. Main permits distinct new scope only. | App82e9 |
 | D141gg single | Retain accepted single pass and both gaps | Luna and independent Luna; Main | Main D141hh12:02 | merged | Controller1145; custody1156 | Main accepts24271 PASS0/257s with raw KEEP timing and private path relocation disclosed. Original FAIL retained; no rerun. | App82e9 |
@@ -91,16 +92,18 @@ Runtime source receiving1011/independent1023 PASS same33 and scoped source contr
 Maintenance: Guarded sweep3 and compact1 terminal0 at12:35, removed0/packed0/gzipped0. Census33 present worktrees found zero clean ended nonKEEP candidates; all89 baseline KEEP hashes/modes exact. [Receipt](../../design/app-D141hh-maintenance-result-1233.json). All prior exact source-pin recycles retain lead hostCLEAR and repeated guards; sourceGit and every rawKEEP retained. DirtyU3/lockedU3c/missing metadata bundles/hardlinked cache/refused orphan graph stay held. Owner-approved lead repack10:16 complete; manager no hub operation or further repack. Lossless closedstdout batches conserve decodedSHA/mode/mtime.
 
 Blockers: Agent — FINAL55 owner scope decision pending;13writer+2installer FAIL and40 collectionblocked. Final pins and REG0 gated.
-Blockers: Optional diagnostic — Independent1245 verifies corrected correlation. Route source1249 prepares supported artifact capture only. Real body awaits source PASS, route qualification and fresh5.2GB admission.
+Blockers: Optional diagnostic — Source visibility PASS. Privatecapture1255 connects existing installer/snapshot through mounted test fixture; route1256 reviews finite facts. Body still needs qualified route and fresh5.2GB admission.
 Blockers: Safety — D130 absolute hold, no SWAP retry/transfer/alternatequalification/rollback. Dirty, unowned, sealed, refused and hardlinked targets retained.
-Next ready: Independent1245 and route1249 terminals; qualified optional diagnostic only at ordinary admission. Final pin briefs stay gated on recorded Agent REG0.
+Next ready: Capture1255 terminal then one protected independent review; route1256 terminal. Optional body only after qualified capture and ordinary admission. Final pins after recorded Agent REG0.
 
 Later: Gate3/D133B/D23/D14/D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped.8912/19479 unchanged;18617 supported cancelled, originals/rawKEEP retained. Main upstream-drift scope decision remains Main-owned, no upstream chase. No globalGO/build/ZIP. INBOX consumed through2963588bytes.
 
-live 2 / cap 3; ready-undispatched 0. Current 2026-10-26T12:49:45.755352+00:00; free 4708114432 bytes. Independent source review and route preparation only; no heavy.
+live 2 / cap 3; ready-undispatched 0. Current 2026-10-26T12:58:20.775026+00:00; free 4701204480 bytes. Private capture source and route review only; no heavy.
 
 Visibility source1226 actualterminalc2f8c697/treeba3077ec at12:34:09, [eleven originals](../../design/app-D141j-visibility-source-publication-1236.json); author claims mounted12/types/scopedlint/check PASS. One independent Luna1234 immediately queued on exactterminal source. Candidate remains private and unmerged, actualdiagnostic NOTRUN, causeUNKNOWN.
 
 Visibility independent1234 terminal FAIL D141J-VIS-001; [eight originals](../../design/app-D141j-visibility-first-failure-publication-1240.json). Same-branch Luna1240 immediately queued on c2f8 to correlate accepted reads through later renders and prove mismatch refusal. Full touched12/types/scopedlint pass did not clear the finding. Original FAIL immutable; no diagnostic body or cause claim.
 
 Visibility first return1240 terminal3bb09fc6/tree3d286bf4; [eleven originals](../../design/app-D141j-visibility-return-publication-1250.json). Independent1245 immediately queued; separate tinyComposition route1249 source-only preps actual capture feasibility, no competing source author and no body. All original FAIL/source monitor limits retained. Main12:30 all-seven-terminal gate consumed; App final acceptance still D141v after Agent55 decision.
+
+D141j source visibility independent1245 PASS, [ten originals](../../design/app-D141j-visibility-PASS-publication-1257.json); first1234FAIL retained. Route1249 [nine originals](../../design/app-D141j-route-source-publication-1257.json) records actual missing browser enable/retention seam; independent1256 and privatecapture1255 active in parallel. No diagnostic body, product fix, cause claim or original-proof retarget.

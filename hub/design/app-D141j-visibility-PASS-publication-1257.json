@@ -1,0 +1,68 @@
+{
+  "utc": "2026-10-26T12:58:20.775026+00:00",
+  "worker": "app-A3-D141j-visibility-review-1245",
+  "exit": 0,
+  "scope": "PASS_SOURCE_VISIBILITY only on private3bb; prior cached-head finding resolved, regenerated2read artifact PASS/staleassociation refused, full13/types/lint/diff PASS. Focused runner exit1 filtered skips not acceptance. Own human-readable4.4G trace and already-reaped followup limit retained. No native activation/body/cause/merge claim.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-report.md",
+      "sha256": "c9ec55f875d3dd5c2130f150edaac3ef4524dc7641195052ad5d69f86f5e7e4e",
+      "bytes": 999
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-review.json",
+      "sha256": "975183fa8646a13c5d1cfec20a6b4cf3695c3ca16714b8c9844269aa357c4a31",
+      "bytes": 1021
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-findings.md",
+      "sha256": "0149764ccaf4b5b521442138ed27b5cfdae1b81ea2c9d46738a9697f197ff02b",
+      "bytes": 1019
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-source-manifest.json",
+      "sha256": "ec11a53665750f74383920e6cb13d4dcbb0bb776f60b4874626411204b4b2b75",
+      "bytes": 2089
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-validation.md",
+      "sha256": "8b88c950b2e376cf61c37d42d109d242272b85397a15b4b15eebe4d4cc0794d1",
+      "bytes": 1819
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-handoff.md",
+      "sha256": "d8466f75872d5898cc11e7c56793ccbcc107ca2edef9b6ed4692e259881ea1f6",
+      "bytes": 876
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-disk-trace.txt",
+      "sha256": "b7459444d94458bd373b4fe4a53224cc485dbc6239750c1d6b48cffffaaa5e95",
+      "bytes": 6513
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-sampler-lifecycle.json",
+      "sha256": "02765bde96cea1a8592cae5a68e15ebaec6c30ad4e79a605b9d44c2920b4eb5b",
+      "bytes": 687
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/visibility-proof.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-visibility-proof.json",
+      "sha256": "3812b3ea12cfbf8b89a9251eee56a811ff01e0f4a76ace13a59063b93fe94832",
+      "bytes": 3620
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1245/evidence/stale-artifact.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A3-D141j-visibility-review-1245-stale-artifact.json",
+      "sha256": "c35dd908233bcd844019bb45e297223e04b9af0b026df8e2b64fba724f21f92e",
+      "bytes": 3620
+    }
+  ]
+}

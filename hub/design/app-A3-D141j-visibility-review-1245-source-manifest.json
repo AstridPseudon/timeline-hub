@@ -1,0 +1,27 @@
+{
+  "schema": "timeline.app.d141j.visibility-review-source-manifest.v1",
+  "base_commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+  "terminal_commit": "3bb09fc656c6b8a81243f8f796115013b56d621f",
+  "terminal_tree": "3d286bf4dd68c3c791b0351bb6257d302fbdca73",
+  "working_tree_dirty": false,
+  "checker": {
+    "path": "scripts/testing/check-d141j-visibility.mjs",
+    "sha256": "bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27",
+    "git_blob": "9f99bf3de96a5885fd419324e7709061bf98b692"
+  },
+  "files": [
+    {"path":"src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts","sha256":"504088ca11b9522f39e38328cfcd636f621768387c4dc2b5c461a76ab9856e56","git_blob":"4601e49db2fc344d8ef8859ff57b7f0a3a5dcdcb"},
+    {"path":"src/tools/video-editor/adapters/app/useAstridShotsHost.ts","sha256":"59c1982900d564564487fb871527ac92e7b80e61350793ac36491ccaf3e8ffdf","git_blob":"f8c085505bfb6338c1b62a2cf370a51f38ce9d13"},
+    {"path":"src/tools/video-editor/hooks/useShotGroups.ts","sha256":"f8545d3e1decc55a5d84a35ba2ef68fc63dd221789be18a1cd2537a8f334207e","git_blob":"c91a5fd682d90a3ea6bdb767906612726f59606f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx","sha256":"555526c695eafb2d6436344e31ce6a824b10932e1c48f40a40ec97d334adda44","git_blob":"e27b4e4e488f52fbc0fa1ebcc0b434a26a04892f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx","sha256":"4f9ed3c617ecbd4619b233960053e0e571ad00e6dea7a108226d9aab584e4a07","git_blob":"728c5e5b26cebc6323a32da5c86729e91a2f079b"},
+    {"path":"scripts/testing/check-d141j-visibility.mjs","sha256":"bd5feadba07f6cdec3afa4d12baa3008cfd9bd012fdb9db6895d34e3db5baa27","git_blob":"9f99bf3de96a5885fd419324e7709061bf98b692"}
+  ],
+  "reviewer_artifacts": {
+    "repeat_read": "evidence/visibility-proof.json",
+    "stale_association": "evidence/stale-artifact.json",
+    "checker_pass_output": "evidence/checker-output.txt",
+    "checker_stale_output": "evidence/stale-checker-output.txt"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "utc": "2026-10-26T12:58:20.775026+00:00",
+  "worker": "app-P-D141j-diagnostic-route-source-1249",
+  "exit": 0,
+  "scope": "NOTRUN_FINITE_MISSING_SEAM; genuine pure builder output, candidate source checkout unmaterialized, registrationfalse; actual browser enable/snapshot transfer absent at3bb. Owning independent1256 checks source facts. New privatecapture1255 supplies minimal existing fixture wiring, no native request/body.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-report.md",
+      "sha256": "773818e589bbd94be2accf37208c857599d95ec4c5d56de30c10a4539940d333",
+      "bytes": 1537
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/route.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-route.json",
+      "sha256": "d6dbbaea9aa4e39b0df2b96c2f930f1cbd61cd4ae680817e2aa4a6fd9d8cf004",
+      "bytes": 8191
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-source-map.json",
+      "sha256": "2a415296381969518b49c9ce8b3c358c6dac453110fa14b6cce1e5485d6070e8",
+      "bytes": 3200
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-source-manifest.json",
+      "sha256": "60ff57b0dd6cf09d0141038c183626d0e76ec48cfac546a4ac3dbc93eba80128",
+      "bytes": 4523
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-findings.md",
+      "sha256": "c84dcccce639a4e12baa4fd88300f320a9a54f70c0a10f05627a1ce601b67daf",
+      "bytes": 3305
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-validation.md",
+      "sha256": "f247d7c92cb57ac57cd6ce0135cb51f2878dba007791dfcf3fd91c1e6c455c71",
+      "bytes": 1919
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-handoff.md",
+      "sha256": "0633203525f0392cc3967a1b2f4b81e0668ba7103c8304514587492c6aab6ca9",
+      "bytes": 1318
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-disk-trace.txt",
+      "sha256": "a2b19bbd51bd614a1a35f50a971ca5d8afde4a52c10a66b743b63b908a0050c4",
+      "bytes": 835
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141j-diagnostic-route-source-1249/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141j-diagnostic-route-source-1249-sampler-lifecycle.json",
+      "sha256": "be293e573c6c7e4b57790dbecbf128daea7090cf8d28c4e19ab99dded6a0353a",
+      "bytes": 666
+    }
+  ]
+}
