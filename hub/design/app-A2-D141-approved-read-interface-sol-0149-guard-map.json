@@ -1,0 +1,182 @@
+{
+  "status": "PASS_16_original_workspace_guards_and_6_upstream_tests",
+  "controls_file": "src/shared/lib/placement/__tests__/placementService.workspaceV1.test.ts",
+  "controls_byte_exact": true,
+  "controls": [
+    {
+      "title": "places a generation by publishing a new head revision",
+      "line": 182,
+      "guard": "accepted closure and zero old-route traffic",
+      "result": "PASS"
+    },
+    {
+      "title": "re-reads the head and re-applies the placement once after a stale-head conflict",
+      "line": 196,
+      "guard": "bounded local stale-pair retry preserves sibling edit",
+      "result": "PASS"
+    },
+    {
+      "title": "surfaces the conflict when the head stays stale",
+      "line": 215,
+      "guard": "repeated stale-pair refusal",
+      "result": "PASS"
+    },
+    {
+      "title": "a definitive Runtime refusal is retained without semantic replay",
+      "line": 228,
+      "guard": "definitive/unknown result retains original intent, no semantic replay",
+      "result": "PASS"
+    },
+    {
+      "title": "an invalid placement is retained without semantic replay",
+      "line": 228,
+      "guard": "definitive/unknown result retains original intent, no semantic replay",
+      "result": "PASS"
+    },
+    {
+      "title": "an unclassified transport failure is retained without semantic replay",
+      "line": 228,
+      "guard": "definitive/unknown result retains original intent, no semantic replay",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff dependency_changed conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff binding_changed conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff value_conflict conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff selection_changed conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff atomic_scope_changed conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retains the actual handoff stale_head conflict and original guards on recovery",
+      "line": 241,
+      "guard": "exact original body/key/guard retention, no replacement intent",
+      "result": "PASS"
+    },
+    {
+      "title": "retries local document staleness before authoring exactly one durable placement",
+      "line": 279,
+      "guard": "two stable-read pairs on bounded retry; four original basis loads",
+      "result": "PASS"
+    },
+    {
+      "title": "bounds local read retries without creating any durable intent",
+      "line": 304,
+      "guard": "four reads then no owner/intent/request",
+      "result": "PASS"
+    },
+    {
+      "title": "retries an unknown acknowledgement with the exact durable request and key",
+      "line": 319,
+      "guard": "exact request/key idempotent recovery",
+      "result": "PASS"
+    },
+    {
+      "title": "adopts recovered canonical closure before a later placement merges over an intervening head",
+      "line": 329,
+      "guard": "recovered accepted closure replaces initial load before dependent mutation",
+      "result": "PASS"
+    }
+  ],
+  "new_reader": {
+    "source": "src/integrations/runtime/dataProvider.ts:997-1005",
+    "guard": "Existing full verified history/immutable-closure reader followed by existing actual display/version read; exact revision AND publication equality; mismatch refuses. No version derived from caller/head/history length; no module cache."
+  },
+  "caller_owned_basis": {
+    "source": "src/shared/lib/placement/placementService.ts:339-357; shot-group-pack-commands.ts:388-420",
+    "guard": "Cold provider and cloned selected target; private basis retained only in store closure; single-use mutate; no caller supplied basis or pin. Returned display/registry cannot mutate the canonical basis."
+  },
+  "fresh_postvalidation_pair": {
+    "source": "src/shared/lib/placement/placementService.ts:254-278",
+    "guard": "Consume initial basis once, await complete authoringBundleFromDocument, then newly load and compare BOTH head IDs before getRecoverableIdentity/createLocalSaveSession. Next retry has no retained basis."
+  },
+  "unchanged_guards": {
+    "source": "placementService.ts:124-135,149-169,203-218,291-305,387-405",
+    "guards": [
+      "original exact capture head/parent",
+      "session document and display source must equal original verified authored parent",
+      "accepted closure adoption",
+      "single-owner exact-request recovery and refusal of multiple owners",
+      "bounded pre-intent retry only for PlacementDocumentChangedError with allowVersionRebase",
+      "active selected headRevisionId refusal",
+      "session disposal after success/refusal"
+    ]
+  },
+  "wire_and_authority": "commitTimeline, localSaveSession, commitOutbox, outbox transport, request/reply construction, atomic/fields/read policy and all Runtime/client/schema/pins unchanged.",
+  "cold_await_controls": {
+    "status": "PASS",
+    "controls": 6,
+    "trace": [
+      "history:revision-1:publication-1",
+      "parent:revision-1",
+      "inspect:revision-1:publication-1",
+      "parent:revision-1",
+      "history:revision-1:publication-2",
+      "parent:revision-1",
+      "inspect:revision-1:publication-2",
+      "parent:revision-1",
+      "PASS:cold-provider-actual-version",
+      "history:revision-1:publication-2",
+      "parent:revision-1",
+      "publish-during-combined-await",
+      "inspect:revision-1:publication-3",
+      "parent:revision-1",
+      "PASS:combined-publication-mismatch",
+      "history:revision-1:publication-3",
+      "parent:revision-1",
+      "inspect:revision-1:publication-3",
+      "parent:revision-1",
+      "history:revision-1:publication-3",
+      "parent:revision-1",
+      "identity-boundary",
+      "PASS:cold-production-caller-two-basis-reads",
+      "history:revision-1:publication-3",
+      "parent:revision-1",
+      "inspect:revision-1:publication-3",
+      "parent:revision-1",
+      "publish-after-preflight-await:revision",
+      "history:revision-1-next:publication-3",
+      "parent:revision-1-next",
+      "PASS:awaited-revision-mismatch-no-owner",
+      "history:revision-1-next:publication-3",
+      "parent:revision-1-next",
+      "inspect:revision-1-next:publication-3",
+      "parent:revision-1-next",
+      "publish-after-preflight-await:publication",
+      "history:revision-1-next:publication-3-next",
+      "parent:revision-1-next",
+      "PASS:awaited-publication-mismatch-no-owner",
+      "history:revision-1-next:publication-3-next",
+      "parent:revision-1-next",
+      "inspect:revision-1-next:publication-3-next",
+      "parent:revision-1-next",
+      "publish-at-validation-await",
+      "history:revision-1-next:publication-3-next-validation",
+      "parent:revision-1-next",
+      "PASS:post-validation-await-no-owner"
+    ]
+  },
+  "limitations": "Private probe executes real reader/placement/caller code with fixture low-level client reads and a throwing identity boundary; it is not a live authentication/Runtime/pack-task proof. Independent protected review still required."
+}

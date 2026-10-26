@@ -1,0 +1,81 @@
+{
+  "status": "CANDIDATE_SOURCE_READY_local_reproof_PASS_independent_review_and_integrated_receipts_PENDING",
+  "base": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "changed_product_files": [
+    "src/integrations/runtime/dataProvider.ts",
+    "src/shared/lib/placement/placementService.ts",
+    "src/tools/video-editor/data/DataProvider.ts",
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts"
+  ],
+  "qualified_affected_id": "normal-033-shot-group-pack",
+  "qualified_parent_receipts": [
+    {
+      "id": "app-full-1026004326-12174",
+      "outcome": "FAIL",
+      "case": "expected 2 got 3",
+      "source": "immutable join/whole-path evidence"
+    },
+    {
+      "id": "app-D141-pristine-receiver-0007-full-1026010029-23581",
+      "outcome": "exact case PASS; full run FAIL elsewhere",
+      "source": "immutable join/whole-path evidence"
+    }
+  ],
+  "local_verification": {
+    "shot_group": {
+      "passed": 6,
+      "failed": 0
+    },
+    "placement_workspace_v1": {
+      "passed": 16,
+      "failed": 0
+    },
+    "private_cold_await_source_controls": 6
+  },
+  "receipts_invalidated_by_this_worker": [],
+  "P1_P2_P3": [
+    {
+      "id": "P1",
+      "requires_reproof_if_save_basis_head_moves": [
+        "real-document doc.patch accepted/merged/refused",
+        "split -> trim new clip -> intervening Agent edit -> lost acknowledgement -> restart",
+        "dependent intent basis and stable IDs; accepted closure adoption"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    },
+    {
+      "id": "P2",
+      "requires_reproof_if_save_basis_head_moves": [
+        "document-native duplicate and placement selected non-default target",
+        "popup add/swap, placement, element, registerAsset through A2 as applicable to changed shared save seam",
+        "zero old-route traffic, intended fields, reload and guarded undo"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    },
+    {
+      "id": "P3",
+      "requires_reproof_if_save_basis_head_moves": [
+        "Gate-5 journey on A2/R2",
+        "lost acknowledgement/restart/recovery and guarded undo on authoritative Runtime history"
+      ],
+      "this_worker": "NOT RUN; no new receipt or head change"
+    }
+  ],
+  "exact_P1_P2_P3_receipt_ids": "Not supplied by this brief or controlling finite D141 packet; no claim that any existing receipt qualifies a future candidate. Repo lane must join exact current integrated-head receipts before assigning reruns.",
+  "candidate_review": "ONE independent protected review required; manager to allocate after harness candidate; author has not self-certified independent review",
+  "holds": [
+    "D130 absolute hold",
+    "D141 B022/Element/SWAP/profiling/other own failures remain stopped"
+  ],
+  "scope": "No broader duplicate-output corruption claim. No full/core/browser/journey/profile runs requested or performed.",
+  "production_path_evidence": {
+    "duplicate": "AstridTimelineEditor.tsx:355 selected runtime.project.projectId/runtime.timelineId/configVersion -> duplicateShotGroup:388 prepare -> RuntimeDataProvider:997 full verified basis + actual display/version -> caller:393 numeric preflight -> optional task awaits:402-409 -> head.mutate:414 -> placement store:261 await full validation -> :264 fresh exact pair -> :271 identity -> :278 LocalSaveSession -> :283 provider.commitTimeline; session recovery/adoption unchanged.",
+    "placement": "placeGeneration/forkOccurrence/batchUpdatePlacementFrames -> createDocumentStore -> same two fresh reads, complete validation, post-validation pair gate, existing handoff/capture/session/outbox. Default path has no initial basis and retains all16 original controls.",
+    "P1": "tests/e2e/local/three-products.p1-chain.spec.ts:1393,1561 (unchanged) -> mounted editor timelineLocalSaveHandoff.ts -> unchanged LocalSaveSession/commitOutbox/provider.commitTimeline. Existing loadTimelineCommandBasis body unchanged; added combined method is used only by prepared duplicate. Source boundary conserved; no current integrated-head P1 PASS supplied by this author.",
+    "P2": "tests/e2e/local/three-products.p2-elements-assets.spec.ts and p2-tour/p2-popup specs (all byte-exact) -> placement services for dependent placement, and editor duplicate caller above -> shared session/outbox. Re-prove the actual affected placement/duplicate selections after normal head move; retain original request/field/reload/undo expectations and D141/D130 stops.",
+    "P3": "tests/e2e/local/three-products.spec.ts Gate5 controls (unchanged) -> timelineLocalSaveHandoff.ts -> unchanged session recovery/outbox exact request/key -> provider.commitTimeline/history/undo. New reader does not replace that ingress. Manager must bind any required affected Gate5 reproof to final merged head/tuple; no existing receipt is relabelled."
+  },
+  "P1_P2_P3_reproof": "No browser/live socket or full suite authorized here. After ONE protected PASS and normal manager merge, existing proof owners join exact current receipts to new App commit/tree and re-run affected selectors only via central service. No blanket full rerun. Original 0130 receipt examples remain historical; no inherited candidate qualification.",
+  "notes_coordination": "App existing ledger owner + Runtime existing final-notes owner; exact proposed entry/line are upstream-test-ledger.md and zip-note.md."
+}

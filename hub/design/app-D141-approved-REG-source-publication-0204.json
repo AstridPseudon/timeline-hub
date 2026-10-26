@@ -1,0 +1,36 @@
+{
+  "worker": "app-A2-D141-approved-read-interface-sol-0149",
+  "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+  "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+  "review": "app-A2-D141-read-interface-protected-review-0203 active; no sourcehome claim",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-source-manifest.json",
+      "sha256": "5856e42cb20eb2229ec594ab8c8e701f36c8d5bd6f8e373813ad732e5ea27f0b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-validation.md",
+      "sha256": "6c5d79a4201cf835ebbddf2456d50e2e9a4baa3d61c57ea13d3578566f90b0f2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-guard-map.json",
+      "sha256": "d56f7f4019d58a60f1c794a5346adebc35fc8604ddb1d8acea46344f9f1a97ea"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-affected-proofs.json",
+      "sha256": "e7091725486565dd4a3a85f7de8175d64258bbb849afb4ff2aeb1fd20aa19974"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-upstream-test-ledger.md",
+      "sha256": "d519a222e2d6e3817d5e4a8b678e1ea4cf321f015c1fc8a2105e3c58a292f03a"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-zip-note.md",
+      "sha256": "8dda12805b852fc469a956f31480d9ed4703fb7818b2ddc5b34475f13f99689c"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A2-D141-approved-read-interface-sol-0149-handoff.md",
+      "sha256": "2446840025d03509ee1c4c32d202afe93f074726e2879e9de84ee4a0a3cc20c5"
+    }
+  ]
+}
