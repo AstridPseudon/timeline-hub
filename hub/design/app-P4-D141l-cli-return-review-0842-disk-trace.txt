@@ -1,0 +1,13 @@
+review_trace_start=2026-10-26T08:43:50Z
+interval_seconds=5 stop_threshold_bytes=4000000000
+checker_logic_equivalence=PASS
+positive_input_equivalence=PASS
+poison_input_equivalence=PASS
+production_input_equivalence=PASS
+control_profile_byte_equivalence=PASS
+persistent_sampler_pid=19
+2026-10-26T08:43:50Z available_bytes=4645625856 threshold_bytes=4000000000
+author_packet_immutable=PASS
+2026-10-26T08:43:55Z available_bytes=4645502976 threshold_bytes=4000000000
+review_trace_end_before_stop=2026-10-26T08:43:57Z
+persistent_sampler_stop kill_rc=0 wait_rc=143 reaped=true

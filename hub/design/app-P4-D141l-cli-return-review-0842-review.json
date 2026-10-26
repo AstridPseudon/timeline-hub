@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.coordinate-review.v1",
+  "task": "P4 D141l independent Luna review of first bounded coordinate return0838",
+  "overall": "SOURCE_QUALIFIED_WITH_PRODUCTION_INPUT_MISSING",
+  "source_coordinate_correction": "PASS",
+  "source_qualification": "SOURCE_QUALIFIED",
+  "production_input": {
+    "status": "PRODUCTION_INPUT_MISSING",
+    "ordinary_receiving_gap": true,
+    "missing": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.astrid-registry-state.json",
+      "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+      "reviewer-controls/operational inputs/body-evidence",
+      "reviewer-controls/operational inputs/body-evidence/p4-d141l-cli-selector.xml"
+    ],
+    "not_agent_host_absence": true,
+    "not_authorization_refusal": true,
+    "future_runmanifest_and_body_xml_are_prospective": true
+  },
+  "checker": {
+    "prepare_command": "/home/user/work/venv-agent/bin/python -P reviewer-controls/evidence/check-source.py prepare",
+    "prepare_exit": 0,
+    "check_command": "/home/user/work/venv-agent/bin/python -P reviewer-controls/evidence/check-source.py check",
+    "check_exit": 0,
+    "same_logic_after_only_root_substitution": true,
+    "author_packet_preserved": true
+  },
+  "controls": {
+    "unchanged_production_launcher": {
+      "path": "/home/user/work/wt/agt-pin-ecdc242e/tools/p4-d73-pinned-launch.sh",
+      "mode": "run",
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+    },
+    "positive": {
+      "exit_code": 17,
+      "stub_calls": 1,
+      "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0"
+    },
+    "agent_sha_only_poison": {
+      "exit_code": 1,
+      "stub_calls": 0,
+      "observed": "D73 launcher: agent SHA mismatch"
+    },
+    "pytest": false,
+    "collection": false,
+    "service_request": false,
+    "row_install": false,
+    "cas_or_registry_mutation": false
+  },
+  "static_checks": {
+    "checker_ast": "PASS",
+    "installer_ast": "PASS",
+    "target_test_ast": "PASS",
+    "positive_stub_bash_syntax": "PASS",
+    "launcher_bash_syntax": "PASS",
+    "git_diff_check_all_four_pins": "PASS",
+    "product_types_lint": "N/A operational-only; no product source changed"
+  },
+  "historical_scope": {
+    "old_manifest_pointer_8585": "retained as D141v metadata only",
+    "D130": "held; no action or pass claimed",
+    "8912": "refused/stopped state retained",
+    "19479": "held/unstarted; no request or body",
+    "raw_KEEP": "retained; no deletion or mutation",
+    "behavioral_P4_credit": "NONE",
+    "REG0_or_ZIP": "NONE"
+  }
+}

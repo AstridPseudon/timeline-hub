@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.p4.d141l.cli-selector.sampler-lifecycle.v1",
+  "trace": "evidence/disk-trace.txt",
+  "job_id": "app-P4-D141l-cli-return-review-0842",
+  "primary": {
+    "started_before_reviewer_replay": true,
+    "interval_seconds": 5,
+    "stop_threshold_bytes": 4000000000,
+    "samples": 2,
+    "minimum_available_bytes": 4645502976,
+    "threshold_reached": false,
+    "explicit_stop": "SIGTERM",
+    "wait_exit": 143,
+    "reaped": true,
+    "gap": "This bounded source-only replay was short; two samples demonstrate the lifecycle and threshold guard, not continuous full-time 4GB coverage for a future heavy body."
+  },
+  "author_trace_observation": {
+    "source": "author evidence/disk-trace.txt",
+    "reported_start": "2026-10-26T08:40:01Z",
+    "reported_samples": 1,
+    "explicit_stop_wait_reap": true,
+    "late_threshold_sample_not_treated_as_continuous_coverage": true
+  }
+}
