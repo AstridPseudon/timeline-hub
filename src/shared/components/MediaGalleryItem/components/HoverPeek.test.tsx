@@ -94,7 +94,8 @@ describe('HoverPeekButton', () => {
     expect(peekEl()).toBeInTheDocument();
     expect(eye).toHaveAttribute('data-state', 'open');
     expect(eye).toHaveClass('data-[state=open]:opacity-100');
-    expect(peekEl()).toHaveStyle({ left: '12px', top: '142px', height: '246px' });
+    expect(Number.parseFloat(peekEl()?.style.left ?? '')).toBeCloseTo(31.333, 3);
+    expect(peekEl()).toHaveStyle({ top: '142px', height: '246px' });
     expect(peekEl()?.parentElement?.children).toHaveLength(2);
   });
 
@@ -157,14 +158,14 @@ describe('HoverPeekButton', () => {
     const { eye } = renderPeek();
     fireEvent.pointerEnter(eye);
     advance(120);
-    expect(peekEl()).toHaveStyle({ left: '12px' });
+    expect(Number.parseFloat(peekEl()?.style.left ?? '')).toBeCloseTo(31.333, 3);
 
     const thumbnail = peekEl()?.querySelector('img[alt=""]') as HTMLImageElement;
     Object.defineProperty(thumbnail, 'naturalWidth', { configurable: true, value: 9 });
     Object.defineProperty(thumbnail, 'naturalHeight', { configurable: true, value: 16 });
     fireEvent.load(thumbnail);
 
-    expect(peekEl()).toHaveStyle({ left: '142px' });
+    expect(Number.parseFloat(peekEl()?.style.left ?? '')).toBeCloseTo(144.25, 2);
     expect(peekEl()).toHaveStyle({ width: '211.5px', height: '376px' });
   });
 

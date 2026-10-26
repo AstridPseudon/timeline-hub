@@ -8,6 +8,24 @@ const anchorAt = (left: number, top: number, width = 28, height = 28): PeekAncho
   bottom: top + height,
 });
 
+function expectInsideMargins(placement: PeekPlacement, viewport: { width: number; height: number }, margin = 12) {
+  expect(placement.left).toBeGreaterThanOrEqual(margin);
+  expect(placement.top).toBeGreaterThanOrEqual(margin);
+  expect(placement.left + placement.width).toBeLessThanOrEqual(viewport.width - margin);
+  expect(placement.top + placement.height).toBeLessThanOrEqual(viewport.height - margin);
+}
+
+function expectOutsideAnchorGap(placement: PeekPlacement, anchor: PeekAnchor, gap = 14) {
+  const separated = placement.side === 'top'
+    ? placement.top + placement.height <= anchor.top - gap
+    : placement.side === 'bottom'
+      ? placement.top >= anchor.bottom + gap
+      : placement.side === 'left'
+        ? placement.left + placement.width <= anchor.left - gap
+        : placement.left >= anchor.right + gap;
+  expect(separated).toBe(true);
+}
+
 describe('placePeek', () => {
   it('opens a 16:9 image above an eye in a bottom gallery pane on a 16:9 screen', () => {
     const placement = placePeek(anchorAt(946, 900), { width: 1920, height: 1080 }, 16 / 9);
@@ -19,6 +37,36 @@ describe('placePeek', () => {
     const placement = placePeek(anchorAt(24, 500), { width: 1920, height: 1080 }, 9 / 16);
 
     expect(placement.side).toBe('right');
+  });
+
+  it('centres a 16:9 peek above a bottom-pane eye when the straight edge spans it', () => {
+    const viewport = { width: 1144, height: 716 };
+    const anchor = anchorAt(340, 458, 24, 24);
+    const placement = placePeek(anchor, viewport, 16 / 9);
+
+    expect(placement.side).toBe('top');
+    expect(placement.width).toBeCloseTo(768);
+    expect(placement.height).toBeCloseTo(432);
+    expect(placement.left + placement.width / 2).toBeCloseTo(viewport.width / 2);
+    expect(placement.top).toBe(12);
+    expectInsideMargins(placement, viewport);
+    expectOutsideAnchorGap(placement, anchor);
+  });
+
+  it('centres a portrait peek vertically and moves it toward the middle from a left eye', () => {
+    const viewport = { width: 1144, height: 716 };
+    const anchor = anchorAt(50, 344);
+    const placement = placePeek(anchor, viewport, 9 / 16);
+    const connector = connectorFor(anchor, placement, 8);
+
+    expect(placement.side).toBe('right');
+    expect(placement.top + placement.height / 2).toBeCloseTo(viewport.height / 2);
+    expect(placement.left).toBeGreaterThan(anchor.right + 14);
+    expect(placement.left + placement.width / 2).toBeCloseTo(viewport.width / 2);
+    expect(connector?.length).toBeCloseTo(placement.left - anchor.right);
+    expect(connector?.length).toBeGreaterThan(14);
+    expectInsideMargins(placement, viewport);
+    expectOutsideAnchorGap(placement, anchor);
   });
 
   it('chooses the left side for an anchor at the right edge', () => {
@@ -39,18 +87,22 @@ describe('placePeek', () => {
     const placement = placePeek(anchor, viewport, 4 / 3);
     const gap = 14;
 
-    expect(placement.left).toBeGreaterThanOrEqual(12);
-    expect(placement.top).toBeGreaterThanOrEqual(12);
-    expect(placement.left + placement.width).toBeLessThanOrEqual(viewport.width - 12);
-    expect(placement.top + placement.height).toBeLessThanOrEqual(viewport.height - 12);
-    const separated = placement.side === 'top'
-      ? placement.top + placement.height <= anchor.top - gap
-      : placement.side === 'bottom'
-        ? placement.top >= anchor.bottom + gap
-        : placement.side === 'left'
-          ? placement.left + placement.width <= anchor.left - gap
-          : placement.left >= anchor.right + gap;
-    expect(separated).toBe(true);
+    expectInsideMargins(placement, viewport);
+    expectOutsideAnchorGap(placement, anchor, gap);
+  });
+
+  it('moves a corner-clamped peek just far enough to keep the eye on its straight edge', () => {
+    const viewport = { width: 800, height: 1000 };
+    const anchor = anchorAt(556, 950);
+    const placement = placePeek(anchor, viewport, 9 / 16);
+    const connector = connectorFor(anchor, placement, 8);
+
+    expect(placement.side).toBe('left');
+    expect(placement.top).toBeCloseTo((anchor.top + anchor.bottom) / 2 - placement.height + 12);
+    expect(connector?.crossOffset).toBe(14);
+    expect(connector?.length).toBe(14);
+    expectInsideMargins(placement, viewport);
+    expectOutsideAnchorGap(placement, anchor);
   });
 
   it.each([
@@ -94,7 +146,7 @@ describe('placePeek', () => {
       height: 46,
     };
 
-    expect(connectorFor(anchorAt(100, 100), placement, 8)?.crossOffset).toBe(18);
+    expect(connectorFor(anchorAt(100, 100), placement, 8)?.crossOffset).toBe(22);
   });
 
   it('skips the connector when the clamped position falls outside the eye span', () => {

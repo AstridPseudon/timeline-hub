@@ -15,6 +15,7 @@ export interface PeekViewport {
 export interface PeekPlacementOptions {
   margin?: number;
   gap?: number;
+  cornerRadius?: number;
 }
 
 export interface PeekPlacement {
@@ -88,17 +89,76 @@ export function placePeek(
   const winner = candidates.find((candidate) => candidate.area >= maxArea * 0.99) ?? candidates[0];
   const { side, width: peekWidth, height: peekHeight } = winner;
   const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), Math.max(min, max));
+  const eyeCenterX = (a.left + a.right) / 2;
+  const eyeCenterY = (a.top + a.bottom) / 2;
+  const inset = finiteNonNegative(opts.cornerRadius ?? 8) + 4;
+
+  const crossAxisPosition = (
+    viewportSize: number,
+    boxSize: number,
+    eyeCenter: number,
+  ) => {
+    const minByViewport = margin;
+    const maxByViewport = viewportSize - margin - boxSize;
+    const minByEye = eyeCenter - boxSize + inset;
+    const maxByEye = eyeCenter - inset;
+    const min = Math.max(minByViewport, minByEye);
+    const max = Math.min(maxByViewport, maxByEye);
+    const viewportCentered = (viewportSize - boxSize) / 2;
+
+    // For a very small box the eye may not fit inside its straight edge. Preserve the old
+    // eye-centered placement in that case; connectorFor will still report whether it fits.
+    return min <= max
+      ? clamp(viewportCentered, min, max)
+      : clamp(eyeCenter - boxSize / 2, minByViewport, maxByViewport);
+  };
+  const mainAxisPosition = (
+    sideStart: number,
+    sideEnd: number,
+    boxSize: number,
+    viewportSize: number,
+    fillsRegion: boolean,
+  ) => {
+    if (fillsRegion) return sideStart;
+    const min = Math.max(margin, sideStart);
+    const max = Math.min(viewportSize - margin - boxSize, sideEnd - boxSize);
+    return clamp((viewportSize - boxSize) / 2, min, max);
+  };
 
   const left = side === 'right'
-    ? a.right + gap
+    ? mainAxisPosition(
+      a.right + gap,
+      width - margin,
+      peekWidth,
+      width,
+      peekWidth >= regions.right.width,
+    )
     : side === 'left'
-      ? a.left - gap - peekWidth
-      : clamp((a.left + a.right - peekWidth) / 2, margin, width - margin - peekWidth);
+      ? mainAxisPosition(
+        margin,
+        a.left - gap,
+        peekWidth,
+        width,
+        peekWidth >= regions.left.width,
+      )
+      : crossAxisPosition(width, peekWidth, eyeCenterX);
   const top = side === 'bottom'
-    ? a.bottom + gap
+    ? mainAxisPosition(
+      a.bottom + gap,
+      height - margin,
+      peekHeight,
+      height,
+      peekHeight >= regions.bottom.height,
+    )
     : side === 'top'
-      ? a.top - gap - peekHeight
-      : clamp((a.top + a.bottom - peekHeight) / 2, margin, height - margin - peekHeight);
+      ? mainAxisPosition(
+        margin,
+        a.top - gap,
+        peekHeight,
+        height,
+        peekHeight >= regions.top.height,
+      )
+      : crossAxisPosition(height, peekHeight, eyeCenterY);
   const boundedLeft = clamp(left, margin, width - margin - peekWidth);
   const boundedTop = clamp(top, margin, height - margin - peekHeight);
 
@@ -124,7 +184,7 @@ export function connectorFor(
   const anchorCenter = (anchorStart + anchorEnd) / 2;
   const edgeStart = finiteCoordinate(isVertical ? placement.left : placement.top);
   const edgeSize = finiteNonNegative(isVertical ? placement.width : placement.height);
-  const inset = Math.min(finiteNonNegative(radius), edgeSize / 2);
+  const inset = Math.min(finiteNonNegative(radius) + 4, edgeSize / 2);
   const straightStart = edgeStart + inset;
   const straightEnd = edgeStart + edgeSize - inset;
   const crossPosition = Math.min(Math.max(anchorCenter, straightStart), straightEnd);

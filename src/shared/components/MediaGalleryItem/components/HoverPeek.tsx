@@ -142,7 +142,7 @@ const HoverPeekLayer: React.FC<HoverPeekLayerProps> = ({
       getAnchor(),
       { width: window.innerWidth, height: window.innerHeight },
       aspectRatio,
-      { gap: PEEK_GAP },
+      { gap: PEEK_GAP, cornerRadius: PEEK_CORNER_RADIUS },
     ),
     [getAnchor, aspectRatio],
   );
