@@ -1,0 +1,34 @@
+{
+  "utc": "2026-10-26T14:49:20.293648+00:00",
+  "kind": "Guarded manager maintenance terminal; no source or proof change",
+  "before": "managers/app/rounds/20261026T1446Z-maintenance-before.json",
+  "commands": [
+    {
+      "argv": [
+        "bin/sweep-tmp",
+        "3"
+      ],
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4405M -> 4405M\n",
+      "stderr": "managers/app/rounds/20261026T1446Z-sweep.stderr"
+    },
+    {
+      "argv": [
+        "bin/compact-scratch",
+        "1"
+      ],
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 4405M -> 4405M\ngzipped 0 old worker logs; free now 4405M\npacked 0 finished test-run dirs; free now 4405M\n",
+      "stderr": ""
+    }
+  ],
+  "KEEP_count": 92,
+  "all_baseline_KEEP_bytes_and_modes_exact": true,
+  "recycled_worktrees": [],
+  "worktree_census_count": 34,
+  "ended_unprotected_candidates": [],
+  "free_before": 4618706944,
+  "free_after": 4614844416,
+  "sweep_stderr_scope": "Ordinary repeated ls broken-pipe scan diagnostics; no permission or safety refusal reported.",
+  "limits": "No cleanup-only savings inference amid sync. Cannot reach15GB using zero available authorized worktree candidates. All held pins and raw KEEP, protected/refused targets and Git source objects retained. No hub operation."
+}
