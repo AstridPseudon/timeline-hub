@@ -1,0 +1,90 @@
+{
+  "time": "2026-10-26T06:05:20.757505+00:00",
+  "scope": "Finished unreferenced Agent manager stdout only; no worker/test raw or KEEP path",
+  "checks": "exit marker, no open fd, regular singlelink, no KEEP, no path citation in design/escalations/board/suites; decompressed SHA256 and modes exact",
+  "pre_free_bytes": 4492673024,
+  "post_free_bytes": 4503302144,
+  "saved_bytes": 10631851,
+  "files": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0020Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0020Z.log.gz",
+      "before_bytes": 1606769,
+      "after_bytes": 408550,
+      "decompressed_sha256": "c353d2ac6c53addb72b50979aee080a0e3c16fe20f57770dd6f02ed314a39d09",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0055Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0055Z.log.gz",
+      "before_bytes": 1407727,
+      "after_bytes": 355531,
+      "decompressed_sha256": "1e0045c5be55a7b4a473386acd465ea451a920adf71395b66d1b65312097a00d",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0130Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0130Z.log.gz",
+      "before_bytes": 1186518,
+      "after_bytes": 294380,
+      "decompressed_sha256": "1494003eb56284de0a2dc810aaefed0884f2a5b19d75fd008b216bb478fe9593",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0206Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0206Z.log.gz",
+      "before_bytes": 1523762,
+      "after_bytes": 366395,
+      "decompressed_sha256": "ef2185ad77ffa2cf87fc197b0cd9184b51fb3cececa6eaf391b91d70582ce21e",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0241Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0241Z.log.gz",
+      "before_bytes": 1251623,
+      "after_bytes": 324918,
+      "decompressed_sha256": "0a62d4a6b801ad2f610a286447341cb9efdcb70f61acd19939b5359174644d1b",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0316Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0316Z.log.gz",
+      "before_bytes": 1409335,
+      "after_bytes": 333172,
+      "decompressed_sha256": "4f9de76938bef1e5d8680ac10f4350b1f6980fbc1d777034f0800b6543d9c8c0",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0352Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0352Z.log.gz",
+      "before_bytes": 1334825,
+      "after_bytes": 324136,
+      "decompressed_sha256": "ce413bc16509cc8e67193ff6ae37e5ee8446640aa567067da07ca20bda165e35",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0427Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0427Z.log.gz",
+      "before_bytes": 1309684,
+      "after_bytes": 309412,
+      "decompressed_sha256": "a00cbed2c9ac9e336a4e8994af1e2789ea535a8fb5ef72428e2aeed1ecd44fc8",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0502Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0502Z.log.gz",
+      "before_bytes": 1574837,
+      "after_bytes": 383677,
+      "decompressed_sha256": "7288496730849ed24f34796a892bffae8707ca8d3fc20b602a07944390799585",
+      "mode": "0o644"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0526Z.log",
+      "gzip": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/rounds/20261026T0526Z.log.gz",
+      "before_bytes": 1485716,
+      "after_bytes": 358774,
+      "decompressed_sha256": "f925b704e55b00c5453e9d8ef3c4a1650b00a01ed5d53326ef2466db607a2e86",
+      "mode": "0o644"
+    }
+  ]
+}
