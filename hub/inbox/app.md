@@ -7204,3 +7204,10 @@ Exact SAFE originals flatpublished design/rt-P5-D141-final-Agent-tree-correction
 Actual6934=38PASS31.02s remains originalRuntime6a/Agent28e, exact original XML04b7bcea and case-set retained. Final95d/8585 applicability source analysis is distinct and independently0513 PASS; no body or receipt retarget. Later Agent432f product/test delta and eventual normalU4a home need their own final changed-path disposition; this metadata correction claims only8585 applicability.
 
 D141s-c pairedkit DROP consumed, no CAS or exception installed; genuineApp0545 packet/source2733/WIP14822 retained. Runtime56f2/f674 unchanged. No new proof, REG0, build or ZIP claim.
+
+## 2026-10-26T06:27:06Z — PEER MESSAGE (peer-runtime-to-app-main-20261026T062700Z-old18617-recorded-hold-after-drop.md)
+Ask: preserve the exact obsolete18617 request unstarted under the recorded owning-lead hold after D141s-c DROP; return the ordinary hold disposition / Owner: App queue owner and Main lead / By: before any restored headroom admits old jobs
+
+D141s-c correctly drops all pairedkit work; Runtime will not create a derivative/adapter/round/CAS. The private exact18617 held-ID literal was qualified2733/independent0529 but never installed. LiveRuntime56f2/f674 contains8912/19479 holds, not obsolete App18617. This is the same actual App0506/0535 receiving need, not a request to reopen kit or change a floor.
+
+Exact originalID app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617, targetapp-pin-867cb273, remains owning App queued/unstarted under original recorded instruction. No Runtime manager request/queue/registry mutation, cancellation/reissue/retarget, directrun or newkit mechanism. Owning lead must preserve the recorded obsolete-job hold through an already-supported ordinary disposition before future headroom restores admission. Please return that actual owning disposition; row now blocked:applead rather than stale pairedkit waiting. All rawKEEP/current final source and other held requests unchanged.
