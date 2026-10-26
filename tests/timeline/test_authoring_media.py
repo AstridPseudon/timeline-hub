@@ -127,9 +127,10 @@ def test_local_registry_replacement_is_readonly_and_strips_stale_authority(tmp_p
     rewritten = prepared["internal_timeline"]["registry"]["assets"]["old-picture"]
     assert rewritten["media_id"] == row["digest"]
     assert rewritten["type"] == "image"
-    assert row["resolution"] == "16x12"
-    assert rewritten["resolution"] == row["resolution"]
-    assert not {"width", "height", "duration_seconds"} & set(row)
+    assert (row["width"], row["height"]) == (16, 12)
+    assert "duration_seconds" not in row
+    assert rewritten["resolution"] == "16x12"
+    assert not {"width", "height", "duration_seconds"} & set(rewritten)
     assert rewritten["opaque_asset"] == "keep"
     assert not set(("file", "local_path", "src", "source", "content_sha256")) & rewritten.keys()
     assert prepared["payload"]["items"][0]["media_id"] == row["digest"]
@@ -196,18 +197,20 @@ def test_audio_local_selector_is_probed_and_keeps_audio_mirror(tmp_path):
     plan = plan_authoring_media(work, base_directory=tmp_path)
     row = plan["imports"][0]
     assert row["media_type"].startswith("audio/")
-    assert row["duration"] == 1.0
-    assert "resolution" not in row
-    assert not {"width", "height", "duration_seconds"} & set(row)
+    assert row["duration_seconds"] == 1.0
+    assert "width" not in row and "height" not in row
     prepared = next(iter(plan["candidate"]["shots"].values()))
     clip = prepared["internal_timeline"]["clips"][1]
-    assert prepared["internal_timeline"]["registry"]["assets"][clip["asset"]]["type"] == "audio"
+    audio_entry = prepared["internal_timeline"]["registry"]["assets"][clip["asset"]]
+    assert audio_entry["type"] == "audio"
+    assert audio_entry["duration"] == row["duration_seconds"]
+    assert not {"width", "height", "duration_seconds"} & set(audio_entry)
     assert prepared["payload"]["items"][1]["media_id"] == row["digest"]
     assert prepared["payload"]["audio_bindings"][0]["object_id"] == row["digest"]
     assert prepared["base_payload"]["items"][1]["media_id"] == AUDIO
     catalog = Catalog()
     import_authoring_media(plan, catalog)
-    assert catalog.calls[0][2]["duration_seconds"] == row["duration"]
+    assert catalog.calls[0][2]["duration_seconds"] == row["duration_seconds"]
     assert "width" not in catalog.calls[0][2]
 
 

@@ -5,7 +5,7 @@ import pytest
 
 from astrid.core import timeline
 from astrid.packs.rendering.actions.render.managed_timeline import _render_compatible_projection
-from astrid.sdk.authoring_media import _metadata, _runtime_import_metadata
+from astrid.sdk.authoring_media import _metadata
 
 DIGEST = "a" * 64
 
@@ -32,7 +32,7 @@ def test_retired_locators_and_unknown_keys_still_fail():
             timeline.validate_registry(projected)
 
 
-def test_authoring_media_metadata_uses_one_registry_shape_end_to_end(monkeypatch, tmp_path):
+def test_authoring_media_import_metadata_maps_to_renderer_registry_shape(monkeypatch, tmp_path):
     path = tmp_path / "clip.mp4"
     path.write_bytes(b"media")
     monkeypatch.setattr(
@@ -46,21 +46,17 @@ def test_authoring_media_metadata_uses_one_registry_shape_end_to_end(monkeypatch
         ),
     )
     details = _metadata(path)
-    assert details["resolution"] == "1280x720"
-    assert details["duration"] == 4.0
-    assert not {"width", "height", "duration_seconds"} & set(details)
-    assert _runtime_import_metadata(details) == {
-        "width": 1280,
-        "height": 720,
-        "duration_seconds": 4.0,
-    }
+    assert details["width"] == 1280
+    assert details["height"] == 720
+    assert details["duration_seconds"] == 4.0
+    assert not {"resolution", "duration"} & set(details)
 
     imported = _entry(
         type="video",
         media_type=details["media_type"],
         filename=details["filename"],
-        resolution=details["resolution"],
-        duration=details["duration"],
+        resolution=f"{details['width']}x{details['height']}",
+        duration=details["duration_seconds"],
     )
     _config, projected = _render_compatible_projection({"clips": []}, {"assets": {"clip": imported}})
     timeline.validate_registry(projected)

@@ -121,7 +121,7 @@ def _metadata(path: Path) -> dict[str, Any]:
         with Image.open(path) as image:
             image.verify()
         with Image.open(path) as image:
-            metadata["resolution"] = f"{image.width}x{image.height}"
+            metadata.update(width=image.width, height=image.height)
             decoded_type = Image.MIME.get(image.format)
             if decoded_type != media_type:
                 raise ValueError(f"Image bytes disagree with filename type {media_type}: {path}")
@@ -133,32 +133,14 @@ def _metadata(path: Path) -> dict[str, Any]:
             raise ValueError(f"Video media has no video stream: {path}")
         if not probe.duration_seconds or probe.duration_seconds <= 0:
             raise ValueError(f"Media has no positive duration: {path}")
-        metadata["duration"] = probe.duration_seconds
-        if kind == "video" and probe.width is not None and probe.height is not None:
-            metadata["resolution"] = f"{probe.width}x{probe.height}"
+        metadata["duration_seconds"] = probe.duration_seconds
+        if kind == "video":
+            metadata.update(width=probe.width, height=probe.height)
     payload = path.read_bytes()
     if len(payload) > _MAX_BYTES:
         raise ValueError(f"Local media exceeds Runtime's 64 MiB limit: {path}")
     metadata["digest"] = "sha256:" + hashlib.sha256(payload).hexdigest()
     metadata["size"] = len(payload)
-    return metadata
-
-
-def _runtime_import_metadata(row: Mapping[str, Any]) -> dict[str, Any]:
-    """Translate registry metadata to Runtime's media-import request fields."""
-    metadata: dict[str, Any] = {}
-    resolution = row.get("resolution")
-    if resolution is not None:
-        match = (
-            re.fullmatch(r"(\d+)x(\d+)", resolution)
-            if isinstance(resolution, str)
-            else None
-        )
-        if match is None:
-            raise ValueError(f"Invalid media resolution {resolution!r}")
-        metadata["width"], metadata["height"] = map(int, match.groups())
-    if "duration" in row:
-        metadata["duration_seconds"] = row["duration"]
     return metadata
 
 
@@ -384,13 +366,17 @@ def plan_authoring_media(
         entry["type"] = row["media_type"].split("/", 1)[0]
         entry["media_type"] = row["media_type"]
         entry["filename"] = row["filename"]
+        width, height = row.get("width"), row.get("height")
+        if width is not None and height is not None:
+            entry["resolution"] = f"{width}x{height}"
+        else:
+            entry.pop("resolution", None)
+        if "duration_seconds" in row:
+            entry["duration"] = row["duration_seconds"]
+        else:
+            entry.pop("duration", None)
         for field in ("width", "height", "duration_seconds"):
             entry.pop(field, None)
-        for field in ("resolution", "duration"):
-            if field in row:
-                entry[field] = row[field]
-            else:
-                entry.pop(field, None)
 
     def rewrite_registry(
         node: dict[str, Any], base: Mapping[str, Any], *, explicit_only: bool = False
@@ -490,8 +476,8 @@ def plan_authoring_media(
                         )
                 if details:
                     source_descriptor["type"] = details["media_type"]
-                    if "duration" in details:
-                        source_descriptor["duration"] = details["duration"]
+                    if "duration_seconds" in details:
+                        source_descriptor["duration"] = details["duration_seconds"]
                     else:
                         source_descriptor.pop("duration", None)
             if details and asset.get("role") in {"image", "video", "audio"}:
@@ -611,7 +597,6 @@ def import_authoring_media(plan: Mapping[str, Any], transport: Any) -> dict[str,
     catalog = _existing_imports(transport, work["project_id"]) if payloads else []
     receipts = []
     for row, payload in zip(expected["imports"], payloads):
-        runtime_metadata = _runtime_import_metadata(row)
         existing = next(
             (
                 entry
@@ -620,8 +605,8 @@ def import_authoring_media(plan: Mapping[str, Any], transport: Any) -> dict[str,
                 and entry["details"].get("mime_type") == row["media_type"]
                 and entry["details"].get("filename") == row["filename"]
                 and all(
-                    entry["details"].get(key) == value
-                    for key, value in runtime_metadata.items()
+                    entry["details"].get(key) == row.get(key)
+                    for key in ("width", "height", "duration_seconds")
                 )
             ),
             None,
@@ -643,7 +628,7 @@ def import_authoring_media(plan: Mapping[str, Any], transport: Any) -> dict[str,
             filename=row["filename"],
             expected_digest=row["digest"],
             idempotency_key=row["import_key"],
-            **runtime_metadata,
+            **{key: row[key] for key in ("width", "height", "duration_seconds") if key in row},
         )
         resource = response.get("data", response)
         if (
