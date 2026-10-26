@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "current": {
+    "result_id": "app-full-d141-node-phase-1026063009-19156",
+    "status": "fail",
+    "exit": 1,
+    "duration_seconds": 83,
+    "suite": "full-d141-node-phase",
+    "command": "npm run test:node",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "source_head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "source_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "request": "tests/app-full-d141-node-phase-1026063009-19156/request",
+    "snap": "tests/app-full-d141-node-phase-1026063009-19156/snap",
+    "keep": "tests/app-full-d141-node-phase-1026063009-19156/KEEP",
+    "receipt": "tests/app-full-d141-node-phase-1026063009-19156/recorded-measured-floor.json",
+    "admission": "admitted_after_same-ID-queue",
+    "initial_queue_reason": "low disk (available=4790255616 bytes; floor=4793895424; measured receipt inclusive)",
+    "body": "RUN",
+    "counts": {"tests": 324, "suites": 33, "passed": 296, "failed": 2, "cancelled": 0, "skipped": 26, "todo": 0},
+    "failures": [
+      "scripts/quality/capture-extension-external-evidence.test.mjs: computes and verifies an Ed25519 public-key fingerprint without reading a private key — spawnSync ssh-keygen ENOENT",
+      "scripts/quality/check-extension-ship-evidence.test.mjs: suite failed after the external-evidence failure"
+    ],
+    "declared_skips": 27,
+    "xml": "not emitted by this registered Node route",
+    "raw": {
+      "summary": {"path": "tests/app-full-d141-node-phase-1026063009-19156/summary", "sha256": "cb2f6cbae49d74547da72370f9bea03128cb0cac7faff0c5d20edc92c2f251b1"},
+      "log": {"path": "tests/app-full-d141-node-phase-1026063009-19156/log.txt", "sha256": "ad43b74b1536b557a4b943fb8a8e3183707c86ff521fbb44ba589970dd8ffa4e", "bytes": 65795},
+      "trace": {"path": "tests/app-full-d141-node-phase-1026063009-19156/disk-trace.tsv", "sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b", "bytes": 2126, "samples": 19},
+      "keep": true
+    }
+  },
+  "pristine": {
+    "status": "NOTRUN",
+    "reason": "exact d822 checkout unavailable; manager normal request-checkout required"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "result_id": null,
+  "status": "NOTRUN",
+  "reason": "exact frozen d822 checkout unavailable; manager-owned normal request-checkout required",
+  "required_source": {
+    "head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "parent": "7796159ce89408aa307988ec4cfc29bc99783a25",
+    "package_json_bytes": 16880,
+    "test_node_script_bytes": 1666
+  },
+  "execution": {
+    "full": "NOTRUN",
+    "node": "NOTRUN",
+    "collection": "NOTRUN",
+    "cached": "NOTRUN",
+    "xml": "NOTRUN"
+  },
+  "manager_need": "Create/receive an exact d822 normal service checkout; do not use app-D141-pristine-receiver-0007 synthetic/old tuple or copy source files."
+}

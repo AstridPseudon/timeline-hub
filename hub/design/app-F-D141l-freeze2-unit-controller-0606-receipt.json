@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "decision": "CURRENT_FULL_TERMINAL_FAIL_NODE_NOTRUN",
+  "actual_receipt": {
+    "path": "tests/app-full-1026060654-8638/recorded-measured-floor.json",
+    "schema": "timeline.d89d.measured-floor.v1",
+    "sha256": "dbe17516eec37decf3d6f9b1e40470053ad654e285bda978b5607953693d9823",
+    "job_id": "app-full-1026060654-8638",
+    "repo": "app",
+    "suite": "full",
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+    "floor_bytes": 4793895424,
+    "growth_bytes": 593895424,
+    "stop_bytes": 4000000000,
+    "margin_bytes": 200000000
+  },
+  "node_receipt": {
+    "path": "tests/app-full-d141-node-phase-1026063009-19156/recorded-measured-floor.json",
+    "schema": "timeline.d89d.measured-floor.v1",
+    "sha256": "bd20043324ad6e9c6dedb13b14707ad1520283839e0a20bcc60ff2d40ed953a8",
+    "job_id": "app-full-d141-node-phase-1026063009-19156",
+    "suite": "full-d141-node-phase",
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "command_sha256": "92cbc68d05b5657e26ac1ce1e3f83f3f58487fbcd70e36400726ac8eda8616ef",
+    "floor_bytes": 4793895424
+  },
+  "normalization_provenance": {
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "start_path": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-start.df",
+    "stop_path": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalized-stop.df",
+    "normalization_json": "workers/app-F-D141l-unit-witness-return-0549/evidence/normalization.json",
+    "measurement_json": "workers/app-F-D141l-unit-witness-return-0549/evidence/measurement.json",
+    "raw_origins_and_gaps_preserved": true
+  },
+  "no_reg_verdict": true
+}

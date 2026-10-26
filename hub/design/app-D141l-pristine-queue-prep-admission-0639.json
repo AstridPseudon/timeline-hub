@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-26T06:37:55.226076+00:00",
+  "worker": "app-F-D141l-pristine-queue-prep-0639",
+  "kind": "source-only normal queue preparation, not body admission",
+  "available_bytes": 4626448384,
+  "source_only_floor_bytes": 4600000000,
+  "actual_future_service_floor_bytes": 4793895424,
+  "heavy_running": false,
+  "retained_pair_lineage": "app-F-D141l-freeze2-unit-controller-0606",
+  "instruction": "Same genuine serviceID only; actual default/general measured floor and trace stop guard remain authoritative."
+}

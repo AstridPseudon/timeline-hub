@@ -1,0 +1,11 @@
+# D141l freeze2 unit-controller handoff
+
+Current full completed through the normal service as `app-full-1026060654-8638` on App `4de54db14bdc9ddc2ce2e5887258b03acbffd30d` / tree `84c3fb7f73f08c22220f8e808962fe3f24aaa0aa`, parents `5344c53e3063001bb3255bd0c9cd32cc5e77967f` and `fdea805191f466fa67dc0f2ea118da31bf86028f`. It used the unchanged registered `npm test -- --maxWorkers=3` command with `--no-cache` and the actual per-job D89d data receipt.
+
+Result is terminal FAIL, not PASS/REG: exit 1; 4/1362 files failed, 32/19777 tests failed, 1358 files and 19745 tests passed. The exact failure groups and raw full log are retained in `tests/app-full-1026060654-8638/`. The chained Node phase is explicitly NOTRUN. The registered route emitted no XML; this is recorded as absent, not synthesized.
+
+The current standalone Node request is `app-full-d141-node-phase-1026063009-19156`, registered command `npm run test:node`, with its own receipt and KEEP. It initially queued because available bytes were `4790255616`, below the measured receipt floor `4793895424`; the normal dispatcher later admitted the same ID after headroom recovered. It terminated FAIL (exit 1) after 83 seconds: 324 tests across 33 suites, 296 passed, 2 failed, 26 skipped. The first failure was the Ed25519 fingerprint test receiving `spawnSync ssh-keygen ENOENT`; the second was the `check-extension-ship-evidence` suite-level failure. No XML was emitted by this registered Node route.
+
+The exact pristine source is not available in this worker's normal checkout set. Required manager action is a normal request-checkout for d822 `d822d2f5d2bd05187b4ff5b6071c3e13945d4747` / tree `2af40a015057779ceb4e4b37cad62e1469aa7e36`, then the same registered full command and, if its full chain stops before Node, that source's unchanged standalone `npm run test:node`. Do not use the old synthetic `app-D141-pristine-receiver-0007`, copy source files, inject fixtures, or alter selectors/semantics.
+
+No REG verdict, product-author verdict, journey/P4/P5/core/browser/source work, global GO, build, ZIP, or merge is claimed. All current and queued request directories retain KEEP. The Composition base remains documentary and untouched at `635f4de06fda22a85fc2e4cfc764d0153a4c9f40` / tree `5ab5191a296980a0a6bcd1178ab6902d6478a148`.

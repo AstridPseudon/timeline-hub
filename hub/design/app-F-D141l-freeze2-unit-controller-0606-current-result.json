@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task": "D141l",
+  "result_id": "app-full-1026060654-8638",
+  "route": "integration:app",
+  "status": "fail",
+  "exit": 1,
+  "duration_seconds": 1270,
+  "source": {
+    "repo": "app",
+    "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "parents": ["5344c53e3063001bb3255bd0c9cd32cc5e77967f", "fdea805191f466fa67dc0f2ea118da31bf86028f"],
+    "worktree": "/home/user/work/app",
+    "clean_before": true,
+    "computed_tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"
+  },
+  "invocation": {
+    "request_argv": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test", "integration:app", "full", "--no-cache"],
+    "wait_argv": ["/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test", "app-full-1026060654-8638"],
+    "registered_command": "npm test -- --maxWorkers=3",
+    "registered_command_sha256": "10ec988435479a2c3967d004429343b8bc5661b8b815d00ad30fbd455a2ca54b",
+    "effective_shell": "npm run test:app && npm run test:node --maxWorkers=3",
+    "no_cache": true,
+    "node_phase": "NOTRUN",
+    "node_reason": "npm run test:app exited 1; &&-chained npm run test:node did not start"
+  },
+  "counts": {
+    "test_files": {"failed": 4, "passed": 1358, "total": 1362},
+    "tests": {"failed": 32, "passed": 19745, "total": 19777},
+    "expected_failure_markers": 0,
+    "skipped": "not separately emitted in service summary",
+    "collection": "Vitest collected 1362 files / 19777 tests",
+    "cached": false
+  },
+  "failures": {
+    "files": [
+      "src/tools/video-editor/commands/commitSession.genericPatch.test.ts",
+      "src/tools/travel-between-images/components/ShotTimelinePreview.full-caller.a3.test.tsx",
+      "src/tools/video-editor/contexts/VideoEditorProvider.runtime-elements.test.tsx",
+      "src/tools/video-editor/hooks/useTimelineSave.test.tsx"
+    ],
+    "first_observed": [
+      "commitSession.genericPatch.test.ts: SCHEMA_DIGEST expected sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2; received sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "ShotTimelinePreview.full-caller.a3.test.tsx: popupAuthorityFixture.py failed because authored fps declarations did not retain typed locations",
+      "VideoEditorProvider.runtime-elements.test.tsx: unexpected PUT /v1/projects/selection",
+      "useTimelineSave.test.tsx: prepared-video cases observed three clips instead of four; missing-selection cases lacked accessible alert; Undo timeline received merge mode fields instead of atomic"
+    ],
+    "exact_names_in_log": "tests/app-full-1026060654-8638/log.txt"
+  },
+  "raw": {
+    "request": {"path": "tests/app-full-1026060654-8638/request", "sha256": "493f0eac73dd31fd2ac0a49e9fd009c54a4bedd335d93e946d3ed8a371a30ec9"},
+    "snap": {"path": "tests/app-full-1026060654-8638/snap", "sha256": "922e01ddd09c4f1f2c1a623f477b6d32749fcb45736514b8340b6d03c6ea60a5"},
+    "summary": {"path": "tests/app-full-1026060654-8638/summary", "sha256": "47c65edf369198e6a094dbac95ddc21fc431fca694a971b1f8343fa7d3c7334e"},
+    "log": {"path": "tests/app-full-1026060654-8638/log.txt", "sha256": "50c49dcc58d59e30bd02c349a5cc18b2c977e8f72bfc24d58c873384143f5f77", "bytes": 3535795},
+    "trace": {"path": "tests/app-full-1026060654-8638/disk-trace.tsv", "sha256": "9b6338962ff0d2ca76ddb84f5d9644547efe8675ed340b4dfdcaeceef703fdc0", "bytes": 23607, "samples": 256},
+    "xml": "not emitted by this registered npm full route",
+    "keep": true
+  }
+}

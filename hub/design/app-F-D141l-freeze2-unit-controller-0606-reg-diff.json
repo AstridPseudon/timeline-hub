@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "verdict": "NOT_READY_NO_REG_VERDICT",
+  "current": {
+    "source": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+    "full": "FAIL",
+    "node": "FAIL (standalone current phase; 324 tests, 2 failures, 26 skipped)"
+  },
+  "pristine": {
+    "source": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "full": "NOTRUN",
+    "node": "NOTRUN"
+  },
+  "comparison": {
+    "same_environment_kind": "NOT_ESTABLISHED",
+    "same_args": "registered full args are known; pristine execution absent",
+    "each_failing_id": "N/A until pristine result exists",
+    "environment_type_pristine_failure_rerun": "NOTRUN",
+    "reg": "NOT_PROVED",
+    "nonreg": "NOT_PROVED"
+  },
+  "no_source_or_fixture_substitution": true
+}

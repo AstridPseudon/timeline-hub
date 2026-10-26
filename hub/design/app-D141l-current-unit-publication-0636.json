@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-26T06:36:01.460308+00:00",
+  "worker": "app-F-D141l-freeze2-unit-controller-0606",
+  "publication": [
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/current-result.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-current-result.json",
+      "sha256": "ba70a35e07289d482a0f0f0e09d912d98407907f895a05f1f05e9d6752a947df",
+      "bytes": 3592
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/handoff.md",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-handoff.md",
+      "sha256": "52ff0f887a49238ba2fcae1cc7d559344b2fb69fd1e50749dd9bc81576241815",
+      "bytes": 2298
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/node-results.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-node-results.json",
+      "sha256": "cbfd24d9c3cd2bc9a21246ee49b723d40f9ea448059e1ad0c021101075801fb5",
+      "bytes": 2185
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/pristine-result.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-pristine-result.json",
+      "sha256": "a5e73c36cfcdc18c2d011f7a7ef5a67050e8de9e7974c61fdf122b8a65205ba8",
+      "bytes": 735
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/progress.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-progress.json",
+      "sha256": "c7433bceb42f206a7e9df9d15e418476ae8f6094fd4a3acd57d4a1566b165154",
+      "bytes": 3895
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/receipt.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-receipt.json",
+      "sha256": "4ba0471cd2172b120a5308b22d5a14484146d7b5284b335c231a92d294eff77e",
+      "bytes": 1879
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/reg-diff.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-reg-diff.json",
+      "sha256": "eb27b5acc51fc57012aa4faddbe0aa4ec33607fa45eb89b7f8161f1024ac748c",
+      "bytes": 842
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/trace-measurement.json",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-trace-measurement.json",
+      "sha256": "1a00a2f1936b09a08c9e42d682a346c886632cd1b0e03cc4cb3c3fb13d9f6d81",
+      "bytes": 1413
+    },
+    {
+      "source": "workers/app-F-D141l-freeze2-unit-controller-0606/evidence/validation.md",
+      "destination": "design/app-F-D141l-freeze2-unit-controller-0606-validation.md",
+      "sha256": "1008ecb8285950e8bedf5b312c36d6b82a645811812d26b98faa729513503760",
+      "bytes": 1684
+    }
+  ],
+  "limits": "Author evidence only; independent0635 dispatched. Raw full/node logs and traces remain KEEP at original paths; no current/pristine REG verdict."
+}

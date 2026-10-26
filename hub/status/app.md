@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T06:31:58Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 0m -->
-# app board, 2026-10-26T06:26:37Z
+<!-- app | 2026-10-26T06:37:32Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# app board, 2026-10-26T06:36:01Z
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -20,8 +20,8 @@
 | D141s received ask | Provide first pair for final kit review | Luna | Runtime0506 receiving ask | merged | 0459;manager hash checks | Exact requested packet already byte equal in normal hub. Sole Runtime0503 review owns receiving. | Source5344 |
 | D141 Node route | Retain exact standalone Node row | Luna | Main standalone phase requirement | merged | 0515 | One full-d141-node-phase row; exact npm run test:node. All outside config bytes equal preimage. No body. | Source5344 andd822 |
 | D141 unit measure | Qualify normalized retained bracket data | Luna and independent Luna | Independent0600 PASS | merged | Author0549; independent0600 | Raw values and MAX exact; honest derived DATA, not originalstdout. Existing validator fixture PASS4793895424; no kit change. | Evidence only |
-| D141 unit pair | Run actual current and pristine units | Luna and service | Independent0600 PASS and D89d | doing | app-F-D141l-freeze2-unit-controller-0606 | Actual8638 FAIL19745PASS32FAIL plus collection error; Node current19156 queued. Pristine d822 and own Node remain owed. | Actual4de54 |
-| D141 Node body | Cover both actual standalone phases | Luna and service | Each full outcome and admission | gated:D141-unit | Existing full controller lineage | 4de54 script1709 bytes;d8221666. Each source executes its own unchanged script; no phase short circuit claim. | Pending |
+| D141 unit pair | Run actual current and pristine units | Luna and service | Exact d822 and real admission | blocked:disk | Controller0606; pristine next | Current8638 FAIL19745PASS32FAIL plus collection error; current Node19156 FAIL296PASS2FAIL26SKIP. Pristine full and Node owed. | Actual4de54 |
+| D141 Node body | Cover both actual standalone phases | Luna and service | Exact d822 and admission | blocked:disk | Controller0606; current19156 | Current standalone296PASS2FAIL26SKIP, both ssh-keygen ENOENT. Pristine own unchanged1666byte script still NOTRUN. | Actual4de54 |
 | D141 P1 | Reprove original dependent chain | Luna and service | Normal disk admission | blocked:disk | Existing journey controller lineage | Original2 cases and readiness preserved. Historical17879 PASS on867 stays historical. | Pending4de54 |
 | D141 P2 six | Reprove six original gestures | Luna and service | Normal disk admission | blocked:disk | Existing journey controller lineage | Corrected placement first;5s KEEP trace. No measured journey X; normal floors apply. No0545 registration. | Pending4de54 |
 | D141 P2 ADD | Run unchanged popup on final head | Luna and service | Main D141j and normal admission | blocked:disk | Same journey controller | PASS means not reproduced and cause unknown. Second FAIL needs proven visible four-field diagnostics before one diagnostic body. | Pending4de54 |
@@ -41,6 +41,7 @@
 | U3 catch up | Merge tip once before final delivery | Luna and independent review | Main04:39 final build step | gated:F-final | Reserved normal U3 route | No chase now. One then-current tip; both sides retained; affected AgentChat tests, types, lint and one review. | Later |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim. Actual post-fix heads and receipts required. | Cut pending |
 
+| D141 current custody | Review actual full and Node evidence | Luna | Controller0606 terminal | review | app-F-D141l-current-result-review-0635 | Read-only raw hashes, source, counts, traces,32 failing ID presence and two Node errors; no repeated product tests. | Evidence only |
 
 Integration: Clean App4de54db14bdc9ddc2ce2e5887258b03acbffd30d / tree84c3fb7f73f08c22220f8e808962fe3f24aaa0aa equals independent0540-reviewed fdea. Normal adoption of qualified Runtime95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 changes only runtime.lock source_commit and public installer runtime.sha from5344. Agent8585ed9c0404d0187b2ce70242d25114a32747c2/tree92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c and Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40 unchanged. Frozen App upstreamd822d2f5d2bd05187b4ff5b6071c3e13945d4747 ancestor. No upstream catch-up until F-final.
 
@@ -56,17 +57,19 @@ H6 owner boards: Runtime06:11 independently qualifies final producer, integrated
 
 Custody and maintenance: All named raw runs retain KEEP and private0700/files0600 bytes. Current controller0606 now has explicit evidence KEEP. Guarded inventory0621 has zero eligible ended clean nonKEEP tree; active test snapshot/controller, old867 actual queued18617 reference, current producers retained. Dirty U3, locked initializing U3c, bundles without metadata, refused orphan graph and hardlinked cache remain held. Sweep3 terminal removed0; compact1 terminal0 scratch/0testdirs/1oldlog. All33 preexisting KEEP markers exact; only new controller KEEP added. No hub, raw, product, pin or source edits. [Maintenance](../../design/app-D141-maintenance-result-0626.json).
 
-Blockers: App unit continuation — Current8638 terminal FAIL; Node19156 queued under genuine receipt4793895424. Pristine d822 source preparation needs actual admission; no premature pin creation. Lead0632 informed.
+Blockers: App unit continuation — Current full8638 and Node19156 terminal FAIL; exact pristine d822 checkout now requested normally. Pristine actual full and Node need receipt4793895424 and one heavy. Lead0632/0636 informed.
 Blockers: App journey disk — Paired kit dropped06:18. Normal5.0/5.2GB floors; no journey measured X. Wait genuine headroom, no0545 registration or owner-unapproved hub operation.
 Blockers: Runtime old queue — Existing0519 owns exact18617 hold; private guard PASS, not live. Original queue/request/registry unchanged; retain unstarted after paired drop.
 Blockers: Agent — Definitive freeze2 full pair and changed-CLI P4 proof owed by existing owners. Current REG review and ordinary U4a transport are owner work.
 Blockers: Safety — D130 absolute hold; owner-gated hub stays lead only with explicit owner approval. Refused, dirty, unowned and hardlinked paths retained.
 
 Next ready: Actual current8638 terminal receipt; then pristine exactd822 source and each own Node phase when admission permits. Final journeys wait normal floors. Reserved HARD Sol0149 lineage only for genuinely proved new REG. One catch-up merge only at F-final; no build or ZIP now.
-live 1 / cap 3; ready-undispatched 0. One admitted heavy body8638. No new source workers while active heavy and ordinary4.6GB source floor unavailable. Board proof rows retain genuine receipt scopes.
+live 1 / cap 3; ready-undispatched 0. Sole read-only independent0635, no heavy body. Pristine exact source request queued; actual next body retains4793895424 floor. Board proof rows retain genuine scopes.
 
 Later: Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. Unused App review-host offer remains later; Runtime sole0529 review already PASS74. Old full, source, notes, admission and P4 custody remain immutable. No source-only behavior credit, REG0, platform GO, final build or ZIP. Manager writes operational board/briefs/peers/KEEP and exact safe publications only; all product/test/generated/pin changes remain worker-owned.
 
-INBOX consumed through2785826 bytes. Board rewritten 2026-10-26T06:26:37Z after Main D141s-c. Gate-change peer0622 sent through normal sync; no hourly redundant status. Current body remains admitted under D89c, continuous trace and4GBstop; no duplicate or re-admission.
+INBOX consumed through2788809 bytes. Board rewritten 2026-10-26T06:26:37Z after Main D141s-c. Gate-change peer0622 sent through normal sync; no hourly redundant status. Current body remains admitted under D89c, continuous trace and4GBstop; no duplicate or re-admission.
 
 Current06:31:15Z: actual currentfull8638 FAIL exit1,1270s service,1263.40s Vitest.19745PASS32FAIL;4failed1358passed1362files;collection error and chainedNodeNOTRUN remain. Controller current Node19156 queued exact npm run test:node, same D89d receipt and KEEP. Only3MBfloor gap solved at once: six exact unreferenced closed22-24Oct manager stdout logs compressed losslessly after hostFD/singlelink/reference/hash guards; saved7976196bytes, after4798033920. All26Oct witness logs and rawKEEP retained. [Compression](../../design/app-D141-closed-manager-stdout-compression-0632.json). Terminal peer0632 through normal sync; no duplicate body, new floor or source writer.
+
+Current 2026-10-26T06:36:01Z: Controller0606 terminal0; current full8638 and standalone Node19156 both FAIL with actualcounts above. Nine exact author originals published0636; independent0635 dispatched immediately at ordinary sourcefloor/noheavy. Normal pristine full-ID d822 checkout requested after both current bodies ended. No new body or phase claim; no product writer before proved REG. Fulltrace256 actual samples,min4494544896,stopneverreached; independent audits raw semantics.
