@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-26T01:44:41.390771+00:00",
+  "authorization": "owner delete stale v1 archives under ORCH",
+  "guards": "pre22Oct finished v1; regular singlelink; absent current boards, leases, livebriefs, pendingqueue, suite and env references",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-pcm-caller-current-land-unit-TREE.tar.gz",
+      "bytes": 63765389,
+      "sha256": "307a6bfc41528207cdde1aa429067a49ffe514e71073783554148d79627f5533",
+      "mtime": "2026-10-20T10:48:18.980054+00:00"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-main-image-cap-source-vector-main-source.tar.gz",
+      "bytes": 59134823,
+      "sha256": "6b89215fd014a062a2590c9739e39efd656effec0aefae45b6afa0db0ac4d96d",
+      "mtime": "2026-10-20T10:58:56.220092+00:00"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m3-node20.19.4-retained-app.tgz",
+      "bytes": 35729844,
+      "sha256": "e481653ec961f88c9cb8f034740afca3ed1bbc5fa3f9d56efde0eb502372481f",
+      "mtime": "2026-10-20T22:58:18.050658+00:00"
+    }
+  ],
+  "logical_bytes": 158630056,
+  "available_before": 4700200960,
+  "available_after": 4858839040,
+  "protected_v2_raw_and_sources_untouched": true
+}
