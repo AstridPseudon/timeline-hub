@@ -13,6 +13,12 @@ case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^workt
 if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
   git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
 [ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+refuse() { echo "$*" | tee "$D/why"; exit 3; }
+case "$ID" in
+  rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
+  agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
+  app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617) refuse "held old App 18617 job remains queued and unstarted" ;;
+esac
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
 PAIR=0
@@ -26,20 +32,15 @@ if [ -n "${pair_preflight_suite:-}" ]; then
   PAIR=1
 fi
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
-HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
+HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-5344c53e-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
-refuse() { echo "$*" | tee "$D/why"; exit 3; }
 if [ "$PAIR" = 1 ]; then
   [ "$HV" = heavy ] || refuse "paired admission body must be a heavy suite"
   [ -f "$D/recorded-measured-floor.json" ] || refuse "paired admission requires a measured-floor receipt"
 fi
-case "$ID" in
-  rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
-  agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
-esac
-if [ "$suite" = d141g-p2-automatic-child-placement-520d7e4f-submit ]; then
-  [ "$repo" = app ] && [ "$target" = app-pin-520d7e4f ] && [ -z "$files" ] || refuse "D141g first placement target/repo/files mismatch"
+if [ "$suite" = d141g-p2-automatic-child-placement-5344c53e-submit ]; then
+  [ "$repo" = app ] && [ "$target" = app-pin-5344c53e ] && [ -z "$files" ] || refuse "D141g first placement target/repo/files mismatch"
 fi
 if [ -z "$RUN" ]; then
   IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null

@@ -359,7 +359,7 @@ def main() -> int:
     root, script, worktree, env = prepare()
     outcomes: dict[str, object] = {
         "root": str(root), "installed_layout": json.loads((root / "installed-layout.json").read_text()), "cases": [],
-        "app_scope": "prospective 0309 source binding only; no registered App row, body, or product execution",
+        "app_scope": "prospective freeze2 source binding only; no registered App row, body, or product execution",
     }
 
     def case(name: str, proc: subprocess.CompletedProcess[str], expected: int) -> None:
@@ -554,18 +554,18 @@ def main() -> int:
     # Consume the published production-builder bytes without launching App or
     # fabricating its unavailable checkout. The actual validator is received
     # through bin publication; these are authority controls, not App proof.
-    binding_path = LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-binding.json"
+    binding_path = LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-binding.json"
     binding_raw = binding_path.read_bytes()
-    if digest(binding_raw) != "a9947b5924c6b0b212b0d1ee7e3de0948cb0b65ec0ff8bd901ea50637cf6caf3":
+    if digest(binding_raw) != "53a145f29602a9c5925ed4782fb1d4d7d4dfe3025f78171eee253896bc52a539":
         raise AssertionError("published App binding changed")
     binding = json.loads(binding_raw)
-    app_command = (LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-normal-command.txt").read_text()
+    app_command = (LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-normal-command.txt").read_text()
     if digest(app_command.encode()) != binding["commands"]["normal"]["sha256_utf8_without_newline"]:
         raise AssertionError("published App command changed")
-    app_preflight_command = (LIVE_ROOT / "design/app-P-D141g-first-suite-binding-0309-preflight-command.txt").read_text()
+    app_preflight_command = (LIVE_ROOT / "design/app-P-D141l-freeze2-suite-binding-0459-preflight-command.txt").read_text()
     if digest(app_preflight_command.encode()) != binding["commands"]["preflight"]["sha256_utf8_without_newline"]:
         raise AssertionError("published App preflight command changed")
-    outcomes["cases"].append({"name": "prospective-first-pair-binding", "status": "pass", "registration": False, "body_command_sha256": digest(app_command.encode()), "preflight_command_sha256": digest(app_preflight_command.encode())})
+    outcomes["cases"].append({"name": "prospective-freeze2-pair-binding", "status": "pass", "registration": False, "body_command_sha256": digest(app_command.encode()), "preflight_command_sha256": digest(app_preflight_command.encode())})
     if " ".join(app_command.split()) != app_command:
         raise AssertionError("App command differs after test-run awk normalization")
     app_source = dict(binding["source_tuple"]["app"], command_sha256=digest(app_command.encode()))
@@ -588,8 +588,14 @@ def main() -> int:
         case(label, proc, expected)
     # Even a genuine command cannot attach this authority to another target
     # or append file arguments that alter the approved first placement body.
-    with (root / "tests/suites.conf").open("a") as registry:
-        registry.write(binding["rows"]["normal"]["row"] + "\n")
+    normal_row = f"app {binding['suites']['normal']} {app_command}\n".encode()
+    preflight_row = f"app {binding['suites']['preflight']} {app_preflight_command}\n".encode()
+    if digest(normal_row) != binding["commands"]["normal_row_sha256_utf8_with_one_terminal_lf"]:
+        raise AssertionError("published App normal row changed")
+    if digest(preflight_row) != binding["commands"]["preflight_row_sha256_utf8_with_one_terminal_lf"]:
+        raise AssertionError("published App preflight row changed")
+    with (root / "tests/suites.conf").open("ab") as registry:
+        registry.write(preflight_row + normal_row)
     for label, target, files in [("wrong-app-target", "body", ""), ("app-extra-files", binding["target"], "other")]:
         request(root, label, "app", binding["suites"]["normal"])
         path = root / "tests" / label / "request"
@@ -834,11 +840,18 @@ def main() -> int:
     # Held jobs remain held by their exact production IDs, before any launch
     # artifacts are created.  A bare suffix is not an identity guard.
     held = {
-        "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912": "held old pristine full job",
-        "agent-p4-current-becfe-http-3legs-1026012948-19479": "cancelled P4 job",
+        "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912": (
+            "runtime", "full-d141-pristine-targeted15", "held old pristine full job"
+        ),
+        "agent-p4-current-becfe-http-3legs-1026012948-19479": (
+            "runtime", "full-d141-pristine-targeted15", "cancelled P4 job"
+        ),
+        "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617": (
+            "app", "d141-p2-transition-none-single-867cb273-submit-preflight", "held old App 18617 job"
+        ),
     }
-    for job, label in held.items():
-        request(root, job, "runtime", "full-d141-pristine-targeted15")
+    for job, (repo, suite, label) in held.items():
+        request(root, job, repo, suite)
         case(f"held-{job}", run_candidate(script, root, job, env), 3)
         names = sorted(path.name for path in (root / "tests" / job).iterdir())
         if names != ["request", "why"]:
@@ -855,9 +868,9 @@ def main() -> int:
     if not (root / "tests" / p5_job / "status").exists():
         raise AssertionError("exact P5 request did not reach terminal status")
 
-    if len(outcomes["cases"]) != 73:
-        raise AssertionError(f"D141 control purpose count changed: {len(outcomes['cases'])} != 73")
-    outcomes["case_count"] = 73
+    if len(outcomes["cases"]) != 74:
+        raise AssertionError(f"D141 control purpose count changed: {len(outcomes['cases'])} != 74")
+    outcomes["case_count"] = 74
     outcomes["verdict"] = {
         "SEC002": "PASS",
         "SEC001": "PASS",
