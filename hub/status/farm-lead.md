@@ -1,1 +1,1 @@
-2026-10-26T14:43:25Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; NEW read-only job F-extensibility-minimal (MAIN/owner) handed to the manager (Sonnet fallback, Codex unavailable); hub-repack real run + delivery-build form await the owner; perms rules intact
+2026-10-26T15:02:29Z farm lead: F-extensibility-minimal published (hub/design/farm-extensibility-*); daemons up; farm stands by.
