@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-26T04:15:54Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-26T04:14:21Z
+<!-- app2 | 2026-10-26T04:18:58Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-26T04:17:27Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -169,7 +169,7 @@
 | F-D137-core | Retain conditional Farm environment chain | Runtime and Farm | D141k per ID Agent join | gated:D141k | Existing Runtime and Farm owners | Original kit pair and67-wheel seed EXACT-MISSING. No search or rebuild unless Agent join leaves undecidable environment candidates. Cheap schema verify is separate. | Frozen cut tuple |
 | F-D141-schema-receive | Retain Farm schema transport receipt | Farm lead | Lead receipt 0341 published | merged | Farm lead verification; redundant0335 closed | PASS_TRANSPORT_CLOSURE in lead receipt0341. Worker sidecar failure retained. No extraction, binding, child, census or body; no Farm READY. | Packetc1c2 / helper729e8 |
 | F-D141-Agent-core | Measure first cut core against pristine | Agent HARD Sol; Luna | Actual26496 terminal; per ID join | review | Controller0321; prepared join0349 | Declared9561:9388 concrete plus173 subtests;204 FAIL,196 ERROR. Monitor0, sources clean, evidence0; controller0. Per ID join and counts qualification pending. | Agent28e / Runtime6a |
-| F-D141l-freeze2 | Track new App and Agent joins | App Luna; Agent HARD Sol | D141k join and qualified Agent producer | blocked:agent | App0358; Agent prepared U2 after join | App8f278 review FAIL one UA producer dependency; other116 checks and types/lint PASS. Agent join disk held. New heads and proofs pending. | Candidate8f278 / Agent28e |
+| F-D141l-freeze2 | Track new App and Agent joins | App Luna; Agent HARD Sol | D141p Sol first and qualified producer | doing | Agent Sol0408; App held8f278 | D141q one source worker at4.5GB. Agent0408 queued, fresh lead tip receipt owed. Join follows or runs at4.6GB. App normal-tool manifest return follows reviewed head. | Candidate8f278 / Agent28e |
 
 | F-D139-runtime-union | Qualify merged Runtime targeted union | Runtime service; independent Luna | Independent2219 PASS | merged | Runtime9082; independent2219 | 1571 PASS, zero fail/error/skip in70.6s. Exact source, six bodies and durable XML independently qualified. No Agent full-core or final-gate credit. | Runtimef103 / Agent4c4ee |
 
@@ -194,12 +194,12 @@ D141 supersedes the prior ship bar. Required on the cut tuple: P1/P3/P4/P5 GO, s
 
 live 0 / cap 0 stood down; ready-undispatched 0. Normal bin/workers reports all 1313 Proof worker records done. No live Proof controller or heavy body.
 
-core open: final cut count UNKNOWN. Agent26496 XML declares9561 outcomes:9388 concrete cases plus173 subtests,204 FAIL and196 ERROR; custody facts and controller exit0 reported by Agent. D141k per ID join is ready but disk held at4.58GB against4.6GB source floor. No regression classification or zero REG verdict yet. SWAP and Element remain documented gaps. Historical P1/P3/P4 GOs retain their tuple and path scopes.
+core open: final cut count UNKNOWN. Agent26496 XML declares9561 outcomes:9388 concrete cases plus173 subtests,204 FAIL and196 ERROR; custody facts and controller exit0 reported by Agent. D141k join is ready but follows the D141p/q priority source merge below4.6GB. No regression classification or zero REG verdict yet. SWAP and Element remain documented gaps. Historical P1/P3/P4 GOs retain their tuple and path scopes.
 regressions: App duplicate-read REG is source-repaired on5fe and independently0203 qualified. Freeze2 App source, affected browser proofs and final pristine comparison remain pending. Original9 retains9 setupERROR and unknown causes; D141 stops investigation. Measurement18455 failed custody with XML missing remains historical, not a ship-grade count.
 
-Blockers: Freeze2 proofs and comparison — owner App and Agent. App candidate8f278 independent0358 FAIL one installer UA producer dependency, other116 checks/types/lint/installer/vendor PASS. Existing normal-tool return waits qualified Agent freeze2. Agent26496 terminal; prepared D141k join waits4.6GB source floor, then Sol U2 and delta proof. No final GO.
+Blockers: Freeze2 proofs and comparison — owner Agent and App. D141p/q reorder: Agent Sol0408 source merge first at one-worker4.5GB exception, fresh lead tip receipt owed; per ID join follows or runs at4.6GB. App8f278 stays held for reviewed Agent producer and normal-tool manifest return. Independent re-review covers manifest delta and unchanged rest. No final GO.
 Blockers: Runtime admission — owner Runtime0400 and0402. App pair review0344 FAIL three findings: trace custody, arbitrary authority and stale520d binding. Return0400 plus reviewed trace donor/new App binding owed. Runtime0349 author44 PASS, bounded0402 before CAS. D141m04:30 timebox; targeted15 and sameP56934 still pending.
-Next ready: None for Proof. Agent per ID join at source floor -> prepared U2 -> qualified producer. App normal-tool return -> protected review -> normal home -> new immutable paired binding, unit comparison and journeys. Runtime0402 -> CAS -> targeted15/sameP56934. Smoke dropped everywhere; conditional Farm child parkedD141k.
+Next ready: None for Proof. Agent lead tip receipt -> sanctioned Sol0408 -> independent review/normal home -> App normal-tool manifest return/review -> new binding, unit comparison and journeys. Join0349 after Sol or at4.6GB. Runtime0402 -> CAS -> targeted15/sameP56934. Smoke dropped; conditional child parkedD141k.
 
 Safety: D130 automatic classifier refusal remains in force. SWAP recovery and related acceptance stay stopped: no retry, rephrase, alternate route, transfer or rollback. D127e only proves static WAL reachability; Element wait causality is UNPROVED. D141 documents both gaps without lifting refusals. Original Farm0137 census approval refusal remains in the [permission report](../../escalations/app2-20261026T014014Z-Farm-census-permission-stop.md). Owner-approved census0140 returned NOT_READY. Farm smoke approval refusal is preserved in [Farm0355](../../design/peer-farm-to-lead-runtime-20261026T0355Z-schema-verify-sidecar-and-zip-smoke-allowlist.md). D141m04:03 drops the smoke everywhere and withdraws machine transfer; planned F-final stays separate. D141o defers hub repacking to owner permission. Proof makes no execution action.
 
