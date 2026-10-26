@@ -1,0 +1,36 @@
+{
+  "at": "2026-10-26T04:55:02.540531+00:00",
+  "files": [
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/adoption.json",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-adoption.json",
+      "sha256": "6d477823c06a8116cc8a01504f459e30735538613ae6c7a08cb75803003cd801"
+    },
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/findings.json",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-findings.json",
+      "sha256": "65fda66ec140a13414b73b472d3f606b7b2023ee3eec20136befbeb54271451a"
+    },
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/handoff.md",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-handoff.md",
+      "sha256": "ff31f36059fe2931173b870861aeec819eaab13ea246d73c417b85a7bda2eb95"
+    },
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/outside-conservation.json",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-outside-conservation.json",
+      "sha256": "0e1b8207924c7f0dc97b2332eab40bf67ef64a080a1f8fb88c79a406d5996d3b"
+    },
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/source-manifest.json",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-source-manifest.json",
+      "sha256": "20fa8b83f96e98f005967ae161e8df0929ceb3fdd741f39881a2a0ab70961dd3"
+    },
+    {
+      "source": "workers/app-U4p-D141p-Agent-manifest-return-0448/evidence/validation.md",
+      "target": "design/app-U4p-D141p-Agent-manifest-return-0448-validation.md",
+      "sha256": "ef2fcfb83300d41b115df542acf744e3217bf55b23ccc3ad57a93d801672156a"
+    }
+  ],
+  "qualification": "Original author metadata source packet only; installer subprocess test unresolved; bounded review0454 dispatched"
+}

@@ -1,0 +1,24 @@
+{
+  "findings": [
+    {
+      "severity": "resolved",
+      "path": "public/install-manifest.json",
+      "finding": "Manifest still pointed at the prior Agent producer.",
+      "action": "Regenerated with update-manifest.mjs from the exact qualified Agent and Runtime checkouts."
+    },
+    {
+      "severity": "resolved",
+      "path": "vendor/astrid-browser/provenance.json",
+      "finding": "Vendor provenance still pointed at the prior Agent producer.",
+      "action": "Refreshed with refresh-vendor.mjs after private comparison proved all 160 payloads exact."
+    },
+    {
+      "severity": "non_blocking_environment",
+      "path": "scripts/installer/update-manifest.test.mjs",
+      "finding": "The required direct test command could not observe output from nested Node subprocesses in this sandbox; the updater invocations themselves passed.",
+      "action": "Retained the test unchanged and reported the exact limitation."
+    }
+  ],
+  "source_findings_remaining": false,
+  "scope_expansion": false
+}

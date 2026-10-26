@@ -1,0 +1,34 @@
+{
+  "at": "2026-10-26T04:59:45.892551+00:00",
+  "repo": "/home/user/work/app",
+  "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+  "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+  "parents": [
+    "520d7e4fc12a03392afaed3f486aba34a2b5c319",
+    "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04"
+  ],
+  "clean": true,
+  "integration_equals_head": true,
+  "candidate": "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04",
+  "reviewed_tree_exact": true,
+  "freeze2_upstream": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+  "agent": {
+    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c"
+  },
+  "runtime": {
+    "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+  },
+  "composition": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_review": "app-U3-D141l-independent-review-0358: sole UA finding, otherwise116/types/lint/installer/vendor PASS",
+  "metadata_review": "app-U4p-D141p-manifest-review-0454 PASS zero findings; unmodified installer4/4, verifier65/160/11; all outside metadata exact",
+  "proof_limits": "No current full, Node, P1/P2six/P3, P4/P5 freeze2 GO or REG0; bodies held installed pair and latest MAIN GO",
+  "merge_receipt": {
+    "path": "queue/done/merge-app-U4p-D141p-Agent-manifest-return-0448",
+    "sha256": "3d765a38cce9dae5b725cdead9abfa6e01cff8316480ccd3b9422145f097dbc3"
+  }
+}

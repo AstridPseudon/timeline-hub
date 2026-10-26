@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-26T04:58:11.892039+00:00",
+  "files": [
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/findings.md",
+      "target": "design/app-U4p-D141p-manifest-review-0454-findings.md",
+      "sha256": "8493871487fadeecfc7adbe9732cb2922d018cc7595fa80f476feef853154ba3"
+    },
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/handoff.md",
+      "target": "design/app-U4p-D141p-manifest-review-0454-handoff.md",
+      "sha256": "7cfc5e0248f932116f4f88c0853ef50106ce2d4a84bfcac52a8e919afcd9c2ff"
+    },
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/outside-conservation.json",
+      "target": "design/app-U4p-D141p-manifest-review-0454-outside-conservation.json",
+      "sha256": "7dbb2898c92a5bee60579e714b3647a08b46672970cec39a6463bcf321ad4618"
+    },
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/review.json",
+      "target": "design/app-U4p-D141p-manifest-review-0454-review.json",
+      "sha256": "b389c83ddf188ac1573aaa1554f099ac10a2eff3a0fae622cf5983328e057294"
+    },
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/source-manifest.json",
+      "target": "design/app-U4p-D141p-manifest-review-0454-source-manifest.json",
+      "sha256": "1cb2ae79008e2a0ef86e4b364b70d1b987eb87434030a52a54d77525751c881e"
+    },
+    {
+      "source": "workers/app-U4p-D141p-manifest-review-0454/evidence/validation.md",
+      "target": "design/app-U4p-D141p-manifest-review-0454-validation.md",
+      "sha256": "05248dee6e0e9c0c7142f2f87ede8c250661ec150661b378bd277e6ae796295d"
+    }
+  ]
+}

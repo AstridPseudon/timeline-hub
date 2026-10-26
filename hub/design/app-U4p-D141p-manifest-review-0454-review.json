@@ -1,0 +1,33 @@
+{
+  "task": "U4p D141p bounded manifest review",
+  "verdict": "PASS",
+  "candidate": {
+    "commit": "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04",
+    "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "parent": "8f278b91accec5852e39bb84822e99124fccb81d"
+  },
+  "base": {
+    "commit": "8f278b91accec5852e39bb84822e99124fccb81d",
+    "tree": "99d79cb47496c0ca682b0cd42aa911177761bb31"
+  },
+  "allowed_paths": [
+    "public/install-manifest.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "findings": [],
+  "commands": [
+    {
+      "command": "/opt/node20/bin/node scripts/build/verify-astrid-vendor-sources.mjs",
+      "result": "PASS: 65 pinned Astrid source files, 160 vendor files, 11 public imports"
+    },
+    {
+      "command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --test scripts/installer/manifest.test.mjs scripts/installer/update-manifest.test.mjs",
+      "result": "PASS: 4 tests, 0 failures, 0 skipped"
+    },
+    {
+      "command": "git diff --check 8f278b91accec5852e39bb84822e99124fccb81d dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Manifest and Astrid browser provenance metadata only; no full, browser, provider, journey, Node broad, typecheck, or lint suite run."
+}

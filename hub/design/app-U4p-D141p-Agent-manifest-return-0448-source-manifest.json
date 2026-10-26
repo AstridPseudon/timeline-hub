@@ -1,0 +1,30 @@
+{
+  "task": "U4p D141p",
+  "app_base": "8f278b91accec5852e39bb84822e99124fccb81d",
+  "producer_identities": {
+    "agent": {
+      "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+      "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+      "checkout": "/home/user/work/wt/agt-pin-8585ed9c"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "checkout": "/home/user/work/wt/rt-pin-6a011d58"
+    }
+  },
+  "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+  "manifest_result": {
+    "agent_sha": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "runtime_sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "generated_by": "scripts/installer/update-manifest.mjs --write"
+  },
+  "vendor_result": {
+    "commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "payload_files": 160,
+    "private_refresh_comparison": "exact against App baseline payloads",
+    "generated_by": "scripts/astrid-landing/refresh-vendor.mjs --astrid-repo EXACT_AGENT --commit 8585ed9c0404d0187b2ce70242d25114a32747c2"
+  }
+}

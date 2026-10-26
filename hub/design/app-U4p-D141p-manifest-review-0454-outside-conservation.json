@@ -1,0 +1,38 @@
+{
+  "baseline": {
+    "commit": "8f278b91accec5852e39bb84822e99124fccb81d",
+    "tree": "99d79cb47496c0ca682b0cd42aa911177761bb31"
+  },
+  "candidate": {
+    "commit": "dc1a86cf4797b6ca3799d9ad1dee7e7d949caf04",
+    "tree": "dd989783046aeff652486a1ba39db42aea86e201"
+  },
+  "allowed_paths": [
+    "public/install-manifest.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "changed_paths": [
+    "public/install-manifest.json",
+    "vendor/astrid-browser/provenance.json"
+  ],
+  "allowed_blob_changes": {
+    "public/install-manifest.json": {
+      "baseline_blob": "a7365eb2b6b91fc8f28b1e5a362925c158bdb253",
+      "candidate_blob": "23e99adc4ae88efccd980950cc6c7a3e24f2fa20",
+      "change": "agent.sha only; Runtime SHA, schema digest, and all other manifest keys exact"
+    },
+    "vendor/astrid-browser/provenance.json": {
+      "baseline_blob": "bfd83965f125eb2ad96158017fb70c3e2a12231f",
+      "candidate_blob": "4161d5068f4ed9352cf8e26c67016491a8bc2e4f",
+      "change": "astrid commit/tree and refresh command only; 160 payload digests exact"
+    }
+  },
+  "proof": {
+    "non_allowed_paths": "exact",
+    "vendor_payload_files_baseline": 160,
+    "vendor_payload_files_candidate": 160,
+    "vendor_payload_tree_blobs": "exact",
+    "untracked_or_unexpected_paths": false,
+    "git_diff_check": "pass"
+  }
+}
