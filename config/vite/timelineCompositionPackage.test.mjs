@@ -22,16 +22,16 @@ const configs = [
 ];
 
 test('root and lock use the approved immutable source-commit artifact', () => {
-  const artifact = 'vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz';
+  const artifact = 'vendor/artifacts/banodoco-timeline-composition-a5908fac2b43c5d7b17a45cd4687d7caccf1806451e1f081aee3e912fe64ca89.tgz';
   const bytes = fs.readFileSync(path.join(appRoot, artifact));
   const root = JSON.parse(fs.readFileSync(path.join(appRoot, 'package.json'), 'utf8'));
   const lock = JSON.parse(fs.readFileSync(path.join(appRoot, 'package-lock.json'), 'utf8'));
   const installed = lock.packages[`node_modules/${packageName}`];
-  assert.equal(bytes.length, 73451);
-  assert.equal(createHash('sha256').update(bytes).digest('hex'), '819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234');
+  assert.equal(bytes.length, 73235);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), 'a5908fac2b43c5d7b17a45cd4687d7caccf1806451e1f081aee3e912fe64ca89');
   assert.equal(root.dependencies[packageName], `file:${artifact}`);
   assert.equal(lock.packages[''].dependencies[packageName], root.dependencies[packageName]);
-  assert.equal(installed.version, '0.0.14');
+  assert.equal(installed.version, '0.0.15');
   assert.equal(installed.resolved, `file:${artifact}`);
   assert.equal(installed.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
   assert.equal(root.devDependencies['@remotion/layout-utils'], '4.0.509');
@@ -51,7 +51,7 @@ for (const configFile of configs) {
         path.join(appRoot, 'src/tools/video-editor/compositions/TimelineRenderer.tsx'),
         path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
       ];
-      assert.equal(manifest.version, '0.0.14');
+      assert.equal(manifest.version, '0.0.15');
       for (const [subpath, entry] of Object.entries(manifest.exports)) {
         if (subpath === './package.json') continue;
         const specifier = packageName + subpath.slice(1);

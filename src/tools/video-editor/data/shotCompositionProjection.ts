@@ -324,11 +324,45 @@ function tracksFor(
   return tracks;
 }
 
+function isAudioClip(
+  rawClip: JsonObject,
+  occurrence: CanonicalShotOccurrence,
+  parentTracks: readonly TrackDefinition[],
+  registry: Record<string, ResolvedAssetRegistryEntry>,
+): boolean {
+  const trackId = text(rawClip.track) ?? occurrence.trackId ?? 'video';
+  const parentTrack = parentTracks.find((track) => track.id === trackId);
+  const timeline = outputTimeline(childTimeline(occurrence));
+  const childTrack = (Array.isArray(timeline.tracks) ? timeline.tracks : [])
+    .map(record)
+    .find((track) => track?.id === trackId);
+  const track = parentTrack ?? childTrack;
+  if (track?.kind === 'audio' || track?.kind === 'visual') return track.kind === 'audio';
+
+  const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? text(rawClip.type);
+  if (clipType?.toLowerCase() === 'audio') return true;
+
+  const assetId = text(rawClip.asset_id) ?? text(rawClip.asset);
+  if (!assetId) return false;
+  const playbackAssets = occurrence.revision.runtime_playback_assets;
+  const assets = Array.isArray(playbackAssets)
+    ? playbackAssets
+    : Array.isArray(occurrence.revision.assets) ? occurrence.revision.assets : [];
+  const canonicalAsset = assets
+    .map(record)
+    .find((asset) => asset?.asset_id === assetId);
+  const canonicalType = canonicalAsset ? mediaTypeForAsset(canonicalAsset) : undefined;
+  const resolvedType = mediaTypeForAsset(record(registry[assetId]) ?? {});
+  return (canonicalType ?? resolvedType)?.toLowerCase().startsWith('audio') ?? false;
+}
+
 function projectClip(
   rawClip: JsonObject,
   occurrence: CanonicalShotOccurrence,
   clipIndex: number,
   clipIdentities: Map<string, CanonicalProjectedClipIdentity>,
+  parentTracks: readonly TrackDefinition[],
+  registry: Record<string, ResolvedAssetRegistryEntry>,
   clampToOccurrenceDuration: boolean,
   storedOccurrenceDurationMs: number,
 ): TimelineClip | null {
@@ -359,9 +393,12 @@ function projectClip(
   const rawFrom = optionalFiniteNumber(rawClip.from);
   const rawTo = optionalFiniteNumber(rawClip.to);
   const hasTrim = rawFrom !== undefined && rawTo !== undefined && rawTo > rawFrom;
-  const sourceOffsetMs = Math.max(0, occurrence.sourceOffsetMs ?? 0);
+  const occurrenceSourceOffsetMs = Math.max(0, occurrence.sourceOffsetMs ?? 0);
+  const isAudio = isAudioClip(rawClip, occurrence, parentTracks, registry);
+  const sourceOffsetMs = isAudio ? 0 : occurrenceSourceOffsetMs;
   const sourceOffsetSeconds = sourceOffsetMs / 1000;
-  const speed = positiveNumber(rawClip.speed, positiveNumber(occurrence.speed, 1));
+  const occurrenceSpeed = positiveNumber(occurrence.speed, 1);
+  const speed = positiveNumber(rawClip.speed, isAudio ? 1 : occurrenceSpeed);
   // Persisted duration/hold/trim values are source-media units. Keep that
   // convention in the projected clip; timeline-domain consumers apply speed
   // once when deriving the occurrence extent and render duration.
@@ -405,9 +442,10 @@ function projectClip(
     clipType,
     ...(text(rawClip.label) ? { label: text(rawClip.label) } : {}),
     ...(asset ? { asset } : {}),
-    ...(hasTrim
-      ? { from: Math.max(0, rawFrom + sourceOffsetSeconds), to: Math.max(0, rawTo + sourceOffsetSeconds) }
-      : sourceOffsetMs > 0 ? { from: sourceOffsetSeconds } : {}),
+    ...(rawFrom !== undefined || sourceOffsetMs > 0
+      ? { from: Math.max(0, (rawFrom ?? 0) + sourceOffsetSeconds) }
+      : {}),
+    ...(hasTrim ? { to: Math.max(0, rawTo + sourceOffsetSeconds) } : {}),
     ...(speed !== 1 ? { speed } : {}),
     // Transport clips expose duration_ms; editor-form clips with `from`/`to`
     // retain those trim bounds instead of being converted to a parent-sized
@@ -428,7 +466,8 @@ function projectClip(
       ...app,
       canonical: identity,
       canonicalTiming: {
-        sourceOffsetMs,
+        sourceOffsetMs: occurrenceSourceOffsetMs,
+        occurrenceSpeed,
         speed,
         gain,
         muted,
@@ -503,6 +542,8 @@ export function projectCanonicalComposition(
   const clips: TimelineClip[] = [];
   const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
+  const outputTracks = tracksFor(composition, outputBaseConfig, outputOccurrences);
+  const { registry, assetAliases } = assetRegistryFor(composition, outputBaseConfig, outputOccurrences);
 
   for (const occurrence of outputOccurrences) {
     const identity = identityForOccurrence(occurrence);
@@ -531,6 +572,8 @@ export function projectCanonicalComposition(
           effectiveOccurrence,
           index,
           clipIdentities,
+          outputBaseConfig?.tracks ?? [],
+          registry,
           options.clampToOccurrenceDuration !== false,
           occurrence.durationMs,
         );
@@ -556,7 +599,6 @@ export function projectCanonicalComposition(
   // Legacy parent shot clips are replaced by the immutable child projection;
   // every other parent clip remains part of the rendered/editor timeline.
   const parentClips = (outputBaseConfig?.clips ?? []).filter((clip) => clip.clipType !== 'shot');
-  const { registry, assetAliases } = assetRegistryFor(composition, outputBaseConfig, outputOccurrences);
   // `baseConfig` is already resolved, but projected child clips are created
   // from the persisted canonical graph after that resolution step. Attach the
   // corresponding resolved registry entry here so the renderer can consume
@@ -575,7 +617,7 @@ export function projectCanonicalComposition(
   const configBase: ResolvedTimelineConfig = {
     ...(outputBaseConfig ? cloneTimelineExtras(outputBaseConfig) : {}),
     output,
-    tracks: tracksFor(composition, outputBaseConfig, outputOccurrences),
+    tracks: outputTracks,
     clips: projectedClips,
     registry,
     ...(outputBaseConfig?.effects ? {effects: outputBaseConfig.effects} : {}),

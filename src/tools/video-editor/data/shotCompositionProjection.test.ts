@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import fixture from './shotComposition.fixture.json';
+import mediaProjectionFixture from './occurrenceMediaProjection.fixture.json';
 import orderFixture from './shotTrackOrder.fixture.json';
 import { createShotCompositionAdapter, type PreparedShotComposition } from './shotCompositionAdapter.ts';
 import { createAudioReactiveColourFixtures } from '@/test/fakeRuntimeSeed.mjs';
@@ -58,6 +59,57 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('applies placement timing to visual media and keeps occurrence timing metadata-only for audio', () => {
+    const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
+    const vector = mediaProjectionFixture;
+    const occurrences = graph.occurrences as Array<Record<string, unknown>>;
+    Object.assign(occurrences[0]!, vector.occurrence);
+    Object.assign(occurrences[1]!, vector.next_occurrence);
+    const revision = graph.shot_revisions.find((item) => item.shot_id === 'shot-alpha' && item.revision_id === 'rev-a')!;
+    const timeline = revision.internal_timeline_revision.timeline as Record<string, unknown>;
+    timeline.tracks = vector.tracks;
+    timeline.clips = vector.clips;
+    revision.assets = vector.assets as typeof revision.assets;
+
+    const parentClip = vector.parent_clip;
+    const parentConfig = {
+      output: { resolution: '1280x720', fps: 30, file: 'canonical.mp4' },
+      tracks: [{ id: 'parent-visual-lane', kind: 'visual' as const, label: 'Shots' }],
+      clips: [parentClip] as ResolvedTimelineConfig['clips'],
+      registry: { 'standalone-source': { file: 'standalone.png', type: 'image/png' } },
+    } as ResolvedTimelineConfig;
+    const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+    const projection = projectCanonicalComposition(composition, parentConfig);
+    const projected = new Map(
+      projection.config.clips
+        .filter((clip) => clip.id.startsWith('occ-1:'))
+        .map((clip) => [clip.id.slice('occ-1:'.length), clip]),
+    );
+
+    for (const [id, expected] of Object.entries(vector.expected)) {
+      const clip = projected.get(id)!;
+      expect(clip).toBeDefined();
+      expect(clip).toMatchObject({
+        at: expected.at,
+        from: expected.from,
+        ...(expected.to === undefined ? {} : { to: expected.to }),
+        ...(expected.hold === undefined ? {} : { hold: expected.hold }),
+        ...(expected.speed === undefined ? {} : { speed: expected.speed }),
+      });
+      expect(getClipTimelineDuration(clip)).toBeCloseTo(expected.timeline_duration, 6);
+    }
+    expect(projected.get('audio-track-inherited')?.speed).toBeUndefined();
+    expect(projected.get('audio-asset-inferred')?.speed).toBeUndefined();
+    expect(projected.get('audio-clip-type-inferred')?.speed).toBeUndefined();
+    expect(projected.get('audio-track-inherited')?.app?.canonicalTiming)
+      .toMatchObject({ sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: 1 });
+    expect(projected.get('visual-trim-inherited')?.app?.canonicalTiming).toMatchObject({ sourceOffsetMs: 350, speed: 1.5 });
+    expect(projection.config.registry['occ-1:lane-audio-source'] ?? projection.config.registry['lane-audio-source'])
+      .toMatchObject({ media_id: 'object-lane-audio-source', type: 'audio/wav' });
+    expect(projection.config.clips.find((clip) => clip.id === 'parent-standalone')).toMatchObject(parentClip);
+    expect(timeline.clips).toEqual(vector.clips);
+  });
+
   it('merges shot-only lanes around shared picture layers and preserves authored properties', () => {
     const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
