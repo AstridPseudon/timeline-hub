@@ -1,0 +1,29 @@
+{
+  "schema": "timeline.d141h.runtime.submission.v1",
+  "target15": {
+    "request_command": "request-test rt-pin-fa9cd546 full-d141-pristine-targeted15 --no-cache",
+    "id": "rt-pin-fa9cd546-full-d141-pristine-targeted15-1026044256-11121",
+    "target": "rt-pin-fa9cd546",
+    "repo": "runtime",
+    "suite": "full-d141-pristine-targeted15",
+    "status": "pass",
+    "exit": 0,
+    "duplicate": false
+  },
+  "p5": {
+    "id": "runtime-d141-p5-cut-1026013331-6934",
+    "repo": "runtime",
+    "suite": "d141-p5-cut",
+    "status": "pass",
+    "exit": 0,
+    "new_request": false,
+    "reissue": false
+  },
+  "held_requests": {
+    "old_pristine": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+    "cancelled_p4": "agent-p4-current-becfe-http-3legs-1026012948-19479",
+    "action": "preserved; no reissue or direct run"
+  },
+  "normal_route": "request-test -> dispatcher -> test-run -> wait-test",
+  "forbidden_routes_used": []
+}

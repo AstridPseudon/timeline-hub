@@ -1,0 +1,29 @@
+{
+  "schema": "timeline.d141h.runtime.targeted15-result.v1",
+  "id": "rt-pin-fa9cd546-full-d141-pristine-targeted15-1026044256-11121",
+  "status": "pass",
+  "exit": 0,
+  "source": {"runtime_head": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "runtime_tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "agent_head": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "agent_tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"},
+  "command": {"interpreter": "/home/user/work/venv-runtime/bin/python", "argv": ["-m", "pytest", "-q", "-n3", "--junitxml=$D66_OUTPUT_DIR/runtime-targeted15.xml"], "node_count": 15, "environment": "normal test-run snapshot PYTHONPATH; ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-8b6ed211"},
+  "cases": [
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[False]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_preserves_canonical_rows_and_retains_backup_only_when_requested[True]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_repairs_missing_historical_object_indexes", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_is_not_repeatable_and_refuses_live_owner", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_archives_wal_before_activation", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-checkpoint]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[None-publication_flush]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-checkpoint]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[before_publication-publication_flush]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-checkpoint]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_restores_after_publication_and_preserves_uncertain_rollback[after_publication-publication_flush]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_and_compaction_flush_owned_files_through_writable_handles[upgrade]", "outcome": "PASS"},
+    {"nodeid": "tests/test_runtime_upgrade.py::test_upgrade_post_publication_failure_restores_archived_sqlite_sidecars", "outcome": "PASS"},
+    {"nodeid": "tests/test_typescript_generator.py::test_typescript_conformance_generator_is_byte_stable", "outcome": "PASS"},
+    {"nodeid": "tests/test_typescript_generator.py::test_typescript_generator_check_rejects_client_and_manifest_mutation", "outcome": "PASS"}
+  ],
+  "xml": {"tests": 15, "passed": 15, "sha256": "0047e2b891a454bfdebf1fac924ebf5a2e16b7e0404d771ef4f9d1700c094888"},
+  "disk": {"admission_available": 4647489536, "floor": 4600000000, "stop": 4000000000, "trace_samples": 3, "trace_validation": "PASS", "trace_pid": 3962, "trace_reaped": true, "first": "2026-10-26T04:43:08.018Z", "terminal": "2026-10-26T04:43:11.369Z", "keep": true},
+  "service_dir_mode": "0700",
+  "raw_modes": {"disk-trace.tsv": "0600", "start.witness": "0600", "stop.witness": "0600", "d141-decision.json": "0600", "recorded-measured-floor.json": "0600"}
+}

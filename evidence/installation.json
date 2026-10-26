@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.d141h.runtime.installation.v1",
+  "status": "PASS_INSTALL",
+  "donor": {
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d"
+  },
+  "independent_gates": {
+    "cancellation0418": "PASS",
+    "cas0422": "PASS_INSTALL",
+    "manager_readback0438": "PASS"
+  },
+  "installed_files": {
+    "bin/test-run": {"sha256": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300", "mode": "0755"},
+    "bin/d141-append-final.py": {"sha256": "14546f709edb04d0fff1b2e1a0efe8d6314fca4a9d3575fab414146670c3c398", "mode": "0755"},
+    "bin/d141-disk-trace.py": {"sha256": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222", "mode": "0755"},
+    "bin/d141-validate-receipt.py": {"sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6", "mode": "0755"},
+    "bin/d141-validate-trace.py": {"sha256": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5", "mode": "0755"}
+  },
+  "receipt_interface": "tests/<FULLID>/recorded-measured-floor.json plus d141-decision.json, start/stop witnesses, and fixed five-second KEEP trace; normal dispatcher invokes test-run",
+  "app": "paired-kit pending; no App row or source change"
+}

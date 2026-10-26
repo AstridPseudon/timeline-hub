@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.d141h.runtime.p5-result.v1",
+  "id": "runtime-d141-p5-cut-1026013331-6934",
+  "status": "pass",
+  "exit": 0,
+  "cases": {"exact": 38, "passed": 38, "failed": 0, "errors": 0, "skipped": 0},
+  "source": {"runtime_head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28", "agent_head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+  "xml": {"sha256": "04b7bcea10a693d691a4ccaff85df8c94a0e1e634ea14ae1de87f0a25ddca688"},
+  "disk": {"admission_available": 4633440256, "floor": 4600000000, "stop": 4000000000, "trace_samples": 9, "trace_validation": "PASS", "trace_pid": 10451, "trace_reaped": true, "first": "2026-10-26T04:43:23.186Z", "periodic_5s": "2026-10-26T04:43:28.191Z", "terminal": "2026-10-26T04:43:54.979Z", "keep": true},
+  "service_dir_mode": "0700",
+  "raw_modes": {"disk-trace.tsv": "0600", "start.witness": "0600", "stop.witness": "0600", "d141-decision.json": "0600", "recorded-measured-floor.json": "0600"},
+  "identity": "existing authorized cut receipt; not relabeled freeze2; no new request or reissue"
+}
