@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.agent.u2.d141.upstream-preservation.v1",
+  "parents": {
+    "agent_current": {
+      "commit": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7"
+    },
+    "frozen_upstream": {
+      "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed"
+    }
+  },
+  "preserved_current_d100a": [
+    {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "current_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "upstream_state": "deleted"
+    },
+    {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "current_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "upstream_state": "deleted"
+    }
+  ],
+  "lock_provenance": {
+    "producer": "astrid-runtime",
+    "producer_version": "sha256:91b02f4abc0554005bf3b5e7df8643b403136867f86227c5aa6b2280930fd683",
+    "source_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+  },
+  "production_callchain": "registered Runtime commitTimeline -> Agent provider after composition",
+  "upstream_only_silent_reverts": false
+}

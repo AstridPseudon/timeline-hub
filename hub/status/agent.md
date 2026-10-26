@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-26T00:14:08Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 4m -->
+<!-- agent | 2026-10-26T00:18:07Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
 # agent board, 2026-10-26T00:04Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -124,11 +124,11 @@
 | D100a source intake | Receive qualified first item birth source | Luna | Independent receiving PASS | merged | Intake2336; receiver2341 | PASS_RECEIVING_CUSTODY | Exact two blobs and approved delta HOME; prior27/security/noB022 PASS. Farm behavior pending. | c585cb2aa7 / bbeea |
 | D134 identity16 | Preserve current setup source selection | Luna | Farm actual per-ID proof | merged | Author2322; independent2327 PASS | Exact reviewed tree HOME9521; three setup literals only. All assertions/inverse6634 exact; five UNKNOWN unchanged. All16 behavior NOTRUN. | 9521bed8e3 /1ae |
 | D136a typed source intake | Preserve exact FPS return donor | Luna | Normal source merge complete | merged | Intake2141; normal merge | Exact20db two blobs HOMEcd63. Behavioral original9 remains App-owned; no release or core credit. | cd63be424d |
-| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Correct generated provenance | doing | Author2355; firstfix0001/0005; cumulative0008 | Normaltools PASS; final review active | Artifact and normal Runtime6a011 provenance now PASS; canonical15 exact. Cumulative reviewer0008 active, no freeze yet. | aa5a91 /15ce1a |
+| U2 D141 final join | Merge frozen upstream once then freeze | Luna | Correct generated provenance | doing | Author2355; firstfix0001/0005; cumulative0008 | Normaltools PASS; final review active | Artifact and normal Runtime6a011 provenance now PASS; canonical15 exact. Normaltools/Bun200 PASS. Source receiver0015 and longer Python0008 split; failures/errors retained, no freeze yet. | aa5a91 /15ce1a |
 | F D141 pristine comparator | Resolve exact upstream measurement recipe | Luna | MAIN pristine scope | gated:D141-freeze | Prep2350; independent2353 | NOT_READY; source review active | D141b authorizes17 roots and plain pytest,noD73 controls. Old recipe superseded; source2358 active,no body. | 1de87d source |
 | F D141 own failure notes | List unchanged own failures by root cluster | Luna | Notes source review complete | merged | Prep2350; reviewer2353 | Documentary conservation PASS | All370 IDs and52 clusters exact; media48 nested in105. Old executable recipe FAIL is superseded. No behavior credit. | Evidence only |
 
-| F D141b command | Prepare reviewed plain pristine pytest | Luna | Independent command review | review | Author2358; review0003 FAIL; return0008 | Author PASS_SOURCE_READY | First return fixes durable exit/log and diskmonitor false-pass.17 roots unchanged; no body before review/freeze. | 6274c362f9 |
+| F D141b command | Prepare reviewed plain pristine pytest | Luna | Independent command review | review | Author2358; review0003 FAIL; return0008; final0014 | Author PASS_SOURCE_READY | Firstreturn0008 done; final0014 review active.17 roots unchanged; no body before sourcefreeze/commandPASS. | 6274c362f9 |
 | U4 App cut handoff | Supply exact frozen Agent receiving inputs | Manager | Final reviewed freeze | blocked:agent | Agent manager after2357 | No handoff yet | Send SHA/tree/ref/parents/receipts and Runtimefa9 cut tuple to App and lead together at freeze. | Cut pending |
 
 | P4 D141 cut rerun | Reserve existing P4 controller | Luna / service | Journey recipe,finalheads,MAIN GO | gated:MAIN-GO | Existing P4 continuation; Agent sole owner | NOT_READY; no body | App2346 recipe absent,Agent freeze pending. Explicit MAIN GO and oneheavy sequence required; App owns verdict. | Cut pending |
@@ -142,13 +142,13 @@ Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/impo
 Blockers: Agent comparator — D141b scope cleared; plain17-root command2358 must receive one independent review and U2 freeze before body. No D73 controls required.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: normal final Runtime provenance0005 and comparator review0003 active; cumulative final source review follows immediately. live2 / cap3; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
+Next ready: normal final Runtime provenance0005 and comparator review0003 active; cumulative final source review follows immediately. live3 / cap3; ready-undispatched0. Comparator source prep2350 is independent; no heavy body runs.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
 D100a: normal c585 includes exact provider09cbeedd/test39ed571d. Independent2341 custody PASS plus owner2320 release gates consumed. Managed105/media48/managed30 source wait cleared; Farm cut full-core per-ID proof owed. Original9 retained nine setup errors separately; further investigation stopped.
 
-Disk: 4.82GB at00:04Z. Sweep3 removed11 stale tempdirs; compact packed0 scratch/test dirs and gzipped7 logs. D100a ended worktrees already recycled. Protected KEEP,dirtyG2,old3e163 and active suite targets retained. No manual Store retirement or floor change.
+Disk: post-recycle5.086GB; pre4.792GB. Only agt120d/app e771 pins recycled after fresh guards; no refusal. Sweep3 removed11 stale tempdirs; compact packed0 scratch/test dirs and gzipped7 logs. D100a ended worktrees already recycled. Protected KEEP,dirtyG2,old3e163 and active suite targets retained. No manual Store retirement or floor change.
 
 Later: transcript authority,originalTrue redo,graph child birth and fork18 retain missing authentic records and UNKNOWN behavior. Gate3 deferred unchanged. D23/D14 retained. U2 platform/wheel/final gate proof still unqualified. No new own-test reader or unchanged body under D141.
 
@@ -157,3 +157,5 @@ INBOX consumed through 1963016 bytes. [Latest handoff](../../design/peer-agent-t
 Pass00:04Z: D141b applied; four pristine checkout receipts present. Runtime final normal6a011 and independent2350 PASS received from actual published board/peer. Agent firstreturn0001 normally fixed stale am-footage artifact; provenance0005 immediately dispatched on that branch. Initial2357 FAIL retained with full source conservation and missing/wrong-environment tests. Bun2357 borrowed App node_modules (missing zod); final qualification must use actual existing Agent profile dependency tree. No source overwrite or test weakening.
 
 Pass00:10Z: P4 reservation added per MAIN00:43, future body held for explicit GO and actual App2346 recipe. Existing controller lineage will be continued, no duplicate. Runtime6a011 exact normal receiving and all15 canonicalbytes verified by author0005; final cumulative0008 source/tests active. Comparator firstreturn0008 active after command0003 FAIL; no heavy body.
+
+Pass00:16Z: product composition2357 SOURCE PASS retained; normalgenerated/provenancefixes nowPASS0005. Cumulative0008 Bun200PASS but Pythonstillrunning with failures/errors. Bounded receiving0015 independentlyreviews ONLYtwofilefix/fulloutsidepreservation so sourcefreeze can bind App/Farm while proof continues. No inferred nonREG/shipcredit or test cancellation. Finalcommand0014 active. P4recipe still absent; explicitGO pending.

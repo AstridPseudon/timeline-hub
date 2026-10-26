@@ -1,0 +1,45 @@
+{
+  "schema": "timeline.agent.u2.d141.final-review.source-conservation.v1",
+  "merge_tree": {
+    "automatic_tree": "69baf50f92444ce001b217240611c0b27ce26099",
+    "exit": 1,
+    "conflict_paths": ["astrid/chat/service.mjs", "runtime.lock.json"],
+    "candidate_vs_automatic_nonconflict_mismatches": 0
+  },
+  "parent_delta_conservation": {
+    "upstream_only": {
+      "count": 19,
+      "mismatches": 0,
+      "mapping_sha256": "e30be16338102f6bae4dababe0f53745c9c1ac7223f1f90e6e043e7ca5983b04",
+      "paths": [
+        "astrid/chat/astrid-acp-empty-session-recovery.test.ts",
+        "astrid/core/execution/guards.py",
+        "astrid/core/rendering/storage.py",
+        "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+        "astrid/packs/vibecomfy/actions/run/run.py",
+        "astrid/packs/vibecomfy/invocation_preflight.py",
+        "astrid/packs/vibecomfy/local_server_engine.py",
+        "astrid/packs/vibecomfy/production_engine.py",
+        "docs/development/journeys.md",
+        "docs/development/render-storage.md",
+        "remotion/tests/am-footage-cover.test.cjs",
+        "tests/core/execution/test_generic_host_actions_v3.py",
+        "tests/core/execution/test_render_storage.py",
+        "tests/core/rendering/test_storage.py",
+        "tests/packs/rendering/test_render_registry_editor_metadata.py",
+        "tests/packs/vibecomfy/test_local_server_run.py",
+        "tests/test_installer_runtime_error.py",
+        "tests/test_vibecomfy_invocation_preflight.py",
+        "tests/test_vibecomfy_production_engine.py"
+      ]
+    },
+    "current_only_later_source": {
+      "count": 922,
+      "mismatches": 0,
+      "mapping_sha256": "cacd2460f6681ba3831f5c192cd6a85910838f1a622d3be4e765658a7e7af67e"
+    },
+    "both_parents_changed": 12
+  },
+  "silent_reverts": false,
+  "semantic_conflicts": []
+}

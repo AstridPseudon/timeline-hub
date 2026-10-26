@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.f.d141b.command-review.v1",
+  "verdict": "FAIL",
+  "candidate": {
+    "branch": "tl/agt-F-D141b-plain-command-2358",
+    "commit": "6274c362f902632a99ab0f676ad458ace08f550b",
+    "base": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "command_sha256": "3b5dd427d52febe81277b2e47af3f52b2fc5de8fe17ceeed1fa0480921ff5bc6",
+    "service_row_sha256": "b43ecc72c1b90d2d0563e08ba31814e3705bc301ee8e008fe0b896f79fdd5f48"
+  },
+  "scope": {
+    "review_mode": "independent read-only static command/evidence review",
+    "source_tree_modified": false,
+    "body_executed": false,
+    "pytest_executed": false,
+    "collection_or_import_executed": false,
+    "service_submitted": false
+  },
+  "retained_passes": {
+    "candidate_commit_resolved": true,
+    "base_and_candidate_diff_check": true,
+    "bash_syntax": true,
+    "json_syntax": true,
+    "frozen_tuple_sha_tree_receipts": true,
+    "frozen_checkout_clean_status": true,
+    "root_inventory": "17 upstream-present roots; five approved project-only roots absent",
+    "pytest_settings": "-q -n 3 -o addopts= -p no:cacheprovider --timeout=45",
+    "pristine_runtime_binding": true,
+    "review_and_freeze_gate_presence": true
+  },
+  "findings": [
+    {
+      "id": "D141B-DURABILITY-001",
+      "severity": "blocker",
+      "title": "Required durable stdout/stderr/exit witnesses are incomplete",
+      "evidence": "evidence/command.sh:29,33,158",
+      "details": "The body redirects stdout and stderr together into pytest.log. The EXIT trap records an exit value only on failure in status.txt and records no exit value on success. There are no separate raw stdout and raw stderr files and no durable successful exit-code file.",
+      "required_return": "Retain distinct durable raw stdout, raw stderr, and an exit-code witness, with ownership bound to the single run root; keep XML, status, and disk witnesses durable as well."
+    },
+    {
+      "id": "D141B-MONITOR-002",
+      "severity": "blocker",
+      "title": "Disk-monitor read failure can produce a false PASS",
+      "evidence": "evidence/command.sh:121-130,162-170",
+      "details": "monitor_disk returns 97 when available_bytes cannot be read, but the caller only converts monitor_rc 124 into body_rc 124. A body exit of zero with monitor_rc 97 reaches capture_sources and can finish with wrapper exit zero and status=PASS.",
+      "required_return": "Fail closed on every monitor failure, terminate only the wrapper-owned body when appropriate, and persist an honest terminal status/exit witness."
+    },
+    {
+      "id": "D141B-DISK-003",
+      "severity": "blocker",
+      "title": "The 4.6 GB source floor is not distinguished from the 4.7 GB body start floor",
+      "evidence": "evidence/command.sh:14,84-85; evidence/admission.json:13-15",
+      "details": "The packet contains only START_BYTES=4700000000 and STOP_BYTES=4000000000. The required source admission floor of 4600000000 is neither represented nor separately checked; source-only admission and one-time heavy-body start are collapsed.",
+      "required_return": "Record and enforce the 4.6 GB source floor separately from the 4.7 GB body start threshold, while retaining the 4.0 GB continuous stop threshold and one-body limit."
+    },
+    {
+      "id": "D141B-INTERPRETER-004",
+      "severity": "major",
+      "title": "Interpreter path/version are recorded but not fail-closed guarded",
+      "evidence": "evidence/command.sh:69-70; evidence/source-manifest.json execution_contract",
+      "details": "The wrapper records realpath and --version output, but does not assert the expected realpath or Python 3.13.16 before admitting the body. A changed existing venv link or interpreter can therefore pass preflight while producing a receipt outside the reviewed setup.",
+      "required_return": "Add exact path and version assertions matching the reviewed existing interpreter, or document a controller-owned equivalent guard without acquiring or replacing the environment."
+    },
+    {
+      "id": "D141B-PUBLISH-005",
+      "severity": "blocker",
+      "title": "The documented service invocation points at an absent post-recycle artifact path",
+      "evidence": "evidence/service-row.txt:9; /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-plain-command-2358/evidence/command.sh",
+      "details": "The author worktree was recycled, and the exact absolute command path named by the service row does not currently exist. The row's sha256sum guard therefore fails before /bin/bash can run the command. The candidate branch contains the bytes, but the service row has not been rebound to an existing durable publication path.",
+      "required_return": "Before controller submission, publish the exact command and row bytes to the named durable path and verify both paths exist, or obtain a reviewed row with a stable published path. Do not submit the current row while its guard path is absent."
+    }
+  ],
+  "first_return_needed": "D141B-PUBLISH-005 plus the durability and monitor fixes; no body or alternate route is authorized until a new exact packet is independently reviewed."
+}

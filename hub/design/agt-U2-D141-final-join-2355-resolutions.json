@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.agent.u2.d141.resolutions.v1",
+  "conflicts": [
+    {
+      "path": "astrid/chat/service.mjs",
+      "classification": "generated-textual",
+      "purposes": {
+        "current": "Current Agent chat source and generated bundle changes.",
+        "upstream": "Frozen upstream chat source and generated bundle changes."
+      },
+      "resolution": "Used the automatically merged astrid/chat TypeScript sources as the input to bun run build:chat; no bundle text was hand-merged.",
+      "result_sha256": "821ff6b1c2e96dab49a0f4dfa73a6e0d8f731930438b0cf2ce4ba421ca5ad6da"
+    },
+    {
+      "path": "runtime.lock.json",
+      "classification": "provenance-textual-eof",
+      "purposes": {
+        "current": "Older Runtime lock provenance source_commit f103bb46866999c961a8865636f2e66d544e0c9b.",
+        "upstream": "Frozen qualified Runtime provenance source_commit fa9cd5464a8b37b02f971de375e56be846cd69e2."
+      },
+      "resolution": "Kept the complete frozen-upstream lock entry, including producer_version sha256:91b02f4abc0554005bf3b5e7df8643b403136867f86227c5aa6b2280930fd683 and source_commit fa9cd5464a8b37b02f971de375e56be846cd69e2.",
+      "result_sha256": "44dd583e198d5fcf8d176817171c6152053e60032c8ba75c08a89e44e04a58b8"
+    }
+  ],
+  "semantic_conflicts": []
+}

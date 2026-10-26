@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.agent.u2.d141.final-review.v1",
+  "status": "FAIL",
+  "qualification": "FAIL",
+  "head": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+  "tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+  "parents": [
+    "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+  ],
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-fa9cd546",
+    "commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "clean": true
+  },
+  "source": {
+    "automatic_composition": "PASS",
+    "conflicts": ["astrid/chat/service.mjs", "runtime.lock.json"],
+    "d100a_exact_blobs": "PASS",
+    "ancestry_index_markers": "PASS",
+    "runtime_lock_producer_check": "FAIL",
+    "artifact_manifest_check": "FAIL"
+  },
+  "tests": {
+    "python_targeted": "INCOMPLETE",
+    "chat_bundle_check": "NOTRUN_DEPENDENCY",
+    "chat_tests": "FAIL_ENVIRONMENT",
+    "am_footage_node_test": "PASS"
+  },
+  "lint_type": {
+    "ruff": "INHERITED",
+    "mypy": "INHERITED"
+  },
+  "scope": {
+    "full_suites": "NOTRUN",
+    "product_changes": false,
+    "ship_credit": false,
+    "final_core": false,
+    "reg0": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.agent.u2.d141.generated-return.v1",
+  "status": "PENDING_FINAL_RUNTIME_PROVENANCE",
+  "candidate": {
+    "commit": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "parents": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+    ]
+  },
+  "artifact_manifest": {
+    "command": "python scripts/artifact_manifest.py",
+    "exit": 0,
+    "check_command": "python scripts/artifact_manifest.py --check",
+    "check_exit": 0,
+    "changed_entry": {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "before": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+      "after": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+    },
+    "manifest_version_before": "sha256:fe27d7039ed9b5a7ad10ba1540d3ed5a1a1f0d794fcf7bd928ab6593749a1a28",
+    "manifest_version_after": "sha256:a6de31757f8f9678064a47579ddab839f786699f863494eb2c3f4440318991f3"
+  },
+  "runtime_lock": {
+    "adopted": false,
+    "reason": "No final integrated Runtime producer receipt is available. The pristine fa9cd checkout is not a qualified producer for the retained v2 client.",
+    "sha256_unchanged": "sha256:44dd583e198d5fcf8d176817171c6152053e60032c8ba75c08a89e44e04a58b8",
+    "current_source_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "current_producer_version": "sha256:91b02f4abc0554005bf3b5e7df8643b403136867f86227c5aa6b2280930fd683",
+    "local_check_exit": 0,
+    "pristine_producer_check_exit": 1,
+    "pristine_producer_failures": [
+      "producer changed: contract/schemas/timeline-config.schema.json",
+      "producer changed: packages/python/astrid_runtime_client/__init__.py",
+      "producer changed: packages/python/astrid_runtime_client/contract_metadata.py",
+      "producer changed: packages/python/astrid_runtime_client/generated.py",
+      "producer artifact missing from manifest: packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "producer artifact missing from manifest: conformance/responses/commit_conflict_409.json"
+    ]
+  },
+  "scope": {
+    "changed_files": ["artifacts.json"],
+    "out_of_scope_source_changes": [],
+    "canonical_runtime_client_files_preserved": true
+  }
+}

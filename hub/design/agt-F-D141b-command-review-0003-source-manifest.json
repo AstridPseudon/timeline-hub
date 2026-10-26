@@ -1,0 +1,116 @@
+{
+  "schema": "timeline.f.d141b.command-review-manifest.v1",
+  "task": "F/D141b",
+  "verdict": "FAIL",
+  "candidate": {
+    "branch": "tl/agt-F-D141b-plain-command-2358",
+    "commit": "6274c362f902632a99ab0f676ad458ace08f550b",
+    "base": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "base_tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "changed_paths": [
+      "evidence/admission.json",
+      "evidence/command.sh",
+      "evidence/progress.md",
+      "evidence/service-row.txt",
+      "evidence/source-manifest.json",
+      "evidence/validation.md"
+    ],
+    "command_sha256": "3b5dd427d52febe81277b2e47af3f52b2fc5de8fe17ceeed1fa0480921ff5bc6",
+    "service_row_sha256": "b43ecc72c1b90d2d0563e08ba31814e3705bc301ee8e008fe0b896f79fdd5f48"
+  },
+  "frozen_tuple": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-8b6ed211",
+      "sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+      "receipt_sha256": "915cb92977ea0951209472c6b85e69ea3cfed33a8ad41df26c9472130696cd36",
+      "status": "clean"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "receipt_sha256": "323d3c067f8e39e1aa4ed1adf97a305915503015364d621fd7e530c43f1c94d1",
+      "status": "clean"
+    },
+    "app": {
+      "path": "/home/user/work/wt/app-pin-7ca61bb3",
+      "sha": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab",
+      "origin": "https://github.com/banodoco/reigh-app",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "receipt_sha256": "88b77bc0dd27348b4ea72709886a9cf268d8b780497121afb41c69ea9eb98dd1",
+      "status": "clean"
+    },
+    "composition": {
+      "path": "/home/user/work/wt/vw-pin-67b8aa3d",
+      "sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-67b8aa3d0d6831d3e3504a340ff583c3da253707",
+      "receipt_sha256": "aaa302b63fc5938a6392149153496cb39758eafbe30f899871c27f04cf5b8f35",
+      "status": "clean"
+    }
+  },
+  "roots": {
+    "source_basis": "original D134 22-root command minus five approved pristine-only roots",
+    "upstream_present_count": 17,
+    "upstream_present": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/packs/timeline",
+      "tests/packs/rendering/test_live_scene_composition.py",
+      "tests/packs/rendering/test_render_export_task_adapter.py",
+      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/stage1/test_cold_launch_autobootstrap.py",
+      "tests/test_installer_schema.py",
+      "tests/test_installer_sources.py",
+      "tests/test_timeline_clip_replacement.py",
+      "tests/v10/test_timelines_create.py"
+    ],
+    "inventory_sha256": "b1f106c00a6d40804082192e160c80718227acb85af38df2bbebec382411b820",
+    "project_only_absent_count": 5,
+    "project_only_absent": [
+      "tests/core/test_timeline_element_orphan_cleanup.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_local_schema.py",
+      "tests/packs/rendering/test_composition_package.py",
+      "tests/test_installer_bootstrap_schema.py"
+    ],
+    "absent_disposition": "NOT APPLICABLE at pristine; Farm retains all project tests"
+  },
+  "execution_contract_review": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "recorded_realpath": "/usr/bin/python3.13",
+    "recorded_version": "Python 3.13.16",
+    "settings": ["-q", "-n", "3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"],
+    "source_cwd": "/home/user/work/wt/agt-pin-8b6ed211",
+    "pythonpath": ["/home/user/work/wt/agt-pin-8b6ed211", "/home/user/work/wt/rt-pin-fa9cd546"],
+    "runtime_checkout": "/home/user/work/wt/rt-pin-fa9cd546",
+    "body_start_bytes": 4700000000,
+    "source_floor_bytes_required": 4600000000,
+    "body_stop_bytes": 4000000000,
+    "heavy_body_limit": 1,
+    "gate_files": ["U2_FINAL_FREEZE_PASS", "INDEPENDENT_COMMAND_PASS"],
+    "service_runner_semantics": "test-run snapshots the target worker, then runs the registered command under bash -c in the snapshot; the candidate command's absolute pinned paths and cd make the test source pristine, but the row's command publication path is currently absent",
+    "body_allowed": false
+  },
+  "review_findings": [
+    "D141B-DURABILITY-001",
+    "D141B-MONITOR-002",
+    "D141B-DISK-003",
+    "D141B-INTERPRETER-004",
+    "D141B-PUBLISH-005"
+  ],
+  "no_body_or_alternate_route": true
+}

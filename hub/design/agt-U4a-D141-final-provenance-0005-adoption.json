@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.u4a.u2.d141.final-provenance.v1",
+  "status": "PASS_SOURCE_TOOLS",
+  "base_candidate": {
+    "commit": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "parents": [
+      "c585cb2aa73c5298d474e614cb2144f58f27e605",
+      "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+    ]
+  },
+  "runtime_receipt": {
+    "queue_done": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "checkout": "/home/user/work/wt/rt-pin-6a011d58",
+    "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "clean": true,
+    "board": {
+      "independent_review": "24107e83b0",
+      "targeted_passes": 119,
+      "upstream_ancestor": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+    }
+  },
+  "normal_adoption": {
+    "selection_command": "PYTHONDONTWRITEBYTECODE=1 python scripts/refresh_runtime_client.py --producer /home/user/work/wt/rt-pin-6a011d58",
+    "selection_exit": 0,
+    "update_command": "PYTHONDONTWRITEBYTECODE=1 python scripts/vendor_lock.py update runtime.lock.json --producer /home/user/work/wt/rt-pin-6a011d58",
+    "update_exit": 0,
+    "producer_check_exit": 0,
+    "local_check_exit": 0,
+    "artifact_check_exit": 0
+  },
+  "runtime_lock": {
+    "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "producer": "astrid-runtime",
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "consumer_file_count": 15,
+    "canonical_consumer_mappings_unchanged": true,
+    "canonical_consumer_hashes_unchanged": true,
+    "canonical_consumer_bytes_unchanged": true,
+    "canonical_consumer_modes_unchanged": true
+  },
+  "artifact_manifest": {
+    "generator_check_exit": 0,
+    "approved_changed_entry": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+    "before": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+    "after": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec"
+  }
+}

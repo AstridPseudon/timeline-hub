@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.u4a.u2.d141.source-manifest.v1",
+  "candidate": {
+    "base_commit": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "base_tree": "c3ad6cca753bf1bfd033bf016c1d93e4b9f07127",
+    "working_head": "15ce1a267a3b1541be2562d701e65373217cf0ad",
+    "working_head_parent": "aa5a91a618f4d28308772169bc08e8e79274cd6a",
+    "current_parent": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "frozen_upstream_parent": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+    "upstream_ancestor_verified": true,
+    "current_parent_ancestor_verified": true
+  },
+  "cumulative_diff_vs_base": {
+    "allowed_files": ["artifacts.json", "runtime.lock.json"],
+    "actual_files": ["artifacts.json", "runtime.lock.json"],
+    "outside_blobs": [],
+    "diff_scope_pass": true,
+    "artifact_change": {
+      "path": "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+      "before": "sha256:6e70d9bd341cf77d5c6e99e106f9e84d1451a109cb354ed0fca54aa998967937",
+      "after": "sha256:bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+      "manifest_version_before": "sha256:fe27d7039ed9b5a7ad10ba1540d3ed5a1a1f0d794fcf7bd928ab6593749a1a28",
+      "manifest_version_after": "sha256:a6de31757f8f9678064a47579ddab839f786699f863494eb2c3f4440318991f3"
+    },
+    "runtime_lock_change": {
+      "source_commit_before": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "source_commit_after": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "producer_version_before": "sha256:91b02f4abc0554005bf3b5e7df8643b403136867f86227c5aa6b2280930fd683",
+      "producer_version_after": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5"
+    }
+  },
+  "canonical_runtime_files": {
+    "count": 15,
+    "mappings_unchanged": true,
+    "hashes_unchanged": true,
+    "bytes_unchanged": true,
+    "modes_unchanged": true
+  },
+  "d100a": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "sha256:018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "sha256:fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    }
+  }
+}

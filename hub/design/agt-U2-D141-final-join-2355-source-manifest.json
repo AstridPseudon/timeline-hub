@@ -1,0 +1,30 @@
+{
+  "schema": "timeline.agent.u2.d141.source-manifest.v1",
+  "task": "U2 / D141 FINAL CUT",
+  "repo": "agent",
+  "current_parent": {
+    "commit": "c585cb2aa73c5298d474e614cb2144f58f27e605",
+    "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7",
+    "d100a_source_home": true
+  },
+  "frozen_upstream_parent": {
+    "commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+    "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed",
+    "parent": "b24dd3de98b04d2387fc31eb08f736b573fa7f7a"
+  },
+  "merge_parent_recorded_by_manager": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a",
+  "conflicts": [
+    "astrid/chat/service.mjs",
+    "runtime.lock.json"
+  ],
+  "d100a_exact_bytes": {
+    "astrid/sdk/timeline/_command_state.py": {
+      "blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    "tests/sdk/test_d100_item_birth_boundary.py": {
+      "blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    }
+  }
+}
