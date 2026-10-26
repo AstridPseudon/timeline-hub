@@ -1,0 +1,104 @@
+{
+  "schema": "timeline.f.d141.cut-census-review.v1",
+  "read_only": true,
+  "scope": "finite preparation review only; no behavioral or REG conclusion",
+  "overall": "FAIL",
+  "overall_reason": "The census and selector preparation pass, but exact custody evidence is not clean: the retained pristine why control hash differs from source-manifest.json and the manifest contains unresolved tree placeholders.",
+  "inputs": {
+    "author_task": "rt-F-D141-cut-failure-census-0132",
+    "cut_request_id": "runtime-full-d141-cut-1026005231-18778",
+    "cut_xml_sha256": "227a6efa2e4886b0d1ae3d657e703174ef6a7ccb5f4aaa558875d3887dde31f0",
+    "pristine_request_id": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912",
+    "pristine_status": "queued",
+    "pristine_outcome": "UNKNOWN_NO_COMPARATOR"
+  },
+  "checks": {
+    "xml_case_conservation": {
+      "status": "PASS",
+      "tests": 7392,
+      "unique_testcase_ids": 7392,
+      "pass": 7300,
+      "failure": 35,
+      "error": 18,
+      "xml_skipped": 39,
+      "service_skipped": 26,
+      "service_xfailed": 13,
+      "reconciles": "7392 = 7300 + 35 + 18 + 39; 39 = 26 + 13"
+    },
+    "bad_id_conservation": {
+      "status": "PASS",
+      "cut_bad_records": 53,
+      "unique_bad_ids": 53,
+      "xml_bad_ids": 53,
+      "exact_set_match": true,
+      "status_match": true,
+      "parameter_selector_checks": 53,
+      "parameter_selectors_preserved": true
+    },
+    "selector_mapping": {
+      "status": "PASS",
+      "mappings": 53,
+      "exactmappedPRISTINE_ELIGIBLE": 15,
+      "NEW_OURS": 38,
+      "exact_ast_hash_matches": 15,
+      "bounded_name_body_checks": 38,
+      "bounded_name_matches": 0,
+      "bounded_body_matches": 0,
+      "dynamic_selector_behavior": "UNKNOWN_NO_COMPARATOR"
+    },
+    "behavior_classification": {
+      "status": "PASS",
+      "reg_status": "UNCLASSIFIED_NO_SAME_ENV_COMPARATOR",
+      "behavior_verdict": "NONE",
+      "zero_reg_claim": false,
+      "preexisting_claim": false
+    },
+    "privacy": {
+      "status": "PASS",
+      "published_fields": "safe testcase IDs/selectors, exception class, file/line, hashes, custody metadata",
+      "raw_failure_messages": false,
+      "raw_runtime_payloads": false,
+      "user_content": false,
+      "keys_or_credentials": false,
+      "urls": false
+    },
+    "cut_keep_control": {
+      "status": "PASS",
+      "keep_marker": "KEEP before service cleanup",
+      "raw_artifacts_unchanged": true
+    },
+    "source_custody": {
+      "status": "PASS",
+      "runtime_cut": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "clean": true},
+      "agent_cut": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "clean": true},
+      "runtime_pristine": {"commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "clean": true},
+      "agent_pristine": {"commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "clean": true},
+      "listed_blob_objects": "all present cut blobs and present pristine blobs match; absent pristine paths remain absent"
+    },
+    "control_manifest_identity": {
+      "status": "FAIL",
+      "findings": [
+        {
+          "artifact": "rt-pin-fa9cd546-full-d141-pristine-1026005231-8912/why",
+          "claimed_sha256": "186892ceda5ead968acf6748cc708ab4bea1cb7aa6be2770f2dcf32727da2905",
+          "actual_sha256": "9bbf7539757ca42cce991a9ca3b16b33f5adc92cc3eb139dbb1839a8ac37d971"
+        },
+        {
+          "artifact": "source-manifest.frozen_tuple.composition.tree",
+          "claimed_value": "HEAD^{{tree}}",
+          "actual_commit_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+        },
+        {
+          "artifact": "source-manifest.source_repositories[*].worktree_tree",
+          "claimed_value": "HEAD^{{tree}}",
+          "actual_values": "unresolved placeholder; primary commit/tree fields independently match for Runtime and Agent"
+        }
+      ]
+    }
+  },
+  "limits": [
+    "No imports, collection, tests, providers, or failure investigation were run.",
+    "Missing pristine source is source provenance only, not behavioral evidence.",
+    "No product/source/test changes were made."
+  ]
+}
