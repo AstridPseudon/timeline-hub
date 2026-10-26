@@ -1,0 +1,1 @@
+Proposed entry for the existing `design/deletion-ledger.app.md` (OUR P2 test, not upstream): `D141d — automatic child-placement history expectation now includes the exact D124 materialization contract (two bindings, 22 structural paths); no production or contract surface changed.`

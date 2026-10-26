@@ -1,0 +1,38 @@
+{
+  "task": "D141d",
+  "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+  "approved_expression": "automatic-child-placement strict history expected.records",
+  "source_anchor": "assertNativeHistoryEntry records initializer at line 758",
+  "change": "When the authenticated target history has the D124 materialization family, add exactly two inverse commit.materialization bindings to expected.records.commands[0].bindings.",
+  "materialization_objects": 2,
+  "structural_paths": 22,
+  "structural_path_set": [
+    "boundary",
+    "boundary.base_publication_id",
+    "boundary.base_revision_id",
+    "boundary.command_ordinal",
+    "boundary.evaluated_head",
+    "boundary.evaluated_head.publication_id",
+    "boundary.evaluated_head.revision_id",
+    "boundary.phase",
+    "boundary.step_id",
+    "content_digest",
+    "dependencies",
+    "edge_after",
+    "edge_before",
+    "key",
+    "owner",
+    "owners",
+    "physical_ref",
+    "policy",
+    "ref",
+    "revision_id",
+    "step_id",
+    "successor"
+  ],
+  "preserved": [
+    "all other gestures and assertions",
+    "production code and caller",
+    "request/reply shapes, fixtures, waits, retries and Undo tail"
+  ]
+}

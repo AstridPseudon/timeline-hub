@@ -1,0 +1,163 @@
+{
+  "schema": "timeline.app.p4.path-independent-review.v1",
+  "task": "app-P4-D141-path-independent-0226",
+  "verdict": "PASS_SOURCE_PATH_UNRELATED_XML_CUSTODY_PENDING",
+  "analysis_mode": "finite_source_only",
+  "execution_checks": "NOT_APPLICABLE",
+  "scope": "Independent review of the completed postREG App 867-to-5fe path/custody packet against PLAN §3 P4/A2/A3 and C0 §§1-5,7, using frozen Composition 635f as the documentary host.",
+  "source_unchanged": true,
+  "frozen_tuple": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "app_actual_p4_pin": {
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"
+    },
+    "composition_documentary_host": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "candidate_app": {
+    "from_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "to_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "changed_file_count": 5,
+    "changed_files": [
+      {
+        "path": "src/integrations/runtime/dataProvider.ts",
+        "old_blob": "5c830fe2b4661c9722ad22960f752c968604acd1",
+        "new_blob": "a9115da0910af30baaf7b98c70f8cae9ee8f3d59",
+        "new_sha256": "a8a28da4b386ced902a8c9d38c94daf899d293bcfbeff4ad9a5d8a3de62e9e4d",
+        "lines": "997-1005",
+        "role": "Pairs Runtime command basis and display head; this is an App production caller, not a launcher or selected Agent-test import."
+      },
+      {
+        "path": "src/shared/lib/placement/placementService.ts",
+        "old_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99",
+        "new_blob": "f8c7564ba787ec2d2068bfa129db67769af941c0",
+        "new_sha256": "8d7be679f8e728105f420ed6f579ee09cec4570e74cc4bb839a409ecf563ce5b",
+        "lines": "247-335,338-357",
+        "role": "Builds App placement save sessions and delegates the mutation through the existing Runtime commit outbox."
+      },
+      {
+        "path": "src/tools/video-editor/data/DataProvider.ts",
+        "old_blob": "a3fe1d4157b65242b4b2a62df107becc0d311d07",
+        "new_blob": "286fa147e9216fb968dd49e8813e3d0c96ce783a",
+        "new_sha256": "6c9d4ee57e628fb40a781d75ba09b7003b43aa527d12e3bc123a5c504b0900fb",
+        "lines": "445-459",
+        "role": "Adds the paired App provider type surface."
+      },
+      {
+        "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+        "old_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+        "new_blob": "6fa15804960500a99a466d1a0931e9c0451b538a",
+        "new_sha256": "cbf0d2341810e3c0435590e2c5d6a0e59922448392e5fd87683c7e1efb182632",
+        "lines": "378-419,444-470",
+        "role": "Routes duplicateShotGroup through prepared placement mutation; promotePrimaryVariant retains App load/mutate flow."
+      },
+      {
+        "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+        "old_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+        "new_blob": "a073bb4b88ddd9a9216f3bded0e969d41331d33e",
+        "new_sha256": "a37dc005acaa5942b0116c601029d8bf291fa1710664aa01408d50fdc8acf782",
+        "lines": "22-132,145-153,323-432",
+        "role": "Updates the App-only provider mock and request assertions."
+      }
+    ]
+  },
+  "registered_actual_p4": {
+    "service": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+    "request_id": "p4-d141c-normal",
+    "launcher": {
+      "repo": "agent",
+      "path": "tools/p4-d73-pinned-launch.sh",
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+      "lines": "24-58,75-122,125-161"
+    },
+    "selectors": [
+      {
+        "path": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+        "blob": "033482ec2b94c5ae4a6b5c456e2d9fab3f454022",
+        "lines": "15-32,70-135,211-235",
+        "selector": "test_cli_sheet_v2_runtime_preserves_document_and_reads_back"
+      },
+      {
+        "path": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+        "blob": "afc9c112527692536a065de8cdbfc7a25c19bc26",
+        "lines": "17-29,194-456",
+        "selector": "test_http_ten_note_commit_per_step_inverse_and_redo"
+      },
+      {
+        "path": "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py",
+        "blob": "192efbfa14607f0edfb362d47d5238645c64e984",
+        "lines": "10-28,71-135,194-270",
+        "selector": "test_http_note_conflict_reruns_public_function_from_verified_peer_document"
+      }
+    ],
+    "process_edges": [
+      "registered argv -> pinned launcher -> three selected Agent tests",
+      "selected tests -> tests/editing_conformance/test_native_batch_ingress.py:43-109",
+      "runtime fixture -> RuntimeHandler/WorkspaceClient generated-client transport over the actual daemon",
+      "runtime helper -> vendored Runtime commit and runtime_protocol import (tests/helpers/runtime.py:40-43,71-105,118-124)",
+      "POST /v1/projects/{project}/timelines/{timeline}/commit -> server.py:301-341,405-414,552-553",
+      "commit_timeline validation/coordinator -> service.py:2468-2525",
+      "execution coordinator -> timeline_commit_execution.py:365-431 provider commit, replay lookup, verification and outcome",
+      "GET .../commits -> server.py:575-585 history"
+    ],
+    "app_pin_use": "launcher lines 24-58 validate app_sha/app_tree/app_path as four-way manifest metadata; launcher lines 129-161 expose only pinned Agent and Runtime roots in PYTHONPATH for preflight/body execution."
+  },
+  "app_path_result": {
+    "result": "no_dependency_edge_from_867_to_5fe_delta_to_actual_p4_body",
+    "basis": [
+      "All five changed files are TypeScript or an App Vitest test; none is imported by the launcher or the three Python selectors.",
+      "The launcher body command has Agent/Runtime PYTHONPATH only; app_path is not an import root.",
+      "The App delta contains no subprocess/child-process launcher, test-selector, daemon, or fixture handoff.",
+      "App Runtime client/outbox calls are production App dataflow and do not make App source an execution dependency of the independently registered Agent process.",
+      "Composition 635f is a pinned documentary/preflight package identity, not an App source import and not the semantic provider."
+    ],
+    "negative_edges_checked": [
+      "App changed files -> launcher: absent",
+      "App changed files -> selected Agent tests: absent",
+      "App changed files -> Runtime fixture/daemon/provider/history in the registered process: absent",
+      "App metadata pin -> executable App module import: absent"
+    ]
+  },
+  "placement_0225": {
+    "ref": "tl/app-P2-D141-materialization-expectation-0225",
+    "commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "relation": "ref_resolves_to_candidate_5fe_exactly",
+    "delta_vs_867": "same five files; no additional P4 executable path",
+    "result": "placement_expectation_only_for_this_review; no effect on registered Agent/Runtime body"
+  },
+  "xml_custody": {
+    "state": "XML_CUSTODY_PENDING",
+    "recorded_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+    "recorded_sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+    "bytes_present_here": false,
+    "parsed_here": false,
+    "three_selector_recount_here": false,
+    "consequence": "This is not a cumulative P4 GO and does not claim XML execution proof. If bytes arrive, independently parse/hash exact three selectors, no skip, and check correction0159 before any cumulative decision."
+  },
+  "historical_conservation": {
+    "old_0114": "FAIL preserved: stale/absent XML binding in the original custody review",
+    "historical_10086": "recorded 3/3 PASS, exit 0, retained as historical tuple only",
+    "correction_0159": "metadata-only correction preserved; no body rerun or kit/registry change",
+    "queued_19479": "unstarted and untouched; no exit or XML supplied"
+  },
+  "contract_preservation": {
+    "request": "api_version, project_id, timeline_id, base_revision_id, base_publication_id, commands[schema_version,op,version,select,args,created], label, steps[id,label,intent,tags,command_ordinals,patch,reads], merge fields|atomic, reads, Idempotency-Key, dry_run, source, rationale, group_id",
+    "accepted_reply": "accepted|merged, data+receipt, canonical, digest, normalizedcommands, idmap, base, previous, accepted, landing, rebased_onto, merge_mode, records, bindings, effects, dependencies, history, undo_steps",
+    "other_replies": "conflict reason/head; invalid code/path/hint/suggestedcommand; preview would_status/nullreceipt",
+    "source_tail_input_assertions": "unchanged in the frozen Agent source blobs; no source edits made"
+  },
+  "recommendation": "Keep this source-path PASS separate from cumulative P4 custody. Await/verify XML bytes before any GO. No App source change is requested by this review."
+}

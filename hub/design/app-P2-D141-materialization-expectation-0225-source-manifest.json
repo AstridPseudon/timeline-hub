@@ -1,0 +1,17 @@
+{
+  "task": "D141d",
+  "base_commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+  "source_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+  "base_source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+  "working_source_sha256": "f8efcf65562e29f07623b4df6a8ebd427db483b113acb2716b101a94df5ee33f",
+  "diff_stat": {"added_lines": 19, "deleted_lines": 1},
+  "approved_inputs": [
+    "app-P2-D141-history-safe-fields-0146-extra-fields.json",
+    "app-P2-D141-history-safe-fields-0146-prior-pass.json",
+    "app-P2-D141-history-safe-fields-0146-source-manifest.json",
+    "app-P2-D141-safe-history-review-0153-review.json",
+    "rt-P2-D141-history-independent-0201-review.json",
+    "commit-v2.md sections 2, 4, 5 and 7"
+  ],
+  "retained_source": "3118 actual-only strict history diff: two binding objects and 22 safe paths; no values copied into evidence"
+}
