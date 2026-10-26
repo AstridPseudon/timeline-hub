@@ -21,6 +21,7 @@ module.
 from __future__ import annotations
 
 import copy
+import logging
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -29,6 +30,8 @@ from typing import Any
 from .duration import clip_timeline_duration
 from .shot_composition import validate_shot_composition
 from .validators.meta import validate_meta, validate_timeline_meta_locations
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class ShotCompositionProjectionError(ValueError):
@@ -171,30 +174,13 @@ def _placement_speed(value: Any, *, path: str) -> float:
     return result
 
 
-def _apply_placement_transform(clip: dict[str, Any], occurrence: Mapping[str, Any], *, path: str) -> None:
-    """Apply the renderer's explicit geometry subset without guessing opaque keys."""
-    transform = occurrence.get("transform")
-    if not isinstance(transform, Mapping):
-        return
-    for key in ("x", "y", "width", "height", "cropTop", "cropBottom", "cropLeft", "cropRight", "opacity"):
-        if key not in transform:
-            continue
-        value = _number(transform[key], f"{path}.transform.{key}")
-        if key in {"width", "height"} and value < 0:
-            raise ShotCompositionProjectionError(f"{path}.transform.{key} must not be negative")
-        clip[key] = value
-    if "scale" in transform:
-        scale = _number(transform["scale"], f"{path}.transform.scale")
-        if scale <= 0:
-            raise ShotCompositionProjectionError(f"{path}.transform.scale must be positive")
-        if "width" in clip:
-            clip["width"] = float(clip["width"]) * scale
-        if "height" in clip:
-            clip["height"] = float(clip["height"]) * scale
-        if "width" not in clip and "height" not in clip and scale != 1:
-            raise ShotCompositionProjectionError(
-                f"{path}.transform.scale requires explicit clip width/height"
-            )
+def _apply_placement_transform(occurrence: Mapping[str, Any], *, path: str) -> None:
+    """Refuse placement compositing that cannot be applied to the whole group."""
+    if any(occurrence.get(key) not in (None, {}, [], "") for key in ("opacity", "transform")):
+        raise ShotCompositionProjectionError(
+            "Shot opacity and transforms are not supported yet. "
+            "Remove them from the shot placement to render this timeline."
+        )
 
 
 def _base_parts(
@@ -261,35 +247,56 @@ def _add_assets(registry: dict[str, Any], revision: Mapping[str, Any]) -> None:
         assets[asset_id] = entry
 
 
-def _track_merge(config: dict[str, Any], timeline: Mapping[str, Any]) -> None:
+def _build_track_group(
+    config: dict[str, Any], timeline: Mapping[str, Any], occurrence: Mapping[str, Any]
+) -> dict[str, str]:
+    """Insert a visual block at the parent row; retain the audio merge by id."""
     tracks = config.setdefault("tracks", [])
     by_id = {row.get("id"): row for row in tracks if isinstance(row, Mapping)}
     shot_tracks = timeline.get("tracks", [])
+    group = []
+    track_ids: dict[str, str] = {}
     for index, raw in enumerate(shot_tracks):
         track = _mapping(raw, "internal_timeline_revision.timeline.tracks[]")
         track_id = track.get("id")
         if not isinstance(track_id, str) or not track_id:
             raise ShotCompositionProjectionError("internal track id must be a non-empty string")
-        if track_id not in by_id:
-            # Keep shot-only layers adjacent to the nearest preceding layer
-            # shared with the film, preserving the shot's local layer order.
+        if track.get("kind") != "audio":
+            projected_id = f"{occurrence['occurrence_id']}~{track_id}"
+            track_ids[track_id] = projected_id
+            projected = copy.deepcopy(dict(track))
+            projected["id"] = projected_id
+            app = projected.get("app")
+            if not isinstance(app, dict):
+                app = {}
+                projected["app"] = app
+            app["group"] = {"id": occurrence["occurrence_id"], "sourceTrack": track_id}
+            group.append(projected)
+        elif track_id not in by_id:
             preceding = next((str(item.get("id")) for item in reversed(shot_tracks[:index])
                               if isinstance(item, Mapping) and item.get("id") in by_id), None)
             following = next((str(item.get("id")) for item in shot_tracks[index + 1:]
                               if isinstance(item, Mapping) and item.get("id") in by_id), None)
             if following is None:
-                # A shot-only suffix belongs after the film's complete track list,
-                # including unrelated film-only layers such as music.
                 insert_at = len(tracks)
             elif preceding is not None:
                 insert_at = next(i + 1 for i, item in enumerate(tracks) if str(item.get("id")) == preceding)
             else:
-                # With no preceding shared layer, anchor before the nearest
-                # following shared layer while retaining unrelated prefix rows.
                 insert_at = next((i for i, item in enumerate(tracks) if str(item.get("id")) == following), len(tracks))
             merged = copy.deepcopy(dict(track))
             tracks.insert(insert_at, merged)
             by_id[track_id] = merged
+
+    row = occurrence.get("track")
+    insert_at = next((i for i, track in enumerate(tracks) if track.get("id") == row), -1)
+    if insert_at == -1:
+        insert_at = 0
+        _LOGGER.warning(
+            'shot-layering: track "%s" not found — placing occurrence "%s" at top of stack',
+            row, occurrence["occurrence_id"], extra={"code": "timeline-patch/target-not-found"},
+        )
+    tracks[insert_at:insert_at] = group
+    return track_ids
 
 
 def _occurrence_window(occurrence: Mapping[str, Any], *, path: str) -> tuple[float, float, float]:
@@ -348,7 +355,6 @@ def _project_clip(
         source_from = _number(clip.get("from", 0), f"{path}.from", default=0.0)
         clip["to"] = source_from + visible_duration * child_speed
     clip["at"] = absolute_at
-    _apply_placement_transform(clip, occurrence, path=path)
     original_id = str(clip["id"])
     occurrence_id = occurrence["occurrence_id"]
     clip["id"] = f"{occurrence_id}:{original_id}"
@@ -417,7 +423,8 @@ def project_shot_composition(
         timeline = _mapping(internal.get("timeline"), f"shot_revisions[{index}].internal_timeline_revision.timeline")
         if timeline.get("compositing") not in (None, "source_over", "normal"):
             raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")
-        _track_merge(config, timeline)
+        _apply_placement_transform(occurrence, path=f"occurrences[{index}]")
+        track_ids = _build_track_group(config, timeline, occurrence)
         start, end, duration = _occurrence_window(occurrence, path=f"occurrences[{index}]")
         occurrence["project_id"] = prepared["project"]["project_id"]
         occurrence["timeline_id"] = prepared["primary_timeline"]["document_id"]
@@ -450,6 +457,7 @@ def project_shot_composition(
                 path=f"shot_revisions[{index}].timeline.clips[{clip_index}]",
             )
             if projected is not None:
+                projected["track"] = track_ids.get(projected["track"], projected["track"])
                 config_clips.append(projected)
         _add_assets(registry, revision)
 
@@ -614,7 +622,8 @@ def project_runtime_parent_composition(
         )
         if timeline.get("compositing") not in (None, "source_over", "normal"):
             raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")
-        _track_merge(config, timeline)
+        _apply_placement_transform(occurrence, path=f"occurrences[{index}]")
+        track_ids = _build_track_group(config, timeline, occurrence)
 
         occurrence["revision_id"] = shot_revision_id
         occurrence["project_id"] = project_id
@@ -688,6 +697,7 @@ def project_runtime_parent_composition(
                 selected = projected.get(selector)
                 if isinstance(selected, str) and selected in asset_ids:
                     projected[selector] = asset_ids[selected]
+            projected["track"] = track_ids.get(projected["track"], projected["track"])
             config["clips"].append(projected)
 
     app = config.setdefault("app", {})
