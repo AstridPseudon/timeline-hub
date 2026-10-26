@@ -1,0 +1,21 @@
+{
+  "exit_code": "UNKNOWN (background sampler was not a child of the final shell)",
+  "floor_bytes": 4000000000,
+  "floor_tripped": false,
+  "minimum_observed_bytes": 5113397248,
+  "note": "The central request refused before builder startup, so no builder lifecycle trace exists. The raw first-tool trace is retained verbatim in disk-trace.txt.",
+  "observed_process_at_stop": false,
+  "pid": 6,
+  "sample_count": 1,
+  "sample_interval_seconds": 5,
+  "samples": [
+    {
+      "available_bytes": 5113397248,
+      "timestamp": "2026-10-26T17:47:48Z"
+    }
+  ],
+  "start": "2026-10-26T17:47:48Z",
+  "status": "TERMINATED_BEFORE_REQUEST",
+  "stop_check": "2026-10-26T17:49Z",
+  "waited_and_reaped": false
+}

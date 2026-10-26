@@ -1,0 +1,99 @@
+{
+  "time": "2026-10-26T17:51:48.911367+00:00",
+  "worker": "rt-F-final-build-resume-next",
+  "request_id": "runtime-delivery-v2-final-1026174858-3359",
+  "status": "BLOCKED_SAFETY_REFUSAL",
+  "refusal": "final delivery refused: service TMPDIR is writable by another user: /tmp",
+  "builder_invoked": false,
+  "staging_created": false,
+  "zip_created": false,
+  "published_originals": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-report.md",
+      "bytes": 986,
+      "sha256": "4089e36524a2f7fb72bac1757acfb077f2249c847cf50de9e8ef0fb3fef1ac1b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/result.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-result.json",
+      "bytes": 1288,
+      "sha256": "2b442223b0981310b87a495223f32a1aa15e384eeafc4fad0c0a979ccaa25d7c"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/request-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-request-receipt.json",
+      "bytes": 7703,
+      "sha256": "20a27b6c872c63e82359da05aabcd5a28ece26cd4ce1ca69347e6b276e68715c"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-source-manifest.json",
+      "bytes": 2451,
+      "sha256": "cd83b5bffae0f72ec8f9c902488f83c1fbf878d6dd2436ca12fa64a5065bb7b8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-validation.md",
+      "bytes": 902,
+      "sha256": "25d14880f5f62af115956a5a80d3edb72348ca2fb7b84b42fff066fb3ec0f184"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-handoff.md",
+      "bytes": 635,
+      "sha256": "8ba2a4837a735dcd9fbb28f80b95deb2ed1805a1107a1777b551f91715ad95fa"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-disk-trace.txt",
+      "bytes": 166,
+      "sha256": "99e73154b46711c353bc3fe9188d0c5f1ba424a8ecb5252abbf8e578ec2737a6"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-build-resume-next-sampler-lifecycle.json",
+      "bytes": 704,
+      "sha256": "fc37735e6ca4265776fb49fd6d86be8541bc9c04faea3a82ab26fb1b63f0c5c6"
+    }
+  ],
+  "raw_originals": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/log.txt",
+      "bytes": 73,
+      "sha256": "77d93027570dad6cd20eaf5f1a3775b35367e588ceb61987c73b8dcea5b026ba"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/request",
+      "bytes": 114,
+      "sha256": "b6c9ab2967d1f024cd41bcc8efa7fbc9bc0b71128bce7376ea4298cfd96ad965"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/status",
+      "bytes": 5,
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/exit",
+      "bytes": 2,
+      "sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/summary",
+      "bytes": 2782,
+      "sha256": "5682281ce482cf1f31e66c5165620dd3290d53cbcb51693069019b0d726a8cc2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/KEEP",
+      "bytes": 97,
+      "sha256": "2adf81a6a0f38ae6ecc0c1cb2b7739687226c115fd080b81f61f088260388f18"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359/snap",
+      "bytes": 116,
+      "sha256": "3599a6866b62492a882a878f19996a162262863d84c23121b8d79e8ed6fc2d8a"
+    }
+  ],
+  "manager_action": "STOP; report only, no retry, workaround, source/config change, cleanup or new worker",
+  "monitor_limit": "Worker startup sampler exited before request startup; exit/reap UNKNOWN; no builder trace. Raw KEEP creation authenticated."
+}

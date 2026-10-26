@@ -1,0 +1,25 @@
+{
+  "artifact_acceptance": "NOTRUN",
+  "builder_invoked": false,
+  "preflight": {
+    "available_bytes": 5112872960,
+    "gate_tuple_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+    "manager_admission_floor_bytes": 4860000000,
+    "registry_sha256": "2df2e13fd9396a99f3a8c6395804b4168344b5d61930ea6d676a27a9fb3e1901",
+    "source_tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+    "whole_group_stop_floor_bytes": 4000000000
+  },
+  "product_tests": "NOTRUN",
+  "raw_service_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/runtime-delivery-v2-final-1026174858-3359",
+  "refusal": "final delivery refused: service TMPDIR is writable by another user: /tmp",
+  "request_elapsed_seconds": 0,
+  "request_exit": 2,
+  "request_id": "runtime-delivery-v2-final-1026174858-3359",
+  "safety_action": "STOP; no retry, transfer, alternate route, direct run, cleanup, or floor override",
+  "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-build-resume-next/evidence/source-manifest.json",
+  "staging_path": null,
+  "status": "BLOCKED_SAFETY_REFUSAL",
+  "zip_bytes": null,
+  "zip_path": null,
+  "zip_sha256": null
+}
