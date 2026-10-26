@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.f.d141y.correction-review.source-manifest.v1",
+  "task": "rt-F-D141y-correction-review-0729",
+  "verdict": "CORRECTIONHONESTY_PASS",
+  "source_branch": "tl/rt-F-D141y-custody-correction-0724",
+  "source_commit": "ea49099efb176df65ef7b6fd2f9ec3578e8a73b1",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "recovery_receipt": {
+    "absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141y-correction-recovery-publication-0729.json",
+    "receipt_sha256": "f0942e4a8210140b4b18c0ec73d305f95ac3a0ef6c131cbfaf9f34a2e443a6bf",
+    "all_nine_byte_exact": true,
+    "all_nine_receipt_sha256_matches": true,
+    "all_nine_published_copies_byte_exact": true
+  },
+  "recovered_inputs": [
+    {"git_path":"evidence/correction.json","git_blob":"01c43f0e4291903054ef5c28ce884e198abf78e4","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/correction.json","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-correction.json","bytes":3283,"sha256":"cadcc05567906698251d9913b545130a0da9efbd820fea3b4b417c0b512c2de2","byte_exact":true},
+    {"git_path":"evidence/report.md","git_blob":"f00e4fb1405d2310edb33da910e634160224da18","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/report.md","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-report.md","bytes":1791,"sha256":"20035fa471c8d5857b7074f4969cb69de86cbb2a31fd613600077c69ae579fdf","byte_exact":true},
+    {"git_path":"evidence/source-manifest.json","git_blob":"b03bec2fd97bc3eca64b17dd1a84ee093772248d","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/source-manifest.json","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-source-manifest.json","bytes":12007,"sha256":"e4a4194a2e3927d1d370ac8c9ec021819b179a3e679e6315a91cc6ab20f75005","byte_exact":true},
+    {"git_path":"evidence/validation.md","git_blob":"02d8d8adc322d01432256b8e8885112c492dd3ae","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/validation.md","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-validation.md","bytes":2558,"sha256":"32addc0127d785e54d8619aef55abc0ed7d13677d25fb03a7457a793585c255d","byte_exact":true},
+    {"git_path":"evidence/handoff.md","git_blob":"38cd97777467cd5e9ef0067919741969a503531d","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/handoff.md","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-handoff.md","bytes":1134,"sha256":"f914478fe94f1e46249718c8853a42fc9868c39676442ea0bc6fdf4f6f9a26df","byte_exact":true},
+    {"git_path":"evidence/disk-trace.txt","git_blob":"dc87fc1cc0ae06f9c13797c7607ba1ace4afb5d3","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/disk-trace.txt","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-disk-trace.txt","bytes":200,"sha256":"5bebe1f975a8822c9324f788f82830f9b5e4bec13744f4d8d7eee2348f31619c","byte_exact":true},
+    {"git_path":"evidence/sampler-start.json","git_blob":"d0a54240f573ca69e1e3e18df00fce50db66c8c4","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/sampler-start.json","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-sampler-start.json","bytes":446,"sha256":"ba69474cce964c7d86c165e131b0fe78e611dac8f18968c4d64835ee855bfe2e","byte_exact":true},
+    {"git_path":"evidence/sampler-terminal.json","git_blob":"8b2a0c6d32ede0b05066407e50752ad49c9f16f3","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/sampler-terminal.json","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-sampler-terminal.json","bytes":369,"sha256":"70657593bb88556515d4f6a0d58b6711e3d2d3a865a3567d4e24dc068e811f65","byte_exact":true},
+    {"git_path":"evidence/sampler-reap.json","git_blob":"9a7b39fe77e7ff5cf96e859e027da0ee0e752698","absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/evidence/sampler-reap.json","published_absolute_path":"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-custody-correction-0724-sampler-reap.json","bytes":285,"sha256":"1773a41618592f6b29f35a301154f03c0450a366be7cd0e23e79be6e9c470b02","byte_exact":true}
+  ],
+  "originals": {
+    "author_absolute_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710",
+    "reviewer_absolute_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719",
+    "author_file_hashes_checked": 15,
+    "reviewer_file_hashes_checked": 13,
+    "total_hashes_checked": 28,
+    "unchanged": true,
+    "raw_and_keep_preserved": true,
+    "keep_markers": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-0710/KEEP",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-rehearsal-review-0719/KEEP"
+    ]
+  },
+  "controls": {
+    "plan_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "plan_sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "board_header_absolute_path": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md",
+    "board_header_sha256": "a6f2e32ea7697082441771d83e1dbadbe89fecd857421760ba3ba6a8dfe6c9ac",
+    "c0_contract_absolute_path": "/home/user/work/runtime/contract/commit-v2.md",
+    "c0_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "sections_read": ["PLAN section 3/F", "BOARD-HEADER D141v", "BOARD-HEADER D141w", "BOARD-HEADER D141y", "C0 sections 1/4/7"]
+  },
+  "source_identities": {
+    "agent": {"head":"ecdc242ed9b673f641759ecf029f95e89a2c6f92","tree":"d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735","clean":true},
+    "runtime": {"head":"95d98f038320d5d46bd679ac000ab3e15825c935","tree":"78df31d62c5b9ba4c84dee4ea346e43a767718c1","clean":true},
+    "app": {"head":"4de54db14bdc9ddc2ce2e5887258b03acbffd30d","tree":"84c3fb7f73f08c22220f8e808962fe3f24aaa0aa","clean":true},
+    "composition": {"head":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148","clean":true}
+  },
+  "source_log": {
+    "absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-custody-correction-0724/log.txt",
+    "one_evidence_only_pass": true,
+    "correction_delivery_build_invocations": 0,
+    "second_build_subset_retry_guard_bypass": false,
+    "source_product_tests_imports_browser_fetch_checkout_mutation": false
+  },
+  "review_outputs": {
+    "review_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/review.json",
+    "findings_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/findings.md",
+    "report_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/report.md",
+    "validation_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/validation.md",
+    "handoff_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/handoff.md",
+    "disk_trace_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/disk-trace.txt",
+    "sampler_lifecycle_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/sampler-lifecycle.json",
+    "sha256": {
+      "review.json": "f1cd548e95c0124dd77961237df39d76b5434de29bdcf960f429fd36d4b808e5",
+      "findings.md": "c54923ba632b396f2082ca96a2fae48eea41faa57bc742c246dfe05f91470988",
+      "report.md": "cbf3f1a426e96f89a03d39394a4e1aac5538fa4b580a8aba8f74a3731a5665f8",
+      "validation.md": "ac17457683a75f0515450846e983e8eed75f64651dcd4c4e3d380ee8ecf17d2e",
+      "handoff.md": "7862652ae64fc584dddc5d70fdb8ca1a08dea70fb08955c9a74601dc96058bad",
+      "disk-trace.txt": "b7e7ba61a8f06e0d59716f36f2060532ee2b4c290a6de95b78ca6529246ff4a8",
+      "sampler-lifecycle.json": "48e066e8bd90cb156c2a9d3ff0045b7bf0b07b46af1fbc7ae299ed11ce8059b9"
+    }
+  }
+}

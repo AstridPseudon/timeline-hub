@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T07:28:45Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 3m -->
-# runtime board, 2026-10-26T07:25:13Z
+<!-- main | 2026-10-26T07:33:48Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 4m -->
+# runtime board, 2026-10-26T07:29:10Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -58,11 +58,11 @@
 
 | D141l command whole path | Deliver complete independent source investigation | Luna | Agent peer0640 | merged | rt-F-D141l-command-wholepath-0640 | All7 findings confirmed plus3 finite observations. [Packet](../../design/runtime-D141l-command-wholepath-publication-0656.json). Agent0638 owns repair and final review. | Evidence only |
 
-| D141y rehearsal | Correct unsupported lifecycle receipt | Luna and independent Luna | Independent0719 FAIL one custody finding | doing | Original0710; review0719; return0724 | Single exit2/refusal/counts qualified. Original sampler reaping unsupported; immutable evidence-only correction active. No build rerun. | 95d / ecdc /4de /635f |
+| D141y rehearsal | Qualify immutable lifecycle disclosure | Luna and independent Luna | First return0724 complete | review | Original0710; review0719; correction0724; check0729 | Original reaping UNKNOWN and claim retracted. Exact derivative recovered from9 Gitblobs; independent0729 active. Single build refusal unchanged. | Evidence ea49099e |
 Blockers: App — D141w catch-up owns ancestryfc24f849; independent0707 disk-held on App, no duplicate Runtime author. D141x cancellation wait CLEARED this pass.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives remain held. D141t KEEP retained. Hub-repack owner-gated; refused smoke dropped.
-Next ready: Evidence-only0724 terminal and bounded independent check; actual final tuple and owning Agent/App proofs gate packaging.
-live 1 / cap 3 at dispatch4608192512; ready-undispatched 0. One evidence-only Luna return; no heavy body.
+Next ready: Bounded correction review0729 terminal. App catch-up review hosting offer awaits sole-owner handoff and fresh admission; actual final tuple/proofs gate packaging.
+live 1 / cap 3 at dispatch4602564608; ready-undispatched 0. One read-only Luna correction review; no heavy body.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL, pristine11121=15PASS2.76s, P56934=38PASS31.02s. Original receipts keep original sources; successor applicability0513 and0637 is separate. Original XML/trace/private and /tmp/rt-F-D141-postREG-integrated-proof-JfAg26 KEEP retained. Old8912/19479 held unstarted.
 
@@ -75,3 +75,5 @@ D141y actual single canonical dryrun07:13:20 exit2: App4de54 is not descended fr
 Disk this pass: all-worker census found only three dirty ended nonKEEP Runtime trees, zero clean eligible ended tree. Normal guarded sweep3/compact50 started; no held/raw/dirty/Store/hub/oldvenv cleanup. Prior0711 closed-manager lossless compression receipt retained,13.7MB saved. Inbox consumed through1828735 bytes; no new items at07:17.
 
 07:25 pass: Independent0719 terminal FAIL only F1 missing original terminal/reap custody. Singlecanonicalinvocation/source/raw/refusal/NOT_REACHED accounting independentlyPASS. Original/review KEEP set; SAFE review packet published0725. ONE firstreturn0724 on samebranch dispatched4608192512 after verified lossless12 closed23-24Oct managerlogs saved11008506bytes, receipt0724. It may cite existing original evidence or retract unsupported lifecycle claim as UNKNOWN in immutable derivative; no rerun/forgedretrospectiveevidence. Sweep3 removed0; compact50 packed0scratch/0test and gzipped3logs. Three dirty ended worktrees retained.
+
+07:29 pass: Correction0724 terminal, originalsamplerreap remains UNKNOWN and unsupportedclaim retracted; originalF1 unchanged. New sampler evidence explicitly currentworker-only, no historicalrepair or buildrerun. Author mistakenly wrote repo-relativeevidence; manager recovered all9 Gitblobs byteexact to required absoluteoutputs and flatpublished, receipt runtime-D141y-correction-recovery-publication-0729.json. ONE bounded independent0729 dispatched4602564608, no secondproduct/build/body. App0708 cancellation status clears exact18617 row. Agent source0707 PASS recordedheader07:21; controllerbinding0718 and D89d headroom remain owninglane. App solecatchupreview hostoffer0725 pending, no duplicate starts.

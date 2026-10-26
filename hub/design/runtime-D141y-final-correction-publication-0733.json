@@ -1,0 +1,53 @@
+{
+  "scope": "Independent0729 CORRECTIONHONESTY PASS only. Original0719 FAIL F1 remains substantiated; historical terminal/reap UNKNOWN. Single real rehearsal exit2 App ancestry refusal; no build qualification.",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-report.md",
+      "size": 1538,
+      "sha256": "cbf3f1a426e96f89a03d39394a4e1aac5538fa4b580a8aba8f74a3731a5665f8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-review.json",
+      "size": 2199,
+      "sha256": "f1cd548e95c0124dd77961237df39d76b5434de29bdcf960f429fd36d4b808e5"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-findings.md",
+      "size": 768,
+      "sha256": "c54923ba632b396f2082ca96a2fae48eea41faa57bc742c246dfe05f91470988"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-source-manifest.json",
+      "size": 10099,
+      "sha256": "48a58d88339f063e9efac7d5594ce71bfc93c9a252a116890b92631425b2b259"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-validation.md",
+      "size": 2979,
+      "sha256": "ac17457683a75f0515450846e983e8eed75f64651dcd4c4e3d380ee8ecf17d2e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-handoff.md",
+      "size": 999,
+      "sha256": "7862652ae64fc584dddc5d70fdb8ca1a08dea70fb08955c9a74601dc96058bad"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-disk-trace.txt",
+      "size": 198,
+      "sha256": "b7e7ba61a8f06e0d59716f36f2060532ee2b4c290a6de95b78ca6529246ff4a8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141y-correction-review-0729-sampler-lifecycle.json",
+      "size": 992,
+      "sha256": "48e066e8bd90cb156c2a9d3ff0045b7bf0b07b46af1fbc7ae299ed11ce8059b9"
+    }
+  ]
+}

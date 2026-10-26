@@ -1,0 +1,27 @@
+{
+  "schema": "timeline.f.d141y.correction-review.sampler-lifecycle.v1",
+  "task": "rt-F-D141y-correction-review-0729",
+  "observation_scope": "present_time_only",
+  "dispatch_admission": {
+    "admission_at_utc": "2026-10-26T07:28:47.533343+00:00",
+    "declared_bytes": 4602564608,
+    "stop_bytes": 4000000000
+  },
+  "sampler": {
+    "pid": 9,
+    "started_at_utc": "2026-10-26T07:30:27.598Z",
+    "initial_available_bytes": 4598833152,
+    "sampling_seconds": 5,
+    "trace_absolute_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141y-correction-review-0729/evidence/disk-trace.txt",
+    "terminal_at_utc": "2026-10-26T07:30:33.613Z",
+    "terminal_available_bytes": 4598829056,
+    "terminal_status": "TERM",
+    "termination_signal": "TERM",
+    "kill_return": 0,
+    "wait_return": 143,
+    "reap_at_utc": "2026-10-26T07:30:37.626Z",
+    "reaped_pid": 9,
+    "reap_status": "REAP_RECORDED"
+  },
+  "historical_receipt": false
+}
