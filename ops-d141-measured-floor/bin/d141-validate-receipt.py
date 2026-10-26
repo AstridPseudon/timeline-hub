@@ -176,11 +176,10 @@ def validate_recorded_decision(
     decision = authorization["decision"]
     if decision not in {
         "D141g-next-app-journey",
-        "D141g-paired-control",
         "D141h-runtime-pristine-targeted15",
         "P5-service6934",
     }:
-        fail("recorded decision is not an authorized D141 decision")
+        fail("recorded decision is not an authorized production D141 decision")
     expected_record = f"tests/{job_id}/d141-decision.json"
     if authorization["record_path"] != expected_record:
         fail("recorded decision path is not the fixed per-job path")
@@ -194,9 +193,9 @@ def validate_recorded_decision(
         fail(f"recorded decision is not strict JSON: {exc}")
     expected_record_keys = {"schema", "decision", "scope", "trace"}
     if isinstance(record, dict) and "pair" in record:
+        if decision != "D141g-next-app-journey":
+            fail("paired admission is not authorized for this production decision")
         expected_record_keys.add("pair")
-    elif decision == "D141g-paired-control":
-        fail("paired control decision requires a paired admission record")
     record = exact_keys(record, expected_record_keys, "recorded decision")
     expected_schema = "timeline.d141.paired-recorded-decision.v1" if "pair" in record else "timeline.d141.recorded-decision.v1"
     if record["schema"] != expected_schema or record["decision"] != decision:

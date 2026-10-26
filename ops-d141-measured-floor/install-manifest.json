@@ -27,7 +27,7 @@
     {
       "source": "bin/d141-validate-receipt.py",
       "destination": "bin/d141-validate-receipt.py",
-      "sha256": "ff538a0154e8ef70fd138b98f99b5c8c6b5adfda8d54c0379355f76303cf2c21",
+      "sha256": "c651a436ce0421699456b19e0b0afd31fc7c863a5886cb192e7902317ad424ef",
       "mode": "755",
       "precondition": {
         "state": "absent_including_dangling_symlink"
