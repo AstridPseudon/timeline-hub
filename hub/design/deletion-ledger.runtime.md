@@ -42,3 +42,10 @@ Lossless: 33 batches; loose objects 32626 -> 0 (packed and verified before remov
 ### 2026-10-26T14:09:33Z — owner-approved deletion (main session, permission prompt approved)
 
 The owner approved the deletion in the main session ("You message, i'll approve"; "Can you please request permission you need?") and then approved the tool permission prompt. Deleted exactly /tmp/w-208b39481f: 1.6 GB of regenerable repo clones from the stopped D141jj check. Free disk 3,776,655,360 -> 5,427,089,408 B.
+
+### 2026-10-26T16:18:09Z — 3 clean pin worktrees removed on main (owner-approved in the main session)
+Owner, typed in this session: "I approve removing exactly the worktrees agt-pin-28e56cac, agt-pin-4c4ee35d and agt-pin-8b6ed211 on the main machine with git worktree remove (no --force)."
+- Pre-checks: each was a detached worktree of /home/user/work/agent with 0 modified or untracked files, no KEEP or .sealed marker, and no process cwd inside it. The only ignored files (agt-pin-28e56cac) were __pycache__, which is reproducible.
+- Action: `git worktree remove` with no --force, for exactly those 3. rc=0 each.
+- Commits 28e56cacb42d, 4c4ee35d5687 and 8b6ed2116fd1 remain in the object store, so each pin can be re-created with `git worktree add`.
+- Free disk: 4,861,800,448 -> 5,240,180,736 B.
