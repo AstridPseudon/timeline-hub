@@ -497,26 +497,36 @@ test('Runtime discovery selection ignores source checkout and rejects ambiguous 
   assert.throws(() => resolveWorkspaceDiscoveryPath({ home, discovery: 'relative/discovery.json' }), /absolute path/);
 });
 
-test('build handoff carries verified identity into the emitted browser build without launching services', async () => {
-  const fixture = await launchFixture();
-  const captured = join(fixture.fixture, 'build-environment.json');
-  const fakeNpm = join(fixture.fixture, 'bin', 'npm');
-  const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
-  const fakeNpmScript = `const fs = require('node:fs');
-fs.writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
+test('build handoff carries verified identity and gives only builds a 4 GB heap default', async () => {
+  for (const [existingNodeOptions, expectedNodeOptions] of [
+    ['', '--max-old-space-size=4096'],
+    ['--trace-warnings', '--trace-warnings --max-old-space-size=4096'],
+    ['--max-old-space-size=2048', '--max-old-space-size=2048'],
+  ]) {
+    const fixture = await launchFixture();
+    const captured = join(fixture.fixture, 'build-environment.json');
+    const fakeNpm = join(fixture.fixture, 'bin', 'npm');
+    const fakeNpmJs = join(fixture.fixture, 'bin', 'npm-cli.js');
+    const fakeNpmScript = `const fs = require('node:fs');
+fs.writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID, nodeOptions:process.env.NODE_OPTIONS}));
 `;
-  writeFileSync(fakeNpm, `#!${process.execPath}
-require('node:fs').writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID}));
+    writeFileSync(fakeNpm, `#!${process.execPath}
+require('node:fs').writeFileSync(${JSON.stringify(captured)}, JSON.stringify({args:process.argv.slice(2), actor:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID, realm:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID, instance:process.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID, nodeOptions:process.env.NODE_OPTIONS}));
 `, { mode: 0o700 });
-  writeFileSync(fakeNpmJs, fakeNpmScript);
-  fixture.env.npm_execpath = fakeNpmJs;
-  try {
-    const result = await run(['--build'], fixture.env);
-    assert.equal(result.code, 0, result.stderr);
-    assert.deepEqual(JSON.parse(readFileSync(captured, 'utf8')), { args: ['run', 'build'], actor: fixture.actorId, realm: fixture.realmId, instance: fixture.runtimeInstanceId });
-    assert.equal(existsSync(fixture.spawnMarker), false);
-    assert(!result.stdout.includes(fixture.token));
-  } finally { await fixture.close(); }
+    writeFileSync(fakeNpmJs, fakeNpmScript);
+    fixture.env.npm_execpath = fakeNpmJs;
+    fixture.env.NODE_OPTIONS = existingNodeOptions;
+    try {
+      const result = await run(['--build'], fixture.env);
+      assert.equal(result.code, 0, result.stderr);
+      assert.deepEqual(JSON.parse(readFileSync(captured, 'utf8')), {
+        args: ['run', 'build'], actor: fixture.actorId, realm: fixture.realmId,
+        instance: fixture.runtimeInstanceId, nodeOptions: expectedNodeOptions,
+      });
+      assert.equal(existsSync(fixture.spawnMarker), false);
+      assert(!result.stdout.includes(fixture.token));
+    } finally { await fixture.close(); }
+  }
 });
 
 

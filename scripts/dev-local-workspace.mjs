@@ -607,8 +607,13 @@ if (checkOnly) {
 // serves a fresh discovery-backed binding on each page load.
 if (buildOnly) {
   if (verbose) console.log(healthyLine);
-  const buildInvocation = packageManagerInvocation('npm', ['run', 'build'], { env });
-  const build = spawnService(buildInvocation.command, buildInvocation.args, { kind: 'vite', stdio: 'inherit', env });
+  const buildEnv = { ...env };
+  const nodeOptions = (env.NODE_OPTIONS || '').trim();
+  if (!/(?:^|\s)--max-old-space-size(?:=|\s|$)/.test(nodeOptions)) {
+    buildEnv.NODE_OPTIONS = [nodeOptions, '--max-old-space-size=4096'].filter(Boolean).join(' ');
+  }
+  const buildInvocation = packageManagerInvocation('npm', ['run', 'build'], { env: buildEnv });
+  const build = spawnService(buildInvocation.command, buildInvocation.args, { kind: 'vite', stdio: 'inherit', env: buildEnv });
   build.on('error', (error) => { fail(CANT_START, `could not build Astrid App: ${error.message}`); process.exitCode = 1; });
   const [code, signal] = await new Promise((resolveExit) => build.once('close', (...result) => resolveExit(result)));
   if (code === 0 && !signal && !(await verifyRuntime(endpoint, credential.token, expectedIdentity))) process.exitCode = 1;
