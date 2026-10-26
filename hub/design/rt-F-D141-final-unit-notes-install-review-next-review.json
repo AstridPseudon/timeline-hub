@@ -1,0 +1,175 @@
+{
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "checks": {
+    "accepted_candidates_current_hash_equal": true,
+    "accepted_candidates_equal_bytes": true,
+    "backups_match_declared_preimages": true,
+    "controlled_render_function_only": true,
+    "controlled_render_placeholders_fences_ids_suffix": true,
+    "disk_trace_durable_5s_and_floor": true,
+    "full_preimage_prefix_conservation": true,
+    "outside_count_568_at_genuine_paths": true,
+    "outside_current_matches_retained_maps": true,
+    "outside_genuine_pre_post_conservation": "UNOBSERVABLE",
+    "regular_0644_no_symlink": true
+  },
+  "custody_limit": "The actual installer did not serialize its pre-mutation outside inventory because its first process exited after the CAS on an over-strict fallback assertion. The later follow-up wrote the current inventory into both before and after fields. Therefore the current 568-item inventory is verified, but independent genuine pre/post conservation is not observable.",
+  "disk_sampler": {
+    "command": "os.statvfs available-byte sampler",
+    "interval_seconds": 5,
+    "minimum_observed_available_bytes": 5708038144,
+    "pid": 9,
+    "reap": {
+      "called": true,
+      "process_reaped": true
+    },
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch",
+    "sample_count": 3,
+    "started": "2026-10-26T10:12:26.061537+00:00",
+    "stop": {
+      "method": "SIGINT",
+      "wait_returncode": 0
+    },
+    "stop_condition_triggered": false,
+    "threshold_bytes": 4000000000,
+    "trace_sha256": "7fc2300e3cbbeacff4a9d7d1a636200715497e76553d88e0763d6b3b11ca1e42",
+    "wait": {
+      "called": true,
+      "returncode": 0
+    }
+  },
+  "installer_disk_monitor_custody": {
+    "durable_trace_retained": true,
+    "exit_code": "UNOBSERVABLE_FROM_RETAINED_INSTALLER_ARTIFACTS",
+    "note": "The installer retained disk samples but no sampler lifecycle record; the review sampler lifecycle is separate and does not establish installer-process lifecycle.",
+    "pid": "UNOBSERVABLE_FROM_RETAINED_INSTALLER_ARTIFACTS",
+    "reap": "UNOBSERVABLE_FROM_RETAINED_INSTALLER_ARTIFACTS",
+    "wait": "UNOBSERVABLE_FROM_RETAINED_INSTALLER_ARTIFACTS"
+  },
+  "installer_method": {
+    "directory_fsync": true,
+    "first_process_post_cas_failure": "controlled fallback assertion mismatch after CAS; no second mutation",
+    "follow_up": "read-only target/backup/outside/render verification",
+    "preimage_cas_before_replacement": true,
+    "readback": true,
+    "staged_atomic_replacements": true
+  },
+  "render": {
+    "ast_main_definitions": 1,
+    "ast_render_readme_definitions": 1,
+    "balanced_fences": true,
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "disclosure_occurrences": 2,
+    "fallback_placeholder_behavior": true,
+    "fallback_sha256": "effa9a06f364d100a69af8613353be818f6309e82567096563f180ac953f6719",
+    "function": "render_readme",
+    "function_only": true,
+    "id_entry_count": 32,
+    "id_table_occurrences": 1,
+    "placeholders_resolved": true,
+    "rendered_sha256": "c65eff9af7cff67e280c25e092ef755b8a0c304fe57c3b9396c56187398211da"
+  },
+  "schema": "timeline.d141.final-unit-notes-install-review/v1",
+  "scope": "read-only qualification of actual Main prose installation; no source repair, semantic review, product test, build, ZIP, or global gate claim",
+  "source_publications": {
+    "candidate_publication_actual_install": false,
+    "controlling_publication_verdict": "PASS protected documentary source review",
+    "protected_review_verdict": "PASS",
+    "runtime_source_files": [
+      {
+        "bytes": 35560,
+        "mode": "0o644",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-README.template.md",
+        "sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+        "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md"
+      },
+      {
+        "bytes": 25966,
+        "mode": "0o644",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-gate-results.md",
+        "sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+        "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md"
+      },
+      {
+        "bytes": 31889,
+        "mode": "0o755",
+        "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+        "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+        "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build"
+      }
+    ]
+  },
+  "targets": {
+    "README.template.md": {
+      "backup": {
+        "bytes": 35560,
+        "mode": "0o644",
+        "sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776"
+      },
+      "backup_matches_preimage": true,
+      "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-next/evidence/backups/README.template.md",
+      "backup_regular_0644_non_symlink": true,
+      "candidate": {
+        "bytes": 38282,
+        "mode": "0o644",
+        "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02"
+      },
+      "candidate_hash_matches_accepted": true,
+      "candidate_is_backup_plus_suffix": true,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-candidate-README.template.md",
+      "candidate_regular_0644_non_symlink": true,
+      "full_preimage_prefix_preserved": true,
+      "suffix_bytes": 2722,
+      "suffix_sha256": "a89129f0d7c8f61468d9f4e4ac38ec49dcb6dc0ee599cdc43f63d4eb66c323b8",
+      "target": {
+        "bytes": 38282,
+        "mode": "0o644",
+        "sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02"
+      },
+      "target_equals_candidate_bytes": true,
+      "target_hash_matches_accepted": true,
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "target_regular_0644_non_symlink": true
+    },
+    "gate-results.md": {
+      "backup": {
+        "bytes": 25966,
+        "mode": "0o644",
+        "sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47"
+      },
+      "backup_matches_preimage": true,
+      "backup_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-next/evidence/backups/gate-results.md",
+      "backup_regular_0644_non_symlink": true,
+      "candidate": {
+        "bytes": 35582,
+        "mode": "0o644",
+        "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"
+      },
+      "candidate_hash_matches_accepted": true,
+      "candidate_is_backup_plus_suffix": true,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-F-D141-final-unit-notes-host-0849-candidate-gate-results.md",
+      "candidate_regular_0644_non_symlink": true,
+      "full_preimage_prefix_preserved": true,
+      "suffix_bytes": 9616,
+      "suffix_sha256": "47bc0f08b1ab1c464a316604562942e4ad9a4591a57818f33946d598baa0670a",
+      "target": {
+        "bytes": 35582,
+        "mode": "0o644",
+        "sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"
+      },
+      "target_equals_candidate_bytes": true,
+      "target_hash_matches_accepted": true,
+      "target_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "target_regular_0644_non_symlink": true
+    }
+  },
+  "task": "rt-F-D141-final-unit-notes-install-review-next",
+  "verdict": "FAIL_CUSTODY_LIMIT"
+}

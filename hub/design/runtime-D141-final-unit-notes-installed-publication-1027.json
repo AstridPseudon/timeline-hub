@@ -1,0 +1,195 @@
+{
+  "utc": "2026-10-26T10:27:18.891160+00:00",
+  "result": "PASS_CORRECTION_BOUNDED_CURRENT_CONTENT_AND_EARLIER_AGGREGATE_ONLY",
+  "current_notes_installed": true,
+  "independent_correction_review": "rt-F-D141-notes-custody-review-1022",
+  "historical_install_review": "FAIL_CUSTODY_LIMIT retained",
+  "immediate_pre_CAS_inventory": "NOT_RECOVERABLE",
+  "original_installer_monitor_lifecycle": "UNKNOWN",
+  "earlier_to_current_aggregate": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+  "current_outside_count": 568,
+  "files": [
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/evidence/installation.json",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-installation.json",
+      "bytes": 4911,
+      "sha256": "09a115648a185b99cfd4de06b3f27a0bb2da2a376e830693ddf8504a7a83dcbf"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-source-manifest.json",
+      "bytes": 230677,
+      "sha256": "732175a46207a7896d60e9ab666640a63a05fe23e1805967c406e6f7d2289cbb"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/evidence/validation.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-validation.md",
+      "bytes": 2348,
+      "sha256": "2aaddbfa9cfc530b0bc26c6e7e3cdf803e519261c98d225ef055a065286c1b14"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/evidence/handoff.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-handoff.md",
+      "bytes": 1023,
+      "sha256": "477240cb648cf73cd4545a892165ddc15ec93c23cf8ca54d8907d12897ecf34b"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-disk-trace.txt",
+      "bytes": 644,
+      "sha256": "dba67841bf0e590ba1187dfed0028b0568ec3d7a287ef36afe73a5425a81ff7a"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-next/report.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-next-report.md",
+      "bytes": 1119,
+      "sha256": "0a806ca4ca91fa5f743cd7398b258d5afb25a23ddf65ca6339ed9f0db7fe3254"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/review.json",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-review.json",
+      "bytes": 8435,
+      "sha256": "34ee5ef21ca3f2a89219313a2020a2b5d983c3c49a8846924db2fc2123249678"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/findings.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-findings.md",
+      "bytes": 3101,
+      "sha256": "2319bb644a6bbd703654c2f011192cb72b392a9d7423b21fcc320b4f4634d8c6"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-source-manifest.json",
+      "bytes": 126037,
+      "sha256": "df1e5310504a9d905e669eb2a0ad7fd2014218802996cf8b3d991edfefb92d30"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/validation.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-validation.md",
+      "bytes": 1334,
+      "sha256": "23692a1cda74dd4dbf924343964ed57f94939a51fdcb520e9f3b46216f4443ef"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/handoff.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-handoff.md",
+      "bytes": 1260,
+      "sha256": "f3617e72563f580d508b6eb322125eb1182668baad43806128e0b4aef3cd0cb2"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-disk-trace.txt",
+      "bytes": 495,
+      "sha256": "7fc2300e3cbbeacff4a9d7d1a636200715497e76553d88e0763d6b3b11ca1e42"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-sampler-lifecycle.json",
+      "bytes": 799,
+      "sha256": "ef582f6b136f28f8e1432ca74e748d7320eb5516e34c07d7a7d542dd90abf0a6"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-install-review-next/report.md",
+      "published": "design/rt-F-D141-final-unit-notes-install-review-next-report.md",
+      "bytes": 1172,
+      "sha256": "5ca0f45c81b7e77604aa98b5299437803e17cc0757868078bd233088936bd273"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/correction.json",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-correction.json",
+      "bytes": 6881,
+      "sha256": "1bb0d6d686b39861d6955c4e098f9ee6d7db43540148fe4c0e6586a3f36f01d6"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-source-manifest.json",
+      "bytes": 6178,
+      "sha256": "3dfc71eff8ede4dc8691ed4d9fafdd59a5ac67ede32d655606df28fcb8f1a08c"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/comparison.py",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-comparison.py",
+      "bytes": 13286,
+      "sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/validation.md",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-validation.md",
+      "bytes": 2320,
+      "sha256": "46d71a1b95910469118673372902c7aeb8b8076bdbacd039aa1208702438ada6"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/handoff.md",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-handoff.md",
+      "bytes": 1422,
+      "sha256": "8b07f3f71cf6e8a53b74ef27689dcb7b148888a5d8fcf6538010399da0c8930e"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-disk-trace.txt",
+      "bytes": 508,
+      "sha256": "a09e72ced372406aa5933cfb125b47fba3a49b8075e5ed012ee89576761d94ad"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-sampler-lifecycle.json",
+      "bytes": 796,
+      "sha256": "1eabfbdddee9ead204cfeff4edc10cfed223ca9ed975d7e9ce047bd7bdb2617d"
+    },
+    {
+      "source": "workers/rt-F-D141-final-unit-notes-custody-return-1015/report.md",
+      "published": "design/rt-F-D141-final-unit-notes-custody-return-1015-report.md",
+      "bytes": 1021,
+      "sha256": "1f71731b85fbd09523598527dcf22f964cbbc2ec40e542258a8410e22465d6e6"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/review.json",
+      "published": "design/rt-F-D141-notes-custody-review-1022-review.json",
+      "bytes": 3116,
+      "sha256": "770c1f889470df18bb5483206280f0056cb9bd5299eecbf636a2b60bfd504cc8"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/findings.md",
+      "published": "design/rt-F-D141-notes-custody-review-1022-findings.md",
+      "bytes": 2985,
+      "sha256": "7455a7492effe11fb2bbc209b37bed5af272b7f744febb4ffe1ce9bd741267d2"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-notes-custody-review-1022-source-manifest.json",
+      "bytes": 4539,
+      "sha256": "257fa3bd19120d8095a0e925e38529900240caf7cd83b166c733a8aa96c09ce5"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/validation.md",
+      "published": "design/rt-F-D141-notes-custody-review-1022-validation.md",
+      "bytes": 1084,
+      "sha256": "394b75f514c68f53c0607bf45f2f550a17dc1d4505b29694782426893cb48aae"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/handoff.md",
+      "published": "design/rt-F-D141-notes-custody-review-1022-handoff.md",
+      "bytes": 1158,
+      "sha256": "3e9289a28519d2c13a0eaeb5db380e4930a1df03c37812a8f885e6de0ad37cf5"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-notes-custody-review-1022-disk-trace.txt",
+      "bytes": 484,
+      "sha256": "3b5ec8f7c374d23ce0d2e8c25688321e0b806298941a218fc326fc1cec4a9ce5"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141-notes-custody-review-1022-sampler-lifecycle.json",
+      "bytes": 922,
+      "sha256": "0761218c9d2f2d25f97bbd927e34f4e526f48011e7f96671244b03d6e9b9985c"
+    },
+    {
+      "source": "workers/rt-F-D141-notes-custody-review-1022/report.md",
+      "published": "design/rt-F-D141-notes-custody-review-1022-report.md",
+      "bytes": 619,
+      "sha256": "752466fd97508627d14593373c5039e720661351a9f260725c8a04074093beb4"
+    }
+  ],
+  "no_reinstall": true,
+  "no_final_gate_or_build_claim": true
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "timeline.d141.notes-custody-review/v1",
+  "task": "rt-F-D141-notes-custody-review-1022",
+  "base": "d77575d45ad8920592b7d5352518e63b6048cfb6",
+  "verdict": "PASS_CORRECTION_BOUNDED",
+  "bounded_result": "Immutable current-content correction and the earlier-to-current aggregate both pass. The original immediate pre-CAS custody finding remains FAIL_CUSTODY_LIMIT.",
+  "correction": {
+    "status": "PASS_CORRECTION",
+    "comparison_script_sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27",
+    "comparison_command_exit_code": 0,
+    "current_outside_count": 568,
+    "current_map_sha256": "0c11b4b85b75c19657a3a824f4c85176f6bb78e96fc27a9f653e06b015103724",
+    "targets": {
+      "README.template.md": {
+        "target_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+        "backup_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+        "mode": "0o644",
+        "regular_non_symlink": true,
+        "target_equals_candidate": true,
+        "backup_equals_declared_preimage": true
+      },
+      "gate-results.md": {
+        "target_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+        "backup_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+        "mode": "0o644",
+        "regular_non_symlink": true,
+        "target_equals_candidate": true,
+        "backup_equals_declared_preimage": true
+      }
+    },
+    "retained_function_only_render": {
+      "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "function_only": true,
+      "placeholders_resolved": true,
+      "balanced_fences": true,
+      "id_entry_count": 32,
+      "disclosure_occurrences": 2,
+      "rerendered_by_this_review": false
+    }
+  },
+  "earlier_to_current_aggregate": {
+    "status": "PASS_BOUNDED_AGGREGATE_ONLY",
+    "earlier_observation": "Genuine independent placement review 0258, after placement installation 0254 and before final-unit installation.",
+    "earlier_count": 568,
+    "current_reproduced_count": 568,
+    "earlier_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "current_reproduced_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "aggregate_equal": true,
+    "algorithm_verified_against_0254_log": true,
+    "not_immediate_pre_cas_map": true,
+    "no_transient_changes_proof": false
+  },
+  "original_installation": {
+    "independent_review_verdict_unchanged": "FAIL_CUSTODY_LIMIT",
+    "historical_status": "NOT_RECOVERABLE",
+    "genuine_immediate_pre_cas_568_map": "UNKNOWN",
+    "genuine_pre_post_conservation": "UNKNOWN",
+    "original_installer_sampler_pid_exit_wait_reap": "UNKNOWN",
+    "return_sampler_does_not_repair_installation_lifecycle": true
+  },
+  "scope": {
+    "read_only": true,
+    "no_reinstall": true,
+    "no_source_repair": true,
+    "no_historical_output_overwrite": true,
+    "no_semantic_source_review": true,
+    "no_delivery_build": true,
+    "product_tests_types_lint": "N/A documentary review"
+  }
+}

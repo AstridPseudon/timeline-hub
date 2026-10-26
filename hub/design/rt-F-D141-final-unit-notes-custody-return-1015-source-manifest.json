@@ -1,0 +1,119 @@
+{
+  "schema": "timeline.d141.final-unit-notes-custody-return-source-manifest/v1",
+  "task": "rt-F-D141-final-unit-notes-custody-return-1015",
+  "decision": "QUALIFIED_CURRENT_CONTENT_WITH_CUSTODY_LIMIT",
+  "inputs": {
+    "installer_installation": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-next/evidence/installation.json",
+      "sha256": "09a115648a185b99cfd4de06b3f27a0bb2da2a376e830693ddf8504a7a83dcbf"
+    },
+    "installer_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-next/evidence/source-manifest.json",
+      "sha256": "732175a46207a7896d60e9ab666640a63a05fe23e1805967c406e6f7d2289cbb"
+    },
+    "independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-review-next/evidence/review.json",
+      "sha256": "34ee5ef21ca3f2a89219313a2020a2b5d983c3c49a8846924db2fc2123249678",
+      "verdict": "FAIL_CUSTODY_LIMIT"
+    },
+    "independent_review_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-final-unit-notes-install-review-next/evidence/source-manifest.json",
+      "sha256": "df1e5310504a9d905e669eb2a0ad7fd2014218802996cf8b3d991edfefb92d30"
+    },
+    "earlier_placement_install_source_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-placement-note-install-0254/evidence/source-manifest.json",
+      "sha256": "2ab8cb2419ceebc234944e65847dfa1c2589c41660b30db6aea09fe38bef96df",
+      "outside_count": 568,
+      "outside_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded"
+    },
+    "earlier_placement_independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-placement-note-review-0258-source-manifest.json",
+      "sha256": "86ba1fd70de96a1ac307b1532fd7f868322a96f70e2df7359493823cd7563569",
+      "outside_count": 568,
+      "outside_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+      "status": "PASS"
+    }
+  },
+  "comparison": {
+    "script": "evidence/comparison.py",
+    "script_sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27",
+    "current_map_algorithm": "final-unit outside_inventory: os.walk(followlinks=False), symlink directories pruned, target basenames excluded, regular non-symlink lstat entries mapped to bytes/mode/sha256",
+    "earlier_aggregate_algorithm": "placement outside_inventory: sorted os.walk entries, target paths excluded, mode/regular/symlink/sha256 fields, sha256(json.dumps(map, sort_keys=True, separators=(',', ':')))",
+    "current_outside_count": 568,
+    "current_map_sha256": "0c11b4b85b75c19657a3a824f4c85176f6bb78e96fc27a9f653e06b015103724",
+    "current_equals_independent_review_map": true,
+    "current_equals_installer_serialized_after_map": true,
+    "current_equals_installer_serialized_before_map": true,
+    "serialized_before_is_historical": false,
+    "retained_render_function_only": true,
+    "new_render_invoked": false,
+    "targets": {
+      "README.template.md": {
+        "target_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+        "candidate_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+        "backup_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776",
+        "mode": "0o644",
+        "regular_non_symlink": true
+      },
+      "gate-results.md": {
+        "target_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+        "candidate_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d",
+        "backup_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47",
+        "mode": "0o644",
+        "regular_non_symlink": true
+      }
+    },
+    "retained_render": {
+      "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+      "function_only": true,
+      "placeholders_resolved": true,
+      "balanced_fences": true,
+      "id_entry_count": 32,
+      "disclosure_occurrences": 2
+    }
+  },
+  "separate_earlier_to_current_interval": {
+    "status": "QUALIFIED_AGGREGATE_ONLY",
+    "earlier_count": 568,
+    "current_count": 568,
+    "earlier_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "current_reproduced_aggregate_sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "aggregate_equal": true,
+    "not_immediate_pre_cas_evidence": true,
+    "transient_changes_absence_inferred": false
+  },
+  "historical_custody": {
+    "status": "NOT_RECOVERABLE",
+    "genuine_immediate_pre_cas_map": "UNKNOWN",
+    "genuine_pre_post_conservation": "UNKNOWN",
+    "original_installer_sampler_pid": "UNKNOWN",
+    "original_installer_sampler_exit": "UNKNOWN",
+    "original_installer_sampler_wait": "UNKNOWN",
+    "original_installer_sampler_reap": "UNKNOWN",
+    "reason": "The installer fallback assertion failed after CAS before durable serialization; follow-up before/after maps came from current bytes."
+  },
+  "new_return_sampler": {
+    "trace": "evidence/disk-trace.txt",
+    "trace_sha256": "a09e72ced372406aa5933cfb125b47fba3a49b8075e5ed012ee89576761d94ad",
+    "lifecycle": "evidence/sampler-lifecycle.json",
+    "pid": 4,
+    "exit_code": 0,
+    "wait_called": true,
+    "reaped": true,
+    "sample_count": 3,
+    "interval_seconds": 5,
+    "minimum_available_bytes": 5674721280,
+    "threshold_bytes": 4000000000,
+    "threshold_reached": false,
+    "separate_from_original_installer_lifecycle": true
+  },
+  "scope": {
+    "read_only": true,
+    "no_reinstall": true,
+    "no_rollback": true,
+    "no_canonical_mutation": true,
+    "no_semantic_review": true,
+    "no_real_builder_or_rerender": true,
+    "product_tests_types_lint": "N/A documentary prose"
+  }
+}

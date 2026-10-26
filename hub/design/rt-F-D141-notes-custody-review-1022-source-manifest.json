@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.d141.notes-custody-review-source-manifest/v1",
+  "task": "rt-F-D141-notes-custody-review-1022",
+  "base": "d77575d45ad8920592b7d5352518e63b6048cfb6",
+  "inputs": {
+    "plan_sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075",
+    "c0_commit_v2_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "recovery_design_sha256": "e1d20c828848f7b71873faa030e146e1545d0f1c94047948abf47d6c0c440aea",
+    "placement_0254_log_sha256": "771cae6a7cce51a94c78b0998336634f1cdcf0d387fa400f1b85b5117510266d",
+    "installer_installation_sha256": "09a115648a185b99cfd4de06b3f27a0bb2da2a376e830693ddf8504a7a83dcbf",
+    "installer_source_manifest_sha256": "732175a46207a7896d60e9ab666640a63a05fe23e1805967c406e6f7d2289cbb",
+    "independent_review_sha256": "34ee5ef21ca3f2a89219313a2020a2b5d983c3c49a8846924db2fc2123249678",
+    "independent_review_source_manifest_sha256": "df1e5310504a9d905e669eb2a0ad7fd2014218802996cf8b3d991edfefb92d30",
+    "placement_0254_source_manifest_sha256": "2ab8cb2419ceebc234944e65847dfa1c2589c41660b30db6aea09fe38bef96df",
+    "genuine_0258_source_manifest_sha256": "86ba1fd70de96a1ac307b1532fd7f868322a96f70e2df7359493823cd7563569",
+    "mandated_comparison_script_sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27",
+    "retained_correction_sha256": "1bb0d6d686b39861d6955c4e098f9ee6d7db43540148fe4c0e6586a3f36f01d6",
+    "retained_return_source_manifest_sha256": "3dfc71eff8ede4dc8691ed4d9fafdd59a5ac67ede32d655606df28fcb8f1a08c"
+  },
+  "recovered_originals": [
+    {"path": "evidence/comparison.py", "bytes": 13286, "git_blob_sha1": "7b4a12c75bfcbe218e3c70faaedcbc3340512e4e", "sha256": "f02c7accbdff821f88a0e008a2139391665a5674c8a9de133dcb3717a6820f27", "matches_git_bytes": true},
+    {"path": "evidence/correction.json", "bytes": 6881, "git_blob_sha1": "85669ce1c994c29deebea882c919054802910635", "sha256": "1bb0d6d686b39861d6955c4e098f9ee6d7db43540148fe4c0e6586a3f36f01d6", "matches_git_bytes": true},
+    {"path": "evidence/disk-trace.txt", "bytes": 508, "git_blob_sha1": "448d2809d96a5ec6596e5f48ff50d9af8534e238", "sha256": "a09e72ced372406aa5933cfb125b47fba3a49b8075e5ed012ee89576761d94ad", "matches_git_bytes": true},
+    {"path": "evidence/handoff.md", "bytes": 1422, "git_blob_sha1": "7f582cc3c88a6f822d10d1b436aadb7115877834", "sha256": "8b07f3f71cf6e8a53b74ef27689dcb7b148888a5d8fcf6538010399da0c8930e", "matches_git_bytes": true},
+    {"path": "evidence/sampler-lifecycle.json", "bytes": 796, "git_blob_sha1": "ea81c5d81584f770a390b5ea69b57b7e0c820d6c", "sha256": "1eabfbdddee9ead204cfeff4edc10cfed223ca9ed975d7e9ce047bd7bdb2617d", "matches_git_bytes": true},
+    {"path": "evidence/source-manifest.json", "bytes": 6178, "git_blob_sha1": "89fb272eefec1b9503d841a3c6ccab8c825601e1", "sha256": "3dfc71eff8ede4dc8691ed4d9fafdd59a5ac67ede32d655606df28fcb8f1a08c", "matches_git_bytes": true},
+    {"path": "evidence/validation.md", "bytes": 2320, "git_blob_sha1": "72eed7dcc5509555ca8aed31a01a6e3029cd5595", "sha256": "46d71a1b95910469118673372902c7aeb8b8076bdbacd039aa1208702438ada6", "matches_git_bytes": true}
+  ],
+  "current_content": {
+    "outside_count": 568,
+    "map_sha256": "0c11b4b85b75c19657a3a824f4c85176f6bb78e96fc27a9f653e06b015103724",
+    "targets_regular_0644_non_symlink": true,
+    "README.template.md": {"target_sha256": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02", "backup_sha256": "13f2b3409d42313dd2ed02d1d479bc5e27cb74f7ec29151e30199428fe0bc776"},
+    "gate-results.md": {"target_sha256": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d", "backup_sha256": "b29945990c34adc8d8ae0b25f8c6621c4c509f43c84b22adb7dedca141815b47"}
+  },
+  "earlier_aggregate": {
+    "count": 568,
+    "sha256": "eea4cb8759a00a1ad7e9a5eab5922e4ebeb36d2a6ec0b0bde22c8f63e3c7fded",
+    "algorithm": "0254 inventory: sorted os.walk(followlinks=False), target paths excluded, mode/regular/symlink/sha256 fields, canonical compact sorted-key JSON SHA-256",
+    "source_verified": "placement-0254 log lines 4170-4198 and 4424-4426; genuine 0258 retained source manifest"
+  },
+  "review_sampler": {
+    "trace_sha256": "3b5ec8f7c374d23ce0d2e8c25688321e0b806298941a218fc326fc1cec4a9ce5",
+    "lifecycle_sha256": "0761218c9d2f2d25f97bbd927e34f4e526f48011e7f96671244b03d6e9b9985c",
+    "minimum_available_bytes": 5667667968,
+    "threshold_bytes": 4000000000,
+    "sample_count": 3,
+    "interval_seconds": 5,
+    "exit_code": 0,
+    "wait_called": true,
+    "reaped": true
+  }
+}
