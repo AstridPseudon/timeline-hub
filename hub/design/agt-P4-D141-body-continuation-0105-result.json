@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "service_id": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+  "status": "PASS",
+  "exit_code": 0,
+  "counts": {
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "per_id": [
+    {
+      "id": "tests.editing_conformance.test_p4_cli_sheet_v2_runtime::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "status": "passed",
+      "time_seconds": "2.916"
+    },
+    {
+      "id": "tests.editing_conformance.test_p4_ten_note_v2_runtime::test_http_ten_note_commit_per_step_inverse_and_redo",
+      "status": "passed",
+      "time_seconds": "14.737"
+    },
+    {
+      "id": "tests.editing_conformance.test_p4_note_rerun_v2_runtime::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+      "status": "passed",
+      "time_seconds": "4.547"
+    }
+  ],
+  "junit": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+    "sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+    "bytes": 724,
+    "suite_count": 1,
+    "suite_attribute_totals": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "raw_log": {
+    "service_log_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/log.txt",
+    "service_log_sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef",
+    "body_log_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.body.log",
+    "body_log_sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef"
+  },
+  "preflight_exit": 0,
+  "body_exit": 0,
+  "first_safe_error_frame": null,
+  "actual_artifacts_retained": true,
+  "raw_payloads_public": false
+}

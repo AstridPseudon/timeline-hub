@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:12:20Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# agent board, 2026-10-26T01:09Z
+<!-- agent | 2026-10-26T01:16:17Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
+# agent board, 2026-10-26T01:13Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Run reserved P4 after pristine | Luna and service | Source0106 PASS and MAIN GO | doing | Controller0105 after0047/0055 | Source0106 PASS; normal CAS/readback then first actual three-selector service. Admitted5169483776 bytes; stop4GB. Historical1347 zero-body retained. | Cut tuple GO |
+| P4 D141 cut rerun | Qualify actual cut P4 result | Luna and service | Result custody and App cumulative verdict | review | Controller0105; independent0114 | Actual10086 exit0; original3 PASS,0 fail/error/skip,23.668s. DurableXML afca45. Source/CAS/manifest/result custody under review; no duplicatebody. | Frozen28e/867c/6a |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
@@ -142,7 +142,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: Controller0105 normal CAS/readback and first actual P4 body. live 1 / cap 6 source; one heavy controller, body not yet claimed. ready-undispatched 0.
+Next ready: P4 independent result custody0114 then App cumulative verdict. live 1 / cap 6 source; no heavy body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -177,3 +177,5 @@ Pass01:02Z: Operational0055 terminal PASS immediately sent independent0101. Real
 Pass 2026-10-26T01:06Z: Review0101 terminalFAIL cites old installed row only while its candidate checks and finalnormalID realrun controls PASS. Source author/reviewer both prohibited installation; bounded independent scope return0106 dispatched immediately, no controls/body repeated and originalFAIL preserved. Allsafe0055/0101 originals flatpublished byteexact,0101 from committed Gitblobs after own relative-output mistake/autorecycle. Runtime ordinaryrecipe source qualified with mechanicalcutbinding0055 active; Farm remains no body. Free5043929088 bytes, one read-onlyreview.
 
 Pass 01:09Z: Finalindependent0106 PASS_OPERATIONAL_SOURCE/INSTALLATION_NOT_READY immediatelydispatchedsamecontroller0105 with genuine5169483776byteadmission/nootherheavy. Exactreviewedcandidate willnormalCAS/readbackbeforeONE firstreal3selectorrequest. No repeatedcontrols orsourceedit, oldFAIL/zero-body1347 retained. NewINBOX delayedselfpeers0035-0050 arealreadycleared, no duplicateasks orauthors.
+
+Pass 2026-10-26T01:13Z: Actual10086 terminalPASS, all3originalsPASS/0skip/23.668s, preflight/body0 and realnormalservice. Resultpeer sentApp+lead immediately; controllerterminal0105 immediatelydispatchedindependent0114, rawKEEPprotected and eightSAFEcontrolleroutputs bytepublished. Reviewchecks actualversusmanifestJUnitpath and completehash/source/CASbindings; no bodyrepeat/sourcefix inferred.

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c body continuation",
+  "dispatch_witness_utc": "2026-10-26T01:09:01.862567+00:00",
+  "dispatch_free_bytes": 5169483776,
+  "current_free_bytes": 5039976448,
+  "dispatch_floor_bytes": 4700000000,
+  "continuous_stop_floor_bytes": 4000000000,
+  "heavy_body_admitted": true,
+  "one_heavy_body": true,
+  "other_live_agent_heavy_body": false,
+  "own_prep_retriggers_admission": false,
+  "source_review": "PASS_OPERATIONAL_SOURCE",
+  "source_review_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-review-return-0106/evidence/review.json",
+  "candidate_row_sha256": "21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b",
+  "normal_manifest_sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+  "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+  "installer_sha256": "1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805",
+  "registry_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+  "registry_preimage_sha256_read_before_cas": "2a1b549f2ac25d119d564cdcc2441e53fe621262dfe16e3cf24f42a6c5a55858"
+}

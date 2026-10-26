@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "service_id": "agent-p4-current-becfe-http-3legs-1026011042-10086",
+  "target": "integration:agent",
+  "repo": "agent",
+  "suite": "p4-current-becfe-http-3legs",
+  "request_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/request",
+  "requested_utc": "2026-10-26T01:10:42Z",
+  "terminal_status": "pass",
+  "exit_code": 0,
+  "summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/summary",
+  "summary_sha256": "9376311d8eb310841c1c11ea68c5db328a8460029cc53b54a12a2bd244ac9aa1",
+  "command": "bin/request-test integration:agent p4-current-becfe-http-3legs --no-cache",
+  "actual_command_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.command",
+  "actual_command_sha256": "ad2168fde0f0c928a975e2f2898a824031ce434ec1ecd47db97f16932f32f352",
+  "preflight_exit": 0,
+  "body_exit": 0,
+  "source_versions": {
+    "agent_sha": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "runtime_sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "app_sha": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "composition_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "original_p4_test_hash": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac",
+    "service_versions": "agent:28e56cacb42d3da85b02e5b3543895b44f3d0f70,runtime:6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d,app:867cb2737af1b46dc608c7cd37c349e920fe9422,composition:635f4de06fda22a85fc2e4cfc764d0153a4c9f40,node:v20.19.4,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "junit_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-cut-controller-0047/evidence/p4-d141c-normal.xml"
+  },
+  "pinned_manifest_sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+  "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml",
+  "junit_sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+  "disk_free_bytes_after_terminal": 5039706112,
+  "raw_artifacts": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/request": {
+      "sha256": "20d18d526ebe3bc848eb82659025636c41bf810b48dc5de2d4c590b9baf58b97",
+      "bytes": 120
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/status": {
+      "sha256": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2",
+      "bytes": 5
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/summary": {
+      "sha256": "9376311d8eb310841c1c11ea68c5db328a8460029cc53b54a12a2bd244ac9aa1",
+      "bytes": 1591
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/log.txt": {
+      "sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef",
+      "bytes": 99
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/snap": {
+      "sha256": "bafb1ccf86bf672184f7d2592c9cc0533d6edcfcb86604b844c618f431bbd3f0",
+      "bytes": 114
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/ext": {
+      "sha256": "674058f54cc53daef1c5d501bf5840914350f7959074a5c3765a4ff12b8efe33",
+      "bytes": 157
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.manifest": {
+      "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+      "bytes": 2862
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.runmanifest": {
+      "sha256": "86595e66a6739d9d6c9cdaa5fe583c4b7eff50a5f2ba5aec4e620df91104dc71",
+      "bytes": 779
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.command": {
+      "sha256": "ad2168fde0f0c928a975e2f2898a824031ce434ec1ecd47db97f16932f32f352",
+      "bytes": 612
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.preflight.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.body.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.body.log": {
+      "sha256": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef",
+      "bytes": 99
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c-normal.preflight.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D141-operational-return-0055/evidence/body-evidence/p4-d141c.xml": {
+      "sha256": "afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d",
+      "bytes": 724
+    }
+  },
+  "raw_payloads_public": false,
+  "error_frame": "none",
+  "no_retry": true,
+  "single_submission": true
+}
