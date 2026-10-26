@@ -96,17 +96,18 @@ def test_windows_update_backup_up_uses_the_actual_venv_interpreter(tmp_path, mon
         child._runtime_job.close()
 
     checkout = Path(__file__).resolve().parents[1]
-    profile = tmp_path / "source-profile.json"
-    profile.write_text(json.dumps({
+    manifest = tmp_path / "source-profile.json"
+    manifest.write_text(json.dumps({
         "profile": "astrid", "runtime_checkout": str(checkout),
         "source_checkout": str(checkout), "runtime_environment": str(environment),
     }), encoding="utf-8")
     data = tmp_path / "support"
 
-    def command(*args):
+    def command(*args, profile=True):
         result = subprocess.run(
             [str(python), "-X", "utf8", "-I", "-m", "astrid_runtime", *args,
-             "--data-root", str(data), "--source-manifest", str(profile), "--json"],
+             "--data-root", str(data), "--json",
+             *(["--source-manifest", str(manifest)] if profile else [])],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         )
         assert result.returncode == 0, result.stdout
@@ -119,7 +120,7 @@ def test_windows_update_backup_up_uses_the_actual_venv_interpreter(tmp_path, mon
         command("up", "--hosted-origin", "off")
         discovery = json.loads((data / "runtime/discovery.json").read_text(encoding="utf-8"))
         assert not discovery.get("door_endpoint")
-        command("backup", "--destination", str(tmp_path / "backup"))
+        command("backup", "--destination", str(tmp_path / "backup"), profile=False)
         print(f"Neutral update daemon ready at PID {discovery['pid']}; authenticated backup succeeded")
     finally:
         command("down")
