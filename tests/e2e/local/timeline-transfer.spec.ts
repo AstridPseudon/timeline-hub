@@ -199,7 +199,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await page.keyboard.press('Escape');
   await expect(timelineOptions).toHaveCount(0);
 
-  await expect(page.locator('[data-testid="preview-panel"]')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Preview panel' })).toBeVisible();
   // The position slider is only shown in full screen (calmed player controls), so observe playback from there.
   await page.getByRole('button', { name: 'Full screen' }).click();
   const position = page.getByRole('slider', { name: 'Playback position' });
