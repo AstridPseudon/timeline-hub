@@ -199,9 +199,11 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await page.keyboard.press('Escape');
   await expect(timelineOptions).toHaveCount(0);
 
+  await expect(page.locator('[data-testid="preview-panel"]')).toBeVisible();
+  // The position slider is only shown in full screen (calmed player controls), so observe playback from there.
+  await page.getByRole('button', { name: 'Full screen' }).click();
   const position = page.getByRole('slider', { name: 'Playback position' });
   await expect(position).toBeVisible();
-  await expect(page.locator('[data-testid="preview-panel"]')).toBeVisible();
   const before = await position.getAttribute('aria-valuenow');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect.poll(async () => position.getAttribute('aria-valuenow'), {
@@ -210,6 +212,7 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const playbackEvidence = browserEvidencePath(testInfo, 'timeline-transfer/ui-round-trip-playback.png');
   await page.screenshot({ path: playbackEvidence, fullPage: true });
+  await page.keyboard.press('Escape');
 
   const memory = await page.evaluate(async () => {
     const measure = (performance as any).measureUserAgentSpecificMemory;
