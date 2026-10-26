@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "single-scope-2",
+  "source_controls": {
+    "app": {
+      "expected": {
+        "checkout": "/home/user/work/app",
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      },
+      "actual": {
+        "checkout": "/home/user/work/wt/app-pin-82e9e13d",
+        "root": "/home/user/work/wt/app-pin-82e9e13d",
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+        "branch": null,
+        "dirty": false
+      },
+      "equal": true
+    },
+    "agent": {
+      "expected": {
+        "checkout": "/home/user/work/agent",
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      "actual": {
+        "checkout": "/home/user/work/wt/agt-pin-ecdc242e",
+        "root": "/home/user/work/wt/agt-pin-ecdc242e",
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+        "branch": null,
+        "dirty": false
+      },
+      "equal": true
+    },
+    "runtime": {
+      "expected": {
+        "checkout": "/home/user/work/runtime",
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      },
+      "actual": {
+        "checkout": "/home/user/work/wt/rt-pin-95d98f03",
+        "root": "/home/user/work/wt/rt-pin-95d98f03",
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+        "branch": null,
+        "dirty": false
+      },
+      "equal": true
+    },
+    "composition": {
+      "expected": {
+        "checkout": "/home/user/work/composition",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "actual": {
+        "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+        "root": "/home/user/work/wt/vw-pin-635f4de0",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "branch": null,
+        "dirty": false
+      },
+      "equal": true
+    }
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "bytes": 49914
+  },
+  "original_command_sha256": {
+    "preflight": "7dc0c13e7bea23a39fee9788a1575e76eae06be2ec74a3e3d595c99043facd57",
+    "normal": "00ee17b1b120f8907c537bb73879a6020f0f32aca9942a4402cb399d137b52ee"
+  },
+  "original_row_sha256": {
+    "preflight": "45ffb77c0bfe61fedd90997a0b6b96037073a5e512a35eeebef45f249b6dd009",
+    "normal": "f287fea597ca4fbe7c875b7678c92f3a27be08066712d8cb2be70bf1c474498b"
+  },
+  "new_command_sha256": {
+    "preflight": "7dc0c13e7bea23a39fee9788a1575e76eae06be2ec74a3e3d595c99043facd57",
+    "normal": "00ee17b1b120f8907c537bb73879a6020f0f32aca9942a4402cb399d137b52ee"
+  },
+  "new_row_sha256": {
+    "preflight": "5fee419a8a10fe41a2b5ab9fedd611afe188cd62ac0f733a01dde68918085c50",
+    "normal": "aaa3c1b46d4ef2639671ec0b4f58930efaae704a39c72889ce1c4794bba48bca"
+  },
+  "registration": false,
+  "native_ids": false,
+  "future_paths_absent": true
+}

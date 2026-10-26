@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.d141cc.bulk-custody-source-manifest.v1",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "selector": "p2-transition-none-bulk",
+  "recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json#/dispatches/3",
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "command_sha256": {"preflight": "38c79f83817a3f923fff11c76a1c0334e0158325a6f93bec04f152b123a7dc28", "normal": "b9dbc7f4f69d9bde52d84e8c96b50e0519c33245b4d2de304ca021740f609db3"},
+    "row_sha256": {"preflight": "cdd99483ea31d82263011b54fbe81baec4ec9d2f83807fa17b4fa93202beddce", "normal": "3636c3aec938363dd71350cafbce79434fa852463e7c2733fa30deaa4cb36bbd"},
+    "argv_cwd_environment": "loaded from dispatches[3] and matched the native invocation record"
+  },
+  "pins": {
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "tests": {
+    "p2_tour_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "readiness_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "p2_tour_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+    "readiness_blob": "ba85a25085b61bd2e8e3960ab0260a91c6f9650a",
+    "before_after_equal": true
+  },
+  "artifacts": {
+    "native_submit_plan_sha256": "857eda8a418f832bfa547a476288b3a1d6aaae136eaa940b0bc26f6c80952f65",
+    "normal_manifest_sha256": "752cfb99e47ca5b8173f0f0881f2fe2b7dfdcdae93b8d3e19fed51d12c6b72a",
+    "normal_request_sha256": "eb437fd1c3bcc01e0ee2d6bd7924fa7874321e5b75d458ca6864ac99dc14a3fe",
+    "normal_snap_sha256": "f969f467a15fbf624e7ac0f2a6f93b2b942f03f0a5c5cb4d1090cf6be8c9574d",
+    "preflight_request_sha256": "4ff3a40fac1315c852236c1a722283faf7126992fb1fd22a2e5ba77cf3d0b716",
+    "preflight_snap_sha256": "b0ce2c6b4f73db15a87eaf923c678cbd99043bb64d2cca3051a1c6de09693285",
+    "raw_keep_markers": true
+  },
+  "service": {
+    "normal_status": "pass",
+    "normal_exit": 0,
+    "preflight_status": "pass",
+    "preflight_exit": 0,
+    "wait_exit": 0,
+    "service_source_recorded_clean": true
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T11:45:46.379388+00:00",
+  "status": "SERVICE_PASS_PENDING_INDEPENDENT_CUSTODY",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/controller-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-controller-receipt.json",
+      "sha256": "f936681d7784b7f1eac0a81da070bb396a6cb0c615cccc1889a9abe9f927f446",
+      "bytes": 2459
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-results.json",
+      "sha256": "34ca6b981c107c0d864644ab6513aeb9b742b1646e12313dd3b420e14b898bba",
+      "bytes": 1955
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-source-manifest.json",
+      "sha256": "e1ed5cd0c365178f0c4348fef9885d509db5892f710463bcb2a99249745af68c",
+      "bytes": 1551
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/trace-measurement.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-trace-measurement.json",
+      "sha256": "cc90f23997d50fd59d2742d64d681a10be184e928c389fa992bf96cac350a389",
+      "bytes": 805
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-sampler-lifecycle.json",
+      "sha256": "1613e827000882c0ee1092950f7091ca43c1f53a199c30f8b8b00ceb9c1d7bbe",
+      "bytes": 404
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-validation.md",
+      "sha256": "bc580cbacde492d459360011a74f237a1e6f5746ef6aa200ec53198e97f1693b",
+      "bytes": 1807
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-handoff.md",
+      "sha256": "38e268eecc29a9c4f31221fbc9b14d18619b3c3ee9dcb94f5a8c0e6df5a293ca",
+      "bytes": 1018
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/progress.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-controller-next-progress.json",
+      "sha256": "00c67333b1f4d708f12276660008a843af65f58a6e7ecd229f6ae920b5e7c9a8",
+      "bytes": 3192
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.d141cc.bulk-controller.results.v1",
+  "selector": "p2-transition-none-bulk",
+  "attempt_scope": "original",
+  "outcome": "PASS",
+  "normal_request_id": "app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060",
+  "suite": "full-d141-p2-transition-none-bulk-82e9e13d-submit",
+  "service_wait": {"command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060", "exit": 0, "status": "pass", "duration_seconds": 220},
+  "preflight": {"id": "app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-preflight-1026113625-5394", "status": "pass", "exit": 0, "duration_seconds": 2},
+  "tests": [
+    {"file": "tests/e2e/local/three-products.mounted-readiness.spec.ts", "name": "D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture", "status": "passed", "time_seconds": 10.3},
+    {"file": "tests/e2e/local/three-products.p2-tour.spec.ts", "name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo", "status": "passed", "time_seconds": 39.4}
+  ],
+  "raw_evidence": {
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060",
+    "summary_sha256": "9a0b067fb13941e9f9abe6a427ad0f1fd102006a8a5f474ee3e177d78179532c",
+    "manifest_sha256": "752cfb99e47ca5b8173f0f0881f2fe2b7dfdcdae93b8d3e19fed51d12c6b72a",
+    "journey_junit_sha256": "d112ad2f7c69f4c254df0747ae674276076bd6cdad6afcfd508accc19e5ce2df",
+    "readiness_junit_sha256": "34ae34759d000d2a7bfea2c1957f3909a684b47764d674e2837cb3163fe7352d"
+  },
+  "scope_limit": "This is the unchanged original selector result only; no overall P2/platform GO, REG0, final build, ZIP, or other selector claim."
+}

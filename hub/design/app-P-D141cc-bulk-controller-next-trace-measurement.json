@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.d141cc.bulk-controller.trace.v1",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-controller-next/evidence/disk-trace.txt",
+  "trace_sha256": "f9ea72bcd5ee16fdb437ca7d52820bcd65b4ec43d9ea1b7b6533028ae949a623",
+  "samples": 73,
+  "first_timestamp": "2026-10-26T11:34:57Z",
+  "last_timestamp": "2026-10-26T11:40:58Z",
+  "first_available_bytes": 5636124672,
+  "admission_available_bytes": 5635117056,
+  "minimum_available_bytes": 5185191936,
+  "last_available_bytes": 5488504832,
+  "admission_floor_bytes": 5200000000,
+  "standing_stop_bytes": 4000000000,
+  "standing_stop_reached": false,
+  "sampler_session": 92982,
+  "lifecycle": "foreground retained sampler; SIGINT sent, same session reaped exit 1"
+}

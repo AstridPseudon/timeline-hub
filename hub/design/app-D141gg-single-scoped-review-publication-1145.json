@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-26T11:45:06.977618+00:00",
+  "status": "PASS_SOURCE_ONLY",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-report.md",
+      "sha256": "e869404c824c7fd65497bad36f681e17fba5889e6d888230f2a7c6538f04b87a",
+      "bytes": 751
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-review.json",
+      "sha256": "65f234c5468b071939fae4fd4d1b68dc02a2e1c574cac6cf7748b56ef0d93781",
+      "bytes": 3111
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-findings.md",
+      "sha256": "df0b1a0b2af44840c2e547017fa29463905c5ddcd45abfafc0f9c7dea4579df1",
+      "bytes": 2216
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-source-manifest.json",
+      "sha256": "a26a8411b080b732664b1cac52879f8a14813dc6a97e25245777c023162301ab",
+      "bytes": 15026
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/controls.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-controls.json",
+      "sha256": "c2d6c7e29d5256283c62e67e522c1414669e9602dffc8de4f6613709a8750a7a",
+      "bytes": 1135
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/same-check.stdout.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-same-check.stdout.json",
+      "sha256": "bc89a721db92006b34e5146d6bd0b20e19e5eb65a473b62d42285703005d83c2",
+      "bytes": 3427
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-validation.md",
+      "sha256": "0431522c4c3e4fa4b2ca252a95ca62f4dd831fc3918846fe2bfe747d6f19903a",
+      "bytes": 1447
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-handoff.md",
+      "sha256": "227f7cc82ec9caabb8516b388da2149031f5eff60d8dedfe003dac5e114ed396",
+      "bytes": 806
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-disk-trace.txt",
+      "sha256": "e2351afbfa4670886eb05226b8151f305fc46dc481001b06b4fb2da499c0186a",
+      "bytes": 1125
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-review-1141/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-single-scope-review-1141-sampler-lifecycle.json",
+      "sha256": "ddcbab429e42412a369c7f7045cf75f2ae9c8581bc43f6e0a0a16a6da48d2522",
+      "bytes": 1042
+    }
+  ],
+  "trace_limit": "Author zero coverage and supplemental reviewer5samples only, no fullsource/bodycoverageclaim",
+  "body_result": false
+}

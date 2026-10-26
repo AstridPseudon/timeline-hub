@@ -1,0 +1,57 @@
+{
+  "schema": "d141gg-single-scope-source-review-v1",
+  "verdict": "PASS_SOURCE_ONLY",
+  "selector": "p2-transition-none-single",
+  "attempt_scope": "single-scope-2",
+  "target": "app-pin-82e9e13d",
+  "source_base": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "execution": {
+    "source_checker_exit_code": 0,
+    "source_checker_status": "PASS",
+    "native_submit_invocations": 0,
+    "request_id": null,
+    "body_started": false,
+    "body_verdict": "UNVERIFIED",
+    "test_status": "NOTRUN",
+    "registration": false,
+    "no_ids_created_by_review": true
+  },
+  "source_controls": {
+    "source_tuple_conserved": true,
+    "exact_execution_inputs": true,
+    "allowed_data_only_changes": true,
+    "exact_original_command_bytes": true,
+    "command_hashes_conserved": true,
+    "genuine_four_detached_clean_checkouts": true,
+    "loaded_agent_sha_matches_original_pin": true,
+    "builder_sha_and_git_blob_exact": true,
+    "registration_false": true,
+    "future_namespace_paths_absent": true,
+    "native_ids_absent": true,
+    "no_new_runtime_authority": true
+  },
+  "inputs": {
+    "original_recipe": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "original_dispatch_index": 2,
+    "original_recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-prep-1137/evidence/dispatch-recipe.json",
+    "packet_sha256": "bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e",
+    "checker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-single-scope-prep-1137/evidence/check.mjs",
+    "checker_sha256": "97d121a783feddabbb0f1b87ad8999af37d892870dc9393702a212fda4ff3a93",
+    "original_source_manifest_sha256": "4c1c59497ac2694d62fa4ad6efe7b1a18cd4cf96f8cd6e4aa7d644f77ea21467",
+    "author_packet_source_manifest_sha256": "342ff24d28b3c2c2886b6856a8496bc5a1f84d8919b7e8fb5773afa5a1014083",
+    "author_controls_sha256": "70a7ad076d1d86090223f52559d9e2173291706cd20228eac712e82e08a199e5",
+    "builder": {
+      "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+      "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+      "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+      "bytes": 49914
+    }
+  },
+  "limitations": [
+    "Author-required first sampler failed before its evidence directory existed; zero coverage is preserved and not relabeled continuous.",
+    "This is source/data qualification only; no native submit, request-test, service, body, registration, browser, or product test was run.",
+    "The prior original single attempt remains FAIL_CUSTODY / NOTRUN and is not repaired, retried, or converted into a product verdict.",
+    "A future controller must re-inspect the real namespace, request, row, and snapshot with the accepted procedure and finite-fail on prior or torn custody."
+  ]
+}

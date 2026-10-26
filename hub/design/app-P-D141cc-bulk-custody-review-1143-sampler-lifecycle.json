@@ -1,0 +1,18 @@
+{
+  "schema": "timeline.d141cc.bulk-custody-review.sampler.v1",
+  "command": "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence && timeout 5s bash -c 'while :; do date -u +%Y-%m-%dT%H:%M:%SZ; df -Pk /home/user/work/wt/app-P-D141cc-bulk-custody-review-1143; sleep 1; done' > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/disk-trace.txt",
+  "foreground": true,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/disk-trace.txt",
+  "trace_sha256": "65bb86d1885e3806a6445c4cf6297ca153f49671ed8d31f967021653d7bb5815",
+  "trace_samples": 5,
+  "first_timestamp": "2026-10-26T11:42:55Z",
+  "last_timestamp": "2026-10-26T11:42:59Z",
+  "first_available_bytes": 5482328064,
+  "minimum_available_bytes": 5482328064,
+  "last_available_bytes": 5482332160,
+  "stop": "timeout after foreground five-second observation",
+  "timeout_exit": 124,
+  "reaped": true,
+  "worker_tmpdir_created": false,
+  "native_started": false
+}

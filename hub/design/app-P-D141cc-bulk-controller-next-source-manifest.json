@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.d141cc.bulk-controller.source-manifest.v1",
+  "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "builder": {"path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f", "blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"},
+  "pins": {
+    "app": {"head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "service_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060/d66/manifest.json",
+  "service_manifest_sha256": "752cfb99e47ca5b8173f0f0881f2fe2b7dfdcdae93b8d3e19fed51d12c6b72a",
+  "source_files_unchanged": true,
+  "test_files_sha256_before_after_equal": true,
+  "artifact_sha256": "857eda8a418f832bfa547a476288b3a1d6aaae136eaa940b0bc26f6c80952f65"
+}

@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-26T11:45:06.977618+00:00",
+  "worker": "app-P-D141gg-single-scoped-controller-1145",
+  "free_bytes": 5480448000,
+  "no_live_test_ids": [],
+  "source_pins": [
+    {
+      "role": "app",
+      "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "clean": true
+    },
+    {
+      "role": "agent",
+      "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "clean": true
+    },
+    {
+      "role": "runtime",
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "clean": true
+    },
+    {
+      "role": "composition",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "clean": true
+    }
+  ],
+  "recipe_sha256": "bdf548ac4498d08dd38f2b7eb0664f7a862c4ad109a39fd48d91db46062f194e",
+  "scope": "single-scope-2",
+  "normal_suite": "full-d141-p2-transition-none-single-82e9e13d-submit-single-scope-2",
+  "source_review": "1141 PASS_SOURCE_ONLY samecheckPASS allfieldsTRUE",
+  "prior_bulk": "27060PASS0/220s controllerterminal",
+  "prior_single": "NOTRUN no request; independentFAIL immutable",
+  "body_ids": "not yet generated"
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "timeline.d141cc.bulk-controller.sampler.v1",
+  "tool_session": 92982,
+  "command": "foreground 5-second df sampler writing disk-trace.txt",
+  "trace_started": "2026-10-26T11:34:57Z",
+  "stop": "SIGINT",
+  "reaped": true,
+  "exit_code": 1,
+  "trace_samples": 73,
+  "first_sample_before_request": true,
+  "request_started_after_first_sample": true,
+  "last_sample": "2026-10-26T11:40:58Z"
+}

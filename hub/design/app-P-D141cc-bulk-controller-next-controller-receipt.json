@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.d141cc.bulk-controller.receipt.v1",
+  "selector": "p2-transition-none-bulk",
+  "attempt_scope": "original",
+  "recipe": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json#/dispatches/3",
+    "sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "command_sha256": {"preflight": "38c79f83817a3f923fff11c76a1c0334e0158325a6f93bec04f152b123a7dc28", "normal": "b9dbc7f4f69d9bde52d84e8c96b50e0519c33245b4d2de304ca021740f609db3"},
+    "row_sha256": {"preflight": "cdd99483ea31d82263011b54fbe81baec4ec9d2f83807fa17b4fa93202beddce", "normal": "3636c3aec938363dd71350cafbce79434fa852463e7c2733fa30deaa4cb36bbd"}
+  },
+  "admission": {
+    "free_bytes": 5635117056,
+    "floor_bytes": 5200000000,
+    "decision": "admitted_once",
+    "custody_inspection": "FIRST_NATIVE_INVOCATION_ONLY",
+    "no_prior_same_target_request": true,
+    "no_prior_artifact_or_lock": true
+  },
+  "native": {
+    "tool_session": 59025,
+    "pid": 21,
+    "invocations": 1,
+    "argv_from_recipe": true,
+    "cwd_from_recipe": true,
+    "environment_from_recipe": true,
+    "exit": 0,
+    "stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/native-submit.stdout.log",
+    "stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-transition-none-bulk-82e9e13d-submit/native-submit.stderr.log"
+  },
+  "ids": {
+    "preflight": "app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-preflight-1026113625-5394",
+    "normal": "app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060",
+    "preflight_request_sha256": "4ff3a40fac1315c852236c1a722283faf7126992fb1fd22a2e5ba77cf3d0b716",
+    "preflight_snap_sha256": "b0ce2c6b4f73db15a87eaf923c678cbd99043bb64d2cca3051a1c6de09693285",
+    "normal_request_sha256": "eb437fd1c3bcc01e0ee2d6bd7924fa7874321e5b75d458ca6864ac99dc14a3fe",
+    "normal_snap_sha256": "f969f467a15fbf624e7ac0f2a6f93b2b942f03f0a5c5cb4d1090cf6be8c9574d"
+  },
+  "custody": {"normal_status": "pass", "normal_exit": 0, "wait_exit": 0, "second_submit": false, "manual_request_creation": false}
+}

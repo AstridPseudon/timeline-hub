@@ -1,0 +1,32 @@
+{
+  "schema": "d141gg-single-scope-review-controls-v1",
+  "verdict": "PASS_SOURCE_ONLY",
+  "checker_sha256": "97d121a783feddabbb0f1b87ad8999af37d892870dc9393702a212fda4ff3a93",
+  "source_ready": true,
+  "pure_builder_recomputed": true,
+  "service_recipe_matches_original": true,
+  "build_submit_plan_source_tuple_matches": true,
+  "exact_original_command_bytes": true,
+  "source_tuple_conserved": true,
+  "exact_argv_cwd_unset_operational_environment": true,
+  "twelve_pin_environment_references_conserved": true,
+  "loaded_agent_sha_matches_original_json_pin": true,
+  "four_exact_detached_checkouts_unchanged": true,
+  "source_blobs_and_builder_spec_exact": true,
+  "data_only_delta": {
+    "selector": true,
+    "attempt_scope": true,
+    "suite_names": true,
+    "rows": true,
+    "hashes": true,
+    "private_future_paths": true,
+    "future_environment_references": true
+  },
+  "registration": false,
+  "namespace_paths_absent": true,
+  "ids_created": false,
+  "inspector_or_runtime_authority_changed": false,
+  "old_procedure_or_wire_changed": false,
+  "author_first_sampler_gap_preserved": true,
+  "no_body_pass_claim": true
+}

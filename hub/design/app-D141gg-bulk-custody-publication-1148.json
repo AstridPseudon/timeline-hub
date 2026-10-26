@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-26T11:48:44.818987+00:00",
+  "verdict": "PASS_CUSTODY_TEST_PASS",
+  "actual_normal_id": "app-pin-82e9e13d-full-d141-p2-transition-none-bulk-82e9e13d-submit-1026113655-27060",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-report.md",
+      "sha256": "439232e5359f1bd38a3b974105a506ad48b85e2375683b322f8775c51194d6a6",
+      "bytes": 750
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-review.json",
+      "sha256": "deebc89e40dd19dedaae19d33e512e078ef51aa148520ce314c68e983b41ff02",
+      "bytes": 5464
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-findings.md",
+      "sha256": "f47f0bd74ac41d57e9038f4faefe90f2e5fabb9632d09e56289000cf583b0819",
+      "bytes": 1961
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-source-manifest.json",
+      "sha256": "a38efa5688c462d5de709a0111a4e6993239e156ccf44c78bfa587a8fef99c89",
+      "bytes": 3008
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-validation.md",
+      "sha256": "2a01783033cfc442e4dd77a245a0358ca84272f91e8807252b860c655bc32748",
+      "bytes": 1669
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-handoff.md",
+      "sha256": "c5f80fad53b5c1df9b4fb61f68029e77fbb53356bd8b9c6daf12fa5353567de8",
+      "bytes": 547
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-disk-trace.txt",
+      "sha256": "65bb86d1885e3806a6445c4cf6297ca153f49671ed8d31f967021653d7bb5815",
+      "bytes": 995
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-bulk-custody-review-1143/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-bulk-custody-review-1143-sampler-lifecycle.json",
+      "sha256": "988f52dbe7c3df834c65aacd3c2da00e160a8346fd6b6b64e6f95cd3ac23d9f2",
+      "bytes": 1200
+    }
+  ],
+  "scope": "Original bulk only on82e/ecdc/95d/635f; no overallP2GO or retarget",
+  "trace_limit": "Author73 native-era samples, reviewer supplemental5seconds only; no whole-reviewer continuous5s claim"
+}
