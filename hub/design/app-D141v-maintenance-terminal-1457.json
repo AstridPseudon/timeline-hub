@@ -1,0 +1,37 @@
+{
+  "utc": "2026-10-26T14:57:36.175335+00:00",
+  "kind": "Manager maintenance terminal; no product source or proof change",
+  "before": "managers/app/rounds/20261026T1457Z-maintenance-before.json",
+  "commands": [
+    {
+      "argv": [
+        "bin/sweep-tmp",
+        "3"
+      ],
+      "exit": 0,
+      "stdout": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4397M -> 4397M\n",
+      "stderr": "managers/app/rounds/20261026T1457Z-sweep.stderr",
+      "stderr_distinct_lines": [
+        "ls: write error: Broken pipe"
+      ]
+    },
+    {
+      "argv": [
+        "bin/compact-scratch",
+        "1"
+      ],
+      "exit": 0,
+      "stdout": "packed 0 scratch dirs; free 4397M -> 4397M\ngzipped 0 old worker logs; free now 4397M\npacked 0 finished test-run dirs; free now 4397M\n",
+      "stderr": "managers/app/rounds/20261026T1457Z-compact.stderr",
+      "stderr_distinct_lines": []
+    }
+  ],
+  "KEEP_count": 92,
+  "all_baseline_KEEP_bytes_and_modes_exact": true,
+  "materialized_worktrees": 34,
+  "ended_unprotected_candidates": [],
+  "recycled_worktrees": [],
+  "free_before": 4610539520,
+  "free_after": 4610269184,
+  "limits": "No reclaimable candidates or cleanup-only savings. Cannot reach15GB through available authorized candidates. Held source pins, rawKEEP, Git objects and dirty/locked/unowned/sealed/refused targets retained. No hub operation or sourceKEEP release."
+}
