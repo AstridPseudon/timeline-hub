@@ -158,7 +158,6 @@ function ShotTimelineEditorSurface({
   const { previewRef, playerContainerRef, currentTime, onPreviewTimeUpdate } = useTimelinePlaybackContext();
   const editorData = useTimelineEditorData();
   const activeConfig = editorData.resolvedConfig ?? config;
-  const [showClipDetail, setShowClipDetail] = useState(() => config.clips.length <= 24);
   // Resolved config is the visual/rendering model and may omit timeline-level
   // metadata. Prefer the persisted config actually consumed by this mounted
   // query; only fall back to that same editor query's resolved config when a
@@ -321,34 +320,16 @@ function ShotTimelineEditorSurface({
         {activeConfig.clips.length > 24 ? (
           <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/20 px-3 py-2 text-xs">
             <span className="text-muted-foreground">
-              One canonical shot · {activeConfig.clips.length} internal render clips
+              One canonical shot · {activeConfig.clips.length} internal render clips · drop media below to add it
             </span>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              aria-expanded={showClipDetail}
-              onClick={() => setShowClipDetail((visible) => !visible)}
-            >
-              {showClipDetail ? 'Hide frame detail' : 'Edit frame detail'}
-            </Button>
           </div>
         ) : null}
-        {showClipDetail ? (
-          <div className="h-44 min-h-36 overflow-hidden">
-            <TimelineEditorCore
-              durationLimitSeconds={durationLimitSeconds}
-              hardDurationSeconds={hardDurationSeconds}
-            />
-          </div>
-        ) : (
-          <div
-            className="flex min-h-24 items-center justify-center px-4 text-center text-xs text-muted-foreground"
-            data-shot-timeline-overview="true"
-          >
-            This shot is shown as one timeline item. Expand frame detail only when you need to edit its internal composition.
-          </div>
-        )}
+        <div className="h-44 min-h-36 overflow-hidden">
+          <TimelineEditorCore
+            durationLimitSeconds={durationLimitSeconds}
+            hardDurationSeconds={hardDurationSeconds}
+          />
+        </div>
       </div>
       <div className="sr-only">Shot timeline duration {durationSeconds.toFixed(2)} seconds.</div>
     </div>
