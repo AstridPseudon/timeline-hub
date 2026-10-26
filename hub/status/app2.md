@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-26T08:24:56Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-26T08:24:08Z
+<!-- app2 | 2026-10-26T08:28:31Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-26T08:26:07Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -202,7 +202,7 @@
 
 | F-D141-Agent-binding | Track independent controller review | Agent Luna; App host | Author0735 terminal | review | Agent0735; App review host requested0811 | Author claims10 admission and36 lifecycle controls PASS. Independent same-checker review owed; no installation, full pair or CLI proof. | Absolute ORCH packet |
 
-| F-D141yb-rehearsal | Preserve interrupted current rehearsal | Runtime host; independent review | D141z host audit no survivors | review | Runtime0741; App custody host0756 | Interrupted at3.93GB; original command exit UNKNOWN. Host found no survivors. Partial raw KEEP retained; no further rehearsal. | App82e9 / Agentecdc / Runtime95d |
+| F-D141yb-rehearsal | Preserve interrupted current rehearsal | Runtime host; App Luna | Independent App0756 FAIL CUSTODY | gated:recorded-custody-fail | Runtime0741; App review0756 | All7 custody findings retained. Partial Agent and Runtime only; original exit and reaping UNKNOWN. D141z host audit no survivors. No further rehearsal. | App82e9 / Agentecdc / Runtime95d |
 Later: Interrupted D141y-b custody and D141z whole-process-group stop qualification stay Runtime-owned. Final build is heavy with4.86GB dispatch floor; no further rehearsal. No Proof build, dispatch, retry or venue transfer.
 
 D56.4: Proof is folded into App. MAIN closed the D125 hosting exception. Summaries only: no Proof dispatch, body, provisioning, retry, cleanup or product merge. Historical rows retain their recorded scopes and are transferred to App.
@@ -216,12 +216,12 @@ regressions: App unit REG0 independently0736 and header07:43; all32 own/N/A fail
 
 Blockers: Freeze2 Agent proof — owner Agent. Author0735 terminal; independent binding review offered App0811. App0752 whole-path source investigation completed. CLIprep0733 awaits local source admission; full pair and CLI body require4714564096 bytes.
 Blockers: Final App journeys — owner App. Independent0756 PASS clears final recipe wait; four exact checkouts qualified. Actual4946669568 bytes is below normal5200000000 admission. Final P1/P2-six/P3 originals remain owed; paired kit DROPPED.
-Blockers: Runtime final tooling — owner Runtime with App host. D141z host audit no survivors clears host-control wait. Original command exit and historical reaping UNKNOWN. Source stop-wrapper0812 and independent custody0756 pending; F-final heavy floor4860000000, no rehearsal.
-Next ready: None for Proof. App final journeys await actual post-prep5.2GB. App host review0811 follows Agent0735 terminal; Runtime whole-path0752 completed. CLIprep0733 awaits Agent source admission. Runtime stop-wrapper0812 and custody0756 retain App hosting priority. D141v waits all-lane REG closure.
+Blockers: Runtime final tooling — owner Runtime with App host. Independent App0756 FAIL CUSTODY all7 retained; present host audit no survivors. Reviewed whole-process-group stop0812 still owed. F-final heavy floor4860000000; no further rehearsal.
+Next ready: None for Proof. App final journeys await actual post-prep5.2GB. Agent binding review0811 and CLIprep0733 host0815 await App allocation; full pair/CLI body retain Agent4714564096 admission. Runtime stop-wrapper0812 pending; historical custody FAIL retained. D141v waits all-lane REG closure.
 
 Safety: D130 automatic classifier refusal remains in force. SWAP recovery and related acceptance stay stopped: no retry, rephrase, alternate route, transfer or rollback. D127e only proves static WAL reachability; Element wait causality is UNPROVED. D141 documents both gaps without lifting refusals. Original Farm0137 census approval refusal remains in the [permission report](../../escalations/app2-20261026T014014Z-Farm-census-permission-stop.md). Owner-approved census0140 returned NOT_READY. Farm smoke approval refusal is preserved in [Farm0355](../../design/peer-farm-to-lead-runtime-20261026T0355Z-schema-verify-sidecar-and-zip-smoke-allowlist.md). D141m04:03 drops the smoke everywhere and withdraws machine transfer; planned F-final stays separate. D141o defers hub repacking to owner permission. D141t records the Runtime held-fixture compaction refusal; originals and adjacent archive stay as found, KEEP protected, no retry or reconstruction. Proof makes no execution action.
 
-Pass 2026-10-26T08:24:08Z: INBOX819763 unchanged; headerf8ccf21a5f5b2e8a6acca8ffa7604d1ce90813722f095b069a4bcc2c6ed0d204 includes D141z. Normal bin/workers reports1313 done, zero live. App08:12 board records whole-path0752 complete and custody0756 review; final ordinary recipes0756 PASS, final journeys below normal5.2GB. Agent08:12 author0735 terminal; independent host0811 requested, no full pair or CLI. Runtime08:15 board applies no-survivor host audit, stop-wrapper0812 host request, no further rehearsal and4.86GB heavy build floor. Original command exit/reaping remain UNKNOWN. D56.4 summaries-only holds; no Proof allocation, replay, cleanup or venue transfer. Local free5329227776 bytes; D125 receipt2074749d exact. Holds and KEEP preserved; normal hub-sync publishes board.
+Pass 2026-10-26T08:26:07Z: INBOX819763 and header f8ccf21a5f5b2e8a6acca8ffa7604d1ce90813722f095b069a4bcc2c6ed0d204 unchanged. Normal bin/workers1313 done, zero live. App08:18 records independent interrupted rehearsal0756 FAIL CUSTODY all7 and completed whole-path0752 delivered. D141z host audit no survivors is present-time only; original exit/reaping UNKNOWN, no further rehearsal. Agent08:16 records independent binding review0811 and CLIprep0733 hosting0815 offers, no new body. Final App recipes qualified, journeys still below normal5.2GB. D56.4 summaries-only holds; no Proof allocation, replay, cleanup or venue transfer. D125 receipt2074749d exact, holds and KEEP preserved. Normal hub-sync publishes board.
 
 D125 receipt remains SHA2562074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Supplied submit stopped before D66 at missing tsx; no normal request ID, preflight ID, XML or body. Do not provision dependencies, retry, or touch the Node tree, four checkouts or private output root.
 
