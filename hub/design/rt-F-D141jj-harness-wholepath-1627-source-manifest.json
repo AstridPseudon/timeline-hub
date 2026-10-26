@@ -1,0 +1,35 @@
+{
+  "format": "timeline-d141jj-wholepath-source-manifest-v1",
+  "original_source_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-base-fix-next/evidence",
+  "controlling_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141jj-positive-NOTREADY-publication-1625.json",
+  "publication_sha256": "3945764d485f2c90708ed9290a61c48f00a451fe29c25124f5909acce191d06f",
+  "inputs": [
+    {
+      "path": "evidence/check_jj.py",
+      "sha256": "0fae07c6eeafc4c8081b84e65ecd9e2518f54c79d5d8c8132a4396974c8b9595",
+      "role": "original checker read-only"
+    },
+    {
+      "path": "evidence/candidate/run-final-delivery.py",
+      "sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a",
+      "role": "caller byte identity"
+    },
+    {
+      "path": "evidence/candidate/delivery_lifecycle.py",
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "role": "lifecycle byte identity"
+    },
+    {
+      "path": "evidence/candidate/delivery_gate_build.py",
+      "sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8",
+      "role": "D68 wrapper byte identity"
+    },
+    {
+      "path": "evidence/candidate/check.sh",
+      "sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332",
+      "role": "SAME33 control source"
+    }
+  ],
+  "immutable_source_policy": "No candidate, product, registry, worktree, branch, or canonical source was modified."
+}
+

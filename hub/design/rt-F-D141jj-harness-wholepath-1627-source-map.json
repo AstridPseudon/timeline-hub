@@ -1,0 +1,54 @@
+{
+  "format": "timeline-d141jj-wholepath-source-map-v1",
+  "classification": "source-only read-only investigation",
+  "failed_log": {
+    "commit": "ce9e0532a71489e39a0d339e0f9d399a12a39090",
+    "path": "evidence/tmp/check_jj-positive.log",
+    "sha256": "049134972a2ad541ffc589a9b5cb26ee72ac4bd4981b75cdeff69fa03bf1630a",
+    "key_lines": [
+      "D68 delivery status: PASS",
+      "PASS refusal before candidate writes: gate-source-root-mismatch",
+      "delivery lifecycle failed closed: delivery trace already exists",
+      "AssertionError: stale-nonapp-upstream"
+    ]
+  },
+  "trace": [
+    {
+      "file": "evidence/check_jj.py",
+      "lines": "112-117",
+      "role": "invoke catches exceptions but discards caller.main integer return"
+    },
+    {
+      "file": "evidence/check_jj.py",
+      "lines": "320-333",
+      "role": "one service_tmp is assigned to the whole positive/negative sequence"
+    },
+    {
+      "file": "evidence/check_jj.py",
+      "lines": "402-432",
+      "role": "later refusal reuses TMPDIR unless an explicit service_root is supplied"
+    },
+    {
+      "file": "candidate/run-final-delivery.py",
+      "lines": "211-232",
+      "role": "unique stage parent, but outer service_tmp passed to run_delivery"
+    },
+    {
+      "file": "candidate/delivery_lifecycle.py",
+      "lines": "290-337",
+      "role": "fixed retained trace path and intentional pre-existing-trace refusal"
+    },
+    {
+      "file": "candidate/delivery_gate_build.py",
+      "lines": "221-242",
+      "role": "intended stale non-App current-origin guard, reached only after lifecycle"
+    },
+    {
+      "file": "candidate/check.sh",
+      "lines": "64-116,224-253",
+      "role": "SAME33 uses distinct per-case TMPDIR roots"
+    }
+  ],
+  "production_distinction": "The source guard and lifecycle behavior are not implicated; only the private checker invocation root and refusal observation are defective."
+}
+

@@ -1,0 +1,15 @@
+{
+  "format": "timeline-d141jj-wholepath-sampler-v1",
+  "sampler_pid": 4,
+  "interval_seconds": 5,
+  "floor_bytes": 4000000000,
+  "trace": "disk-trace.txt",
+  "observed_samples": 28,
+  "minimum_observed_available_bytes": 5214289920,
+  "final_observed_available_bytes": 5214289920,
+  "process_observed_absent_at_reap_check": true,
+  "exit_status": "UNKNOWN",
+  "waited": false,
+  "reaped": "UNKNOWN",
+  "coverage_gap": "The initial shell session was interrupted after the sampler ran; its durable wait/reap status was not recorded. No investigation command depended on sampler output."
+}
