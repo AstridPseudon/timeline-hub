@@ -1,0 +1,79 @@
+{
+  "utc": "2026-10-26T07:53:21.481867+00:00",
+  "kind": "byte-exact committed evidence recovery; relative-output original immutable; no product/test changes",
+  "worker": "app-P-D141w-ordinary-recipe-return-0747",
+  "files": [
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/binding.json",
+      "blob": "814502cf00474ab10cd48b3cac5c734436d35945",
+      "sha256": "812b737aa235e26ab25fd8a342223c8d6f43d35394d4cdcbcc63545645469255",
+      "bytes": 9059,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/binding.json"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/normal-command.txt",
+      "blob": "d1e1b2f4e50e89e04b177ba671175fd34043b67f",
+      "sha256": "ee68699ee18022ce9e77c40173fb85db2112204bc7d3df6b705edde3211ecedb",
+      "bytes": 966,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/normal-command.txt"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/preflight-command.txt",
+      "blob": "bdad9acbf3d9a67636d213a982ea1e11944d8aea",
+      "sha256": "01361393d0189db2d60e7effb17666cd5ddbd7554286e98a1f10b2459b3c799a",
+      "bytes": 978,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/preflight-command.txt"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/submit-commands.json",
+      "blob": "552d5d6b7029c20297e318e16d5adb15dd856a2f",
+      "sha256": "239d93ad133315445c85006e13394af312f0ec616a76bb7bc04203c984cc989e",
+      "bytes": 6708,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/submit-commands.json"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/controller-plan.md",
+      "blob": "93ea3a156b74247fda7ef602612a526b9a4eb942",
+      "sha256": "b545f113762afae3cfc53cba75f560aa082db32bc1b578ed40c426382c0632de",
+      "bytes": 4624,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/controller-plan.md"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/findings-resolved.json",
+      "blob": "7105bbaf974c8bfed0a70897ae21167119a6b319",
+      "sha256": "e1c3a66ced21d37f72809a4954e2b0d20be0ad08c4c2d9015a4acb8489fee004",
+      "bytes": 3899,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/findings-resolved.json"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/source-manifest.json",
+      "blob": "746b38f25102d175f57d5817e64ee259c0323e47",
+      "sha256": "89d389d89a8bfcf15ae2bf7c5e78af52a9a57099c6c8813a61d245569aa9e5ba",
+      "bytes": 7610,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/source-manifest.json"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/validation.md",
+      "blob": "d4712eb6002a62b1090afbe16176dfa128b673aa",
+      "sha256": "338f1550cdad5b12bb3e6b57628ecdd06d28a3ac5668435951d10d77cdcdecd5",
+      "bytes": 3723,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/validation.md"
+    },
+    {
+      "original_commit": "a8d94948d73c09a8ad7687d464a6e7cac815295f",
+      "path": "evidence/handoff.md",
+      "blob": "9e00dc6481dbfa2df06df4575345ddfd3ad94a3a",
+      "sha256": "06e95ec69393ebff66a52b09354a92aa76e0d1622c7549f49abd977474a27a2a",
+      "bytes": 1633,
+      "assigned_output": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/handoff.md"
+    }
+  ]
+}
