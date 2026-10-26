@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.f.d141y.immutable-custody-correction.v1",
+  "task": "rt-F-D141y-custody-correction-0724",
+  "one_result": "honest_immutable_custody_correction",
+  "original_review": {
+    "task": "rt-F-D141y-rehearsal-review-0719",
+    "verdict": "FAIL",
+    "finding": "F1",
+    "finding_status": "SUBSTANTIATED_FROM_OLD_EVIDENCE",
+    "scope": "missing retained historical sampler terminal/termination/wait-reap custody"
+  },
+  "original_claims": [
+    {"claim": "single canonical delivery-build dry-run on the four pinned heads", "status": "SUBSTANTIATED", "limit": "exit 2 at all-repository App ancestry preflight"},
+    {"claim": "App 4de54db14bdc9ddc2ce2e5887258b03acbffd30d is not descended from origin/main fc24f84994dc36cfae9349112782ab4d91dbc73b", "status": "SUBSTANTIATED", "evidence": "raw-command.stderr and results.json"},
+    {"claim": "all four patch/tree/bundle/apply checks", "status": "NOT_REACHED", "status_not_pass" : true},
+    {"claim": "disk remained above 4000000000 bytes during retained trace", "status": "SUBSTANTIATED_FOR_RETAINED_SAMPLES", "limit": "does not prove sampler lifecycle"},
+    {"claim": "original sampler was terminated and reaped after finalization", "status": "UNSUPPORTED", "derivative_action": "RETRACT"}
+  ],
+  "preserved_identity": {
+    "tuple_sha256": "6fe1b04ca64f38cc8a524bc397950df5a6bce835be614341a70e2c163d253c4d",
+    "raw_stderr_sha256": "8723a85802bb604561bf76ba507e71dc13fc4d4c4ae9bda553b32fee0fb90c95",
+    "original_exit_code": 2,
+    "app_ancestry": {"base": "fc24f84994dc36cfae9349112782ab4d91dbc73b", "tip": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d"},
+    "actual_checks": "ALL FOUR patch/tree/bundle/apply NOT_REACHED",
+    "original_files": "source-manifest.json records SHA-256 for author and reviewer originals"
+  },
+  "historical_sampler_facts": {
+    "start": {"status": "PARTIAL_ONLY", "retained_line": "author log.txt:853", "fact": "sampler command text is present"},
+    "pid": {"status": "UNKNOWN", "fact": "no original sampler PID assignment was retained"},
+    "terminal": {"status": "UNKNOWN_UNSUBSTANTIATED", "fact": "no original terminal artifact or actual sampler status"},
+    "termination": {"status": "UNKNOWN_UNSUBSTANTIATED", "fact": "no original kill/TERM call or return evidence"},
+    "wait_reap": {"status": "UNKNOWN_UNSUBSTANTIATED", "retained_line": "author log.txt:3880", "fact": "only a later ps poll of guessed PID 3265; no wait/reap result"},
+    "finalization": {"status": "SUBSTANTIATED", "retained_file": "finalize.log", "fact": "wrapper finalization and cleanup, not sampler reaping"}
+  },
+  "present_only_observations": {
+    "admission_bytes": 4608192512,
+    "admission_at_utc": "2026-10-26T07:24:07.605992+00:00",
+    "sampler_pid": 8,
+    "start_at_utc": "2026-10-26T07:25:10.193Z",
+    "terminal_at_utc": "2026-10-26T07:25:16.203Z",
+    "kill_return": 0,
+    "wait_return": 143,
+    "reap_at_utc": "2026-10-26T07:25:20.217Z",
+    "stop_bytes": 4000000000,
+    "interpretation": "real current observation only; cannot establish the original sampler PID or historical lifecycle"
+  },
+  "no_replay": {
+    "delivery_build_rerun": false,
+    "historical_sampler_restarted": false,
+    "historical_receipt_manufactured": false,
+    "original_outputs_modified": false
+  }
+}

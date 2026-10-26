@@ -1,0 +1,2 @@
+phase=present_monitor available_bytes=4605661184 stop_bytes=4000000000 utc=2026-10-26T07:25:10.200Z
+phase=present_monitor available_bytes=4605603840 stop_bytes=4000000000 utc=2026-10-26T07:25:15.207Z
