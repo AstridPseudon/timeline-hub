@@ -21,7 +21,8 @@ def test_first_tool_archive_creates_its_missing_parent(tmp_path, monkeypatch):
         bundle.writestr("bun-linux-x64/bun", b"tool executable")
     requests = []
 
-    def response(url, *, timeout):
+    def response(request, *, timeout):
+        url = request.full_url
         requests.append((url, timeout))
         return io.BytesIO(payload.getvalue())
 
