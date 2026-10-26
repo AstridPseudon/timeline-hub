@@ -1,0 +1,80 @@
+{
+  "at": "2026-10-26T16:48:43.530670+00:00",
+  "worker": "rt-F-D141jj-harness-complete-sol-1637",
+  "result": "FAIL_FIXTURE_SETUP_UID_MAP",
+  "original_returncode": 1,
+  "source11": "unchanged hashes and modes",
+  "actual_pass": "positive caller D68 stub, scoped CAS, manifest, root mismatch and stale upstream",
+  "remaining": "Owner guard not reached; later cases NOT_EXECUTED",
+  "ordinary_fixture_error": "chown UID65534 EINVAL; only UID0 mapped; not safety refusal",
+  "source_qualification": "NOT_READY",
+  "monitor": "105 samples min5193572352 maxgap5.017; initial launch and final bookkeeping gaps retained",
+  "outputs": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-check_jj.py",
+      "sha256": "0940de25f79f6b90fbc269325940442522a36c2dad1bc4fe23331fc13f28ab9c",
+      "bytes": 24786
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/checker-diff.patch",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-checker-diff.patch",
+      "sha256": "f35390533c2f961459ad48cf8c1a667898c5ac90cb77ee7b37a9f27c3c9481f4",
+      "bytes": 26289
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/purpose-map.json",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-purpose-map.json",
+      "sha256": "a02eeb50df176e7667a07c615db9cb02ec8747e72d9eb6a461d26675dbafd6ea",
+      "bytes": 21752
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/report.md",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-report.md",
+      "sha256": "d74ee55ad2644e41969c5e39ae6bcc74c47d5e97c4686eac25ee3e1e138802bf",
+      "bytes": 1956
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/review.json",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-review.json",
+      "sha256": "cd64e404220618e8db9ac6ddf5bf65a89a4672607086f250cf12baa3bc15bee0",
+      "bytes": 10494
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/findings.md",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-findings.md",
+      "sha256": "295973a9a96149cb51a6e1f894bac5cb6e4b9b8214de2565cac5ed9c0d67f7d2",
+      "bytes": 2104
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/source-manifest.json",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-source-manifest.json",
+      "sha256": "7c3fa7c10dd4afb7e01f6af32aaf28ffb94a16c81730095d36bc514683b27852",
+      "bytes": 3133
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/validation.md",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-validation.md",
+      "sha256": "b240ec17369903012b1e43870c042a27da6381a6a544488c2a023aba74ec5d2a",
+      "bytes": 2999
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/handoff.md",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-handoff.md",
+      "sha256": "53c97de6d844d503e5ee4177dfab1ad08577fc9cc145ec3ed3f852658ffcdf18",
+      "bytes": 925
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-disk-trace.txt",
+      "sha256": "0e2f40672929af240a4a75187e48123d22eee156f46484b60c3a0e33d32ed3e4",
+      "bytes": 5670
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141jj-harness-complete-sol-1637-sampler-lifecycle.json",
+      "sha256": "0b8387a21380bc60d9c87d4555fcdbd3c0dcd0c2d68d4b11f0d323a96aa26f34",
+      "bytes": 1706
+    }
+  ]
+}

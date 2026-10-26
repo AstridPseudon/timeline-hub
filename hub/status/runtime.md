@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T16:46:28Z | dispatcher heartbeat 15s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 4m -->
-# runtime board, 2026-10-26T16:40:43.088790+00:00
+<!-- main | 2026-10-26T16:52:01Z | dispatcher heartbeat 3s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 3m -->
+# runtime board, 2026-10-26T16:48:43.530670+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -83,7 +83,7 @@
 
 | OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
-| F D141jj App base | Complete private control fixtures | Sol after failed qualification | Isolation fixed; stale and owner fixtures still invalid | doing | rt-F-D141jj-harness-complete-sol-1637 | [Prior complete FAIL](../../design/runtime-D141jj-harness-Sol-FAIL-publication-1637.json). All 11 production source files remain exact. | Private checker only |
+| F D141jj App base | Complete private owner fixtures | Sol after failed qualification | UID 0 only fixture correction | doing | rt-F-D141jj-harness-owner-sol-1647 | [Prior FAIL](../../design/runtime-D141jj-harness-complete-FAIL-publication-1648.json). Positive and stale controls PASS; ownership setup EINVAL. Source 11 exact. | Private checker only |
 | F D141jj notes | Retain qualified App base note installation | Luna and independent Luna | Bounded clarification PASS | merged | CAS resume; review and clarification next | [Receipt](../../design/runtime-D141jj-notes-installed-publication-1428.json). Exact pair and568 conserved. Original FAIL and reviewer monitor gap retained. | Actual60b938 /7cacdb |
 
 | P5 final Agent applicability | Qualify ec0a source boundaries | Luna | Final Agent ec0a HOME | merged | rt-P5-D141-ec0-applicability-next | [PASS source applicability](../../design/runtime-P5-ec0-applicability-publication-1437.json). Original 38-case receipt unchanged; relative-output gap disclosed. | Agent ec0a / Runtime95d |
@@ -96,7 +96,7 @@
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
 Next ready: Independent protected check of actual repaired harness; then existing final installer, installation review, one build and artifact review.
-live 1 / cap 6; ready-undispatched 0. One heavy private checker author; mandatory independent map is terminal. Protected review waits for actual corrected checker.
+live 2 / cap 6; ready-undispatched 0. One heavy complete private checker correction and one finite read-only ownership investigator. Protected review waits for terminal checker.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
@@ -123,3 +123,7 @@ Prior watch receipts: [15:30](rounds/20261026T1530Z-pass.json), [15:50](rounds/2
 Current pass 2026-10-26T16:38:29.574529+00:00: Initial bounded Sol correction terminal16:35:36 FAIL/NOT_READY, no disk-floor trip. Trace isolation succeeded; actual positive and scoped-CAS passed, but stale-upstream fixture advanced HEAD rather than origin/main. Further exact findings: child refusal is nonzero plus diagnostic receipt; owner fixture could fail earlier source ownership. Source11 and original checker remain unchanged. Ten exact SAFE originals published in1637. New complete private fixture/phase correction Sol and mandatory finite read-only Luna map requested immediately under D120, all purposes kept and each intended branch required. [Dispatch](rounds/20261026T1637Z-complete-harness-dispatch.json). New protected-review brief ready; no installation or builder. Main16:18 no further cleanup stays. Free 5202939904. INBOX1933303 and HEADER255678 consumed.
 
 Current pass 2026-10-26T16:40:43.088790+00:00: Resumed manager read PLAN and MANAGER-COMMON, consumed INBOX1934514 and HEADER255678. Main16:18 GO and16:29 harness-only rule retained. Existing Sol1637 author and Luna1637 whole-path reader active; no duplicate dispatch. All final metadata and peer receiving clear. Installation, build and artifact briefs ready behind actual protected source PASS. Free 5198704640 bytes; no cleanup performed or permitted on a floor trip.
+
+| F D141jj owner map | Audit namespace compatible fixtures | Luna read only | Actual complete Sol 1637 failure | doing | rt-F-D141jj-harness-owner-wholepath-1647 | Finite ownership fixture and exact phase evidence; no heavy execution or authoring. | Evidence only |
+
+Current pass 2026-10-26T16:48:43.530670+00:00: Complete Sol1637 terminal FAIL1 from unmapped owner fixture, no floor trip. Sol1647 continuation and mandatory Luna1647 finite map queued immediately. One-heavy means serial bodies, not a one-checker-run limit; debugging authorized to complete all purposes. All product11 and failures retained; no install/build or cleanup. INBOX1934514 HEADER256846 consumed.

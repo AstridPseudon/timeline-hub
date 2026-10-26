@@ -1,0 +1,211 @@
+{
+  "qualification": "FAIL",
+  "verdict": "NOT_READY_PRIVATE_OWNER_FIXTURE_UNMAPPED_UID",
+  "review_kind": "author evidence; protected independent SAME-checker review pending",
+  "checker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+    "sha256": "0940de25f79f6b90fbc269325940442522a36c2dad1bc4fe23331fc13f28ab9c",
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+    "invocations": 1,
+    "exit_code": 1,
+    "actual_guard_observations": [
+      {
+        "builder_unchanged": true,
+        "diagnostic_receipt": null,
+        "label": "gate-source-root-mismatch",
+        "phase": "require_root_binding",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "refused",
+            "phase": "require_root_binding",
+            "reason": "source and gate tuple roots differ for agent"
+          }
+        ],
+        "protected_sources_unchanged": true,
+        "reason": "source and gate tuple roots differ for agent",
+        "returncode": null,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/tmp/d141jj-check-488362f1bdc24ddfbdd5d754505aa27c-ou9dvqwr/gate-source-root-mismatch-crkli5qw/service"
+      },
+      {
+        "builder_unchanged": true,
+        "diagnostic_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/tmp/d141jj-check-488362f1bdc24ddfbdd5d754505aa27c-ou9dvqwr/stale-nonapp-upstream-1f6bar7z/receipt.json",
+        "label": "stale-nonapp-upstream",
+        "phase": "run_wrapper",
+        "phases": [
+          {
+            "outcome": "returned",
+            "phase": "source_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "gate_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_root_binding"
+          },
+          {
+            "outcome": "returned",
+            "phase": "require_app_base"
+          },
+          {
+            "outcome": "returned",
+            "phase": "overlap_identity"
+          },
+          {
+            "outcome": "returned",
+            "phase": "run_wrapper"
+          }
+        ],
+        "protected_sources_unchanged": true,
+        "reason": "agent recorded upstream base is not current origin/main",
+        "returncode": 2,
+        "service_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/tmp/d141jj-check-488362f1bdc24ddfbdd5d754505aa27c-ou9dvqwr/stale-nonapp-upstream-1f6bar7z/service"
+      }
+    ]
+  },
+  "positive": "PASS actual caller -> immutable D68 -> bounded private stub",
+  "negative_purposes": [
+    {
+      "label": "stale-source-manifest",
+      "phase": "validate_manifest",
+      "expected_reason": "candidate hash mismatch: check.sh",
+      "purpose_and_change": "Exact poisoned candidate digest; catch only the precise assertion, not unrelated filesystem/JSON failures.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "gate-source-root-mismatch",
+      "phase": "require_root_binding",
+      "expected_reason": "source and gate tuple roots differ for agent",
+      "purpose_and_change": "Source and gate roots must bind to the same real root.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "stale-nonapp-upstream",
+      "phase": "D68.source_snapshot via caller.run_wrapper",
+      "expected_reason": "agent recorded upstream base is not current origin/main",
+      "purpose_and_change": "Advance private origin/main only after recording old base; actual caller returns2 and writes FAIL diagnostic with empty repos/stage, no builder.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "wrong-source-owner",
+      "phase": "source_identity",
+      "expected_reason": "source tuple root agent owner is not the effective user",
+      "purpose_and_change": "Change private fixture owner, retain actual effective UID; exact source guard.",
+      "execution_status": "FIXTURE_SETUP_FAILED_BEFORE_GUARD"
+    },
+    {
+      "label": "wrong-source-mode",
+      "phase": "source_identity",
+      "expected_reason": "source tuple root agent is writable by another user",
+      "purpose_and_change": "Retain explicit mode0775, exact source guard.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-stage-mode",
+      "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+      "expected_reason": "stage parent/service TMPDIR is writable by another user",
+      "purpose_and_change": "Separate exclusive invocation fixtures for direct D68 and actual caller; real source_identity passes; mode0775.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-stage-owner",
+      "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+      "expected_reason": "stage parent/service TMPDIR owner is not the effective user",
+      "purpose_and_change": "Separate real private wrong-owner fixtures; actual source ownership passes before actual stage guard; no shared geteuid patch.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-app-base",
+      "phase": "require_app_base",
+      "expected_reason": "App upstream base is not the authorized fc24f849 source",
+      "purpose_and_change": "Current origin object/tree valid so exact authorized-base guard fails.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-app-tree",
+      "phase": "require_app_base/direct and caller.gate_identity",
+      "expected_reason": "App upstream base tree is not the authorized faf477ad source / frozen upstream base tree drift for app",
+      "purpose_and_change": "Direct precise authorized-tree guard plus real caller earlier object-tree consistency guard; distinguish phases.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "dirty-source",
+      "phase": "source_identity",
+      "expected_reason": "source tuple source is dirty",
+      "purpose_and_change": "Private source/gate roots agree; exact dirty source guard.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "symlink-source",
+      "phase": "source_identity",
+      "expected_reason": "invalid final source tuple identity for agent",
+      "purpose_and_change": "Explicit symlink fixture plus exact source identity branch; valid underlying fixture.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "source-ref-drift",
+      "phase": "gate_identity",
+      "expected_reason": "frozen gate ref drift for agent",
+      "purpose_and_change": "Private gate records old integration ref; update actual ref and current source tuple together so source passes and actual frozen-gate guard fails.",
+      "execution_status": "NOT_EXECUTED"
+    }
+  ],
+  "fixture_failure": {
+    "operation": "os.chown(wrong_owner_root, 65534, -1)",
+    "errno": 22,
+    "reason": "Invalid argument",
+    "uid_map": "         0          0          1\n",
+    "gid_map": "         0          0          1\n",
+    "effective_uid": 0,
+    "remaining_fixture_uid": 0,
+    "inference": "UID65534 has no mapping; root-only namespace explains chown EINVAL. No safety/classifier refusal observed; no chown retry."
+  },
+  "staging": {
+    "completed_repository_staging_operations": 1,
+    "positive": {
+      "admission_free_bytes": 5197635584,
+      "free_bytes": 5195735040,
+      "full_history_copied": false,
+      "max_bytes": 100000000,
+      "measured_bytes": 1126664,
+      "method": "alternates-backed private Git no-checkout worktree",
+      "min_free_after_bytes": 4860000000,
+      "stage_parent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/tmp/d141jj-check-488362f1bdc24ddfbdd5d754505aa27c-ou9dvqwr/service-tmp/timeline-d68-receipt-ce72t7zu"
+    },
+    "negative": "stale D68 allocates only empty stage root, fails agent source_snapshot before stage_repo; no second repository staging or builder invocation"
+  },
+  "controls": {
+    "scoped_CAS_preimage_outside_four_row_poisoned_caller": "PASS inherited actual controls; registry no-install invocation unchanged",
+    "source11_and_original_manifest": "PASS exact bytes/modes unchanged before and after",
+    "all_original_main_positive_assertions": "PASS AST conservation",
+    "same33": "Prior actual PASS retained; original13 immutable published blobs verified against ce9e0532; not rerun",
+    "scoped_ruff_F_AST_privatecompile_JSON_diff_source_clean": "PASS",
+    "types": "N/A"
+  },
+  "scope": "Private harness only; no product/C0/candidate/manifest refresh, installation, realbuilder, body/rehearsal/ZIP/push, or source ref changes. No full suite requested.",
+  "next_step": "Protected reviewer to inspect exact derivative and purpose-map; next authorized finite owner-fixture approach must support root-only UID mapping and target stage metadata without globally patching shared os.geteuid. Complete checker remains FAIL; no installation.",
+  "sampler_final": {
+    "durable_samples": 105,
+    "minimum_available_bytes": 5193572352,
+    "max_observed_interval_seconds": 5.017159984,
+    "first_sample_ns": 1793032719490321634,
+    "last_sample_ns": 1793033239739243232,
+    "stop_to_last_sample_seconds": 3.974961547,
+    "floor_tripped": false,
+    "supervisor_returncode": 0,
+    "sampler_returncode": -15,
+    "sampler_waited_and_reaped": true,
+    "scope": "Supervisor/sampler/checker process group; production D68 child groups retain their existing lifecycle sampler, parent-death and stop propagation. Other read-only/static tool sessions outside group.",
+    "gaps": "Initial detached attempt produced no sample and could not be waited after starter exit; duration unknown. No heavy during that gap. Final small bookkeeping after supervised sampler stop is unsampled."
+  },
+  "private_evidence_owned_file_bytes": 2084301
+}

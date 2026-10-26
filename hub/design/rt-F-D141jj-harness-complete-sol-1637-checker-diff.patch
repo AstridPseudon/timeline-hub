@@ -1,0 +1,526 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/check_jj.py
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py
+@@ -9,6 +9,7 @@
+ from __future__ import annotations
+ 
+ import hashlib
++import contextlib
+ import importlib.util
+ import json
+ import os
+@@ -16,6 +17,8 @@
+ import subprocess
+ import sys
+ import tempfile
++import uuid
++from unittest.mock import patch
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -109,17 +112,9 @@
+     return digest(raw)
+ 
+ 
+-def invoke(caller: Any, args: list[str]) -> BaseException | None:
+-    try:
+-        caller.main(args)
+-    except (OSError, ValueError) as exc:  # refusal is the expected result for negatives
+-        return exc
+-    return None
+-
+-
+ def fixture_repo(root: Path, name: str) -> tuple[str, str]:
+     repo = root / name
+-    repo.mkdir()
++    repo.mkdir(mode=0o700)
+     git_run(repo, "init", "-q", "--initial-branch=main")
+     git_run(repo, "config", "user.name", "D141jj fixture")
+     git_run(repo, "config", "user.email", "d141jj@example.invalid")
+@@ -171,7 +166,7 @@
+     for entry in value["candidates"]:
+         candidate = CANDIDATE / entry["name"]
+         assert candidate.stat().st_mode & 0o777 == int(entry["mode"], 8)
+-        assert digest(candidate.read_bytes()) == entry["sha256"]
++        assert digest(candidate.read_bytes()) == entry["sha256"], f"candidate hash mismatch: {entry['name']}"
+ 
+ 
+ def manifest_refusal(work: Path) -> None:
+@@ -181,10 +176,17 @@
+     write_json(poisoned, manifest)
+     try:
+         validate_manifest(poisoned)
+-    except (AssertionError, KeyError, OSError, ValueError, json.JSONDecodeError):
+-        print("PASS refusal before candidate writes: stale-source-manifest")
++    except AssertionError as exc:
++        assert str(exc) == "candidate hash mismatch: " + manifest["candidates"][0]["name"]
++        print("PASS refusal before candidate writes: stale-source-manifest; phase=validate_manifest; reason=" + str(exc))
+     else:
+         raise AssertionError("stale source manifest was accepted")
++
++
++def protected_snapshot() -> dict[str, tuple[str, int]]:
++    paths = [CANDIDATE / item["name"] for item in json.loads((HERE / "source-manifest.json").read_text())["candidates"]]
++    paths += [CANDIDATE.parent / "source-manifest.json", REGISTRY]
++    return {str(path): (digest(path.read_bytes()), path.stat().st_mode & 0o777) for path in paths}
+ 
+ 
+ def finding_refusals(
+@@ -199,54 +201,127 @@
+     assert wrapper_spec is not None and wrapper_spec.loader is not None
+     wrapper = importlib.util.module_from_spec(wrapper_spec)
+     wrapper_spec.loader.exec_module(wrapper)
+-
+-    def direct_refusal(label: str, operation: Any) -> None:
+-        try:
+-            operation()
+-        except (OSError, ValueError, RuntimeError):
+-            print(f"PASS refusal before candidate writes: {label}")
+-        else:
+-            raise AssertionError(f"{label} was accepted")
++    observations = []
++    baseline = protected_snapshot()
++    mark = Path(os.environ["D141JJ_BUILDER_MARK"])
++    mark_before = (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino)
+ 
+     def refusal(
+         label: str,
+         changed_gate: dict[str, Any],
+-        changed_source: dict[str, Any] | None = None,
++        changed_source: dict[str, Any],
++        reason: str,
++        phase: str,
++        *,
++        returned: bool = False,
+         service_root: Path | None = None,
+     ) -> None:
+-        gpath = work / f"{label}-gate.json"
+-        spath = work / f"{label}-source.json"
+-        gsha = write_json(gpath, changed_gate)
+-        ssha = write_json(spath, changed_source if changed_source is not None else source)
+-        target = work / f"{label}-receipt.json"
+-        old_tmp = os.environ.get("TMPDIR")
+-        if service_root is None:
+-            service_root = Path(tempfile.mkdtemp(prefix=f"{label}-service-", dir=work))
+-        os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
++        invocation = Path(tempfile.mkdtemp(prefix=f"{label}-", dir=work))
++        service_root = service_root or invocation / "service"
++        if not service_root.exists():
++            service_root.mkdir(mode=0o700)
++        assert not (service_root / "timeline-delivery-KEEP" / "disk-trace.tsv").exists()
++        gpath, spath = invocation / "gate.json", invocation / "source.json"
++        gsha, ssha = write_json(gpath, changed_gate), write_json(spath, changed_source)
++        target = invocation / "receipt.json"
++        args = [
++            "--source-tuple", str(spath), "--tuple-sha", ssha,
++            "--gate-tuple", str(gpath), "--gate-tuple-sha", gsha,
++            "--wrapper", str(WRAPPER_PATH), "--wrapper-sha", digest(WRAPPER_PATH.read_bytes()),
++            "--builder", str(builder), "--builder-sha", builder_sha,
++            "--receipt", str(target), "--", "--private-stub",
++        ]
++        phases = []
++
++        def observe(name: str, original: Any) -> Any:
++            def observed(*args: Any, **kwargs: Any) -> Any:
++                event = {"phase": name, "outcome": "entered"}
++                phases.append(event)
++                try:
++                    value = original(*args, **kwargs)
++                except ValueError as exc:
++                    event.update(outcome="refused", reason=str(exc))
++                    raise
++                event["outcome"] = "returned"
++                return value
++            return observed
++
++        code = None
++        failure = None
++        with contextlib.ExitStack() as stack:
++            stack.enter_context(patch.dict(os.environ, {name: str(service_root) for name in ("TMPDIR", "TMP", "TEMP")}))
++            for name in ("source_identity", "gate_identity", "require_root_binding", "require_app_base", "overlap_identity", "run_wrapper"):
++                stack.enter_context(patch.object(caller, name, observe(name, getattr(caller, name))))
++            try:
++                code = caller.main(args)
++            except ValueError as exc:
++                failure = str(exc)
++        assert phases[-1]["phase"] == phase, (label, phases)
++        if returned:
++            assert failure is None and code == 2, (label, code, failure)
++            assert phases[-1]["outcome"] == "returned", phases
++            value = json.loads(target.read_text())
++            assert value["status"] == "FAIL" and value["exit"] == code
++            d68 = value["wrapper"]["receipt"]
++            assert d68["status"] == "FAIL" and d68["error"] == reason, d68
++            assert d68["repos"] == {} and "builder_exit" not in d68
++            assert list(Path(d68["stage_root"]).iterdir()) == []
++            assert "delivery gate refused: " + reason in value["output"]
++            lifecycle = json.loads((service_root / "timeline-delivery-KEEP" / "lifecycle.json").read_text())
++            assert lifecycle["status"] == "failed" and lifecycle["exit"] == code, lifecycle
++            assert lifecycle["trace_status"] == "PASS", lifecycle
++            assert all(event["outcome"] == "returned" for event in phases)
++        else:
++            assert code is None and failure == reason, (label, code, failure, reason)
++            assert phases[-1]["outcome"] == "refused", phases
++            assert not target.exists(), (label, target)
++        assert not list(service_root.rglob("delivery-output")), label
++        assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before
++        assert protected_snapshot() == baseline
++        assert not (CANDIDATE / "final-source-tuple.json").exists()
++        assert not (CANDIDATE / "final-gate-tuple.json").exists()
++        record = {"label": label, "phase": phase, "reason": reason, "returncode": code,
++                  "diagnostic_receipt": str(target) if target.exists() else None,
++                  "service_root": str(service_root), "phases": phases,
++                  "builder_unchanged": True, "protected_sources_unchanged": True}
++        observations.append(record)
++        write_json(work / "negative-observations.json", observations)
++        print(f"PASS refusal before success delivery/candidate/activation writes: {label}; phase={phase}; reason={reason}")
++
++    def direct_stage_refusal(label: str, fixture: Path, detail: str) -> None:
++        # Real source validation succeeds before testing the D68-only stage entrypoint.
++        invocation = Path(tempfile.mkdtemp(prefix=f"{label}-direct-", dir=work))
++        parent = invocation / "stage"
++        parent.mkdir(mode=fixture.stat().st_mode & 0o777)
++        os.chown(parent, fixture.stat().st_uid, -1)
++        reason = f"stage parent {detail}: {parent}"
++        spath, gpath = invocation / "source.json", invocation / "gate.json"
++        ssha, gsha = write_json(spath, source), write_json(gpath, gate)
++        assert caller.source_identity(spath, ssha) == source
++        receipt = invocation / "wrapper-receipt.json"
+         try:
+-            failure = invoke(caller, [
+-                "--source-tuple", str(spath), "--tuple-sha", ssha,
++            wrapper.main([
+                 "--gate-tuple", str(gpath), "--gate-tuple-sha", gsha,
+-                "--wrapper", str(WRAPPER_PATH), "--wrapper-sha", digest(WRAPPER_PATH.read_bytes()),
+                 "--builder", str(builder), "--builder-sha", builder_sha,
+-                "--receipt", str(target), "--", "--private-stub",
++                "--stage-parent", str(parent), "--receipt", str(receipt),
++                "--app-upstream-base", APP_BASE, "--app-upstream-tree", APP_BASE_TREE,
++                "--", "--private-stub",
+             ])
+-        finally:
+-            if old_tmp is None:
+-                os.environ.pop("TMPDIR", None)
+-                os.environ.pop("TMP", None)
+-                os.environ.pop("TEMP", None)
+-            else:
+-                os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = old_tmp
+-        assert failure is not None, label
+-        assert not target.exists(), (label, target)
+-        print(f"PASS refusal before candidate writes: {label}")
+-
+-    mismatch_root, mismatch_head = fixture_repo(work, "gate-root-mismatch-low")
++        except wrapper.CandidateError as exc:
++            assert str(exc) == reason, (label, str(exc), reason)
++        else:
++            raise AssertionError(f"{label} direct D68 stage guard accepted")
++        assert not receipt.exists() and list(parent.iterdir()) == []
++        observations.append({"label": label, "phase": "D68.main/require_directory(stage parent)",
++                             "reason": reason, "source_identity_passed": True})
++        print(f"PASS direct guard: {label}; phase=D68.main/require_directory(stage parent); reason={reason}")
++
++    mismatch_root, mismatch_head = fixture_repo(work, "gate-root-mismatch")
+     _, mismatch_gate = fixture_source_gate(source, gate, "agent", mismatch_root, mismatch_head)
+-    refusal("gate-source-root-mismatch-low", mismatch_gate)
+-
+-    stale_root, stale_base = fixture_repo(work, "stale-upstream-low")
++    refusal("gate-source-root-mismatch", mismatch_gate, source,
++            "source and gate tuple roots differ for agent", "require_root_binding")
++
++    stale_root, stale_base = fixture_repo(work, "stale-upstream")
+     stale_repo = Path(stale_root)
+     (stale_repo / "current.txt").write_text("current origin main\n")
+     git_run(stale_repo, "add", "current.txt")
+@@ -256,42 +331,88 @@
+     stale_source, stale_gate = fixture_source_gate(
+         source, gate, "agent", stale_root, stale_head, stale_base, stale_base
+     )
+-    direct_refusal(
+-        "stale-nonapp-upstream-low",
+-        lambda: wrapper.source_snapshot("agent", stale_gate["repos"]["agent"]),
+-    )
+-
+-    wrong_owner_root, wrong_owner_head = fixture_repo(work, "wrong-source-owner-low")
+-    owner_source, owner_gate = fixture_source_gate(
+-        source, gate, "agent", wrong_owner_root, wrong_owner_head
+-    )
+-    real_euid = caller.os.geteuid
+-    caller.os.geteuid = lambda: 65534
++    recorded = stale_gate["repos"]["agent"]["upstream_base"]
++    current = git(stale_repo, "rev-parse", "origin/main")
++    assert recorded == stale_base and current == stale_head and recorded != current
++    assert stale_source["agent"]["sha"] == stale_head
++    print(f"STALE fixture before invocation: recorded={recorded} current_origin_main={current} source_sha={stale_source['agent']['sha']}")
++    write_json(work / "stale-before-invocation.json", {"recorded": recorded, "current_origin_main": current, "source": stale_source["agent"]})
++    refusal("stale-nonapp-upstream", stale_gate, stale_source,
++            "agent recorded upstream base is not current origin/main", "run_wrapper", returned=True)
++
++    wrong_owner_root, wrong_owner_head = fixture_repo(work, "wrong-source-owner")
++    owner_source, owner_gate = fixture_source_gate(source, gate, "agent", wrong_owner_root, wrong_owner_head)
++    assert os.geteuid() == 0, "real private owner fixtures require root; no geteuid patch allowed"
++    os.chown(wrong_owner_root, 65534, -1)
++    refusal("wrong-source-owner", owner_gate, owner_source,
++            f"source tuple root agent owner is not the effective user: {wrong_owner_root}", "source_identity")
++
++    wrong_mode_root, wrong_mode_head = fixture_repo(work, "wrong-source-mode")
++    os.chmod(wrong_mode_root, 0o775)
++    mode_source, mode_gate = fixture_source_gate(source, gate, "agent", wrong_mode_root, wrong_mode_head)
++    refusal("wrong-source-mode", mode_gate, mode_source,
++            f"source tuple root agent is writable by another user: {wrong_mode_root}", "source_identity")
++
++    for kind in ("mode", "owner"):
++        parent = work / f"wrong-stage-{kind}"
++        parent.mkdir(mode=0o700)
++        if kind == "mode":
++            parent.chmod(0o775)
++            detail = "is writable by another user"
++        else:
++            os.chown(parent, 65534, -1)
++            detail = "owner is not the effective user"
++        direct_stage_refusal(f"wrong-stage-{kind}", parent, detail)
++        refusal(f"wrong-stage-{kind}", gate, source, f"service TMPDIR {detail}: {parent}",
++                "run_wrapper", service_root=parent)
++
++    wrong_base = json.loads(json.dumps(gate))
++    wrong_base["repos"]["app"]["upstream_base"] = git(REPOS["app"], "rev-parse", "origin/main")
++    wrong_base["repos"]["app"]["upstream_base_tree"] = git(REPOS["app"], "rev-parse", "origin/main^{tree}")
++    refusal("wrong-app-base", wrong_base, source,
++            "App upstream base is not the authorized fc24f849 source", "require_app_base")
++
++    wrong_tree = json.loads(json.dumps(gate))
++    wrong_tree["repos"]["app"]["upstream_base_tree"] = "0" * 40
++    # The caller's object-tree validation precedes its authorized-tree guard.
+     try:
+-        refusal("wrong-source-owner-low", owner_gate, owner_source)
+-    finally:
+-        caller.os.geteuid = real_euid
+-
+-    wrong_mode_root, wrong_mode_head = fixture_repo(work, "wrong-source-mode-low")
+-    os.chmod(wrong_mode_root, 0o775)
+-    mode_source, mode_gate = fixture_source_gate(
+-        source, gate, "agent", wrong_mode_root, wrong_mode_head
+-    )
+-    refusal("wrong-source-mode-low", mode_gate, mode_source)
+-
+-    bad_stage_mode = work / "wrong-stage-mode-low"
+-    bad_stage_mode.mkdir(mode=0o700)
+-    os.chmod(bad_stage_mode, 0o775)
+-    refusal("wrong-stage-mode-low", gate, source, bad_stage_mode)
+-
+-    bad_stage_owner = work / "wrong-stage-owner-low"
+-    bad_stage_owner.mkdir(mode=0o700)
+-    real_euid = caller.os.geteuid
+-    caller.os.geteuid = lambda: 65534
+-    try:
+-        refusal("wrong-stage-owner-low", gate, source, bad_stage_owner)
+-    finally:
+-        caller.os.geteuid = real_euid
++        caller.require_app_base(wrong_tree["repos"])
++    except ValueError as exc:
++        assert str(exc) == "App upstream base tree is not the authorized faf477ad source"
++    else:
++        raise AssertionError("wrong authorized App tree accepted")
++    observations.append({"label": "wrong-app-tree", "phase": "require_app_base/direct",
++                         "reason": "App upstream base tree is not the authorized faf477ad source"})
++    refusal("wrong-app-tree", wrong_tree, source,
++            "frozen upstream base tree drift for app", "gate_identity")
++
++    dirty_root, dirty_head = fixture_repo(work, "dirty")
++    dirty_source, dirty_gate = fixture_source_gate(source, gate, "agent", dirty_root, dirty_head)
++    (Path(dirty_root) / "dirty.txt").write_text("uncommitted\n")
++    refusal("dirty-source", dirty_gate, dirty_source,
++            f"source tuple source is dirty: {dirty_root}", "source_identity")
++
++    symlink_target, symlink_head = fixture_repo(work, "symlink-target")
++    symlink_source, symlink_gate = fixture_source_gate(source, gate, "agent", symlink_target, symlink_head)
++    symlink = work / "symlink-root"
++    symlink.symlink_to(symlink_target, target_is_directory=True)
++    symlink_source["agent"]["root"] = str(symlink)
++    refusal("symlink-source", symlink_gate, symlink_source,
++            "invalid final source tuple identity for agent", "source_identity")
++
++    drift_root, drift_head = fixture_repo(work, "ref-drift")
++    drift_repo = Path(drift_root)
++    drift_source, drift_gate = fixture_source_gate(source, gate, "agent", drift_root, drift_head)
++    (drift_repo / "drift.txt").write_text("ref drift\n")
++    git_run(drift_repo, "add", "drift.txt")
++    git_run(drift_repo, "commit", "-q", "-m", "drift")
++    drift_actual = git(drift_repo, "rev-parse", "HEAD")
++    git_run(drift_repo, "update-ref", "refs/heads/tl/integration", drift_actual)
++    drift_source["agent"].update(sha=drift_actual, tree=git(drift_repo, "rev-parse", "tl/integration^{tree}"))
++    refusal("source-ref-drift", drift_gate, drift_source,
++            "frozen gate ref drift for agent", "gate_identity")
++    write_json(work / "negative-observations.json", observations)
++    assert len([item for item in observations if "returncode" in item]) == 11
+ 
+ 
+ def main() -> None:
+@@ -300,7 +421,10 @@
+     source, gate, upstream = actual_tuples()
+     private_tmp = HERE / "tmp"
+     private_tmp.mkdir(exist_ok=True)
+-    work = Path(tempfile.mkdtemp(prefix="d141jj-check-", dir=private_tmp))
++    run_id = uuid.uuid4().hex
++    work = Path(tempfile.mkdtemp(prefix=f"d141jj-check-{run_id}-", dir=private_tmp))
++    print(f"RUN_ID={run_id} private_work={work}", flush=True)
++    protected_before = protected_snapshot()
+     source_path = work / "source.json"
+     gate_path = work / "gate.json"
+     source_sha = write_json(source_path, source)
+@@ -311,7 +435,7 @@
+         "import os\n"
+         "from pathlib import Path\n"
+         "def main_with_args(args):\n"
+-        "    Path(os.environ['D141JJ_BUILDER_MARK']).write_text('called\\n')\n"
++        "    with Path(os.environ['D141JJ_BUILDER_MARK']).open('x') as f: f.write('called\\n')\n"
+         "    return 0\n"
+     )
+     builder_sha = digest(builder.read_bytes())
+@@ -322,16 +446,7 @@
+     service_tmp.mkdir(mode=0o700)
+     os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_tmp)
+     receipt = work / "positive-receipt.json"
+-    if shutil.disk_usage(service_tmp).free < 4_960_000_000:
+-        validate_manifest(HERE / "source-manifest.json")
+-        manifest_refusal(work)
+-        finding_refusals(caller, source, gate, builder, builder_sha, work)
+-        print(
+-            "NOT_READY heavy admission: available bytes below enforced "
+-            "4,960,000,000-byte pre-stage floor; positive staging and inherited "
+-            "lifecycle controls not executed"
+-        )
+-        return
++    assert shutil.disk_usage(service_tmp).free >= 4_960_000_000, "NOT_READY: pre-stage floor below 4,960,000,000"
+     args = [
+         "--source-tuple", str(source_path), "--tuple-sha", source_sha,
+         "--gate-tuple", str(gate_path), "--gate-tuple-sha", gate_sha,
+@@ -400,127 +515,9 @@
+     assert receiving.returncode == 0, receiving.stdout + receiving.stderr
+     print("PASS no-install/preimage/outside-four-row/poisoned-caller scoped-CAS controls")
+ 
+-    def refusal(
+-        label: str,
+-        changed_gate: dict[str, Any],
+-        changed_source: dict[str, Any] | None = None,
+-        service_root: Path | None = None,
+-    ) -> None:
+-        gpath = work / f"{label}-gate.json"
+-        spath = work / f"{label}-source.json"
+-        gsha = write_json(gpath, changed_gate)
+-        ssha = write_json(spath, changed_source if changed_source is not None else source)
+-        target = work / f"{label}-receipt.json"
+-        old_tmp = os.environ.get("TMPDIR")
+-        if service_root is None:
+-            service_root = Path(tempfile.mkdtemp(prefix=f"{label}-service-", dir=work))
+-        os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = str(service_root)
+-        try:
+-            failure = invoke(caller, [
+-                "--source-tuple", str(spath), "--tuple-sha", ssha,
+-                "--gate-tuple", str(gpath), "--gate-tuple-sha", gsha,
+-                "--wrapper", str(WRAPPER_PATH), "--wrapper-sha", digest(WRAPPER_PATH.read_bytes()),
+-                "--builder", str(builder), "--builder-sha", builder_sha,
+-                "--receipt", str(target), "--", "--private-stub",
+-            ])
+-        finally:
+-            if old_tmp is None:
+-                os.environ.pop("TMPDIR", None)
+-                os.environ.pop("TMP", None)
+-                os.environ.pop("TEMP", None)
+-            else:
+-                os.environ["TMPDIR"] = os.environ["TMP"] = os.environ["TEMP"] = old_tmp
+-        assert failure is not None, label
+-        assert not target.exists(), (label, target)
+-        print(f"PASS refusal before candidate writes: {label}")
+-
+-    mismatch_root, mismatch_head = fixture_repo(work, "gate-root-mismatch")
+-    _, mismatch_gate = fixture_source_gate(source, gate, "agent", mismatch_root, mismatch_head)
+-    refusal("gate-source-root-mismatch", mismatch_gate)
+-
+-    stale_root, stale_base = fixture_repo(work, "stale-upstream")
+-    stale_repo = Path(stale_root)
+-    (stale_repo / "current.txt").write_text("current origin main\n")
+-    git_run(stale_repo, "add", "current.txt")
+-    git_run(stale_repo, "commit", "-q", "-m", "current origin main")
+-    stale_head = git(stale_repo, "rev-parse", "HEAD")
+-    stale_source, stale_gate = fixture_source_gate(
+-        source, gate, "agent", stale_root, stale_head, stale_base, stale_base
+-    )
+-    refusal("stale-nonapp-upstream", stale_gate, stale_source)
+-
+-    wrong_owner_root, wrong_owner_head = fixture_repo(work, "wrong-source-owner")
+-    owner_source, owner_gate = fixture_source_gate(
+-        source, gate, "agent", wrong_owner_root, wrong_owner_head
+-    )
+-    real_euid = caller.os.geteuid
+-    caller.os.geteuid = lambda: 65534
+-    try:
+-        refusal("wrong-source-owner", owner_gate, owner_source)
+-    finally:
+-        caller.os.geteuid = real_euid
+-
+-    wrong_mode_root, wrong_mode_head = fixture_repo(work, "wrong-source-mode")
+-    os.chmod(wrong_mode_root, 0o775)
+-    mode_source, mode_gate = fixture_source_gate(
+-        source, gate, "agent", wrong_mode_root, wrong_mode_head
+-    )
+-    refusal("wrong-source-mode", mode_gate, mode_source)
+-
+-    bad_stage_mode = work / "wrong-stage-mode"
+-    bad_stage_mode.mkdir(mode=0o700)
+-    os.chmod(bad_stage_mode, 0o775)
+-    refusal("wrong-stage-mode", gate, source, bad_stage_mode)
+-
+-    bad_stage_owner = work / "wrong-stage-owner"
+-    bad_stage_owner.mkdir(mode=0o700)
+-    real_euid = caller.os.geteuid
+-    caller.os.geteuid = lambda: 65534
+-    try:
+-        refusal("wrong-stage-owner", gate, source, bad_stage_owner)
+-    finally:
+-        caller.os.geteuid = real_euid
+-
+-    wrong_base = json.loads(json.dumps(gate))
+-    wrong_base["repos"]["app"]["upstream_base"] = upstream["app"]
+-    wrong_base["repos"]["app"]["upstream_base_tree"] = git(REPOS["app"], "rev-parse", "origin/main^{tree}")
+-    refusal("wrong-app-base", wrong_base)
+-
+-    wrong_tree = json.loads(json.dumps(gate))
+-    wrong_tree["repos"]["app"]["upstream_base_tree"] = "0" * 40
+-    refusal("wrong-app-tree", wrong_tree)
+-
+-    dirty_root, dirty_head = fixture_repo(work, "dirty")
+-    (Path(dirty_root) / "dirty.txt").write_text("uncommitted\n")
+-    dirty_source = json.loads(json.dumps(source))
+-    dirty_source["agent"] = {"root": dirty_root, "sha": dirty_head, "tree": git(Path(dirty_root), "rev-parse", "tl/integration^{tree}")}
+-    refusal("dirty-source", gate, dirty_source)
+-
+-    symlink_target, symlink_head = fixture_repo(work, "symlink-target")
+-    symlink = work / "symlink-root"
+-    symlink.symlink_to(symlink_target, target_is_directory=True)
+-    symlink_source = json.loads(json.dumps(source))
+-    symlink_source["agent"] = {"root": str(symlink), "sha": symlink_head, "tree": git(Path(symlink_target), "rev-parse", "tl/integration^{tree}")}
+-    refusal("symlink-source", gate, symlink_source)
+-
+-    drift_root, drift_head = fixture_repo(work, "ref-drift")
+-    drift_repo = Path(drift_root)
+-    drift_gate = json.loads(json.dumps(gate))
+-    drift_gate["repos"]["agent"] = {
+-        "root": drift_root,
+-        "base_ref": "origin/main",
+-        "gate_ref": "tl/integration",
+-        "upstream_base": drift_head,
+-        "upstream_base_tree": git(drift_repo, "rev-parse", f"{drift_head}^{{tree}}"),
+-        "gated_tip": drift_head,
+-        "gated_tree": git(drift_repo, "rev-parse", f"{drift_head}^{{tree}}"),
+-    }
+-    (drift_repo / "drift.txt").write_text("ref drift\n")
+-    git_run(drift_repo, "add", "drift.txt")
+-    git_run(drift_repo, "commit", "-q", "-m", "drift")
+-    drift_actual = git(drift_repo, "rev-parse", "HEAD")
+-    git_run(drift_repo, "update-ref", "refs/heads/tl/integration", drift_actual)
+-    refusal("source-ref-drift", drift_gate)
++    finding_refusals(caller, source, gate, builder, builder_sha, work)
++    assert protected_snapshot() == protected_before
++    validate_manifest(HERE / "source-manifest.json")
+     assert source_snapshot() == before
+     print("PASS dirty/symlink/source-ref drift refusals leave all four real worktrees unchanged")
+ 

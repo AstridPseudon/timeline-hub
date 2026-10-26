@@ -1,0 +1,37 @@
+{
+  "pid": 9,
+  "supervisor_pid": 8,
+  "pgid": 8,
+  "started_ns": 1793032719466296621,
+  "interval_seconds": 5,
+  "floor_bytes": 4000000000,
+  "status": "stopped and reaped",
+  "initial_attempt": {
+    "pid": 10,
+    "outcome": "no sample produced; starter exited before child persisted",
+    "wait_reap": "not observable after starter exit"
+  },
+  "coverage_gap": "initial attempt to supervised start; no staging or checker executed",
+  "checker_pid": 10,
+  "checker_command": "PYTHONDONTWRITEBYTECODE=1 python3 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+  "checker_returncode": 1,
+  "checker_reaped": true,
+  "returncode": -15,
+  "wait_reap": "subprocess.Popen.wait completed",
+  "ended_ns": 1793033243714204779,
+  "observed_final_bytes": 5193560064,
+  "final_statistics": {
+    "durable_samples": 105,
+    "minimum_available_bytes": 5193572352,
+    "max_observed_interval_seconds": 5.017159984,
+    "first_sample_ns": 1793032719490321634,
+    "last_sample_ns": 1793033239739243232,
+    "stop_to_last_sample_seconds": 3.974961547,
+    "floor_tripped": false,
+    "supervisor_returncode": 0,
+    "sampler_returncode": -15,
+    "sampler_waited_and_reaped": true,
+    "scope": "Supervisor/sampler/checker process group; production D68 child groups retain their existing lifecycle sampler, parent-death and stop propagation. Other read-only/static tool sessions outside group.",
+    "gaps": "Initial detached attempt produced no sample and could not be waited after starter exit; duration unknown. No heavy during that gap. Final small bookkeeping after supervised sampler stop is unsampled."
+  }
+}

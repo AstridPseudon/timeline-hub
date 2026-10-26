@@ -1,0 +1,374 @@
+{
+  "format": "d141jj-private-checker-purpose-map",
+  "baseline": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-sol-1627/evidence/check_jj.py",
+  "baseline_sha256": "616f3e23382da003d435053ff3f1aec6b8fc6893ce4d7a0e2794ffefc3617859",
+  "derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141jj-harness-complete-sol-1637/evidence/check_jj.py",
+  "assertion_changes": [
+    {
+      "kind": "replace",
+      "before": [
+        {
+          "line": 174,
+          "scope": "validate_manifest",
+          "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"]",
+          "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+        }
+      ],
+      "after": [
+        {
+          "line": 169,
+          "scope": "validate_manifest",
+          "assertion": "assert digest(candidate.read_bytes()) == entry[\"sha256\"], f\"candidate hash mismatch: {entry['name']}\"",
+          "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+        },
+        {
+          "line": 180,
+          "scope": "manifest_refusal",
+          "assertion": "assert str(exc) == \"candidate hash mismatch: \" + manifest[\"candidates\"][0][\"name\"]",
+          "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+        }
+      ],
+      "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+      "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+    },
+    {
+      "kind": "replace",
+      "before": [
+        {
+          "line": 241,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert failure is not None, label",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        }
+      ],
+      "after": [
+        {
+          "line": 223,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert not (service_root / \"timeline-delivery-KEEP\" / \"disk-trace.tsv\").exists()",
+          "purpose_and_rationale": "Require fresh trace/stage roots and exact guard fixture/conservation preconditions; predecessor duplicate negative assertions consolidated in the complete helper."
+        },
+        {
+          "line": 259,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert phases[-1][\"phase\"] == phase, (label, phases)",
+          "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+        },
+        {
+          "line": 261,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert failure is None and code == 2, (label, code, failure)",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 262,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert phases[-1][\"outcome\"] == \"returned\", phases",
+          "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+        },
+        {
+          "line": 264,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert value[\"status\"] == \"FAIL\" and value[\"exit\"] == code",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 266,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert d68[\"status\"] == \"FAIL\" and d68[\"error\"] == reason, d68",
+          "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+        },
+        {
+          "line": 267,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert d68[\"repos\"] == {} and \"builder_exit\" not in d68",
+          "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+        },
+        {
+          "line": 268,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert list(Path(d68[\"stage_root\"]).iterdir()) == []",
+          "purpose_and_rationale": "Require exact D68 FAIL reason and empty staged repos/builder outcomes; prove stale upstream refused before stage_repo or builder."
+        },
+        {
+          "line": 269,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert \"delivery gate refused: \" + reason in value[\"output\"]",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 271,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert lifecycle[\"status\"] == \"failed\" and lifecycle[\"exit\"] == code, lifecycle",
+          "purpose_and_rationale": "Require production lifecycle completion with failed child exit2 and valid trace, excluding sampler/low-disk/lifecycle failure as false positives."
+        },
+        {
+          "line": 272,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert lifecycle[\"trace_status\"] == \"PASS\", lifecycle",
+          "purpose_and_rationale": "Require production lifecycle completion with failed child exit2 and valid trace, excluding sampler/low-disk/lifecycle failure as false positives."
+        },
+        {
+          "line": 273,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert all(event[\"outcome\"] == \"returned\" for event in phases)",
+          "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+        },
+        {
+          "line": 275,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert code is None and failure == reason, (label, code, failure, reason)",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 276,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert phases[-1][\"outcome\"] == \"refused\", phases",
+          "purpose_and_rationale": "Require the named production guard phase and successful preceding phases; reject an unrelated earlier refusal."
+        }
+      ],
+      "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+      "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+    },
+    {
+      "kind": "insert",
+      "before": [],
+      "after": [
+        {
+          "line": 278,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert not list(service_root.rglob(\"delivery-output\")), label",
+          "purpose_and_rationale": "Prohibit negative builder invocation or successful delivery output; exclusive positive marker must remain unchanged."
+        },
+        {
+          "line": 279,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert (mark.read_bytes(), mark.stat().st_mtime_ns, mark.stat().st_ino) == mark_before",
+          "purpose_and_rationale": "Prohibit negative builder invocation or successful delivery output; exclusive positive marker must remain unchanged."
+        },
+        {
+          "line": 280,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert protected_snapshot() == baseline",
+          "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+        },
+        {
+          "line": 281,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert not (CANDIDATE / \"final-source-tuple.json\").exists()",
+          "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+        },
+        {
+          "line": 282,
+          "scope": "finding_refusals.refusal",
+          "assertion": "assert not (CANDIDATE / \"final-gate-tuple.json\").exists()",
+          "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+        },
+        {
+          "line": 300,
+          "scope": "finding_refusals.direct_stage_refusal",
+          "assertion": "assert caller.source_identity(spath, ssha) == source",
+          "purpose_and_rationale": "Establish real source ownership/identity succeeds before direct stage-owner or stage-mode production guards."
+        },
+        {
+          "line": 311,
+          "scope": "finding_refusals.direct_stage_refusal",
+          "assertion": "assert str(exc) == reason, (label, str(exc), reason)",
+          "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+        },
+        {
+          "line": 314,
+          "scope": "finding_refusals.direct_stage_refusal",
+          "assertion": "assert not receipt.exists() and list(parent.iterdir()) == []",
+          "purpose_and_rationale": "For preflight/direct guards no receipt exists; subprocess refusals retain FAIL diagnostic receipt and prohibit success delivery."
+        },
+        {
+          "line": 336,
+          "scope": "finding_refusals",
+          "assertion": "assert recorded == stale_base and current == stale_head and recorded != current",
+          "purpose_and_rationale": "Prove frozen recorded gate base differs from independently advanced fixture origin/main while current source identity remains valid."
+        },
+        {
+          "line": 337,
+          "scope": "finding_refusals",
+          "assertion": "assert stale_source[\"agent\"][\"sha\"] == stale_head",
+          "purpose_and_rationale": "Prove frozen recorded gate base differs from independently advanced fixture origin/main while current source identity remains valid."
+        },
+        {
+          "line": 345,
+          "scope": "finding_refusals",
+          "assertion": "assert os.geteuid() == 0, \"real private owner fixtures require root; no geteuid patch allowed\"",
+          "purpose_and_rationale": "Require a real privileged fixture environment; insufficient in this sandbox because only UID0 is mapped. Subsequent chown fails EINVAL before guard. This assertion is not qualified."
+        },
+        {
+          "line": 381,
+          "scope": "finding_refusals",
+          "assertion": "assert str(exc) == \"App upstream base tree is not the authorized faf477ad source\"",
+          "purpose_and_rationale": "Require exact intended diagnostic; refuse broad exception-only acceptance."
+        },
+        {
+          "line": 415,
+          "scope": "finding_refusals",
+          "assertion": "assert len([item for item in observations if \"returncode\" in item]) == 11",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 449,
+          "scope": "main",
+          "assertion": "assert shutil.disk_usage(service_tmp).free >= 4_960_000_000, \"NOT_READY: pre-stage floor below 4,960,000,000\"",
+          "purpose_and_rationale": "Fail NOT_READY if fresh heavy admission is below4,960,000,000; no low-disk alternate path can count as complete PASS."
+        }
+      ],
+      "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+      "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+    },
+    {
+      "kind": "replace",
+      "before": [
+        {
+          "line": 433,
+          "scope": "main.refusal",
+          "assertion": "assert failure is not None, label",
+          "purpose_and_rationale": "Distinguish exact caller preflight ValueError from actual subprocess return2 plus FAIL diagnostic receipt; success or arbitrary failure is not accepted."
+        },
+        {
+          "line": 434,
+          "scope": "main.refusal",
+          "assertion": "assert not target.exists(), (label, target)",
+          "purpose_and_rationale": "For preflight/direct guards no receipt exists; subprocess refusals retain FAIL diagnostic receipt and prohibit success delivery."
+        }
+      ],
+      "after": [
+        {
+          "line": 519,
+          "scope": "main",
+          "assertion": "assert protected_snapshot() == protected_before",
+          "purpose_and_rationale": "Preserve immutable production bytes/modes/manifest/registry and prohibit candidate activation tuple writes."
+        }
+      ],
+      "rationale": "Replace exception-only/no-receipt acceptance with exact guard reason and actual phase/return/diagnostic assertions; remove duplicated low-disk route and consolidate all negative controls. Added conservation checks prevent success writes, builder invocation, or unrelated refusal from counting as PASS.",
+      "purpose": "Conserve each negative refusal purpose and exact production source identity; no arbitrary failure qualifies."
+    }
+  ],
+  "case_purposes": [
+    {
+      "label": "stale-source-manifest",
+      "phase": "validate_manifest",
+      "expected_reason": "candidate hash mismatch: check.sh",
+      "purpose_and_change": "Exact poisoned candidate digest; catch only the precise assertion, not unrelated filesystem/JSON failures.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "gate-source-root-mismatch",
+      "phase": "require_root_binding",
+      "expected_reason": "source and gate tuple roots differ for agent",
+      "purpose_and_change": "Source and gate roots must bind to the same real root.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "stale-nonapp-upstream",
+      "phase": "D68.source_snapshot via caller.run_wrapper",
+      "expected_reason": "agent recorded upstream base is not current origin/main",
+      "purpose_and_change": "Advance private origin/main only after recording old base; actual caller returns2 and writes FAIL diagnostic with empty repos/stage, no builder.",
+      "execution_status": "PASS"
+    },
+    {
+      "label": "wrong-source-owner",
+      "phase": "source_identity",
+      "expected_reason": "source tuple root agent owner is not the effective user",
+      "purpose_and_change": "Change private fixture owner, retain actual effective UID; exact source guard.",
+      "execution_status": "FIXTURE_SETUP_FAILED_BEFORE_GUARD"
+    },
+    {
+      "label": "wrong-source-mode",
+      "phase": "source_identity",
+      "expected_reason": "source tuple root agent is writable by another user",
+      "purpose_and_change": "Retain explicit mode0775, exact source guard.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-stage-mode",
+      "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+      "expected_reason": "stage parent/service TMPDIR is writable by another user",
+      "purpose_and_change": "Separate exclusive invocation fixtures for direct D68 and actual caller; real source_identity passes; mode0775.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-stage-owner",
+      "phase": "D68.main/require_directory(stage parent) and caller.run_wrapper",
+      "expected_reason": "stage parent/service TMPDIR owner is not the effective user",
+      "purpose_and_change": "Separate real private wrong-owner fixtures; actual source ownership passes before actual stage guard; no shared geteuid patch.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-app-base",
+      "phase": "require_app_base",
+      "expected_reason": "App upstream base is not the authorized fc24f849 source",
+      "purpose_and_change": "Current origin object/tree valid so exact authorized-base guard fails.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "wrong-app-tree",
+      "phase": "require_app_base/direct and caller.gate_identity",
+      "expected_reason": "App upstream base tree is not the authorized faf477ad source / frozen upstream base tree drift for app",
+      "purpose_and_change": "Direct precise authorized-tree guard plus real caller earlier object-tree consistency guard; distinguish phases.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "dirty-source",
+      "phase": "source_identity",
+      "expected_reason": "source tuple source is dirty",
+      "purpose_and_change": "Private source/gate roots agree; exact dirty source guard.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "symlink-source",
+      "phase": "source_identity",
+      "expected_reason": "invalid final source tuple identity for agent",
+      "purpose_and_change": "Explicit symlink fixture plus exact source identity branch; valid underlying fixture.",
+      "execution_status": "NOT_EXECUTED"
+    },
+    {
+      "label": "source-ref-drift",
+      "phase": "gate_identity",
+      "expected_reason": "frozen gate ref drift for agent",
+      "purpose_and_change": "Private gate records old integration ref; update actual ref and current source tuple together so source passes and actual frozen-gate guard fails.",
+      "execution_status": "NOT_EXECUTED"
+    }
+  ],
+  "entrypoint_changes": [
+    {
+      "before": "invoke catches OSError/ValueError and discards main return; helpers assert exception and no receipt",
+      "after": "finding_refusals.refusal invokes real caller.main, observes actual production phases, requires exact ValueError for preflight or code2 + FAIL caller/D68 receipts for subprocess refusal",
+      "why": "Diagnostic refusal receipts are normative evidence, not successful delivery; no purpose is removed."
+    },
+    {
+      "before": "duplicated low-disk finding_refusals and heavy main negative fixture definitions",
+      "after": "one complete finding_refusals path; insufficient heavy admission raises NOT_READY before any staging",
+      "why": "Avoid two drifting fixture implementations and false green low-disk completion."
+    },
+    {
+      "before": "wrong-stage-owner globally patches shared os.geteuid",
+      "after": "actual private directory chown; separate direct D68.main stage fixture and real caller.main stage fixture; successful real source_identity first",
+      "why": "Reach actual stage owner branches after passing source owner validation."
+    },
+    {
+      "before": "wrong-app-tree only caller.main (earlier tree consistency guard)",
+      "after": "direct real require_app_base plus actual caller.main exact earlier guard",
+      "why": "Observe both protected authorized-tree purpose and true caller phase without changing production."
+    },
+    {
+      "before": "stale fixture keeps origin/main at stale_base",
+      "after": "advance private origin/main to independent new HEAD; preserve recorded gate base; emit both values before real caller invocation",
+      "why": "Genuinely stale non-App upstream is refused before any repo stages."
+    },
+    {
+      "before": "run directory mkdtemp; positive fixed service root; negative service mkdtemp; stub marker overwrite",
+      "after": "UUID + exclusive-created run/invocation/direct-stage/service roots, preserved explicit bad owner/mode roots, exclusive stub marker; no trace deletion",
+      "why": "Each lifecycle invocation owns fresh real TMPDIR and trace; builder reuse cannot hide negative success."
+    }
+  ],
+  "preserved": "All original positive staging, App frozen-base, other-three current-upstream, source-clean, no-activation assertions; no-install and scoped-CAS/preimage/outside-four-row/poisoned-caller controls unchanged. Eleven caller negatives plus poisoned-manifest control retained (covering and exceeding the requested seven negative purposes).",
+  "review": "Author mapping only; protected independent purpose-conservation review remains pending.",
+  "qualification": "FAIL: full command exited1; three negative purposes PASS, wrong-owner setup EINVAL, eight later caller negatives unexecuted. Direct stage and authorized-tree guards unexecuted."
+}
