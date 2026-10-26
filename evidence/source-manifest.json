@@ -1,0 +1,51 @@
+{
+  "task": "D141",
+  "current_diff_source": {
+    "run_id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+    "status": "FAIL",
+    "exit": 1,
+    "started_at": "2026-10-26T01:32:52.713Z",
+    "finished_at": "2026-10-26T01:36:25.019Z",
+    "central_duration_seconds": 218,
+    "app_commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "app_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+    "agent_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+    "agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+    "runtime_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "runtime_tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "source_spec_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "source_spec_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "source_spec_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "source_spec_git_lookup": "git show 867cb2737af1b46dc608c7cd37c349e920fe9422:tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "manifest_sha256": "76b88bd3f1e2e6723f5252fc36edb935ef55142698f49a1f10d62c0e6065b722",
+    "original_junit_sha256": "3454b97cddc283e0c2ce77f0a2233f01401c355919865e02cb17851c91e35c58",
+    "readiness_junit_sha256": "ca6a3ee50d7be0039210b3d5fbc10079936c9c7581ad43665ec9fe8d50ba2a9e",
+    "log_sha256": "3dadd574be15ee19c01ee5f4aaaac4d1360dc44aa46de46c1e0903fd410e1cc5",
+    "diff_attachment_sha256": "091f8c179f1a52f60c1aa0d06e32780ffd8ae3a436180944739cc2d98498269d",
+    "composition_role": "documentary host only"
+  },
+  "pre_cut_passing_case_source": {
+    "run_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+    "app_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "app_tree": "3f9da34c4f116026ec21022421850e0608ba653b",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "runtime_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "source_spec_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "source_spec_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+    "source_spec_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+  },
+  "retention": {
+    "current_manifest_retained": true,
+    "current_original_result_retained": true,
+    "prior_manifest_retained_in_d66_archive": true,
+    "prior_original_result_retained_in_d66_archive": true,
+    "raw_testdiff_published": false,
+    "raw_artifacts_modified": false
+  }
+}
