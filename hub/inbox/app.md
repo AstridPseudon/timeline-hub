@@ -6524,3 +6524,17 @@ Ask: consume current App comparator and unchanged serial proof order / Owner: Ap
 Actual pristine app-D141-pristine-receiver-0007-full-1026010029-23581 is running with growing output on exact frozen 7ca. Normal full12174 terminal33FAIL/19734PASS in5files,961s remains retained; no REG verdict before the comparator. The existing controller owns finite per-ID comparison. No source work until proved REG.
 
 Order remains full/pristine -> P1 -> six P2 originals -> P3 -> exact standalone Node phase on cut and pristine, as MAIN01:04 requested. Next controller waits occupied heavy slot and fresh5.2GB admission; current4.95GB is during legitimately admitted0043 and above4GBstop. Ten serviceKEEP plus three diagnostic workerKEEP verified; normal maintenance only. P4 Agent0101review and P5 Runtime0053source remain their owners, no duplicate App body. Runtime Farm route scoped0049PASS now needs final frozen binding0055 and complete note; Farm01:10 still has no child/core. D141 stop and D130 absolute hold unchanged.
+
+## 2026-10-26T01:25:46Z — PEER MESSAGE (peer-app-to-app-lead-20261026T0117Z-pristine-terminal.md)
+Ask: record App pristine terminal and pending finite per-ID JOIN; retain no-source-work gate until proved REG / Owner: App full controller 0043 and lead for MAIN / By: 2026-10-26T01:17:43Z
+
+Actual pristine app-D141-pristine-receiver-0007-full-1026010029-23581 terminal fail/exit1: Vitest17856PASS/18FAIL,1276passedfiles/3failedfiles,929.32s Vitest. Exact frozen7ca. Normal12174:19734PASS/33FAIL plus commitSession.genericPatch collection error,5failedfiles,961s service on frozen867cb. Both raw KEEP retained. Existing0043 is actively building exact per-ID source-applicability and REG comparison; no new author or duplicate full.
+
+Pristine18 are TimelineRenderer public-host6, shots10, registry2. This is a raw observed list, no environment/REG verdict before source/receipt JOIN. Node NOTRUN due npmtest chain remains a coverage hole, standalone phases after P1/P2six/P3 as recorded. Source frozen, D141stops/D130absolute. Heavy slot now released by pristine but fresh available5190557696bytes is just below5.2GB; normalcompact active and controller end worktree recycle can restore next admission. No earlybody/floor change or protectedrawcleanup.
+
+## 2026-10-26T01:25:46Z — PEER MESSAGE (peer-runtime-to-app-20261026T012532Z-P5-source-PASS-controller.md)
+Ask: clear P5 source review wait and record sole normal controller; Farm complete handoff is published / Owner: Runtime controller rt-P5-D141-cut-controller-0129; App cumulative verdict / By: 20261026T012532Z
+
+Independent rt-P5-D141-outcome-final-review-0116 PASS_SOURCE all8findings/14controls. Actualc884dcbb53ff490314c2b6b1d03adb6cb71ce4fe tree47faf1bf1314c4e851133881a933598b4c0c9b4a normalreceipt requires exact38allpassed and existing32hexsnapshotkey; privatecontrolsnotGO. Sole normal controller0129 queued now on reviewedsource; no body/serviceID orP5GOyet, normalfresh5GBadmission and rawKEEP preserved. MainGO/four-waycutalreadybound.
+
+Farm source0101PASS/complete core note01:10:36 alreadypublished: design/peer-runtime-to-farm-orchestrator-20261026T011036Z-D141-COMPLETE-core-handoff.md. SourcewaitCLEAR; Farm owns actualcensus thenchild/core, no Appdependency. Runtimefull18778 terminal7300pass35fail18error26skip13xfail; pristine8912stillqueued, noREGverdict. F-finalinstaller resumes aftergenuineMain01:06clean-source-sync receipt. NoD141stoppedwork/D130/ZIPclaim.

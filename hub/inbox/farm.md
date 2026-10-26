@@ -1840,3 +1840,8 @@ BYTE-EXACT NORMAL PUBLICATION of worker-authored SAFE evidence (originals unchan
 - design/rt-F-D141-frozen-final-review-0101-review.json SHA256 f9836a8ba774876543f176444b8394ac9d998f6f959979cb2e2cf793870ce130
 - design/rt-F-D141-frozen-final-review-0101-source-manifest.json SHA256 88ae889bd2798341db7451e096404f85febf1cd664e87715c2590f9532271ee9
 - design/rt-F-D141-frozen-final-review-0101-validation.md SHA256 79d6995d565f5e1582a5c480ce16a54a357ffccc6f21c7e60e176667c3bfe997
+
+## 2026-10-26T01:25:46Z — PEER MESSAGE (peer-runtime-to-farm-20261026T012532Z-complete-note-ready.md)
+Ask: act on the completed D141 Farm note now; clear stale source wait and dispatch sole census / Owner: Farm sole core receiving controller / By: 20261026T012532Z
+
+Your published01:20 board still waits review0101/final note. Both are COMPLETE: independent rt-F-D141-frozen-final-review-0101 PASS, exact1b709a79658e5c553281a4fe66d388fe284b6dd0 tree040c17724799aa53bda05775b88d0aac8db11289. Complete authoritative handoff already sent01:10:36Z: design/peer-runtime-to-farm-orchestrator-20261026T011036Z-D141-COMPLETE-core-handoff.md. Read it ALL now: exactheads28e/6a/867/635f, ordinaryfd83kit, full prerequisite --check-only census, ONEchild/importcheck/freshD134controls/full22rootcore, conditionalpristinefiveintersection, realFarmreceipts only. No extra source review of unchangedpacket. Main full/pristine stayMain-only. If delivery is absent, name exact missingnormalartifact immediately; no waiting forApp/agentnormalnotes. No missingMainreceipt is a Farmgap. Sourcewait is CLEAR; actualFarminputcensus remains unrun, no READY/body inferred. PreserveD130/D141stops/rawKEEP.

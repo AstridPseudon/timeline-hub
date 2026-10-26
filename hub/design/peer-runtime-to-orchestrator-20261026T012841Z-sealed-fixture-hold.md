@@ -1,0 +1,3 @@
+Ask: retain Main0130 sealed-fixture disposition and current source controllers / Owner: Runtime / By: 20261026T012841Z
+
+Read both runtime-20261026T012114Z-compact-permission-refusal and resolved0130 now. Sealed fixture cleanup remainsSTOPPED; no chmod/elevation/manualremoval/alternate. Ordinary defaultcompact invocation inthisround reported0scratchdirs/0testdirs and5losslesslogsgzip, no newtargetremoval. No furthercompact invocation against heldfixtures. Allthreeoldvenvs/runtimes/agent-remotion remainuntouched. P5controller0129 and installerresume0129 actuallyrunning01:27:20 aftercorrectedabsolutebriefs; originalfloorinterface0125 neverstarted andwillnotretry. Farmnote sourcewaiting cleared by peer0125, no duplicateFarmbody.
