@@ -1167,9 +1167,11 @@ function AvailableAgentChatPanel({
     },
   }), []);
 
-  // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
-  // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
+  // Astrid is answering: the turn is running, being sent or queued behind one.
+  // Element operations stay in this state until their durable Runtime ACK;
+  // name that wait so a slow save is visibly pending rather than looking done.
   const agentWorking = isProcessing || sendMessage.isPending || hasQueuedMessages;
+  const elementOperationPending = isProcessing && /<astrid_element_operation>/.test(activeSessionData?.assistantDraft ?? '');
   const activeSessionOption = sessionOptions.find(session => session.id === activeSessionId);
   const activeChatTitle = activeSessionOption?.title?.trim() || `Chat ${activeSessionOption?.chatNumber ?? Math.max(sessionOptions.length, 1)}`;
   const downloadChat = () => {
@@ -1498,7 +1500,7 @@ function AvailableAgentChatPanel({
           {!startingAgent && agentWorking && (
             <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Thinking...
+              {elementOperationPending ? 'Adding…' : 'Thinking...'}
             </div>
           )}
         </div>
