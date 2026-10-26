@@ -759,11 +759,12 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
         os.link(temporary, path, follow_symlinks=False)
         os.unlink(temporary)
         info = os.lstat(path)
-        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
+        if os.name != "nt":
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
         return path, info.st_dev, info.st_ino, payload
     finally:
         if os.path.exists(temporary):
