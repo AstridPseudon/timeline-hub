@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.d141cc.dispatch-recipes.v1",
+  "source": "candidate/cases.json#/dispatches",
+  "recipe_origin": "unchanged pure production builder serviceRecipe binding; private controller only checks/adopts",
+  "target": "app-pin-82e9e13d",
+  "default_heavy_floor_bytes": 5200000000,
+  "default_heavy_floor_rule": "strictly greater than 5200000000 available bytes",
+  "standing_stop_bytes": 4000000000,
+  "trace_rule": "one independent genuine five-second KEEP trace per heavy request, including derived preflight",
+  "selector_order": [
+    "p2-popup-add@popup-retry-1",
+    "p2-parent-move@original",
+    "p2-transition-none-single@original",
+    "p2-transition-none-bulk@original",
+    "p2-register-asset@original",
+    "p1@original",
+    "p3@original"
+  ],
+  "environment_fields": [
+    "D66_APP_SHA", "D66_APP_TREE", "D66_APP_CHECKOUT",
+    "D66_AGENT_SHA", "D66_AGENT_TREE", "D66_AGENT_CHECKOUT",
+    "D66_RUNTIME_SHA", "D66_RUNTIME_TREE", "D66_RUNTIME_CHECKOUT",
+    "D66_COMPOSITION_SHA", "D66_COMPOSITION_TREE", "D66_COMPOSITION_CHECKOUT"
+  ],
+  "binding_guards": [
+    "Every row in candidate/cases.json has exactly 12 environment values.",
+    "Every normal suite is unique and starts with full-d141; preflight is the derived -preflight suite.",
+    "Every output and submit-plan path is unique; no default artifact path is used.",
+    "The popup retry keeps the exact source tuple and command/spec guards while using a distinct attempt namespace.",
+    "No prospective normal or preflight request ID is recorded."
+  ]
+}

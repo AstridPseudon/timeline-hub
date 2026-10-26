@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-26T10:39:24.998065+00:00",
+  "free_before": 5961805824,
+  "free_after": 5956730880,
+  "baseline_keep_count": 56,
+  "baseline_keep_changes": [],
+  "eligible_recycle": [],
+  "sweep_exit": 0,
+  "sweep_output": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 5686M -> 5684M\n",
+  "sweep_diagnostics": "Known helper broken-pipe messages retained in round stderr",
+  "compact_exit": 0,
+  "compact_output": "packed 0 scratch dirs; free 5684M -> 5683M\ngzipped 1 old worker logs; free now 5684M\npacked 0 finished test-run dirs; free now 5683M\n",
+  "compact_stderr": "",
+  "held_targets_untouched": true,
+  "hub_operations": false
+}

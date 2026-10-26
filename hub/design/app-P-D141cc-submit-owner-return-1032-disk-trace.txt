@@ -1,0 +1,14 @@
+# D141cc first-tool present-time sampler
+
+scope=read-only present-time evidence; service_started=false; backfill=false
+standing_stop_bytes=4000000000
+sampler_pid=3
+2026-10-26T10:32:31.624Z available_bytes=5961859072
+2026-10-26T10:32:36.631Z available_bytes=5961859072
+minimum_available_bytes=5961859072
+standing_stop_reached=false
+stop_signal=TERM kill_rc=0
+wait_rc=0 reaped=true
+
+This trace was captured before private evidence inputs were written. It does
+not substitute for or backfill the retained placement/popup service traces.

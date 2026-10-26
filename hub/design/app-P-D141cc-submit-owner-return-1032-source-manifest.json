@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.d141cc.private-source-manifest.v1",
+  "publication": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141cc-wholepath-publication-1032.json",
+    "sha256": "26d3c99d399d3a2cf27cc75b71f74f366b00336a93d2b6ba7842df2b522b0a63"
+  },
+  "review_source_map": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-custody-wholepath-review-1026/evidence/source-map.json",
+    "sha256": "cbfcb905667a9e1bf63fc549be05c1439ec6819334de2d93d44af93d708ed40f"
+  },
+  "original_binding": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141w-ordinary-recipe-return-0747/evidence/binding.json",
+    "sha256": "812b737aa235e26ab25fd8a342223c8d6f43d35394d4cdcbcc63545645469255"
+  },
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "source_lines": ["643-660", "691-699", "704-710"],
+    "meaning": "Existing artifact resumes preflight then creates one normal; new invocation creates one preflight and one normal; submit lock wraps ownership."
+  },
+  "tuple": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "candidate_files": {
+    "controller.py": "98104bdfe1eb02dd8b5938f4a7953cc1233f63f58c492a2a089242998ae480a7",
+    "check.sh": "36df5df5cc83c0574a29c0215926748a2897a2f17e37115212baa879912be435",
+    "cases.json": "4ded5e672e0497eb85b50bcf7962158f6f5aca11e08e62f5a5ce305428565795"
+  },
+  "constraints": {
+    "source_or_product_change": false,
+    "wire_change": false,
+    "manual_registry_queue": false,
+    "paired_kit": false,
+    "new_auth_protocol": false,
+    "future_real_request_ids": false
+  }
+}

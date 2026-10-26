@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.d141cc.findings.v1",
+  "verdict": "PASS_PRIVATE_CONTROLS",
+  "findings": [
+    {
+      "id": "D141cc-F1",
+      "status": "resolved",
+      "finding": "The original popup overlap is procedural custody misuse, not a native-builder defect.",
+      "evidence": "The unchanged builder has one normal request call per invocation; the retained trace shows IDs 13234 and 20413 from overlapping invocations."
+    },
+    {
+      "id": "D141cc-F2",
+      "status": "resolved",
+      "finding": "A missing normal artifact is not permission to relaunch.",
+      "evidence": "The controller first inspects exact same-target/suite/source service records and adopts the authoritative normal ID; a live or unknown owner produces a finite custody error."
+    },
+    {
+      "id": "D141cc-F3",
+      "status": "resolved",
+      "finding": "The cancelled popup IDs are not current proof.",
+      "evidence": "The old scope is retained as terminal cancelled with UNKNOWN body verdict; the authorized retry receives a distinct attempt scope and namespace."
+    },
+    {
+      "id": "D141cc-F4",
+      "status": "resolved",
+      "finding": "Independent selectors may proceed after one selector custody fault.",
+      "evidence": "The self-test faults one selector on foreign preflight ownership while the adjacent selectors still create normally."
+    },
+    {
+      "id": "D141cc-F5",
+      "status": "resolved",
+      "finding": "The standing disk stop is attributed to the exact request ID.",
+      "evidence": "The disk guard raises DiskStop carrying the triggering request ID and exact available-byte value."
+    }
+  ],
+  "retained_limits": [
+    "Placement 9168 remains the only bounded PASS.",
+    "Popup has no functional verdict and no D141j diagnostic body was triggered.",
+    "The six other original selectors were NOTRUN; this packet prepares seven independent future dispatches but executes none.",
+    "No source qualification is claimed for actual bodies."
+  ]
+}

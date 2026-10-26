@@ -1,0 +1,62 @@
+{
+  "utc": "2026-10-26T10:38:32.667223+00:00",
+  "worker": "app-P-D141cc-submit-owner-return-1032",
+  "scope": "Author12inmemorycontrolsPASS and staticchecks; actualnativeprocedure and independentreview owed; no body",
+  "files": [
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-adoption.json",
+      "bytes": 2617,
+      "sha256": "132bb43d6c431d1ae94ad56114badda05a55ac9f5c61e0ed8f97388014429d54"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-source-manifest.json",
+      "bytes": 2344,
+      "sha256": "16a99caf3158db4a92102d0045c06097c2edf2057d3d83aeed54e9d179d25d2a"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-dispatch-recipes.json",
+      "bytes": 1541,
+      "sha256": "42975512ffcc4285442d647b48fe0691fae078f5adb8e32e38865479275e7a0c"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-validation.md",
+      "bytes": 2610,
+      "sha256": "d24dd4b5d7a33fbdb902b6d14ef1752cb5f5ca231bda1733085d2d4a667971ba"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-findings.json",
+      "bytes": 1982,
+      "sha256": "59d5e3ce1461d1e66da7c04933913557bd0b489d2b47b455096c9b5cf3e55661"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-handoff.md",
+      "bytes": 2118,
+      "sha256": "89ce3e5aa6df74acab345c7849694783b49d0f5d46df5404edb1bfe170297faa"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-disk-trace.txt",
+      "bytes": 534,
+      "sha256": "420b5ebd192fd4a3e3f59e080a05d86b9fb116bb1fa383a5c338d7ddcfd56cdb"
+    },
+    {
+      "published": "design/app-P-D141cc-submit-owner-return-1032-sampler-lifecycle.json",
+      "bytes": 573,
+      "sha256": "29a392991c87f59206165aae8acb5086c53134bf28cb5935905fdfd6f6e969fc"
+    },
+    {
+      "published": "design/app-D141cc-source-1032-controller.py",
+      "bytes": 21348,
+      "sha256": "98104bdfe1eb02dd8b5938f4a7953cc1233f63f58c492a2a089242998ae480a7"
+    },
+    {
+      "published": "design/app-D141cc-source-1032-check.sh",
+      "bytes": 2466,
+      "sha256": "36df5df5cc83c0574a29c0215926748a2897a2f17e37115212baa879912be435"
+    },
+    {
+      "published": "design/app-D141cc-source-1032-cases.json",
+      "bytes": 12832,
+      "sha256": "4ded5e672e0497eb85b50bcf7962158f6f5aca11e08e62f5a5ce305428565795"
+    }
+  ]
+}

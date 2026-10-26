@@ -1,0 +1,128 @@
+{
+  "schema": "timeline.d141cc.private-submit-owner-controls.v1",
+  "source_only": true,
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "bytes": 49914,
+    "pure_exports": ["buildSubmitPlan", "serviceRecipe", "exactCheckoutPath"],
+    "manual_row_or_command_construction": false
+  },
+  "source_tuple": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "old_attempt": {
+    "selector": "p2-popup-add",
+    "attempt_scope": "original-cancelled",
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437",
+    "normal_ids": [
+      "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234",
+      "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"
+    ],
+    "terminal_statuses": ["cancelled", "cancelled"],
+    "body_verdict": "UNKNOWN",
+    "excluded_from_new_attempt": "Both are terminal cancelled receipts from the first scope; neither is resurrected, retargeted, or treated as current proof."
+  },
+  "dispatches": [
+    {
+      "selector": "p2-popup-add",
+      "attempt_scope": "popup-retry-1",
+      "suite": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1",
+      "preflight_suite": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "809c1a5ed1be729808d335c8c18dbfdee3ccd73d9454e4739b91e256572def37",
+      "row_sha256": "17e8a4acc32f21825eb0642d7e7a832889ec10b9591c0a05795e2dfa8cf6a018",
+      "output_path": "/private/controller/full-d141/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p2-parent-move",
+      "attempt_scope": "original",
+      "suite": "full-d141-p2-parent-move-82e9e13d-submit",
+      "preflight_suite": "full-d141-p2-parent-move-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "c77b6a97e0807d43a2590624e3d47590a5e76d5ed5841f7f214f3aa9176c8f04",
+      "row_sha256": "ff98c12644fed8ba786a453ae49fde0ba7648160e8a2c1bf7ab75fc07d3c898d",
+      "output_path": "/private/controller/full-d141/full-d141-p2-parent-move-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p2-parent-move-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p2-transition-none-single",
+      "attempt_scope": "original",
+      "suite": "full-d141-p2-transition-none-single-82e9e13d-submit",
+      "preflight_suite": "full-d141-p2-transition-none-single-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "00ee17b1b120f8907c537bb73879a6020f0f32aca9942a4402cb399d137b52ee",
+      "row_sha256": "f287fea597ca4fbe7c875b7678c92f3a27be08066712d8cb2be70bf1c474498b",
+      "output_path": "/private/controller/full-d141/full-d141-p2-transition-none-single-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p2-transition-none-single-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p2-transition-none-bulk",
+      "attempt_scope": "original",
+      "suite": "full-d141-p2-transition-none-bulk-82e9e13d-submit",
+      "preflight_suite": "full-d141-p2-transition-none-bulk-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "b9dbc7f4f69d9bde52d84e8c96b50e0519c33245b4d2de304ca021740f609db3",
+      "row_sha256": "3636c3aec938363dd71350cafbce79434fa852463e7c2733fa30deaa4cb36bbd",
+      "output_path": "/private/controller/full-d141/full-d141-p2-transition-none-bulk-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p2-transition-none-bulk-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p2-register-asset",
+      "attempt_scope": "original",
+      "suite": "full-d141-p2-register-asset-82e9e13d-submit",
+      "preflight_suite": "full-d141-p2-register-asset-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "06852ebd4ab501e51704f8df7d5709063a4e8a1d675b3c018eb39226f0ce2df8",
+      "row_sha256": "c5f318d16964e88df19e41544d5bf73920542ed138c587681e2771d15c015a0b",
+      "output_path": "/private/controller/full-d141/full-d141-p2-register-asset-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p1",
+      "attempt_scope": "original",
+      "suite": "full-d141-p1-82e9e13d-submit",
+      "preflight_suite": "full-d141-p1-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "513dd6421d52e745bb3ba54daaa79eb4c05cfa0d1bd464c27cb03997969245e6",
+      "row_sha256": "890320b6c6608fc53e356268bce7cb8890d144b8c4d8151cf2fc6dfc8c730db6",
+      "output_path": "/private/controller/full-d141/full-d141-p1-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p1-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    },
+    {
+      "selector": "p3",
+      "attempt_scope": "original",
+      "suite": "full-d141-p3-82e9e13d-submit",
+      "preflight_suite": "full-d141-p3-82e9e13d-submit-preflight",
+      "source_digest": "a112af3e0422ece42bbd135b14aac419a7be7a0013cc859efd2cbf70fe668121",
+      "command_sha256": "8323d9cc07a099a8234f6b2fda34b1250b78f7df9ffcbcb8ab66ec2e3fd90cb4",
+      "row_sha256": "6ccf671ffe56b9fc5625317761f5e2a437be89d8d58ad77dca301c3fb610071f",
+      "output_path": "/private/controller/full-d141/full-d141-p3-82e9e13d-submit/output",
+      "plan_path": "/private/controller/full-d141/full-d141-p3-82e9e13d-submit/submit-plan.json",
+      "environment": {"D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d", "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e", "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935", "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03", "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0"}
+    }
+  ],
+  "controls": [
+    "initial single owner",
+    "live preflight-only owner cannot be replaced",
+    "normal request is adopted if artifact persistence failed",
+    "same tool-session resume is allowed; new invocation is not",
+    "queued/running/completed/cancelled same IDs are adopted honestly",
+    "multiple candidates and mismatched source are refused",
+    "cancelled old attempt is retained and excluded from new proof",
+    "selector custody fault does not block independent selectors",
+    "4GB stop is attributed to exact request ID",
+    "submit and body call counts cannot duplicate"
+  ]
+}

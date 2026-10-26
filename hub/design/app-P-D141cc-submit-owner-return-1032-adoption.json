@@ -1,0 +1,44 @@
+{
+  "schema": "timeline.d141cc.submit-owner-adoption.v1",
+  "task": "app-P-D141cc-submit-owner-return-1032",
+  "admission_utc": "2026-10-26T10:31:38.237937+00:00",
+  "source_only": true,
+  "verdict": "CORRECTED_PRIVATE_PROCEDURE_READY",
+  "product_change": false,
+  "builder_change": false,
+  "old_popup_attempt": {
+    "preflight_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-preflight-1026102125-437",
+    "normal_ids": [
+      "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102149-13234",
+      "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-1026102155-20413"
+    ],
+    "status": "terminal cancelled",
+    "functional_verdict": "UNKNOWN",
+    "disposition": "Retain as cancelled custody receipts. Exclude from the new attempt scope; never resurrect or retarget either ID."
+  },
+  "root_cause": "The first popup submit owner was not proved dead before a second worker invocation. The unchanged native builder made one normal request per invocation, producing overlapping IDs 13234 and 20413.",
+  "procedure": [
+    "Derive the exact production service recipe and bind all four source pins, target, command bytes, row bytes, source digest, suite, output, and plan paths.",
+    "Before any create or relaunch, inspect authoritative same-target/same-suite/source requests and durable artifact IDs.",
+    "Adopt an existing queued, running, or completed valid request with its honest status; report cancelled as cancelled and not current proof.",
+    "Resume only through the original submit owner/tool session. PID invisibility is not proof of death; a new owner stops with a finite custody error.",
+    "If a request exists before its artifact is durable, recover by inspecting and adopting that exact request; never call create again.",
+    "On ambiguity, multiple candidates, mismatched source, missing custody, or safety refusal, stop only that selector and continue independent selectors after the shared safety check.",
+    "For the authorized popup retry, generate a new explicit attempt scope with unique full-d141 suite/output/plan paths; the old cancelled scope is excluded."
+  ],
+  "dispatch_order": [
+    "p2-popup-add@popup-retry-1",
+    "p2-parent-move@original",
+    "p2-transition-none-single@original",
+    "p2-transition-none-bulk@original",
+    "p2-register-asset@original",
+    "p1@original",
+    "p3@original"
+  ],
+  "not_run": [
+    "actual --submit",
+    "request-test/wait-test/stop-test",
+    "body, browser, localhost, full suite, delivery build, dry run, rehearsal",
+    "product tests, typecheck, lint, registration, registry/queue operation"
+  ]
+}
