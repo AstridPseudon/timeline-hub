@@ -55,6 +55,12 @@ case "$D140_PHASE" in
     *) printf '%s\n' 'D140_PHASE must be pre-child, post-child or post-launch' >&2; exit 2 ;;
 esac
 
+farm_required=${FARM_REQUIRED:-0}
+case "$farm_required" in
+    0|1) ;;
+    *) printf '%s\n' 'FARM_REQUIRED must be 0 or 1' >&2; exit 2 ;;
+esac
+
 checks=()
 missing=0
 
@@ -281,6 +287,14 @@ check_farm_kit_receipt() {
     fi
 }
 
+check_ordinary_route() {
+    if /usr/bin/python3 -I -B "$RECEIPT_CHECKER" kit ordinary-route; then
+        add_check route.ordinary-installed-schema PASS 'normal receiving route owner' 'D139a installed distribution and normal child custody are selected; no Farm authority receipt is required'
+    else
+        add_check route.ordinary-installed-schema MISMATCH 'normal receiving route owner' 'ordinary D139a producer or retained registration/report closure is unavailable'
+    fi
+}
+
 check_d73_receipt() {
     check_producer_receipt "$1" "$2" d73
 }
@@ -291,9 +305,9 @@ check_d73_manifest() {
 
 check_normal_caller() {
     if /usr/bin/python3 -I -B "$RECEIPT_CHECKER" caller normal-request; then
-        add_check route.farm-distribution-join PASS 'normal Farm caller owner' 'qualified caller supports the required producer join'
+        add_check route.normal-caller PASS 'normal receiving route owner' 'qualified normal D139a installed-schema caller is selected'
     else
-        add_check route.farm-distribution-join MISMATCH 'normal Farm caller owner' 'D139a installed-schema request and Farm authority are mutually refused by the qualified requester/maker; no authorized joined producer exists'
+        add_check route.normal-caller MISMATCH 'normal receiving route owner' 'qualified normal caller refused the selected route'
     fi
 }
 
@@ -349,13 +363,15 @@ check_hash_mode operational.maker MAKER_PATH "$MAKER_SHA" 111171 755 'D139a join
 check_hash_mode operational.wrapper WRAPPER_PATH "$WRAPPER_SHA" 18066 755 'D139a request-carrier owner'
 check_hash_mode operational.checker CHECKER_PATH "$CHECKER_SHA" 14033 755 'D139a census owner'
 require_env FARM_ORCH_ROOT 'normal Farm owner'
-require_env FARM_DISTRIBUTION_SOURCE 'Farm distribution owner'
-check_bound_path distribution.source FARM_DISTRIBUTION_SOURCE dir 'Farm distribution owner'
-normal_archive="${FARM_ORCH_ROOT-}/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz"
-if [ -n "${FARM_ORCH_ROOT-}" ] && physical_path "$normal_archive" file; then
-    add_check distribution.original-bootstrap PASS 'Farm distribution owner' 'normal original archive is present; the pinned input verifier must authenticate its bytes'
-else
-    add_check distribution.original-bootstrap MISSING 'Farm distribution owner' 'normal original five-wheel archive is unavailable; no acquisition or alternate packet'
+if [ "$farm_required" = 1 ]; then
+    require_env FARM_DISTRIBUTION_SOURCE 'Farm distribution owner'
+    check_bound_path distribution.source FARM_DISTRIBUTION_SOURCE dir 'Farm distribution owner'
+    normal_archive="${FARM_ORCH_ROOT-}/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz"
+    if [ -n "${FARM_ORCH_ROOT-}" ] && physical_path "$normal_archive" file; then
+        add_check distribution.original-bootstrap PASS 'Farm distribution owner' 'normal original archive is present; the pinned input verifier must authenticate its bytes'
+    else
+        add_check distribution.original-bootstrap MISSING 'Farm distribution owner' 'normal original five-wheel archive is unavailable; no acquisition or alternate packet'
+    fi
 fi
 check_producer_receipt operational.installation-summary FARM_INSTALLED_KIT_SUMMARY installation
 check_normal_caller
@@ -446,13 +462,21 @@ if [ "$D140_PHASE" = pre-child ]; then
     check_source_receipt receipt.FARM_CURRENT_RUNTIME_RECEIPT FARM_CURRENT_RUNTIME_RECEIPT "${RUNTIME_CHECKOUT-}" "$RUNTIME_SHA" "$RUNTIME_TREE"
     check_source_receipt receipt.FARM_CURRENT_APP_RECEIPT FARM_CURRENT_APP_RECEIPT "${APP_CHECKOUT-}" "$APP_SHA" "$APP_TREE"
     check_source_receipt receipt.FARM_CURRENT_COMPOSITION_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT "${COMPOSITION_CHECKOUT-}" "$COMPOSITION_SHA" "$COMPOSITION_TREE"
-    check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+    if [ "$farm_required" = 1 ]; then
+        check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+    else
+        check_ordinary_route
+    fi
 else
     check_source_receipt receipt.FARM_CURRENT_AGENT_RECEIPT FARM_CURRENT_AGENT_RECEIPT "${AGENT_CHECKOUT-}" "$AGENT_SHA" "$AGENT_TREE"
     check_source_receipt receipt.FARM_CURRENT_RUNTIME_RECEIPT FARM_CURRENT_RUNTIME_RECEIPT "${RUNTIME_CHECKOUT-}" "$RUNTIME_SHA" "$RUNTIME_TREE"
     check_source_receipt receipt.FARM_CURRENT_APP_RECEIPT FARM_CURRENT_APP_RECEIPT "${APP_CHECKOUT-}" "$APP_SHA" "$APP_TREE"
     check_source_receipt receipt.FARM_CURRENT_COMPOSITION_RECEIPT FARM_CURRENT_COMPOSITION_RECEIPT "${COMPOSITION_CHECKOUT-}" "$COMPOSITION_SHA" "$COMPOSITION_TREE"
-    check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+    if [ "$farm_required" = 1 ]; then
+        check_farm_kit_receipt receipt.FARM_D139A_KIT_RECEIPT FARM_D139A_KIT_RECEIPT
+    else
+        check_ordinary_route
+    fi
     if [ "$D140_PHASE" = post-launch ]; then
         check_d73_receipt receipt.FARM_D73_RECEIPT FARM_D73_RECEIPT
     fi

@@ -8,11 +8,12 @@ manager manifest, controls, and output roots. After the launcher, use
 `D140_PHASE=post-launch` to check request-scoped retained results. A missing gate is finite
 `NOT_READY`; do not continue or substitute another route.
 
-The current qualified requester/maker refuse the D139a installed-schema +
-Farm-authority join. The receiver records `route.farm-distribution-join` as
-`MISMATCH`; this sequence is not executable as a qualified Farm run until the
-orchestrator resolves that producer incompatibility. Keep the existing guards.
-Do not add Farm flags to the installed-schema request or substitute its carrier.
+The ordinary D139a installed-schema request is the default Farm route and does
+not require the historical Farm distribution source or receipt. If the existing
+`FARM_REQUIRED=1` selector is used for the special Farm profile, the receiver
+requires its full distribution and retained-authority closure. The requester
+and maker still refuse an installed-schema request combined with Farm flags;
+keep that guard and do not substitute the D139a carrier.
 
 The receiver never starts a body. The post-child census authenticates the
 registered child, tuple receipts, key/value D73 input manifest, exact poison

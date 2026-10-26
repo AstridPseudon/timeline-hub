@@ -132,7 +132,9 @@ def test_phase_census_does_not_admit_future_inputs_or_start_routes(tmp_path: Pat
     assert "binding.CHILD_RECEIPT" not in pre_ids
     assert "binding.P4_D73_MANIFEST" not in pre_ids
     assert "binding.OUTPUT_ROOT" not in pre_ids
-    assert {"binding.FARM_DISTRIBUTION_SOURCE", "distribution.original-bootstrap", "route.farm-distribution-join"} <= pre_ids
+    assert "binding.FARM_DISTRIBUTION_SOURCE" not in pre_ids
+    assert "distribution.original-bootstrap" not in pre_ids
+    assert "route.normal-caller" in pre_ids
     assert "receipt.FARM_D73_RECEIPT" not in pre_ids | post_ids
     assert "binding.CHILD_RECEIPT" in post_ids
     assert "binding.P4_D73_MANIFEST" in post_ids
@@ -671,6 +673,7 @@ def test_farm_main_calls_real_producer_and_retention_boundary(custody: dict, mon
         return real_physical(path, directory)
 
     monkeypatch.setattr(module, "physical", physical)
+    monkeypatch.setenv("FARM_REQUIRED", "1")
     monkeypatch.setenv("FARM_DISTRIBUTION_SOURCE", str(custody["tmp"]))
     monkeypatch.setenv("D140_PHASE", phase)
     value = json.loads(module.canonical(packet))
@@ -726,17 +729,31 @@ def test_matching_hash_cannot_register_an_arbitrary_owner_root(custody: dict) ->
     assert result["status"] == "NOT_READY"
 
 
-def test_real_normal_caller_refuses_d139a_farm_join_before_any_queue(custody: dict, monkeypatch) -> None:
+def test_real_normal_caller_uses_ordinary_route_and_special_join_still_refuses(custody: dict, monkeypatch) -> None:
     module = checker_module(custody, monkeypatch)
-    assert checker_call(module, monkeypatch, "caller", "normal-request") == 1
+    assert checker_call(module, monkeypatch, "caller", "normal-request") == 0
     result = run_receiver(custody["tmp"], "pre-child", **custody["bindings"])
-    assert next(row["status"] for row in result["checks"] if row["id"] == "route.farm-distribution-join") == "MISMATCH"
+    assert next(row["status"] for row in result["checks"] if row["id"] == "route.normal-caller") == "PASS"
+    assert next(row["status"] for row in result["checks"] if row["id"] == "route.ordinary-installed-schema") == "PASS"
     wrapper = (ROOT.parent / "ops-child-custody/request-child-venv").read_text()
     guard_end = wrapper.index('\nif [ "$SCHEMA_REQUIRED" = 1 ]; then')
     parser = wrapper[:guard_end]
-    result = subprocess.run(["bash", "-c", parser, "request-control", "venv-agent-child-d140", custody["constants"]["AGENT_SHA"],
-                             "--farm-distributions", "--schema-installed-distribution", "/private/dist-info", "--schema-source-manifest", "/private/manifest"],
-                            capture_output=True, text=True, check=False)
-    assert result.returncode == 2
-    assert "installed schema input cannot be combined with Farm schema authority" in result.stderr
+    ordinary = subprocess.run(["bash", "-c", parser, "request-control", "venv-agent-child-d140", custody["constants"]["AGENT_SHA"],
+                               "--schema-installed-distribution", "/private/dist-info", "--schema-source-manifest", "/private/manifest"],
+                              capture_output=True, text=True, check=False)
+    assert ordinary.returncode == 0
+    special = subprocess.run(["bash", "-c", parser, "request-control", "venv-agent-child-d140", custody["constants"]["AGENT_SHA"],
+                              "--farm-distributions", "--schema-installed-distribution", "/private/dist-info", "--schema-source-manifest", "/private/manifest"],
+                             capture_output=True, text=True, check=False)
+    assert special.returncode == 2
+    assert "installed schema input cannot be combined with Farm schema authority" in special.stderr
     assert not list((custody["orch"] / "queue/done").glob("childvenv-*"))
+
+
+def test_special_farm_profile_remains_strict(custody: dict, monkeypatch) -> None:
+    monkeypatch.setenv("FARM_REQUIRED", "1")
+    module = checker_module(custody, monkeypatch)
+    assert checker_call(module, monkeypatch, "caller", "normal-request") == 1
+    result = run_receiver(custody["tmp"], "pre-child", FARM_REQUIRED="1", **custody["bindings"])
+    assert next(row["status"] for row in result["checks"] if row["id"] == "binding.FARM_DISTRIBUTION_SOURCE") == "MISSING"
+    assert next(row["status"] for row in result["checks"] if row["id"] == "route.normal-caller") == "MISMATCH"

@@ -204,8 +204,17 @@ def normal_kit(root: Path) -> None:
             raise ValueError("detached installed normal caller: " + executable)
 
 
+def farm_profile_selected() -> bool:
+    value = os.environ.get("FARM_REQUIRED", "0")
+    if value not in {"0", "1"}:
+        raise ValueError("FARM_REQUIRED must be 0 or 1")
+    return value == "1"
+
+
 def caller(root: Path, name: str) -> None:
     normal_kit(root)
+    if not farm_profile_selected():
+        return
     guard = b"installed schema input cannot be combined with Farm schema authority"
     if all(guard in (root / "bin" / tool).read_bytes() for tool in ("request-child-venv", "make-child-venv")):
         raise ValueError("NOT_READY: qualified normal caller refuses D139a installed schema + Farm authority; no joined producer exists")
@@ -269,6 +278,11 @@ def registered_child(root: Path, child_path: Path, report: bytes | None = None) 
 def kit(root: Path, name: str) -> None:
     """Use the maker's exact input gate before create and retention gate after."""
     normal_kit(root)
+    if not farm_profile_selected():
+        if os.environ.get("D140_PHASE", "pre-child") != "pre-child":
+            child_path = physical(Path(bound("CHILD_PYTHON")).parent.parent, directory=True)
+            registered_child(root, child_path)
+        return
     seed = seed_component(root)
     archive = physical(root / "artifacts" / f"bootstrap-wheel-input-0932-{ARCHIVE_SHA}.tgz")
     source_path = physical(bound("FARM_DISTRIBUTION_SOURCE"), directory=True)

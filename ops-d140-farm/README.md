@@ -42,18 +42,16 @@ The production caller is `receive-farm.sh:check_producer_receipt` ->
   as **supporting installation evidence only**, through the separate
   `FARM_INSTALLED_KIT_SUMMARY` and `FARM_KIT_INSTALLATION` bindings. Neither
   summary is a Farm distribution receipt.
-- `kit` loads only the pinned `verify_dependency_seed.py` and
-  `verify_farm_distribution_inputs.py` source bytes. Before child creation it
-  calls the existing `farm_inputs` input gate with `FARM_DISTRIBUTION_SOURCE`
-  and the normal retained original bootstrap archive. The actual producer
-  returns `{schema_source, wheel_inputs, component_identity}`; `wheel_inputs`
-  is `timeline.farm-distribution-inputs.v1`, including roles, lock,
-  distributions, ownership and component identity. No future child receipt is
-  required before creation. After creation, `FARM_D139A_KIT_RECEIPT` must be
-  the registered child's exact mode-0400 `.farm-receipt.json`, byte-identical
-  to that producer output. `retained_farm` revalidates source custody, original
-  archive, schema carrier and retained test-wheel/lock closure against the
-  registered `farm_authority`. There is no replacement receipt protocol.
+- `kit` selects the ordinary D139a installed-distribution route by default and
+  checks the normal maker/requester custody before creation. After creation it
+  checks the registered child and retained provision report through the normal
+  formats. It does not require `FARM_DISTRIBUTION_SOURCE`, `farm_authority`,
+  or `.farm-receipt.json`. When the existing `FARM_REQUIRED=1` selector is
+  supplied, the strict special Farm branch instead loads only the pinned
+  `verify_dependency_seed.py` and `verify_farm_distribution_inputs.py` source
+  bytes, authenticates `farm_inputs`, and requires the registered child's exact
+  mode-0400 `.farm-receipt.json` and retained `farm_authority` closure. There
+  is no replacement receipt protocol.
 - `child` accepts the normal queue result for `venv-agent-child-d140` and the
   maker's real final success line. `registered_child` checks retained normal
   owner/index/entry/registration metadata, key, source/client/schema/bootstrap
@@ -69,15 +67,12 @@ The production caller is `receive-farm.sh:check_producer_receipt` ->
   launcher; `post-launch` checks retained results after it. No future launcher
   output is required at either earlier phase.
 
-**Current normal-caller incompatibility: NOT_READY.** The real
-`request-child-venv` parser and `make-child-venv` both explicitly refuse combining
-D139a installed-schema input with Farm schema authority. The normal D140
-request below selects installed-schema input and therefore cannot produce a
-Farm `.farm-receipt.json`. `caller`, reached through `check_normal_caller`,
-reports this as `route.farm-distribution-join=MISMATCH` even when individual
-input controls pass. No command is changed to bypass that guard, and no
-Farm source replaces the D139a installed carrier. A compatible producer join
-requires an orchestrator decision outside this private receiving scope.
+**Route selection.** The ordinary D140 request below selects the approved D139a
+installed-schema input and reaches the normal caller without Farm authority.
+The existing requester/maker guard still refuses the same request when Farm
+authority is selected alongside the installed schema. The strict special Farm
+branch is selected only with `FARM_REQUIRED=1`; no command bypasses the guard
+and no Farm source replaces the D139a installed carrier.
 
 Producer path: `request-child-venv` serializes `CHILDVENV` ->
 `dispatcher-daemon:prov` invokes `make-child-venv` -> its inline Farm gate calls
@@ -93,8 +88,8 @@ an unauthenticated receipt. Only the pinned read-only input verifier runs;
 no maker, request or D73 body runs. A changed producer requires a new reviewed
 handoff, with no fallback.
 
-The sequence in [commands.md](commands.md) remains blocked by the normal-caller
-join. The post-child census is a separate admission after a normal request;
+The sequence in [commands.md](commands.md) uses the ordinary normal-caller
+route by default. The post-child census is a separate admission after a normal request;
 post-launch retained-result admission follows launcher execution. The command file preserves the
 normal request wrapper, registered-child import checker, D134
 positive/poison accounting, and the unfiltered D124 22-root core selector.
