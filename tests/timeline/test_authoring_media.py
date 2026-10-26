@@ -316,7 +316,7 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
         def _state(self):
             return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"}}
 
-        def _bundle(self, state):
+        def _capture_bundle(self, state):
             assert state["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
             return copy.deepcopy(session_base)
 

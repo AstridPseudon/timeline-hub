@@ -570,7 +570,7 @@ def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp
         def _state(self):
             return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"}}
 
-        def _bundle(self, _state):
+        def _capture_bundle(self, _state):
             original = bundle()
             original["base_parent"]["publication_id"] = "publication-1"
             return original
