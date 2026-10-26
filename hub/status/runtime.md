@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T13:43:14Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 8m -->
-# runtime board, 2026-10-26T13:34:45.973287+00:00
+<!-- main | 2026-10-26T13:48:51Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 4 | status age 3m -->
+# runtime board, 2026-10-26T13:45:22.344308+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -79,16 +79,19 @@
 
 | F D141hh P1 P3 notes | Retain qualified documentary installation | Luna and independent Luna | Independent1252 PASS | merged | Installer1252; independent1252 | [Receipt](../../design/runtime-D141hh-P1-P3-notes-installed-publication-1332.json). Exact3c32/c610;568 outside records, backups, CAS, readback and render PASS. Monitor limits retained. | No product change |
 
-| D141ii App successor | Retain held latest catch-up candidate | App Luna and independent review | Main13:32 owner choice reopened | gated:D141ii-owner | App author1305; review1317 | Review touches all8 journey paths. HOME held;82e proofs and pins conserved. Owner chooses latest or retainedfc24 before reproof. | Candidateeac97ea5 |
+| D141jj App choice | Retain proven App against frozen base | Owner and App | Owner13:42 optionB | merged | App82e lineage; catch-up held | Ship82e againstfc24f849. Candidateeac97 retained uninstalled for shot-layering afterZIP. Existing proofs and pins kept. | App82e9e13d |
 
 | OPS normal sync | Retain confirmed ordinary publication | Main lead | Main13:29 process readback | merged | Existing hub sync owner | Main confirms sync daemon alive and cycle active.13:12 to13:26 was one slow cycle; no manual hub operation. | No source change |
 
+| F D141jj App base | Implement exact App apply target | Luna | Owner13:42 D141jj | doing | rt-F-D141jj-base-source-1345 | Private caller to D68 to scoped installer closure. Appfc24 exact; other3 currenttips. No activation or real build. | Pending candidate |
+| F D141jj notes | Disclose frozen App upstream and conflicts | Luna | Qualified3c32/c610; owner13:42 | doing | rt-F-D141jj-notes-1345 | Bounded private suffix; preserve all current prefixes, gaps and32 IDs. Protected review then guarded CAS. | Pending candidate |
+
 Blockers: Agent — Owner D141ii closes scope decisions: inverse38 restore, installer2 exact retirement, writers15 protected migration. Repairs, independent reviews and actual per ID proof must reach REG0 before D141v.
 Blockers: Final activation — Existing final-install-next has qualified Main1011/1023 source and scoped registry map. Actual final source/gate tuple, D141v and accepted final proofs remain required.
-Blockers: App owner choice — Main13:32 reopens D141ii(4): latest catch-up touches all8 journeys. App holds HOME pending owner latest versus retainedfc24 decision;82e proofs and pins stay.
+Blockers: Runtime source — D141jj exact Appbase final caller/D68/installer closure and bounded notes update now dispatch. No real build; independent source and documentary review precede guarded installation.
 Blockers: Safety — D130, old venvs, agent-remotion, sealed1811 and adjacent archives stay held. No manager hub operation or repeat repack. All open raw KEEP and refused smoke retained.
-Next ready: Existing Agent failure-note join needs its SAFE per ID table. Agent protected writer review and integratedkept53 remain owed. App HOME holds owner target choice; no early final pins.
-live 0 / cap 6; ready-undispatched 0. P1/P3 installation qualification complete; no heavy body. Final pins, activation and build remain gated.
+Next ready: Review each D141jj source and notes author immediately on terminal. Agent protected writer review and integratedkept53 still gate final pins; existing failure-note join waits SAFE perID originals.
+live 2 / cap 6; ready-undispatched 0. Both D141jj independent authors queued; no heavy body. Final pins, activation and build remain gated.
 
 Runtime source95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1. Integrated15 actual0508=15PASS5.79s; independent0513 PASS. Original18778=7300PASS35FAIL18ERROR26SKIP13XFAIL; pristine11121=15PASS2.76s. Fifteen proved REG corrected;38 own nonpass unchanged. P56934=38PASS31.02s on original6a/28e, final applicability0513/0637 stays separate, metadata0619 correction immutable. Raw originals KEEP;8912/19479 held unstarted. P4 historical10086=3PASS23.668s/XMLafca45b7 through0151/0202; current CLI14092=1PASS/XML7ff7ea37, cumulative App1101 GO. No original receipt retarget or repeat body.
 
@@ -119,3 +122,5 @@ Current pass 2026-10-26T13:32:53.331656+00:00: INBOX consumed through1900977byte
 Main peer13:29 clears normal-sync blocker: daemon226 alive, cycle23826 active, hub latest773f6f858 at13:26:16. No manual hub mutation. H6 Agent13:17 inverse38 and installer2 HOME73e369, writers sole firstreturn1319 active; integratedkept53 still owed. App13:18 latest-upstream author1304 plus protected visibilityreturn active; newhead/fullpair/sevenjourney path maps still owed. No duplicate owning author. No Runtime worker pending/running. Maintenance13:20 terminal sweep3 removed0, compact packed0/gzipped0/testdirs0; three dirty ended legacy trees retained, no eligible clean source. Free5528342528bytes; no heavybody or new cleanup target.
 
 Main header13:32 reopens D141ii(4) ownerchoice; header249962 read. Latest App review1317 touchesall8journeys, estimatedsevenreproofs plusfullunitpair. CandidateHOME HOLD and82e pins/proofs retained. Runtime row gated:D141ii-owner; owning App/Main decision lineage retained, no duplicate escalation or author. Agent13:24 board solewriterreturn3638 terminal22PASS9.10s/scopedRuffPASS/targetPython3.12mypyPASS; protectedreview active13:24. Still noREG0/integratedkept53 or finalpins. INBOXunchanged1900977.
+
+Pass 2026-10-26T13:45:22.344308+00:00: INBOX1901726/header250660 consumed through ownerD141jj13:42 optionB. App choice gate CLEAR: shipproven82e against EXACTfc24f84994dc36cfae9349112782ab4d91dbc73b/treefaf477adef3ec24c9cc359486ac16866500ab219; actualGitreadonlymatches. New independent ready notes/source rows both Lunaqueued1345 atfree5515902976, normalcap6/noheavy. Source completecaller/D68/installer closure, lifecycle760790 andbuilder ef9 exact. Notes private3c32/c610 successor, no canonicalwrites. Allnewsource/protected reviews owed; finalAgent53/REG0, D141v, actualtuple, guardedinstall/heavybuild remain gated. Originalcatchupeac97 uninstalledpostZIP only, no freshpair/journeybody. Runtime1332 publication is byteexact in normalhub; syncblockerremainsclear.
