@@ -123,7 +123,14 @@ def _clip_element(ctx, command, *, allow_initial=False):
     element = command['args']['elementRef']
     selected, alias = ctx.read(ref, ['elementRef']), ctx.read(ref, ['element_ref'])
     before = selected if selected is not None else alias
-    if not isinstance(before, dict) and not allow_initial:
+    row = ctx.state.entity(ref)
+    initial_discord = (
+        allow_initial
+        and ctx.read(ref, ['clipType']) == 'am-discord'
+        and 'elementRef' not in row
+        and 'element_ref' not in row
+    )
+    if not isinstance(before, dict) and not initial_discord:
         raise CommandError('clip.set-element requires an existing element ref', ref=ref)
     if isinstance(before, dict) and (any(before.get(key) != element[key] for key in ('id', 'kind'))
             or before.get('packId') is not None and before['packId'] != element.get('packId')):
