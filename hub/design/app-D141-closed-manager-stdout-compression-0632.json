@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-26T06:31:15.722240+00:00",
+  "before_free": 4790063104,
+  "after_free": 4798033920,
+  "saved_bytes": 7976196,
+  "records": [
+    {
+      "original": "managers/app/rounds/20261022T2309Z.log",
+      "compressed": "managers/app/rounds/20261022T2309Z.log.gz",
+      "sha256_original_and_decompressed": "b358820c0dd156b40a19f6bd3cdd6c7535beaa9f97701b4829452c74a3b092b8",
+      "before_bytes": 2645962,
+      "after_bytes": 619665,
+      "mode": "0o644"
+    },
+    {
+      "original": "managers/app/rounds/20261024T0218Z.log",
+      "compressed": "managers/app/rounds/20261024T0218Z.log.gz",
+      "sha256_original_and_decompressed": "89d22066c77dd4a0aa19b4f34008d0a2a208a0d3dc941325c266ed03ed62313b",
+      "before_bytes": 1995182,
+      "after_bytes": 472093,
+      "mode": "0o644"
+    },
+    {
+      "original": "managers/app/rounds/20261023T0256Z.log",
+      "compressed": "managers/app/rounds/20261023T0256Z.log.gz",
+      "sha256_original_and_decompressed": "13e531cb00ad08363083f8f3cc6fb58f1ca147171a6fa7532f0e51417e187b20",
+      "before_bytes": 1845872,
+      "after_bytes": 441867,
+      "mode": "0o644"
+    },
+    {
+      "original": "managers/app/rounds/20261023T0042Z.log",
+      "compressed": "managers/app/rounds/20261023T0042Z.log.gz",
+      "sha256_original_and_decompressed": "169a5120cbe3c227cb0b5c6af1995dd8684d52dee0e28b9bec171741e2f5ce1d",
+      "before_bytes": 1629221,
+      "after_bytes": 430961,
+      "mode": "0o644"
+    },
+    {
+      "original": "managers/app/rounds/20261023T0340Z.log",
+      "compressed": "managers/app/rounds/20261023T0340Z.log.gz",
+      "sha256_original_and_decompressed": "1b1dcbf6db8123f501dbcd284ba8982431e4446fca2b12ed2839764e10d64c58",
+      "before_bytes": 1325373,
+      "after_bytes": 361298,
+      "mode": "0o644"
+    },
+    {
+      "original": "managers/app/rounds/20261023T0445Z.log",
+      "compressed": "managers/app/rounds/20261023T0445Z.log.gz",
+      "sha256_original_and_decompressed": "8a7b45587ccd83a20c28d10575993f0bbea92f4edcfea79107f61ca1920ab879",
+      "before_bytes": 1202459,
+      "after_bytes": 341989,
+      "mode": "0o644"
+    }
+  ],
+  "guards": "Closed >1h, single link, nonsymlink, no current design/brief/board/suite reference, no host open FD; no26Oct witness log or worker/test raw touched."
+}
