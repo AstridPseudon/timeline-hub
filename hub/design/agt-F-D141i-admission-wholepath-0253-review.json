@@ -1,0 +1,79 @@
+{
+  "schema": "timeline.agent.d141i.admission-wholepath.review.v1",
+  "status": "WHOLE_PATH_REVIEW_COMPLETE",
+  "scope": "read-only production request-test to controller/wrapper boundary",
+  "plan": "PLAN §3 F/C0 unchanged",
+  "service": {
+    "id": "agent-agent-core-full-1026025151-24049",
+    "request": "request-test integration:agent agent-core-full --no-cache",
+    "request_exit": 0,
+    "wait_exit": 78,
+    "terminal_status": "fail",
+    "terminal_message": "REFUSED: controller admission disk floor not met: 4687142912 < 4700000000",
+    "body_started": false,
+    "body_invocation_count": 0,
+    "launcher_reached": false
+  },
+  "path": [
+    {
+      "stage": "request-test",
+      "evidence": "bin/request-test lines 2-16; request file requested=2026-10-26T02:51:52Z; returned service directory",
+      "result": "recorded service ID before polling"
+    },
+    {
+      "stage": "test-run named-suite admission",
+      "evidence": "bin/test-run lines 18, 34-40; agent-core-full is heavy and has inclusive 4700000000-byte floor",
+      "result": "passed at dispatch; otherwise no background run would have been started"
+    },
+    {
+      "stage": "snapshot/bench preparation",
+      "evidence": "bin/test-run lines 42-45, 98-107, 198-209; BENCH-LEASE-RESULT=complete; service heavy and runner receipts materialized; wrapper command executed",
+      "result": "completed far enough to invoke the registered command"
+    },
+    {
+      "stage": "0238 wrapper",
+      "evidence": "measurement-command.sh lines 225-255; actual disk-trace.txt records source_admission=4687142912",
+      "result": "refused with exit 78 before service witness, argv, launcher or body"
+    },
+    {
+      "stage": "launcher/body",
+      "evidence": "actual run-root launcher-evidence is absent; XML/raw stdout/raw stderr are zero bytes; status says body_started=0",
+      "result": "not reached"
+    }
+  ],
+  "cause_of_missed_timing": {
+    "finding": "The 0246 command PASS covered static source/manifest/argv checks and dry launcher controls only; it explicitly did not run request-test, service admission, snapshot preparation, or the body.",
+    "operational_boundary": "The production path has a dispatcher floor check before snapshot preparation and an independent wrapper source_admission check after preparation. The latter observed 4687142912, below 4700000000.",
+    "manager_witness_bytes": 4821594112,
+    "wrapper_observed_bytes": 4687142912,
+    "drop_bytes": 134451200,
+    "wrapper_shortfall_bytes": 12857088,
+    "d89c": "The settled decision says own preparation does not retrigger the floor; continuous 4000000000-byte stop remains. No new floor is proposed here."
+  },
+  "materialization": {
+    "suite_row_count": 1,
+    "suite_row_line": 31,
+    "suite_row_exact": true,
+    "suite_conf_sha256": "8871cb8218c828f74e2ad4a15f385df497f45ff860788b25f98a8fb111cb257d",
+    "row_sha256": "e29834abb52af15074269c6b7f00d5549943a966c79a74150a696ad09038a844",
+    "wrapper_sha256": "87384df6e825af2e211b67135ec944aa51f855251e195bb955a8832c92ab0381",
+    "positive_manifest_sha256": "94d8d5813c7f96259547bc273cad388d6fefe60126c33fc5faa68385c56f8707",
+    "poison_manifest_sha256": "c1e9ae00cc7c4b94262b9277f3079e1234524d90610cbe807945961d5379fb4c",
+    "source_manifest_sha256": "773d23da50a9212b137ec3a8f3228fea69b206f372e9fad9d25b4c720b70f0c1"
+  },
+  "custody": {
+    "source_before_sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2",
+    "source_after_sha256": "2011194df7446fa0751c63907989866578afa82aaa3d59807baf7da83d1873c2",
+    "status_sha256": "c9a22b52a881dc21191f742075aa27510fd1add4089d8fcf6dbdd89f4b91fc8a",
+    "disk_trace_sha256": "e7cdf490bffaa6651b06cfe2abd1dadc85826899d6d52d67ab3c16bf0d3f4667",
+    "interpreter_sha256": "638646cbdf40aa272993d70b59caf8d5c27eb72fbdf04a1390b8b8c08fcf2686",
+    "body_artifacts": "not produced after pre-body refusal",
+    "raw_keep": true
+  },
+  "comparators": {
+    "pristine_27388": "Existing receipt: body_started=1, source admission 5295308800, body dispatch 5295300608, minimum 5277556736, monitor exit 0; not a current cut result.",
+    "p4_10086": "Existing receipt: exact cut tuple and pinned launcher, 3/3 PASS; supports launcher/source materialization, not whole-core qualification.",
+    "queued_19479": "Existing receipt remains queued/unstarted; no body or result inferred."
+  },
+  "conclusion": "One finite blocker is established: free space fell below the wrapper's 4700000000-byte source-admission threshold after service preparation. No second source, row, launcher, or product blocker is established. No body, test outcome, REG/nonREG, or ship credit is claimed."
+}

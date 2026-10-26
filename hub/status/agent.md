@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T02:55:05Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 0m -->
-# agent board, 2026-10-26T02:54Z
+<!-- agent | 2026-10-26T02:59:13Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 1m -->
+# agent board, 2026-10-26T02:57Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream behavior and both test families | Luna and Sol | D141 cut | merged | U2 historical and final2355 | Final join includes8b6ed; cumulative Python476 PASS61 FAIL73 ERROR1 SKIP. Bun200 PASS. Source custody0015 PASS; cut REG proof separate. | 28e56cacb4 |
@@ -44,7 +44,7 @@ Blockers: Farm — owner cleared census permission; actual0140 census NOT_READY 
 Blockers: App — receipt b7be and independent0202 PASS published0207; App cumulative P4 verdict owed. No second body.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification. Existing Runtime escalation retained; no retry, transfer, alternate route or rollback.
 
-Next ready: Sol0253 and wholepath0253 -> bounded final check -> corrected sole body -> per ID join. live2 / cap3; ready-undispatched0. Service24049 zero body;19479 unstarted.
+Next ready: Sol0253 and wholepath0253 -> bounded final check -> corrected sole body -> per ID join. live1 / cap3; ready-undispatched0. Service24049 zero body;19479 unstarted.
 
 P4: Latest MAIN shortcut in INBOX01:48:16Z supersedes corrected rerun and kit change. Genuine10086=3PASS23.668s, XML0055/evidence/body-evidence/p4-d141c.xml sha256afca45b778f118b22f30e2cac08654a902dd86241b76442f146ae0ad8623316d. Original manifest67ef and runmanifest named missing0047 path; independent0114 FAIL retained. New immutable receipt0159 b7be binds actual path/hash/fulltuple without rewriting originals; ONE quick independent0202 check terminal PASS at02:04:50Z; published0207, then App verdict. No second P4 body; queued19479 remains unstarted, no floor release/manual cancellation. Normal stop0128 completed; dispatcher receipt confirms process stopped. Source0119/0124 and admission6c00/8aa7/0139 are retained superseded, uninstalled; MAIN told Runtime cancel0146. Canonical bin/test-run remains0be17b. All old/new raw, selector and controller KEEP stay through App verdict and final delivery.
 
@@ -95,3 +95,5 @@ Pass02:50Z: Independent0246 terminal PASS_COMMAND, all4findings independentlyclo
 Pass02:54Z: Actual normalserviceagent-agent-core-full-1026025151-24049 terminalfail78, body_started0, runner/monitor notstarted, sourcebefore0/afterclean/evidence0. Wrapper source_admission4687142912 after snapshot; genuine managerdispatch4821594112 clears4700000000. D89c forbids ownprep floorretrigger. This is ordinary operationalguard stop, no classifier/safety/permissiondenial; controllerhonestlystops, unchangedretryforbidden. Immediate HARD Sol0253 boundedcorrection and independentLuna0253 wholepath dispatched inparallel underD33. Preserve all0238/24049raw/source/failedclaims; newpacket/destinations required, no overwrite. No floor/kit/launcher/productchange. App0230 delayedXMLask already fulfilled0243; pathseparation0226PASS consumed, no duplicatereader.
 
 Controller0249 terminalexit0report honestly NOTRUN/REFUSED service78/zero body. EightSAFE finaloutputs bytepublished; independentwholepath0253 reviews genuine path/result. Bothremainingworkers active; live2/cap3 source, ready-undispatched0.
+
+Pass02:57Z: Independent wholepath0253 terminal, exact actualproductionpath confirms namedfloor accepted before134451200byte snapshot/prep drop; wrapper repeats admission afterprep contraryD89c. Row/materialization/source/interpreter custody exact, body0. No other finite blocker established. FiveSAFE outputs bytepublished; finalSolpacket not yetterminal, so this is supporting investigation, not finalsourcePASS. SoleSol0253 active; nextboundedcheck upon completion.
