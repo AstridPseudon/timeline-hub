@@ -1,0 +1,112 @@
+{
+  "status": "BLOCKED_WORKER_TRACE_ACCEPTANCE",
+  "source_status": "READY_SOURCE_D141aa_NOT_RUN_LIVE",
+  "controller_floor_bytes": 4714564096,
+  "native_floor_bytes": 4700000000,
+  "continuous_stop_bytes": 4000000000,
+  "integrated": {
+    "agent": {
+      "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab",
+      "path": "/home/user/work/agent",
+      "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+    },
+    "app": {
+      "parents": "82e9e13ddf1d7ec6c736521b2eb091dca9877598 4de54db14bdc9ddc2ce2e5887258b03acbffd30d 4937203f545a77fa3ca7597493e009c84eebeffa",
+      "path": "/home/user/work/app",
+      "sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+    },
+    "composition": {
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a",
+      "path": "/home/user/work/composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7",
+      "path": "/home/user/work/runtime",
+      "sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    }
+  },
+  "pristine": {
+    "agent": {
+      "parents": "64197afa297f86f1e738238d5e80aff6d33e303a d02bcfb66c895b8889aedefbfc732c42f0ab372b",
+      "path": "/home/user/work/wt/agt-pin-64197afa",
+      "sha": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"
+    },
+    "runtime": {
+      "parents": "fa9cd5464a8b37b02f971de375e56be846cd69e2 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"
+    }
+  },
+  "derivative_base": {
+    "commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+    "tree": "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"
+  },
+  "owner_brief": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/owner-brief.txt",
+    "sha256": "2602f4f47c9f6b8f35b8dba81e9cc7122fc69b264607a0db2c6a96eaccaf96eb"
+  },
+  "source_manifest_sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+  "source_controls": {
+    "status": "PASS",
+    "author_final_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/check-1793007965712608319.json",
+    "association_cases": 10,
+    "lifecycle_cases": 38,
+    "native_admission_expression_cases": 10,
+    "live_admission": false,
+    "reviewer_final_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/check-1793008084593202366.json"
+  },
+  "independent_review": {
+    "verdict": "PASS_SOURCE",
+    "checker_exit": 0,
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/check-source.py check",
+    "final_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/private-control-logs/check-1793008084593202366.json",
+    "source_edits": false
+  },
+  "real_pair_started": false,
+  "rows_installed": false,
+  "service_ids": [],
+  "request_test": "not_called_live",
+  "wait_test": "not_called_live",
+  "test_run": "not_called; future dispatcher sole owner",
+  "withdraw": "not_called_live; isolated native O relocation only",
+  "worker_start_trace_continuous": false,
+  "trace_start_gap_seconds": 26.079119,
+  "historical_trace_limits": "All old reports and recorded gaps retained unchanged at predecessor paths; never backfilled",
+  "remaining": [
+    "Own26.079119-second handoff gap and15.966516-second post-reap terminal gap prevent uninterrupted-worker trace acceptance; cannot be repaired retrospectively"
+  ],
+  "future_unverified": [
+    "live native admission/result association",
+    "product/full-body measurements",
+    "REG/product qualification"
+  ],
+  "worker_disk_trace": {
+    "samples": 183,
+    "first": "2026-10-26T09:34:20.208936+00:00",
+    "terminal": "2026-10-26T09:50:02.376536+00:00",
+    "minimum_bytes": 4618723328,
+    "gaps_over_six_seconds": [
+      {
+        "from": "2026-10-26T09:34:35.209846+00:00",
+        "to": "2026-10-26T09:35:01.288965+00:00",
+        "seconds": 26.079119
+      },
+      {
+        "from": "2026-10-26T09:49:46.410020+00:00",
+        "to": "2026-10-26T09:50:02.376536+00:00",
+        "seconds": 15.966516
+      }
+    ],
+    "worker_start_continuous": false,
+    "sampler_exit": 0,
+    "sampler_reaped": true,
+    "all_sampled_above_stop": true
+  }
+}

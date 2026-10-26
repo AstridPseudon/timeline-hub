@@ -1,0 +1,135 @@
+{
+  "utc": "2026-10-26T09:52:38.779311+00:00",
+  "kind": "manager byte publication of worker operational source originals",
+  "worker": "agt-F-D141l-binding-final-next",
+  "scope": "Source only. Author worker trace acceptance BLOCKED; source controls PASS. No live admission or behavior. Reserved independent manager review pending.",
+  "excluded": "private-control-logs, raw test logs and all product/user payloads",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/controller-continuation.sh",
+      "published": "design/agt-F-D141l-binding-final-next-controller-continuation.sh",
+      "bytes": 7854,
+      "sha256": "34da660a9ec94b2a31080cbd83c092b1c8208ab061fca39fa0e78c25a79d24bf",
+      "mode": "0o700"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/binding-source.py",
+      "published": "design/agt-F-D141l-binding-final-next-binding-source.py",
+      "bytes": 13797,
+      "sha256": "258867d9fe1c44fbd6c54f7e1f8179c93bde1c2bad205c0c4ae08abe70d59180",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/check-source.py",
+      "published": "design/agt-F-D141l-binding-final-next-check-source.py",
+      "bytes": 48019,
+      "sha256": "3add53f0c0f75c8f877757ec860924cd3085d8ea9cd88c9cd18b93afbabcbba2",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/command-cut.sh",
+      "published": "design/agt-F-D141l-binding-final-next-command-cut.sh",
+      "bytes": 10838,
+      "sha256": "b679d5e8141a2a3284c80f453211e1aa0b04dcf462a9ae60213906a62f5f372f",
+      "mode": "0o700"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/command-pristine.sh",
+      "published": "design/agt-F-D141l-binding-final-next-command-pristine.sh",
+      "bytes": 10618,
+      "sha256": "8446275790163adf6eca899d45bd4e81ab58c7fb77ebc4f9dcc34119e3aaa54f",
+      "mode": "0o700"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/source-manifest.json",
+      "published": "design/agt-F-D141l-binding-final-next-source-manifest.json",
+      "bytes": 24537,
+      "sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/rows.txt",
+      "published": "design/agt-F-D141l-binding-final-next-rows.txt",
+      "bytes": 544,
+      "sha256": "7a538872c138892b4dc06e4c09dcb4e7bae48c6dda426ceb4ea8ea11e08cb11d",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/readiness.json",
+      "published": "design/agt-F-D141l-binding-final-next-readiness.json",
+      "bytes": 5240,
+      "sha256": "906ab706092ac3d8a38e0750171eb026afd1639000a1d89af1e72d6206de5dfb",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/controller-plan.md",
+      "published": "design/agt-F-D141l-binding-final-next-controller-plan.md",
+      "bytes": 3266,
+      "sha256": "b9763eb218cf178cc7ca5011ee32a0c019efadd1a2f1e5ec1b5f7e010504f972",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/validation.md",
+      "published": "design/agt-F-D141l-binding-final-next-validation.md",
+      "bytes": 5157,
+      "sha256": "2ad5f5005f4043ef8520ff445d5a9a68d2dfce19524143ce5221e953d3f653de",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/handoff.md",
+      "published": "design/agt-F-D141l-binding-final-next-handoff.md",
+      "bytes": 2976,
+      "sha256": "0197f9ccb7c8d48dc5139ec5ad013ea98a8fc6df523cbd466b9f53653e106753",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/disk-trace.txt",
+      "published": "design/agt-F-D141l-binding-final-next-disk-trace.txt",
+      "bytes": 15949,
+      "sha256": "d72ff159902a276c366dbd5a767c8cb60567037d712ae1b0864628f1ca2eec5a",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/owner-brief.txt",
+      "published": "design/agt-F-D141l-binding-final-next-owner-brief.txt",
+      "bytes": 5771,
+      "sha256": "2602f4f47c9f6b8f35b8dba81e9cc7122fc69b264607a0db2c6a96eaccaf96eb",
+      "mode": "0o444"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/admission-derivation.json",
+      "published": "design/agt-F-D141l-binding-final-next-admission-derivation.json",
+      "bytes": 882,
+      "sha256": "39410ae8083b1900cebf74a802882a1fe7f6b762939e7ec7b29fb3cef525c8b4",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/positive.manifest",
+      "published": "design/agt-F-D141l-binding-final-next-positive.manifest",
+      "bytes": 2660,
+      "sha256": "cd2077a73503f427c9191318d41bc5ae0c386bd8d47795f2927ba700c971e9f5",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/poison.manifest",
+      "published": "design/agt-F-D141l-binding-final-next-poison.manifest",
+      "bytes": 2660,
+      "sha256": "218df2d86a451e19a49d991a58dfa80d356bbdaac7963cd14cddc05ccdbd2bf3",
+      "mode": "0o644"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/positive-stub.sh",
+      "published": "design/agt-F-D141l-binding-final-next-positive-stub.sh",
+      "bytes": 67,
+      "sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
+      "mode": "0o700"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/tiny-controls.sh",
+      "published": "design/agt-F-D141l-binding-final-next-tiny-controls.sh",
+      "bytes": 1301,
+      "sha256": "89ddaa6fa4f51bfab20fe872b0a7dc54980b2b9d8398011365641f5d39960197",
+      "mode": "0o700"
+    }
+  ]
+}
