@@ -1,0 +1,41 @@
+{
+  "kind": "manager recorded terminal summary, not original stdout",
+  "utc": "2026-10-26T12:44:35.478764+00:00",
+  "free_bytes": 6530785280,
+  "workers": {
+    "command": "bin/workers agt-",
+    "exit": 0,
+    "rows": 3569,
+    "active": 0
+  },
+  "census": {
+    "directories": 55,
+    "KEEP": 46,
+    "nonhome_without_metadata": 8,
+    "protected_dirty": [
+      "agt-G2-open-commit"
+    ],
+    "eligible_ended_nonKEEP": 0,
+    "recycle_attempts": 0
+  },
+  "compact": {
+    "command": "bin/compact-scratch 0",
+    "exit": 0,
+    "packed_scratch_dirs": 4,
+    "gzipped_old_logs": 0,
+    "packed_test_dirs": 0
+  },
+  "sweep": {
+    "command": "bin/sweep-tmp 3",
+    "exit": 0,
+    "removed_dirs": 0,
+    "stderr": "Known ls Broken pipe diagnostics; no safety or permission refusal"
+  },
+  "limits": [
+    "No before and after full marker inventory; no marker byte equality claim",
+    "No KEEP packing or removal by manager",
+    "No manager hub operation or repeat repack",
+    "No product, tests, generated files, pins or Git internals changed by manager"
+  ],
+  "decision_gate": "FINAL55 exact owner dispositions remain absent; six prepared response briefs remain gated"
+}
