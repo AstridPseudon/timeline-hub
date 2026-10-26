@@ -45,8 +45,9 @@ def test_remotion_failed_install_never_publishes_marker(tmp_path):
     (remotion / "package-lock.json").write_text('{}\n')
     backend = Backend(tmp_path, tmp_path / "log", Path("uv"))
     backend.run = Mock(side_effect=subprocess.CalledProcessError(1, "npm"))
-    with pytest.raises(subprocess.CalledProcessError):
-        backend.install_remotion_dependencies(agent, {"ASTRID_NODE_EXECUTABLE": "node"}, Path("npm-cli.js"))
+    assert backend.install_remotion_dependencies(
+        agent, {"ASTRID_NODE_EXECUTABLE": "node"}, Path("npm-cli.js")
+    ) is False
     assert not (remotion / "node_modules/.astrid-package-lock.sha256").exists()
 
 

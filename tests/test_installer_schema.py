@@ -1,11 +1,95 @@
 """Installer staging must consume the schema artifact pinned by Remotion."""
 
 import json
+import subprocess
 from pathlib import Path
+
+import pytest
 
 from astrid.installer.backend import Backend
 
 ROOT = Path(__file__).parents[1]
+
+
+@pytest.mark.parametrize("failed_step", ["npm", "browser"])
+def test_optional_remotion_failure_does_not_block_staging(tmp_path, monkeypatch, failed_step):
+    import astrid.installer.backend as backend_module
+
+    messages = []
+    calls = []
+    backend = Backend(tmp_path / "program", tmp_path / "install.log", tmp_path / "uv", say=messages.append)
+    monkeypatch.setattr(backend, "existing", lambda _data: None)
+
+    def source(_name, _sha, destination, **_kwargs):
+        destination.mkdir(parents=True)
+        if destination.name == "a":
+            (destination / "remotion").mkdir()
+            (destination / "remotion/package-lock.json").write_text("{}\n")
+        else:
+            (destination / "packages/python").mkdir(parents=True)
+        return destination
+
+    monkeypatch.setattr(backend_module, "source", source)
+    monkeypatch.setattr(backend_module, "install_tools", lambda *_args: {
+        "PATH": "/tools", "ASTRID_NODE_EXECUTABLE": "/tools/node", "ASTRID_BUN_EXECUTABLE": "/tools/bun",
+    })
+    monkeypatch.setattr(backend_module, "binary", lambda *_args: Path("/tools/npm-cli.js"))
+
+    def run(argv, **_kwargs):
+        call = [str(value) for value in argv]
+        calls.append(call)
+        if call[0].endswith("uv") and call[1:] == ["--version"]:
+            return "uv 1.0.0"
+        npm_ci = call[1:3] == ["/tools/npm-cli.js", "ci"]
+        browser_fetch = any(value.endswith("fetch-shared-browser.mjs") for value in call)
+        if npm_ci:
+            remotion = next((tmp_path / "program/versions").iterdir()) / "a/remotion"
+            modules = remotion / "node_modules"
+            modules.mkdir(exist_ok=True)
+            if failed_step == "npm":
+                (modules / "partial-output").write_text("partial")
+                raise subprocess.CalledProcessError(1, "npm", output="registry unavailable")
+            schema = modules / "@banodoco/timeline-schema/python"
+            schema.mkdir(parents=True)
+            (schema / "pyproject.toml").write_text("[project]\nname='banodoco-timeline-schema'\n")
+        if browser_fetch and failed_step == "browser":
+            raise subprocess.CalledProcessError(1, "browser", output="browser host unavailable")
+        if "source_checkout_digest" in " ".join(call):
+            return "digest"
+        return ""
+
+    monkeypatch.setattr(backend, "run", run)
+    declared = []
+
+    def declare(*, folder, **_kwargs):
+        calls.append(["declare-services"])
+        declared.append(True)
+        destination = folder / "services.json"
+        destination.write_text('{"version":1,"services":[]}', encoding="utf-8")
+        return destination
+
+    monkeypatch.setattr(backend, "_declare_services", declare)
+    manifest = {
+        "agent": {"sha": "a" * 40}, "runtime": {"sha": "b" * 40},
+        "tools": {"uv": {"version": "1.0.0"}, "python": {"version": "3.11.9"}},
+    }
+
+    version = backend.stage(manifest, tmp_path / "program", tmp_path / "workspace")
+
+    assert version.profile.is_file()
+    assert declared
+    assert messages and "Rendering unavailable" in messages[0]
+    assert ("npm ci" if failed_step == "npm" else "browser setup") in messages[0]
+    assert "retry" in messages[0]
+    schema_installs = [call for call in calls if call[1:3] == ["pip", "install"] and any("timeline-schema" in v for v in call)]
+    if failed_step == "npm":
+        assert not schema_installs
+        remotion = version.root / "a/remotion"
+        assert (remotion / "node_modules/partial-output").is_file()
+        assert not (remotion / "node_modules/.astrid-package-lock.sha256").exists()
+    else:
+        assert len(schema_installs) == 1
+        assert schema_installs[0][-1].endswith("/a/remotion/node_modules/@banodoco/timeline-schema/python")
 
 
 def test_staging_installs_the_npm_locked_schema_before_declaring_services(tmp_path, monkeypatch):
