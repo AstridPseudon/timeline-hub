@@ -1,0 +1,15 @@
+{
+  "first_sample_utc": "2026-10-26T12:10:07.001000Z",
+  "gaps_preserved_without_backfill": true,
+  "interval_seconds": 5,
+  "last_sample_utc": "2026-10-26T12:15:22.705000Z",
+  "mode": "foreground PTY sampler",
+  "reap_exit_code": 1,
+  "reaped": true,
+  "sample_count": 64,
+  "session_id": 73741,
+  "standing_4gb_stop_reached": false,
+  "stop_action": "explicit SIGINT via same retained sampler session after native terminal and normal wait terminal",
+  "stop_observed": "^C",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/disk-trace.txt"
+}

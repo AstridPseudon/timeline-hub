@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T12:12:06Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
-# app board, 2026-10-26T12:10:34.648658+00:00
+<!-- app | 2026-10-26T12:17:42Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 4m -->
+# app board, 2026-10-26T12:13:11.795516+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -40,7 +40,7 @@
 | D141 unit measure | Qualify normalized retained bracket data | Luna and independent Luna | Independent0600 PASS | merged | Author0549; independent0600 | Raw values and MAX exact; honest derived DATA, not originalstdout. Existing validator fixture PASS4793895424; no kit change. | Evidence only |
 | D141 unit pair | Close finite App REG comparison | Luna and independent Luna | Independent0736 PASS custody and source | merged | Author0710; review0736 | All32 current failed IDs OWN or N/A; collection file absent upstream. No undecidable upstream REG candidate; actual tests FAIL and visible. | Actual4de54 andd822 |
 | D141 Node body | Qualify both standalone failed results | Luna and independent Luna | Independent0736 PASS source and custody | merged | Controller0710; helper0726; review0736 | Pristine289 PASS2 FAIL26 SKIP; current296 PASS2 FAIL26 SKIP. Two exact same-kind ssh-keygen failures NONREG; no repair or rerun. | Actual4de54 andd822 |
-| D141 P1 | Reprove original dependent chain | Luna and service | Prior asset terminal and fresh5.2GB | doing | app-P-D141cc-p1-controller-next | Admitted5230325760; exact original two cases and readiness. Native TEST_KEEP beforequeue, literal programmatic recipe. | App82e9 |
+| D141 P1 | Reprove original dependent chain | Luna and service | Prior asset terminal and fresh5.2GB | doing | app-P-D141cc-p1-controller-next | Preflight31121 PASS, normal32161 RUNNING. Both genuine raw KEEP at creation beforequeue; original two cases unchanged. | App82e9 |
 | D141 P2 six | Reprove original gestures | Luna and independent Luna | Separate normal controllers | doing | Asset1155; single custody1156 | Placement9168, parent16601 and bulk27060 qualified PASS. Single24271 PASS pending custody. Popup27026 known gap. | App82e9 |
 | D141 P2 ADD | Retain qualified popup known gap | Luna and independent Luna | D141ff and independent1121 PASS | merged | Popup next; custody1121 | 27026 FAIL1/207s; custody PASS. Native44/min5.472GB. Cause UNKNOWN; four fields absent. Nonblocking gap per Main. | App82e9 |
 | D141ff notes | Receive factual popup gap paragraph | Runtime Luna and review | Main D141ff and custody1121 | blocked:runtime | rt-F-D141ff-popup-notes-1133 | Author actually queued11:33. Existing qualified popup custody1127 re-supplied; no App prose author. | Evidence only |
@@ -94,7 +94,7 @@ Blockers: Runtime notes — Existing1133 owns popup known-gap suffix and parent 
 Blockers: Safety — D130 absolute hold; no SWAP retry, transfer, alternate qualification or rollback. Dirty, unowned, sealed, refused and hardlinked targets retained.
 Next ready: Asset actual terminal then P1 and P3 at separate ordinary admissions; single1156 verdict. Optional diagnostic only after six and visibility proof. Final pins after Agent REG0.
 
-Later: D141ff nonblocking diagnostic after six/visibility; existing Runtime notes route. Gate3/D133B/D23/D14/D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped.8912/19479 unchanged;18617 supported cancelled with originals/rawKEEP retained. All historical failed reviews and own unit failures visible. No global GO/build/ZIP. INBOX consumed through2932661 bytes; delayed self peers already fulfilled.
+Later: D141ff nonblocking diagnostic after six/visibility; existing Runtime notes route. Gate3/D133B/D23/D14/D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped.8912/19479 unchanged;18617 supported cancelled with originals/rawKEEP retained. All historical failed reviews and own unit failures visible. No global GO/build/ZIP. INBOX consumed through2937877 bytes; delayed self peers already fulfilled.
 
 Current 2026-10-26T11:58:59.282812+00:00: single independent FAIL_CUSTODY original retained, [exact verdict](../../design/app-D141gg-single-custody-publication-1159.json). Finite Main decision requested; all source/predicate/native one-owner/trace checks pass, no automatic acceptance or rerun. Asset actual3534 preflight PASS,10328 RUNNING; normal raw KEEP immediate, preflight manager marker added prospectively11:58:20.303196Z.
 
@@ -103,3 +103,5 @@ Current 2026-10-26T12:03:38.610921+00:00: MainD141hh accepts single actual24271P
 Current 2026-10-26T12:08:02.709556+00:00: D141hh-a resolves raw KEEP instruction via inherited TEST_KEEP; live kit line personally verified. P1/P3 original future-artifact parentKEEP created before dispatch; exact briefs updated, no inventedID/source or kit edit. Timing decision blocker clear. Asset10328PASS0/260s actualauthor ended0; sole independent1205 active. P1 briefly disk gated, current about5.16GB below5.2; verified lossless closedstdout recompression active, separate from held worktree.
 
 Current 2026-10-26T12:10:34.648658+00:00: [asset independent PASS](../../design/app-D141hh-asset-custody-publication-1210.json), all procedural gaps disclosed. [P1 admission](../../design/app-D141hh-p1-controller-admission-1210.json)5230325760 bytes, actualqueued. D141hh-a raw KEEP question resolved, no Main timing blocker. [Lossless stdout](../../design/app-D141hh-closed-stdout-lossless-1208.json) saved69242921 bytes and exact decodedSHA; heldworktree/rawKEEP untouched. live 1 / cap 6; ready-undispatched 0. P1 soleheavy, P3 gated slot/floor; no repeated selector.
+
+Current 2026-10-26T12:13:11.795516+00:00: actualP1 preflight31121 PASS and normal32161 RUNNING; manager read both real TEST_KEEP at creation11:11/11:40 minutes of12Z, exact strings12:11:10 and12:11:40. No pre-IDgap and no guessedIDs. Closedstdout lossless batch continues to protect next ordinary P3 admission; only ended over24h nonKEEP singlelink unreferenced App logs, every decodedSHA/mode/mtime verified. No worktree/rawproof mutation. Native soleheavy4GBstop unchanged.

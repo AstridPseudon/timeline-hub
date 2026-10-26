@@ -1,0 +1,250 @@
+{
+  "admission": {
+    "TEST_KEEP": "D141hh p1",
+    "active_runner_markers": [],
+    "available_bytes": 5230325760,
+    "dispatch_index": 5,
+    "floor_bytes": 5200000000,
+    "future_artifact_parent_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/KEEP",
+    "once_at_dispatch": true,
+    "pins": {
+      "agent": {
+        "clean": true,
+        "detached": true,
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "path": "/home/user/work/wt/agt-pin-ecdc242e",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      "app": {
+        "clean": true,
+        "detached": true,
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "path": "/home/user/work/wt/app-pin-82e9e13d",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      },
+      "composition": {
+        "clean": true,
+        "detached": true,
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "path": "/home/user/work/wt/vw-pin-635f4de0",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "runtime": {
+        "clean": true,
+        "detached": true,
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "path": "/home/user/work/wt/rt-pin-95d98f03",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      }
+    },
+    "prior_asset_terminal": true,
+    "recipe_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/dispatch-recipes.json",
+    "recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "request_test_sha256": "9408dc44636db0e69ee64c59c373f5cd09cf7c82196a83167182227706d443cb",
+    "scope": "Original two mounted chain cases plus readiness only",
+    "source_review": "design/app-D141dd-final-review-publication-1110.json",
+    "stop_bytes": 4000000000,
+    "utc": "2026-10-26T12:09:48.922802+00:00",
+    "worker": "app-P-D141cc-p1-controller-next"
+  },
+  "custody": {
+    "preflight_parent_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/KEEP",
+    "raw_ids": [
+      {
+        "exit": "0",
+        "id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121",
+        "keep": {
+          "exists": true,
+          "mtime_ns": 1793016670553002579,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121/KEEP"
+        },
+        "phase": "preflight",
+        "request_sha256": "7154e42c9ca8ff9e6e391fa5d0ad0cdfc57b1ea5008657b50033356ed4641ab7",
+        "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121",
+        "snap_sha256": "0f3c5b6ef9c9030bc20febd0d81d0997fd25a56dc79a829908e003163c426bb3",
+        "status": "pass",
+        "summary_head": [
+          "test app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121: pass exit=0 in 2s \u2014 full-d141-p1-82e9e13d-submit-preflight on app-pin-82e9e13d (app tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710)",
+          "cmd: D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1' --preflight",
+          "counts: ",
+          "--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-preflight-1026121110-31121/log.txt ---"
+        ],
+        "summary_sha256": "5f15a52c18aae8d5c7b7d1ee50813a3f65a47fc4c97844a8d7c7b8fb3868a8eb",
+        "trace_validation": "trace PASS: 3 actual samples"
+      },
+      {
+        "exit": "0",
+        "id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161",
+        "keep": {
+          "exists": true,
+          "mtime_ns": 1793016700625380287,
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161/KEEP"
+        },
+        "phase": "normal",
+        "request_sha256": "f25ce40e1a7c187e2d754c67a902abdb29f00ba41f9854cf4d60d73ce92800ab",
+        "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161",
+        "snap_sha256": "e494876b85a744353e2d4453d43ad3e408bc176c3a502a695226058aea6c41ed",
+        "status": "pass",
+        "summary_head": [
+          "test app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161: pass exit=0 in 200s \u2014 full-d141-p1-82e9e13d-submit on app-pin-82e9e13d (app tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710)",
+          "cmd: D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1'",
+          "counts:   1 passed (32.4s)   2 passed (51.3s) ",
+          "--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161/log.txt ---"
+        ],
+        "summary_sha256": "47d4abcc3543f767fb62c3cc96f42939c8cf490b8a6e5e2e2e0a3ceabec911d9",
+        "trace_validation": "trace PASS: 42 actual samples"
+      }
+    ],
+    "worker_KEEP": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/KEEP"
+  },
+  "dispatch": {
+    "argv": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "--max-old-space-size=6144",
+      "--import",
+      "tsx",
+      "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+      "p1",
+      "--submit"
+    ],
+    "attempt_scope": "original",
+    "checkouts": {
+      "agent": "/home/user/work/wt/agt-pin-ecdc242e",
+      "app": "/home/user/work/wt/app-pin-82e9e13d",
+      "composition": "/home/user/work/wt/vw-pin-635f4de0",
+      "runtime": "/home/user/work/wt/rt-pin-95d98f03"
+    },
+    "command_sha256": {
+      "normal": "513dd6421d52e745bb3ba54daaa79eb4c05cfa0d1bd464c27cb03997969245e6",
+      "preflight": "dd370bf2089f971b7f53eab596a740fefd764079ffb93e71b9c74b13b7bd7cc2"
+    },
+    "cwd": "/home/user/work/app",
+    "deadline_seconds": 10800,
+    "environment": {
+      "D66_AGENT_CHECKOUT": "/home/user/work/wt/agt-pin-ecdc242e",
+      "D66_AGENT_SHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "D66_AGENT_TREE": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "D66_APP_CHECKOUT": "/home/user/work/wt/app-pin-82e9e13d",
+      "D66_APP_SHA": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+      "D66_APP_TREE": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+      "D66_COMPOSITION_CHECKOUT": "/home/user/work/wt/vw-pin-635f4de0",
+      "D66_COMPOSITION_SHA": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "D66_COMPOSITION_TREE": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "D66_OUTPUT_DIR": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/output",
+      "D66_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-95d98f03",
+      "D66_RUNTIME_SHA": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "D66_RUNTIME_TREE": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "D66_SUBMIT_PLAN_PATH": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json",
+      "D66_SUBMIT_SUITE": "full-d141-p1-82e9e13d-submit",
+      "D66_SUBMIT_TARGET": "app-pin-82e9e13d"
+    },
+    "environment_unset": [
+      "D66_SUITE_REGISTRY",
+      "D66_CHECKOUT_ROOT",
+      "D66_NORMAL_AGENT_HOME",
+      "D66_NORMAL_RUNTIME_HOME",
+      "D66_NORMAL_COMPOSITION_HOME",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256",
+      "D66_ELEMENT_VERIFICATION_ONLY"
+    ],
+    "inspection_active_argv_template": [
+      "/usr/bin/python3",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+      "p1",
+      "--owner-state",
+      "active",
+      "--tool-session",
+      "<EXACT_EXISTING_TOOL_SESSION_ID>"
+    ],
+    "inspection_argv": [
+      "/usr/bin/python3",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/candidate/controller.py",
+      "p1",
+      "--owner-state",
+      "not-started"
+    ],
+    "lock_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json.lock",
+    "operational_environment": {
+      "GIT_OPTIONAL_LOCKS": "0"
+    },
+    "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/output",
+    "owner": "One future controller for this selector; keep its existing exec session from first native invocation through terminal/reap. No worker/session IDs are preassigned here.",
+    "pins": {
+      "agent": {
+        "checkout": "/home/user/work/agent",
+        "head": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+        "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"
+      },
+      "app": {
+        "checkout": "/home/user/work/app",
+        "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+        "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+      },
+      "composition": {
+        "checkout": "/home/user/work/composition",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+      },
+      "runtime": {
+        "checkout": "/home/user/work/runtime",
+        "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+        "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+      }
+    },
+    "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/submit-plan.json",
+    "pre_submit_instruction": "Follow procedure steps3-9; repeat read-only authentication immediately before the FIRST and ONLY native invocation. Any existing request or incomplete artifact blocks this argv; adopt or finite NOTRUN instead.",
+    "recipes": {
+      "normal": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1'",
+      "preflight": "D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1' --preflight"
+    },
+    "request_result_paths": "Use native resultDir for authenticated existing ID; no invented ID or output directory for an uncreated service request.",
+    "row_sha256": {
+      "normal": "890320b6c6608fc53e356268bce7cb8890d144b8c4d8151cf2fc6dfc8c730db6",
+      "preflight": "83dfca368dc296f95d9e4c16f3c4585206a3713958cd4d88241e9a0c65e5d88c"
+    },
+    "rows": {
+      "normal": "app full-d141-p1-82e9e13d-submit D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1'\n",
+      "preflight": "app full-d141-p1-82e9e13d-submit-preflight D66_APP_SHA='82e9e13ddf1d7ec6c736521b2eb091dca9877598' D66_APP_TREE='6a6e49eb4461b5ca1a7fa1247653bc794f26d710' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-82e9e13d' D66_AGENT_SHA='ecdc242ed9b673f641759ecf029f95e89a2c6f92' D66_AGENT_TREE='d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-ecdc242e' D66_RUNTIME_SHA='95d98f038320d5d46bd679ac000ab3e15825c935' D66_RUNTIME_TREE='78df31d62c5b9ba4c84dee4ea346e43a767718c1' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-95d98f03' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p1' --preflight\n"
+    },
+    "selector": "p1",
+    "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stderr.log",
+    "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p1-82e9e13d-submit/native-submit.stdout.log",
+    "suites": {
+      "normal": "full-d141-p1-82e9e13d-submit",
+      "preflight": "full-d141-p1-82e9e13d-submit-preflight"
+    },
+    "target": "app-pin-82e9e13d",
+    "yield_instruction": "Resume only the tool session returned by this exact invocation; do not execute argv again."
+  },
+  "extra_authorized_environment": {
+    "TEST_KEEP": "D141hh p1"
+  },
+  "native_submit_session": {
+    "exit_code": 0,
+    "id": 9556,
+    "invocation_count": 1,
+    "retained_from_exec_through_terminal": true
+  },
+  "no_alternate_route": true,
+  "no_second_submit": true,
+  "no_source_recipe_edit": true,
+  "normal_wait_session": {
+    "exit_code": 0,
+    "id": 7742,
+    "id_source": "artifact.normal.id",
+    "invocation_count": 1,
+    "same_id": "app-pin-82e9e13d-full-d141-p1-82e9e13d-submit-1026121140-32161"
+  },
+  "results_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/results.json",
+  "sampler_session": {
+    "id": 73741,
+    "lifecycle": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/sampler-lifecycle.json",
+    "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/disk-trace.txt"
+  },
+  "selector": "p1",
+  "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/source-manifest.json",
+  "task": "app-P-D141cc-p1-controller-next"
+}

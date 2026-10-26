@@ -1,0 +1,17 @@
+{
+  "admission_observation": 5230325760,
+  "admission_utc": "2026-10-26T12:09:48.922802+00:00",
+  "available_bytes": {
+    "admission_floor": 5200000000,
+    "max": 5229191168,
+    "min": 4855148544,
+    "stop_threshold": 4000000000
+  },
+  "max_gap_seconds": 5.031,
+  "notes": "Foreground 5-second sampler started in the first tool call, remained alive through native terminal and same-ID wait, then was explicitly signalled and reaped.",
+  "sample_count": 64,
+  "sampler_last_sample": "2026-10-26T12:15:22.705000Z",
+  "sampler_started_by_first_sample": "2026-10-26T12:10:07.001000Z",
+  "standing_stop_reached": false,
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-p1-controller-next/evidence/disk-trace.txt"
+}
