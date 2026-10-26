@@ -1,1 +1,1 @@
-2026-10-26T01:28:41Z procs: hub-syncd dispatcher run-manager up; workers running: tf-core-D141-census-0137 (step 1 census, attempt 2 after a node approval prompt in 0130); disk 10G free; D141 core: waiting for the census packet; note composition 635f4de0 receipt file name has 39 hex chars
+2026-10-26T01:38:21Z procs: hub-syncd dispatcher run-manager up; disk 10G free; D141 core: census worker 0137 was refused twice (permission: running receive-farm.sh); owner allowed the census script (2 narrow rules in claude-perms.sh); manager re-dispatching census attempt 3
