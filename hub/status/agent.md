@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T08:35:23Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# agent board, 2026-10-26T08:35:10.709738+00:00
+<!-- agent | 2026-10-26T08:39:55Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# agent board, 2026-10-26T08:37:13.022516+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -79,3 +79,5 @@ Inbox consumed through2151928 bytes. Runtime0803 author precedence consumed;0735
 Standing next-pass dispatch rule: host offers alone are not a new approval gate. If genuine local admission recovers, check all actual host starts first; the earliest actual dispatcher owns, and a local actual start is promptly published so any later host stops at source checkpoint. Never wait for an unaccepted offer while an independently ready admitted task can run. Current local floor remains unmet.
 
 2026-10-26T08:35:10.709738+00:00 pass: H6 read actual App0820 intake and peer directly. SAME independent review is now App-owned at genuine4938182656 bytes,17 source inputs hash/size/mode exact; no local duplicate. Runtime08:20 retains95d REG closure, D141z stop fix and custody offered App, no Agent source need. Current fullpair and CLI floors unchanged. Present local metadata census:37 KEEP trees and dirty G2; zero eligible ended nonKEEP targets. Compact0 and sweep3 running; known sweep broken-pipe diagnostics, no refusal. INBOX still2151928 bytes. No source, pin, row, service or integration mutation.
+
+2026-10-26T08:37:13.022516+00:00 maintenance terminal: compact0 exit0 packed1 scratch directory, gzipped0 logs and packed0 tests; sweep3 exit0 removed0 with known broken-pipe diagnostics. Actual free4460232704 bytes. No eligible ended nonKEEP worktree, no protected cleanup or refusal. New INBOX through2153672 is delayed App0811 wholepath return already consumed; same App0820 review retained. Existing CLI0815 offer reiterated0836 as independently ready source row, no local start.
