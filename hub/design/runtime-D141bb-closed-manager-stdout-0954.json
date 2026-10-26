@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-26T09:53:51.853467+00:00",
+  "scope": "Guarded lossless compression of four old closed Runtime manager stdout logs; no worker/test/raw/KEEP/hub/source changes",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0640Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0640Z.log.gz",
+      "status": "LOSSLESS",
+      "bytes": 1413062,
+      "compressed_bytes": 363597,
+      "decoded_sha256": "8492a4e3800abe793eb3f6647023ad47c4b1eedf9c86320d1530061bbac2c450",
+      "mode": "0o644",
+      "closed_exit": "124"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0716Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0716Z.log.gz",
+      "status": "LOSSLESS",
+      "bytes": 1321470,
+      "compressed_bytes": 344966,
+      "decoded_sha256": "7195e1fa1957153c7d70b73bff410a9f39e339dc38b8da0d8fc50b85283b3837",
+      "mode": "0o644",
+      "closed_exit": "0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0739Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0739Z.log.gz",
+      "status": "LOSSLESS",
+      "bytes": 1144885,
+      "compressed_bytes": 309940,
+      "decoded_sha256": "19ba9be6e26e16c3bfbfd7af0ddaf8620a6b42b2201523cfcab4dc38f688d1c5",
+      "mode": "0o644",
+      "closed_exit": "0"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0806Z.log",
+      "compressed": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/rounds/20261026T0806Z.log.gz",
+      "status": "LOSSLESS",
+      "bytes": 1244959,
+      "compressed_bytes": 314273,
+      "decoded_sha256": "2b0c3fa20b0d19e9e9d018eae4306a4cb2bf591c1a6b57f461705162fafbee8d",
+      "mode": "0o644",
+      "closed_exit": "124"
+    }
+  ],
+  "saved_bytes": 3791600,
+  "no_product_or_evidence_proof_claim": true
+}
