@@ -1,0 +1,78 @@
+{
+  "schema": "D141l-independent-review-v1",
+  "reviewed_at": "2026-10-26T07:05:42.116Z",
+  "composition_base": {
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "worktree_clean": true
+  },
+  "verdicts": {
+    "node_data": "PASS",
+    "pristine_attachment": "PASS",
+    "operational_compression": "FAIL"
+  },
+  "node_data": {
+    "qualified_for_future_standalone_node_use": true,
+    "consumption_authorized": false,
+    "classification": "DERIVED_DATA_PROJECTION_NOT_ORIGINAL_STDOUT",
+    "source": {
+      "job_id": "app-full-d141-node-phase-1026063009-19156",
+      "body_pid": 18109,
+      "head": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+      "command": "npm run test:node",
+      "trace_sha256": "b3fcb3043ae629afc97328f0e855d8396343d3797775b5ac35148a6fd0e7706b",
+      "samples": 19,
+      "sampling_seconds": 5,
+      "gaps_disclosed": true
+    },
+    "same_kind_witnesses": {
+      "controller_admission_start_bytes": 4814028800,
+      "actual_node_first_bytes": 4798197760,
+      "actual_node_minimum_stop_bytes": 4625068032,
+      "controller_growth_bytes": 188960768,
+      "actual_node_growth_bytes": 173129728,
+      "controller_admission_receipt_sha256": "640b02686aae1e2182024d3d9fb1aee5a78e767ddfb9b464cf76151202e4b567",
+      "chosen_floor_bytes": 4600000000,
+      "formula": "max(4600000000, 4000000000 + X + 200000000)"
+    },
+    "validator_control": {
+      "validator_sha256": "2987adbcd888400a41afbbd60e22ea2e4afe6c4580b084a4d63dcced6943a7f6",
+      "fixture_root": "/tmp/w-99449a541b/node-validator-control",
+      "exit": 0,
+      "stdout": "4600000000"
+    },
+    "excluded": [
+      "full-suite Vitest routes and shortcircuited Node are not Node witnesses",
+      "no continuous peak is claimed between five-second samples",
+      "no pristine d822 standalone Node result or future job identity was invented"
+    ]
+  },
+  "pristine_attachment": {
+    "job_id": "app-pin-d822d2f5-full-1026063854-17524",
+    "request_sha256": "26f6a8d0dfded2d7c96eba9cf2577862da0a841c91e84a26debe7a933a304321",
+    "receipt_sha256": "4c01fb145865378a8405f8cdca5e263c9a9a44eac30046113b780e274aa52fbc",
+    "source_head": "d822d2f5d2bd05187b4ff5b6071c3e13945d4747",
+    "source_tree": "2af40a015057779ceb4e4b37cad62e1469aa7e36",
+    "floor_bytes": 4793895424,
+    "validator_exit": 0,
+    "validator_stdout": "4793895424",
+    "request_body_present": false,
+    "keep": true,
+    "status_at_read": "running",
+    "status_read_at": "2026-10-26T07:05:42.116Z",
+    "no_preadmission_claim": true
+  },
+  "operational_compression": {
+    "author_result": "PASS",
+    "independent_decoded_records": 161,
+    "independent_preexisting_gz_records": 111,
+    "independent_current_excluded_logs": 12,
+    "independent_keep_markers_matching_manifest": 37,
+    "manifest_keep_markers": 38,
+    "finite_missingness": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-pin-867cb273/KEEP"
+    ],
+    "finding": "One manifest-listed worker KEEP was absent at the independent read. All 161 decoded hashes/modes and 111 pre-existing gzip records matched; this finding is not attributed to deletion or recompression of logs."
+  }
+}
