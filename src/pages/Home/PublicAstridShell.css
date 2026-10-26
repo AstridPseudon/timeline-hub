@@ -1901,8 +1901,10 @@
   .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-timeline-surface { animation-delay: 110ms; }
   .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-inspector-surface { animation-delay: 220ms; }
   .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-chat-surface { animation-delay: 260ms; }
+  /* The rider's opacity has one owner, its own transition: it fades in after the panels on a direct
+     entry, and a stalled keyframe animation can never strand it at 0 before the first journey. */
   .astrid-public-site[data-astrid-direct-entry] .astrid-editor-stage[data-revealed="true"] .astrid-preview-transport-outlet {
-    animation: astrid-rise 500ms ease 500ms backwards;
+    transition: opacity 500ms ease 500ms;
   }
   .astrid-public-site[data-astrid-direct-entry] .astrid-callouts { --astrid-label-delay: 600ms; }
   .astrid-public-site[data-astrid-direct-entry] .astrid-callout {
