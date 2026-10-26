@@ -721,3 +721,7 @@ Source-only PASS for candidate `9d75477be4ab209fed52087f06bfcd20487ce1a9` (tree 
 
 D141e / A2 D141 REG: approved interface-support-only addition in upstream src/tools/video-editor/lib/shot-group-pack-commands.test.ts adds loadTimelineCommandBasisWithDisplay to the existing RuntimeDataProvider mock. Original blob 4df8a97cac77b3531cec437e5ae1dc98bebddeff -> candidate a073bb4b88ddd9a9216f3bded0e969d41331d33e. Removing only that method restores the original file byte-for-byte and AST-equivalently: every original title, input, assertion, fixture, loader counter, commit-side subtraction, and loads=2 predicate is exact. The mock uses the existing basis reader plus fixture display/version/registry state and rejects pair mismatch; no fabricated version or hidden read subtraction. Production duplicate uses the authenticated combined-reader seam while full closure validation and the fresh revision/publication check remain before owner/intent creation. Independent protected review PASS; targeted shot-group 6/6 and Workspace guards 16/16 PASS. No full/browser/ZIP qualification claim.
 | D141d | App P2 automatic child placement | P2 placement expectation updated to the D124 materialization contract. | tests/e2e/local/three-products.p2-elements-assets.spec.ts |
+
+### 2026-10-26T10:07Z — hub-repack (D141o, owner-approved in the app session)
+
+Lossless: 38 batches; loose objects 113264 -> 0 (packed and verified before removal by git prune-packed); free 5275267072 -> 8228765696 B. Repo /home/user/timeline-hub.
