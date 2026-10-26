@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.app.d141j.visibility-review-sampler-lifecycle.v1",
+  "first_tool": "mkdir evidence and workerKEEP; foreground 5-sample df sampler",
+  "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-A3-D141j-visibility-review-1234/evidence/disk-trace.txt",
+  "samples": 5,
+  "available_bytes_minimum_observed": 4609376,
+  "available_gib_approx": 4.39,
+  "stop": "foreground loop completed after sample 5",
+  "wait": "not applicable; no child session remained",
+  "reap": "not applicable; exec returned exit 0",
+  "first_error": null,
+  "gaps": [],
+  "four_gb_stop_triggered": false,
+  "heavy_or_service_started": false
+}

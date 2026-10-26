@@ -1,0 +1,20 @@
+{
+  "schema": "timeline.app.d141j.visibility-source-review-manifest.v1",
+  "base_commit": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+  "candidate_commit": "c2f8c697ce2da6c25dcc9af1ae10e9f50b6cc15f",
+  "candidate_tree": "ba3077ec9a0cd45913ac35b165b8f293e548d4b9",
+  "checker": {
+    "path": "scripts/testing/check-d141j-visibility.mjs",
+    "sha256": "49678b45252a5a1163a57ae990af57baf81e653cc300d70a1926ea84741f8fe7",
+    "git_blob": "9da3fbaeca584c9803b62e27865853831d9784b3"
+  },
+  "files": [
+    {"path":"src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts","sha256":"5c59ae8271a38a60ca022e6e0c21c618a0b910276dee0c0919d46df83a83f732","git_blob":"40222aef1733a0213620ce0b383cd0717ee76317"},
+    {"path":"src/tools/video-editor/adapters/app/useAstridShotsHost.ts","sha256":"cbc9d1858e0fb6efffe3f9eef22fc81bdf21ba0af7131fd1a62f850cc407d798","git_blob":"2d00b0a5b476c14155aa7d93598085568b22b254"},
+    {"path":"src/tools/video-editor/hooks/useShotGroups.ts","sha256":"f8545d3e1decc55a5d84a35ba2ef68fc63dd221789be18a1cd2537a8f334207e","git_blob":"c91a5fd682d90a3ea6bdb767906612726f59606f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx","sha256":"555526c695eafb2d6436344e31ce6a824b10932e1c48f40a40ec97d334adda44","git_blob":"e27b4e4e488f52fbc0fa1ebcc0b434a26a04892f"},
+    {"path":"src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx","sha256":"3b39c6ab5b858b36ca187f81dfd1d397db7f8de3ab21573b644ff89e20964d49","git_blob":"cfb22c18e4338875abf4110c4307a4c3a00157ad"}
+  ],
+  "author_manifest_note": "The author's source-manifest.json records working_tree_commit as the base commit; this review independently authenticated the candidate terminal ref/tree above."
+}

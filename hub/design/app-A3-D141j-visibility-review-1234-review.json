@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.app.d141j.visibility-review.v1",
+  "verdict": "FAIL",
+  "scope": "A3/P2 D141j independent source visibility review",
+  "candidate": {
+    "terminal_ref": "c2f8c697ce2da6c25dcc9af1ae10e9f50b6cc15f",
+    "tree": "ba3077ec9a0cd45913ac35b165b8f293e548d4b9",
+    "base_ref": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+    "base_tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"
+  },
+  "finding_count": 1,
+  "findings": [
+    {
+      "id": "D141J-VIS-001",
+      "severity": "blocking",
+      "title": "Read-head continuity is sourced from the collector's first cached read",
+      "locations": [
+        "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:97-105",
+        "src/tools/video-editor/diagnostics/d141jVisibilityObservation.ts:155-163",
+        "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.test.tsx:264-276"
+      ],
+      "effect": "After a later accepted read, activeCanonicalOccurrences can be from the later composition while the active event still reports the first accepted head. The checker can therefore accept stale-head continuity across repeat reads/renders.",
+      "required_resolution": "Retain an identity that is actually correlated from each accepted read through activeCanonicalOccurrences/useShotGroups to the overlay boundary, and exercise a repeat accepted read/render in source control."
+    }
+  ],
+  "source_only": true,
+  "cause": "UNKNOWN",
+  "diagnostic_body": "NOTRUN",
+  "candidate_unmerged": true,
+  "no_product_edits_by_reviewer": true
+}
