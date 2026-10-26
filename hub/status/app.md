@@ -1,5 +1,5 @@
-<!-- app | 2026-10-26T09:34:12Z | dispatcher heartbeat 15s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 4m -->
-# app board, 2026-10-26T09:29:35.118631+00:00
+<!-- app | 2026-10-26T09:39:58Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 4m -->
+# app board, 2026-10-26T09:35:50.762391+00:00
 
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,7 +46,7 @@
 | D141 P4 history | Retain historical three-leg GO | Agent and App | XML and independent path checks | merged | 10086;0202;App0254 | Original XMLafca45b7:3 PASS23.668s on actual old tuple. Changes through520d outside executed path. | 28e6a867 tuple |
 | D141 P4 freeze2 | Receive changed CLI path reproof | Agent and service | Owning source review0916 PASS | blocked:agent | Existing Agent P4 controller | CLI source and owning profile qualified; actual named service needs5GB on Agent. New tuple body owed; no App duplicate or retarget. | Pending |
 | D141 P5 | Retain38 and exact bounded applicability | Runtime and service | Independent0513 and correction0619 | merged | Actual6934;0513;0619; App0645 | Original38 PASS31.02s retained. Independent0637 qualifies95d/ecdc source path; normal originals and actualGit verified0708. No newbody or retarget. | Historical6a tuple |
-| D141 core | Receive definitive same-kind comparison | Agent and service | Main D141u | blocked:agent | 0455;0507;0500;0508 | Early17 candidates,376 UNKNOWN retained; freeze2 identical full pair definitive. Farm only for undecidable environment need. | Pending8585 pair |
+| D141 core | Receive definitive same-kind comparison | Agent and service | Main D141u; pending native row decision | blocked:agent | Agent Sol and independent review terminal | Native source FAIL awaits owning Main scope decision. Definitive freeze2 pair remains unrun; early17 candidates and376UNKNOWN retained. | Pending8585 pair |
 | D141 REG author | Reserve newly proved product repairs | HARD Sol | Genuine new per-ID proof | gated:REG-proof | Reserved app-A2-D141l-proved-REG-sol | Existing approved0149 lineage. No speculative writer or own-test investigation. | Not dispatched |
 | D74 headroom | Recycle obsolete source pins | Manager and lead | Host0550/0702/0718 CLEAR; repeated guards | merged | Recycle5344;867; oldAgent28e andRuntime6a | Four exact superseded source pins recycled normally; old28e/6a freed150MB. All proof rawKEEP and Git source objects retained. | No source edit |
 | D74 completed pins | Recycle completed source checkouts | Manager and lead | Host0750 CLEAR; fresh guards | merged | Static0748; release0752 | Oldd822 and8585 source pins recycled normally; about286MB restored. All rawKEEP and Git source objects retained; no metadata pointer changed. | No source edit |
@@ -79,8 +79,8 @@ D141x cancellation: exact obsolete app-pin-867cb273-d141-p2-transition-none-sing
 Maintenance0735 and0757: Compact1 additionally gzipped4 ended worker logs; packed0 scratch/0 test dirs. Only host0750-authorized empty d822/8585 sourceKEEP removed; all33 others exact. [Later normal cleanup](../../design/app-D141-compact1-result-0757.json). Earlier pass: guarded sweep3 exit0 removed0; existing helper printed Broken-pipe diagnostics. Compact20 exit0 packed0 scratch/0 test dirs and gzipped0logs. All35 preexisting KEEP markers preserve exact hashes/modes. Finished0707 source auto-recycled normally; no eligible clean ended App source remains except tiny Composition0606 held for the still-open comparison. Previous guarded5344/867/28e/6a releases remain recorded. DirtyU3, lockedU3c, bundles without metadata, hardlink cache and refused orphan graph remain held. No raw removal, hub operation or repack. [Current maintenance](../../design/app-D141-maintenance-result-0735.json).
 
 
-Blockers: App journeys — Ordinary preflight and body each need available>5200000000 after exact sources. Actual4.698GB; no measured journey X or owner hub approval.
-Blockers: Agent — Earlier local Sol next08:53:57 owns native controller repair; late App0905 duplicate stopped. Owning home checker, definitive full pair and changed CLI body owed.
+Blockers: App journeys — Both ordinary parts need available>5200000000 after exact sources. Actual4.679GB; no measured journey X or owner hub approval.
+Blockers: Agent — Native Sol and independent review terminal; source FAIL awaits owning Main row-scope decision. Full pair and changed CLI body still owed; CLI native floor5GB.
 Blockers: Safety — D130 absolute hold; owner-gated hub lead only after explicit owner approval. Refused, dirty, unowned and hardlinked targets retained.
 
 Next ready: Independent review of actual Sol0924 terminal source. Prepared final journey controller only at genuine post-prep available>5200000000; all four exact sources and ordinary recipes retained. D141v waits all-lane REG closure.
@@ -88,7 +88,7 @@ live 1 / cap 3; ready-undispatched 0. Sol0924 active; mandatory native wholepath
 
 Later: Runtime final-unit notes Main CAS remains owning installer after App private candidate and protected documentary review. Gate3D133B,D23,D14,D79 deferred;E4 dropped. SWAP/Element/D136/B022/D77/profiling/own investigations stopped. D141s review-host offer unused; no duplicate review. Historical full12174=19734PASS33FAIL plus collectionerror and pristine23581=17856PASS18FAIL, bothNodeNOTRUN, stay historical. Approved two-readREG5fe and exact2object22path placement expectation520d retained under protected0203/0243; every other predicate exact. Historical receipts never retargeted. No globalREG0/platformGO/finalbuild/ZIP claim.
 
-INBOX consumed through2871505 bytes; board rewritten 2026-10-26T09:24:56.306980+00:00.
+INBOX consumed through2876483 bytes; board rewritten 2026-10-26T09:35:28.814239+00:00.
 
 Pass 2026-10-26T08:06:45.417952+00:00: Read new App inbox, current header through07:43, Agent0751 and Runtime0752 boards. App finite REG remains closed; Agent definitive pair/P4 and final all-lane pins remain pending. Runtime0752 cross-lane ask is now the named hosted source row, exclusive one Luna at ordinary4.6GB. Runtime final unit notes0804 remains owning notes wait. Exact source pins and current proof rawKEEP retained; no source, pin, registry, queue or hub mutation. Normal maintenance runs with before/after KEEP custody.
 
@@ -135,3 +135,7 @@ H6 second failure 2026-10-26T09:24:56.306980+00:00: Independent0920 terminal FAI
 2026-10-26T09:29:06.234595+00:00 H6: Runtime09:14 board publishes three genuine F1 Main originals0913; exact hashes and sizes readbackPASS0929. Source-input receiving blocker clears this pass, canonical Main path custody separate from App absence. No source installation into historical worker paths. Current Sol source repair and its actual-terminal independent review will use the genuine published originals; no redundant input author. Agent09:15 confirms owning CLI receiving independent0916 PASS_SOURCE, body held by actual native5GB floor; App changed-path proof row updated. Existing Agent Sol remains active; no new final pin or body readiness.
 
 2026-10-26T09:29:35.118631+00:00 Mandatory native wholepath0924 terminal0: eight exact evidence originals published0930. Complete donor161-249 versus8e42 caller/D68/builder map confirms intrinsic F5 and external-mount F3 limit. No source/readiness credit, build or install. Its historical default-path F1 absence remains in immutable originals; actual genuine Runtime0913 files now received0929, so no stale missing-source wait. Current Sol0924 continues sole private source repair. [Whole-path evidence only](../../design/app-D141z-native-wholepath-publication-0930.json).
+
+H6 pass 2026-10-26T09:35:28.814239+00:00: Full app-prefix census retains sole active Sol0924 with fresh log progress; Luna wholepath0924 terminal returned, no ready-undispatched row. INBOX through2876483: Runtime0913 genuine dependency publication already hash-received0929, Agent0907 local CLI receiving already independently complete0916 per current board. App source-input blocker cleared; final notes remain sole Main CAS floor wait. Source82e9 unchanged and ordinary final journeys still need5.2GB. No new source author, pin, queue/registry mutation, service or body.
+
+2026-10-26T09:35:50.762391+00:00 H6 owner update: Agent09:25 actual Sol and independent review terminal FAIL_SOURCE; existing native row-scope escalation0924 awaits recorded Main decision. No App author or duplicate escalation, D125b decision hold retained. CLI source independently PASS0916; body native5GB. Runtime09:26 still sourcefloor-held for canonical CAS; App protected notes0909 PASS remains controlling despite delayed review label. D141v all-lane REG/final tuple gate remains closed.
