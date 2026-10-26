@@ -297,6 +297,7 @@ def test_windows_rejects_owner_mismatch_with_private_dacl(tmp_path, monkeypatch)
     # Model a different token user without requiring owner-changing privileges.
     null_sid = ctypes.create_string_buffer(bytes([1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
     monkeypatch.setattr(windows_security, "_user_sid", lambda: null_sid)
+    monkeypatch.setattr(windows_security, "_default_owner_sid", lambda: null_sid)
     with pytest.raises(PermissionError, match="owner is not the current token user"):
         windows_security.validate(path)
 
