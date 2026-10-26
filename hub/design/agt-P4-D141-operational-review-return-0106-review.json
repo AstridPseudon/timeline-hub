@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c bounded same-review return",
+  "review_kind": "derivative_source_qualification",
+  "base": "tl/agt-P4-D141-operational-review-0101",
+  "source_under_review": "tl/agt-P4-D141-operational-return-0055",
+  "verdict": "PASS_OPERATIONAL_SOURCE",
+  "readiness": "INSTALLATION_NOT_READY",
+  "source_assessment": {
+    "candidate_defect": false,
+    "basis": "The candidate source row is byte-identical to the reviewed 0055/0101 row, passes the settled argv checks, and the existing 0101 production-run control receipts pass.",
+    "candidate_content_sha256": "21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b",
+    "candidate_blob": "9d963ee8ad476cc16dd5023dff17c4cb9b0ab4de",
+    "candidate_equal_on_0055_and_0101": true,
+    "argv": {
+      "run_then_pytest": true,
+      "later_integration_marker": true,
+      "timeout_seconds": 45,
+      "addopts_cleared": true,
+      "cache_provider_disabled": true,
+      "junit_under_body_evidence": true,
+      "original_selector_count": 3,
+      "original_selectors_unchanged": true
+    }
+  },
+  "readiness_assessment": {
+    "status": "INSTALLATION_NOT_READY",
+    "reason": "The existing 0101 read-only receipt records that the active CAS registry still serves the old 0047 row. This is controller installation/readback state, not a defect in the 0055 candidate source.",
+    "active_registry_sha256": "2a1b549f2ac25d119d564cdcc2441e53fe621262dfe16e3cf24f42a6c5a55858",
+    "active_row_sha256": "d58f649a2e48994501766c28fdb9ab4d08a21cfe12543e81af70f5f69e1459f9",
+    "candidate_row_sha256": "21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b",
+    "active_equals_old_0047": true,
+    "active_equals_candidate": false,
+    "controller_action_required": "Install the reviewed row through the existing controller, then verify normal CAS/readback before any genuine body run.",
+    "body_ready": false,
+    "suite_installed": false,
+    "p4_go": false
+  },
+  "existing_controls": {
+    "source_review_blob": "tl/agt-P4-D141-operational-review-0101:evidence/review.json@b2a66a911479143311eb7b5294caa60ebbb05a93",
+    "controls_blob": "tl/agt-P4-D141-operational-review-0101:evidence/controls.json@1cf204f804fd10170806ca5552cbfced5418c1b3",
+    "final_normal_request_id": "p4-d141c-normal",
+    "positive_run_exit": 17,
+    "positive_run_counter_lines": 1,
+    "poison_run_exit": 1,
+    "poison_run_counter_lines": 0,
+    "source_clean_before_after": true,
+    "realpaths_distinct": true,
+    "samefile_false": true,
+    "symlink_false": true,
+    "hardlink_false": true,
+    "positive_receipt_request_id": "p4-d141c-positive-persist",
+    "positive_manifest_hash_readback": true,
+    "launcher_bash_n": true,
+    "reused_without_rerun": true
+  },
+  "historical_failure": {
+    "unchanged": true,
+    "service_id": "agent-p4-current-becfe-http-3legs-1026005145-1347",
+    "exit_code": 1,
+    "selectors_executed": 0,
+    "junit_present": false,
+    "cause": "old active row materialized the manifest and evidence destination as the same file before selector execution",
+    "log_sha256": "5fab373131e9a30b1b946f4f8e4aa580c84a1734ed3a73dea427b1290dfec6e4",
+    "not_retracted_or_rewritten": true
+  },
+  "prior_review": {
+    "verdict": "FAIL",
+    "unchanged": true,
+    "branch": "tl/agt-P4-D141-operational-review-0101",
+    "review_blob": "b2a66a911479143311eb7b5294caa60ebbb05a93",
+    "findings_blob": "0693fdb571b301206bb6b9cf4d4f7d7bfa8395e0",
+    "finding_ids": ["P4-D141c-F001", "P4-D141c-F002"],
+    "interpretation": "The prior FAIL remains the operational readiness result for the still-installed old CAS row; it is not reclassified as a candidate-source defect here."
+  },
+  "scope": {
+    "claim": "source qualification versus readiness only",
+    "no_behavior_credit": true,
+    "no_actual_body_receipt": true,
+    "no_product_or_gate_fix": true,
+    "no_suite_cas_install": true,
+    "no_controller_dispatch": true,
+    "no_unchanged_control_rerun": true,
+    "product_typecheck_lint": "NOT_APPLICABLE: no executable source authored"
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "task": "P4 D141c bounded same-review return",
+  "verdict": "PASS_OPERATIONAL_SOURCE",
+  "readiness": "INSTALLATION_NOT_READY",
+  "source_branch": "tl/agt-P4-D141-operational-return-0055",
+  "review_branch": "tl/agt-P4-D141-operational-review-0101",
+  "candidate": {
+    "path_in_source_branch": "evidence/candidate-row.txt",
+    "git_blob": "9d963ee8ad476cc16dd5023dff17c4cb9b0ab4de",
+    "content_sha256": "21f407285a7f1476e9507add8d8d54e723776d6ce5074ac7cbbe8be5773c2f0b",
+    "same_blob_on_review_branch": true,
+    "request_id": "p4-d141c-normal",
+    "installed": false,
+    "argv_checks": {
+      "run_module_pytest": true,
+      "later_marker_integration": true,
+      "exact_flags": ["-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"],
+      "junit_argument": "$P4_D73_EVIDENCE/p4-d141c.xml",
+      "selector_count": 3,
+      "selectors": [
+        "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+        "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+        "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document"
+      ]
+    }
+  },
+  "product_tuple": {
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "launcher": {
+    "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "installer_sha256": "1fbcbc866a170212709e3e0f647f6d7082338eb819d42199f74b25b7e9d01805"
+  },
+  "manifest": {
+    "sha256": "67ef4348b4b77eb02b74abe20ad6fefdb075f980dc8ca563c0a3c79d1f0e5b9f",
+    "selector_count": 3,
+    "timeout_seconds": 45,
+    "marker": "integration",
+    "original_p4_test_hash": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac"
+  },
+  "controls_receipt": {
+    "review_json_git_blob": "b2a66a911479143311eb7b5294caa60ebbb05a93",
+    "controls_json_git_blob": "1cf204f804fd10170806ca5552cbfced5418c1b3",
+    "final_normal_request_id": "p4-d141c-normal",
+    "positive": {"exit": 17, "counter_lines": 1, "manifest_hash_readback": true},
+    "poison": {"exit": 1, "counter_lines": 0, "changed_field": "agent_sha"},
+    "path_identity": {"realpaths_distinct": true, "samefile": false, "symlink": false, "hardlink": false},
+    "source_clean_before_after": true,
+    "reused": true,
+    "rerun": false
+  },
+  "active_readiness_receipt": {
+    "registry_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "registry_sha256": "2a1b549f2ac25d119d564cdcc2441e53fe621262dfe16e3cf24f42a6c5a55858",
+    "row_sha256": "d58f649a2e48994501766c28fdb9ab4d08a21cfe12543e81af70f5f69e1459f9",
+    "equals_old_0047": true,
+    "equals_candidate": false,
+    "has_run_pytest": false,
+    "manifest_and_evidence_parent_same": true,
+    "source_defect": false,
+    "installation_ready": false
+  },
+  "historical_service": {
+    "id": "agent-p4-current-becfe-http-3legs-1026005145-1347",
+    "exit": 1,
+    "selectors_executed": 0,
+    "junit": false,
+    "log_sha256": "5fab373131e9a30b1b946f4f8e4aa580c84a1734ed3a73dea427b1290dfec6e4",
+    "preserved": true,
+    "retracted": false
+  },
+  "contract_v2": {
+    "caller": "Runtime commitTimeline / Agent provider",
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
+    "command_fields": ["schema_version", "op", "version", "select", "args"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "reply_fields": ["accepted", "merged", "canonical", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict", "invalid", "preview"],
+    "unchanged": true
+  },
+  "scope": "documentary source verdict only; no suite installation, controller continuation, original body, behavior credit, product edit, or gate decision"
+}
