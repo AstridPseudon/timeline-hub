@@ -1,0 +1,86 @@
+{
+  "at": "2026-10-26T04:28:51.368353+00:00",
+  "scope": "Corrected documentary preparation ONLY, independent0425 PASS; no final binding, body or source merge.",
+  "source_return": "497eba74682121a50f454cf4db466fb169e52381",
+  "tree_equals_composition_base": true,
+  "publications": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/binding-recipe.md",
+      "published": "app-P-D141p-proof-prep-return-0420-binding-recipe.md",
+      "sha256": "1fc8d072c0c92f0ca1c17d85306960afe50a36ee7bf9b46b86acc2206fd8685d",
+      "bytes": 5437
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/controller.md",
+      "published": "app-P-D141p-proof-prep-return-0420-controller.md",
+      "sha256": "ef25095b63aae57a939cd15891e383ec2676e943dc0e7e683c3c6cbfcf2f54e3",
+      "bytes": 3159
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/findings-resolved.json",
+      "published": "app-P-D141p-proof-prep-return-0420-findings-resolved.json",
+      "sha256": "b35086fb115a9bcd0842b49856861394135ed8041378f2af016d908efeaa74c3",
+      "bytes": 3001
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/handoff.md",
+      "published": "app-P-D141p-proof-prep-return-0420-handoff.md",
+      "sha256": "7c286cf506ce4c442331d7eadea91c27c78a06e1d771788e05d9625ee46ca27d",
+      "bytes": 1516
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/readiness.json",
+      "published": "app-P-D141p-proof-prep-return-0420-readiness.json",
+      "sha256": "ce22770f520128d4e646b0fb84718c52065415e75569860203213bc9acdedc5f",
+      "bytes": 3341
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/source-manifest.json",
+      "published": "app-P-D141p-proof-prep-return-0420-source-manifest.json",
+      "sha256": "9f8a063b11ae3d7376d8bad7b3acd259c8df00b1f7cdfef9167d896aeef1f328",
+      "bytes": 7668
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/unit-recipe.md",
+      "published": "app-P-D141p-proof-prep-return-0420-unit-recipe.md",
+      "sha256": "4c834ce1c95c11154d0a19171438bd15c6e0db184780517d1f6baa437cf7e8cc",
+      "bytes": 1755
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-return-0420/evidence/validation.md",
+      "published": "app-P-D141p-proof-prep-return-0420-validation.md",
+      "sha256": "79d2fd1a7f6d41b3583790be8edc85224bddd6da30bfab7b2581506ac3edadba",
+      "bytes": 2217
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-final-review-0425/evidence/findings.md",
+      "published": "app-P-D141p-proof-prep-final-review-0425-findings.md",
+      "sha256": "25e7d2a6ab091bb3aa2fb9f5ed57e2111e00dfaa1d117568eb3350dfa95bc904",
+      "bytes": 2582
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-final-review-0425/evidence/handoff.md",
+      "published": "app-P-D141p-proof-prep-final-review-0425-handoff.md",
+      "sha256": "4224ebdb2d104fe99e5fe9443b9cc013e21056cf71b44638880230271551c512",
+      "bytes": 1340
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-final-review-0425/evidence/review.json",
+      "published": "app-P-D141p-proof-prep-final-review-0425-review.json",
+      "sha256": "c265eca48126f59e7dc8f3e907a52a4374f4a3d490d657f2af3fc62d69bf6567",
+      "bytes": 4429
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-final-review-0425/evidence/source-manifest.json",
+      "published": "app-P-D141p-proof-prep-final-review-0425-source-manifest.json",
+      "sha256": "9a3c16f2f8f5077ca47f1d6e22550f97298abb69e6086ecfda5ee085ddf0ffe5",
+      "bytes": 3340
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141p-proof-prep-final-review-0425/evidence/validation.md",
+      "published": "app-P-D141p-proof-prep-final-review-0425-validation.md",
+      "sha256": "ab99e544bc2fecaa8d2d963056a28082e8c5bbe0f237cd56b7f50a5f1f54874a",
+      "bytes": 2640
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task": "app-P-D141p-proof-prep-return-0420",
+  "status": "NOT_READY",
+  "review_basis": "app-P-D141p-proof-prep-review-0415/evidence/review.json and findings.md",
+  "delivery": {
+    "prior_author_commit": "644424bc1ce768c42db1fc1f4bda8482006359a5",
+    "prior_failure": "Eight artifacts were written repo-relative instead of to the absolute worker evidence root.",
+    "correction": "Only the eight allowed repo-relative artifacts are deleted; all replacement artifacts are written under the exact absolute worker evidence root."
+  },
+  "findings": [
+    {"id": "D141p-001", "status": "resolved", "disposition": "Placement/registerAsset uses held-8f/current-520d blob 186ba03b6a8bb5d45d2659cf0a1b647b68e5a149 and SHA-256 ec63d7f5728be8d6a8cd41d2bc83cf7353ac4c2543c9ae15729972c1faf3039e; the stale 7cca claim is explicitly rejected; D141d/0243 two-binding/22-path expectation is retained."},
+    {"id": "D141p-002", "status": "resolved", "disposition": "Cites existing D141p/D141l authority and adds no new MAIN authorization wait."},
+    {"id": "D141p-003", "status": "resolved", "disposition": "The optional pure-builder-receive.mjs is deleted. The documentary recipe requires real Git-bound source receipts, detached clean checkouts, known qualified Runtime/Composition members, genuine App/Agent qualification, installed-kit source/review/CAS receipt, and supported admission/trace interface; no generic receiver is introduced."},
+    {"id": "D141p-004", "status": "resolved", "disposition": "The recipe names only the actual final App scripts/testing/d66-plain-stack.mjs and requires hashing/verifying its Git blob and SHA before using buildSubmitPlan/serviceRecipe; the historical 59b65214... identity is continuity evidence only."},
+    {"id": "D141p-005", "status": "resolved", "disposition": "The exact absolute worker evidence root is recorded in readiness.json/controller.md; no executable writer exists and no output outside that root is authorized."},
+    {"id": "D141p-006", "status": "resolved", "disposition": "Controller carries placement-first order, first trace X, later floor max(4.6 GB, 4 GB + X + 0.2 GB), <=4.3 GB lead notice, continuous 5-second KEEP, 4 GB stop before/during/after, one-heavy and no-second-gate rules."},
+    {"id": "D141p-007", "status": "resolved", "disposition": "Binding recipe preserves exact C0 request keys and accepted/merged, canonical_document, document_digest, commands, id_map, provider/compiler versions, complete steps, base/previous/accepted/rebased_onto, merge_mode, records/bindings/effects/dependencies/history/undo_steps, publisher/echoed annotations, conflict, invalid, and preview fields."},
+    {"id": "D141p-008", "status": "resolved", "disposition": "Runtime 6a011d58.../ac5b8627... and Composition 635f4de0.../5ab5191a... are fixed qualified tuple members; only their exact custody/checkout/receipt and paired-kit receipt remain to be received."}
+  ],
+  "proof_execution": "none",
+  "final_binding": null
+}
