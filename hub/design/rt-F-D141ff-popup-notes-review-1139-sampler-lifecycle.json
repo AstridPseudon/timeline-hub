@@ -1,0 +1,27 @@
+{
+  "schema": "d141ff-protected-review-sampler-lifecycle-v1",
+  "worker_pid": 2,
+  "parent_pid": 1,
+  "first_tool": {
+    "durable_trace": true,
+    "interval_seconds": 5,
+    "stop_free_bytes": 4294967296,
+    "initial_available_bytes": 5611270144,
+    "final_available_bytes": 5611270144,
+    "above_stop": true,
+    "child_pid": 20,
+    "child_exit": 0,
+    "waited": true,
+    "reaped": true
+  },
+  "author_sampler_limit": {
+    "first_tool_sampler": false,
+    "first_tool_coverage_gap": "initial background sampler evidence was not durable after its session closed",
+    "restarted_samples": 10,
+    "status": "terminated_by_session",
+    "final_exit": "UNKNOWN",
+    "waited": true,
+    "reaped": true
+  },
+  "interpretation": "Own trace proves only review-worker disk admission and child lifecycle. It does not repair or promote author/body continuity evidence."
+}

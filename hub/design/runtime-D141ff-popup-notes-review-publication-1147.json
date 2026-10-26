@@ -1,0 +1,55 @@
+{
+  "time": "2026-10-26T11:44:21.112532+00:00",
+  "verdict": "PASS",
+  "scope": "Independent private documentary review; installation not done",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-report.md",
+      "sha256": "48c63d47017aa9a4e47f39dd893d2bd7dc7e5825274c3374817efd5d76698c65",
+      "bytes": 1238
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-review.json",
+      "sha256": "ffee1331f310390b454d3feb9d4c1a551d2e9c5c12e3a19abd427fc8c5a2b9cd",
+      "bytes": 3584
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-findings.md",
+      "sha256": "7259ecb0ff1b73ac377df56458da47083940daf0192e0309358a25c28ae82cd3",
+      "bytes": 2505
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-source-manifest.json",
+      "sha256": "bdf74f42e82fd21b8efef154130ebb207b99f2594a56d2d175e7c835c9a389b9",
+      "bytes": 3280
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-validation.md",
+      "sha256": "669258fe3030100d3955d83ef5407bd99be8b0124016ea555d0e1f70c38587c6",
+      "bytes": 1712
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-handoff.md",
+      "sha256": "8735fc6896594d794120c74129e7f2afa24cffa02adca4fa0747712e238a67c9",
+      "bytes": 895
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-disk-trace.txt",
+      "sha256": "c440250e6dc02a792fdd8007680a43824e636b9b9a2c5fe0001289879b7e26e2",
+      "bytes": 609
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-review-1139/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141ff-popup-notes-review-1139-sampler-lifecycle.json",
+      "sha256": "59546f04ba6c1535bd27c60d5e4d81a9a6fefa3edc1c121732b4a713102dd629",
+      "bytes": 873
+    }
+  ]
+}

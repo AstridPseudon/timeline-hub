@@ -1,0 +1,56 @@
+{
+  "schema": "d141ff-popup-notes-protected-source-manifest-v1",
+  "verdict": "PASS",
+  "author_checker_sha256": "67122109344b018f94df3d670e03139779ff9f2e27c0d74eba3560e2bd3e1fee",
+  "candidates": {
+    "README.template.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-README.template.md",
+      "sha256": "599d0e3f2d82b8cef50238966ce45f37d766f6e3e6d907ecd8502bc9c1b0205a",
+      "bytes": 39689,
+      "suffix_bytes": 1407
+    },
+    "gate-results.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141ff-popup-notes-1133/evidence/candidate-gate-results.md",
+      "sha256": "6175f480aebc8daf5e48f8db510c40137317ba11a937f04d0caffdd8e2cfd4ec",
+      "bytes": 36699,
+      "suffix_bytes": 1117
+    }
+  },
+  "canonical_preimages": {
+    "README.template.md": "48013c7fbcb8f72a7d4371540b50a4abcc43dd8c6274d90726beec82b8f9fc02",
+    "gate-results.md": "506e4461b63e81af490e4b43c5eb7fe2717ebb07825c77d216a59967d863a55d"
+  },
+  "current_publication": {
+    "path": "/home/user/timeline-hub/hub/design/app-D141cc-popup-terminal-publication-1122.json",
+    "sha256": "718011e008f18520636102813ca26c8bdab6b7ebbb37b177e0c918c98096fa69",
+    "status": "FUNCTIONAL_FAIL_PENDING_CUSTODY",
+    "eight_originals_verified": true
+  },
+  "current_source_tuple": {
+    "app": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"],
+    "agent": ["ecdc242ed9b673f641759ecf029f95e89a2c6f92", "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"],
+    "runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "historical_1368": {
+    "source": "/home/user/timeline-hub/hub/design/app-P2-D141-popup-read-review-0232-findings.md",
+    "id": "app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368",
+    "app": ["867cb2737af1b46dc608c7cd37c349e920fe9422", "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"],
+    "agent": ["28e56cacb42d3da85b02e5b3543895b44f3d0f70", "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"],
+    "runtime": ["6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "ac5b862744bece65b2e30565db1777bacd60da28"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"],
+    "retargeted": false
+  },
+  "custody_publication": {
+    "path": "/home/user/timeline-hub/hub/design/app-D141ff-popup-custody-publication-1127.json",
+    "sha256": "279387891c32712fecdbfc28c30dad55e2b8ca4b3e6a3d11116fb602ebf1d717",
+    "verdict": "PASS_CUSTODY_TEST_FAIL"
+  },
+  "render_source": {
+    "production_bin": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "cited_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-final-unit-notes-input-0849-delivery-build.py",
+    "function": "render_readme",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca"
+  },
+  "scope": "read-only documentary admission and render checks; no canonical or product mutation"
+}
