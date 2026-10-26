@@ -144,6 +144,16 @@ def test_timeout_stream_tails_are_captured_before_cancellation_and_bounded(tmp_p
     stdout = "x" * (journey.TASK_OUTPUT_TAIL_BYTES + 19)
     (attempt / "task-stdout-tail.log").write_text(stdout, encoding="utf-8")
     (attempt / "task-stderr-tail.log").write_text("worker stderr at timeout\n", encoding="utf-8")
+    metadata = {
+        "schema_version": 1,
+        "streams": {
+            "stdout": {"file": "task-stdout-tail.log", "available": True,
+                       "byte_count": journey.TASK_OUTPUT_TAIL_BYTES, "truncated": True, "error": None},
+            "stderr": {"file": "task-stderr-tail.log", "available": True,
+                       "byte_count": 26, "truncated": False, "error": "OSError"},
+        },
+    }
+    (attempt / "task-output-capture.json").write_text(json.dumps(metadata) + "\n", encoding="utf-8")
     calls = []
     state = "running"
 
@@ -168,6 +178,8 @@ def test_timeout_stream_tails_are_captured_before_cancellation_and_bounded(tmp_p
             evidence = json.loads((tmp_path / "task-logs-before-cancel.json").read_text(encoding="utf-8"))
             assert evidence["task_child_output"]["available"] is True
             assert evidence["task_child_output"]["missing"] == []
+            assert evidence["task_child_output"]["metadata"]["status"] == "valid"
+            assert evidence["task_child_output"]["metadata"]["streams"]["stderr"]["error"] == "OSError"
             assert evidence["task_child_output"]["streams"] == [
                 {"source": "task-stdout-tail.log", "evidence": "task-timeout-task-stdout-tail.log",
                  "bytes": journey.TASK_OUTPUT_TAIL_BYTES, "truncated": True},
@@ -192,6 +204,7 @@ def test_timeout_stream_tails_are_captured_before_cancellation_and_bounded(tmp_p
 
     assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
     assert (tmp_path / "task-timeout-service-pack-host.log").read_text(encoding="utf-8") == "host at timeout\n"
+    assert json.loads((tmp_path / "task-timeout-task-output-capture.json").read_text()) == metadata
 
 
 def test_snapshot_failure_does_not_prevent_cancel_or_hide_follow_failure(tmp_path, monkeypatch):
@@ -213,6 +226,8 @@ def test_snapshot_failure_does_not_prevent_cancel_or_hide_follow_failure(tmp_pat
         if argv[:2] == ["tasks", "show"]:
             return json.dumps({"ok": True, "data": {"state": state}})
         if argv[:2] == ["tasks", "cancel"]:
+            manifest = json.loads((tmp_path / "task-logs-before-cancel.json").read_text())
+            assert manifest["task_child_output"]["metadata"]["status"] == "missing"
             state = "cancelled"
             return json.dumps({"ok": True})
         raise AssertionError(argv)
@@ -226,6 +241,64 @@ def test_snapshot_failure_does_not_prevent_cancel_or_hide_follow_failure(tmp_pat
 
     assert calls.index(("tasks", "cancel")) > calls.index(("tasks", "show"))
     assert (tmp_path / "processes-after-task-follow-error.json").is_file()
+
+
+def test_malformed_task_metadata_is_reported_without_blocking_cancellation(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path)
+    monkeypatch.setattr(journey, "data_root", lambda: tmp_path)
+    (tmp_path / "logs").mkdir()
+    attempt = tmp_path / "astrid-attempt-task-1-token"
+    attempt.mkdir()
+    (attempt / "task-output-capture.json").write_text("{broken", encoding="utf-8")
+    calls = []
+    state = "running"
+
+    def cli(module, argv, name, **kwargs):
+        nonlocal state
+        calls.append(tuple(argv[:2]))
+        if argv[:2] == ["projects", "create"]:
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "create"]:
+            return json.dumps({"ok": True, "data": {"task_id": "task-1"}})
+        if argv[:2] == ["tasks", "follow"]:
+            raise RuntimeError("follow timed out")
+        if argv[:2] == ["tasks", "show"]:
+            return json.dumps({"ok": True, "data": {"state": state}})
+        if argv[:2] == ["tasks", "cancel"]:
+            manifest = json.loads((tmp_path / "task-logs-before-cancel.json").read_text())
+            assert manifest["task_child_output"]["metadata"]["status"] == "malformed"
+            state = "cancelled"
+            return json.dumps({"ok": True})
+        if argv[:2] == ["tasks", "events"]:
+            return json.dumps({"ok": True, "data": []})
+        raise AssertionError(argv)
+
+    command = f"python -m astrid.packs.chiptune.actions.sfx.run --out {attempt / 'outputs'}"
+    monkeypatch.setattr(journey, "cli", cli)
+    monkeypatch.setattr(journey, "snapshot", lambda name: [process(22, 21, "10:02", command=command)])
+    monkeypatch.setattr(journey, "capture_sfx_output", lambda task_id, rows: None)
+    with pytest.raises(RuntimeError, match="reached terminal state 'cancelled'"):
+        journey.task()
+
+    assert ("tasks", "cancel") in calls
+    assert not (tmp_path / "task-timeout-task-output-capture.json").exists()
+
+
+def test_oversized_task_metadata_is_rejected_with_a_bounded_read(tmp_path, monkeypatch):
+    monkeypatch.setattr(journey, "EVIDENCE", tmp_path / "evidence")
+    attempt = tmp_path / "astrid-attempt-task-1-token"
+    attempt.mkdir()
+    (attempt / "task-output-capture.json").write_bytes(b"x" * (journey.TASK_OUTPUT_METADATA_BYTES + 100))
+
+    result = journey._task_output_metadata(attempt)
+
+    assert result == {
+        "available": False,
+        "status": "oversized",
+        "source": "task-output-capture.json",
+        "bytes": journey.TASK_OUTPUT_METADATA_BYTES + 100,
+    }
+    assert not (tmp_path / "evidence" / "task-timeout-task-output-capture.json").exists()
 
 
 def test_sfx_output_capture_restricts_path_to_the_journey_attempt(tmp_path, monkeypatch):
@@ -291,7 +364,13 @@ def test_timeout_manifest_marks_missing_task_streams(tmp_path, monkeypatch):
         "available": False,
         "streams": [],
         "missing": ["task-stdout-tail.log", "task-stderr-tail.log"],
-        "reason": "No readable per-attempt task stream tail was available before cancellation.",
+        "metadata": {
+            "available": False,
+            "status": "missing",
+            "source": "task-output-capture.json",
+        },
+        "reason": "One or more per-attempt task stream tails were unavailable before cancellation.; "
+                  "Task output capture metadata is missing.",
     }
 
 

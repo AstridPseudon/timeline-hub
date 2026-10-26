@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())) / "X5-windows-journey"
 HEALTH_URL = "http://127.0.0.1:17340/api/runtime/v1/health"
 TASK_OUTPUT_TAIL_BYTES = 65536
+TASK_OUTPUT_METADATA_BYTES = 2048
 
 
 def save(name, value):
@@ -301,6 +302,56 @@ def _copy_tail(source, evidence_name, limit, *, details=False):
     return row
 
 
+def _task_output_metadata(attempt):
+    source = attempt / "task-output-capture.json" if attempt is not None else None
+    missing = {"available": False, "status": "missing", "source": "task-output-capture.json"}
+    if source is None or source.is_symlink() or not source.is_file():
+        return missing
+    try:
+        with source.open("rb") as stream:
+            size = os.fstat(stream.fileno()).st_size
+            if size > TASK_OUTPUT_METADATA_BYTES:
+                return {**missing, "status": "oversized", "bytes": size}
+            content = stream.read(TASK_OUTPUT_METADATA_BYTES + 1)
+    except OSError:
+        return {**missing, "status": "unreadable"}
+    if len(content) > TASK_OUTPUT_METADATA_BYTES:
+        return {**missing, "status": "oversized", "bytes": len(content)}
+    try:
+        value = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        return {**missing, "status": "malformed", "bytes": len(content)}
+
+    if (not isinstance(value, dict) or set(value) != {"schema_version", "streams"} or
+            type(value.get("schema_version")) is not int or value["schema_version"] != 1 or
+            not isinstance(value.get("streams"), dict) or set(value["streams"]) != {"stdout", "stderr"}):
+        return {**missing, "status": "malformed", "bytes": len(content)}
+    for name, filename in (("stdout", "task-stdout-tail.log"), ("stderr", "task-stderr-tail.log")):
+        row = value["streams"][name]
+        if (not isinstance(row, dict) or set(row) != {"file", "available", "byte_count", "truncated", "error"} or
+                row.get("file") != filename or type(row.get("available")) is not bool or
+                type(row.get("byte_count")) is not int or
+                not 0 <= row["byte_count"] <= TASK_OUTPUT_TAIL_BYTES or
+                type(row.get("truncated")) is not bool or
+                row.get("error") is not None and
+                (not isinstance(row["error"], str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,63}", row["error"]))):
+            return {**missing, "status": "malformed", "bytes": len(content)}
+
+    evidence_name = "task-timeout-task-output-capture.json"
+    try:
+        (EVIDENCE / evidence_name).write_bytes(content)
+    except OSError:
+        return {**missing, "status": "copy_failed", "bytes": len(content)}
+    return {
+        "available": True,
+        "status": "valid",
+        "source": source.name,
+        "evidence": evidence_name,
+        "bytes": len(content),
+        "streams": value["streams"],
+    }
+
+
 def capture_task_logs(task_id=None, process_rows=None):
     logs = data_root() / "logs"
     EVIDENCE.mkdir(parents=True, exist_ok=True)
@@ -325,6 +376,13 @@ def capture_task_logs(task_id=None, process_rows=None):
             missing_child_logs.append(name)
         else:
             child_logs.append(row)
+    child_metadata = _task_output_metadata(attempt)
+    metadata_valid = child_metadata["status"] == "valid"
+    reasons = []
+    if missing_child_logs:
+        reasons.append("One or more per-attempt task stream tails were unavailable before cancellation.")
+    if not metadata_valid:
+        reasons.append(f"Task output capture metadata is {child_metadata['status']}.")
     save("task-logs-before-cancel.json", {
         "logs": copied,
         "missing": [name for name in ("service-pack-host.log", "service-worker.log")
@@ -333,9 +391,8 @@ def capture_task_logs(task_id=None, process_rows=None):
             "available": bool(child_logs),
             "streams": child_logs,
             "missing": missing_child_logs,
-            "reason": None if not missing_child_logs else (
-                "No readable per-attempt task stream tail was available before cancellation."
-            ),
+            "metadata": child_metadata,
+            "reason": "; ".join(reasons) or None,
         },
     })
 
