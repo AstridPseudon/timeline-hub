@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T01:23:54Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 4m -->
-# agent board, 2026-10-26T01:19Z
+<!-- agent | 2026-10-26T01:27:54Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
+# agent board, 2026-10-26T01:24Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -131,7 +131,7 @@
 | F D141b command | Qualify plain pristine pytest route | Sol and Luna | Independent 0030 PASS | merged | Author 0019; reviewer 0030 | All five finite blockers closed. Exact source and command hashes independently verified. Seven author plumbing checks PASS; no behavior claim. | 0710897c87 |
 | U4 App cut handoff | Supply frozen Agent receiving inputs | Manager | Exact normal source | merged | Handoff 0023 to App and lead | Full SHA/tree/parents/receipts and exact Runtime producer supplied in linked peer. App normal vendor now owns receiving. | 28e56cacb4 |
 
-| P4 D141 cut rerun | Align JUnit proof binding | Luna and service | Corrected operational packet review | doing | Source0119; whole path0119 | Actual 10086 has 3 PASS. Independent0114 custody FAIL: manifest names old missing XML. Normal manifest path correction and whole-path read active; no body. | Frozen28e/867c/6a |
+| P4 D141 cut rerun | Qualify JUnit proof correction | Luna and service | Independent source review0124 | review | Author0119; reader0119; review0124 | New manifest95f5ce changes only JUnit path; runmanifest and argv agree. Controls PASS. Old10086 has3 PASS but custodyFAIL. Raw KEEP retained to final delivery. | Frozen28e/867c/6a |
 
 | F D141c per-ID and env | Qualify full pristine status table | Luna and Farm | Farm cut results and conditional reruns | blocked:farm | Reader0045; independent0100 PASS | All3255 records PASS_EVIDENCE;3082 concrete IDs,173 unnamed subtests. Four ENV plus timeout UNKNOWN. Only overlapping cut failures rerun; no REG verdict. | Actual27388 |
 Integration: FROZEN 28e56cacb42d3da85b02e5b3543895b44f3d0f70; tree 2ebe2ddf5a61f013953ab1e21d51ebaab746e58a. Normal queue receipt confirms reviewed b4eb candidate tree. Nothing merges after this freeze without MAIN ruling. [App and lead receiving inputs](../../design/peer-agent-to-app-20261026T0023Z-D141-FROZEN-receiving-inputs.md).
@@ -142,7 +142,7 @@ Measurement: agent-agent-core-full-1025191128-18455 retained KEEP; 8926 PASS,190
 Blockers: Farm and Runtime — final cut-tuple kit/recipe and genuine child/import/preflight/core owed. D140 prohibits Agent child/core; old3e163 stays.
 Blockers: SWAP safety — D130 automatic classifier refusal holds all recovery and qualification; no retry,transfer,alternate route or rollback. Existing Runtime escalation retained.
 
-Next ready: P4 source0119 and whole path0119, then independent source review. live 2 / cap 3 source at4.8GB; no heavy body. ready-undispatched 0.
+Next ready: P4 independent source0124 then existing controller corrected proof. live 1 / cap 3 source near4.9GB; no heavy body. ready-undispatched 0.
 
 D141: latest decisions and actual hub morning-cut/cut-tuple files consumed. Stop original9/B022,Gate3,D118,cost/render and all own-test investigations. Already qualified cluster fixes may merge before final join; none delay cut. Agent pristine upstream8b6ed/Runtimefa9cd comparator runs here after freeze while Farm runs ours; zero regressions per-ID remains ship gate. P1/P3/P4/P5 and six P2 gestures required; SWAP/Element/render listed known gaps. No new skip,xfail,weakening or retirement.
 
@@ -181,3 +181,5 @@ Pass 01:09Z: Finalindependent0106 PASS_OPERATIONAL_SOURCE/INSTALLATION_NOT_READY
 Pass 2026-10-26T01:13Z: Actual10086 terminalPASS, all3originalsPASS/0skip/23.668s, preflight/body0 and realnormalservice. Resultpeer sentApp+lead immediately; controllerterminal0105 immediatelydispatchedindependent0114, rawKEEPprotected and eightSAFEcontrolleroutputs bytepublished. Reviewchecks actualversusmanifestJUnitpath and completehash/source/CASbindings; no bodyrepeat/sourcefix inferred.
 
 Pass 01:19Z: Actual P4 result reviewed FAIL only on stale manifest/runmanifest JUnit path; true three passes preserved. Immediately dispatched Luna operational return0119 and independent read-only whole path0119 in parallel, no test body. App/lead notified actual PASS does not clear custody. Exact review safe Git blobs flat-published after reviewer relative-output mistake. Latest delayed Proof0054 ask already satisfied by existing P4 row; no duplicate controller. Free 4771897344 bytes.
+
+Pass 2026-10-26T01:24Z: Author0119 terminal sourcePASS and wholepath0119 complete; finalindependent0124 dispatched immediately. Exact new manifest95f5ce differs only junit_paths. Reader bounds retained: source guards bind origins without direct body telemetry; App receiver verdict follows actual result. Manager KEEP guarantees all old/new referenced raw/selector evidence through cumulative verdict and final delivery. Safe author/reader packets flatpublished, no old receipt rewritten or new product telemetry gate. Free 4892372992 bytes.
