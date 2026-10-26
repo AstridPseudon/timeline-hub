@@ -1,0 +1,25 @@
+{
+  "schema": "d141cc-popup-add-result-v1",
+  "selector": "p2-popup-add",
+  "suite": "full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1",
+  "normal_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026",
+  "status": "FAIL_FUNCTIONAL",
+  "exit": 1,
+  "duration_seconds": 207,
+  "counts": {
+    "passed": 1,
+    "failed": 1
+  },
+  "readiness": "PASS",
+  "popup": "FAIL",
+  "failure": {
+    "test": "tests/e2e/local/three-products.p2-popup.spec.ts:941",
+    "assertion": "shared occurrence shot group",
+    "locator": "[data-shot-group-key^=\"f2-occurrence-copy:\"]",
+    "observed": "element not found within 5000ms"
+  },
+  "diagnostic": "not run",
+  "raw_summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026/summary",
+  "raw_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026/log.txt",
+  "raw_trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026/d66/p2-popup-add/three-products.p2-popup-P2-ae6fa-currence-fork-and-A2-commit/trace.zip"
+}

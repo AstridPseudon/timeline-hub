@@ -1,0 +1,36 @@
+{
+  "schema": "d141cc-popup-source-manifest-v1",
+  "source_tuple": {
+    "app": {"sha": "82e9e13ddf1d7ec6c736521b2eb091dca9877598", "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710", "checkout": "/home/user/work/wt/app-pin-82e9e13d"},
+    "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735", "checkout": "/home/user/work/wt/agt-pin-ecdc242e"},
+    "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1", "checkout": "/home/user/work/wt/rt-pin-95d98f03"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0"}
+  },
+  "source_state": "all four detached exact checkouts clean and exact-pinned",
+  "builder": {
+    "path": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+  },
+  "accepted_controls": {
+    "controller_sha256": "86020cad9608be7abc5285dfca72e1373ba066f9ac30c2d1be5486dcb3dd3c66",
+    "check_sha256": "9afb576cfa7c4408c192931f019e571976647957f9a8f2143a95394595a38ee1",
+    "cases_sha256": "94b90398d3956bf67cad7808fc17cb8464264586ce2c47f8328b7d278bf05156",
+    "dispatch_recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+    "accepted_checker_exit": 0,
+    "accepted_checker_controls": 43
+  },
+  "recipe": {
+    "normal_command_sha256": "27fcd174df3f214502bbca1e67b0eb366c361c11e1f5ae5c0c48d7a987582501",
+    "normal_row_sha256": "c89f8ac7430f4e5342fbffb23cd5ce4aa54f2151e38b3e46af7035aea13fc6c3",
+    "plan_sha256": "8a7e4cb2071faf343f9b96c0c43ebc8e671ff6783bdde4d0d8e83e7967639c02"
+  },
+  "raw_terminal": {
+    "request_sha256": "dc398cc68a89e1ab322d6bb3a17e5a3362229461db099e9f9f8dcb86d5e80568",
+    "snap_sha256": "59ed646fd153d3ed6ccf2c468a942ad66575f4f9b0de1fd51a064deb0cc2c71b",
+    "service_manifest_sha256": "5329d7d05a295e9baa5ecde401bfee8c52b083305827c4e0fa57fd1275020350",
+    "service_disk_trace_sha256": "fc92fe63d9455c13b934891db27d8632ba22aa21475ab82b434cfd9bb2ccea5b",
+    "service_summary_sha256": "5901023ee6edcb8e893d1f1c92baae78948a549f6243440ff229be3ae2860221",
+    "service_trace_validation_sha256": "6ba5de112605629546e1a2ac3731a1827d49906ea71fc7bc9dc8c847a2255c1c"
+  }
+}

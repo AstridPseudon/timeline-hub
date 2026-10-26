@@ -1,0 +1,23 @@
+{
+  "task": "app-P-D141cc-popup-controller-next",
+  "selector": "p2-popup-add",
+  "attempt_scope": "popup-retry-1",
+  "stage": "terminal_observed",
+  "native_tool_session": "86698",
+  "admission_available_bytes": 5920292864,
+  "admission_floor_bytes": 5200000000,
+  "source_controller_sha256": "86020cad9608be7abc5285dfca72e1373ba066f9ac30c2d1be5486dcb3dd3c66",
+  "dispatch_recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "preflight_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight-1026111237-26455",
+  "preflight_status": "pass",
+  "normal_id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026",
+  "normal_status": "fail",
+  "normal_exit": 1,
+  "normal_duration_seconds": 207,
+  "functional_result": "FAIL_FUNCTIONAL",
+  "passed_cases": 1,
+  "failed_cases": 1,
+  "failure": "P2 popup mounted ADD could not find the expected shared occurrence shot-group element; no diagnostic rerun performed",
+  "custody": "same native tool session only; no retry authorized",
+  "updated_utc": "2026-10-26T11:16:46Z"
+}

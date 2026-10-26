@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-26T11:21:38.008681+00:00",
+  "status": "FUNCTIONAL_FAIL_PENDING_CUSTODY",
+  "worker": "app-P-D141cc-popup-controller-next",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/controller-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-controller-receipt.json",
+      "sha256": "34f40f321b093dd90e68330a01bc08d0f050d0ad59479c9cf99d9d620ff1994d",
+      "bytes": 1947
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-results.json",
+      "sha256": "97ecfac6257840b508d9db187e53d6052d01b159d1b5e9c3c4d69bf80bacc344",
+      "bytes": 1376
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-source-manifest.json",
+      "sha256": "3efec87a5eac894069c6c50500cea42f9de9f93f156b8190da218e2c6f1b0850",
+      "bytes": 2430
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/trace-measurement.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-trace-measurement.json",
+      "sha256": "b58e89df83f2ce4d052d5653c606fcae548c52bae580a1d5b5f45a9d61f7275b",
+      "bytes": 1242
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-sampler-lifecycle.json",
+      "sha256": "96e0155620f42b12408794848134ec1ca59019f8730a2ddd34022263a2d25834",
+      "bytes": 567
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-validation.md",
+      "sha256": "18c8020a6ae7cb3471a7e7aadbb47f864bba4a3940605e7f8066f0a70eb76f65",
+      "bytes": 1866
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-handoff.md",
+      "sha256": "1defed95edf4c9fc55516e6974566838d4e4f342a3eb4f67964c25418625d0f9",
+      "bytes": 1022
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-popup-controller-next/evidence/progress.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141cc-popup-controller-next-progress.json",
+      "sha256": "c0dd61b536304716bcd312d959e31cb02bbcbd6f6e1777909b041391ea995b92",
+      "bytes": 1118
+    }
+  ],
+  "no_raw_export": true
+}

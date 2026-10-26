@@ -1,0 +1,26 @@
+{
+  "schema": "d141cc-popup-trace-measurement-v1",
+  "controller_sampler": {
+    "session_id": "51345",
+    "started_by_first_tool": true,
+    "started_utc": "2026-10-26T11:11:14Z",
+    "admission_sample_bytes": 5920292864,
+    "last_observed_sample_utc": "2026-10-26T11:17:05Z",
+    "last_observed_sample_bytes": 5772152832,
+    "stop": "SIGINT after native terminal and evidence capture",
+    "standing_stop_bytes": 4000000000,
+    "standing_stop_reached": false
+  },
+  "native_service_trace": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026/disk-trace.tsv",
+    "validation_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026/trace-validation",
+    "actual_samples": 44,
+    "first_sample_bytes": 5920227328,
+    "minimum_bytes": 5471948800,
+    "minimum_utc": "2026-10-26T11:16:40.959Z",
+    "final_sample_bytes": 5605601280,
+    "final_utc": "2026-10-26T11:16:46.596Z",
+    "standing_stop_reached": false,
+    "validation": "trace PASS: 44 actual samples"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "d141cc-popup-controller-receipt-v1",
+  "selector": "p2-popup-add",
+  "attempt_scope": "popup-retry-1",
+  "tool_session": "86698",
+  "wait_session": "92916",
+  "invocation": {
+    "cwd": "/home/user/work/app",
+    "argv": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "--max-old-space-size=6144",
+      "--import",
+      "tsx",
+      "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+      "p2-popup-add",
+      "--submit"
+    ],
+    "builder_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "builder_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "admission_available_bytes": 5920292864,
+    "admission_floor_bytes": 5200000000,
+    "invocation_count": 1
+  },
+  "preflight": {
+    "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-preflight-1026111237-26455",
+    "status": "pass"
+  },
+  "normal": {
+    "id": "app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026",
+    "status": "fail",
+    "exit": 1,
+    "duration_seconds": 207,
+    "request_sha256": "dc398cc68a89e1ab322d6bb3a17e5a3362229461db099e9f9f8dcb86d5e80568",
+    "snap_sha256": "59ed646fd153d3ed6ccf2c468a942ad66575f4f9b0de1fd51a064deb0cc2c71b",
+    "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026"
+  },
+  "wait": {
+    "command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test app-pin-82e9e13d-full-d141-p2-popup-add-82e9e13d-submit-popup-retry-1-1026111307-27026 180",
+    "exit": 1,
+    "observed_same_id_only": true
+  },
+  "custody": {
+    "post_return_controller": "ADOPT",
+    "second_submit": false,
+    "direct_request_test": false,
+    "manual_request_recreation": false
+  }
+}

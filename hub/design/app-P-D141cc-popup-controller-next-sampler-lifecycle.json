@@ -1,0 +1,14 @@
+{
+  "schema": "d141cc-popup-sampler-lifecycle-v1",
+  "session_id": "51345",
+  "command": "while true; do date -u '+%Y-%m-%dT%H:%M:%SZ'; df -B1 /tmp /home/user/work; sleep 5; done",
+  "foreground": true,
+  "started_utc": "2026-10-26T11:11:14Z",
+  "stopped_utc": "2026-10-26T11:17:05Z",
+  "stop_method": "write_stdin Ctrl-C after terminal result and evidence capture",
+  "exit_observed": 1,
+  "exit_interpretation": "expected SIGINT reap, not sampler failure",
+  "min_observed_bytes": 5471567872,
+  "standing_stop_bytes": 4000000000,
+  "standing_stop_reached": false
+}
