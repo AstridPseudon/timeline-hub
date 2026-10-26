@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-26T07:07:54.101224+00:00",
+  "status": "AUTHOR CONTROLS PASS; PAIR NOT EXECUTABLE; independent0707 pending",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/readiness.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-readiness.json",
+      "sha256": "688292e88b755bde8a17c1f5891fe1321d2441b0dd6561193779b8e23131890b"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/source-manifest.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-source-manifest.json",
+      "sha256": "ad1d044c423ffe027704bf33675358c9f544ee811940b5a6250c65b9d070965f"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/admission-derivation.json",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-admission-derivation.json",
+      "sha256": "a02a6472a7fe87e2ce22da356e6fcf63e52cfa5f0b8ba32b24fb91662332b9e8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/validation.md",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-validation.md",
+      "sha256": "3249d97587563dc60a3b71e98a776903ebda7523bb6e7fe10ee858e6d92b73c0"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/handoff.md",
+      "target": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-command-sol-0638-handoff.md",
+      "sha256": "c12b482dd300faf781286e89577175ad7f0d719ead83a91a69065376554d655b"
+    }
+  ]
+}

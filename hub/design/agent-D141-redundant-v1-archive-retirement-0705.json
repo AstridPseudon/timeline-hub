@@ -1,0 +1,240 @@
+{
+  "time": "2026-10-26T07:06:10.342412+00:00",
+  "authority": "owner22Oct and current Manager common explicit stale v1 archive cleanup; duplicate only",
+  "removed_duplicate_archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/archive-v1/20261025T1000Z-viewing-m3-manifests.tar.xz",
+  "archive_sha256": "ac9a972e48a034dad3e572c067e6c03f2b5b71a3a1383ea4f0c144fef2350806",
+  "removed_bytes": 32614612,
+  "pre_free_bytes": 4495110144,
+  "post_free_bytes": 4527726592,
+  "guards": "single-link regular nonKEEP; no active board/suite/env/lease/openfd reference; EVERY archived member verified byte-exact in retained readonly hub original; no hub mutation or raw loss",
+  "retained_files": [
+    {
+      "name": "handoff-vw-m3-app-private-clean12-graph-source-manifest.json",
+      "bytes": 9446090,
+      "sha256": "6bc3d7e6b80841589397fa28026f2a03a6459f6b162f3e372167c37e78e6cf98",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-app-private-clean12-graph-source-manifest.json"
+    },
+    {
+      "name": "handoff-vw-m3-app-private12-clean-install-manifest.json",
+      "bytes": 9929135,
+      "sha256": "a0bb14c20d5317da984e830c92abe6d95eb1d2e27865bb92ee7f2cdb75b5342d",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-app-private12-clean-install-manifest.json"
+    },
+    {
+      "name": "handoff-vw-m3-current-frame-cohort-ready-post-graph.json",
+      "bytes": 8764091,
+      "sha256": "2077e5364f56a8f3c9daf72b74dd60ed58c797f2ff2c2daf78a0dbcd4579f24e",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-current-frame-cohort-ready-post-graph.json"
+    },
+    {
+      "name": "handoff-vw-m3-current-frame-cohort-ready-post-sources.json",
+      "bytes": 1641464,
+      "sha256": "821cfede86d08f1b527e387579af6d3e1586178243ae3f360b3497312b151362",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-current-frame-cohort-ready-post-sources.json"
+    },
+    {
+      "name": "handoff-vw-m3-current-frame-cohort-ready-pre-graph.json",
+      "bytes": 8764091,
+      "sha256": "2077e5364f56a8f3c9daf72b74dd60ed58c797f2ff2c2daf78a0dbcd4579f24e",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-current-frame-cohort-ready-pre-graph.json"
+    },
+    {
+      "name": "handoff-vw-m3-current-frame-cohort-ready-pre-sources.json",
+      "bytes": 1641464,
+      "sha256": "821cfede86d08f1b527e387579af6d3e1586178243ae3f360b3497312b151362",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-current-frame-cohort-ready-pre-sources.json"
+    },
+    {
+      "name": "handoff-vw-m3-live-source-label-native-join-pre.json",
+      "bytes": 5173656,
+      "sha256": "5c310aec75c571d13c45054918a19948eeee91a86651896b84f50c9638535fbb",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-live-source-label-native-join-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-live-source-label-native-join-qualified-post.json",
+      "bytes": 7310750,
+      "sha256": "e1b4ad6c9a53e0e439de9264ec55685f8e9c5060e694c6bf8135ea4d2309c3ed",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-live-source-label-native-join-qualified-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-live-source-label-native-join-qualified-pre.json",
+      "bytes": 7310750,
+      "sha256": "e1b4ad6c9a53e0e439de9264ec55685f8e9c5060e694c6bf8135ea4d2309c3ed",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-live-source-label-native-join-qualified-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-capture-controller-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-capture-controller-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-controller-final-gate-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-controller-final-gate-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-controller-repair-graph-post.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-controller-repair-graph-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-controller-repair-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-controller-repair-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-locked-theme-stage-graph-post.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-locked-theme-stage-graph-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-locked-theme-stage-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-locked-theme-stage-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-repair-final-gate-graph-post.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-repair-final-gate-graph-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-repair-final-gate-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-repair-final-gate-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-theme-stage-final-gate-graph-post.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-theme-stage-final-gate-graph-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-theme-stage-final-gate-graph-pre.json",
+      "bytes": 2588385,
+      "sha256": "969c146060f7b0bf9b2ba8e0d832b5ed56cc2eb73749079fe371188d43ade5cc",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-theme-stage-final-gate-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-cap-theme-stage-final-gate-static-input.json",
+      "bytes": 2840776,
+      "sha256": "11ebd2030ca9b7b6aba722960164bbfe84556f6ac2704bc96b2ed3706bbb8852",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-cap-theme-stage-final-gate-static-input.json"
+    },
+    {
+      "name": "handoff-vw-m3-main-image-cap-render-proof-candidate-graph.json",
+      "bytes": 2502432,
+      "sha256": "ce3ed043fc0e1266213a288d35b74e6bd4485cdae63da23c404c36de93da0629",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-main-image-cap-render-proof-candidate-graph.json"
+    },
+    {
+      "name": "handoff-vw-m3-native-frame-existing-browser-cache-manifest.json",
+      "bytes": 4766947,
+      "sha256": "0e91b8d5d4925005c56f81331cdef64d2ad9bab681815e8eaa7944a9ab555f18",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-native-frame-existing-browser-cache-manifest.json"
+    },
+    {
+      "name": "handoff-vw-m3-native-fresh-export-label-join-fingerprints.json",
+      "bytes": 4766345,
+      "sha256": "35b27673f578df3699191b49c8750d3c435bd8516c5767cde95e8d9388822b33",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-native-fresh-export-label-join-fingerprints.json"
+    },
+    {
+      "name": "handoff-vw-m3-pcm-native-window-resume-r1-shared-after.json",
+      "bytes": 6434861,
+      "sha256": "df23db9b3e54facc23d2d0d7abb77f15a8f0e2dc209baf0048d0ff864a549f8a",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-pcm-native-window-resume-r1-shared-after.json"
+    },
+    {
+      "name": "handoff-vw-m3-pcm-native-window-resume-r1-shared-before.json",
+      "bytes": 6434861,
+      "sha256": "df23db9b3e54facc23d2d0d7abb77f15a8f0e2dc209baf0048d0ff864a549f8a",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-pcm-native-window-resume-r1-shared-before.json"
+    },
+    {
+      "name": "handoff-vw-m3-pcm-window-final-review-shared-after.json",
+      "bytes": 6434861,
+      "sha256": "df23db9b3e54facc23d2d0d7abb77f15a8f0e2dc209baf0048d0ff864a549f8a",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-pcm-window-final-review-shared-after.json"
+    },
+    {
+      "name": "handoff-vw-m3-pcm-window-final-review-shared-before.json",
+      "bytes": 6434861,
+      "sha256": "df23db9b3e54facc23d2d0d7abb77f15a8f0e2dc209baf0048d0ff864a549f8a",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-pcm-window-final-review-shared-before.json"
+    },
+    {
+      "name": "handoff-vw-m3-repaired-graphs-ready-fingerprints-app-physical-manifest.json",
+      "bytes": 9400245,
+      "sha256": "58e81021f7b744e2a3b3bb8067060239e9b4f76d817e2b8faf167c0c75402574",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-repaired-graphs-ready-fingerprints-app-physical-manifest.json"
+    },
+    {
+      "name": "handoff-vw-m3-repaired-graphs-ready-fingerprints-scene-physical-manifest.json",
+      "bytes": 6333408,
+      "sha256": "c1464704688316ae77c89ec1b7e3fd3d870e8cbd1aa0b17eb67845713ee4f56b",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-repaired-graphs-ready-fingerprints-scene-physical-manifest.json"
+    },
+    {
+      "name": "handoff-vw-m3-root-smoke-central-ready-prepare-finally.json",
+      "bytes": 3218811,
+      "sha256": "2387ebb5e0beaf9b5c0eea064edf0d9e1425059f05f39e9cb31fea064a5414ed",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-root-smoke-central-ready-prepare-finally.json"
+    },
+    {
+      "name": "handoff-vw-m3-root-smoke-central-ready-prepare-pre.json",
+      "bytes": 3218811,
+      "sha256": "2387ebb5e0beaf9b5c0eea064edf0d9e1425059f05f39e9cb31fea064a5414ed",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-root-smoke-central-ready-prepare-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-scene-carry-public12-proof-shared-after.json",
+      "bytes": 6784449,
+      "sha256": "729b85e3d1b271d1248924d0ada1dcaf71fefa04577ef8b23d20355ba3dc3e25",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-scene-carry-public12-proof-shared-after.json"
+    },
+    {
+      "name": "handoff-vw-m3-scene-carry-public12-proof-shared-before.json",
+      "bytes": 6784449,
+      "sha256": "729b85e3d1b271d1248924d0ada1dcaf71fefa04577ef8b23d20355ba3dc3e25",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-scene-carry-public12-proof-shared-before.json"
+    },
+    {
+      "name": "handoff-vw-m3-scene-source-carry-shared-before.json",
+      "bytes": 9681118,
+      "sha256": "662550dfc2ad35ee49c27ed3f47aab6bd12d8ce130917a8e519af62eb6c0a55b",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-scene-source-carry-shared-before.json"
+    },
+    {
+      "name": "handoff-vw-m3-tab-clean-install-final-gate-shared-before.json",
+      "bytes": 7011561,
+      "sha256": "6ab40ea313369a6cf920a1194785ca27505112d77aac3aaf23e166c6d586c0df",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-tab-clean-install-final-gate-shared-before.json"
+    },
+    {
+      "name": "handoff-vw-m3-tab-clean-install-source-compose-graph-post.json",
+      "bytes": 9905546,
+      "sha256": "29047e924945a81eb597da8b783cfcf123669103376faded142377573a731f8c",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-tab-clean-install-source-compose-graph-post.json"
+    },
+    {
+      "name": "handoff-vw-m3-tab-clean-install-source-compose-graph-pre.json",
+      "bytes": 9905546,
+      "sha256": "29047e924945a81eb597da8b783cfcf123669103376faded142377573a731f8c",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-tab-clean-install-source-compose-graph-pre.json"
+    },
+    {
+      "name": "handoff-vw-m3-tab-private12-independent-gate-shared-before.json",
+      "bytes": 7011561,
+      "sha256": "6ab40ea313369a6cf920a1194785ca27505112d77aac3aaf23e166c6d586c0df",
+      "retained_readonly_copy": "/home/user/timeline-hub/hub/design/handoff-vw-m3-tab-private12-independent-gate-shared-before.json"
+    }
+  ]
+}

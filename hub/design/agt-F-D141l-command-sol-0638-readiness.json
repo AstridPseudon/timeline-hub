@@ -1,0 +1,69 @@
+{
+  "status": "BLOCKED_EXISTING_CONTROLLER_BINDING_MISSING",
+  "pair_executable_qualified": false,
+  "controls_pass": true,
+  "product_edits": false,
+  "normal_receiving": "RECEIVED_AND_VERIFIED",
+  "integrated": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
+      "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab"
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+      "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
+      "parents": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d 5344c53e3063001bb3255bd0c9cd32cc5e77967f fdea805191f466fa67dc0f2ea118da31bf86028f"
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a"
+    }
+  },
+  "pristine": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-64197afa",
+      "sha": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
+      "parents": "64197afa297f86f1e738238d5e80aff6d33e303a d02bcfb66c895b8889aedefbfc732c42f0ab372b"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-fa9cd546",
+      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
+      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
+      "parents": "fa9cd5464a8b37b02f971de375e56be846cd69e2 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+    }
+  },
+  "owner_receipts": {
+    "agent-U4a-D141-postREG-home-0622.json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-U4a-D141-postREG-home-0622.json",
+      "sha256": "aa6f52232f7f6e7c5baaf5c35606cdc8ed13867b13f0acc09cf8d6493b67e768"
+    },
+    "app-D141s-postREG-source-home-0545.json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141s-postREG-source-home-0545.json",
+      "sha256": "da9319ce349ff86004afe6989f9eff17eaee946a1981462d449f05a5fac08efc"
+    }
+  },
+  "selection_counts": {
+    "cut": 22,
+    "pristine": 17
+  },
+  "pending_receiving": [],
+  "remaining_blocker": "suites.conf agent agent-core-full still invokes0309 with fixed0249 receipt/brief, service24049 terminal refusal; no existing current-pair row/receipt/brief binding. Source author cannot create controller admission.",
+  "required_next_action": "Existing controller binds the current commands and distinct manifest/source-manifest, exact service/row/tuple/brief owner, original receipt path+hash using0309 route. Author source must then consume those concrete bindings; do not dispatch these blocked recipes.",
+  "future_floor_bytes": 4714564096,
+  "admission_timing": "once at dispatch; preparation enforces4000000000 stop only",
+  "old19479": "HELD UNSTARTED",
+  "no_current_pair_service_submitted": true,
+  "final_controls": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-sol-0638/evidence/control-logs/check-1792997848191899560.json"
+}
