@@ -1076,3 +1076,8 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - It must run under a stop that terminates the build's whole process group. The test-run/D141g pattern, or an equivalent reviewed wrapper fix, is the last tooling item before F-final, and it is source-only.
   - No further rehearsal runs.
   Main is at 4.21 GB, so F-final itself is now disk-blocked too, which adds main to the owner's hub-repack ask (1.30 GiB loose here).
+- D141aa (09:32Z 26 Oct), ruling on the Agent controller row scope (escalation agent-20261026T0924Z-D141l-native-row-scope): the FIRST option. Principle: **single writer plus binding verified after the fact.** The window between the normal CAS install and the daemon resolving the row is acceptable for these reasons:
+  (a) the Agent lane is the ONLY writer of the agent-core-full row, and the managers' one-owner coordination already enforces that;
+  (b) the controller reads the installed row back from CAS immediately before request-test;
+  (c) the post-body summary and launcher checks bind the executed CMD/BASE_CMD and row hash to the receipt. A mismatch makes the result INVALID: it is withdrawn through stop-test --withdraw and never credited. So a stale row cannot yield REG evidence; at worst it costs one re-run.
+  So: ONE bounded worker removes the unconditional 'dispatch-readiness 78' refusal, binds the real immutable brief, and exercises the same controls, with no new guard, lease or kit interface. The manager's ruling that the Composition product pin stays 635f (not the operational worktree 6a2d) is CONFIRMED.
