@@ -1,0 +1,22 @@
+{
+  "format": "timeline-d141z-independent-sol-sampler-lifecycle-v1",
+  "command": "owned PTY shell; df -B1 / every 5 seconds; stop at <= 4294967296 available bytes",
+  "trace": "evidence/disk-trace.txt",
+  "worker_keep": "workerKEEP touched 2026-10-26T09:47:36Z",
+  "pty_session_id": 33960,
+  "started_at_utc": "2026-10-26T09:44:55Z",
+  "stopped_at_utc": "2026-10-26T09:49:08Z",
+  "sample_count": 49,
+  "min_df_available_bytes": 4653031424,
+  "max_df_available_bytes": 4664614912,
+  "stop_floor_bytes": 4294967296,
+  "persistent_across_terminal_calls": true,
+  "explicit_stop_wait_reap": {
+    "stop": "Ctrl-C sent through owned PTY",
+    "session_exit_code": 1,
+    "wait": "PTY completion returned after stop; subsequent poll reported unknown process id",
+    "reap_check": "no python sampler process remained"
+  },
+  "continuity": "first tool before plan/source reads; raw trace retained through final evidence; no historical backfill",
+  "gap": "PTY stop was signal exit 1, not graceful exit 0; no graceful terminal sampler row is claimed"
+}

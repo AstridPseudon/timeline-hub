@@ -1,0 +1,6 @@
+{
+  "format": "timeline-d141z-independent-sol-controls-v1",
+  "exact_acceptance": {"command": "bash ops-d141z-build-stop/check.sh", "sha256_check_sh": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099", "exit_code": 0, "purpose_counts": {"local_lifecycle": 20, "mounted_donor_lease": 4, "direct_parent_death": 1, "inherited_control_pipe": 2, "main_normal": 1, "main_guard_refusals": 5}, "total_purposes": 33},
+  "independent_controls": {"ast_and_redirected_py_compile": "PASS", "bash_n": "PASS", "ruff_select_F": "PASS", "git_diff_check_current_and_32bc": "PASS", "scope_hash_and_run_final_byte_exact": "PASS", "source_route_stop_custody_external_owner_assertions": "PASS", "f1_full_hashes_and_sizes": "PASS", "f1_published_d68_mode": "NOTE observed 0644; publication claims original 0755"},
+  "prohibited_actions": {"real_delivery_build": false, "dry_run_or_rehearsal": false, "zip": false, "full_suite": false, "live_dispatch": false, "canonical_install": false, "service_queue_registry_write": false, "runtime_wire_change": false, "shared_dependency_write": false, "source_repair": false}
+}

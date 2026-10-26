@@ -1,0 +1,119 @@
+{
+  "utc": "2026-10-26T09:53:09.505774+00:00",
+  "result": "PASS_BOUNDED_SOURCE_CONTROLS",
+  "production_readiness": "UNVERIFIED",
+  "source_commit": "61f91572495f4a5733058f1310055846730d3b9b",
+  "source_tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+  "acceptance_sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099",
+  "purposes": 33,
+  "files": [
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/report.md",
+      "published": "design/app-F-D141z-sol-independent-0944-report.md",
+      "sha256": "1c5b5b9420f53e8e0888ac2df2fbcaa9fa38a0e99cb6778d0a2cffcdc60235c0",
+      "bytes": 1510,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/review.json",
+      "published": "design/app-F-D141z-sol-independent-0944-review.json",
+      "sha256": "3e6b62866c664379d1da4d8403eb2b03cbc57b96fbc052b4744dee114af17cbd",
+      "bytes": 1026,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/findings.md",
+      "published": "design/app-F-D141z-sol-independent-0944-findings.md",
+      "sha256": "105809406500fce4ab0c213cd07419f78cb336eeeb1ee14aa1eaa9d363c7f546",
+      "bytes": 3185,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/source-map.json",
+      "published": "design/app-F-D141z-sol-independent-0944-source-map.json",
+      "sha256": "50b8f3c29523a59d8fec0755580a8bb304d9bb24230f14927c18f82ca8a7b10a",
+      "bytes": 2490,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/source-manifest.json",
+      "published": "design/app-F-D141z-sol-independent-0944-source-manifest.json",
+      "sha256": "fdaa5dcf2b2e4e8c76796416064cfcfc912dbecd136562ab4ed4e111b9d200a0",
+      "bytes": 1652,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/controls.json",
+      "published": "design/app-F-D141z-sol-independent-0944-controls.json",
+      "sha256": "985aebf9cb5281e076c267035fdd8f6cbc93acf3e3e11ae9418184c14ce06df8",
+      "bytes": 1110,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/validation.md",
+      "published": "design/app-F-D141z-sol-independent-0944-validation.md",
+      "sha256": "6afa150e3f4f3f6de8aa041fbbc2ae909f9506d4a1155ce865c41741b1b69054",
+      "bytes": 1436,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/handoff.md",
+      "published": "design/app-F-D141z-sol-independent-0944-handoff.md",
+      "sha256": "7f11af0d3eb9030743406999c87ba7bd14eec2f905ab59f4295fd3f552c77411",
+      "bytes": 932,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/disk-trace.txt",
+      "published": "design/app-F-D141z-sol-independent-0944-disk-trace.txt",
+      "sha256": "d2edc10789579f6e8bc7cafea7698b628410a73e26fd729b257b3a0449e558ec",
+      "bytes": 2685,
+      "mode": "0o644"
+    },
+    {
+      "source": "workers/app-F-D141z-sol-independent-0944/evidence/sampler-lifecycle.json",
+      "published": "design/app-F-D141z-sol-independent-0944-sampler-lifecycle.json",
+      "sha256": "2083ce99e69c39a87149afbe1d48c35dff4dda2c4e32ca86ee020579f6fdd92d",
+      "bytes": 1046,
+      "mode": "0o644"
+    }
+  ],
+  "source_exports": [
+    {
+      "git_source": "61f91572495f4a5733058f1310055846730d3b9b:ops-d141z-build-stop/check.sh",
+      "published": "design/app-D141z-qualified-61f915-check.sh",
+      "bytes": 20847,
+      "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099",
+      "transport_mode": "0644; source mode from Git retained separately",
+      "git_mode": "100755"
+    },
+    {
+      "git_source": "61f91572495f4a5733058f1310055846730d3b9b:ops-d141z-build-stop/delivery_lifecycle.py",
+      "published": "design/app-D141z-qualified-61f915-delivery_lifecycle.py",
+      "bytes": 23186,
+      "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3",
+      "transport_mode": "0644; source mode from Git retained separately",
+      "git_mode": "100644"
+    },
+    {
+      "git_source": "61f91572495f4a5733058f1310055846730d3b9b:ops-d141z-build-stop/install-map.json",
+      "published": "design/app-D141z-qualified-61f915-install-map.json",
+      "bytes": 3384,
+      "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618",
+      "transport_mode": "0644; source mode from Git retained separately",
+      "git_mode": "100644"
+    },
+    {
+      "git_source": "61f91572495f4a5733058f1310055846730d3b9b:ops-d141z-build-stop/run-final-delivery.py",
+      "published": "design/app-D141z-qualified-61f915-run-final-delivery.py",
+      "bytes": 12812,
+      "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154",
+      "transport_mode": "0644; source mode from Git retained separately",
+      "git_mode": "100644"
+    }
+  ],
+  "canonical_install": false,
+  "real_body": false,
+  "mode_followup": "D68 original0755 claimed; transported0644. Invoked with sys.executable; owning Runtime verifies original mode.",
+  "historical_failures": "0847 and0920 unchanged; original0741 exit/reap UNKNOWN"
+}

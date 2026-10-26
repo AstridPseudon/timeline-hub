@@ -1,0 +1,16 @@
+{
+  "format": "timeline-d141z-independent-source-manifest-v1",
+  "candidate_commit": "61f91572495f4a5733058f1310055846730d3b9b",
+  "candidate_tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+  "changed_from_8e42": ["ops-d141z-build-stop/check.sh", "ops-d141z-build-stop/delivery_lifecycle.py", "ops-d141z-build-stop/install-map.json"],
+  "changed_from_32bc": ["ops-d141z-build-stop/check.sh", "ops-d141z-build-stop/delivery_lifecycle.py", "ops-d141z-build-stop/install-map.json", "ops-d141z-build-stop/run-final-delivery.py", "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc (authorized deletion)", "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc (authorized deletion)"],
+  "tracked_cache_added": false,
+  "run_final_delivery_byte_exact_from_8e42": true,
+  "f1_published_originals": [
+    {"path": "design/runtime-D141z-final-dependency-0913-run-final-services.py", "bytes": 18055, "mode_observed": "0644", "mode_claimed_original": "0644", "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7"},
+    {"path": "design/runtime-D141z-final-dependency-0913-core-inventory.json", "bytes": 25664, "mode_observed": "0644", "mode_claimed_original": "0644", "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14"},
+    {"path": "design/runtime-D141z-final-dependency-0913-delivery_gate_build.py", "bytes": 14909, "mode_observed": "0644", "mode_claimed_original": "0755", "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"}
+  ],
+  "canonical_app_coordinates": "absent_expected_venue_state",
+  "worker_keep": "touched_during_review_not_backdated"
+}

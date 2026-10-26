@@ -1,0 +1,24 @@
+{
+  "format": "timeline-d141z-independent-sol-review-v1",
+  "result": "PASS_BOUNDED_SOURCE_CONTROLS",
+  "production_readiness": "UNVERIFIED",
+  "candidate": {
+    "commit": "61f91572495f4a5733058f1310055846730d3b9b",
+    "tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+    "branch": "tl/app-F-D141z-sol-independent-0944",
+    "underlying_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "findings": {
+    "F1": "published_hashes_verified_mode_note_canonical_app_coordinates_absent_expected",
+    "F2": "pass_bound_descriptor_append_final_validator_custody",
+    "F3": "pass_no_private_admission_source_route_external_admission_unverified",
+    "F4": "pass_main_to_D68_to_stub_bounded_route_and_guards",
+    "F5": "pass_donor_mounted_cancel_parent_control_pipe_eof_term_kill_reap",
+    "F6": "pass_exact_scope_and_authorized_pyc_deletions"
+  },
+  "historical_0741": "UNKNOWN_not_backfilled",
+  "real_dispatch": false,
+  "canonical_install": false,
+  "runtime_wire_changed": false,
+  "source_repair": false
+}

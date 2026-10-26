@@ -1,0 +1,41 @@
+{
+  "format": "timeline-d141z-independent-source-map-v1",
+  "result": "PASS_BOUNDED_SOURCE_CONTROLS",
+  "base": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+  "over": "8e42d6f663d506be02f5f63b9e56596884648b50",
+  "candidate": {
+    "commit": "61f91572495f4a5733058f1310055846730d3b9b",
+    "tree": "28047a71b0d06f43d945ff92a935bfce2aa31e5e",
+    "underlying_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "files": {
+    "ops-d141z-build-stop/check.sh": {"bytes": 20847, "sha256": "0486a6e6d6fd5f548f39accfb1ac3866a79b65606c74de9649a67eb2262f6099"},
+    "ops-d141z-build-stop/delivery_lifecycle.py": {"bytes": 23186, "sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3"},
+    "ops-d141z-build-stop/install-map.json": {"bytes": 3384, "sha256": "4b42c9e355c03be688e5fd763646b0415ea385086862e2854aa1d64d64467618"},
+    "ops-d141z-build-stop/run-final-delivery.py": {"bytes": 12812, "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154"}
+  },
+  "run_final_delivery_sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154",
+  "run_final_delivery_byte_exact_from_8e42": true,
+  "diff_from_8e42": ["M ops-d141z-build-stop/check.sh", "M ops-d141z-build-stop/delivery_lifecycle.py", "M ops-d141z-build-stop/install-map.json"],
+  "diff_from_32bc": [
+    "D ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc",
+    "D ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc",
+    "M ops-d141z-build-stop/check.sh",
+    "M ops-d141z-build-stop/delivery_lifecycle.py",
+    "M ops-d141z-build-stop/install-map.json",
+    "M ops-d141z-build-stop/run-final-delivery.py"
+  ],
+  "route": {
+    "caller": "run-final-delivery.py main -> run_wrapper -> delivery_lifecycle.run_delivery",
+    "lifecycle": "delivery_lifecycle.py:320-489",
+    "stop": "PR_SET_PDEATHSIG, os.getppid, D/CANCELLED seam, TERM/KILL, wait/reap",
+    "trace": "bound descriptor -> d141-append-final.py -> donor validator custody",
+    "external_owner": "normal dispatcher test-run owns one-heavy admission, markers and lease"
+  },
+  "donor_hashes": {
+    "test-run": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+    "d141-append-final.py": "14546f709edb04d0fff1b2e1a0efe8d631fca4a9d3575fab414146670c3c398",
+    "d141-disk-trace.py": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222",
+    "d141-validate-trace.py": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"
+  }
+}
