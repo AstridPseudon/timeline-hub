@@ -119,10 +119,10 @@ def source_checkout_closure(checkout):
             value = hashlib.sha256(path.read_bytes()).hexdigest()
         else:
             entries = []
-            for child in sorted(path.rglob("*")):
+            for child in sorted(path.rglob("*"), key=lambda item: item.relative_to(path).parts):
                 if child.is_symlink(): raise HostLaunchError("source closure contains a symlink")
                 if child.is_file() and "__pycache__" not in child.parts:
-                    entries.append((str(child.relative_to(path)), hashlib.sha256(child.read_bytes()).hexdigest()))
+                    entries.append((child.relative_to(path).as_posix(), hashlib.sha256(child.read_bytes()).hexdigest()))
             value = raw_digest(entries)
         measured.append({"component": name, "path": relative, "sha256": value})
     measured.sort(key=lambda entry: entry["component"])
@@ -139,13 +139,13 @@ def _inventory(value):
     for relative, pin in files.items():
         path = Path(relative) if isinstance(relative, str) else None
         if (path is None or not relative or path.is_absolute() or ".." in path.parts
-                or str(path) != relative or "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}
+                or path.as_posix() != relative or "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}
                 or not _raw(pin)):
             raise HostLaunchError("reviewed inventory has an unsupported file representation")
     actual = set()
     for path in root.rglob("*"):
         if path.is_symlink(): raise HostLaunchError("reviewed inventory contains an alias")
-        if path.is_file(): actual.add(str(path.relative_to(root)))
+        if path.is_file(): actual.add(path.relative_to(root).as_posix())
     if actual != set(files):
         raise HostLaunchError("materialized inventory has missing or unexpected files")
     for relative, pin in files.items(): read_source(root / relative, pin)
@@ -177,7 +177,7 @@ def _mapping(import_roots, inventories, runtime_inventory, *, trusted_local=Fals
                 name = ".".join(names); package = False; kind = "extension"
                 # Native code requires the externally protected runtime map;
                 # source/dependency roots cannot smuggle native representations.
-                if not trusted_local and (not path.is_relative_to(runtime_root) or runtime_inventory["files"].get(str(path.relative_to(runtime_root))) != pin):
+                if not trusted_local and (not path.is_relative_to(runtime_root) or runtime_inventory["files"].get(path.relative_to(runtime_root).as_posix()) != pin):
                     raise HostLaunchError("native dependency is outside protected Python runtime inventory")
             if trusted_local and name.split('.')[0] in {"astrid", "astrid_runtime_client"} and root != source_root:
                 # These selected namespaces are closed over the first, exact
@@ -270,7 +270,7 @@ class HostLaunchVerifier:
         root = Path(runtime["root"])
         if not interpreter.is_relative_to(root):
             raise HostLaunchError("selected interpreter is outside protected runtime")
-        return str(interpreter.relative_to(root))
+        return interpreter.relative_to(root).as_posix()
 
     def _observation(self, record, profile):
         return self._protection(json.loads(canonical(record)))
@@ -423,14 +423,14 @@ def installed_inventory(root):
     """
     root = _absolute(str(root))
     files = {}; aliases = {}
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).parts):
         if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
             continue
         if path.is_symlink():
-            aliases[str(path.relative_to(root))] = {"target": os.readlink(path),
+            aliases[path.relative_to(root).as_posix()] = {"target": os.readlink(path),
                 "kind": "file" if path.is_file() else "directory" if path.is_dir() else "broken"}
         if path.is_file():
-            files[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+            files[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
     # rglob does not traverse directory aliases. Record their literal targets,
     # but never silently make their contents an import root. -S omits the
     # stdlib's ordinary aliased site directory in favor of the explicit roots.
@@ -451,7 +451,7 @@ def _local_inventory(value):
     for relative, pin in value["files"].items():
         path = Path(relative) if isinstance(relative, str) else None
         if (path is None or not relative or path.is_absolute() or ".." in path.parts
-                or str(path) != relative or "__pycache__" in path.parts
+                or path.as_posix() != relative or "__pycache__" in path.parts
                 or path.suffix in {".pyc", ".pyo"} or not _raw(pin)):
             raise HostLaunchError("installed inventory has an unsupported file representation")
         _local_read(root / relative, pin)
@@ -512,7 +512,7 @@ class TrustedLocalHostLaunchVerifier(HostLaunchVerifier):
         root = Path(runtime["root"]).resolve(strict=True)
         if not selected.is_relative_to(root):
             raise HostLaunchError("selected installed interpreter is outside its recorded runtime")
-        return str(selected.relative_to(root))
+        return selected.relative_to(root).as_posix()
 
     def _import_mapping(self, roots, inventories, runtime):
         return _mapping(roots, inventories, runtime, trusted_local=True)
@@ -552,7 +552,7 @@ class _MappedDistribution(importlib.metadata.Distribution):
     def read_text(self, filename):
         relative = self.directory + "/" + filename
         path = Path(relative)
-        if path.is_absolute() or ".." in path.parts or str(path) != relative:
+        if path.is_absolute() or ".." in path.parts or path.as_posix() != relative:
             raise HostLaunchError("distribution metadata path escapes its binding")
         pin = self._file_pins.get(relative)
         if pin is None:
@@ -562,7 +562,8 @@ class _MappedDistribution(importlib.metadata.Distribution):
     def locate_file(self, filename):
         relative = str(filename)
         path = Path(relative)
-        if path.is_absolute() or ".." in path.parts or str(path) != relative or relative not in self._file_pins:
+        if (path.is_absolute() or ".." in path.parts
+                or path.as_posix() != relative or relative not in self._file_pins):
             raise HostLaunchError("distribution resource is outside its reviewed inventory")
         _local_read(self.root / relative, self._file_pins[relative])
         return self.root / relative

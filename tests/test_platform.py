@@ -459,3 +459,19 @@ def test_windows_tree_drained_requires_a_job(monkeypatch):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
     with pytest.raises(ProcessLookupError, match="no Windows Job Object"):
         platform.tree_drained(SimpleNamespace())
+
+
+def test_windows_tree_drained_accepts_retained_closed_job_without_query(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    job = SimpleNamespace(handle=None, active_processes=lambda: pytest.fail("queried a closed Job"))
+
+    assert platform.tree_drained(SimpleNamespace(_runtime_job=job)) is True
+
+
+def test_windows_tree_drained_preserves_query_errors(monkeypatch):
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    job = SimpleNamespace(handle=77, active_processes=lambda: (_ for _ in ()).throw(OSError("query failed")))
+
+    with pytest.raises(OSError, match="query failed"):
+        platform.tree_drained(SimpleNamespace(_runtime_job=job))
+    assert job.handle == 77

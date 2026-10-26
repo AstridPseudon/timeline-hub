@@ -1286,10 +1286,10 @@ def _pack_inventory(value):
     if not root.is_absolute() or root.is_symlink() or not root.is_dir() or any(p.is_symlink() for p in root.parents):
         raise ConflictError("additional pack root is not an exact admitted directory")
     rows = {}
-    for path in sorted(root.rglob("*")):
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).parts):
         if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}: continue
         if path.is_symlink(): raise ConflictError("additional pack inventory contains an alias")
-        if path.is_file(): rows[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+        if path.is_file(): rows[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
     if not rows: raise ConflictError("additional pack inventory is empty")
     return rows
 
@@ -1302,7 +1302,7 @@ def _verify_installed_host_records(profile, config):
     records = {}
     for package in ("astrid", "astrid-runtime"):
         distribution = importlib.metadata.distribution(package)
-        if Path(distribution.locate_file("")).resolve() != source:
+        if Path(distribution.locate_file("")).resolve() != source.resolve():
             raise ConflictError("host-only release is outside current installed root")
         record = distribution.read_text("RECORD")
         if not record: raise ConflictError("host-only installed release has no RECORD")
