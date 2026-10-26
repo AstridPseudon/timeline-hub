@@ -324,6 +324,72 @@ def test_bootstrap_passes_inventory_identity_and_restarts_on_change(monkeypatch,
     assert len(inventory_calls) == 3
 
 
+def test_unresolved_remotion_probe_blocks_host_spawn(monkeypatch, tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    (source / "astrid" / "packs").mkdir(parents=True)
+    _materialize_source_closure(source)
+    credential = tmp_path / "support" / "credentials" / "worker.token"
+    credential.parent.mkdir(parents=True)
+    credential.write_text("worker", encoding="utf-8")
+    credential.chmod(0o600)
+    value = {
+        "worker_credential_file": str(credential),
+        "source_checkout": str(source),
+        "worker_actor": host_bootstrap.PACK_HOST_ACTOR,
+        "worker_scopes": list(host_bootstrap.PACK_HOST_SCOPES),
+        "endpoint": "http://runtime.test",
+        "runtime_epoch": 1,
+        "runtime_instance_id": "instance-1",
+        "schema_digest": "schema-1",
+    }
+    monkeypatch.setattr(
+        "astrid.core.pack.source_setup.active_source_inventory",
+        lambda: SimpleNamespace(identity="", roots=(), sources=()),
+    )
+    from astrid.core.execution import generic_host
+
+    class FakeRuntimeClient:
+        def __init__(self, endpoint, token):
+            assert endpoint == "http://runtime.test"
+            assert token == "worker"
+
+        def health(self):
+            return {
+                "status": "ok", "runtime_epoch": 1,
+                "runtime_instance_id": "instance-1", "schema_digest": "schema-1",
+            }
+
+    monkeypatch.setattr(generic_host, "RuntimeProtocolClient", FakeRuntimeClient)
+    monkeypatch.setattr(host_bootstrap, "_read_object", lambda _path: None)
+    monkeypatch.setattr(host_bootstrap, "_host_render_environment", lambda _source: {})
+    launches: list[list[str]] = []
+
+    def record_launch(argv, **_kwargs):
+        launches.append(list(argv))
+        pytest.fail("host was spawned despite unresolved probe custody")
+
+    _mock_host_launch(monkeypatch, record_launch)
+    from astrid.core.rendering import remotion_runtime
+
+    retained = SimpleNamespace(pid=5151)
+    fatal_probe = remotion_runtime.RemotionProbeCleanupError(
+        "trusted Remotion probe cleanup is unproved"
+    )
+    fatal_probe.process = retained
+    fatal_probe.cleanup_error = RuntimeError("simulated live probe child")
+    monkeypatch.setattr(
+        remotion_runtime,
+        "remotion_runtime_status",
+        lambda **_kwargs: (_ for _ in ()).throw(fatal_probe),
+    )
+
+    with pytest.raises(
+        host_bootstrap.PackHostBootstrapError, match="pack host launch is blocked"
+    ):
+        host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+    assert launches == []
+
+
 def test_bootstrap_stops_on_correlated_terminal_registration_failure(
     monkeypatch, tmp_path: Path
 ) -> None:

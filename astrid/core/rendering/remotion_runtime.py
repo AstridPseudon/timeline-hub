@@ -93,11 +93,19 @@ class RemotionRuntimeTools:
     remotion_cli: Path
 
 
-def _probe_environment() -> dict[str, str]:
+class RemotionProbeCleanupError(RuntimeError):
+    """A failed probe whose child process could not be proved settled."""
+
+
+_UNRESOLVED_PROBE_CUSTODY: list[RemotionProbeCleanupError] = []
+
+
+def _probe_environment(environment: Mapping[str, str] | None = None) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
 
     keys = _SAFE_BASE_ENV | (_WINDOWS_BASE_ENV if sys.platform == "win32" else frozenset())
-    return {"PATH": os.defpath, **{key: value for key, value in os.environ.items() if key in keys}}
+    source = os.environ if environment is None else environment
+    return {"PATH": os.defpath, **{key: value for key, value in source.items() if key in keys}}
 
 
 def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
@@ -131,7 +139,13 @@ def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
             except BaseException as cleanup:
                 primary.process = process
                 primary.cleanup_error = cleanup
-                raise primary from cleanup
+                fatal = RemotionProbeCleanupError(
+                    f"trusted Remotion probe cleanup is unproved: {primary}; cleanup failed: {cleanup}"
+                )
+                fatal.process = process
+                fatal.cleanup_error = cleanup
+                _UNRESOLVED_PROBE_CUSTODY.append(fatal)
+                raise fatal from cleanup
         if process is not None:
             primary.probe_receipt = {
                 "original_child_pid": process.pid,
@@ -152,26 +166,31 @@ def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
     }
     return subprocess.CompletedProcess(argv, code, stdout, stderr), receipt
 
-def _probe_schema(schema_root: Path) -> str | None:
+def _probe_schema(schema_root: Path, *, environment: Mapping[str, str] | None = None) -> str | None:
     """Import the installed schema in isolation and check its module origin."""
     try:
         probe, _receipt = _owned_probe(
             [sys.executable, "-X", "utf8", "-I", "-c", _SCHEMA_PROBE, str(schema_root),
              str(REPO_ROOT / "astrid/core/timeline/schema/timeline-config.schema.json")],
-            cwd=schema_root.parent, env=_probe_environment(), timeout=_NODE_PROBE_TIMEOUT_SECONDS,
+            cwd=schema_root.parent, env=_probe_environment(environment), timeout=_NODE_PROBE_TIMEOUT_SECONDS,
         )
         if probe.returncode:
             return f"clean timeline schema validation failed: {probe.stderr.strip()}"
         origin = Path(probe.stdout.strip())
         if not origin.is_absolute() or not origin.resolve().is_relative_to(schema_root / "banodoco_timeline_schema"):
             return f"timeline schema origin escaped trusted root: {origin}"
+    except RemotionProbeCleanupError:
+        raise
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return f"clean timeline schema validation failed: {exc}"
     return None
 
 
-def _configured_node_executable() -> tuple[Path | None, str | None]:
-    raw = os.environ.get(NODE_EXECUTABLE_ENV, "").strip()
+def _configured_node_executable(
+    environment: Mapping[str, str] | None = None,
+) -> tuple[Path | None, str | None]:
+    source = os.environ if environment is None else environment
+    raw = source.get(NODE_EXECUTABLE_ENV, "").strip()
     if not raw:
         return None, f"{NODE_EXECUTABLE_ENV} must point to the server-owned Node executable"
     candidate = Path(raw).expanduser()
@@ -188,14 +207,18 @@ def _configured_node_executable() -> tuple[Path | None, str | None]:
     return resolved, None
 
 
-def _probe_node(node_executable: Path, *, cwd: Path) -> tuple[str | None, str | None]:
+def _probe_node(
+    node_executable: Path, *, cwd: Path, environment: Mapping[str, str] | None = None
+) -> tuple[str | None, str | None]:
     """Bounded version probe for the trusted Node executable."""
 
     try:
         probe, _receipt = _owned_probe(
             [str(node_executable), "--version"], cwd=cwd,
-            env=_probe_environment(), timeout=_NODE_PROBE_TIMEOUT_SECONDS,
+            env=_probe_environment(environment), timeout=_NODE_PROBE_TIMEOUT_SECONDS,
         )
+    except RemotionProbeCleanupError:
+        raise
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return None, f"trusted Node version probe failed: {exc}"
     version = probe.stdout.strip().splitlines()[0] if probe.stdout.strip() else ""
@@ -207,10 +230,11 @@ def _probe_node(node_executable: Path, *, cwd: Path) -> tuple[str | None, str | 
 
 def resolve_remotion_runtime_tools(
     project_dir: Path,
+    *, environment: Mapping[str, str] | None = None,
 ) -> tuple[RemotionRuntimeTools | None, str | None]:
     """Resolve and validate the server-owned Node + locked local CLI pair."""
 
-    node_executable, reason = _configured_node_executable()
+    node_executable, reason = _configured_node_executable(environment)
     if reason:
         return None, reason
     assert node_executable is not None
@@ -225,7 +249,7 @@ def resolve_remotion_runtime_tools(
         cli_resolved.relative_to(project_dir.resolve())
     except ValueError:
         return None, f"locked Remotion CLI escapes the server-owned project: {cli_path}"
-    node_version, reason = _probe_node(node_executable, cwd=project_dir)
+    node_version, reason = _probe_node(node_executable, cwd=project_dir, environment=environment)
     if reason:
         return None, reason
     assert node_version is not None
@@ -250,13 +274,14 @@ def timeline_requires_remotion(config: Mapping[str, Any]) -> bool:
     )
 
 
-def resolve_remotion_project_dir() -> Path:
+def resolve_remotion_project_dir(environment: Mapping[str, str] | None = None) -> Path:
     """Resolve the server-owned project, with a source-checkout development fallback.
 
     Only process configuration is consulted; renderer requests cannot select a
     runtime. Invalid explicit configuration must never fall back to the checkout.
     """
-    raw = os.environ.get(REMOTION_PROJECT_DIR_ENV, "").strip()
+    source = os.environ if environment is None else environment
+    raw = source.get(REMOTION_PROJECT_DIR_ENV, "").strip()
     if raw:
         candidate = Path(raw).expanduser()
         if not candidate.is_absolute():
@@ -290,7 +315,8 @@ def remotion_install_problem(project: Path) -> str | None:
 
 
 def remotion_runtime_status(
-    *, require_explicit_project: bool = False
+    *, require_explicit_project: bool = False,
+    environment: Mapping[str, str] | None = None,
 ) -> RemotionRuntimeStatus:
     """Inspect the trusted runtime without mutating it or running npm.
 
@@ -300,9 +326,19 @@ def remotion_runtime_status(
     explicit without weakening the development parity lane.
     """
 
+    if _UNRESOLVED_PROBE_CUSTODY:
+        previous = _UNRESOLVED_PROBE_CUSTODY[0]
+        error = RemotionProbeCleanupError(
+            "prior Remotion probe child custody is unresolved"
+        )
+        error.process = previous.process
+        error.cleanup_error = previous.cleanup_error
+        raise error from previous
+
     project_dir = None
     try:
-        if require_explicit_project and not os.environ.get(REMOTION_PROJECT_DIR_ENV, "").strip():
+        source = os.environ if environment is None else environment
+        if require_explicit_project and not source.get(REMOTION_PROJECT_DIR_ENV, "").strip():
             reason = f"{REMOTION_PROJECT_DIR_ENV} must point to the server-owned Remotion project"
             # The source launcher deliberately leaves an uninstalled project unbound.
             # Diagnose that checkout without admitting it as an execution runtime.
@@ -318,7 +354,7 @@ def remotion_runtime_status(
             )
 
         try:
-            project_dir = resolve_remotion_project_dir()
+            project_dir = resolve_remotion_project_dir(source)
         except ValueError as exc:
             return RemotionRuntimeStatus(False, None, str(exc))
         if not project_dir.is_dir():
@@ -328,7 +364,7 @@ def remotion_runtime_status(
         install_problem = remotion_install_problem(project_dir)
         if install_problem:
             return RemotionRuntimeStatus(False, project_dir, install_problem)
-        schema_root_raw = os.environ.get(TIMELINE_SCHEMA_PYTHONPATH_ENV, "").strip()
+        schema_root_raw = source.get(TIMELINE_SCHEMA_PYTHONPATH_ENV, "").strip()
         if not schema_root_raw:
             return RemotionRuntimeStatus(
                 False,
@@ -354,7 +390,7 @@ def remotion_runtime_status(
                 "installed timeline schema is incomplete under "
                 f"{schema_root}: {', '.join(missing_schema_files)}",
             )
-        runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
+        runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir, environment=source)
         if tools_error:
             return RemotionRuntimeStatus(
                 False,
@@ -362,7 +398,7 @@ def remotion_runtime_status(
                 tools_error,
             )
         assert runtime_tools is not None
-        schema_error = _probe_schema(schema_root)
+        schema_error = _probe_schema(schema_root, environment=source)
         if schema_error:
             return RemotionRuntimeStatus(False, project_dir, schema_error)
         return RemotionRuntimeStatus(
@@ -372,6 +408,8 @@ def remotion_runtime_status(
             node_version=runtime_tools.node_version,
             remotion_cli=runtime_tools.remotion_cli,
         )
+    except RemotionProbeCleanupError:
+        raise
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return RemotionRuntimeStatus(False, project_dir, f"trusted Remotion runtime check failed: {exc}")
 
@@ -381,6 +419,7 @@ __all__ = [
     "REMOTION_CLI_RELATIVE_PATH",
     "REMOTION_PROJECT_DIR_ENV",
     "RemotionRuntimeTools",
+    "RemotionProbeCleanupError",
     "TIMELINE_SCHEMA_PYTHONPATH_ENV",
     "RemotionRuntimeStatus",
     "resolve_remotion_project_dir",

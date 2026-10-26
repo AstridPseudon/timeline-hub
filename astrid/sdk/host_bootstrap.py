@@ -511,7 +511,7 @@ def _provision_render_runtime_env(
                 override=(child_env.get(ASTRID_NODE_EXECUTABLE) or "").strip() or None,
                 search_path=child_env.get("PATH"),
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - optional renderer setup must not stop unrelated host work
             # Node discovery is an optional render setup step. Leave the host
             # running, but ensure preflight sees rendering as unavailable.
             child_env.pop(ASTRID_NODE_EXECUTABLE, None)
@@ -773,6 +773,22 @@ def _host_render_environment(source_path: Path) -> dict[str, str]:
         environment['PYTHONPATH'] = os.pathsep.join((str(source_path), *_dependency_pythonpath()))
     _provision_render_runtime_env(source_path, environment)
     return environment
+
+
+def _verify_remotion_probe_custody(environment: Mapping[str, str]) -> None:
+    from astrid.core.rendering.remotion_runtime import (
+        RemotionProbeCleanupError,
+        remotion_runtime_status,
+    )
+
+    try:
+        # Optional rendering failures are handled by capability preflight;
+        # unresolved probe custody must stop the host before it is spawned.
+        remotion_runtime_status(require_explicit_project=True, environment=environment)
+    except RemotionProbeCleanupError as exc:
+        raise PackHostBootstrapError(
+            "Remotion probe cleanup is unproved; pack host launch is blocked"
+        ) from exc
 
 
 # Launch state the owner holds about a parked host that the host never writes into its ready marker:
@@ -1556,6 +1572,7 @@ def ensure_pack_host(
         if matrix.is_file():
             argv.extend(("--capability-matrix", str(matrix)))
         child_env = _host_render_environment(source_path)
+        _verify_remotion_probe_custody(child_env)
         if _foreground:
             process_state = {
                 "execution_profile": _execution_profile(), "execution_origins": execution_origins,

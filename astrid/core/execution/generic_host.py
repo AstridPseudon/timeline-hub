@@ -6438,14 +6438,22 @@ class GenericPackHost:
                     with owner._handoff_condition:
                         self._remotion_full_preflight.pop(record.id, None)
                     try:
-                        from astrid.core.rendering.remotion_runtime import remotion_runtime_status
+                        from astrid.core.rendering.remotion_runtime import (
+                            RemotionProbeCleanupError,
+                            remotion_runtime_status,
+                        )
                         if remotion_status is None:
                             remotion_status = remotion_runtime_status(require_explicit_project=True)
                         status = remotion_status
+                    except RemotionProbeCleanupError as exc:
+                        self._forget_failed_remotion_observation(record.id, remotion_context)
+                        raise HostError(
+                            "Remotion probe cleanup is unproved; host preflight cannot continue"
+                        ) from exc
                     except HostError:
                         self._forget_failed_remotion_observation(record.id, remotion_context)
                         raise
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001 - optional Remotion checks only disable rendering
                         self._forget_failed_remotion_observation(record.id, remotion_context)
                         status = None
                         checks["remotion"] = {

@@ -40,12 +40,14 @@ def installed_runtime(tmp_path, monkeypatch):
                         (runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV, schema)):
         monkeypatch.setenv(name, str(value))
     calls = []
+    original_probe = runtime._owned_probe
     def owned(argv, **kwargs):
         calls.append((argv, kwargs))
         stdout = "v20.19.4\n" if argv[-1] == "--version" else str(schema / "banodoco_timeline_schema/__init__.py")
         return subprocess.CompletedProcess(argv, 0, stdout, ""), {}
     monkeypatch.setattr(runtime, "_owned_probe", owned)
-    return SimpleNamespace(project=project, schema=schema, node=node, cli=cli, calls=calls)
+    return SimpleNamespace(project=project, schema=schema, node=node, cli=cli, calls=calls,
+                           original_probe=original_probe)
 
 
 def test_direct_status_runs_bounded_node_and_isolated_schema_checks(installed_runtime):
@@ -54,9 +56,29 @@ def test_direct_status_runs_bounded_node_and_isolated_schema_checks(installed_ru
     assert status.available, status.reason
     assert (status.node_executable, status.remotion_cli, status.node_version) == (world.node, world.cli, "v20.19.4")
     assert world.calls[0][0] == [str(world.node), "--version"]
-    assert world.calls[1][0][:3] == [sys.executable, "-I", "-c"]
+    assert world.calls[1][0][:5] == [sys.executable, "-X", "utf8", "-I", "-c"]
     assert all(kwargs["timeout"] == 5 for _, kwargs in world.calls)
     assert not list(world.project.parent.rglob("remotion-validation-*.json"))
+
+
+def test_status_uses_explicit_server_environment(installed_runtime, monkeypatch):
+    world = installed_runtime
+    server_env = {
+        runtime.REMOTION_PROJECT_DIR_ENV: str(world.project),
+        runtime.NODE_EXECUTABLE_ENV: str(world.node),
+        runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV: str(world.schema),
+        "PATH": os.defpath,
+    }
+    monkeypatch.setenv(runtime.REMOTION_PROJECT_DIR_ENV, "/ambient/foreign-remotion")
+    monkeypatch.setenv(runtime.NODE_EXECUTABLE_ENV, "/ambient/foreign-node")
+    monkeypatch.setenv(runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV, "/ambient/foreign-schema")
+    status = runtime.remotion_runtime_status(
+        require_explicit_project=True, environment=server_env
+    )
+    assert status.available, status.reason
+    assert status.project_dir == world.project
+    assert status.node_executable == world.node
+    assert world.calls[0][1]["env"]["PATH"] == os.defpath
 
 
 @pytest.mark.parametrize("configured", ["", "relative-node", "missing-node", "directory", "not-executable"])
@@ -180,6 +202,103 @@ def test_probe_failure_returns_unavailable_instead_of_raising(installed_runtime,
     assert not status.available and str(failure) in status.reason
 
 
+def test_real_owned_probe_cleanup_failure_is_fatal_through_host_preflight(
+    installed_runtime, monkeypatch, tmp_path
+):
+    from astrid.core.execution import process_group
+    from astrid.core.execution.generic_host import GenericPackHost, HostError
+    from astrid.sdk import host_bootstrap
+    from tests.test_generic_host import _write_manifest
+
+    monkeypatch.setattr(runtime, "_UNRESOLVED_PROBE_CUSTODY", [], raising=False)
+    child = SimpleNamespace(pid=12345, returncode=None)
+
+    def timed_out(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired("node", 5)
+
+    def failed_cleanup(*_args, **_kwargs):
+        raise RuntimeError("simulated live child; cleanup unproved")
+
+    monkeypatch.setattr(process_group, "popen_owned_group", lambda *_args, **_kwargs: child)
+    monkeypatch.setattr(child, "communicate", timed_out, raising=False)
+    monkeypatch.setattr(process_group, "terminate_group", failed_cleanup)
+    monkeypatch.setattr(runtime, "_owned_probe", installed_runtime.original_probe)
+    render_root = tmp_path / "render"
+    _write_manifest(render_root, capability_id="test.render")
+    manifest = render_root / "executor.yaml"
+    import json
+    definition = json.loads(manifest.read_text(encoding="utf-8"))
+    definition["metadata"].update({"adapter_family": "render", "requires_remotion": True})
+    manifest.write_text(json.dumps(definition), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="cleanup is unproved") as probe_error:
+        runtime.remotion_runtime_status(require_explicit_project=True)
+    assert probe_error.value.process is child
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="pack host launch is blocked"):
+        host_bootstrap._verify_remotion_probe_custody({
+            runtime.REMOTION_PROJECT_DIR_ENV: str(installed_runtime.project),
+            runtime.NODE_EXECUTABLE_ENV: str(installed_runtime.node),
+            runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV: str(installed_runtime.schema),
+        })
+    original_status = runtime.remotion_runtime_status
+    monkeypatch.setattr(
+        runtime, "remotion_runtime_status",
+        lambda **_kwargs: (_ for _ in ()).throw(probe_error.value),
+    )
+
+    host = GenericPackHost(pack_roots=[tmp_path])
+    host.discover()
+    with pytest.raises(HostError, match="probe cleanup is unproved") as caught:
+        host.preflight()
+    assert caught.value.__cause__.process is child
+    assert "simulated live child" in str(caught.value.__cause__.cleanup_error)
+    with pytest.raises(runtime.RemotionProbeCleanupError, match="prior Remotion probe") as repeated:
+        original_status(require_explicit_project=True)
+    assert repeated.value.process is child
+
+
+def test_schema_probe_preserves_real_owned_cleanup_failure(installed_runtime, monkeypatch):
+    from astrid.core.execution import process_group
+
+    monkeypatch.setattr(runtime, "_UNRESOLVED_PROBE_CUSTODY", [], raising=False)
+    child = SimpleNamespace(pid=12347, returncode=None)
+    monkeypatch.setattr(process_group, "popen_owned_group", lambda *_args, **_kwargs: child)
+    monkeypatch.setattr(child, "communicate", lambda **_kwargs: (_ for _ in ()).throw(
+        subprocess.TimeoutExpired("python", 5)
+    ), raising=False)
+    cleanup = RuntimeError("schema child termination unproved")
+    monkeypatch.setattr(
+        process_group, "terminate_group", lambda *_args, **_kwargs: (_ for _ in ()).throw(cleanup)
+    )
+    monkeypatch.setattr(runtime, "_owned_probe", installed_runtime.original_probe)
+
+    with pytest.raises(runtime.RemotionProbeCleanupError, match="cleanup is unproved") as caught:
+        runtime._probe_schema(installed_runtime.schema)
+    assert caught.value.process is child
+    assert caught.value.cleanup_error is cleanup
+
+
+def test_real_owned_probe_timeout_with_verified_cleanup_degrades(installed_runtime, monkeypatch):
+    from astrid.core.execution import process_group
+
+    monkeypatch.setattr(runtime, "_UNRESOLVED_PROBE_CUSTODY", [])
+    child = SimpleNamespace(pid=12346, returncode=None)
+    monkeypatch.setattr(process_group, "popen_owned_group", lambda *_args, **_kwargs: child)
+    monkeypatch.setattr(child, "communicate", lambda **_kwargs: (_ for _ in ()).throw(
+        subprocess.TimeoutExpired("node", 5)
+    ), raising=False)
+    monkeypatch.setattr(process_group, "terminate_group", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(child, "wait", lambda **_kwargs: setattr(child, "returncode", 0), raising=False)
+    monkeypatch.setattr(process_group, "verify_tree_absent", lambda _child: None)
+    monkeypatch.setattr(runtime, "_owned_probe", installed_runtime.original_probe)
+
+    status = runtime.remotion_runtime_status(require_explicit_project=True)
+    assert not status.available
+    assert "trusted Node version probe failed" in status.reason
+    assert "timed out" in status.reason
+    assert not runtime._UNRESOLVED_PROBE_CUSTODY
+
+
 def test_missing_home_preserves_windows_probe_environment(installed_runtime, monkeypatch):
     monkeypatch.delenv("HOME", raising=False)
     monkeypatch.setenv("USERPROFILE", str(installed_runtime.project.parent))
@@ -292,7 +411,12 @@ def test_renderer_refuses_unsuccessful_registry_repair(tmp_path, monkeypatch, ge
     if generated == "stale":
         for path in run._registry_output_paths(project):
             path.write_text("// stale")
-    monkeypatch.setattr(run.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a[0], 0))
+    def generated(*args, **kwargs):
+        token = kwargs["env"][run.remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+        receipt = run.remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token + "\n"
+        return subprocess.CompletedProcess(args[0], 0, receipt, "")
+
+    monkeypatch.setattr(run.subprocess, "run", generated)
     with run.remotion_lock.remotion_render_lock():
         with pytest.raises(RuntimeError, match="missing or stale after regeneration"):
             run._regenerate_element_registries_locked(project, None)
