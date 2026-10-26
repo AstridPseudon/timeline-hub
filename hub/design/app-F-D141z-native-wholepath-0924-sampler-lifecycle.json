@@ -1,0 +1,21 @@
+{
+  "format": "timeline-d141z-native-wholepath-sampler-lifecycle-v1",
+  "command": "ulimit -v 4194304; PTY shell samples df -B1 and du -sx -B1 on actual disk every 5 seconds",
+  "trace": "evidence/disk-trace.txt",
+  "worker_keep": "workerKEEP",
+  "pty_session_id": 86458,
+  "started_at_utc": "2026-10-26T09:25:34Z",
+  "stopped_at_utc": "2026-10-26T09:26:39Z",
+  "sample_count": 14,
+  "min_df_available_bytes": 4693946368,
+  "max_du_worktree_bytes": 950272,
+  "stop_floor_bytes": 4000000000,
+  "persistent_across_terminal_calls": true,
+  "explicit_stop_wait_reap": {
+    "stop": "Ctrl-C sent through the owned PTY",
+    "session_exit_code": 1,
+    "wait": "write_stdin returned the completed PTY session",
+    "reap_check": "no sampler process remained; the only pgrep match was the checking command's own search text"
+  },
+  "continuity_limit": "This PTY sampler started after the initial plan and retained-evidence reads, but before remaining source/static controls. It is not claimed as a first-tool-before-all-reads trace; the prior detached/late traces are not backfilled."
+}

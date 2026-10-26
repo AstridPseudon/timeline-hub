@@ -1,0 +1,111 @@
+{
+  "format": "timeline-d141z-independent-native-wholepath-v1",
+  "result": "FAIL_F5_WITH_FINITE_F1_INPUT_GAP",
+  "candidate": {
+    "base_commit": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+    "base_tree": "ca2c5e41a7091d47729068a83c1196ad40ea9711",
+    "candidate_commit": "8e42d6f663d506be02f5f63b9e56596884648b50",
+    "candidate_tree": "cfaf00a50be253d8a99f2a77bde7b0bcd5df837c",
+    "underlying_composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "underlying_composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "files": {
+      "ops-d141z-build-stop/run-final-delivery.py": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154",
+      "ops-d141z-build-stop/delivery_lifecycle.py": "9af0d64d7799ba085e906c046421566c409e38ea4781d228c63d6c05a56ddfa9",
+      "ops-d141z-build-stop/check.sh": "39f9c7edaaa4d06bab11f9a2d448801d30398a8be0b644946672ab357f8ea462",
+      "ops-d141z-build-stop/install-map.json": "8964c8b343d37a3742285fe25caaf02e439628d8ac7203f4d7ae390a075e6d1a"
+    }
+  },
+  "qualified_donor": {
+    "commit": "56f2d56e7d241d303be85df62166570d51602101",
+    "tree": "744cca68f672153dd84f7ba20e580b6e917ccf6d",
+    "normal_service_path": "privateops-d141-measured-floor/bin/test-run",
+    "files": {
+      "privateops-d141-measured-floor/bin/test-run": "f674569b4935ee03022fa209ec102f6323dce80b40be726f44b9698acbaf1300",
+      "privateops-d141-measured-floor/bin/d141-append-final.py": "14546f709edb04d0fff1b2e1a0efe8d631fca4a9d3575fab414146670c3c398",
+      "privateops-d141-measured-floor/bin/d141-disk-trace.py": "d7b989ea06fb55710c47af4d15bd5eca6b257f3b5362514919da73bbefd37222",
+      "privateops-d141-measured-floor/bin/d141-validate-trace.py": "b1cb8c23e0d03200dfc7acd8735a9fbaec9f5ea691c2529f0d0392f4e95c73d5"
+    }
+  },
+  "original_0812": {
+    "caller": {
+      "path": "design/runtime-D141z-input-0812-run-final-delivery.py",
+      "sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191"
+    },
+    "d68_wrapper": {
+      "path": "design/runtime-D141z-input-0812-delivery_gate_build.py",
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779"
+    }
+  },
+  "f1_receiving_inputs": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py",
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "state_at_app_venue": "absent"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json",
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "state_at_app_venue": "absent"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+      "state_at_app_venue": "absent_at_canonical_coordinate; SAFE copy exists under design only"
+    }
+  ],
+  "route": {
+    "candidate": [
+      "run-final-delivery.py:213-245 validates source/gate/core/wrapper/builder inputs, then constructs the D68 command",
+      "run-final-delivery.py:171-201 delegates that command to delivery_lifecycle.run_delivery",
+      "delivery_lifecycle.py:320-391 starts the D68 process in a new session, discovers descendants/groups from /proc, and applies local TERM/KILL/reap",
+      "design/runtime-D141z-input-0812-delivery_gate_build.py:308-328 stages the four repositories and calls builder.main_with_args/main in the D68 process",
+      "design/runtime-D141z-input-0812-delivery_gate_build.py:249-285 loads and invokes the builder in-process; it does not provide normal dispatcher supervision"
+    ],
+    "qualified_normal_service": [
+      "privateops.../test-run:19-59 classifies full* as heavy, rejects an existing heavy run, enforces dispatch disk floors, writes heavy/key.running state, and launches one background body",
+      "privateops.../test-run:101-159 enters the existing bench-store lease and passes D/CANCELLED plus the lease parent",
+      "privateops.../test-run:161-181 enables child subreaping, PR_SET_PDEATHSIG, os.getppid parent checks, and mounted cancellation checks",
+      "privateops.../test-run:186-249 owns BENCH_CONTROL_FD, child process-group discovery, TERM/KILL, waitpid, EOF/descriptor cleanup, and cancellation/timeout result ownership",
+      "privateops.../test-run:285-290 executes the registered full command under timeout/nice and reports its child group",
+      "privateops.../test-run:294-310 finalizes the trace before terminal status and removes running markers only after finalization"
+    ]
+  },
+  "seam_comparison": {
+    "cancellation_mount": {
+      "qualified": "D/CANCELLED is passed into the bench lease at test-run:126 and checked at :180 and :225",
+      "candidate": "only optional caller-local cancel_path.exists() at delivery_lifecycle.py:369; no mounted dispatcher cancellation input",
+      "status": "missing_intrinsic_surface"
+    },
+    "control_pipe_and_eof": {
+      "qualified": "pipe2/O_CLOEXEC/O_NONBLOCK and BENCH_CONTROL_FD at test-run:186-189; read loop at :198-209; body writes group then closes at :285-288",
+      "candidate": "no BENCH_CONTROL_FD, pipe, inherited-FD lifetime, or EOF protocol; uses /proc census at delivery_lifecycle.py:334-346 and :381-389",
+      "status": "missing_intrinsic_surface"
+    },
+    "parent_death": {
+      "qualified": "PR_SET_PDEATHSIG and immediate os.getppid check at test-run:174-181, repeated in the supervision loop at :225",
+      "candidate": "only PR_SET_CHILD_SUBREAPER via _prctl(36, 1) at delivery_lifecycle.py:291; no PDEATHSIG or os.getppid contract",
+      "status": "missing_intrinsic_surface"
+    },
+    "heavy_ownership": {
+      "qualified": "dispatcher test-run owns one-heavy admission, D/heavy, C/key.running, bench-store lease, floor checks, and terminal marker cleanup",
+      "candidate": "private lifecycle contains no lock or second gate (install-map.json:10-15), but metadata alone cannot prove real dispatcher admission or heavy ownership",
+      "status": "no_private_lock_but_real_ownership_unproven"
+    },
+    "full_builder_group_kill_wait_reap": {
+      "qualified": "the dispatcher body launches the registered command under timeout, advertises its group over BENCH_CONTROL_FD, supervises all advertised groups, waitpids, and finalizes before result",
+      "candidate": "local D68 subprocess groups are discovered from /proc and signalled at delivery_lifecycle.py:334-391, with _reap at :71-79, but this is not the mounted donor supervisor and lacks parent/control-pipe lifetime semantics",
+      "status": "outer_local_supervision_does_not_cover_intrinsic_gap"
+    }
+  },
+  "classification": {
+    "F1": "finite host/venue input absence only; not proof that Runtime main is absent",
+    "F2": "PASS in candidate source/control: bound parent/descriptor plus append-final --fd at delivery_lifecycle.py:92-219, 406-413",
+    "F3": "no private lock or second floor remains, but install metadata does not prove real heavy service ownership",
+    "F4": "PASS only for bounded harmless check source route: check.sh:61-65 reaches candidate.main/D68 fixture; no production readiness credit",
+    "F5": "FAIL intrinsic: candidate lacks mounted cancellation, BENCH_CONTROL_FD/EOF, and parent-death contract",
+    "F6": "exactly four declared source modifications plus two authorized tracked pyc deletions",
+    "historical_0741": "interrupted/stopped with partial Agent/Runtime stdout; App/Composition result, raw CLI exit, report/DONE and host reaping remain unknown",
+    "original_normal_control": "the candidate check's harmless normal/main fixture is a bounded control only, not evidence that original 0741 had a normal production exit"
+  },
+  "c0": "C0 request/reply examples were read; no Runtime wire/schema/payload validator change or new interface is proposed"
+}

@@ -1,0 +1,57 @@
+{
+  "utc": "2026-10-26T09:29:35.118631+00:00",
+  "candidate_source_verdict": "FAIL_RETAINED",
+  "scope": "Read-only whole-path investigation; publication is evidence only, not qualified candidate publication",
+  "files": [
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/sampler-lifecycle.json",
+      "published": "design/app-F-D141z-native-wholepath-0924-sampler-lifecycle.json",
+      "sha256": "227855ab580ff6ebe1028fd7b2d84a1f97085a05a7b10bba8585fa8d3f4ab3af",
+      "bytes": 1080
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/source-manifest.json",
+      "published": "design/app-F-D141z-native-wholepath-0924-source-manifest.json",
+      "sha256": "140cd47eb07656fbd5d08a6cd0cc268692771e0e077a3a00c7270176d1f13ed5",
+      "bytes": 1787
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/disk-trace.txt",
+      "published": "design/app-F-D141z-native-wholepath-0924-disk-trace.txt",
+      "sha256": "978082f5f44fd065065be575a98a5433ece1934755f5e6b2b81e485b3386c117",
+      "bytes": 840
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/validation.md",
+      "published": "design/app-F-D141z-native-wholepath-0924-validation.md",
+      "sha256": "1287e5c7e7f077cdea63c646b300d25b0a16315ba17a5a7cd51231d3405994ff",
+      "bytes": 1596
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/source-map.json",
+      "published": "design/app-F-D141z-native-wholepath-0924-source-map.json",
+      "sha256": "953a64014502a84befa3119e5ef33ec9050d39c81388f624962dc0f568148703",
+      "bytes": 8133
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/findings.md",
+      "published": "design/app-F-D141z-native-wholepath-0924-findings.md",
+      "sha256": "9ddf8f240c56c5c664604fc997bff653e4d3adbb9d0044127a4ecacda4e7da2f",
+      "bytes": 5098
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/handoff.md",
+      "published": "design/app-F-D141z-native-wholepath-0924-handoff.md",
+      "sha256": "b147e51f755192e4dc6f1f20b9517097dda6f7b20153dadecbecdb94c89652bf",
+      "bytes": 1168
+    },
+    {
+      "source": "workers/app-F-D141z-native-wholepath-0924/evidence/report.md",
+      "published": "design/app-F-D141z-native-wholepath-0924-report.md",
+      "sha256": "37b249901e3824bdbd1d02774ddad2e337cb9baf629df423429df615472bf5d3",
+      "bytes": 1080
+    }
+  ],
+  "F1_correction": "Worker saw historical default path absence; genuine Main source originals0913 received0929, no worker output rewritten",
+  "real_body": false
+}
