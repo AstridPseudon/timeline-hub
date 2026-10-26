@@ -1,0 +1,109 @@
+{
+  "at": "2026-10-26T14:50:10.169811+00:00",
+  "status": "PASS_EVIDENCE_INSTALLED",
+  "scope": "Exact two-document CAS and independent read-only installation review; no source qualification or build",
+  "canonical": {
+    "README.template.md": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+    "gate-results.md": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+  },
+  "outside_files": 568,
+  "monitor_limit": "Both original first-tool and bounded-monitor gaps retained",
+  "outputs": [
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/installation.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-installation.json",
+      "bytes": 8171,
+      "sha256": "257bd4c7000b242d282475e4998c0c25b788ce07886c46dbde1c27265b5ff0f5"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-source-manifest.json",
+      "bytes": 9106,
+      "sha256": "5b18b4d1e90153795ac337ec2280f1612eb82cfd5083a99cb3aceba926006a1e"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/outside-before.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-outside-before.json",
+      "bytes": 172033,
+      "sha256": "28f06a0dc5a1154f91631134471c70e2edf5e27f68a591b88ac51576e4165b67"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/outside-after.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-outside-after.json",
+      "bytes": 172032,
+      "sha256": "a494d573034fdc7980d2f636e8b889559496f6ae6d418d977146045d8d812883"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/validation.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-validation.md",
+      "bytes": 1571,
+      "sha256": "8db7f90ee5b1df35eb095d85f0108ccce84e7517e9453c68bd2019726fa38795"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/handoff.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-handoff.md",
+      "bytes": 879,
+      "sha256": "891029c91571753ef957a1f427c06bb2268b0f2e0310dd7a121215a124bd1eb5"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-disk-trace.txt",
+      "bytes": 485,
+      "sha256": "e608a87ccfb785895a4262fdff8660286d2da17699e037032d0975a139290291"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-next-sampler-lifecycle.json",
+      "bytes": 520,
+      "sha256": "7a5bf0080159a3b941996a9a1d53e64ae39e045143d53bddf26b3f9baa173c9e"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/report.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-report.md",
+      "bytes": 886,
+      "sha256": "0991bfde064c153b8dddfaa48a2b095966f78b99f29f1ea6446c86e4a3c93a7e"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/review.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-review.json",
+      "bytes": 3904,
+      "sha256": "cd14bad0da7a5e1860efa68006d121027dd919ea0ec0b23a168911ff799057c4"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/findings.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-findings.md",
+      "bytes": 4433,
+      "sha256": "064459ecd916dce5073564ae67c92e273d47cb19488804eb49fee0ee2187791b"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/source-manifest.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-source-manifest.json",
+      "bytes": 7344,
+      "sha256": "b9224931273a8510d3c549c8ca1435b60653d6c3c1ef4ae5a5b19f03ee77afe1"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/validation.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-validation.md",
+      "bytes": 1520,
+      "sha256": "5041305c4e566006070bccb4991c3e75f2840f4d2264d6efdac1dd3f387ef592"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/handoff.md",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-handoff.md",
+      "bytes": 948,
+      "sha256": "d6d4eebdb0bcf473add877fccefce20435396364ee6ad2103990025fc46c23e9"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/disk-trace.txt",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-disk-trace.txt",
+      "bytes": 243,
+      "sha256": "4a7ddaed1773df9786a2f2f879ff9c07caefcc84593027fe3dcbe2ed388da961"
+    },
+    {
+      "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/sampler-lifecycle.json",
+      "published": "design/rt-F-D141-Agent-failure-CAS-review-next-sampler-lifecycle.json",
+      "bytes": 422,
+      "sha256": "00cbcacc9fe2ab93f1d8edbc27c8bdaff45b6ecd1ca7600fcb8ed76cd6def966"
+    }
+  ]
+}

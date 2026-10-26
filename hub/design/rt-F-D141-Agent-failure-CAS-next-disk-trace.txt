@@ -1,0 +1,11 @@
+D141 Agent failure guarded CAS disk trace
+
+The initial inspection tool call preceded the sampler; first-tool coverage is not claimed. The subsequent required five-second available-byte sampler used a 4 GB stop and recorded PID, exit, wait, and reap:
+
+2026-10-26T14:41:07.578988Z available_bytes=4936724480
+2026-10-26T14:41:12.579237Z available_bytes=4936716288
+2026-10-26T14:41:17.579636Z available_bytes=4936691712
+sampler_pid=7
+sampler_exit=0
+sampler_waited=true
+sampler_reaped=true

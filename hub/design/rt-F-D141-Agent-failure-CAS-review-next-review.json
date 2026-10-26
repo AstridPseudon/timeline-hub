@@ -1,0 +1,114 @@
+{
+  "schema": "timeline.f.d141.agent-failure-installation-independent-review.v1",
+  "status": "PASS_EVIDENCE",
+  "scope": "read-only post-CAS verification; Composition 635f4de context only",
+  "targets": {
+    "README.template.md": {
+      "candidate": {
+        "bytes": 52052,
+        "mode": "0644",
+        "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+      },
+      "canonical": {
+        "bytes": 52052,
+        "mode": "0644",
+        "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+      },
+      "backup": {
+        "bytes": 48811,
+        "mode": "0644",
+        "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+      },
+      "prefix_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "suffix_bytes": 3241,
+      "suffix_occurrences": 1,
+      "prefix_equal": true
+    },
+    "gate-results.md": {
+      "candidate": {
+        "bytes": 48240,
+        "mode": "0644",
+        "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+      },
+      "canonical": {
+        "bytes": 48240,
+        "mode": "0644",
+        "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+      },
+      "backup": {
+        "bytes": 44999,
+        "mode": "0644",
+        "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+      },
+      "prefix_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "suffix_bytes": 3241,
+      "suffix_occurrences": 1,
+      "prefix_equal": true
+    }
+  },
+  "outside_inventory": {
+    "before_count": 568,
+    "after_count": 568,
+    "maps_equal": true,
+    "current_exact": true
+  },
+  "historical": {
+    "rows": 370,
+    "roots": 52,
+    "records": 9798,
+    "concrete": 9452,
+    "null_id_aggregates": 346,
+    "cut_bad": {
+      "total": 397,
+      "N_A": 378,
+      "FAILS_BOTH": 19
+    },
+    "pristine_only_unresolved": 64,
+    "managed105": 105,
+    "media48_nested": true,
+    "identity": "exact node_id equality only; missing IDs UNKNOWN"
+  },
+  "current_agent": {
+    "integrated53": "53 PASS; 0 failures, 0 errors, 0 skips",
+    "agent": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "historical_ecdc_pair_retargeted": false,
+    "dispositions": {
+      "owner_approved_retirement": 2,
+      "protected_writer_migration": 15,
+      "qualified_move": 9,
+      "retained_upstream_inverse": 38
+    },
+    "kept53": 53
+  },
+  "renderer": {
+    "module": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "function": "render_readme",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_repos": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "controlled_repo_count": 4,
+    "missing_gate_fallback": true,
+    "fallback_marker": "_Not recorded yet. Paste the gate results here",
+    "rendered_sha256": "5e0002eed0e837b96867240fa01c7ef3dac77375f8e9f0c5b5a45575aec8c039",
+    "rendered_bytes": 55521,
+    "readme_written": false,
+    "cli_or_main_invoked": false
+  },
+  "controls": {
+    "canonical_write": false,
+    "product_or_test_change": false,
+    "cli_or_main": false,
+    "build_staging_clone_rehearsal_zip_service": false,
+    "original_check_join_modified_or_postcas_required": false
+  },
+  "limitations": [
+    "First-tool sampler requirement was not met because this review had already received the brief and performed an initial read-only inspection; fresh sampler is separately recorded with the gap.",
+    "Bounded review monitor only; no continuous history or global behavior/REG0/ship claim.",
+    "Types, product tests, full suites, live sockets, delivery-build CLI/main, staging, clone, rehearsal, service, ZIP were not run."
+  ]
+}

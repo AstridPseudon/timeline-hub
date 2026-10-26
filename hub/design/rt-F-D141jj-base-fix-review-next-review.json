@@ -1,0 +1,43 @@
+{
+  "format": "timeline-d141jj-independent-review-v1",
+  "verdict": "NOT_READY",
+  "source_review": "PASS_STATIC",
+  "qualification": "NOT_READY_POSITIVE_CONTROLS_UNEXECUTED",
+  "source_mutation": false,
+  "original_findings": {
+    "F1": "closed_static_manifest_hash_closure",
+    "F2": "closed_static_root_binding",
+    "F3": "closed_static_nonapp_current_origin_guard",
+    "F4": "closed_static_owner_mode_stage_guard"
+  },
+  "final_tuple": {
+    "agent": {"head": "ec0a9f5baef2c31bc5179087b83f044524575182", "tree": "83b84c79941917fde535ee3ddba5533a776cace3"},
+    "runtime": {"head": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+    "app": {"head": "abac6c809da25f4c6cc7cce61a7d5ea2ac067067", "tree": "e2632a4fbe63cadbd03b03edc5d34196a37304fd", "owner_base": "fc24f84994dc36cfae9349112782ab4d91dbc73b", "owner_base_tree": "faf477adef3ec24c9cc359486ac16866500ab219"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "controls": {
+    "check_jj": "PASS_NOT_READY",
+    "candidate_check": "FAIL_ADMISSION",
+    "receiving_controls": "PASS",
+    "installer_no_install_preimage": "PASS",
+    "ruff_f": "PASS",
+    "ast_private_compile_json": "PASS",
+    "bash_n": "PASS",
+    "manifest_hash_mode_closure": "PASS",
+    "positive_staging": "NOT_RUN_ADMISSION",
+    "same33_lifecycle": "NOT_RUN_ADMISSION",
+    "builder_caller_d68_stub": "NOT_RUN_ADMISSION",
+    "real_delivery_build_install_activation_zip": "NOT_RUN_BY_SCOPE"
+  },
+  "admission": {
+    "required_prestage_free_bytes": 4960000000,
+    "required_free_after_bytes": 4860000000,
+    "staging_budget_bytes": 100000000,
+    "review_check_available_bytes": 4922650624,
+    "candidate_check_available_bytes": 4922650624,
+    "result": "below_prestage_floor"
+  },
+  "new_findings": [],
+  "known_limits_retained": ["canonical_activation", "live_heavy_admission", "positive_staging", "SAME33_lifecycle", "final_builder", "final_install", "historical_stopped_runs"]
+}

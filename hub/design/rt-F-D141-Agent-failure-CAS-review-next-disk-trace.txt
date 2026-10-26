@@ -1,0 +1,7 @@
+sampler_pid=4
+2026-10-26T14:46:02.666512516Z available_bytes=4933861376
+2026-10-26T14:46:07.677493770Z available_bytes=4933951488
+2026-10-26T14:46:12.687855668Z available_bytes=4932874240
+sampler_exit=0
+sampler_waited=true
+sampler_reaped=true

@@ -1,0 +1,1 @@
+Main 2026-10-26T14:51:40Z: the owner has been asked, at 14:4x, to approve removing 3 clean superseded agt-pin worktrees on main (about 360 MB, git worktree remove without --force). That is preferred over a second hub-repack. Pending the owner's typed approval; nothing is done without it.

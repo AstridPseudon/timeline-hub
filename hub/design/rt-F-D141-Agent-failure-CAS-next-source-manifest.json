@@ -1,0 +1,166 @@
+{
+  "base_context": "tl/rt-F-D141-Agent-failure-fix-next; composition context only; no product merge",
+  "candidates": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md": {
+      "bytes": 52052,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md",
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md": {
+      "bytes": 48240,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md",
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+    }
+  },
+  "exact_prefix_and_suffix": {
+    "README.template.md": {
+      "candidate_sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169",
+      "prefix_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "suffix_occurrences": 1
+    },
+    "gate-results.md": {
+      "candidate_sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399",
+      "prefix_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "suffix_occurrences": 1
+    }
+  },
+  "installed_targets": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+      "bytes": 52052,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md",
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+      "bytes": 48240,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md",
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+    }
+  },
+  "preimages": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+      "bytes": 48811,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+      "bytes": 44999,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    }
+  },
+  "protected_publication": {
+    "bytes": 3088,
+    "mode": "0644",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141-Agent-failure-protected-publication-1440.json",
+    "sha256": "d3a11596d36a0c0caf58984564bc4422e9383d5e7c0a0d421ca8560aca3e244b",
+    "verdict": "PASS_EVIDENCE"
+  },
+  "protected_publication_files": [
+    {
+      "bytes": 457,
+      "declared_bytes": 457,
+      "declared_sha256": "0b9d949894a3ebdb6c9f4a6ce0650a5016eb3180edfc964d6609948bacb832f6",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-disk-trace.txt",
+      "sha256": "0b9d949894a3ebdb6c9f4a6ce0650a5016eb3180edfc964d6609948bacb832f6"
+    },
+    {
+      "bytes": 2346,
+      "declared_bytes": 2346,
+      "declared_sha256": "cdf65419247b6f856acb6704165c6a7709bd0f21835798d24bb17a87e548f670",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-findings.md",
+      "sha256": "cdf65419247b6f856acb6704165c6a7709bd0f21835798d24bb17a87e548f670"
+    },
+    {
+      "bytes": 988,
+      "declared_bytes": 988,
+      "declared_sha256": "e792cb293c57635bce74556dc04deac08987173207fa883e8e030ad1efbc5a8f",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-handoff.md",
+      "sha256": "e792cb293c57635bce74556dc04deac08987173207fa883e8e030ad1efbc5a8f"
+    },
+    {
+      "bytes": 1040,
+      "declared_bytes": 1040,
+      "declared_sha256": "df96e99fc9ca3ef7a47fd375d6d51d4f9d720428d687a9e34a631824d833bfd0",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-report.md",
+      "sha256": "df96e99fc9ca3ef7a47fd375d6d51d4f9d720428d687a9e34a631824d833bfd0"
+    },
+    {
+      "bytes": 2641,
+      "declared_bytes": 2641,
+      "declared_sha256": "3a14b9b687db417701117c7f41c0b3080317d7b21e590aad03bf42444dff2ab6",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-review.json",
+      "sha256": "3a14b9b687db417701117c7f41c0b3080317d7b21e590aad03bf42444dff2ab6"
+    },
+    {
+      "bytes": 368,
+      "declared_bytes": 368,
+      "declared_sha256": "4bf4e6ab399e11185438944e71504c5dd1366ed542087de4197918017626d102",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-sampler-lifecycle.json",
+      "sha256": "4bf4e6ab399e11185438944e71504c5dd1366ed542087de4197918017626d102"
+    },
+    {
+      "bytes": 3359,
+      "declared_bytes": 3359,
+      "declared_sha256": "24ebc7ce0903babb886f2d78e2e2133cb03e7d4edd9904512e637c3fc963afd7",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-source-manifest.json",
+      "sha256": "24ebc7ce0903babb886f2d78e2e2133cb03e7d4edd9904512e637c3fc963afd7"
+    },
+    {
+      "bytes": 1510,
+      "declared_bytes": 1510,
+      "declared_sha256": "32ea2307c06f053f4e4e45a80a125fe0cfd091e683c3762ede7aba656b67585d",
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D141-Agent-failure-fix-review-next-validation.md",
+      "sha256": "32ea2307c06f053f4e4e45a80a125fe0cfd091e683c3762ede7aba656b67585d"
+    }
+  ],
+  "protected_review_evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-review-next/evidence",
+  "renderer": {
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "cli_or_main_invoked": false,
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "controlled_repo_count": 4,
+    "controlled_status": "PASS",
+    "fallback_rendered_sha256": "5d6c88b44ec7d52ce7d90432aa4d1ba959691943f12044a3fb72137e7b26842a",
+    "function": "render_readme",
+    "function_only": true,
+    "missing_gate_fallback": "PASS",
+    "readme_written": false,
+    "rendered_sha256": "2fe25c3468fa28368cd917245dc55ab1b274686b519365f3e1ecce70cfd8b06b"
+  },
+  "review_json": {
+    "bytes": 2641,
+    "mode": "0644",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-review-next/evidence/review.json",
+    "sha256": "3a14b9b687db417701117c7f41c0b3080317d7b21e590aad03bf42444dff2ab6",
+    "verdict": "PASS_EVIDENCE"
+  },
+  "schema": "timeline.d141.agent-failure-protected-publication-source-manifest.v1",
+  "scope": "exact two canonical targets only; all source prose and known gaps retained",
+  "source_evidence_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence",
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES",
+  "task": "F D141 Agent failure guarded notes CAS"
+}

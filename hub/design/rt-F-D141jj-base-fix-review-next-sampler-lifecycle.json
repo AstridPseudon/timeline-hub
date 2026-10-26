@@ -1,0 +1,32 @@
+{
+  "format": "timeline-d141jj-review-sampler-v1",
+  "trace": "disk-trace.txt",
+  "interval_seconds": 5,
+  "observations": 29,
+  "min_available_bytes": 4916834304,
+  "admission_floor_bytes": 4960000000,
+  "review_sampler": {
+    "pid": 4,
+    "supervisor": "timeout --foreground -s TERM 7",
+    "body_exit": 0,
+    "supervisor_exit": 124,
+    "wait_reap_marker": "pid=4 signal=TERM exit=0 wait=reaped",
+    "trace_observed": true
+  },
+  "initial_sampler_session": {
+    "pid": 2,
+    "session_id": 71429,
+    "stop": "SIGINT",
+    "trace_observed": true,
+    "pty_poll": "session unavailable after stop"
+  },
+  "author_sampler_receipt": {
+    "pid": 9,
+    "exit": 0,
+    "wait_status": 0,
+    "reaped": true,
+    "source": "author evidence/sampler-lifecycle.json"
+  },
+  "positive_staging": "NOT_RUN_ADMISSION",
+  "same33": "NOT_RUN_ADMISSION"
+}

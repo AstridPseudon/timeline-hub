@@ -1,0 +1,172 @@
+{
+  "backups": {
+    "README.template.md": {
+      "bytes": 48811,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/backups/README.template.md",
+      "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "gate-results.md": {
+      "bytes": 44999,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/backups/gate-results.md",
+      "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    }
+  },
+  "candidates": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md": {
+      "bytes": 52052,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md",
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md": {
+      "bytes": 48240,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md",
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+    }
+  },
+  "cas": {
+    "backup_directory_fsync": true,
+    "backup_file_fsync": true,
+    "delivery_directory_fsync_after_each_replace": true,
+    "exact_predecessor_backups": true,
+    "guarded_atomic_staging_and_replace": true,
+    "no_competing_canonical_writer": true,
+    "no_preimage_refresh": true,
+    "outside_inventory_after_writes": {
+      "count": 568,
+      "individually_hashed": true,
+      "maps_equal": true
+    },
+    "outside_inventory_before_writes": {
+      "count": 568,
+      "individually_hashed": true,
+      "serialized_durably": true
+    },
+    "preimage_guard_before_writes": true,
+    "readback_after_each_replace": true,
+    "replacement_order": [
+      "README.template.md",
+      "gate-results.md"
+    ],
+    "stage_file_fsync": true
+  },
+  "independent_after_audit": {
+    "candidate_exact": true,
+    "schema": "timeline.d141.agent-failure-cas-independent-after.v1",
+    "targets": {
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+        "bytes_equal": true,
+        "candidate": {
+          "bytes": 52052,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md",
+          "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+        },
+        "hash_equal": true,
+        "mode_equal": true,
+        "target": {
+          "bytes": 52052,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+          "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+        }
+      },
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+        "bytes_equal": true,
+        "candidate": {
+          "bytes": 48240,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md",
+          "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+        },
+        "hash_equal": true,
+        "mode_equal": true,
+        "target": {
+          "bytes": 48240,
+          "mode": "0644",
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+          "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+        }
+      }
+    }
+  },
+  "installed_targets": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+      "bytes": 52052,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-README.template.md",
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+      "bytes": 48240,
+      "candidate_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence/candidate-gate-results.md",
+      "equals_candidate": true,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+    }
+  },
+  "no_product_or_test_change": true,
+  "preimages": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md": {
+      "bytes": 48811,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+      "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md": {
+      "bytes": 44999,
+      "mode": "0644",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md",
+      "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+    }
+  },
+  "renderer": {
+    "caller": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "cli_or_main_invoked": false,
+    "controlled_inputs": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "controlled_repo_count": 4,
+    "controlled_status": "PASS",
+    "fallback_rendered_sha256": "5d6c88b44ec7d52ce7d90432aa4d1ba959691943f12044a3fb72137e7b26842a",
+    "function": "render_readme",
+    "function_only": true,
+    "missing_gate_fallback": "PASS",
+    "readme_written": false,
+    "rendered_sha256": "2fe25c3468fa28368cd917245dc55ab1b274686b519365f3e1ecce70cfd8b06b"
+  },
+  "sampler": {
+    "exit_code": 0,
+    "first_tool_gap": true,
+    "interval_seconds": 5,
+    "minimum_available_bytes": 4936691712,
+    "reaped": true,
+    "sample_count": 3,
+    "schema": "timeline.d141.agent-failure-cas-sampler.v1",
+    "source_trace": "/tmp/d141-agent-failure-cas-first-sampler.log",
+    "stop_free_bytes": 4000000000,
+    "stop_reached": false,
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence/disk-trace.txt",
+    "waited": true
+  },
+  "schema": "timeline.d141.agent-failure-protected-publication-installation.v1",
+  "source": {
+    "publication_verdict": "PASS_EVIDENCE",
+    "review_verdict": "PASS_EVIDENCE"
+  },
+  "status": "PASS_INSTALLED_EXACT_REVIEWED_CANDIDATES",
+  "targets": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/README.template.md",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/delivery/gate-results.md"
+  ]
+}

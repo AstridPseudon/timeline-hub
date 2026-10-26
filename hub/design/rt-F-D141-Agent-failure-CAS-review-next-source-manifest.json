@@ -1,0 +1,175 @@
+{
+  "schema": "timeline.f.d141.agent-failure-installation-review.source-manifest.v1",
+  "status": "PASS_EVIDENCE",
+  "base_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "scope": "sole independent read-only post-CAS installation review; no product merge or canonical repair",
+  "inputs": {
+    "author_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-next/evidence",
+    "protected_source_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-review-next/evidence",
+    "exact_candidate_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-fix-next/evidence"
+  },
+  "canonical_targets": {
+    "README.template.md": {
+      "candidate": {
+        "bytes": 52052,
+        "mode": "0644",
+        "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+      },
+      "canonical": {
+        "bytes": 52052,
+        "mode": "0644",
+        "sha256": "c39e4509a0829a15b6076192888de8c2a204fe02666d6e0654b4bc563fe82169"
+      },
+      "backup": {
+        "bytes": 48811,
+        "mode": "0644",
+        "sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f"
+      },
+      "prefix_sha256": "60b938ff331f948c33cdd841c42f6f8167e1b30b55ad8e16fdb497eb7e42008f",
+      "suffix_bytes": 3241,
+      "suffix_occurrences": 1,
+      "prefix_equal": true
+    },
+    "gate-results.md": {
+      "candidate": {
+        "bytes": 48240,
+        "mode": "0644",
+        "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+      },
+      "canonical": {
+        "bytes": 48240,
+        "mode": "0644",
+        "sha256": "5b12901967d75e9e581b8a8ef6a5f27bde49d2a44c180b59abb772929d322399"
+      },
+      "backup": {
+        "bytes": 44999,
+        "mode": "0644",
+        "sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7"
+      },
+      "prefix_sha256": "7cacdb3d719d5120b4c5db5a2f312f09153ddb69755e2a61cfdde05d2482ddd7",
+      "suffix_bytes": 3241,
+      "suffix_occurrences": 1,
+      "prefix_equal": true
+    }
+  },
+  "outside_inventory": {
+    "before_count": 568,
+    "after_count": 568,
+    "maps_equal": true,
+    "current_exact": true
+  },
+  "historical_sources": {
+    "template": "design/agt-F-D141-nonreg-notes-template-0213-per-id-template.json",
+    "template_sha256": "d3729a6a2665bfd8d0081bdb2b89004eaec1bb5c6a8de3054711fe7d9f840f10",
+    "final1051": "design/agt-F-D141l-fullpair-source-accounting-return-1051-per-id.json",
+    "final1051_sha256": "9e8b3dbee35702944c2f4486a52dbdfc54797cde14058df6e3fa67a4b8df45c6",
+    "join": "design/agt-F-D141l-fullpair-source-accounting-return-1051-join.json",
+    "source_manifest": "design/agt-F-D141l-fullpair-source-accounting-return-1051-source-manifest.json",
+    "historical_rows": 370,
+    "historical_roots": 52,
+    "records": 9798,
+    "concrete": 9452,
+    "null_id_aggregates": 346,
+    "cut_bad": {
+      "total": 397,
+      "N_A": 378,
+      "FAILS_BOTH": 19
+    },
+    "pristine_only_unresolved": 64,
+    "identity_rule": "exact node_id equality only; missing IDs remain UNKNOWN; no fuzzy or aggregate identity"
+  },
+  "current_agent": {
+    "source_publication": "design/agent-D141ii-integrated-kept53-source-publication-1400.json",
+    "source_publication_sha256": "4a3d465f06c3f448cadb957ef750775838c13c45c23769a6f07bb5fc290dddb6",
+    "independent_publication": "design/agent-D141ii-integrated-kept53-independent-publication-1403.json",
+    "independent_publication_sha256": "43183982cac4ebf137f0e0ea6cfdb13e05382c880332256992bede6c9578c5c4",
+    "home_handoff": "design/agent-D141v-final-HOME-handoff-1410.json",
+    "home_handoff_sha256": "6706162b7fdede65be660a6d5a549b812cc946d34c9087a2057d545c328711d4",
+    "agent_head": "ec0a9f5baef2c31bc5179087b83f044524575182",
+    "agent_tree": "83b84c79941917fde535ee3ddba5533a776cace3",
+    "integrated53": "53 PASS; 0 failures, 0 errors, 0 skips",
+    "kept53": 53,
+    "dispositions": {
+      "qualified_move": 9,
+      "retained_upstream_inverse": 38,
+      "protected_writer_migration": 15,
+      "owner_approved_retirement": 2
+    },
+    "historical_ecdc_pair_retargeted": false
+  },
+  "production_renderer": {
+    "module": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "function": "render_readme",
+    "caller_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "controlled_repos": [
+      "agent",
+      "runtime",
+      "app",
+      "composition"
+    ],
+    "controlled_repo_count": 4,
+    "missing_gate_fallback": true,
+    "fallback_marker": "_Not recorded yet. Paste the gate results here",
+    "rendered_sha256": "5e0002eed0e837b96867240fa01c7ef3dac77375f8e9f0c5b5a45575aec8c039",
+    "rendered_bytes": 55521,
+    "readme_written": false,
+    "cli_or_main_invoked": false
+  },
+  "frozen_reference_context": {
+    "sdk": "origin/codex/handover-timeline-r4-20261019-candidate-sdk @ 11caf1d9de291d76f491cf69f7942606b7471d7a; tree f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+    "runtime": "origin/codex/handover-timeline-r4-20261019-candidate-runtime @ 31c7ac3a00f7a205f507bf5bd4d4625628d429bd; tree 73e676f420ba0545b6eebe45870d532344a9e69b",
+    "app": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified @ 8f0c2484463e9b666d184a744d52e252984e551a; tree 26ad064632fac9ff123670aa7d6ed0e3d8f89178",
+    "composition": "origin/codex/handover-timeline-r4-20261019-candidate-composition @ c82eb7c459d0a41263954bf007071a6a0e8e0a6a; tree 49975e7a54fd594e1b7fc807681fe28611d57864"
+  },
+  "c0_wire_contract_context": {
+    "normative_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps(id,label,intent,tags,command_ordinals,patch,reads)",
+      "merge(fields|atomic)",
+      "reads",
+      "Idempotency-Key",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "reply_requirements": [
+      "accepted",
+      "merged canonical closure with authenticated receipt/records/bindings/effects/dependencies/history/guarded undo",
+      "conflict reason/head",
+      "invalid code/path/hint/suggestedcommand",
+      "dry-run preview"
+    ],
+    "wire_exercised": false,
+    "documentary_evidence_is_not_wire_input": true
+  },
+  "controls": {
+    "canonical_write_by_review": false,
+    "product_or_test_change": false,
+    "canonical_repair": false,
+    "delivery_build_cli_or_main": false,
+    "repository_staging_or_cloning": false,
+    "rehearsal_or_zip": false,
+    "service_or_live_socket": false,
+    "original_check_join_modified": false,
+    "original_check_join_postcas_required": false
+  },
+  "sampler": {
+    "schema": "timeline.d141.agent-failure-review-sampler.v1",
+    "first_tool_gap": true,
+    "interval_seconds": 5,
+    "sample_count": 3,
+    "stop_free_bytes": 4000000000,
+    "stop_reached": false,
+    "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D141-Agent-failure-CAS-review-next/evidence/disk-trace.txt",
+    "exit_code": 0,
+    "waited": true,
+    "reaped": true
+  }
+}
