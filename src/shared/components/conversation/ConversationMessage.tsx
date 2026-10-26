@@ -348,6 +348,7 @@ export function ConversationToolGroup({ pairs, defaultOpen = false }: Conversati
   const detailsId = useId();
   const count = pairs.length;
   const running = pairs.filter(pair => actionStatus(pair) === 'in_progress').length;
+  const stopped = pairs.filter(pair => actionStatus(pair) === 'cancelled').length;
   const unconfirmed = pairs.filter(pair => pair.result?.tool_status === 'unconfirmed').length;
   const failed = pairs.filter(pair => actionStatus(pair) === 'failed').length;
   const label = `[${count} ${count === 1 ? 'action' : 'actions'}]`;
@@ -370,8 +371,9 @@ export function ConversationToolGroup({ pairs, defaultOpen = false }: Conversati
         <span id={`${detailsId}-status`} aria-live="polite" className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2">
           {failed>0&&<span className="font-medium text-destructive">{failed} failed</span>}
           {running>0&&<span>{running} running</span>}
+          {stopped>0&&<span>{stopped} stopped</span>}
           {unconfirmed>0&&<span>{unconfirmed} unconfirmed</span>}
-          {!failed&&!running&&!unconfirmed&&<span>Actions finished</span>}
+          {!failed&&!running&&!stopped&&!unconfirmed&&<span>Actions finished</span>}
         </span>
       </button>
       <button type="button" aria-label="Download logs for this action group" title="Download action logs"
@@ -397,6 +399,7 @@ export function ConversationToolGroup({ pairs, defaultOpen = false }: Conversati
                 )}
                 {!pair.result && <span className="text-muted-foreground">Running…</span>}
                 {actionStatus(pair) === 'failed' && <span className="text-destructive">Failed</span>}
+                {actionStatus(pair) === 'cancelled' && <span className="text-muted-foreground">Stopped</span>}
               </div>
             );
           })}

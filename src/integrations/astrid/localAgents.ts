@@ -13,6 +13,13 @@ export const LOCAL_AGENT_IDS = Object.keys(LOCAL_AGENT_TABLE) as [LocalAgentId, 
 export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<LocalAgentId, 'astrid'> => id !== 'astrid');
 export const localAgentIdSchema = z.enum(LOCAL_AGENT_IDS);
 
+/** Confirmed personal agent-definition folders; project-local paths are intentionally omitted. */
+export const PERSONAL_AGENT_DIRECTORIES: Partial<Record<LocalAgentId, string>> = {
+  astrid: '~/.omp/agent/agents',
+  'claude-code': '~/.claude/agents',
+  codex: '~/.codex/agents',
+};
+
 export const thoughtLevelSchema = z.object({
   configId: z.string().min(1),
   name: z.string(),

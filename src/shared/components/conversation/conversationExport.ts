@@ -1,4 +1,4 @@
-import { formatActionGroupEntries } from './actionGroupLogs';
+import { formatActionGroupMarkdownEntries } from './actionGroupLogs';
 import type { ConversationToolCallPair, ConversationTurn } from './contracts';
 
 export type ConversationExportTurn = {
@@ -31,7 +31,10 @@ function attachmentLines(turn: ConversationTurn): string[] {
   if (!turn.attachments?.length) return [];
   return ['', 'Attachments:', ...turn.attachments.flatMap((attachment, index) => [
     `- ${attachment.shotName || attachment.clipId || `Attachment ${index + 1}`} (${attachment.mediaType}): ${attachment.url}`,
-    `  Details: ${json(attachment)}`,
+    '  Details:',
+    '  ```json',
+    ...json(attachment).split('\n').map(line => `  ${line}`),
+    '  ```',
   ])];
 }
 
@@ -64,29 +67,17 @@ function actionPairsAt(
 /** Serialize every turn present in the session snapshot, including nested action results. */
 export function formatConversationExport(exportData: ConversationExport): string {
   const { title, agent, model, thinkingLevel, sessionId, capturedAt, inProgress, turns } = exportData;
-  const lines = [
-    `# ${safeMetadata(title)}`,
-    '',
-    `- Agent: ${safeMetadata(agent)}`,
-    `- Model: ${safeMetadata(model)}`,
-    `- Thinking level: ${safeMetadata(thinkingLevel)}`,
-    `- Session ID: ${safeMetadata(sessionId)}`,
-    `- Captured at: ${safeMetadata(capturedAt)}`,
-    `- Turn count: ${turns.length}`,
-    `- In progress at capture: ${inProgress ? 'Yes' : 'No'}`,
-    '',
-    '---',
-    '',
-    'Observation timestamps reflect client receipt or replay, not execution times.',
-    '',
-  ];
+  // Turns are numbered as they read: an action and its result share one heading, so no number is skipped.
+  const body: string[] = [];
+  let turnNumber = 0;
   const consumedResults = new Set<number>();
 
   for (let index = 0; index < turns.length;) {
     const { turn, editorActions } = turns[index];
     if (turn.role === 'tool_call') {
       const group = actionPairsAt(turns, index, consumedResults);
-      lines.push(`## Turn ${index + 1} — Tool/action calls — ${safeMetadata(turn.timestamp)}`, '', ...formatActionGroupEntries(group.pairs));
+      turnNumber += 1;
+      body.push(`## Turn ${turnNumber} — Tool/action calls — ${safeMetadata(turn.timestamp)}`, '', ...formatActionGroupMarkdownEntries(group.pairs));
       index = group.nextIndex;
       continue;
     }
@@ -96,22 +87,41 @@ export function formatConversationExport(exportData: ConversationExport): string
       continue;
     }
 
+    turnNumber += 1;
     const role = turn.role === 'tool_result' ? 'Tool result' : turn.role === 'user' ? 'User' : `Assistant${turns[index].inProgress ? ' (in progress at capture)' : ''}`;
-    lines.push(`## Turn ${index + 1} — ${role} — ${safeMetadata(turn.timestamp)}`, '');
+    body.push(`## Turn ${turnNumber} — ${role} — ${safeMetadata(turn.timestamp)}`, '');
     if (turn.role === 'tool_result') {
-      lines.push(`Call ID: ${safeMetadata(turn.tool_call_id)}`, `Status: ${safeMetadata(turn.tool_status)}`, 'Result:', turn.content || '(empty result)');
-      if (turn.tool_output_details) lines.push('', 'Structured result details:', json(turn.tool_output_details));
-      lines.push('');
+      body.push(`- **Call ID:** ${safeMetadata(turn.tool_call_id)}`, `- **Status:** ${safeMetadata(turn.tool_status)}`, '- **Result:**', '  ```text', ...(turn.content || (turn.tool_output !== undefined ? json(turn.tool_output) : '(empty result)')).split('\n').map(line => `  ${line}`), '  ```');
+      if (turn.tool_output !== undefined) body.push('', '- **Raw output:**', '  ```json', ...json(turn.tool_output).split('\n').map(line => `  ${line}`), '  ```');
+      if (turn.tool_output_details) body.push('', '- **Structured result details:**', '  ```json', ...json(turn.tool_output_details).split('\n').map(line => `  ${line}`), '  ```');
+      body.push('');
       index += 1;
       continue;
     }
-    lines.push(turn.content || '(no text)', ...attachmentLines(turn), '');
+    body.push(turn.content || '(no text)', ...attachmentLines(turn), '');
     if (editorActions?.length) {
-      lines.push('Editor requests:', '', ...formatActionGroupEntries(editorActions));
+      body.push('Editor requests:', '', ...formatActionGroupMarkdownEntries(editorActions));
     }
     index += 1;
   }
 
+  const lines = [
+    `# ${safeMetadata(title)}`,
+    '',
+    `- Agent: ${safeMetadata(agent)}`,
+    `- Model: ${safeMetadata(model)}`,
+    `- Thinking level: ${safeMetadata(thinkingLevel)}`,
+    `- Session ID: ${safeMetadata(sessionId)}`,
+    `- Captured at: ${safeMetadata(capturedAt)}`,
+    `- Turn count: ${turnNumber}`,
+    `- In progress at capture: ${inProgress ? 'Yes' : 'No'}`,
+    '',
+    '---',
+    '',
+    'Times are when this editor received or replayed each event, not when it ran.',
+    '',
+    ...body,
+  ];
   return lines.join('\n').trimEnd() + '\n';
 }
 

@@ -97,13 +97,13 @@ export function AgentChatComposer({
                 type="button"
                 size="icon"
                 variant="secondary"
-                className="h-full w-8 shrink-0 rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive [@media(pointer:coarse)]:w-11"
+                className="h-full w-8 shrink-0 rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive [&_svg]:size-3 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:rounded-[10px]"
                 onClick={onStop}
                 disabled={stopDisabled}
                 title="Stop"
                 aria-label="Stop"
               >
-                <Square className="h-3.5 w-3.5" />
+                <Square className="fill-current" />
               </Button>
             )}
             <Button

@@ -96,4 +96,36 @@ describe('durable exact-call Runtime task association', () => {
     expect(state.taskLinks[0]).toMatchObject({ ...ref, toolCallId: 'live', liveObserved: true });
     expect(state.turns.at(-1)?.content).toBe('Admitted.');
   });
+
+  it('keeps pre-command narration and maps Codex and Claude Code raw command output', async () => {
+    const { store, queue, acp } = fixture();
+    await store.get('project', 'session');
+    acp.promptProjectSession.mockImplementation(async () => {
+      queue.push(
+        notification({ sessionUpdate: 'agent_message_chunk', messageId: 'before-command', content: { type: 'text', text: "I'm running the command now…" } }),
+        notification(tool('codex-shell')),
+        notification({ sessionUpdate: 'tool_call_update', toolCallId: 'codex-shell', status: 'completed', rawOutput: { exit_code: 0, formatted_output: 'Codex stdout', details: { source: 'codex' } } }),
+        notification(tool('claude-shell')),
+        notification({ sessionUpdate: 'tool_call_update', toolCallId: 'claude-shell', status: 'completed', rawOutput: [{ type: 'text', text: 'Claude stdout' }] }),
+        notification({ sessionUpdate: 'agent_message_chunk', messageId: 'after-command', content: { type: 'text', text: 'The command finished.' } }),
+      );
+      return {};
+    });
+
+    await store.prompt('session', { message: 'Run the command' }, {
+      tool: 'video-editor', projectId: 'project', projectSlug: 'project', timelineId: null, timelineName: null,
+    });
+
+    const turns = (await store.get('project', 'session')).turns;
+    expect(turns.map(turn => turn.role)).toEqual(['user', 'assistant', 'tool_call', 'tool_result', 'tool_call', 'tool_result', 'assistant']);
+    expect(turns[1]).toMatchObject({ role: 'assistant', content: "I'm running the command now…", messageId: 'before-command' });
+    expect(turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === 'codex-shell')).toMatchObject({
+      content: 'Codex stdout', tool_output: { exit_code: 0, formatted_output: 'Codex stdout', details: { source: 'codex' } },
+      tool_output_details: { source: 'codex' },
+    });
+    expect(turns.find(turn => turn.role === 'tool_result' && turn.tool_call_id === 'claude-shell')).toMatchObject({
+      content: 'Claude stdout', tool_output: [{ type: 'text', text: 'Claude stdout' }],
+    });
+    expect(turns.at(-1)).toMatchObject({ role: 'assistant', content: 'The command finished.', messageId: 'after-command' });
+  });
 });

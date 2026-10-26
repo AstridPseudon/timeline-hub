@@ -21,6 +21,8 @@ describe('native task outcome and group log accuracy', () => {
     expect(log).toContain('Call observed at: replayed-at');
     expect(log).toContain('not execution times');
     expect(log).not.toContain('Call timestamp:');
+    expect(log).not.toContain('```');
+    expect(log).not.toContain('**Arguments:**');
   });
   it('handles all-success and mixed native children without double counting calls', () => {
     expect(actionStatus(pair(details([result(0), result(0, 'Second')])))).toBe('completed');

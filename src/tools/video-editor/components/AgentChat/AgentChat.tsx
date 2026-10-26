@@ -329,6 +329,9 @@ function AvailableAgentChatPanel({
   const agentModelNames = useMemo(() => Object.fromEntries((localAgents.data?.agents ?? []).map(agent => [
     agent.id, agent.models.find(model => model.modelId === agent.defaultModel)?.name ?? agent.defaultModel,
   ])), [localAgents.data]);
+  const astridKeyConfigured = localAgents.data
+    ? Boolean(localAgents.data.agents.find(agent => agent.id === 'astrid')?.models.length)
+    : undefined;
   const [draft, setDraft] = useState('');
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [queue, setQueue] = useState<QueuedMessage[]>([]);
@@ -1152,7 +1155,9 @@ function AvailableAgentChatPanel({
       title: activeChatTitle,
       agent: agentNames[chatAgent],
       model: chatModelName ?? chatModelId,
-      thinkingLevel: chatThoughtLevel?.currentValue,
+      thinkingLevel: chatThoughtLevel
+        ? chatThoughtLevel.options.find(option => option.value === chatThoughtLevel.currentValue)?.name ?? chatThoughtLevel.currentValue
+        : null,
       sessionId: activeSessionId,
       capturedAt,
       inProgress: isProcessing,
@@ -1267,6 +1272,7 @@ function AvailableAgentChatPanel({
             agents={localAgents.data?.agents}
             agentModelNames={agentModelNames}
             agentCanBrowse={agentCanBrowse}
+            astridKeyConfigured={astridKeyConfigured}
             agentsLoading={localAgents.isLoading}
             agentsError={localAgents.error instanceof Error ? localAgents.error : null}
             disabled={startingAgent !== null || !hasProject}
@@ -1274,6 +1280,7 @@ function AvailableAgentChatPanel({
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
             onSetupAgent={agent => { setSetupDone(null); setSetupRequest({ agent, sessionId: activeSessionId }); }}
+            onAstridKeySaved={async () => { await localAgents.refetch({ cancelRefetch: false }); }}
             onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
             onOpenChange={(open) => {
               if (open) void localAgents.refetch();
