@@ -2,18 +2,24 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ComponentProps } from 'react';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AGENT_CHAT_COPY, AGENT_INTEGRATION_PROMPT } from '@/integrations/astrid/chatCopy.ts';
-import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
+import { LOCAL_AGENT_IDS, LOCAL_AGENT_TABLE, PERSONAL_AGENT_DIRECTORIES, type LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
 import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
 import { NewChatMenu, type NewChatMenuHandle, type NewChatAgentModels } from './NewChatMenu.tsx';
 import { rememberNewChatChoice } from './newChatThinkingSelection.ts';
 
+const keyMocks = vi.hoisted(() => ({ saveKey: vi.fn() }));
+vi.mock('@/integrations/astrid/client.ts', () => ({
+  AstridLocalClient: class { acp = { saveAstridApiKey: keyMocks.saveKey }; },
+}));
+
 beforeAll(() => {
   Element.prototype.scrollIntoView ??= vi.fn();
 });
 afterEach(() => { cleanup(); localStorage.clear(); });
+beforeEach(() => { keyMocks.saveKey.mockReset().mockResolvedValue({ signedIn: true }); });
 const plainLine = (line: string) => line.replaceAll('`', '');
 
 const ready: LocalAgentChoice[] = LOCAL_AGENT_IDS
@@ -308,6 +314,95 @@ describe('NewChatMenu model list', () => {
     expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
   });
 
+  it('opens Astrid’s key form in the model panel when the row is picked without a configured model', () => {
+    const { onNewChat, onBrowseAgent } = openMenu({
+      defaultAgent: 'astrid', astridKeyConfigured: false,
+      agentModels: { agent: 'astrid', models: [], loading: false },
+    });
+    fireEvent.click(screen.getByRole('option', { name: /Astrid/ }));
+    expect(screen.getByLabelText('OpenRouter key')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(screen.getByText('Your key goes straight to Astrid on this computer.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Get a key at openrouter\.ai\/keys/ })).toBeInTheDocument();
+    expect(onBrowseAgent).toHaveBeenLastCalledWith('astrid');
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Choose the agent and model for new chats' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('refreshes models in the open panel after saving a key, then starts the selected model', async () => {
+    const onAstridKeySaved = vi.fn().mockResolvedValue(undefined);
+    const { onNewChat, rerender } = openMenu({
+      defaultAgent: 'astrid', current: { agent: 'astrid' }, astridKeyConfigured: false, onAstridKeySaved,
+      agentModels: { agent: 'astrid', models: [], loading: false },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
+    fireEvent.change(screen.getByLabelText('OpenRouter key'), { target: { value: 'test-openrouter-key' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onAstridKeySaved).toHaveBeenCalledOnce());
+    expect(keyMocks.saveKey).toHaveBeenCalledExactlyOnceWith('openrouter', 'test-openrouter-key');
+    expect(document.body.innerHTML).not.toContain('test-openrouter-key');
+    expect(screen.getByRole('option', { name: 'OpenRouter key' })).toBeInTheDocument();
+    rerender({ agentModels: { agent: 'astrid', models: [{ id: 'openrouter/model', name: 'Model' }], defaultModel: 'openrouter/model', loading: false } });
+    expect(screen.getByText('Model')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat with Model' }));
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('astrid', 'openrouter/model');
+  });
+
+  it('opens the Astrid key panel from + when Astrid has no configured key', () => {
+    const { onNewChat } = renderMenu({
+      current: { agent: 'astrid' }, defaultAgent: 'astrid', astridKeyConfigured: false,
+      agentModels: { agent: 'astrid', models: [], loading: false },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'New chat · Astrid' }));
+    expect(screen.getByLabelText('OpenRouter key')).toBeInTheDocument();
+    expect(onNewChat).not.toHaveBeenCalled();
+  });
+
+  it('toggles the replacement field and Escape closes without saving', async () => {
+    const { onNewChat } = renderMenu({
+      current: { agent: 'astrid' }, defaultAgent: 'astrid', astridKeyConfigured: true,
+      agentModels: { agent: 'astrid', models: [{ id: 'model', name: 'Model' }], defaultModel: 'model', loading: false },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
+    fireEvent.click(screen.getByRole('option', { name: 'OpenRouter key' }));
+    expect(screen.getByLabelText('OpenRouter key')).toBeInTheDocument();
+    expect(screen.getByText('An OpenRouter key is saved. Enter a replacement to change it.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('option', { name: 'OpenRouter key' }));
+    expect(screen.queryByLabelText('OpenRouter key')).toBeNull();
+    expect(keyMocks.saveKey).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('option', { name: 'OpenRouter key' }));
+    expect(screen.getByLabelText('OpenRouter key')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('OpenRouter key'), { target: { value: 'unsaved-replacement' } });
+    fireEvent.keyDown(screen.getByLabelText('OpenRouter key'), { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByLabelText('OpenRouter key')).toBeNull());
+    expect(keyMocks.saveKey).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
+    fireEvent.click(screen.getByRole('option', { name: 'OpenRouter key' }));
+    expect(screen.getByLabelText('OpenRouter key')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'OpenRouter key' })).toHaveAttribute('aria-expanded', 'true');
+    expect(onNewChat).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['astrid', '~/.omp/agent/agents', 'Astrid'],
+    ['claude-code', '~/.claude/agents', 'Claude Code'],
+    ['codex', '~/.codex/agents', 'Codex'],
+  ] as const)('shows the %s personal subagent folder in its model panel', (agent, directory, name) => {
+    expect(PERSONAL_AGENT_DIRECTORIES[agent]).toBe(directory);
+    openMenu();
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a ' + name + ' model' }));
+    expect(screen.getByText(directory, { selector: 'code' })).toBeInTheDocument();
+    expect(screen.getByText(new RegExp('ask ' + name + ' to make one'))).toBeInTheDocument();
+  });
+
+  it('does not show a personal subagent folder for Hermes', () => {
+    openMenu();
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Hermes model' }));
+    expect(screen.queryByText(/Subagents:/)).toBeNull();
+  });
+
   it('starts a ready non-default agent with its own default when its catalog is empty', () => {
     const { onNewChat, onBrowseAgent, rerender } = openMenu();
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
@@ -403,7 +498,7 @@ describe('NewChatMenu model list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
     rerender({ agents, agentModels: { agent: 'astrid', models: [], loading: false, note: 'No models available.' } });
     expect(onBrowseAgent).toHaveBeenCalledWith('astrid');
-    expect(screen.getByText((_text, element) => element?.textContent === `More models: ${plainLine(signInLine)}`)).toBeTruthy();
+    expect(screen.getAllByText((_text, element) => element?.textContent === 'More models: ' + plainLine(signInLine)).length).toBeGreaterThan(0);
   });
 
 

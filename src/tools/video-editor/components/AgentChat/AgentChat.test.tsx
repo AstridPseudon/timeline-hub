@@ -1691,6 +1691,22 @@ describe('AgentChat', () => {
       fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
       await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ agent: 'astrid' })));
     });
+
+    it('keeps no-key Astrid setup inside the open new-chat model panel', async () => {
+      const state = createState();
+      mockFromState(state);
+      mocks.useLocalAgents.mockReturnValue({
+        data: { defaultAgent: 'astrid', agents: [{ id: 'astrid', name: 'Astrid', state: 'ready', signIn: 'signed-in', line: null, models: [], defaultModel: null }] },
+        isLoading: false, error: null, refetch: vi.fn().mockResolvedValue(undefined),
+      });
+      renderAgentChat();
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose a Astrid model' }));
+      expect(await screen.findByLabelText('OpenRouter key')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'New chat' })).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
+      expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
+    });
   });
 });
 

@@ -1,12 +1,14 @@
-import { useRef, type ReactNode, type RefObject } from 'react';
-import { Check, ChevronDown, ChevronLeft, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Check, ChevronDown, ChevronLeft, Copy, Loader2 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, CommandSeparator } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
-import { defaultThoughtLevel, type AgentThoughtLevel, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { defaultThoughtLevel, PERSONAL_AGENT_DIRECTORIES, type AgentThoughtLevel, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { AgentIcon, agentNames } from './agentIdentity.tsx';
 import { ThinkingLevelOptions } from './ThinkingLevelOptions.tsx';
+import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
+import { AstridOpenRouterKeyForm } from './AstridOpenRouterKeyForm.tsx';
 
 /** A submenu lists this many models; its search reaches the rest. */
 const SUBMENU_LIMIT = 50;
@@ -22,6 +24,22 @@ export interface NewChatAgentModels {
   loading: boolean;
   /** Shown when there is no list to offer, such as before the agent's first chat. */
   note?: string | null;
+}
+
+function SubagentHint({ agent }: { agent: LocalAgentId }) {
+  const directory = PERSONAL_AGENT_DIRECTORIES[agent];
+  const copy = useCopyAction(directory ?? '');
+  if (!directory) return null;
+  const name = agentNames[agent];
+  return <div className="flex items-start gap-1.5 px-2 py-1.5 text-[11px] text-muted-foreground">
+    <p className="min-w-0 flex-1">Subagents: add personal agents in <code className="select-all font-mono">{directory}</code>, or ask {name} to make one.</p>
+    <button type="button" aria-label={copy.status === 'copied' ? 'Subagent folder copied' : `Copy ${directory}`} title="Copy personal subagent folder"
+      className="-my-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={event => { event.stopPropagation(); void copy.copy(); }}>
+      {copy.status === 'copied' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Copy className="h-3 w-3" aria-hidden="true" />}
+    </button>
+    {copy.status === 'failed' && <CopyFallback text={directory} label="Personal subagent folder" />}
+  </div>;
 }
 
 function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSelect, returnFocus }: {
@@ -62,7 +80,7 @@ function ThinkingLevelSelector({ model, levels, value, open, onOpenChange, onSel
 }
 
 /** The model list a New chat drills into: each model with its thinking level, and the agent's default when there is no list. */
-export function NewChatModels({ agent, submenu, models, levelSelections, openLevelSelector, onLevelSelectorOpenChange, onRememberLevel, onBack, onPick, onStartNow, selectedModel, returnFocus, footer }: {
+export function NewChatModels({ agent, submenu, models, levelSelections, openLevelSelector, onLevelSelectorOpenChange, onRememberLevel, onBack, onPick, onStartNow, astridKeyConfigured, onAstridKeySaved, selectedModel, returnFocus, footer }: {
   agent: LocalAgentId;
   submenu: NewChatAgentModels | null;
   /** The models matching the search. */
@@ -78,11 +96,16 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
   onPick: (model?: string, level?: string) => void;
   /** A model's own New chat button: choose it and start a chat at once. */
   onStartNow: (model: string, level: string | undefined, modelName: string) => void;
+  astridKeyConfigured?: boolean;
+  onAstridKeySaved?: () => Promise<unknown> | unknown;
   /** The model the next chat will use, ticked in the list; the agent's default when none. */
   selectedModel?: string;
   returnFocus: RefObject<HTMLInputElement>;
   footer?: ReactNode;
 }) {
+  const needsAstridKey = agent === 'astrid' && astridKeyConfigured === false;
+  const [showKeyForm, setShowKeyForm] = useState(needsAstridKey);
+  useEffect(() => { setShowKeyForm(needsAstridKey); }, [agent, needsAstridKey]);
   return (
     <>
       <CommandGroup>
@@ -94,7 +117,7 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
       </CommandGroup>
       <CommandSeparator />
       <CommandGroup heading="Use for new chats">
-        {(!submenu || submenu.loading) && models.length === 0 && (
+        {(!submenu || submenu.loading) && models.length === 0 && !needsAstridKey && (
           <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />Loading models...</div>
         )}
         {models.slice(0, SUBMENU_LIMIT).map(model => {
@@ -131,7 +154,7 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
         {models.length > SUBMENU_LIMIT && (
           <p className="px-2 py-1.5 text-[11px] text-muted-foreground">Showing {SUBMENU_LIMIT} of {models.length}. Keep typing to narrow.</p>
         )}
-        {submenu && !submenu.loading && submenu.models.length === 0 && (
+        {submenu && !submenu.loading && submenu.models.length === 0 && !needsAstridKey && (
           <>
             <p className="px-2 py-1.5 text-[11px] text-muted-foreground">{submenu.note ?? AGENT_CHAT_COPY.noModels}</p>
             <CommandItem value="agent-default" className="text-xs" onSelect={() => onPick()}>
@@ -139,8 +162,22 @@ export function NewChatModels({ agent, submenu, models, levelSelections, openLev
             </CommandItem>
           </>
         )}
+        {agent === 'astrid' && !needsAstridKey && (
+          <CommandItem value="astrid-openrouter-key" aria-expanded={showKeyForm} className="text-xs text-muted-foreground" onSelect={() => setShowKeyForm(value => !value)}>
+            <span>OpenRouter key</span>
+          </CommandItem>
+        )}
         {footer}
       </CommandGroup>
+      {showKeyForm && agent === 'astrid' && (
+        <div className="px-2 py-1.5">
+          <AstridOpenRouterKeyForm compact keySaved={!needsAstridKey} onSaved={async () => {
+            await onAstridKeySaved?.();
+            setShowKeyForm(false);
+          }} />
+        </div>
+      )}
+      <SubagentHint key={agent} agent={agent} />
       {submenu && submenu.models.length > 0 && <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">No models match.</CommandEmpty>}
     </>
   );
