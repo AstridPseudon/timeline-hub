@@ -255,7 +255,7 @@ class LocalRuntimeBoundary:
                         f"{candidate}"
                     )
                 python = str(candidate)
-            argv = [python, "-m", "runtime_protocol", "start"]
+            argv = [python, "-X", "utf8", "-m", "runtime_protocol", "start"]
         replacements = {
             "{realm_id}": realm_id,
             "{realm_root}": str(realm_root),
@@ -315,7 +315,7 @@ class LocalRuntimeBoundary:
                 )
             python = str(candidate)
         argv = [
-            python, "-m", "runtime_protocol", "create",
+            python, "-X", "utf8", "-m", "runtime_protocol", "create",
             "--root", str(realm_root),
             "--display-name", display_name,
             "--realm-id", realm_id,
@@ -350,7 +350,7 @@ class LocalRuntimeBoundary:
             raise BootstrapError(f"realm root is unavailable: {root}")
         result = subprocess.run(
             [
-                sys.executable, "-m", "runtime_protocol", "doctor",
+                sys.executable, "-X", "utf8", "-m", "runtime_protocol", "doctor",
                 "--root", str(root), "--json",
                 "--admission-timeout", str(self.admission_timeout_seconds),
             ],

@@ -285,7 +285,7 @@ def fixture_authority(tmp_path):
 def test_private_retained_result_selects_exact_isolated_launch_once(tmp_path):
     f=fixture_authority(tmp_path);proof=f.verifier.verify(**f.args)
     argv,payload=f.verifier.claim(proof,**f.args,binding_fd=31)
-    assert argv==[f.args['host_argv'][0],'-I','-S',str(f.launcher),'--binding-fd','31']
+    assert argv==[f.args['host_argv'][0],'-X','utf8','-I','-S',str(f.launcher),'--binding-fd','31']
     body=json.loads(payload);assert body['host_argv'][-2:]==['--source-closure-digest',f.record['host_protocol']['source_closure_digest']]
     assert body['mapping'][gate.HOST_MODULE]['path']==str(f.source/'astrid/core/execution/generic_host.py')
     assert body['mapping']['astrid.core.execution']['package']

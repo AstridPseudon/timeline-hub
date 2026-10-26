@@ -260,7 +260,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     environment["VIRTUAL_ENV"] = str(env_root)
                     environment["PATH"] = str(runtime_platform.venv_python(env_root).parent) + os.pathsep + environment.get("PATH", "")
                 worker = runtime_platform.spawn_tree(
-                    [str(executable), "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
+                    [str(executable), "-X", "utf8", "-m", "source.runtime.supervisor", "--prepared-control-fd", str(child.fileno())],
                     cwd=str(Path(self.config["support_root"])),
                     env=environment,
                     stdin=subprocess.DEVNULL,
@@ -490,7 +490,7 @@ class CrossProcessWorkerPreparer(LocalWorkerPreparer):
                     ledger_root=scope / "relay-admission", authority_scope_root=scope,
                     authority_journal=scope / "admissions.jsonl", owner_epoch=epoch,
                     timeout=min(self.timeout_seconds, 60.0))
-                argv = [sys.executable, "-I", "-m", "runtime_protocol.local_execution_supervisor", "--prepared-control-fd", str(child.fileno())]
+                argv = [sys.executable, "-X", "utf8", "-I", "-m", "runtime_protocol.local_execution_supervisor", "--prepared-control-fd", str(child.fileno())]
                 environment = {k: v for k, v in os.environ.items() if k not in {"PYTHONPATH", "PYTHONHOME"} and not k.startswith("ASTRID_RUNTIME_CUSTODY_")}
                 environment.update({k: v for k, v in self.environment.items() if k in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "XDG_RUNTIME_DIR", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "ASTRID_EXECUTION_TARGET_JSON"}})
                 environment.update(broker.child_environment(argv, start_new_session=True))

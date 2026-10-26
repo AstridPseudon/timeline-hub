@@ -394,6 +394,26 @@ def test_cross_process_abort_is_bounded_and_reaps_after_kill(tmp_path, monkeypat
     assert preparer._active is None
 
 
+def test_prepared_worker_launch_uses_utf8_interpreter_flag(tmp_path, monkeypatch):
+    profile, _handle = _inspector_fixture(tmp_path)
+    preparer = CrossProcessWorkerPreparer(
+        profile=profile,
+        config={"support_root": str(tmp_path)},
+        environment={},
+    )
+    captured = []
+
+    def stop_after_capture(argv, **_kwargs):
+        captured.append(list(argv))
+        raise RuntimeError("stop after launch capture")
+
+    monkeypatch.setattr(runtime_platform, "spawn_tree", stop_after_capture)
+    with pytest.raises(RuntimeError, match="stop after launch capture"):
+        preparer.prepare(profile, operation_id="operation", channel_id="channel")
+
+    assert captured[0][:4] == [str(profile.worker_executable), "-X", "utf8", "-m"]
+
+
 def test_cancel_current_is_observable_while_spawn_handoff_is_locked(tmp_path):
     profile, _handle = _inspector_fixture(tmp_path)
     preparer = CrossProcessWorkerPreparer(

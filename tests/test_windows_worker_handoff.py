@@ -506,11 +506,16 @@ def test_windows_handle_list_is_explicit_and_inheritance_is_restored(monkeypatch
 
 
 @pytest.mark.parametrize("mode", ["-c", "-m"])
-@pytest.mark.parametrize("flags", [["-I", "-S"], ["-S", "-I"], ["-u", "-B", "-I", "-S", "-s", "-E"]])
+@pytest.mark.parametrize(
+    "flags",
+    [["-I", "-S"], ["-S", "-I"], ["-u", "-B", "-I", "-S", "-s", "-E"], ["-X", "utf8", "-I", "-S"]],
+)
 def test_windows_module_entry_accepts_no_site_and_preserves_worker_arguments(monkeypatch, mode, flags):
     import runpy
     received = []
     monkeypatch.setattr(sys, "argv", [])
+    if "-X" in flags:
+        monkeypatch.setattr(sys, "flags", SimpleNamespace(utf8_mode=1))
     monkeypatch.setattr(sys, "path", list(sys.path))
     original_path = list(sys.path)
     monkeypatch.setenv("PYTHONPATH", "unadmitted-import-root")
@@ -523,6 +528,15 @@ def test_windows_module_entry_accepts_no_site_and_preserves_worker_arguments(mon
     windows.enter_module([sys.executable, *flags, mode, target, "request.json", "--child-bridge", "101", "-S"])
     assert received == [["-c" if mode == "-c" else target, "request.json", "--child-bridge", "101", "-S"]]
     assert sys.path == original_path
+
+
+def test_windows_module_entry_refuses_unrecognized_or_inactive_utf8_option(monkeypatch):
+    monkeypatch.setattr(sys, "flags", SimpleNamespace(utf8_mode=0))
+    with pytest.raises(ConflictError, match="UTF-8 flag was not active"):
+        windows.enter_module([sys.executable, "-X", "utf8", "-m", "worker_probe"])
+    monkeypatch.setattr(sys, "flags", SimpleNamespace(utf8_mode=1))
+    with pytest.raises(ConflictError, match="requires a Python module or command"):
+        windows.enter_module([sys.executable, "-X", "utf8=0", "-m", "worker_probe"])
 
 
 def test_windows_no_site_bootstrap_authenticates_then_enters_network_site_and_channel(monkeypatch):
@@ -550,6 +564,7 @@ def test_windows_no_site_bootstrap_authenticates_then_enters_network_site_and_ch
     monkeypatch.setattr(windows, "_inherited_owner", None)
     monkeypatch.setattr(windows, "_inherited_sockets", {})
     monkeypatch.setattr(sys, "argv", [])
+    monkeypatch.setattr(sys, "flags", SimpleNamespace(utf8_mode=1))
     monkeypatch.setattr(sys, "path", list(sys.path))
     monkeypatch.setitem(sys.modules, "startup_probe", SimpleNamespace(install_network=lambda: events.append("network")))
     def worker():
@@ -572,11 +587,11 @@ def test_windows_no_site_bootstrap_authenticates_then_enters_network_site_and_ch
         "site.execsitecustomize=lambda: None; site.execusercustomize=lambda: None; site.main(); "
         "import worker_dependency; worker_dependency.run()"
     )
-    argv = [sys.executable, "-u", "-B", "-I", "-S", "-c", command, "request.json", "--child-bridge", "101"]
+    argv = [sys.executable, "-X", "utf8", "-u", "-B", "-I", "-S", "-c", command, "request.json", "--child-bridge", "101"]
     kwargs = {"env": {"PYTHONPATH": "unadmitted-import-root"}}
     launch = windows.InheritedHandles(argv, kwargs, (101,))
     try:
-        assert launch.argv == [windows.python_executable(sys.executable), "-u", "-B", "-I", "-S",
+        assert launch.argv == [windows.python_executable(sys.executable), "-X", "utf8", "-u", "-B", "-I", "-S",
                                str(Path(windows.__file__).with_name("windows_worker_bootstrap.py"))]
         monkeypatch.setenv("ASTRID_RUNTIME_WORKER_BOOTSTRAP", kwargs["env"]["ASTRID_RUNTIME_WORKER_BOOTSTRAP"])
         events.clear()

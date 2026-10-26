@@ -374,7 +374,7 @@ class HostLaunchVerifier:
             record["lease"].verify()
             self._read(Path(record["launcher"]["path"]), record["launcher"]["sha256"])
             record["state"] = "claimed"
-            return ([host_argv[0], "-I", "-S", record["launcher"]["path"], "--binding-fd", str(binding_fd)], record["payload"])
+            return ([host_argv[0], "-X", "utf8", "-I", "-S", record["launcher"]["path"], "--binding-fd", str(binding_fd)], record["payload"])
 
     def bind_child(self, result, *, child, identity):
         with self._lock:
