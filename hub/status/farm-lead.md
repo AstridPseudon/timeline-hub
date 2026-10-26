@@ -1,1 +1,1 @@
-2026-10-26T00:59:11Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D141: farm's ONE job = Agent core (28e56cac+6a011d58) after Runtime's ordinary-recipe review 0049 and final note (due ~01:11Z); Runtime full/pristine are Main-only; kit fd83c9e2 ok
+2026-10-26T01:17:08Z procs: hub-syncd dispatcher run-manager up; disk 10G free; D141 CORE GO: Runtime's complete handoff 01:10Z received; kit verified (fd83c9e2/60d2238a/8215f5d9); manager told to dispatch the sole receiving controller, step 1 = --check-only census
