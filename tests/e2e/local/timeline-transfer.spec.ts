@@ -42,7 +42,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test('CLI-imported archive exports and imports into a fresh project, then plays', async ({ page, harness }, testInfo) => {
-  test.setTimeout(0);
+  test.setTimeout(2_400_000); // 600 s export + 600 s import polls plus setup and playback, with headroom
   const descriptor = harness.attachment;
   expect(descriptor, 'N4 needs the isolated CLI-imported realm descriptor').toBeTruthy();
   const imported = JSON.parse(readFileSync(descriptor!.resultFile, 'utf8')) as {
@@ -149,10 +149,17 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   await projectPicker.click();
   await page.getByRole('option', { name: new RegExp(targetProjectName, 'i') }).click();
   await expect.poll(() => new URL(page.url()).searchParams.get('project')).toBe(targetProjectId);
-  await picker.click();
-  await expect(page.getByRole('button', { name: 'Import timeline…', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Import timeline…', exact: true }).click();
-  const importStarted = await page.evaluate(() => performance.now());
+  // The editor re-renders while it settles onto the target project's timeline, which closes open menus. Wait for that first.
+  await expect.poll(() => new URL(page.url()).searchParams.get('timeline'), { message: 'the editor selects a timeline in the target project' }).toBeTruthy();
+  await expect(picker).toBeVisible();
+  let importStarted = 0;
+  await expect(async () => {
+    await picker.click({ timeout: 10_000 });
+    const importButton = page.getByRole('button', { name: 'Import timeline…', exact: true });
+    await expect(importButton).toBeVisible({ timeout: 5_000 });
+    importStarted = await page.evaluate(() => performance.now());
+    await importButton.click({ timeout: 5_000 });
+  }).toPass({ timeout: 120_000 });
   const input = page.getByLabel('Import timeline archive');
   await page.evaluate(async () => {
     const saved = (window as any).__n4Archive;

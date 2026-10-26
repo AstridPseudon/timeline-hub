@@ -9,5 +9,6 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: 0,
+  use: { ...directConfig.use, actionTimeout: 120_000, navigationTimeout: 120_000 },
   forbidOnly: true,
 });
