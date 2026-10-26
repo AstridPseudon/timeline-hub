@@ -1,0 +1,85 @@
+{
+  "schema": "timeline.agent.d141i.corrected-controller.result.v1",
+  "controller": "agt-F-D141i-corrected-controller-0321",
+  "service_id": "agent-agent-core-full-1026032321-26496",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496",
+  "terminal": true,
+  "terminal_status": "fail",
+  "terminal_exit": 1,
+  "outcome": "MEASUREMENT_BODY_FAILED_WITH_DURABLE_JUNIT",
+  "credit": "MEASUREMENT_ONLY; NO SHIP CREDIT",
+  "reg_or_nonreg": "UNCLASSIFIED",
+  "body_started": true,
+  "runner_exit": 1,
+  "monitor_exit": 0,
+  "wrapper_status": "FAIL",
+  "source_custody": {
+    "before": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-before.txt",
+    "after": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/source-after.txt",
+    "before_exit": 0,
+    "after_status": "clean",
+    "frozen_tuple": "PASS: all four exact paths, commits, trees, clean statuses",
+    "runmanifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/launcher-evidence/agent-core-full.runmanifest",
+    "runmanifest_sha256": "f78d31ad65a0743c17d265f088d4b2ec902a0e2a31acf913edaa9299b5d3151e",
+    "launcher_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/launcher-evidence/agent-core-full.manifest",
+    "launcher_manifest_sha256": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643"
+  },
+  "xml": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+    "sha256": "7adf18d3a9cd20c2198d4cd4ccd7e0be59497e6111a73284c4977fe31b92b25d",
+    "parser": "Python stdlib xml.etree.ElementTree",
+    "declared_tests": 9561,
+    "declared_failures": 204,
+    "declared_errors": 196,
+    "declared_skipped": 0,
+    "testcase_elements": 9388,
+    "testcase_passed": 8988,
+    "testcase_failures": 204,
+    "testcase_errors": 196,
+    "testcase_skipped": 0,
+    "testcase_outcome_conservation": true,
+    "declared_vs_testcase_delta": 173,
+    "count_conservation_status": "FAIL_CUSTODY_DISCREPANCY: XML declares 9561 tests but contains 9388 testcase elements; no subtest IDs were invented",
+    "runner_summary": "204 failed, 8988 passed, 86 warnings, 196 errors, 173 subtests passed in 1260.10s"
+  },
+  "disk_trace": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/disk-trace.txt",
+    "sha256": "176b1c21a4c412462ba1197be8580ba488c3d574da6f413ab5360abe5177447b",
+    "sample_count": 254,
+    "start_available_bytes": 4692029440,
+    "minimum_available_bytes": 4311924736,
+    "minimum_utc": "2026-10-26T03:36:28Z",
+    "end_available_bytes": 4451721216,
+    "end_utc": "2026-10-26T03:44:38Z",
+    "continuous_stop_bytes": 4000000000,
+    "monitor_seconds": 5,
+    "stop_floor_preserved": true
+  },
+  "argv": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/callerargv.txt",
+    "sha256": "9966fba8d7db039c4f58f92fccd4cff210e921f3b87848ae2fec483a246eb2ea"
+  },
+  "raw": {
+    "stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/raw-stdout.log",
+    "stdout_sha256": "6929640c9150256cd090e0ae32308f2a1a8b7f2baea4430ab09d6115f867a8e8",
+    "stderr": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/raw-stderr.log",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runner_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/runner.log",
+    "runner_log_sha256": "30595b418903320e322f07eba3ac473c34fb2bf2cdd401fbe6827b0715cf9d29"
+  },
+  "exits": {
+    "runner": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/runner-exit.txt",
+    "runner_value": 1,
+    "monitor": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/monitor-exit.txt",
+    "monitor_value": 0
+  },
+  "retained_service_files": {
+    "request": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/request",
+    "status": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/status",
+    "exit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/exit",
+    "summary": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/summary",
+    "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/log.txt",
+    "keep_marker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/KEEP"
+  },
+  "qualification": "FAIL_SEPARATELY: source custody passed and genuine outcomes are retained, but XML declared-count versus testcase-element discrepancy prevents qualification; no REG/nonREG conclusion"
+}

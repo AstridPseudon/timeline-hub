@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.d141i.corrected-controller.service.v1",
+  "controller": "agt-F-D141i-corrected-controller-0321",
+  "submitted_utc": "2026-10-26T03:23:21Z",
+  "request_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test integration:agent agent-core-full --no-cache",
+  "request_exit": 0,
+  "returned_stdout": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/",
+  "result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496",
+  "service_id": "agent-agent-core-full-1026032321-26496",
+  "request_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/request",
+  "wait_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agent-agent-core-full-1026032321-26496",
+  "terminal_utc": "2026-10-26T03:44:39Z",
+  "terminal_status": "fail",
+  "terminal_exit": 1,
+  "wait_test_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test agent-agent-core-full-1026032321-26496",
+  "wait_test_exit": 1,
+  "body_started": true,
+  "wrapper_finished_utc": "2026-10-26T03:44:38Z",
+  "result_dir_files": ["BENCH-LEASE-RESULT", "KEEP", "exit", "heavy", "log.txt", "request", "runner.log", "snap", "status", "summary"],
+  "summary": "test agent-agent-core-full-1026032321-26496: fail exit=1 in 1269s; counts are blank in service summary; wrapper produced durable body/JUnit artifacts",
+  "status": "TERMINAL_RECORDED"
+}

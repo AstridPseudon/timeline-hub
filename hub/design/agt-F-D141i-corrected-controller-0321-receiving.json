@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.agent.d141i.corrected-controller.receiving.v1",
+  "controller": "agt-F-D141i-corrected-controller-0321",
+  "source_packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence",
+  "independent_review": {
+    "worker": "agt-F-D141i-terminal-final-review-0318",
+    "terminal_exit": 0,
+    "verdict": "PASS_COMMAND",
+    "review_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-final-review-0318/evidence/review.json"
+  },
+  "manager_dispatch_witness": {
+    "utc": "2026-10-26T03:21:30.916740+00:00",
+    "free_bytes": 4826488832,
+    "required_bytes": 4700000000,
+    "comparison": "PASS",
+    "measurement": "shutil.disk_usage(/home/user/work).free",
+    "admission_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-corrected-controller-0321/evidence/admission.json"
+  },
+  "suite_config": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "preimage_copy": "/tmp/agt-F-D141i-corrected-controller-0321.suites.conf.preimage",
+    "preimage_sha256": "8871cb8218c828f74e2ad4a15f385df497f45ff860788b25f98a8fb111cb257d",
+    "preimage_size_bytes": 161975,
+    "postimage_sha256": "f6996b4f1b5c697762bcad3f7cc725c555cf227460240dd0c48e105ac0a0a027",
+    "postimage_size_bytes": 162265,
+    "changed_line": 31,
+    "changed_line_count": 1,
+    "exclusive_match_count_before": 1,
+    "exclusive_match_count_after": 1,
+    "readback": "PASS: all other bytes/rows preserved"
+  },
+  "service_row": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/service-row.txt",
+    "sha256": "81ee29eebf05bb687c39449ca8551a6fde19340055d5472c54f9d493dbe3f43a",
+    "text": "agent agent-core-full /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md\n",
+    "original_0249_arguments_preserved": true
+  },
+  "reviewed_hashes": {
+    "measurement_command_sha256": "cc16a840e049cfbabaa662b175cf094eba10af871bb166123a5339741adbc6d8",
+    "positive_manifest_sha256": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643",
+    "poison_manifest_sha256": "222693fc9fb9b8a9abc5620c6f49eb1b872dd8d42a73c38abb8a69b319d3c1fc",
+    "source_manifest_sha256": "7c0b6c3fdf1384d7f5e71b04a587c61fc4898c3f4d48ae1d1b5f3d26cf6094b2"
+  },
+  "controls": {
+    "roots": 22,
+    "pytest_flags": ["-q", "-n3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"],
+    "source_admission_bytes": 4700000000,
+    "continuous_stop_bytes": 4000000000,
+    "monitor_seconds": 5,
+    "launcher_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "body_started_before_submission": false,
+    "other_agent_core_full_bodies_active": false
+  },
+  "terminal": {
+    "service_id": "agent-agent-core-full-1026032321-26496",
+    "status": "fail",
+    "exit": 1,
+    "body_started": true,
+    "runner_exit": 1,
+    "monitor_exit": 0,
+    "source_after": "clean",
+    "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/private/measurement-runs/agent-core-full/agent-core-full.xml",
+    "xml_count_conservation": "FAIL_SEPARATELY: 173 declared tests are represented only by the raw runner subtest summary; no IDs invented"
+  },
+  "status": "TERMINAL_MEASUREMENT_RECORDED"
+}
