@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-26T02:27:02Z",
+  "before_available_bytes": 4855455744,
+  "after_available_bytes": 4685328384,
+  "concurrent_source_workers": true,
+  "command": "bin/compact-scratch 20",
+  "helper_sha256": "1f6926c6164e73dd9c0c36556fa4897a933f7a742b5a8acfc26c58bdfc5695af",
+  "protected_marker_count": 28,
+  "protected_marker_mismatches": [],
+  "recent_compressed_protected_or_referenced": [],
+  "prior_recent_archives": "17 files predate this round invocation; unreferenced nonKEEP at check; earlier manager round0146 log owns lower-MIN sweep at02:17. No immutable baseline for lead invocation."
+}

@@ -1,0 +1,70 @@
+{
+  "schema": "timeline.app.p4.affected-path-custody.v1",
+  "analysis_mode": "finite_source_only",
+  "verdict": "PASS_UNRELATED_TO_ACTUAL_P4_BODY",
+  "scope": "The App 5fe3e4debec5fb030f772ca41f16c86cc80e6150 delta is not on the executed Agent HTTP three-leg P4 body path at service agent-p4-current-becfe-http-3legs-1026011042-10086.",
+  "not_a_go": "This source verdict does not re-execute P4, parse the recorded XML, or grant cumulative P4 GO. App manager retains custody and must condition any GO on the actual XML bytes/hash and custody checks.",
+  "actual_p4_tuple": {
+    "agent": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"
+    },
+    "app": {
+      "commit": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"
+    },
+    "runtime": {
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "candidate_app": {
+    "commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "changed_source_files": 5
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "result": "The 867-to-5fe App delta is limited to runtime data-provider pairing, placement mutation setup, and shot-group pack command/test code.",
+      "evidence": "source-manifest.json changed_files and source-map.json App nodes"
+    },
+    {
+      "id": "F2",
+      "result": "The registered P4 launcher guards App commit/tree/path in four-way manifest metadata, but its execution PYTHONPATH contains only the pinned Agent and Runtime source roots; no App TypeScript module is imported by the launcher or the three selected Agent tests.",
+      "evidence": "source-map.json nodes launcher:24-161 and test-import edges"
+    },
+    {
+      "id": "F3",
+      "result": "The three P4 selectors call the real Runtime HTTP daemon/provider/generated client path through Agent helpers. The Runtime canonical commit route and execution coordinator are outside the five App changes.",
+      "evidence": "source-map.json Agent/Runtime nodes and edges"
+    },
+    {
+      "id": "F4",
+      "result": "Dependency tracing found no subprocess, asset, schema, client, or dataflow edge from any changed App file into the registered P4 launcher, selected Agent tests, Runtime daemon, or canonical history provider.",
+      "evidence": "source-map.json edge inventory; source-manifest.json exact five-file delta"
+    }
+  ],
+  "affected_scope": {
+    "actual_p4_body": "unaffected_by_app_5fe_source_delta",
+    "app_editor_paths": "affected; current-head App reproof remains required for any App P1/P2/P3/editor claim that traverses the changed placement or shot-group seams",
+    "four_way_manifest_metadata": "App 5fe is not substituted into the historical 10086 execution; the old App 867 pin remains the recorded actual tuple"
+  },
+  "custody_and_reproof": {
+    "recorded_p4_metadata": "The correction receipt and independent receipt review record 3/3 PASS for the old tuple and preserve the old 0114 custody FAIL.",
+    "xml": "The recorded XML path is absent in this sandbox; its recorded hash is not re-parsed here.",
+    "queued_19479": "Must remain queued, unstarted, and unchanged.",
+    "required_next_proof": "Manager checks the actual XML bytes against the recorded hash and custody, then separately re-proves any App current-head path whose caller reaches the five changed files. No new semantic policy or P4 body is requested."
+  },
+  "citations": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-receipt-return-0159-correction.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-receipt-check-0202-review.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-body-continuation-0105-source-manifest.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-body-continuation-0105-registration.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-P4-D141-operational-return-0055-candidate-row.txt"
+  ]
+}

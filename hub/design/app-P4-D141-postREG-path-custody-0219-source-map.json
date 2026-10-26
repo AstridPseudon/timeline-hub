@@ -1,0 +1,143 @@
+{
+  "schema": "timeline.app.p4.source-map.v1",
+  "repositories": {
+    "app": "/home/user/banodoco/reigh-app",
+    "agent": "/home/user/peteromallet/astrid-agent",
+    "runtime": "/home/user/banodoco/banodoco-workspace-runtime",
+    "composition": "/home/user/peteromallet/timeline-composition"
+  },
+  "app_delta": {
+    "from": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "to": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "files": [
+      {
+        "path": "src/integrations/runtime/dataProvider.ts",
+        "old_blob": "5c830fe2b4661c9722ad22960f752c968604acd1",
+        "new_blob": "a9115da0910af30baaf7b98c70f8cae9ee8f3d59",
+        "new_lines": "37,997-1007",
+        "role": "Adds paired basis/display loading with a head-version consistency check."
+      },
+      {
+        "path": "src/shared/lib/placement/placementService.ts",
+        "old_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99",
+        "new_blob": "f8c7564ba787ec2d2068bfa129db67769af941c0",
+        "new_lines": "247-255,338-372",
+        "role": "Adds one-shot prepared document mutation and delegates mutation through an existing store."
+      },
+      {
+        "path": "src/tools/video-editor/data/DataProvider.ts",
+        "old_blob": "a3fe1d4157b65242b4b2a62df107becc0d311d07",
+        "new_blob": "286fa147e9216fb968dd49e8813e3d0c96ce783a",
+        "new_lines": "115-120",
+        "role": "Adds the paired basis/display provider type."
+      },
+      {
+        "path": "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+        "old_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a",
+        "new_blob": "6fa15804960500a99a466d1a0931e9c0451b538a",
+        "new_lines": "18,388-414",
+        "role": "Routes duplicateShotGroup through prepared mutation; promotePrimaryVariant retains the prior load/mutate path."
+      },
+      {
+        "path": "src/tools/video-editor/lib/shot-group-pack-commands.test.ts",
+        "old_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff",
+        "new_blob": "a073bb4b88ddd9a9216f3bded0e969d41331d33e",
+        "new_lines": "65-80",
+        "role": "Updates the test provider mock for the new paired provider method."
+      }
+    ]
+  },
+  "actual_p4_execution_graph": {
+    "nodes": [
+      {
+        "id": "launcher",
+        "repo": "agent",
+        "path": "tools/p4-d73-pinned-launch.sh",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+        "lines": "24-73,75-122,125-161",
+        "role": "Validates the four-way manifest, preflights pinned Agent/Runtime/schema/Composition, then runs Python tests with Agent:Runtime PYTHONPATH."
+      },
+      {
+        "id": "p4_cli_selector",
+        "repo": "agent",
+        "path": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "033482ec2b94c5ae4a6b5c456e2d9fab3f454022",
+        "lines": "15-32,70-250",
+        "role": "Selected CLI/sheet preservation and readback test; imports Agent modules and the real Runtime fixture."
+      },
+      {
+        "id": "p4_ten_note_selector",
+        "repo": "agent",
+        "path": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "afc9c112527692536a065de8cdbfc7a25c19bc26",
+        "lines": "17-26,194-456",
+        "role": "Selected HTTP ten-note per-step inverse/redo test; imports Agent SDK/fixtures and the real Runtime fixture."
+      },
+      {
+        "id": "p4_rerun_selector",
+        "repo": "agent",
+        "path": "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "192efbfa14607f0edfb362d47d5238645c64e984",
+        "lines": "10-24,194-386",
+        "role": "Selected HTTP conflict/rerun test; imports Agent SDK/ten-note fixtures and the real Runtime fixture."
+      },
+      {
+        "id": "runtime_fixture",
+        "repo": "agent",
+        "path": "tests/editing_conformance/test_native_batch_ingress.py",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "b002de2e7315e578123169ba1ac340cb79171fac",
+        "lines": "1-5,23,43-109",
+        "role": "Starts the real Runtime daemon, constructs RuntimeHandler/WorkspaceClient, and sends the generated-client HTTP transport."
+      },
+      {
+        "id": "runtime_helper",
+        "repo": "agent",
+        "path": "tests/helpers/runtime.py",
+        "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "blob": "1bee9cef89f89723b5b8815d7e471c97968964c8",
+        "lines": "1-15,40-43,93-124",
+        "role": "Loads the vendored Runtime commit from runtime.lock.json and places the pinned Runtime source on sys.path."
+      },
+      {
+        "id": "runtime_route",
+        "repo": "runtime",
+        "path": "runtime_protocol/server.py",
+        "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "blob": "046722a7a7a3b4ea0971520af6206d6a29e6b224",
+        "lines": "301-341,405-414,552-585,1229-1235",
+        "role": "Canonical POST timeline commit route, validation, dispatch, and history route."
+      },
+      {
+        "id": "runtime_service",
+        "repo": "runtime",
+        "path": "runtime_protocol/service.py",
+        "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "blob": "9522969da2818772590032e695323d4e010943a0",
+        "lines": "1665-1672,2468-2513",
+        "role": "Canonical commit API validation and execution-coordinator/provider entry."
+      },
+      {
+        "id": "runtime_execution",
+        "repo": "runtime",
+        "path": "runtime_protocol/timeline_commit_execution.py",
+        "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+        "lines": "365-431",
+        "role": "Provider commit, verification, replay lookup, and accepted/preview/refusal outcome checks."
+      }
+    ],
+    "edges": [
+      "launcher -> p4_cli_selector,p4_ten_note_selector,p4_rerun_selector",
+      "p4_cli_selector,p4_ten_note_selector,p4_rerun_selector -> runtime_fixture",
+      "runtime_fixture -> runtime_helper -> runtime daemon/provider/generated client",
+      "runtime daemon -> runtime_route -> runtime_service -> runtime_execution -> canonical history/provider",
+      "launcher manifest App pin -> metadata guard only; no edge to App runtime source",
+      "App changed files -> browser/editor production callers only; no edge to launcher or selected Agent tests"
+    ]
+  }
+}

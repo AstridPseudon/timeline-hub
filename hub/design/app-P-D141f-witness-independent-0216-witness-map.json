@@ -1,0 +1,18 @@
+{
+  "schema": "timeline.d141f.app.witness-map.v1",
+  "verdict": "PASS_AUTHOR_NOT_QUALIFIED",
+  "eligibility_rule": "An eligible witness must authenticate the exact source boundary and provide paired pre-body/post-body same-kind available_bytes samples, or a continuous trace that bounds the same body. Queue, admission, source custody, and an unpaired endpoint do not qualify.",
+  "required_app_runs": [
+    {"id": "app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879", "source_manifest": "c5269108da4f33986c29e4a2100a37907ea2926d05b13f5acd074ec9eea2e3d5", "body_samples": [], "pair": null, "continuous": false, "eligible": false},
+    {"id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118", "source_manifest": "76b88bd3f1e2e6723f5252fc36edb935ef55142698f49a1f10d62c0e6065b722", "body_samples": [], "pair": null, "continuous": false, "eligible": false},
+    {"id": "app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698", "source_manifest": "fc22cf255e8da7648322789f304df65781ea10ee10b1f0f1299e65470e6c6a06", "body_samples": [], "pair": null, "continuous": false, "eligible": false}
+  ],
+  "retained_sources": [
+    {"name": "tests exact roots", "kind": "normal journey receipts", "eligible": false, "finding": "No available/free/disk samples in request, runner, result, snapshot, manifests, bench lease, or terminal files."},
+    {"name": "D66 plain stack", "kind": "source/runner custody", "eligible": false, "finding": "The exercised source and tests authenticate source and phases but do not collect available_bytes around the body."},
+    {"name": "worker controller/source guard", "kind": "operational receipt", "eligible": false, "finding": "Records source tuple, readiness, status, and journey counts only; no paired body disk witness."},
+    {"name": "Runtime D89d retained bracket", "kind": "old immutable log witness", "eligible": false, "finding": "Runtime full run, not App normal journey; bracket only; retained metadata references absent raw test root."},
+    {"name": "queued request 18617", "kind": "queue/preflight", "eligible": false, "finding": "NOTRUN and untouched; its low-disk diagnostic is not a body sample."}
+  ],
+  "conclusion": "No eligible paired or continuous App witness exists in the reviewed retained sources. Preserve NOT_QUALIFIED and the 5,000,000,000-byte floor."
+}

@@ -1,0 +1,228 @@
+{
+  "schema_version": 2,
+  "task": "D141e",
+  "kind": "post_reg_source_preparation",
+  "status": "PREPARED",
+  "dispatchable": false,
+  "execution": "none",
+  "authority": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "main_go": "D141c recorded GO, with D141e authorization for affected proofs after reviewed REG merge; no new GO invented",
+    "scope": ["P1", "P2-six", "P3"],
+    "holds": ["D130", "D136", "B022", "SWAP", "Element", "Gate3", "D77", "full/core/profile", "own-test-investigation"]
+  },
+  "source_preparation_admission": {
+    "available_bytes": 4764389376,
+    "body_present": false,
+    "kind": "source-only D89b preparation admission",
+    "composition_role": "tiny documentary host only",
+    "minimum_bytes": 4600000000,
+    "heavy_admission": false,
+    "new_pin_allocation": false
+  },
+  "heavy_admission": {
+    "status": "NOTREADY",
+    "d141f_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141f-measured-journey-admission-0209/evidence/measurement.json",
+    "d141f_result": "NOT_QUALIFIED",
+    "x_bytes": null,
+    "x_rule": "MAX of authenticated same-kind same-cut-tuple witnessed disk drops",
+    "bracket_bound": false,
+    "continuous_bound": false,
+    "floor_bytes": 5000000000,
+    "stop_bytes": 4000000000,
+    "fresh_available_required": true,
+    "reason": "No authenticated paired available_bytes samples or continuous trace exists for the three specified body runs; retain the mandated fallback floor."
+  },
+  "source_tuple": {
+    "app": {
+      "head": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+      "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+      "normal_home": "/home/user/work/app",
+      "source_home": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-REG-source-home-0211.json",
+      "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+      "candidate_tree_equal": true,
+      "clean": true,
+      "stable_future_target": "app-pin-5fe3e4de"
+    },
+    "agent": {
+      "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "normal_home": "/home/user/work/agent",
+      "clean": true
+    },
+    "runtime": {
+      "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "normal_home": "/home/user/work/runtime",
+      "clean": true
+    },
+    "composition": {
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "normal_home": "/home/user/work/composition",
+      "clean": true,
+      "role": "tiny source-only documentary host; no proof body"
+    }
+  },
+  "old_controller_and_queue": {
+    "controller": "tl/app-P-D141-cut-journeys-resume-0127",
+    "checkpoint": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-cut-journeys-resume-0127/evidence",
+    "old_app_scope": {
+      "head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "target": "app-pin-867cb273"
+    },
+    "queued_request": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617",
+    "queued_request_policy": "preserve the same existing ID and original 867 scope; do not cancel, edit, reissue, duplicate, retarget, or call its eventual terminal receipt new-head proof",
+    "old_pin_policy": "app-pin-867cb273 cannot retire while 18617 references it; retain pristine 7ca source, current producer pins, and raw KEEP outputs"
+  },
+  "selectors": [
+    {
+      "id": "p1",
+      "route": "p1",
+      "cases": 2,
+      "source_files": ["tests/e2e/local/three-products.p1-chain.spec.ts"],
+      "source_sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "original_selector_or_grep": "p1",
+      "test_titles": [
+        "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+        "P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message"
+      ],
+      "preserve": ["split -> trim new clip -> intervening Agent edit -> lost acknowledgement -> restart", "accepted", "merged", "refused", "real-document inputs", "full history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-automatic-child-placement",
+      "route": "p2-automatic-child-placement",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "original_selector_or_grep": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$",
+      "test_title": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo",
+      "status": "HOLD_KNOWN_FAILURE",
+      "known_failure": "normal run 3118 failed on history-shape comparison; Runtime0140/0149 classification and safe22keys plus prior PASS 0158 are retained",
+      "hold_prerequisite": "specific Runtime history-shape contract classification plus a meaningful fix or explicit contract verdict; no blind unchanged retry",
+      "preserve": ["real import/auth selection", "occurrence.add-media", "canonical closure", "history", "reload", "dialog-gone before guarded Undo", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-popup-add",
+      "route": "p2-popup-add",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-popup.spec.ts"],
+      "source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+      "original_selector_or_grep": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$",
+      "test_title": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit",
+      "status": "HOLD_KNOWN_FAILURE",
+      "known_failure": "normal run 1368 failed on popup ADD visibility; cause is not classified",
+      "hold_prerequisite": "specific visibility cause plus a meaningful fix or explicit contract verdict; no blind unchanged retry",
+      "preserve": ["exact C0 v2 request", "occurrence fork/add-media", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-parent-move",
+      "route": "p2-parent-move",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted parent move: exact doc.patch fields and guarded Undo$",
+      "test_title": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo",
+      "status": "READY_AFTER_ADMISSION",
+      "preserve": ["exact doc.patch field guards", "fields merge", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-single",
+      "route": "p2-transition-none-single",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted single transition clear: exact remove and guarded Undo$",
+      "status": "READY_AFTER_ADMISSION",
+      "preserve": ["remove before present/value", "raw absence", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-bulk",
+      "route": "p2-transition-none-bulk",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "source_sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+      "original_selector_or_grep": "P2 mounted bulk transition clear: exact ordered removes and guarded Undo$",
+      "status": "READY_AFTER_ADMISSION",
+      "preserve": ["ordered two removes", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-register-asset",
+      "route": "p2-register-asset",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "source_sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "original_selector_or_grep": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$",
+      "status": "READY_AFTER_ADMISSION",
+      "preserve": ["real file drop", "exact media/registry fields", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p3",
+      "route": "p3",
+      "cases": 1,
+      "source_files": ["tests/e2e/local/three-products.spec.ts"],
+      "source_sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+      "original_selector_or_grep": "M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$",
+      "test_title": "M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent",
+      "status": "READY_AFTER_ADMISSION",
+      "preserve": ["recovery mount", "C0 v2 envelope", "command/step/read/merge", "strict metadata", "canonical history", "restart", "guarded undo", "zero legacy traffic"]
+    }
+  ],
+  "original_tail_guard": {
+    "rule": "consume each complete original source file at its recorded SHA; preserve every selector, full test body/tail, input, wait, assertion, history/reload/undo check, and zero-legacy-traffic predicate byte-for-byte; no sliced or rewritten tail",
+    "line_windows": {
+      "p2-automatic-child-placement": "1018-1036,1205-1295",
+      "p2-popup-add": "920-947,423-578,854-918",
+      "p2-parent-move": "338-744,746-776",
+      "p2-transition-none-single": "477-531,680-744,778-796",
+      "p2-transition-none-bulk": "477-531,680-744,798-817",
+      "p2-register-asset": "1133-1203"
+    },
+    "p1": "complete tests/e2e/local/three-products.p1-chain.spec.ts at the recorded hash; exactly two original cases",
+    "p3": "complete tests/e2e/local/three-products.spec.ts at the recorded hash; exactly one original Gate-5 case plus separate readiness"
+  },
+  "p2_cut": {
+    "included": ["p2-automatic-child-placement", "p2-popup-add", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset"],
+    "excluded": ["p2-popup-swap", "p2-element", "broad p2"],
+    "exclusion_semantics": "owner cut; not skipped or weakened predicates"
+  },
+  "receiving": {
+    "admission_gate": "wait for a qualified D141f receipt and fresh available bytes at or above its retained floor; until then no checkout or D66 submission",
+    "old_controller": "stop at the requested old-tuple checkpoint; do not submit further old normal bodies",
+    "checkout_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-checkout REPO FULL_COMMIT_SHA \"D141e new-head exact source checkout\"",
+    "expected_checkout_receipts": {
+      "app": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+      "agent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "runtime": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "composition": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "receipt_requirements": ["full SHA and tree", "clean status", "KEEP custody", "source manifest identity", "origin/parent identity", "no mutable normal-home substitution"]
+  },
+  "d66": {
+    "script": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "script_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "submit_target": "app-pin-5fe3e4de",
+    "environment_clearance": ["env -u NODE_PATH", "env -u ASTRID_PUBLIC_CHECKOUT", "env -u ASTRID_APP_DIRECT_DIST", "env -u APP_DIRECT_DIST"],
+    "plan_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-postREG-proof-prep-0213/evidence/newhead",
+    "sequence": ["p1", "p2-automatic-child-placement", "p2-popup-add", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset", "p3"],
+    "submission_policy": "unique D141e plan/output and suite per selector; D66 registers paired preflight/normal rows atomically; wait preflight PASS before normal; one central body at a time; never mutate old plans"
+  },
+  "normal_command_template": "cd /home/user/work/app && env -u NODE_PATH -u ASTRID_PUBLIC_CHECKOUT -u ASTRID_APP_DIRECT_DIST -u APP_DIRECT_DIST D66_SUBMIT_TARGET=app-pin-5fe3e4de D66_SUBMIT_PLAN_PATH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-postREG-proof-prep-0213/evidence/newhead/<selector>/submit-plan.json D66_OUTPUT_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-postREG-proof-prep-0213/evidence/newhead/<selector>/d66 D66_SUBMIT_SUITE=d141e-<selector>-5fe3e4de-submit /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs <selector> --submit",
+  "d73_normal_followon": "After the paired preflight is PASS, use the existing central /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test app-pin-5fe3e4de d141e-<selector>-5fe3e4de-submit --no-cache route and /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test; do not invoke a direct --run path",
+  "contract_guard": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args,created]", "label", "steps[id,label,intent,tags,command_ordinals,patch,reads]", "merge fields|atomic", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "reply_fields": ["accepted", "merged[data,receipt]", "canonical", "digest", "normalizedcommands", "idmap", "base", "previous", "accepted", "landing", "rebased_onto", "merge_mode", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict[reason,head]", "invalid[code,path,hint,suggestedcommand]", "preview[would_status,nullreceipt]"],
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "changed": false
+  },
+  "admission_and_failure_policy": {
+    "d141f": "use final authentic receipt when available; otherwise NOTREADY, floor 5000000000, stop 4000000000",
+    "known_failures": "placement 3118 and popup ADD 1368 are held for meaningful disposition; A2 new head is meaningful source change but does not prove either fixed",
+    "independent_ready_paths": ["p1", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset", "p3"],
+    "integration_rule": "integrate placement and popup ADD only after their specific disposition permits; preserve all six P2 rows and original tails",
+    "proof_credit": "none until terminal receipts on this exact new tuple"
+  }
+}

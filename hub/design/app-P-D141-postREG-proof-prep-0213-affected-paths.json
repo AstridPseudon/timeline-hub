@@ -1,0 +1,36 @@
+{
+  "schema": "D141e-affected-paths-v1",
+  "source_transition": {
+    "old": {"head": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "new": {"head": "5fe3e4debec5fb030f772ca41f16c86cc80e6150", "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6"},
+    "reason": "reviewed A2 REG merge; direct parent candidate lineage; exact protected source receipt"
+  },
+  "changed_product_paths": [
+    "src/integrations/runtime/dataProvider.ts",
+    "src/tools/video-editor/data/DataProvider.ts",
+    "src/shared/lib/placement/placementService.ts",
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+    "src/tools/video-editor/lib/shot-group-pack-commands.test.ts"
+  ],
+  "proof_impact": {
+    "p1": {"status": "affected_reproof_required", "selectors": ["p1"], "why": "shared editor save ingress remains the production boundary; exact accepted/merged/refused split-trim/lost-ACK/restart cases must run on new App head"},
+    "p2": {
+      "status": "affected_reproof_required",
+      "selectors": ["p2-automatic-child-placement", "p2-popup-add", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset"],
+      "why": "duplicate/placement shared seams changed; retain all six original gestures, exact fields, history, reload, guarded undo, and zero old-route assertions",
+      "holds": {
+        "p2-automatic-child-placement": "3118 history-shape failure; Runtime0140/0149 classification and meaningful fix/contract verdict required",
+        "p2-popup-add": "1368 visibility failure; classified cause and meaningful fix/contract verdict required"
+      }
+    },
+    "p3": {"status": "affected_reproof_required", "selectors": ["p3"], "why": "shared save/recovery ingress must be rejoined at current head for lost-ACK/restart and authoritative history/undo"}
+  },
+  "unchanged_controlled_paths": {
+    "readiness": "tests/e2e/local/three-products.mounted-readiness.spec.ts",
+    "d66": "scripts/testing/d66-plain-stack.mjs",
+    "original_journey_sources": ["tests/e2e/local/three-products.p1-chain.spec.ts", "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "tests/e2e/local/three-products.p2-popup.spec.ts", "tests/e2e/local/three-products.p2-tour.spec.ts", "tests/e2e/local/three-products.spec.ts"],
+    "guard": "all original selectors, inputs, assertions, full tails, six-gesture checklist, schema/manifest/lock/origin guards remain unchanged"
+  },
+  "excluded_paths_and_work": ["SWAP", "Element", "B022", "D136", "Gate3", "D77", "full", "core", "profile", "own-test-investigation", "product changes", "test changes", "fixture/generated-pin/kit/registry/queue/request/snap/hub/Git metadata edits"],
+  "no_execution": {"body": false, "preflight": false, "request_test": false, "checkout": false, "script": false, "imports": false, "tests": false, "typecheck": false, "lint": false}
+}

@@ -1,0 +1,136 @@
+{
+  "schema": "timeline.d141f.app.witness-review.v1",
+  "review": "independent read-only custody review",
+  "scope": ["PLAN §3 P1", "PLAN §3 P2", "PLAN §3 P3", "PLAN §3 F", "C0 §§1-5,7"],
+  "verdict": "PASS_AUTHOR_NOT_QUALIFIED",
+  "qualification": "No eligible authenticated App same-kind body-drop witness was found. The author packet's NOT_QUALIFIED result is retained.",
+  "author_originals": {
+    "packet_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141f-measured-journey-admission-0209",
+    "measurement_sha256": "af6afbc24f9fc8bf23030bae92ac74cd3a1de97dc7ff6c6bba290529f841b838",
+    "witnesses_sha256": "b03ebe474139d8a77837e224497d6d5145e0c5df3101f1e5f22b3cfc61c07347",
+    "source_manifest_sha256": "d5a08cdb462d46bd7de954676f2b36bfabff46a99117592befe1f22a37d3c90e",
+    "validation_sha256": "51e0971b3dccf97ea0398f933c1309c56912285576859386a91e89065c4dd29e",
+    "immutability": "Read only; no author packet files were changed."
+  },
+  "source_tuple": {
+    "app": {"commit": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd"},
+    "agent": {"commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a"},
+    "runtime": {"commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "source_manifest_sha256": "7d82093bfb7a0a0bb5c0d15ba753a7a3fdfc37c70ac79532a32e0dc3ef9f8280"
+  },
+  "required_witnesses": [
+    {
+      "id": "app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879",
+      "lane": "P1",
+      "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879",
+      "terminal": "pass",
+      "request_at": "2026-10-26T01:28:01Z",
+      "body_interval": ["2026-10-26T01:28:19.226Z", "2026-10-26T01:31:14.450Z"],
+      "manifest_sha256": "c5269108da4f33986c29e4a2100a37907ea2926d05b13f5acd074ec9eea2e3d5",
+      "request_sha256": "47722ad41e4fd33028a6cc6b25461078b2cf7501fe3d34e216e029b9c6fb7bd9",
+      "summary_sha256": "e84a912d2a7ee96341a1a38f34f3c360ac0497d12f341d06e5b495713e715b2e",
+      "available_bytes_samples": [],
+      "paired": false,
+      "continuous": false
+    },
+    {
+      "id": "app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+      "lane": "P2 automatic child placement",
+      "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118",
+      "terminal": "fail",
+      "request_at": "2026-10-26T01:32:36Z",
+      "body_interval": ["2026-10-26T01:32:52.713Z", "2026-10-26T01:36:25.019Z"],
+      "failure": "Guarded Undo history assertion at source line 757; readiness passed.",
+      "manifest_sha256": "76b88bd3f1e2e6723f5252fc36edb935ef55142698f49a1f10d62c0e6065b722",
+      "request_sha256": "8d573c71c205c1ce6e9d2450a597180d3d155abb0724586d28d1a684362ed54a",
+      "summary_sha256": "eacf5c79830f622395c79d7446a575391afa7eea3726594d440125f8ee8f030c",
+      "available_bytes_samples": [],
+      "paired": false,
+      "continuous": false
+    },
+    {
+      "id": "app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698",
+      "lane": "P2 parent move",
+      "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698",
+      "terminal": "pass",
+      "request_at": "2026-10-26T01:46:21Z",
+      "body_interval": ["2026-10-26T01:46:31.897Z", "2026-10-26T01:50:13.671Z"],
+      "manifest_sha256": "fc22cf255e8da7648322789f304df65781ea10ee10b1f0f1299e65470e6c6a06",
+      "request_sha256": "8cb4147c455d67cea67cc065fab7430e83d44a241b6557c65d48da74e598c8fc",
+      "summary_sha256": "c507b8d66c7fa009871a0fd5a34cb59d9e3f59165b56fd5c3f28e23e01f78337",
+      "available_bytes_samples": [],
+      "paired": false,
+      "continuous": false
+    }
+  ],
+  "candidate_observations": [
+    {
+      "source": "App source-only admission in author packet",
+      "available_bytes": 4771422208,
+      "body": false,
+      "eligible_for_x": false,
+      "reason": "Admission/source custody only; no pre-body custody and no terminal body sample."
+    },
+    {
+      "source": "D66 controller admission",
+      "available_bytes": 5433016320,
+      "body": false,
+      "eligible_for_x": false,
+      "reason": "One dispatch admission observation, not a body observation."
+    },
+    {
+      "source": "Queued App request app-pin-867cb273-d141-preflight-1026015050-18617",
+      "available_bytes": 4793532416,
+      "body": false,
+      "status": "NOTRUN",
+      "eligible_for_x": false,
+      "reason": "Queue/preflight diagnostic only; request remains untouched and unchanged."
+    },
+    {
+      "source": "Retained Runtime D89d bracket metadata",
+      "run": "runtime-full-d141-cut-1026005231-18778",
+      "start_free_bytes": 5190156288,
+      "stop_free_bytes": 4430635008,
+      "bracket_delta_bytes": 759521280,
+      "witness_hashes": {
+        "disk-start": "05e055...e9f8",
+        "disk-stop": "642489...0132"
+      },
+      "eligible_for_x": false,
+      "reason": "Different Runtime full run and body scope; only a start/end bracket, not continuously sampled; underlying retained test root is absent. It cannot establish App same-kind pre-body custody or App X."
+    },
+    {
+      "source": "Later App source-only/post-REG admissions",
+      "available_bytes": [4984889344, 4764389376],
+      "body": false,
+      "eligible_for_x": false,
+      "reason": "Different admission records and/or newer App source 5fe; no exact-run body receipt and no retargeting permitted."
+    }
+  ],
+  "search_coverage": [
+    "All files under each of the three exact retained test roots: request, status, summary, exit, snapshot, runner, result, D66 manifest/collection, readiness, JUnit, bench lease, runtime-private logs.",
+    "Exact-root content search for available_bytes, free_bytes, disk, before, after, drop, sample; no body-level disk sample was found.",
+    "D66 plain-stack source and its tests: source guards, immutable checkout, preflight/launch/terminal manifests, phase helper, and receipt assertions; no disk sampler exists in the exercised path.",
+    "Central test runner admission, snapshot, D66 dispatch, terminal summary/status/exit, and cleanup paths; admission has one df value but no body custody sampler.",
+    "Worker controller/source-guard records and original admission/terminal operational receipts for D141; no eligible paired App body samples.",
+    "Queued request 18617 and retained old immutable log/design witnesses, including the Runtime D89d bracket, were checked and classified rather than treated as false absence."
+  ],
+  "arithmetic": {
+    "x_bytes": null,
+    "x_status": "UNAVAILABLE_NO_AUTHENTICATED_PAIRED_SAMPLES",
+    "bracket": false,
+    "continuous": false,
+    "floor_formula": "MAX(4600000000, 4000000000 + X + 200000000)",
+    "selected_floor_bytes": 5000000000,
+    "stop_bytes": 4000000000,
+    "selection_reason": "Author NOT_QUALIFIED fallback; no inference from queue-only, source-admission, or max-endpoint values."
+  },
+  "contract": {
+    "source_changed": false,
+    "request_and_reply_contract_changed": false,
+    "original_tail_and_assertions": "unchanged"
+  },
+  "heavy_work": 0,
+  "tests": "Not applicable: documentary read-only JSON/Git/hash/arithmetic validation only."
+}

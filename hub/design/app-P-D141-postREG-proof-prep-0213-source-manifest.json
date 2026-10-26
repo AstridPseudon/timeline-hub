@@ -1,0 +1,63 @@
+{
+  "schema": "D141e-source-manifest-v1",
+  "status": "PREPARED_SOURCE_HOME_NOT_EXECUTED",
+  "source_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-REG-source-home-0211.json",
+    "sha256": "bc47fafafc8b658695d1d666f2d95cfa3fc4f9998449164819ab4e3d3286aeaa",
+    "head": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+    "candidate_tree_equal": true,
+    "clean": true,
+    "review": "app-A2-D141-read-interface-protected-review-0203; PASS; shot-group 6/6 and Workspace v1 guards 16/16 in retained evidence"
+  },
+  "tuple": {
+    "app": {"head": "5fe3e4debec5fb030f772ca41f16c86cc80e6150", "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6", "home": "/home/user/work/app", "status": "clean"},
+    "agent": {"head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "home": "/home/user/work/agent", "status": "clean"},
+    "runtime": {"head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "home": "/home/user/work/runtime", "status": "clean"},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "home": "/home/user/work/composition", "status": "clean", "role": "tiny source-only host"}
+  },
+  "app_source_guards": [
+    {"path": "scripts/testing/d66-plain-stack.mjs", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f", "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"},
+    {"path": "tests/e2e/local/three-products.mounted-readiness.spec.ts", "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593", "git_blob": "ba85a25085b61bd2e8e3960ab0260a91c6f9650a"},
+    {"path": "tests/e2e/local/three-products.p1-chain.spec.ts", "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde"},
+    {"path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637", "git_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6"},
+    {"path": "tests/e2e/local/three-products.p2-tour.spec.ts", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625"},
+    {"path": "tests/e2e/local/three-products.spec.ts", "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b", "git_blob": "ed083c0aab1a3c995be14e5b774fbb1cb877111b"},
+    {"path": "package-lock.json", "sha256": "59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba", "role": "lock guard; unchanged source input"}
+  ],
+  "changed_product_files": {
+    "src/integrations/runtime/dataProvider.ts": {"base_blob": "5c830fe2b4661c9722ad22960f752c968604acd1", "candidate_blob": "a9115da0910af30baaf7b98c70f8cae9ee8f3d59", "sha256": "a8a28da4b386ced902a8c9d38c94daf899d293bcfbeff4ad9a5d8a3de62e9e4d"},
+    "src/tools/video-editor/data/DataProvider.ts": {"base_blob": "a3fe1d4157b65242b4b2a62df107becc0d311d07", "candidate_blob": "286fa147e9216fb968dd49e8813e3d0c96ce783a", "sha256": "6c9d4ee57e628fb40a781d75ba09b7003b43aa527d12e3bc123a5c504b0900fb"},
+    "src/shared/lib/placement/placementService.ts": {"base_blob": "6b5a140fd77cf56ed6661e5d07f269886983bd99", "candidate_blob": "f8c7564ba787ec2d2068bfa129db67769af941c0", "sha256": "8d7be679f8e728105f420ed6f579ee09cec4570e74cc4bb839a409ecf563ce5b"},
+    "src/tools/video-editor/lib/shot-group-pack-commands.ts": {"base_blob": "015ce2d5f182ed711ba51ea8f8bb44af7edd2d0a", "candidate_blob": "6fa15804960500a99a466d1a0931e9c0451b538a", "sha256": "cbf0d2341810e3c0435590e2c5d6a0e59922448392e5fd87683c7e1efb182632"},
+    "src/tools/video-editor/lib/shot-group-pack-commands.test.ts": {"base_blob": "4df8a97cac77b3531cec437e5ae1dc98bebddeff", "candidate_blob": "a073bb4b88ddd9a9216f3bded0e969d41331d33e", "sha256": "a37dc005acaa5942b0116c601029d8bf291fa1710664aa01408d50fdc8acf782"}
+  },
+  "schema_and_protocol_guards": {
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "protocol": "workspace.v1",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "request_and_reply_shapes": "preserved exactly as listed in recipe.json; no schema/wire change"
+  },
+  "origin_guards": {
+    "frozen_refs": [
+      {"repo": "agent", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk", "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a", "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"},
+      {"repo": "runtime", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-runtime", "commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "tree": "73e676f420ba0545b6eebe45870d532344a9e69b"},
+      {"repo": "app", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified", "commit": "8f0c2484463e9b666d184a744d52e252984e551a", "tree": "26ad064632fac9ff123670aa7d6ed0e3d8f89178d"},
+      {"repo": "composition", "ref": "origin/codex/handover-timeline-r4-20261019-candidate-composition", "commit": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "tree": "49975e7a54fd594e1b7fc807681fe28611d57864a"}
+    ],
+    "policy": "frozen refs are read-only historical references; no fetch, checkout, merge, rebase, push, or manual pin mutation"
+  },
+  "retained_inputs": {
+    "source_home_0211": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-REG-source-home-0211.json",
+    "recipe_2346": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-recipe.json",
+    "binding_0047": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141-final-journey-binding-0047-binding.json",
+    "journey_admission_0119": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-admission-0119.json",
+    "old_controller_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141-cut-journeys-resume-0127/evidence",
+    "d141f_measurement": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141f-measured-journey-admission-0209/evidence",
+    "private_raw_keep": "preserve all existing tests/<result-id>/raw, snap, and KEEP markers; no copy, cleanup, or relabel"
+  },
+  "execution": {"preflight_submitted": false, "normal_submitted": false, "tests_run": false, "source_changed": false}
+}
