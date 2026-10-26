@@ -1,1 +1,1 @@
-2026-10-26T14:35:33Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (last job: shot-layering prep, published); hub-repack real run + delivery-build form await the owner; perms rules intact
+2026-10-26T14:43:25Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; NEW read-only job F-extensibility-minimal (MAIN/owner) handed to the manager (Sonnet fallback, Codex unavailable); hub-repack real run + delivery-build form await the owner; perms rules intact
