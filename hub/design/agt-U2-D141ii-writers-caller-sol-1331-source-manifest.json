@@ -1,0 +1,18 @@
+{
+  "base_commit": "3638da72332dee5ffccacb704c9ac3c794b7c959",
+  "base_tree": "6983046d907b9ec8f745a27a178b0413a66a2a45",
+  "agent_head": "3638da72332dee5ffccacb704c9ac3c794b7c959",
+  "runtime_head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+  "runtime_tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+  "changed_files": [
+    "tests/packs/timeline/test_verbs_working_copy.py"
+  ],
+  "sha256": {
+    "tests/packs/timeline/test_verbs_working_copy.py": "1b19462c34d45952825bbbb03302bb5c2eec631841232e46632d6d47178a0eee",
+    "astrid/packs/timeline/cli_native.py": "fec5b6df32fac8394c1ae9d6b3b82df0b61c3ee699bbb10fd17103d05b032fe4",
+    "pyproject.toml": "3b1d9057b5bba99acf07fe5f591fd84e48de6857a9844e4347b3ddb4e821b8ad"
+  },
+  "cli_native_equals_inherited_blob": true,
+  "outside_allowed_changes": false,
+  "whole_path_findings_sha256": "ae4fc480c46e28b9e0ff34a9efa47479301434df983aaa6c4e2948baa857d69a"
+}

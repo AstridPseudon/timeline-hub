@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-26T13:46:58.650002+00:00",
+  "files": [
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-sol-1331/evidence/disposition.json",
+      "published": "design/agt-U2-D141ii-writers-caller-sol-1331-disposition.json",
+      "sha256": "4eef484e173bd3556dd4788c58cc503b3ad2e6efba05ae4a028dc7a4f6a889c8",
+      "bytes": 1273
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-sol-1331/evidence/per-id.json",
+      "published": "design/agt-U2-D141ii-writers-caller-sol-1331-per-id.json",
+      "sha256": "61a103dffd3dc8f2b9a96f173d52d731c9058fea00d0408812b1cade99da0a8b",
+      "bytes": 2545
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-sol-1331/evidence/source-manifest.json",
+      "published": "design/agt-U2-D141ii-writers-caller-sol-1331-source-manifest.json",
+      "sha256": "7db32032bfd77d6866bf35d8919bc005c9f3a30cf62f0f00b53141d0a354520c",
+      "bytes": 909
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-sol-1331/evidence/validation.md",
+      "published": "design/agt-U2-D141ii-writers-caller-sol-1331-validation.md",
+      "sha256": "8ae42b46b84fe296b30b1ab68e8694a7aefc057875db0a218cecf546f64d52d3",
+      "bytes": 4852
+    },
+    {
+      "source": "workers/agt-U2-D141ii-writers-caller-sol-1331/evidence/handoff.md",
+      "published": "design/agt-U2-D141ii-writers-caller-sol-1331-handoff.md",
+      "sha256": "cade8c85ec542e1173e7ab3f88c4da548703c62d63b390cfe9e3ba21a7ad5556",
+      "bytes": 3123
+    }
+  ],
+  "head": "66720e11e8daa26a4e192a83d592cbe5caafc109",
+  "tree": "a302a0bca0cc941dafd0122bdbdc38430ad7c33d",
+  "result": "Author2PASS3.39s; protected review pending. Default mypy baseline/candidate same FAIL_ENVIRONMENT;3.12 bothPASS. No productchange.",
+  "limits": "Retained namespace fixture and injected generated transport; live HTTP auth/SQLite not claimed; no REG0 or merge yet"
+}

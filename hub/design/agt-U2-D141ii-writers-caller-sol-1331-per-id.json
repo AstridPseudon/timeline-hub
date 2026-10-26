@@ -1,0 +1,31 @@
+{
+  "selectors": [
+    "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+    "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]"
+  ],
+  "ids": [
+    {
+      "n": 12,
+      "original": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "current": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]",
+      "execution": "PASS",
+      "protected": "PENDING_INDEPENDENT_REVIEW",
+      "caller": "CLI commit handler -> commit_document -> TimelineSession -> RemoteTimelines -> WorkspaceClient -> generated commit_timeline -> real provider CommitRejected -> Runtime public_failure -> generated ApiError -> WorkspaceClientError -> CommitConflict -> _document_error -> JSON stdout"
+    },
+    {
+      "n": 13,
+      "original": "tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "current": "tests/packs/timeline/test_verbs_working_copy.py::test_commit_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]",
+      "execution": "PASS",
+      "protected": "PENDING_INDEPENDENT_REVIEW",
+      "caller": "CLI commit handler -> commit_document -> TimelineSession -> RemoteTimelines -> WorkspaceClient -> generated commit_timeline -> real provider CommitRejected -> Runtime public_failure -> generated ApiError -> WorkspaceClientError -> CommitConflict -> _document_error -> JSON stdout"
+    }
+  ],
+  "actual_counts": {
+    "passed": 2,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "selector_source": "agt-U2-D141ee-writers15-decision-next-review/evidence/per-id.json, IDs 12/13; argv loaded as Python list to preserve spaces"
+}

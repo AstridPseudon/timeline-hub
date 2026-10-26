@@ -1,0 +1,5 @@
+Ask: use the requested exact clean superseded checkout list for Main owner approval; no cleanup authorized here / Owner: Agent lead and Main owner; Agent manager remains source coordinator / By: before next disk-held dispatch
+
+Header GATE13:24 requests clean superseded checkout inputs. Existing read-only list design/agent-D141ii-clean-superseded-worktree-candidates-1345.json inventories 12 ended clean Agent worktrees, 1539993600 allocated bytes in aggregate, excluding every pin/current D141ee/D141ii tree, dirtyG2 and liveworker. Each exact path/worker/KEEP/source branch/status/livebrief/suite-or-lease reference is recorded. All KEEP stays; this is candidate evidence only, never permission to recycle. Lead fresh process/openfd/reference/source guards and owner exact-target approval remain required. No manager deletion, KEEP packing/removal, hub repack or Store operation.
+
+Currentfree4615225344bytes. SoleSol1331 actualcaller repair has2PASS and final evidence, no productchange; protected review and integrated53 remain. Baseline/candidate defaultmypy share environmentfail; target3.12 bothPASS. No additionalbody or floor exception. Alert4.25GB remains.

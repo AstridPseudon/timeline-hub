@@ -1,0 +1,119 @@
+{
+  "at": "2026-10-26T13:45:43.007448+00:00",
+  "free_bytes": 4615233536,
+  "scope": "Read-only exact clean ended Agent worktrees outside all pins/current D141ee/D141ii. KEEP remains; no deletion/recycle authorized by this list. Fresh process/lease/source/reference guards and exact owner approval still required.",
+  "candidates": [
+    {
+      "worker": "agt-F-D141ee-installer2-scope-1134",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-installer2-scope-1134",
+      "keep": true,
+      "ended": "2026-10-26T11:35:01Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-installer2-scope-1134",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-inverse38-scope-review-1137",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-inverse38-scope-review-1137",
+      "keep": true,
+      "ended": "2026-10-26T11:41:14Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-inverse38-scope-review-1137",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-1134",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-writers15-scope-1134",
+      "keep": true,
+      "ended": "2026-10-26T11:37:28Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-writers15-scope-1134",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-review-1137",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-writers15-scope-review-1137",
+      "keep": true,
+      "ended": "2026-10-26T11:42:50Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-writers15-scope-review-1137",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-return-review-1148",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-writers15-return-review-1148",
+      "keep": true,
+      "ended": "2026-10-26T11:53:08Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-writers15-return-review-1148",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-installer2-scope-review-1137",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-installer2-scope-review-1137",
+      "keep": true,
+      "ended": "2026-10-26T11:39:24Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-installer2-scope-review-1137",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-writers15-scope-return-1143",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-writers15-scope-return-1143",
+      "keep": true,
+      "ended": "2026-10-26T11:48:29Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-writers15-scope-return-1143",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    },
+    {
+      "worker": "agt-F-D141ee-inverse38-scope-1134",
+      "worktree": "/home/user/work/wt/agt-F-D141ee-inverse38-scope-1134",
+      "keep": true,
+      "ended": "2026-10-26T11:36:42Z",
+      "clean": true,
+      "allocated_bytes": 128524288,
+      "branch_retained": "tl/agt-F-D141ee-inverse38-scope-1134",
+      "status_refs": false,
+      "live_brief_refs": [],
+      "suite_refs": [],
+      "decision": "candidate list only; owner/lead must qualify and approve exact targets before KEEP-associated recycle"
+    }
+  ],
+  "supersedes": "agent-D141ii-clean-superseded-worktree-candidates-1345.json",
+  "correction": "Exclude 0816 and ALL historical controller trees from owner request; explicit held/custody paths are outside this candidate scope. No cleanup occurred.",
+  "excluded_held_or_custody": [
+    "agt-P4-D141-body-continuation-0105",
+    "agt-P4-D141-bound-proof-controller-0128",
+    "agt-F-D141b-pristine-controller-0035",
+    "agt-F-final-source-join-0816"
+  ]
+}
