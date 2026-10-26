@@ -1,0 +1,61 @@
+{
+  "schema": "d141gg-asset-controller-receipt-v1",
+  "selector": "p2-register-asset",
+  "attempt_scope": "original",
+  "outcome": "PASS",
+  "source_recipe_sha256": "d665c4907abd063edc9da0f29c887b56f7b66fb80febbe52f14732ea66e95d0d",
+  "independent_review_sha256": "cf938a6ae2157e14fba7788c29bb8535ad20050858f2b4acb0a6777f80aad6ea",
+  "native_submit": {
+    "exit": 0,
+    "started_at": "2026-10-26T11:57:29Z",
+    "finished_at": "2026-10-26T11:58:01Z",
+    "argv": [
+      "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+      "--max-old-space-size=6144",
+      "--import",
+      "tsx",
+      "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+      "p2-register-asset",
+      "--submit"
+    ],
+    "cwd": "/home/user/work/app",
+    "stdout_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stdout.log",
+    "stderr_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/native-submit.stderr.log",
+    "stdout_sha256": "66805fd3d1d3fdd01feb4daf32edac8f6830e5c7f456ae0b9d39710b424e7bb6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "admission": {
+    "free_bytes": 5320179712,
+    "strictly_above_bytes": 5200000000,
+    "native_inspection": {
+      "action": "FIRST_NATIVE_INVOCATION_ONLY",
+      "first_invocation_candidate": true,
+      "live_admission": "UNVERIFIED",
+      "condition": "same sole owner; repeat inspection immediately before exec, measure >5.2GB once, retain tool session"
+    },
+    "loadedAgentSHA": "ecdc242ed9b673f641759ecf029f95e89a2c6f92"
+  },
+  "requests": {
+    "preflight": {
+      "id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-preflight-1026115730-3534",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-preflight-1026115730-3534",
+      "status": "pass",
+      "exit": "0"
+    },
+    "normal": {
+      "id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328",
+      "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328",
+      "status": "pass",
+      "exit": "0"
+    }
+  },
+  "custody": {
+    "normal_artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141cc-submit-owner-sol-1047/evidence/future-native/full-d141-p2-register-asset-82e9e13d-submit/submit-plan.json",
+    "normal_artifact_sha256": "179644ce9037b29174b7a564b8639b6c1cee995e2a536ae2a525583f35ac0f4f",
+    "raw_keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328/KEEP",
+    "raw_keep_created_at": "2026-10-26T11:58:01Z",
+    "same_normal_id_observed": true,
+    "second_submit": false,
+    "manual_request_creation": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-26T12:03:38.610921+00:00",
+  "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+  "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+  "id_allocation_line": 13,
+  "id_allocation_source": "ID=$(echo \"${T#integration:}\" | tr -c 'a-zA-Z0-9-\\n' -)-$S-$(date -u +%m%d%H%M%S)-$RANDOM; D=$O/tests/$ID; mkdir -p $D",
+  "submission_source": "echo queued > $D/status; echo \"TEST $ID\" > $O/queue/pending/.test-$ID.tmp && mv $O/queue/pending/.test-$ID.tmp $O/queue/pending/test-$ID",
+  "no_preallocate_or_KEEP_option": true,
+  "source_not_modified": true
+}

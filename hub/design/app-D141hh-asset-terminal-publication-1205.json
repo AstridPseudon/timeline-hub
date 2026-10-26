@@ -1,0 +1,60 @@
+{
+  "utc": "2026-10-26T12:05:16.192200+00:00",
+  "worker": "app-P-D141gg-asset-admitted-1155",
+  "actual_worker_exit": 0,
+  "normal_result": "10328 PASS0/260s pending custody",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/controller-receipt.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-controller-receipt.json",
+      "sha256": "79913870728cbd2740c04c59475f7e6f6c1916b1684aa7e9be921093cd517fc9",
+      "bytes": 3333
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/results.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-results.json",
+      "sha256": "70da1fe4ebde1caba6666df603715f1a4156dfc09868acb078c9ec4f328f20a5",
+      "bytes": 1244
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-source-manifest.json",
+      "sha256": "70375bac2aa5f1fe71da2a10ff38567f82fddb45efaa1b9ef69997004d601e31",
+      "bytes": 5576
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/trace-measurement.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-trace-measurement.json",
+      "sha256": "a23ddc945bd689bcd0a6cc77f13eb097425a1121790b17a886158e5ab4dd7de3",
+      "bytes": 964
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-sampler-lifecycle.json",
+      "sha256": "b165c99bc9fc980c0c96b8a19d8b2d827dc7d75ed5ea6eff247903eecd711a8e",
+      "bytes": 713
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/progress.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-progress.json",
+      "sha256": "bbc7126599ff6fc583c6f50190c19987aaec4db2e9d01bf659b36e6f48f5899a",
+      "bytes": 4120
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-validation.md",
+      "sha256": "d820cdaf5017253d14fdbb104c7f7da0a3d53e9587dae4792b3f7b1c93332b7c",
+      "bytes": 1548
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P-D141gg-asset-admitted-1155-handoff.md",
+      "sha256": "04ef86cb2d620b6610ae18adcb667b4528440ef3deda36349ca7045e7755eef4",
+      "bytes": 835
+    }
+  ],
+  "limits": [
+    "Author initial sampler first command failed before real sampler; no first-tool coverage claim",
+    "Raw preflight KEEP manager-added11:58:20.303196Z; normal worker marker11:58:01 immediate"
+  ]
+}

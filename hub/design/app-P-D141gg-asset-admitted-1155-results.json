@@ -1,0 +1,22 @@
+{
+  "schema": "d141gg-asset-results-v1",
+  "selector": "p2-register-asset",
+  "attempt_scope": "original",
+  "normal_id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328",
+  "preflight_id": "app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-preflight-1026115730-3534",
+  "status": "pass",
+  "exit": 0,
+  "summary": "test app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328: pass exit=0 in 260s \u2014 full-d141-p2-register-asset-82e9e13d-submit on app-pin-82e9e13d (app tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710)",
+  "counts": {
+    "readiness_pass": 1,
+    "register_asset_pass": 1,
+    "failures": 0
+  },
+  "raw_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328",
+  "raw_keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-82e9e13d-full-d141-p2-register-asset-82e9e13d-submit-1026115800-10328/KEEP",
+  "raw_bytes": 138065056,
+  "scope_limits": [
+    "This is one admitted original selector result.",
+    "No overall P2/platform GO, final build, ZIP, or unrelated selector claim."
+  ]
+}

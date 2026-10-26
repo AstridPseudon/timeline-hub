@@ -1,0 +1,14 @@
+{
+  "schema": "d141gg-asset-sampler-lifecycle-v1",
+  "trace_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P-D141gg-asset-admitted-1155/evidence/disk-trace.txt",
+  "started_before_native": true,
+  "native_started_at": "2026-10-26T11:57:29Z",
+  "native_finished_at": "2026-10-26T11:58:01Z",
+  "stopped_action": "SIGINT",
+  "wait_reap_completed": true,
+  "reaped_exit_code": 1,
+  "direct_sampling_session": "retained foreground PTY session",
+  "sample_count": 81,
+  "first_tool_coverage_claim": false,
+  "note": "The initial sampler attempt was stopped and corrected to direct-file sampling before native admission; no request started during that attempt."
+}
