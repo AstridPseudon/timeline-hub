@@ -1,51 +1,29 @@
 {
-  "schema": "timeline.agent.u4a.d141.postreg-source-manifest.v1",
-  "agent": {
-    "head": "8585ed9c0404d0187b2ce70242d25114a32747c2",
-    "tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
-    "parents": [
-      "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
-      "5d202569f3af3852476d182ff49683787bb1e881"
-    ],
-    "lock_sha256_before": "sha256:0cc3ba737889822d527179d31f01f6cbab7d04a9b3412f6dfe4508c16e6edea3",
-    "lock_sha256_after": "sha256:cc1661b12d9d0a4600c79adab4e2d962db455b5819dee78a0353787d8d4f2b82"
+  "schema_version": 1,
+  "task": "U2/D135",
+  "repo": "agent",
+  "candidate_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "candidate_base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "merge_head": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+  "merge_head_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+  "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+  "changed_file_count_from_candidate_base": 96,
+  "frozen_source_note": "The first20 and B-1936 packets use frozen ours 547e10456250c1b5bcf63b44a50c90ff0563ce1e, not the actual candidate base. They were used only as bounded source dispositions; actual conflicts and final source were checked against a30e and merge head.",
+  "resolved_paths": {
+    "astrid/chat/astrid-local-agents.test.ts": "53a14d2debc4c45618e2d40fdd6f42659bc51b6cee274a2c2a7fb4bfb63461e3",
+    "astrid/chat/service.mjs": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
+    "astrid/installer/backend.py": "3892c447dc111cd0b41b06d38483b0cffc5cf2ae63ab519cad7388fc145029c0",
+    "docs/install/OMP-LANDING.md": "ec58b4e1a22ca71e1c5acd28c7e823ab948e0fe6b7a24874e96895688f699061",
+    "tests/test_installer_omp_source.py": "1d925f6a343b8a85144967948fb4c80443c74b3c32510bc00645e734b31de4de",
+    "tests/test_installer_platforms.py": "77517d7eec667958ae2409146ac4d3bf472a0878a5965504fe8fac0961126e10"
   },
-  "runtime": {
-    "checkout": "/home/user/work/runtime",
-    "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
-    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
-    "parents": [
-      "857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5",
-      "012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
-    ],
-    "source_commit_before": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
-    "source_commit_after": "95d98f038320d5d46bd679ac000ab3e15825c935",
-    "clean_after": true
-  },
-  "comparison": {
-    "independent_receipt": "/home/user/timeline-hub/hub/design/rt-F-D141-postREG-custody-review-0513-producer-corrected.json",
-    "mapped_count": 15,
-    "all_current_bytes_equal_pre_adoption_bytes": true,
-    "all_current_bytes_equal_runtime_source_bytes": true,
-    "all_current_bytes_equal_independent_0513_bytes": true,
-    "all_modes_unchanged": true,
-    "outside_product_diff": []
-  },
-  "mapped_payloads": [
-    {"consumer": "astrid/core/timeline/schema/timeline-config.schema.json", "source": "contract/schemas/timeline-config.schema.json", "sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"},
-    {"consumer": "astrid_runtime_client/__init__.py", "source": "packages/python/astrid_runtime_client/__init__.py", "sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
-    {"consumer": "astrid_runtime_client/contract_metadata.py", "source": "packages/python/astrid_runtime_client/contract_metadata.py", "sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"},
-    {"consumer": "astrid_runtime_client/generated.py", "source": "packages/python/astrid_runtime_client/generated.py", "sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
-    {"consumer": "astrid_runtime_client/timeline_commit_types.py", "source": "packages/python/astrid_runtime_client/timeline_commit_types.py", "sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
-    {"consumer": "tests/fixtures/runtime-responses/events_page_1_200.json", "source": "conformance/responses/events_page_1_200.json", "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"},
-    {"consumer": "tests/fixtures/runtime-responses/events_page_2_200.json", "source": "conformance/responses/events_page_2_200.json", "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"},
-    {"consumer": "tests/fixtures/runtime-responses/invalid_cursor_400.json", "source": "conformance/responses/invalid_cursor_400.json", "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"},
-    {"consumer": "tests/fixtures/runtime-responses/managed_outputs_200.json", "source": "conformance/responses/managed_outputs_200.json", "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"},
-    {"consumer": "tests/fixtures/runtime-responses/not_found_404.json", "source": "conformance/responses/not_found_404.json", "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"},
-    {"consumer": "tests/fixtures/runtime-responses/publish_conflict_409.json", "source": "conformance/responses/commit_conflict_409.json", "sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"},
-    {"consumer": "tests/fixtures/runtime-responses/task_admission_201.json", "source": "conformance/responses/task_admission_201.json", "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"},
-    {"consumer": "tests/fixtures/runtime-responses/task_read_200.json", "source": "conformance/responses/task_read_200.json", "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"},
-    {"consumer": "tests/fixtures/runtime-responses/validation_error_422.json", "source": "conformance/responses/validation_error_422.json", "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"},
-    {"consumer": "tests/fixtures/visual-boundary-v1.json", "source": "conformance/fixtures/visual-boundary-v1.json", "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"}
-  ]
+  "generated": {
+    "source": "astrid/chat/service.ts",
+    "source_sha256": "e6ca2f298d2785fac2d850fddd34f81c827c1c640f461bb63316fa3ee5ba4899",
+    "artifact": "astrid/chat/service.mjs",
+    "artifact_sha256": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
+    "command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run build:chat",
+    "freshness_command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run check:chat-bundle",
+    "result": "PASS"
+  }
 }
