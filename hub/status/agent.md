@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-26T07:31:23Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 12m -->
-# agent board, 2026-10-26T07:19:03.483798+00:00
+<!-- agent | 2026-10-26T07:36:09Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 3m -->
+# agent board, 2026-10-26T07:33:03.881300+00:00
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Preserve upstream and current behavior | HARD Sol and Luna | Independent0432 PASS SOURCE | merged | Sol0408 and reviewer0432 | Freeze2 whole source union qualified. Full behavior pair pending. | 8585ed9c0404 |
@@ -21,7 +21,7 @@
 | D141l U2 | Preserve custody and installer source | HARD Sol | Independent0432 PASS SOURCE | merged | Sol0408; reviewer0432 | Whole54path union,906 own/26 upstream blobs and both test families conserved. e1c installer ancestor. | 5d202569f3 |
 | D141m media | Preserve both metadata behaviors | HARD Sol and Luna | D141r source review | merged | Sol0408 and reviewer0432 | Existing public generationId plus variantId discriminator; unmarked aliases get upstream conversion. Behavior owed. | 8585ed9c0404 |
 | D141l proof source | Qualify repaired full pair controls | Sol and independent Luna | Independent0707 PASS_COMMAND | merged | Sol0638 and reviewer0707 | 10 admission and36 lifecycle; tiny17/1 and1/0 PASS. Source only; actual controller binding owed. | Evidence only |
-| D141l binding | Complete existing controller continuation | Luna | Independent0707 PASS_COMMAND | doing | agt-F-D141l-controller-binding-prep-0718 | Source-only preparation; actual heavy witness and service IDs remain future facts. | Pending |
+| D141l binding | Complete existing controller continuation | Luna | Author0718 terminal; reviewer0731 live | review | agt-F-D141l-binding-review-0731 | Author controls claim PASS; output paths and copied trace fail delivery. Independent all-findings review pending. | 6a2d1c22ec80 |
 | D141l whole path | Retain independent whole path findings | Luna | Runtime actual06:50:50 and terminal | merged | rt-F-D141l-command-wholepath-0640 | FAIL7 confirmed plus three publication/venue observations; source-only limits retained. Exact originals published0656. | Evidence only |
 | D141u selection | Apply recorded comparable full scope | MAIN and Luna | D141u-a05:13 | merged | Existing command return0515 | Confirmed22 cut/17 pristine roots; same settings, every present ID compared; source-backed N/A for absent own IDs. | Decision only |
 | D141l receiving | Retain genuine new App tuple | App Luna | Review0454 and normal HOME0459 | merged | App0448 and reviewer0454 | Exact HOME5344/treedd989 adopted Agent8585 normally. Source receipt0459 hash qualified; no new gate credit. | 5344c53e3063 |
@@ -29,7 +29,7 @@
 | D141l checkout | Prepare exact final proof inputs | Manager normal route | Binding0718 and D89d | gated:D89d | Existing controller lineage | Current ecdc and95d homes; pristine64197/fa9 present. Source PASS0707; no body. | Pending |
 | D139 Farm | Resolve only current undecidable candidates | Runtime and Farm | Definitive freeze2 join | gated:D141k-candidates | Runtime GroupA0300 | Early15 flagged, unreviewed. No current Farm request or original input hunt; kit pair/67wheel EXACT MISSING. | Pending |
 | P4 freeze1 | Retain authentic original3 GO | Agent and App | Correction0202 and App0254 | merged | Actual10086; receipt0159; App0254 | Actual3 PASS23.668s; XMLafca45/correctionb7be exact. App520d path independent. No retarget. | Actual frozen tuple |
-| P4 freeze2 | Reprove changed CLI selector | Existing controller | Command source and headroom | gated:D89d | Existing P4 controller reserved | Header04:46 scopes CLI selector; actual final source exists. New proof separate; old19479 held unstarted. | Pending |
+| P4 freeze2 | Prepare changed CLI reproof | Luna; existing controller | Source admission then D89d | gated:D89-source | agt-P4-D141l-cli-prep-0733 prepared | Brief ready; actual pre-dispatch4484911104 below4.6GB, no request queued. Old19479 held. | Pending |
 | D134 behavior | Retain own failures visibly | Existing owners | Current per ID proof | gated:D141-results | Existing measured sources | Managed105,media48/30,CLI22,fork18,identity16,PARAM andword groups keep actual limits. No source-only deduction. | Frozen sources |
 | D73 own nodes | Retain ordinary service route | Luna | Full outcomes and real receipts | gated:D141-results | Return2318 and independent2318 | Rows and five refusal classes qualified; historical own5 NOTRUN. Prefer genuine current full outcomes. | cf7faa0054 |
 | D141v pins | Run one final metadata adoption pass | Luna and metadata review | All REG fixes merged and pre F final | gated:F-final | Existing U4a normal tool lineage | Agent adopts final Runtime, then App adopts both. Current App8585 versus Agentecdc is expected; no repeated re-pin. | Pending |
@@ -58,6 +58,12 @@ Later: original9/B022,Gate3,D118,Element,cost,D77 and own-test investigations ST
 
 Blockers: Agent controller — Binding0718 prepares the finite current request/brief/row/manifest seam; full pair and CLI P4 still need4714564096 bytes.
 Blockers: SWAP safety — Runtime1537 classifier refusal retains absolute hold; existing escalation, no retry, transfer or alternate route.
-Next ready: Binding0718 then one operational review; full pair and CLI P4 at D89d. live1 / cap1 below4.6GB; ready-undispatched0. No heavy body.
+Next ready: Receive reviewer0731; samebranch binding fix if needed. CLI prep0733 ready but source admission held. live1 / cap1 below4.6GB; ready-undispatched1. No heavy body.
 
 Inbox consumed through2142684 bytes. Manager writes board/briefs/peers/escalations/KEEP metadata and byte-exact SAFE publications only. No product/test/generated/pin edit, Git internals write, hub write, upstream push, credential orM5 action. No finalbuild/ZIP claimed.
+
+07:32 pass: Binding author0718 terminal07:24:42 exit0, source6a2d1c22/tree from Composition WIP only,101 evidence files accidentally committed there; no source merge. Exact ORCH output contains only supplemental manager trace. Claimed worker trace is copied0638 history and does not cover0718; no current trace claim. ONE independent all-findings Luna0731 actually started07:29:31 at4648656896 normal4.6GB source admission. It audits missing output coordinates/trace and the complete real receipt producer, row/command argument flow, future-service circularity and claimed controls. No repair or body in review.
+
+Guarded local stale-v1 duplicate archive retirement0730 recovered158630056 bytes, all3 pre22Oct archives single-link/nonKEEP, every byte/hash equal retained readonly hub originals, no active board/suite/env/lease/running brief/queued request/openfd reference. Pre4490031104,post4648669184. Normal hub-sync then RESTORED all3 localcopies byteexact; persistent relief is ZERO. This is not permission refusal or hub mutation; no repeated deletion/forced sync change. [Exact cleanup receipt](../../design/agent-D141-stale-v1-duplicate-archive-retirement-0730.json). Reviewer admission was genuine before restoration, continuation above4GB valid. No heavy admitted.
+
+Independent P4 CLI source prep0733 brief fully prepared on currentecdc via existing0105/0055 lineage and approved04:46 CLI scope. Immediately rechecked before request; actual4484911104 below4600000000, so NOT DISPATCHED. Prior commentary intent superseded by that actual refusal-to-dispatch check; no worker/request/service/body exists. This is independent ready source held by disk, not left waiting with an available slot. Current source cap1 occupied by reviewer. Source-only two-node setup fix, full-pair qualification and D141v metadata scopes unchanged. Compact0 and sweep3 terminalexit0, zero reclaimed.

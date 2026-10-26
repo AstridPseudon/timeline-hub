@@ -1,0 +1,44 @@
+{
+  "reviewed_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+  "reviewed_worktree": "/home/user/work/wt/agt-F-D141l-controller-binding-prep-0718",
+  "review_worktree": "/home/user/work/wt/agt-F-D141l-binding-review-0731",
+  "requested_delivery_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-controller-binding-prep-0718/evidence",
+  "observed_delivery_files": ["manager-disk-trace.txt"],
+  "reviewed_packet_files": {
+    "controller-plan.md": "c88156f2fb93bb50e17c9ac67bb21b56f9954794c2edcd1a72ccfa7cb025ca71",
+    "controller-continuation.sh": "0910421e5864a42b8a93b23911724b71f24bfd596bb3638f8334b4dcb66096b1",
+    "binding-source.py": "ee8e85069c794b199cc84aa1a97829d8857e134875972c82656d2777cd2f62e0",
+    "command-cut.sh": "b8da4457a51ad390a133d76b2006ac7df93ecc39c6a054b8c8399004b6e8e16e",
+    "command-pristine.sh": "4282604bb6e09cbad539fe2f2db08bb7648d1d8c4d6f9543586a41983c125b0c",
+    "check-source.py": "d4bc6466e1db95a34fe22a6b477ecc2b7ec629ba6543b2551005b6083e7b6338",
+    "rows.txt": "99ac04418135cffe5bbdb5adcc5d6867d5bde71656d643a1d3b080ce5b9e2436",
+    "source-manifest.json": "f0fbc9adebe8cb27a5116547cc896855ffba2a929a7e13a97b9090be65627cb9",
+    "readiness.json": "cd0c68fc3fee115b5df43590e31f1de87e880c51f4e217e93e0c68867d22017b",
+    "validation.md": "0a759863cf050c7e4e935c4e2d5fb9a267559d1813581666a35cc49f1012fcca",
+    "handoff.md": "0cf3930adaea490fa5740e978d8fc7ce3f634867d4415bb720bda0d5f6abc80b",
+    "disk-trace.txt": "3614e82d3a27668b1e0f823f866fcb1bb8aadb1f60b11c1c67b347bd61c9ac04"
+  },
+  "tuples": {
+    "integrated": {
+      "agent": {"sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92", "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"},
+      "runtime": {"sha": "95d98f038320d5d46bd679ac000ab3e15825c935", "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"},
+      "app": {"sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d", "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"},
+      "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "pristine": {
+      "agent": {"sha": "64197afa297f86f1e738238d5e80aff6d33e303a", "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e"},
+      "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c"}
+    }
+  },
+  "controls": {
+    "author_exact_check_exit": 0,
+    "author_admission_cases": 10,
+    "author_lifecycle_cases": 36,
+    "bash_n": "pass",
+    "python_ast": "pass",
+    "request_test": "not run",
+    "test_run": "not run",
+    "full_suite": "not run"
+  },
+  "verdict": "FAIL"
+}

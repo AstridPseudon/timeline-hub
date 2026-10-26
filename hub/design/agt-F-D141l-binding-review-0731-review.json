@@ -1,0 +1,50 @@
+{
+  "task": "F D141l independent review of existing-controller binding preparation0718",
+  "verdict": "FAIL",
+  "reviewed_commit": "6a2d1c22ec800229812f4d756d7198aece8111ed",
+  "reviewed_worktree": "/home/user/work/wt/agt-F-D141l-controller-binding-prep-0718",
+  "delivery": {
+    "requested_evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-controller-binding-prep-0718/evidence",
+    "requested_files_present": ["manager-disk-trace.txt"],
+    "committed_packet_location": "/home/user/work/wt/agt-F-D141l-controller-binding-prep-0718/evidence",
+    "status": "FAIL_DELIVERY_PATH"
+  },
+  "findings": [
+    {"id": "F-D141L-BIND-001", "severity": "blocking", "title": "Committed packet was not delivered to the required ORCH evidence path"},
+    {"id": "F-D141L-BIND-002", "severity": "blocking", "title": "Controller continuation delegates production to an undefined JSON binding"},
+    {"id": "F-D141L-BIND-003", "severity": "blocking", "title": "Binding consumer does not authenticate the request/receipt/service/brief chain"},
+    {"id": "F-D141L-BIND-004", "severity": "blocking", "title": "Current production row remains the stale 0309/0249 route"},
+    {"id": "F-D141L-BIND-005", "severity": "blocking", "title": "Checker PASS does not exercise real admission and retains a dead stale admission path"},
+    {"id": "F-D141L-BIND-006", "severity": "blocking", "title": "Disk trace is copied historical 0638 evidence, not this worker's pre-work trace"}
+  ],
+  "controls": {
+    "author_exact_check": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P evidence/check-source.py check",
+      "exit": 0,
+      "reported": "control_status=PASS, admission_cases=10, lifecycle_cases=36, pair_status=WAITING_FOR_GENUINE_CONTROLLER_BINDING",
+      "new_log": "/home/user/work/wt/agt-F-D141l-controller-binding-prep-0718/evidence/control-logs/check-1792999830236902248.json"
+    },
+    "bash_n": "PASS",
+    "python_ast": "PASS",
+    "continuation_check": "PASS with WAITING_FOR_GENUINE_CONTROLLER_BINDING",
+    "missing_binding_materialize": "REFUSED exit 78",
+    "tiny_controls": "author log reports positive 17/1 and poison 1/0; isolated controls only",
+    "full_or_body": "NOT RUN",
+    "request_test_or_test_run": "NOT RUN",
+    "lint_typecheck": "N/A: operational evidence scripts only"
+  },
+  "tuple_protection": {
+    "integrated": {
+      "agent": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
+      "runtime": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "app": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "pristine": {
+      "agent": "64197afa297f86f1e738238d5e80aff6d33e303a",
+      "runtime": "fa9cd5464a8b37b02f971de375e56be846cd69e2"
+    },
+    "source_changes": "none"
+  },
+  "next": "Do not admit or run the pair. First publish the packet at the required ORCH path, then have the real existing controller produce and retain a current request/service/receipt/brief binding through request-test/test-run, with authenticated ordering and v2 request validation. Only then materialize/install the exact current rows and dispatch once at 4714564096 bytes."
+}

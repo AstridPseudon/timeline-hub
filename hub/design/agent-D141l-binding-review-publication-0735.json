@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-26T07:36:37.088445+00:00",
+  "kind": "manager SAFE byte-exact publication, originals unchanged",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-review.json",
+      "sha256": "d5b71f159632348c5f87c0cda65cf90f581b8d10d700670a46cb4a5aa99e4b3e",
+      "bytes": 3248
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-findings.md",
+      "sha256": "430afdfe612d4a50e24f19279687c65b65ed7d5ae17f8b7de4184b2fea281386",
+      "bytes": 7550
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-source-manifest.json",
+      "sha256": "be21267904ce8ee164b0bb1ba5633b66e22a154169c7ea498cf59007e5570071",
+      "bytes": 2665
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-validation.md",
+      "sha256": "218ec848ec31b803a74e1c934bd5ee1994e5385e07d3762dd47edecd0d4e33ac",
+      "bytes": 2112
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-handoff.md",
+      "sha256": "1c248242957a68a706027eb6bf7fb2f71732ccb0ed5b7322298378ef6c037ae5",
+      "bytes": 1625
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-review-0731/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D141l-binding-review-0731-disk-trace.txt",
+      "sha256": "ad59c1a0f40dc758988353f3eb265ed96d8882999addea1e608109b8a37c83d4",
+      "bytes": 452
+    }
+  ]
+}
