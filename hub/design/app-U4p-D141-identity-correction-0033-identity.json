@@ -1,0 +1,3176 @@
+{
+  "schema": "timeline.app.u4p.u3.d141.identity-correction.v1",
+  "task": "U4p/U3 D141 bounded read-only identity-evidence firstreturn",
+  "status": "PASS_IDENTITY_CORRECTION",
+  "scope": {
+    "source_changes": [],
+    "product_changes": [],
+    "test_changes": [],
+    "generated_changes": [],
+    "pin_changes": [],
+    "semantic_review": "not repeated; unchanged code proof reused at recorded scopes"
+  },
+  "qualified_inputs": {
+    "app": {
+      "repo": "app",
+      "checkout": "/home/user/banodoco/reigh-app",
+      "commit": "9ada0d906a2efc5cf98b18b112d2d4e9d0657098",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "commit_length": 40,
+      "tree_length": 40,
+      "parents": [
+        "263b728f014040afc9c6b3fdfb54963b93b757eb"
+      ],
+      "base_commit": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+      "base_tree": "6594cb861575456f3548f868abfa46958dbbf514",
+      "frozen_upstream_commit": "7ca61bb3280beca21d98a854af266a382f7ce5df",
+      "frozen_upstream_tree": "974de7cd08900872eeb0bd6f6004d44323e01fab"
+    },
+    "agent": {
+      "repo": "agent",
+      "checkout": "/home/user/peteromallet/astrid-agent",
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "commit_length": 40,
+      "tree_length": 40,
+      "clean": true
+    },
+    "runtime": {
+      "repo": "runtime",
+      "checkout": "/home/user/banodoco/banodoco-workspace-runtime",
+      "commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "commit_length": 40,
+      "tree_length": 40,
+      "clean": true
+    }
+  },
+  "normal_checkout_guards": {
+    "before": [
+      {
+        "name": "agent",
+        "checkout": "/home/user/work/agent",
+        "branch": "tl/integration",
+        "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+        "clean": true
+      },
+      {
+        "name": "runtime",
+        "checkout": "/home/user/work/runtime",
+        "branch": "tl/integration",
+        "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+        "clean": true
+      },
+      {
+        "name": "app",
+        "checkout": "/home/user/work/app",
+        "branch": "tl/integration",
+        "head": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+        "tree": "6594cb861575456f3548f868abfa46958dbbf514",
+        "clean": true
+      }
+    ],
+    "after": [
+      {
+        "name": "agent",
+        "checkout": "/home/user/work/agent",
+        "branch": "tl/integration",
+        "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+        "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+        "clean": true
+      },
+      {
+        "name": "runtime",
+        "checkout": "/home/user/work/runtime",
+        "branch": "tl/integration",
+        "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+        "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+        "clean": true
+      },
+      {
+        "name": "app",
+        "checkout": "/home/user/work/app",
+        "branch": "tl/integration",
+        "head": "263b728f014040afc9c6b3fdfb54963b93b757eb",
+        "tree": "6594cb861575456f3548f868abfa46958dbbf514",
+        "clean": true
+      }
+    ],
+    "unchanged": true
+  },
+  "app_allowed_delta": {
+    "paths": [
+      "public/install-manifest.json",
+      "vendor/astrid-browser/provenance.json"
+    ],
+    "expected": [
+      "public/install-manifest.json",
+      "vendor/astrid-browser/provenance.json"
+    ],
+    "exact": true
+  },
+  "metadata": {
+    "vendor_provenance": {
+      "path": "vendor/astrid-browser/provenance.json",
+      "blob": "bfd83965f125eb2ad96158017fb70c3e2a12231f",
+      "bytes": 24708,
+      "astrid_commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "astrid_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "astrid_tree_length": 40,
+      "matches_agent_git": true
+    },
+    "install_manifest": {
+      "path": "public/install-manifest.json",
+      "blob": "a7365eb2b6b91fc8f28b1e5a362925c158bdb253",
+      "bytes": 4765,
+      "agent_sha": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "runtime_sha": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "pins_exact": true
+    },
+    "runtime_lock": {
+      "path": "runtime.lock.json",
+      "blob": "1cb1c5783d19963f9910e8cf1cdee126ecf719ba",
+      "bytes": 3493,
+      "source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "producer": "astrid-runtime",
+      "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+      "mapping_count": 14,
+      "source_exact": true
+    }
+  },
+  "vendor_custody": {
+    "vendor_file_count": 160,
+    "direct_source_hash_count": 159,
+    "derived_file": "astrid/packs/rendering/elements/public-catalog.ts",
+    "vendor_hash_mismatches": 0,
+    "direct_source_hash_mismatches": 0,
+    "vendor_hashes": {
+      "LICENSE": {
+        "expected_sha256": "d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+        "actual_sha256": "d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+        "blob": "05c06fcfad74b24359a161bfa2d2e83a2f5f6089",
+        "bytes": 7642,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/LICENSE",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx": {
+        "expected_sha256": "b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618",
+        "actual_sha256": "b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618",
+        "blob": "dce228995bde994708d8a4cc8aff04a50faac3e0",
+        "bytes": 6903,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx": {
+        "expected_sha256": "78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646",
+        "actual_sha256": "78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646",
+        "blob": "88cd1bfc001633fe4a66f79b9dd4a0bb4f718f25",
+        "bytes": 5645,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx": {
+        "expected_sha256": "be6f2f61c8428255186357a937aff388327b5b50b72bebae45de01fda1b8ea84",
+        "actual_sha256": "be6f2f61c8428255186357a937aff388327b5b50b72bebae45de01fda1b8ea84",
+        "blob": "0e6974c8b57dc62ea4e9141f991156deb7cceaad",
+        "bytes": 7846,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/element.yaml": {
+        "expected_sha256": "626a95d854cc6849011485cbb291654f8ac086e7b95639b8d448ea48cd720cef",
+        "actual_sha256": "626a95d854cc6849011485cbb291654f8ac086e7b95639b8d448ea48cd720cef",
+        "blob": "2a3f7be180aab0e23e83e70cee6a46892cf450d9",
+        "bytes": 3151,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-burst/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx": {
+        "expected_sha256": "35a4e1a41a5de45900f3f9a3b26c3c8fb647cf3f9bb189728344225e50b9f305",
+        "actual_sha256": "35a4e1a41a5de45900f3f9a3b26c3c8fb647cf3f9bb189728344225e50b9f305",
+        "blob": "af8b9418ce4fe68af277a6c9aec79d56585fc7bd",
+        "bytes": 4987,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/element.yaml": {
+        "expected_sha256": "53aac164d136ea78fd8689b6fe026f9c29d541d70363a69a9f51cd5f605974c8",
+        "actual_sha256": "53aac164d136ea78fd8689b6fe026f9c29d541d70363a69a9f51cd5f605974c8",
+        "blob": "f8825fa1dd13a4b3a34b3d36510b14298137253e",
+        "bytes": 2387,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-callout/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx": {
+        "expected_sha256": "3ac714a541fe5c794cd221472edfbdf67aaca9379fa89c51a7d38b26630885ce",
+        "actual_sha256": "3ac714a541fe5c794cd221472edfbdf67aaca9379fa89c51a7d38b26630885ce",
+        "blob": "b2481b84a62d0833d1e41337fbedb3f0089423d5",
+        "bytes": 21631,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/element.yaml": {
+        "expected_sha256": "3c08a7a39ecb696652ea8929b4e33b057b91807831421f6d2c939ecc0c1dfe86",
+        "actual_sha256": "3c08a7a39ecb696652ea8929b4e33b057b91807831421f6d2c939ecc0c1dfe86",
+        "blob": "3b52612758d070761a2f3f2afc02991d0057bea7",
+        "bytes": 4827,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/ledger.ts": {
+        "expected_sha256": "c378efe90b156ade201e1b86921ed5a585df4ceced9db80520415bbb5251095a",
+        "actual_sha256": "c378efe90b156ade201e1b86921ed5a585df4ceced9db80520415bbb5251095a",
+        "blob": "ed1f03787b2d7908e33b6a3805abb70d9e645683",
+        "bytes": 8905,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-churn/ledger.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx": {
+        "expected_sha256": "9187f494ff90bb01a9a9f7f7d4e8e50230660c35f32e6e2376a8c67281ba83d0",
+        "actual_sha256": "9187f494ff90bb01a9a9f7f7d4e8e50230660c35f32e6e2376a8c67281ba83d0",
+        "blob": "5b672bfad90f4e544895c3c6e799906b47b8358f",
+        "bytes": 38178,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts": {
+        "expected_sha256": "b44afdbcc50132c4e5970bfb1d2dd70418172e4ad3d51b563dc6bd5fb029a33f",
+        "actual_sha256": "b44afdbcc50132c4e5970bfb1d2dd70418172e4ad3d51b563dc6bd5fb029a33f",
+        "blob": "9c6d6319f3edb4d444570d871c2b18b7b5bdcad7",
+        "bytes": 7968,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/element.yaml": {
+        "expected_sha256": "9d48762902a0aed9ff207ae07a52ee81560e1ecf245abfe32161e4ed75e92c6e",
+        "actual_sha256": "9d48762902a0aed9ff207ae07a52ee81560e1ecf245abfe32161e4ed75e92c6e",
+        "blob": "6ac1dd2072cb7fcf7d4450a590f4e482e02630bf",
+        "bytes": 8449,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-discord/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx": {
+        "expected_sha256": "28a0e129fad24deebe46a75128fa76135db4abe10bcd3d7d6a4905501857e883",
+        "actual_sha256": "28a0e129fad24deebe46a75128fa76135db4abe10bcd3d7d6a4905501857e883",
+        "blob": "8cd2563b7ea783ac6a27b032561a094ac446a414",
+        "bytes": 4851,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/element.yaml": {
+        "expected_sha256": "bac0d8fa9291c5f26d85830a5530638221bb7c0549c325311033d1e8d0837ae6",
+        "actual_sha256": "bac0d8fa9291c5f26d85830a5530638221bb7c0549c325311033d1e8d0837ae6",
+        "blob": "c410a6e77d350b5f1a0d8fe685ac50a33a407632",
+        "bytes": 1775,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-droste/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx": {
+        "expected_sha256": "aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
+        "actual_sha256": "aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
+        "blob": "80f2cb965cc70b3b13cd9eeaf4d84e100c908765",
+        "bytes": 3805,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/element.yaml": {
+        "expected_sha256": "c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
+        "actual_sha256": "c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
+        "blob": "d6e11c52c713682298d50566d83d630cb7b5a0e7",
+        "bytes": 3148,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx": {
+        "expected_sha256": "aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
+        "actual_sha256": "aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
+        "blob": "caf5bb1d2aa68c3577c01e27c1ae2e01ad5d0211",
+        "bytes": 5260,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": {
+        "expected_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+        "actual_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+        "blob": "759f2f0534ea19e19ca4d4fc6d8ce7908e187e41",
+        "bytes": 14075,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml": {
+        "expected_sha256": "a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
+        "actual_sha256": "a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
+        "blob": "087b435699ae295af81c4396e73d787075b3c980",
+        "bytes": 5110,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts": {
+        "expected_sha256": "7d04f19d21b5a59555cc4725d54fa087e57068a8cf9da58f618be05764082fb9",
+        "actual_sha256": "7d04f19d21b5a59555cc4725d54fa087e57068a8cf9da58f618be05764082fb9",
+        "blob": "3e46a50fd8a57967801a9deac9276658b2212cd9",
+        "bytes": 1546,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts": {
+        "expected_sha256": "1e94041c8178687a82e4c5b54fb29b8cf0c281f74e9e624fdaf832f647072afa",
+        "actual_sha256": "1e94041c8178687a82e4c5b54fb29b8cf0c281f74e9e624fdaf832f647072afa",
+        "blob": "0a048c2b97dbaa720915398d5205ee2b84b3db92",
+        "bytes": 1876,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts": {
+        "expected_sha256": "b5fc7040551c6ef8e3e7d83afee7b431fc93ac70bd64ae6ddf9a3fa35ebc6ce6",
+        "actual_sha256": "b5fc7040551c6ef8e3e7d83afee7b431fc93ac70bd64ae6ddf9a3fa35ebc6ce6",
+        "blob": "76588b3a39822f8187096d5321879d2f005dcc16",
+        "bytes": 801,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx": {
+        "expected_sha256": "e294619aaedbbe76320539a8f279ce1b78b7bb2d4e0d6e0457247d4c058f82d5",
+        "actual_sha256": "e294619aaedbbe76320539a8f279ce1b78b7bb2d4e0d6e0457247d4c058f82d5",
+        "blob": "33c96861c5e29781db244982b4c0eee3ce5db8fb",
+        "bytes": 4374,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/element.yaml": {
+        "expected_sha256": "529c0a5dbeb8c412b66fdbbce538a27e8945507ecdecc462aed03d762a3e1bb9",
+        "actual_sha256": "529c0a5dbeb8c412b66fdbbce538a27e8945507ecdecc462aed03d762a3e1bb9",
+        "blob": "c1081f2e5ddf79ad93063a6fa630297d1a7b31b3",
+        "bytes": 1566,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx": {
+        "expected_sha256": "6d108507a9504a4666af165730c50ff9ccd31c67f0154c20a996e7b046c957a1",
+        "actual_sha256": "6d108507a9504a4666af165730c50ff9ccd31c67f0154c20a996e7b046c957a1",
+        "blob": "05fd5c48bfbd5dfaf96505fa412159b1400bf395",
+        "bytes": 7543,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/element.yaml": {
+        "expected_sha256": "04908aa702a8a8910ea0f736f1f6a3afbd5ebaa75ac000b43fca0d37a846f34e",
+        "actual_sha256": "04908aa702a8a8910ea0f736f1f6a3afbd5ebaa75ac000b43fca0d37a846f34e",
+        "blob": "4f551b850d2a8b06583a4b3a08635f0c4d4dd4ab",
+        "bytes": 1933,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx": {
+        "expected_sha256": "72559c136b0c221573458d044e700514b47cb1ee0baf73b95e6173feffa96158",
+        "actual_sha256": "72559c136b0c221573458d044e700514b47cb1ee0baf73b95e6173feffa96158",
+        "blob": "3eda4d9851a5ad120a80aa768bd58a68ddaa4af2",
+        "bytes": 3039,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/element.yaml": {
+        "expected_sha256": "11333447891be64f02da35c5699008fb59992a5f5f0b0d0db4f79d547ec77716",
+        "actual_sha256": "11333447891be64f02da35c5699008fb59992a5f5f0b0d0db4f79d547ec77716",
+        "blob": "f2cf19d598eb8230347a311b0cbd47c0a1486144",
+        "bytes": 3138,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts": {
+        "expected_sha256": "d1dd8f09d153b336e8df18a2d3c938feabc63c2ceabf5d602d434db2ba830df5",
+        "actual_sha256": "d1dd8f09d153b336e8df18a2d3c938feabc63c2ceabf5d602d434db2ba830df5",
+        "blob": "d1cf15f22331ee2258ca11db500214300c5ba53a",
+        "bytes": 4231,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx": {
+        "expected_sha256": "60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
+        "actual_sha256": "60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
+        "blob": "29ddf9813dfe0bcc67bfc4e2036b730b07cb1a5e",
+        "bytes": 1407,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/element.yaml": {
+        "expected_sha256": "ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
+        "actual_sha256": "ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
+        "blob": "e7eb5d53c5686c6c9128dad48c7574b84fe83288",
+        "bytes": 1887,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": {
+        "expected_sha256": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
+        "actual_sha256": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
+        "blob": "1c606af49d0252934118bebacdc50d3dfbb1da08",
+        "bytes": 10243,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": {
+        "expected_sha256": "7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+        "actual_sha256": "7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+        "blob": "5263a9d6f7632dd2f513fa8167ecc85988918ac3",
+        "bytes": 5272,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": {
+        "expected_sha256": "05dbda5dfbaf5345532582ad43924cfe4c701d76ec1336319cacdb8948713ec3",
+        "actual_sha256": "05dbda5dfbaf5345532582ad43924cfe4c701d76ec1336319cacdb8948713ec3",
+        "blob": "69918c5e852110b14d466db01a879b4ffaa15559",
+        "bytes": 5708,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts": {
+        "expected_sha256": "6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
+        "actual_sha256": "6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
+        "blob": "6ba26539009d6ccd77cb130c71b2ec2b35d8b061",
+        "bytes": 7560,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": {
+        "expected_sha256": "a30320780d6a348e78d3645b310f73a2460a9e9849a72d146df7722d9083434f",
+        "actual_sha256": "a30320780d6a348e78d3645b310f73a2460a9e9849a72d146df7722d9083434f",
+        "blob": "bb134c5dbd8c057359abb2b17ae2800e5b740e1d",
+        "bytes": 1835,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx": {
+        "expected_sha256": "08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
+        "actual_sha256": "08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
+        "blob": "fef092c3c7579418b1ba056bbc7986fa8847651d",
+        "bytes": 6033,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/element.yaml": {
+        "expected_sha256": "9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
+        "actual_sha256": "9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
+        "blob": "d52ea33faca02e4a0cb29a35b8ed19a1f2feb6aa",
+        "bytes": 2008,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-quote/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx": {
+        "expected_sha256": "9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
+        "actual_sha256": "9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
+        "blob": "1880146935269293e8a99a26ce20c0f70962924f",
+        "bytes": 10063,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/element.yaml": {
+        "expected_sha256": "93143202129f057bbded11bd493626644daadf38c945d20292369b6bfe49758b",
+        "actual_sha256": "93143202129f057bbded11bd493626644daadf38c945d20292369b6bfe49758b",
+        "blob": "a055ea9e17c0368755cf226ad7c96b2ab34d32f8",
+        "bytes": 1649,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx": {
+        "expected_sha256": "93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee",
+        "actual_sha256": "93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee",
+        "blob": "d8e14ec9418c9d6b41461ea1e92713cf6f6e8de4",
+        "bytes": 5904,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/element.yaml": {
+        "expected_sha256": "7e07703f34bbce7e0bc8d9b7f79efe9a48360ffaf001ae8cec3da3cf6ccfeb32",
+        "actual_sha256": "7e07703f34bbce7e0bc8d9b7f79efe9a48360ffaf001ae8cec3da3cf6ccfeb32",
+        "blob": "3b3147cc41b58968c866df8d754ebb10318748d0",
+        "bytes": 3923,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts": {
+        "expected_sha256": "789545a001927ea413eb677c24d3f1c05c5077a4257e342d20a68b63e5ec32ea",
+        "actual_sha256": "789545a001927ea413eb677c24d3f1c05c5077a4257e342d20a68b63e5ec32ea",
+        "blob": "9a9eb0915e5bad67af9c6c512225470b88a1798d",
+        "bytes": 2244,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts": {
+        "expected_sha256": "e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e",
+        "actual_sha256": "e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e",
+        "blob": "41ae6a8a0e6da584c3a5852dc598515a16194e2c",
+        "bytes": 1042,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts": {
+        "expected_sha256": "5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49",
+        "actual_sha256": "5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49",
+        "blob": "bde45de41ac34f94f3d09e68df84e408bdcda1fa",
+        "bytes": 949,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx": {
+        "expected_sha256": "fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e",
+        "actual_sha256": "fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e",
+        "blob": "f48957adda69ba593f4235cc5993e7ac7635b44d",
+        "bytes": 10296,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/element.yaml": {
+        "expected_sha256": "05218725cc0c70c0c708bae8fa57a430b606517d6861cf2344ea623a94c9ca3a",
+        "actual_sha256": "05218725cc0c70c0c708bae8fa57a430b606517d6861cf2344ea623a94c9ca3a",
+        "blob": "daff7683599a985877ab97b2cf1976460e366784",
+        "bytes": 4086,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx": {
+        "expected_sha256": "ca863ed067e560497f8dd946e29933fb103c9cfae629c97b36711e477e8db74e",
+        "actual_sha256": "ca863ed067e560497f8dd946e29933fb103c9cfae629c97b36711e477e8db74e",
+        "blob": "cc946128e9ce5368f3ad11f0927fff92dffaa90e",
+        "bytes": 9432,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml": {
+        "expected_sha256": "1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
+        "actual_sha256": "1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
+        "blob": "cf7b4ab834b8ae4507adcaaf80e8cb591f3ba168",
+        "bytes": 1916,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx": {
+        "expected_sha256": "b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
+        "actual_sha256": "b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
+        "blob": "2b008d5bcab9c561fefeba22c36b53b13a23cc99",
+        "bytes": 6598,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": {
+        "expected_sha256": "be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
+        "actual_sha256": "be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
+        "blob": "6df0b4078584b3421ab11af138f67ac4d5962130",
+        "bytes": 2057,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": {
+        "expected_sha256": "2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+        "actual_sha256": "2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+        "blob": "6b7fa8a3424fec989441dc116d4a8dd5204f2d3e",
+        "bytes": 7169,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": {
+        "expected_sha256": "8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+        "actual_sha256": "8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+        "blob": "a41028e6851fd76b2c9466d1623b54d880f068fd",
+        "bytes": 3674,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": {
+        "expected_sha256": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
+        "actual_sha256": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
+        "blob": "c04f7d160dfd2b2d19cf12e087fcef1bcd2d7313",
+        "bytes": 1669,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": {
+        "expected_sha256": "8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
+        "actual_sha256": "8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
+        "blob": "a495033af8d0f849defcbeeed55d533e673f3655",
+        "bytes": 26994,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": {
+        "expected_sha256": "e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
+        "actual_sha256": "e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
+        "blob": "781de600a84339bdf5333478ffde2e7d79baff35",
+        "bytes": 4017,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/boundary.ts": {
+        "expected_sha256": "cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
+        "actual_sha256": "cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
+        "blob": "8f9ebb7647cc5ceb9c90ddb74f68114fdf93d420",
+        "bytes": 10025,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary.ts",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx": {
+        "expected_sha256": "c410a83f05eb74f21e9f55889a22a243f015c8739d02a8b2567dd89ca73b3f34",
+        "actual_sha256": "c410a83f05eb74f21e9f55889a22a243f015c8739d02a8b2567dd89ca73b3f34",
+        "blob": "36e6f7b89249bd1de5c825c97c6fcda25b1060fd",
+        "bytes": 2835,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/element.yaml": {
+        "expected_sha256": "01f430a9b041de68678385b18be9342c44c1b107ea2db9a667c4ee443402caf3",
+        "actual_sha256": "01f430a9b041de68678385b18be9342c44c1b107ea2db9a667c4ee443402caf3",
+        "blob": "d00b127ba6d80977f81e2af26037310d74804001",
+        "bytes": 2206,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/animated-media-transform/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/motion.ts": {
+        "expected_sha256": "21b2cb3a7e5b5c28de5bba9c2d3121e6d14053d92f909e34f860a7ac1b4803c9",
+        "actual_sha256": "21b2cb3a7e5b5c28de5bba9c2d3121e6d14053d92f909e34f860a7ac1b4803c9",
+        "blob": "fde6584e72b2b0f0d397e18e75b12548d00368ed",
+        "bytes": 3237,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/animated-media-transform/motion.ts",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx": {
+        "expected_sha256": "0318f3e9b3bc78c3d5b800b19ea6078ced83b5b5ff79b85501d74e764f6c0b37",
+        "actual_sha256": "0318f3e9b3bc78c3d5b800b19ea6078ced83b5b5ff79b85501d74e764f6c0b37",
+        "blob": "fd1e1dc88b35ecd8f79bdd19d2ee139e33f51938",
+        "bytes": 5190,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-codex-transform/element.yaml": {
+        "expected_sha256": "331e082f842923d232f5dfd46ca93a584a0a1c28902fd30ffecb176b2e42dc67",
+        "actual_sha256": "331e082f842923d232f5dfd46ca93a584a0a1c28902fd30ffecb176b2e42dc67",
+        "blob": "92099b051acd710288da9882475fada6c1483913",
+        "bytes": 987,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-codex-transform/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx": {
+        "expected_sha256": "5f1ff32f7f7632aba184794d9633d12928192871acad892f218cc33fc95d100f",
+        "actual_sha256": "5f1ff32f7f7632aba184794d9633d12928192871acad892f218cc33fc95d100f",
+        "blob": "8990c1b0957b355023b5fa82eb0a1924b5006143",
+        "bytes": 10382,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-mid-combined/element.yaml": {
+        "expected_sha256": "430cc6b1d4b369af4dfe1573bb186cf54be066b6d10561a178cc9c096eadec00",
+        "actual_sha256": "430cc6b1d4b369af4dfe1573bb186cf54be066b6d10561a178cc9c096eadec00",
+        "blob": "fba3cbda5fff2d7e687825ed7bbadd19f9dced85",
+        "bytes": 1025,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-mid-combined/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx": {
+        "expected_sha256": "481c181539424cd2b27e12dfbeb8b108ef2da5ecf5871c9f93b3594946db9141",
+        "actual_sha256": "481c181539424cd2b27e12dfbeb8b108ef2da5ecf5871c9f93b3594946db9141",
+        "blob": "b2959191c031f5a03790a29dcb7dcae4db2a4a33",
+        "bytes": 7324,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-minimax-animate/element.yaml": {
+        "expected_sha256": "d1a4b1048ac16d97ae5b842740acb2afe3240c90dce0c9ffe6b726d4da45c59b",
+        "actual_sha256": "d1a4b1048ac16d97ae5b842740acb2afe3240c90dce0c9ffe6b726d4da45c59b",
+        "blob": "cdeab47a4ef650913391f4f6d57ffb9ed961fbda",
+        "bytes": 1027,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-minimax-animate/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png": {
+        "expected_sha256": "dfc516cf14c88f9da8dae704dd1fd8d060e1e641cfa444d08bc68c495798de2c",
+        "actual_sha256": "dfc516cf14c88f9da8dae704dd1fd8d060e1e641cfa444d08bc68c495798de2c",
+        "blob": "0c6c4fd62bb4539f9198971644b178246a42bb5a",
+        "bytes": 755246,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png": {
+        "expected_sha256": "6bd6a895cfe78f3dc2dc4b273e999fb05e7883bfee3faa0494c1d0c546591851",
+        "actual_sha256": "6bd6a895cfe78f3dc2dc4b273e999fb05e7883bfee3faa0494c1d0c546591851",
+        "blob": "6e5a9b24c508366cd7bfee82ed1a08dbdfb6ae0f",
+        "bytes": 507593,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png": {
+        "expected_sha256": "1233c44cac8400b2467ef8654b1365372f7b8d00dde6e5cd2f14b0259be3061d",
+        "actual_sha256": "1233c44cac8400b2467ef8654b1365372f7b8d00dde6e5cd2f14b0259be3061d",
+        "blob": "f72510e4ae5d71c5947a3e93c96a10d60dccd626",
+        "bytes": 731235,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png": {
+        "expected_sha256": "6c21fbd4024a2783d51b8cc777fa6e448d0a32027e34813eb070383ebd78371b",
+        "actual_sha256": "6c21fbd4024a2783d51b8cc777fa6e448d0a32027e34813eb070383ebd78371b",
+        "blob": "fc119079382d6fd9dd72e3759cb148373790c0bf",
+        "bytes": 562170,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png": {
+        "expected_sha256": "88cdfffd9b11ec598abc53e00458a07a627c424b5c3f6f65c749849e8ca7e26f",
+        "actual_sha256": "88cdfffd9b11ec598abc53e00458a07a627c424b5c3f6f65c749849e8ca7e26f",
+        "blob": "15b55891bec9121269c40b9132127863b5b27a26",
+        "bytes": 1462140,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png": {
+        "expected_sha256": "c71d9875085eed4cd731bf30e022055fc78bc091e4cb40a29daf4a1baec8c743",
+        "actual_sha256": "c71d9875085eed4cd731bf30e022055fc78bc091e4cb40a29daf4a1baec8c743",
+        "blob": "505d4802925eadb78763efc8870fa0aae1579132",
+        "bytes": 1509793,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png": {
+        "expected_sha256": "8841c0dc9bf431140b9248cff1c35a90e1ef5f94546fcbe163082d93bba2f125",
+        "actual_sha256": "8841c0dc9bf431140b9248cff1c35a90e1ef5f94546fcbe163082d93bba2f125",
+        "blob": "7e1904e7403a1b0ae609d8e22b8f413c8c08fb40",
+        "bytes": 1498999,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png": {
+        "expected_sha256": "4d551743b190b1a9c1b76f779eeb8d1625db6dd9aa8955f8c39500cb7a3e84a8",
+        "actual_sha256": "4d551743b190b1a9c1b76f779eeb8d1625db6dd9aa8955f8c39500cb7a3e84a8",
+        "blob": "81ed88e7bfda69316004e91269155b2fa9d58810",
+        "bytes": 1619131,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png": {
+        "expected_sha256": "84e6b79630750bfe142256820cd4599829069adf07bcda10e6dd8f2145e3a97b",
+        "actual_sha256": "84e6b79630750bfe142256820cd4599829069adf07bcda10e6dd8f2145e3a97b",
+        "blob": "904a502e75ae664b127b089bee98789b9d02c3a0",
+        "bytes": 1582358,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx": {
+        "expected_sha256": "0e850eaa8af9c099105a2d6f2281f53a2ec60bb280fd2e38cf13d530960cfef0",
+        "actual_sha256": "0e850eaa8af9c099105a2d6f2281f53a2ec60bb280fd2e38cf13d530960cfef0",
+        "blob": "4ca5ca59b31f7f70e8b6a8dc90648d278cb4bbf7",
+        "bytes": 16575,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/element.yaml": {
+        "expected_sha256": "26d1c73f538ecb3d320edd3ab57d6002265c8b5c6afad8a7e763fe22767e4532",
+        "actual_sha256": "26d1c73f538ecb3d320edd3ab57d6002265c8b5c6afad8a7e763fe22767e4532",
+        "blob": "8acfb89878fce9b206e5368283d21582b86e27b5",
+        "bytes": 3848,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/timing.ts": {
+        "expected_sha256": "32cfbaf31869f9e87848108f9ffbf40ac29205ad663d47d80756c2bef7358fe1",
+        "actual_sha256": "32cfbaf31869f9e87848108f9ffbf40ac29205ad663d47d80756c2bef7358fe1",
+        "blob": "48b55acd03e6a7e2d89fc1e3b330a0d2abd5c188",
+        "bytes": 3630,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/end-spanning-layer/timing.ts",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx": {
+        "expected_sha256": "01385f7bd429b0c0d3fc3471d6dd162e45de8117c9539304419a4069a930dfad",
+        "actual_sha256": "01385f7bd429b0c0d3fc3471d6dd162e45de8117c9539304419a4069a930dfad",
+        "blob": "79ecd5a48e49e942d9b8fec7dd9d2b83162d187f",
+        "bytes": 5408,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/ending-carousel/element.yaml": {
+        "expected_sha256": "6494d7c7f64f5ed1e4077194ebf671ec3631770766e414450ab9b7f43b6e35ff",
+        "actual_sha256": "6494d7c7f64f5ed1e4077194ebf671ec3631770766e414450ab9b7f43b6e35ff",
+        "blob": "832cb633cd3808f472ba7961f670ae9fc0646c82",
+        "bytes": 1124,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/ending-carousel/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/event-card/component.tsx": {
+        "expected_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "actual_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "blob": "d4d6834322d85fa2f9072f95cb6950289eca9479",
+        "bytes": 4079,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/event-card/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/event-card/element.yaml": {
+        "expected_sha256": "78b3ab23b731d50e29a64b42fe49dfc4ea98a953f6d8bdc705d6733822f8affa",
+        "actual_sha256": "78b3ab23b731d50e29a64b42fe49dfc4ea98a953f6d8bdc705d6733822f8affa",
+        "blob": "ff29d684702404fea0e032438c8af66880767961",
+        "bytes": 1897,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/event-card/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png": {
+        "expected_sha256": "730113561d7848cea6156c3c0e4f08c1d2db693d7522671cf654f044de528605",
+        "actual_sha256": "730113561d7848cea6156c3c0e4f08c1d2db693d7522671cf654f044de528605",
+        "blob": "ee81f42d271b805ae28330bc53102d3a3f3c641c",
+        "bytes": 2949,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx": {
+        "expected_sha256": "a7f9fd70cf64740c6979ba603d78b960badcd6daee02e3265a9df561810d8256",
+        "actual_sha256": "a7f9fd70cf64740c6979ba603d78b960badcd6daee02e3265a9df561810d8256",
+        "blob": "a766c3c70a98a1eaf10b6980a6a26dade6beb7d0",
+        "bytes": 1356,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/element.yaml": {
+        "expected_sha256": "efef8f1e414089d11e0349af42c56c186f54f22b54b76e168ea54bea33ed1c62",
+        "actual_sha256": "efef8f1e414089d11e0349af42c56c186f54f22b54b76e168ea54bea33ed1c62",
+        "blob": "ad62c2bc3d3c3f0faa5fe951aad4558565c9280a",
+        "bytes": 764,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/frame-overlay/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/model-trends/component.tsx": {
+        "expected_sha256": "498e7818f2c8ad7fbb011bc5e8028b67572b03e8ea073061c0ff8821500f1bc2",
+        "actual_sha256": "498e7818f2c8ad7fbb011bc5e8028b67572b03e8ea073061c0ff8821500f1bc2",
+        "blob": "f463142ba2306f8af0826fde3abe77868d794615",
+        "bytes": 28239,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/model-trends/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/model-trends/element.yaml": {
+        "expected_sha256": "e4b4d7cfc22ad2479d1f9c56e1bdd18ab1a9711ea47c9bca3a9305d8492b21b9",
+        "actual_sha256": "e4b4d7cfc22ad2479d1f9c56e1bdd18ab1a9711ea47c9bca3a9305d8492b21b9",
+        "blob": "f42e1092e13b86a16b3570fed35b408ccf3e23cd",
+        "bytes": 2456,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/model-trends/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx": {
+        "expected_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "actual_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "blob": "d4d6834322d85fa2f9072f95cb6950289eca9479",
+        "bytes": 4079,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/neon-orbit-card/element.yaml": {
+        "expected_sha256": "ce1c7788633135f6302e6ba312b0bc7b7ed80808095a0b3a5b8c67f0e2b415de",
+        "actual_sha256": "ce1c7788633135f6302e6ba312b0bc7b7ed80808095a0b3a5b8c67f0e2b415de",
+        "blob": "e92fa49e6e4bfbc38da5c3c6f2a8e398185bbf33",
+        "bytes": 1867,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/neon-orbit-card/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx": {
+        "expected_sha256": "356324b56de0dc7c63bcda3e4f28a22fe08c924f932fcdedd552b3f56259ad78",
+        "actual_sha256": "356324b56de0dc7c63bcda3e4f28a22fe08c924f932fcdedd552b3f56259ad78",
+        "blob": "cd53292648b690965c6fb7a527f5c5fdd8145c39",
+        "bytes": 6490,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/scrolling-guide/element.yaml": {
+        "expected_sha256": "ca4dc8f57158814a875b6b7718eb5caebe9fe2abb5d0f269ecb7176eecd9212c",
+        "actual_sha256": "ca4dc8f57158814a875b6b7718eb5caebe9fe2abb5d0f269ecb7176eecd9212c",
+        "blob": "e9c7b222441b34724b7f8eb4f7d5548de0e08805",
+        "bytes": 1528,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/scrolling-guide/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx": {
+        "expected_sha256": "56065d85fedb4a74da10e4fc6d134585b15e82614c8b96c5d3147a7d8a45cb2d",
+        "actual_sha256": "56065d85fedb4a74da10e4fc6d134585b15e82614c8b96c5d3147a7d8a45cb2d",
+        "blob": "4ebc84c4f01072e5e9215f5e7b4b2c93a74b9799",
+        "bytes": 2696,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/sliding-media/element.yaml": {
+        "expected_sha256": "02366e3d3ed5da688c9fb2d9015f81f8543554a9ec22a6acfa552bb1416a5986",
+        "actual_sha256": "02366e3d3ed5da688c9fb2d9015f81f8543554a9ec22a6acfa552bb1416a5986",
+        "blob": "44ab9ebd9d818032a3093642e0eec144d923c2a3",
+        "bytes": 646,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/sliding-media/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/text-card/component.tsx": {
+        "expected_sha256": "a717914bb0bcbeead78658bb9f05e9bd37a5545df49142d4e07cd73d27e39686",
+        "actual_sha256": "a717914bb0bcbeead78658bb9f05e9bd37a5545df49142d4e07cd73d27e39686",
+        "blob": "fb77c064c555324f670279d8f4d02250f11599a0",
+        "bytes": 19768,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/text-card/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/text-card/element.yaml": {
+        "expected_sha256": "080127fb507ee2fcfe1e4a8bddc53d0c5c7b12e16cd922b386bf802907a408d4",
+        "actual_sha256": "080127fb507ee2fcfe1e4a8bddc53d0c5c7b12e16cd922b386bf802907a408d4",
+        "blob": "54af124d0b7b02da5831ca9962d38f8a387ea7c0",
+        "bytes": 1802,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/text-card/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx": {
+        "expected_sha256": "3100bf2baec6d395ed7c8cc4a9164df720260616b89de1f71ab751060669c3a2",
+        "actual_sha256": "3100bf2baec6d395ed7c8cc4a9164df720260616b89de1f71ab751060669c3a2",
+        "blob": "eddf264cc6e87ec46d318f3ec8aa21cacd31fe99",
+        "bytes": 14066,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/element.yaml": {
+        "expected_sha256": "1c6e78dd2c2fd54218c21a21dc330775db88642a251ab9a775b910dffc1a5ff5",
+        "actual_sha256": "1c6e78dd2c2fd54218c21a21dc330775db88642a251ab9a775b910dffc1a5ff5",
+        "blob": "0865fc122ce5c23e7d7d2d92601b0a68d4167ae0",
+        "bytes": 771,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx": {
+        "expected_sha256": "3a6856e4d332a5e8c1983c2a3ea65972873950821e99e7a572ec4890e01c94a0",
+        "actual_sha256": "3a6856e4d332a5e8c1983c2a3ea65972873950821e99e7a572ec4890e01c94a0",
+        "blob": "09f717011e2b75e42d41ab8b364f92824dbf66f2",
+        "bytes": 10904,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/element.yaml": {
+        "expected_sha256": "f134e11545c2104db341b6c40c34394797e9b7c2889480017dbc3d8b22f3a958",
+        "actual_sha256": "f134e11545c2104db341b6c40c34394797e9b7c2889480017dbc3d8b22f3a958",
+        "blob": "c45b14c67557f80f94b4d187531256b702e66fb6",
+        "bytes": 787,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/element.yaml",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/seam-intent.ts": {
+        "expected_sha256": "00dcfa82b5378637b7e9da00685e6ea38f077ce729b179491df3691116d4abc2",
+        "actual_sha256": "00dcfa82b5378637b7e9da00685e6ea38f077ce729b179491df3691116d4abc2",
+        "blob": "29329f7b02d9f4ab500687ee0d53b72986c20669",
+        "bytes": 4835,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent.ts",
+        "match": true
+      },
+      "astrid/packs/local/shared/clip-effects.ts": {
+        "expected_sha256": "418cb06503e0e330b27f388e7f1bcce72196e3ddd74e22a4af2ea9d2b3617025",
+        "actual_sha256": "418cb06503e0e330b27f388e7f1bcce72196e3ddd74e22a4af2ea9d2b3617025",
+        "blob": "ddf2b0a1e06c4babf7b08f40696f7d0a6a976008",
+        "bytes": 4504,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/shared/clip-effects.ts",
+        "match": true
+      },
+      "astrid/packs/local/shared/readiness-image.tsx": {
+        "expected_sha256": "353c117886d9dcc0932ae16e25ca4b85e2433919ceaebff7834a96142441dd99",
+        "actual_sha256": "353c117886d9dcc0932ae16e25ca4b85e2433919ceaebff7834a96142441dd99",
+        "blob": "0c3c27886a2b803790b6513ee10d9fcafdcf47e4",
+        "bytes": 5129,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/local/shared/readiness-image.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/editor/catalog.ts": {
+        "expected_sha256": "f4fa4077339b35ec91482ca7e6cd51dc79edc21969500122688b040ee500c94d",
+        "actual_sha256": "f4fa4077339b35ec91482ca7e6cd51dc79edc21969500122688b040ee500c94d",
+        "blob": "f87d7fae0c3a6e15dc2d2278ae795b47c108d663",
+        "bytes": 1046,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/editor/catalog.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/elements/catalog.ts": {
+        "expected_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92",
+        "actual_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92",
+        "blob": "141c8c739f888170459106db21e38cb676238082",
+        "bytes": 167755,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/elements/catalog.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/elements/public-catalog.ts": {
+        "expected_sha256": "c5c023060c288b2fc015532049d28fbe17b5c92fce2dd5a9dd1b3553bff83a3f",
+        "actual_sha256": "c5c023060c288b2fc015532049d28fbe17b5c92fce2dd5a9dd1b3553bff83a3f",
+        "blob": "63b1526a451e39c355462fa27b91e362bd3ad15f",
+        "bytes": 23993,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/elements/public-catalog.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": {
+        "expected_sha256": "2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+        "actual_sha256": "2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+        "blob": "90cce426db10f498c73d60c72422e49cfe5d6bde",
+        "bytes": 1038,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/fade/element.yaml": {
+        "expected_sha256": "65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+        "actual_sha256": "65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+        "blob": "3ac89e15e9638fa001458955051e9fff80828efc",
+        "bytes": 1082,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/fade/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/scale-in/element.yaml": {
+        "expected_sha256": "f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+        "actual_sha256": "f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+        "blob": "a56970ac9be9b06d0b1a1771aef9b74876189caa",
+        "bytes": 1047,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/scale-in/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/slide-left/element.yaml": {
+        "expected_sha256": "a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+        "actual_sha256": "a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+        "blob": "3ac03d041b22e03d16b4bfee996812eb0d849360",
+        "bytes": 1065,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-left/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/slide-up/element.yaml": {
+        "expected_sha256": "bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+        "actual_sha256": "bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+        "blob": "611b031f79897db177b10df2097346ee5fd5d3c8",
+        "bytes": 1039,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/slide-up/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/type-on/element.yaml": {
+        "expected_sha256": "44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+        "actual_sha256": "44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+        "blob": "8e0bb0d601838541bcd91d7f592795b73321c138",
+        "bytes": 1143,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/animations/type-on/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx": {
+        "expected_sha256": "c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+        "actual_sha256": "c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+        "blob": "525f8f6d2a6a6f8b5693a6cc0c7781190dc321a1",
+        "bytes": 2136,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/element.yaml": {
+        "expected_sha256": "1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+        "actual_sha256": "1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+        "blob": "64780dde6fc6bbc04ecb4c12dbc4347074df9fe6",
+        "bytes": 2143,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/text-card/element.yaml": {
+        "expected_sha256": "e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+        "actual_sha256": "e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+        "blob": "5c9ad9f26fd47a53af48f5b5e3af20cb3a02003b",
+        "bytes": 1127,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/effects/text-card/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/transitions/cross-fade/element.yaml": {
+        "expected_sha256": "d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+        "actual_sha256": "d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+        "blob": "208ccf015900c742d7147d9a10e697da6bdb1b8b",
+        "bytes": 1090,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/cross-fade/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": {
+        "expected_sha256": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+        "actual_sha256": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+        "blob": "306345ca6ae98e05aa78392e6945038fda206ca2",
+        "bytes": 1042,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/element_contracts.ts": {
+        "expected_sha256": "3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066",
+        "actual_sha256": "3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066",
+        "blob": "22f1e23ffdc8aea675ed830fbe766cce5907ee6b",
+        "bytes": 1613,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/shared/element_contracts.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/managed-media-policy.ts": {
+        "expected_sha256": "712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
+        "actual_sha256": "712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
+        "blob": "e0e4a2fd62c6b41ecb0c25f754a817d5d5079fb7",
+        "bytes": 790,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/shared/managed-media-policy.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/managed-media.tsx": {
+        "expected_sha256": "7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
+        "actual_sha256": "7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
+        "blob": "8f3adde1af8e183152b4a5d0fd62e48f76e7152e",
+        "bytes": 1117,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/shared/managed-media.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/readiness-image.tsx": {
+        "expected_sha256": "5fcf2539131fd75dfbedffb71b075bf165c840404a1036451dcf874ea486832f",
+        "actual_sha256": "5fcf2539131fd75dfbedffb71b075bf165c840404a1036451dcf874ea486832f",
+        "blob": "c682c5cc700f7b606a931b2a4bd5d66a5b28c7c4",
+        "bytes": 5108,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/shared/readiness-image.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": {
+        "expected_sha256": "0f368d460f81e2fb9c61f2f952e3f5ae7a38ded8b8a0d7ed8fd33580b62f4ea5",
+        "actual_sha256": "0f368d460f81e2fb9c61f2f952e3f5ae7a38ded8b8a0d7ed8fd33580b62f4ea5",
+        "blob": "e2b3541865a8e65851972ef2920d990a53c45f02",
+        "bytes": 13966,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": {
+        "expected_sha256": "52a9956ce1451002072037dc07f27f6b66e0b372803be34c7cdb5165d36f7f07",
+        "actual_sha256": "52a9956ce1451002072037dc07f27f6b66e0b372803be34c7cdb5165d36f7f07",
+        "blob": "4745cee765623b6383bea95b1db54c1969bbad1f",
+        "bytes": 46607,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/authoring.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts": {
+        "expected_sha256": "dd4e81c2fbab6657dc1b17e94f3f8ebe567157140b16550243644b6518caf303",
+        "actual_sha256": "dd4e81c2fbab6657dc1b17e94f3f8ebe567157140b16550243644b6518caf303",
+        "blob": "7625bf6104fd451d08ebf944ba94aeff2d4dbd78",
+        "bytes": 1247,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx": {
+        "expected_sha256": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
+        "actual_sha256": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
+        "blob": "288fb03ca832619c0436d051748755ecb18afc52",
+        "bytes": 1045,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx": {
+        "expected_sha256": "4ec0bdc5812ef3c3d369b0e77a1f4d7b876827b94b96e60f99538195f657daf3",
+        "actual_sha256": "4ec0bdc5812ef3c3d369b0e77a1f4d7b876827b94b96e60f99538195f657daf3",
+        "blob": "6d95f906163ab05e5d0da9436d2ff24a032841c8",
+        "bytes": 15339,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": {
+        "expected_sha256": "581da5ac3f663c60a37d02204c72dd285ff88390bc1e7fa35b7ebd5eb68bda58",
+        "actual_sha256": "581da5ac3f663c60a37d02204c72dd285ff88390bc1e7fa35b7ebd5eb68bda58",
+        "blob": "2506b1417a18c5fd16a404c89afb9d0cf1cac9c0",
+        "bytes": 13348,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": {
+        "expected_sha256": "01770ecde256668dd2258c7a7f2d866c741147e50ca8407e3afe0058b5dd64d8",
+        "actual_sha256": "01770ecde256668dd2258c7a7f2d866c741147e50ca8407e3afe0058b5dd64d8",
+        "blob": "8571ccff8472ccbf35bd534c56054d379756d628",
+        "bytes": 77299,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": {
+        "expected_sha256": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
+        "actual_sha256": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
+        "blob": "76c884ce43f86768bc810b21fe52e6f1692611f2",
+        "bytes": 6802,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": {
+        "expected_sha256": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
+        "actual_sha256": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
+        "blob": "672aa546a12264ef3d7935e046d507114be6e413",
+        "bytes": 13006,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts": {
+        "expected_sha256": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",
+        "actual_sha256": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",
+        "blob": "f4afe193abe2b9d1062b21a0add8917e4c9c8b11",
+        "bytes": 2431,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/model.ts": {
+        "expected_sha256": "eba3a13cdb9884c0ca684f39f15cd02e709a73ae795c8358f3980156e99b2061",
+        "actual_sha256": "eba3a13cdb9884c0ca684f39f15cd02e709a73ae795c8358f3980156e99b2061",
+        "blob": "5c0c95f62c2504844df8901221bff9b07f8b387c",
+        "bytes": 22772,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/model.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/rows.ts": {
+        "expected_sha256": "114868a212a28132ab923fefebb32f5891594a11fc307ed9ee9841aa3421c2cc",
+        "actual_sha256": "114868a212a28132ab923fefebb32f5891594a11fc307ed9ee9841aa3421c2cc",
+        "blob": "83c11da604fccdc144dd675e2789afbe19185b2d",
+        "bytes": 5370,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/rows.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/ui.ts": {
+        "expected_sha256": "eddc38f6b6fdc798c0e67a77898ffc484947b267e7f2d19f19381c7bc95e1f2d",
+        "actual_sha256": "eddc38f6b6fdc798c0e67a77898ffc484947b267e7f2d19f19381c7bc95e1f2d",
+        "blob": "acb9767543fdcbe671d81744428023cdc288c484",
+        "bytes": 2538,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/ui.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample.ts": {
+        "expected_sha256": "fab89126e5fa8e2e5110617e334c6bd0c52f0d54e89dac4e541d4a8909063ce8",
+        "actual_sha256": "fab89126e5fa8e2e5110617e334c6bd0c52f0d54e89dac4e541d4a8909063ce8",
+        "blob": "5fd0bd1ecd06406be29005cd956bf53bd5e67e7d",
+        "bytes": 638502,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": {
+        "expected_sha256": "b45a3835e46b98a21793f23f66222ab12e5a66266be9840fc503c749bca1b7cb",
+        "actual_sha256": "b45a3835e46b98a21793f23f66222ab12e5a66266be9840fc503c749bca1b7cb",
+        "blob": "3c4611a12c87a1880fdf56f4f092719cf49c3222",
+        "bytes": 10172,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/extension.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/identity.ts": {
+        "expected_sha256": "b295f5b94eb47fa34612c40faac3508eacb27e89a1369525d526dfb17c2dbdf2",
+        "actual_sha256": "b295f5b94eb47fa34612c40faac3508eacb27e89a1369525d526dfb17c2dbdf2",
+        "blob": "2062b9c5cff384d72ae676a929477048cf1c527a",
+        "bytes": 227,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/identity.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": {
+        "expected_sha256": "cc68382529a0c4ddb07c0a6616ec52501edd1518c8e095c111260398fafceae4",
+        "actual_sha256": "cc68382529a0c4ddb07c0a6616ec52501edd1518c8e095c111260398fafceae4",
+        "blob": "439d7ccce6f10fc0db8f1bd1a9515643fe8099e7",
+        "bytes": 31730,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/runtime.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/shotStillRenderer.tsx": {
+        "expected_sha256": "12f10827613b561f25ca27b7aca0de7afa0d7c8b14e4da7a53087e0117942bea",
+        "actual_sha256": "12f10827613b561f25ca27b7aca0de7afa0d7c8b14e4da7a53087e0117942bea",
+        "blob": "9b6efe00d2bc6ad4d05fcd9b96aebd869d9d61d8",
+        "bytes": 3415,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/shotStillRenderer.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/shotStills.ts": {
+        "expected_sha256": "147d7965ec7aed6a232dcb3405a2168565c3d15525beee1ceb351016f8852b83",
+        "actual_sha256": "147d7965ec7aed6a232dcb3405a2168565c3d15525beee1ceb351016f8852b83",
+        "blob": "1dcaedc4669fd4fb1626240493b555f5fc4201bb",
+        "bytes": 4397,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/shotStills.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/useShotStill.ts": {
+        "expected_sha256": "7bd997ed889e63172019dcbe418a77a9af9e0de1f993a9cff8bd2d786186ce03",
+        "actual_sha256": "7bd997ed889e63172019dcbe418a77a9af9e0de1f993a9cff8bd2d786186ce03",
+        "blob": "24fa813e1d06cb31814abaf575e62c23ef750221",
+        "bytes": 548,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/threejs-live-editor/useShotStill.ts",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": {
+        "expected_sha256": "9eb80ec0f6cd9249a6af618cddf284c2e411bf8ff8a4475d2a87b5ab25a19555",
+        "actual_sha256": "9eb80ec0f6cd9249a6af618cddf284c2e411bf8ff8a4475d2a87b5ab25a19555",
+        "blob": "087647b7c8f6b9f3b6cd28b6a61ae65e28775ada",
+        "bytes": 17637,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": {
+        "expected_sha256": "2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
+        "actual_sha256": "2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
+        "blob": "8b6ce0a8e89d9d636688a705cc9e7212b77f65f3",
+        "bytes": 50549,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript/extension.tsx": {
+        "expected_sha256": "870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
+        "actual_sha256": "870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
+        "blob": "c02e0a1c7a368abbcef101fe88c12f098510902a",
+        "bytes": 2339,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/rendering/ui/transcript/extension.tsx",
+        "match": true
+      },
+      "astrid/packs/video_editing/pack.yaml": {
+        "expected_sha256": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+        "actual_sha256": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+        "blob": "602e61f15f96131b912fe24479cfffce3adb31ce",
+        "bytes": 48599,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/video_editing/pack.yaml",
+        "match": true
+      },
+      "astrid/packs/video_editing/ui/video-editor/entry.json": {
+        "expected_sha256": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+        "actual_sha256": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+        "blob": "779c776f91aa4965cb7a9bf80e0434a51c36b971",
+        "bytes": 87,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/packs/video_editing/ui/video-editor/entry.json",
+        "match": true
+      },
+      "astrid/tools/catalog.json": {
+        "expected_sha256": "05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+        "actual_sha256": "05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+        "blob": "03cc949a32b856e70de27b5b6bf47e2fe729057a",
+        "bytes": 848,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/astrid/tools/catalog.json",
+        "match": true
+      },
+      "remotion/public/fonts/DepartureMono-Regular.woff2": {
+        "expected_sha256": "5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+        "actual_sha256": "5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+        "blob": "b4a23dc1dad1c934005d0862e62c0294636afb08",
+        "bytes": 22496,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/DepartureMono-Regular.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/FONT_PROVENANCE.md": {
+        "expected_sha256": "f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+        "actual_sha256": "f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+        "blob": "4de498d512804075f9cd1d27cabe1c5c5b048576",
+        "bytes": 10900,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Bold.woff2": {
+        "expected_sha256": "2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+        "actual_sha256": "2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+        "blob": "32f059ea6ce850dc7155b92e8ebd28e62d390c50",
+        "bytes": 20452,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Gelasio-Bold.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-BoldItalic.woff2": {
+        "expected_sha256": "e5b0682ff74c6798100255daafaf5d5496c5ddec596aec663fdd0afb3470b609",
+        "actual_sha256": "e5b0682ff74c6798100255daafaf5d5496c5ddec596aec663fdd0afb3470b609",
+        "blob": "aaf4860ecc8c1766372fb0c740ce465e10a13c78",
+        "bytes": 22476,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Gelasio-BoldItalic.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Italic.woff2": {
+        "expected_sha256": "2df3d4a4d0cefc6440710666fa425627e54cb73707224bec044bca8e65940222",
+        "actual_sha256": "2df3d4a4d0cefc6440710666fa425627e54cb73707224bec044bca8e65940222",
+        "blob": "b9a2dd38b55219a94bfc4a0ac06ddca8610b7272",
+        "bytes": 22272,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Gelasio-Italic.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Regular.woff2": {
+        "expected_sha256": "698c2aa61ec1960371b6ed32e6120f028fa614613256f4b9e3f5d10ceb013eb5",
+        "actual_sha256": "698c2aa61ec1960371b6ed32e6120f028fa614613256f4b9e3f5d10ceb013eb5",
+        "blob": "d88339c9f4767d26fce04ce2db4afea67e1581f5",
+        "bytes": 20284,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Gelasio-Regular.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/Inter-Bold.woff2": {
+        "expected_sha256": "aeaf0d0fa3262f4df2da7acf660544cb15aa24dcb63e574daed6ba7e92333a01",
+        "actual_sha256": "aeaf0d0fa3262f4df2da7acf660544cb15aa24dcb63e574daed6ba7e92333a01",
+        "blob": "167215319fb51fa7a28377924626467e08e39f90",
+        "bytes": 41296,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Inter-Bold.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/Inter-Regular.woff2": {
+        "expected_sha256": "5f04e9f02a74eab4ec87eda5b79b5be1c0567c868688b0a08564b2fe5c6da928",
+        "actual_sha256": "5f04e9f02a74eab4ec87eda5b79b5be1c0567c868688b0a08564b2fe5c6da928",
+        "blob": "9093edd30c8961d965600d6af11d1eb2a8219380",
+        "bytes": 40128,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Inter-Regular.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/JetBrainsMono-Bold.woff2": {
+        "expected_sha256": "a1475eef9934d6b3a6d15494f312ee1056b7556d59b1e22cb4e0c618338cd170",
+        "actual_sha256": "a1475eef9934d6b3a6d15494f312ee1056b7556d59b1e22cb4e0c618338cd170",
+        "blob": "2fb6479b9506e334b64f41e6cab590cb7904e736",
+        "bytes": 36856,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/JetBrainsMono-Bold.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/JetBrainsMono-Regular.woff2": {
+        "expected_sha256": "2955337d809a64d58c56730b8344315198ec76214e02710774dd72d6a5de7b87",
+        "actual_sha256": "2955337d809a64d58c56730b8344315198ec76214e02710774dd72d6a5de7b87",
+        "blob": "2607796520ed48b2cf24ae52e869fc458c192c6b",
+        "bytes": 35416,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/JetBrainsMono-Regular.woff2",
+        "match": true
+      },
+      "remotion/public/fonts/OFL-1.1.txt": {
+        "expected_sha256": "c7dbb2126d9c73c641332b4f78f27c5f2bb8c7b1ed906add91d0f6ff3ee3e549",
+        "actual_sha256": "c7dbb2126d9c73c641332b4f78f27c5f2bb8c7b1ed906add91d0f6ff3ee3e549",
+        "blob": "559c8d616b1f3506e99b4b4e1bcbe6b8ead3a4c8",
+        "bytes": 4708,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/OFL-1.1.txt",
+        "match": true
+      },
+      "remotion/public/fonts/Sixtyfour.woff2": {
+        "expected_sha256": "0c35bb8333a12a822333f10fc4fd22e607b80a254b8b31faa8eed1cd4badc24e",
+        "actual_sha256": "0c35bb8333a12a822333f10fc4fd22e607b80a254b8b31faa8eed1cd4badc24e",
+        "blob": "368300391c703dcc22e6ea33fa9cff1cd377d385",
+        "bytes": 7608,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/public/fonts/Sixtyfour.woff2",
+        "match": true
+      },
+      "remotion/src/fonts.ts": {
+        "expected_sha256": "5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb",
+        "actual_sha256": "5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb",
+        "blob": "07361b450c3dcc3c18d01c181838f155c86bbd62",
+        "bytes": 3964,
+        "mode": "100644",
+        "vendor_path": "vendor/astrid-browser/remotion/src/fonts.ts",
+        "match": true
+      }
+    },
+    "direct_source_hashes": {
+      "LICENSE": {
+        "expected_sha256": "d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+        "actual_sha256": "d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+        "blob": "05c06fcfad74b24359a161bfa2d2e83a2f5f6089",
+        "bytes": 7642,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx": {
+        "expected_sha256": "b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618",
+        "actual_sha256": "b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618",
+        "blob": "dce228995bde994708d8a4cc8aff04a50faac3e0",
+        "bytes": 6903,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx": {
+        "expected_sha256": "78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646",
+        "actual_sha256": "78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646",
+        "blob": "88cd1bfc001633fe4a66f79b9dd4a0bb4f718f25",
+        "bytes": 5645,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx": {
+        "expected_sha256": "be6f2f61c8428255186357a937aff388327b5b50b72bebae45de01fda1b8ea84",
+        "actual_sha256": "be6f2f61c8428255186357a937aff388327b5b50b72bebae45de01fda1b8ea84",
+        "blob": "0e6974c8b57dc62ea4e9141f991156deb7cceaad",
+        "bytes": 7846,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/element.yaml": {
+        "expected_sha256": "626a95d854cc6849011485cbb291654f8ac086e7b95639b8d448ea48cd720cef",
+        "actual_sha256": "626a95d854cc6849011485cbb291654f8ac086e7b95639b8d448ea48cd720cef",
+        "blob": "2a3f7be180aab0e23e83e70cee6a46892cf450d9",
+        "bytes": 3151,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/component.tsx": {
+        "expected_sha256": "35a4e1a41a5de45900f3f9a3b26c3c8fb647cf3f9bb189728344225e50b9f305",
+        "actual_sha256": "35a4e1a41a5de45900f3f9a3b26c3c8fb647cf3f9bb189728344225e50b9f305",
+        "blob": "af8b9418ce4fe68af277a6c9aec79d56585fc7bd",
+        "bytes": 4987,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-callout/element.yaml": {
+        "expected_sha256": "53aac164d136ea78fd8689b6fe026f9c29d541d70363a69a9f51cd5f605974c8",
+        "actual_sha256": "53aac164d136ea78fd8689b6fe026f9c29d541d70363a69a9f51cd5f605974c8",
+        "blob": "f8825fa1dd13a4b3a34b3d36510b14298137253e",
+        "bytes": 2387,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/component.tsx": {
+        "expected_sha256": "3ac714a541fe5c794cd221472edfbdf67aaca9379fa89c51a7d38b26630885ce",
+        "actual_sha256": "3ac714a541fe5c794cd221472edfbdf67aaca9379fa89c51a7d38b26630885ce",
+        "blob": "b2481b84a62d0833d1e41337fbedb3f0089423d5",
+        "bytes": 21631,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/element.yaml": {
+        "expected_sha256": "3c08a7a39ecb696652ea8929b4e33b057b91807831421f6d2c939ecc0c1dfe86",
+        "actual_sha256": "3c08a7a39ecb696652ea8929b4e33b057b91807831421f6d2c939ecc0c1dfe86",
+        "blob": "3b52612758d070761a2f3f2afc02991d0057bea7",
+        "bytes": 4827,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-churn/ledger.ts": {
+        "expected_sha256": "c378efe90b156ade201e1b86921ed5a585df4ceced9db80520415bbb5251095a",
+        "actual_sha256": "c378efe90b156ade201e1b86921ed5a585df4ceced9db80520415bbb5251095a",
+        "blob": "ed1f03787b2d7908e33b6a3805abb70d9e645683",
+        "bytes": 8905,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/component.tsx": {
+        "expected_sha256": "9187f494ff90bb01a9a9f7f7d4e8e50230660c35f32e6e2376a8c67281ba83d0",
+        "actual_sha256": "9187f494ff90bb01a9a9f7f7d4e8e50230660c35f32e6e2376a8c67281ba83d0",
+        "blob": "5b672bfad90f4e544895c3c6e799906b47b8358f",
+        "bytes": 38178,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/discord-core.ts": {
+        "expected_sha256": "b44afdbcc50132c4e5970bfb1d2dd70418172e4ad3d51b563dc6bd5fb029a33f",
+        "actual_sha256": "b44afdbcc50132c4e5970bfb1d2dd70418172e4ad3d51b563dc6bd5fb029a33f",
+        "blob": "9c6d6319f3edb4d444570d871c2b18b7b5bdcad7",
+        "bytes": 7968,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-discord/element.yaml": {
+        "expected_sha256": "9d48762902a0aed9ff207ae07a52ee81560e1ecf245abfe32161e4ed75e92c6e",
+        "actual_sha256": "9d48762902a0aed9ff207ae07a52ee81560e1ecf245abfe32161e4ed75e92c6e",
+        "blob": "6ac1dd2072cb7fcf7d4450a590f4e482e02630bf",
+        "bytes": 8449,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/component.tsx": {
+        "expected_sha256": "28a0e129fad24deebe46a75128fa76135db4abe10bcd3d7d6a4905501857e883",
+        "actual_sha256": "28a0e129fad24deebe46a75128fa76135db4abe10bcd3d7d6a4905501857e883",
+        "blob": "8cd2563b7ea783ac6a27b032561a094ac446a414",
+        "bytes": 4851,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-droste/element.yaml": {
+        "expected_sha256": "bac0d8fa9291c5f26d85830a5530638221bb7c0549c325311033d1e8d0837ae6",
+        "actual_sha256": "bac0d8fa9291c5f26d85830a5530638221bb7c0549c325311033d1e8d0837ae6",
+        "blob": "c410a6e77d350b5f1a0d8fe685ac50a33a407632",
+        "bytes": 1775,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/component.tsx": {
+        "expected_sha256": "aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
+        "actual_sha256": "aa1dce0476fde244281bd532368dece6408b9c9275bc5fd74b19f91475bd6af6",
+        "blob": "80f2cb965cc70b3b13cd9eeaf4d84e100c908765",
+        "bytes": 3805,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/element.yaml": {
+        "expected_sha256": "c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
+        "actual_sha256": "c9c2b6c5a26f692f19d4c4a646a86d7bca16714f7de9e761ea83b8866332a431",
+        "blob": "d6e11c52c713682298d50566d83d630cb7b5a0e7",
+        "bytes": 3148,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-flap/flap.tsx": {
+        "expected_sha256": "aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
+        "actual_sha256": "aa7bf8827547c357824047b57a2e1fda4eaee452e0ac97781f9d52958476b087",
+        "blob": "caf5bb1d2aa68c3577c01e27c1ae2e01ad5d0211",
+        "bytes": 5260,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/component.tsx": {
+        "expected_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+        "actual_sha256": "bc7a1c0e4516703206de3964fac52c1682bec3fe6c2b150dbb9b42ef355316ec",
+        "blob": "759f2f0534ea19e19ca4d4fc6d8ce7908e187e41",
+        "bytes": 14075,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/element.yaml": {
+        "expected_sha256": "a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
+        "actual_sha256": "a7c4d86719331bc76ca580c4ae9e220c6a5ef93cbf8e258dff529f6a9a72aeab",
+        "blob": "087b435699ae295af81c4396e73d787075b3c980",
+        "bytes": 5110,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/helper.ts": {
+        "expected_sha256": "7d04f19d21b5a59555cc4725d54fa087e57068a8cf9da58f618be05764082fb9",
+        "actual_sha256": "7d04f19d21b5a59555cc4725d54fa087e57068a8cf9da58f618be05764082fb9",
+        "blob": "3e46a50fd8a57967801a9deac9276658b2212cd9",
+        "bytes": 1546,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/scene.ts": {
+        "expected_sha256": "1e94041c8178687a82e4c5b54fb29b8cf0c281f74e9e624fdaf832f647072afa",
+        "actual_sha256": "1e94041c8178687a82e4c5b54fb29b8cf0c281f74e9e624fdaf832f647072afa",
+        "blob": "0a048c2b97dbaa720915398d5205ee2b84b3db92",
+        "bytes": 1876,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-footage/volume.ts": {
+        "expected_sha256": "b5fc7040551c6ef8e3e7d83afee7b431fc93ac70bd64ae6ddf9a3fa35ebc6ce6",
+        "actual_sha256": "b5fc7040551c6ef8e3e7d83afee7b431fc93ac70bd64ae6ddf9a3fa35ebc6ce6",
+        "blob": "76588b3a39822f8187096d5321879d2f005dcc16",
+        "bytes": 801,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/component.tsx": {
+        "expected_sha256": "e294619aaedbbe76320539a8f279ce1b78b7bb2d4e0d6e0457247d4c058f82d5",
+        "actual_sha256": "e294619aaedbbe76320539a8f279ce1b78b7bb2d4e0d6e0457247d4c058f82d5",
+        "blob": "33c96861c5e29781db244982b4c0eee3ce5db8fb",
+        "bytes": 4374,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orbit/element.yaml": {
+        "expected_sha256": "529c0a5dbeb8c412b66fdbbce538a27e8945507ecdecc462aed03d762a3e1bb9",
+        "actual_sha256": "529c0a5dbeb8c412b66fdbbce538a27e8945507ecdecc462aed03d762a3e1bb9",
+        "blob": "c1081f2e5ddf79ad93063a6fa630297d1a7b31b3",
+        "bytes": 1566,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/component.tsx": {
+        "expected_sha256": "6d108507a9504a4666af165730c50ff9ccd31c67f0154c20a996e7b046c957a1",
+        "actual_sha256": "6d108507a9504a4666af165730c50ff9ccd31c67f0154c20a996e7b046c957a1",
+        "blob": "05fd5c48bfbd5dfaf96505fa412159b1400bf395",
+        "bytes": 7543,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-orgchart/element.yaml": {
+        "expected_sha256": "04908aa702a8a8910ea0f736f1f6a3afbd5ebaa75ac000b43fca0d37a846f34e",
+        "actual_sha256": "04908aa702a8a8910ea0f736f1f6a3afbd5ebaa75ac000b43fca0d37a846f34e",
+        "blob": "4f551b850d2a8b06583a4b3a08635f0c4d4dd4ab",
+        "bytes": 1933,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/component.tsx": {
+        "expected_sha256": "72559c136b0c221573458d044e700514b47cb1ee0baf73b95e6173feffa96158",
+        "actual_sha256": "72559c136b0c221573458d044e700514b47cb1ee0baf73b95e6173feffa96158",
+        "blob": "3eda4d9851a5ad120a80aa768bd58a68ddaa4af2",
+        "bytes": 3039,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/element.yaml": {
+        "expected_sha256": "11333447891be64f02da35c5699008fb59992a5f5f0b0d0db4f79d547ec77716",
+        "actual_sha256": "11333447891be64f02da35c5699008fb59992a5f5f0b0d0db4f79d547ec77716",
+        "blob": "f2cf19d598eb8230347a311b0cbd47c0a1486144",
+        "bytes": 3138,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-shape/shape-cells.ts": {
+        "expected_sha256": "d1dd8f09d153b336e8df18a2d3c938feabc63c2ceabf5d602d434db2ba830df5",
+        "actual_sha256": "d1dd8f09d153b336e8df18a2d3c938feabc63c2ceabf5d602d434db2ba830df5",
+        "blob": "d1cf15f22331ee2258ca11db500214300c5ba53a",
+        "bytes": 4231,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/component.tsx": {
+        "expected_sha256": "60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
+        "actual_sha256": "60b2844f119d55f39da498027e751d06533d6c1f632bfc13544338b066f24f3f",
+        "blob": "29ddf9813dfe0bcc67bfc4e2036b730b07cb1a5e",
+        "bytes": 1407,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-pixel-wipe/element.yaml": {
+        "expected_sha256": "ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
+        "actual_sha256": "ca96ed57c5afe725e39431dfb73e8a3ab2a82d1f97445d17fd6cc013c36bdf77",
+        "blob": "e7eb5d53c5686c6c9128dad48c7574b84fe83288",
+        "bytes": 1887,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/component.tsx": {
+        "expected_sha256": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
+        "actual_sha256": "b1dea928a4c709e1148525ceb88c704952b93fdf6f2b89c49e6e668afb7e84cc",
+        "blob": "1c606af49d0252934118bebacdc50d3dfbb1da08",
+        "bytes": 10243,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/element.yaml": {
+        "expected_sha256": "7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+        "actual_sha256": "7bbcb59775818bda4d0cdc58e364256139d904901ce87bcc7263c8ee80afe156",
+        "blob": "5263a9d6f7632dd2f513fa8167ecc85988918ac3",
+        "bytes": 5272,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/motion.ts": {
+        "expected_sha256": "05dbda5dfbaf5345532582ad43924cfe4c701d76ec1336319cacdb8948713ec3",
+        "actual_sha256": "05dbda5dfbaf5345532582ad43924cfe4c701d76ec1336319cacdb8948713ec3",
+        "blob": "69918c5e852110b14d466db01a879b4ffaa15559",
+        "bytes": 5708,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/presenter-core.ts": {
+        "expected_sha256": "6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
+        "actual_sha256": "6f3bc8fbf8f612c3ba369cfdac811294b2d53a88b853b15a8be64576d8bfe731",
+        "blob": "6ba26539009d6ccd77cb130c71b2ec2b35d8b061",
+        "bytes": 7560,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-presenter/scene.ts": {
+        "expected_sha256": "a30320780d6a348e78d3645b310f73a2460a9e9849a72d146df7722d9083434f",
+        "actual_sha256": "a30320780d6a348e78d3645b310f73a2460a9e9849a72d146df7722d9083434f",
+        "blob": "bb134c5dbd8c057359abb2b17ae2800e5b740e1d",
+        "bytes": 1835,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/component.tsx": {
+        "expected_sha256": "08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
+        "actual_sha256": "08b9608d01480c13910da79e5de838a1954559a5a63b737259c85ee8ddd7ede1",
+        "blob": "fef092c3c7579418b1ba056bbc7986fa8847651d",
+        "bytes": 6033,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-quote/element.yaml": {
+        "expected_sha256": "9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
+        "actual_sha256": "9ba3959fb4abf7237aaa26630ba476d93d4caf5365f962994eb9dc23e7ff3370",
+        "blob": "d52ea33faca02e4a0cb29a35b8ed19a1f2feb6aa",
+        "bytes": 2008,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/component.tsx": {
+        "expected_sha256": "9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
+        "actual_sha256": "9ef9e9242ce75e4a3b21b81ecd05a1e5876eda1d11f8be2ae61dbdc51b97677e",
+        "blob": "1880146935269293e8a99a26ce20c0f70962924f",
+        "bytes": 10063,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-seasons/element.yaml": {
+        "expected_sha256": "93143202129f057bbded11bd493626644daadf38c945d20292369b6bfe49758b",
+        "actual_sha256": "93143202129f057bbded11bd493626644daadf38c945d20292369b6bfe49758b",
+        "blob": "a055ea9e17c0368755cf226ad7c96b2ab34d32f8",
+        "bytes": 1649,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/component.tsx": {
+        "expected_sha256": "93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee",
+        "actual_sha256": "93fc2fb7ab03a4d64d9e1c53a9a40de6de75860576b77f5b6f2c31cbd9c292ee",
+        "blob": "d8e14ec9418c9d6b41461ea1e92713cf6f6e8de4",
+        "bytes": 5904,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/element.yaml": {
+        "expected_sha256": "7e07703f34bbce7e0bc8d9b7f79efe9a48360ffaf001ae8cec3da3cf6ccfeb32",
+        "actual_sha256": "7e07703f34bbce7e0bc8d9b7f79efe9a48360ffaf001ae8cec3da3cf6ccfeb32",
+        "blob": "3b3147cc41b58968c866df8d754ebb10318748d0",
+        "bytes": 3923,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/motion.ts": {
+        "expected_sha256": "789545a001927ea413eb677c24d3f1c05c5077a4257e342d20a68b63e5ec32ea",
+        "actual_sha256": "789545a001927ea413eb677c24d3f1c05c5077a4257e342d20a68b63e5ec32ea",
+        "blob": "9a9eb0915e5bad67af9c6c512225470b88a1798d",
+        "bytes": 2244,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/scene.ts": {
+        "expected_sha256": "e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e",
+        "actual_sha256": "e43bb6dfe94a770df11e21bcf5e959e9591387d7952dda11176c79fc9e2c686e",
+        "blob": "41ae6a8a0e6da584c3a5852dc598515a16194e2c",
+        "bytes": 1042,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-snap-plate/surface.ts": {
+        "expected_sha256": "5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49",
+        "actual_sha256": "5c844e62bd6d32673d16ad17d61435380050ffbe2cb92036d2251ac3579edd49",
+        "blob": "bde45de41ac34f94f3d09e68df84e408bdcda1fa",
+        "bytes": 949,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/component.tsx": {
+        "expected_sha256": "fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e",
+        "actual_sha256": "fc79cee164d9d7aeb2a008d9d924e7b41710856b0b630bbc91137ff504b5172e",
+        "blob": "f48957adda69ba593f4235cc5993e7ac7635b44d",
+        "bytes": 10296,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-sprite/element.yaml": {
+        "expected_sha256": "05218725cc0c70c0c708bae8fa57a430b606517d6861cf2344ea623a94c9ca3a",
+        "actual_sha256": "05218725cc0c70c0c708bae8fa57a430b606517d6861cf2344ea623a94c9ca3a",
+        "blob": "daff7683599a985877ab97b2cf1976460e366784",
+        "bytes": 4086,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/component.tsx": {
+        "expected_sha256": "ca863ed067e560497f8dd946e29933fb103c9cfae629c97b36711e477e8db74e",
+        "actual_sha256": "ca863ed067e560497f8dd946e29933fb103c9cfae629c97b36711e477e8db74e",
+        "blob": "cc946128e9ce5368f3ad11f0927fff92dffaa90e",
+        "bytes": 9432,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml": {
+        "expected_sha256": "1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
+        "actual_sha256": "1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
+        "blob": "cf7b4ab834b8ae4507adcaaf80e8cb591f3ba168",
+        "bytes": 1916,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx": {
+        "expected_sha256": "b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
+        "actual_sha256": "b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
+        "blob": "2b008d5bcab9c561fefeba22c36b53b13a23cc99",
+        "bytes": 6598,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": {
+        "expected_sha256": "be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
+        "actual_sha256": "be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
+        "blob": "6df0b4078584b3421ab11af138f67ac4d5962130",
+        "bytes": 2057,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": {
+        "expected_sha256": "2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+        "actual_sha256": "2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+        "blob": "6b7fa8a3424fec989441dc116d4a8dd5204f2d3e",
+        "bytes": 7169,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": {
+        "expected_sha256": "8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+        "actual_sha256": "8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+        "blob": "a41028e6851fd76b2c9466d1623b54d880f068fd",
+        "bytes": 3674,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": {
+        "expected_sha256": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
+        "actual_sha256": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
+        "blob": "c04f7d160dfd2b2d19cf12e087fcef1bcd2d7313",
+        "bytes": 1669,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": {
+        "expected_sha256": "8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
+        "actual_sha256": "8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
+        "blob": "a495033af8d0f849defcbeeed55d533e673f3655",
+        "bytes": 26994,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": {
+        "expected_sha256": "e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
+        "actual_sha256": "e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
+        "blob": "781de600a84339bdf5333478ffde2e7d79baff35",
+        "bytes": 4017,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/boundary.ts": {
+        "expected_sha256": "cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
+        "actual_sha256": "cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
+        "blob": "8f9ebb7647cc5ceb9c90ddb74f68114fdf93d420",
+        "bytes": 10025,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/component.tsx": {
+        "expected_sha256": "c410a83f05eb74f21e9f55889a22a243f015c8739d02a8b2567dd89ca73b3f34",
+        "actual_sha256": "c410a83f05eb74f21e9f55889a22a243f015c8739d02a8b2567dd89ca73b3f34",
+        "blob": "36e6f7b89249bd1de5c825c97c6fcda25b1060fd",
+        "bytes": 2835,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/element.yaml": {
+        "expected_sha256": "01f430a9b041de68678385b18be9342c44c1b107ea2db9a667c4ee443402caf3",
+        "actual_sha256": "01f430a9b041de68678385b18be9342c44c1b107ea2db9a667c4ee443402caf3",
+        "blob": "d00b127ba6d80977f81e2af26037310d74804001",
+        "bytes": 2206,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/animated-media-transform/motion.ts": {
+        "expected_sha256": "21b2cb3a7e5b5c28de5bba9c2d3121e6d14053d92f909e34f860a7ac1b4803c9",
+        "actual_sha256": "21b2cb3a7e5b5c28de5bba9c2d3121e6d14053d92f909e34f860a7ac1b4803c9",
+        "blob": "fde6584e72b2b0f0d397e18e75b12548d00368ed",
+        "bytes": 3237,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-codex-transform/component.tsx": {
+        "expected_sha256": "0318f3e9b3bc78c3d5b800b19ea6078ced83b5b5ff79b85501d74e764f6c0b37",
+        "actual_sha256": "0318f3e9b3bc78c3d5b800b19ea6078ced83b5b5ff79b85501d74e764f6c0b37",
+        "blob": "fd1e1dc88b35ecd8f79bdd19d2ee139e33f51938",
+        "bytes": 5190,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-codex-transform/element.yaml": {
+        "expected_sha256": "331e082f842923d232f5dfd46ca93a584a0a1c28902fd30ffecb176b2e42dc67",
+        "actual_sha256": "331e082f842923d232f5dfd46ca93a584a0a1c28902fd30ffecb176b2e42dc67",
+        "blob": "92099b051acd710288da9882475fada6c1483913",
+        "bytes": 987,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-mid-combined/component.tsx": {
+        "expected_sha256": "5f1ff32f7f7632aba184794d9633d12928192871acad892f218cc33fc95d100f",
+        "actual_sha256": "5f1ff32f7f7632aba184794d9633d12928192871acad892f218cc33fc95d100f",
+        "blob": "8990c1b0957b355023b5fa82eb0a1924b5006143",
+        "bytes": 10382,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-mid-combined/element.yaml": {
+        "expected_sha256": "430cc6b1d4b369af4dfe1573bb186cf54be066b6d10561a178cc9c096eadec00",
+        "actual_sha256": "430cc6b1d4b369af4dfe1573bb186cf54be066b6d10561a178cc9c096eadec00",
+        "blob": "fba3cbda5fff2d7e687825ed7bbadd19f9dced85",
+        "bytes": 1025,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-minimax-animate/component.tsx": {
+        "expected_sha256": "481c181539424cd2b27e12dfbeb8b108ef2da5ecf5871c9f93b3594946db9141",
+        "actual_sha256": "481c181539424cd2b27e12dfbeb8b108ef2da5ecf5871c9f93b3594946db9141",
+        "blob": "b2959191c031f5a03790a29dcb7dcae4db2a4a33",
+        "bytes": 7324,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-minimax-animate/element.yaml": {
+        "expected_sha256": "d1a4b1048ac16d97ae5b842740acb2afe3240c90dce0c9ffe6b726d4da45c59b",
+        "actual_sha256": "d1a4b1048ac16d97ae5b842740acb2afe3240c90dce0c9ffe6b726d4da45c59b",
+        "blob": "cdeab47a4ef650913391f4f6d57ffb9ed961fbda",
+        "bytes": 1027,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0-canonical-mink.png": {
+        "expected_sha256": "dfc516cf14c88f9da8dae704dd1fd8d060e1e641cfa444d08bc68c495798de2c",
+        "actual_sha256": "dfc516cf14c88f9da8dae704dd1fd8d060e1e641cfa444d08bc68c495798de2c",
+        "blob": "0c6c4fd62bb4539f9198971644b178246a42bb5a",
+        "bytes": 755246,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-0.png": {
+        "expected_sha256": "6bd6a895cfe78f3dc2dc4b273e999fb05e7883bfee3faa0494c1d0c546591851",
+        "actual_sha256": "6bd6a895cfe78f3dc2dc4b273e999fb05e7883bfee3faa0494c1d0c546591851",
+        "blob": "6e5a9b24c508366cd7bfee82ed1a08dbdfb6ae0f",
+        "bytes": 507593,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-1.png": {
+        "expected_sha256": "1233c44cac8400b2467ef8654b1365372f7b8d00dde6e5cd2f14b0259be3061d",
+        "actual_sha256": "1233c44cac8400b2467ef8654b1365372f7b8d00dde6e5cd2f14b0259be3061d",
+        "blob": "f72510e4ae5d71c5947a3e93c96a10d60dccd626",
+        "bytes": 731235,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-2.png": {
+        "expected_sha256": "6c21fbd4024a2783d51b8cc777fa6e448d0a32027e34813eb070383ebd78371b",
+        "actual_sha256": "6c21fbd4024a2783d51b8cc777fa6e448d0a32027e34813eb070383ebd78371b",
+        "blob": "fc119079382d6fd9dd72e3759cb148373790c0bf",
+        "bytes": 562170,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-3.png": {
+        "expected_sha256": "88cdfffd9b11ec598abc53e00458a07a627c424b5c3f6f65c749849e8ca7e26f",
+        "actual_sha256": "88cdfffd9b11ec598abc53e00458a07a627c424b5c3f6f65c749849e8ca7e26f",
+        "blob": "15b55891bec9121269c40b9132127863b5b27a26",
+        "bytes": 1462140,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4-canonical-mink.png": {
+        "expected_sha256": "c71d9875085eed4cd731bf30e022055fc78bc091e4cb40a29daf4a1baec8c743",
+        "actual_sha256": "c71d9875085eed4cd731bf30e022055fc78bc091e4cb40a29daf4a1baec8c743",
+        "blob": "505d4802925eadb78763efc8870fa0aae1579132",
+        "bytes": 1509793,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-4.png": {
+        "expected_sha256": "8841c0dc9bf431140b9248cff1c35a90e1ef5f94546fcbe163082d93bba2f125",
+        "actual_sha256": "8841c0dc9bf431140b9248cff1c35a90e1ef5f94546fcbe163082d93bba2f125",
+        "blob": "7e1904e7403a1b0ae609d8e22b8f413c8c08fb40",
+        "bytes": 1498999,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5-canonical-mink.png": {
+        "expected_sha256": "4d551743b190b1a9c1b76f779eeb8d1625db6dd9aa8955f8c39500cb7a3e84a8",
+        "actual_sha256": "4d551743b190b1a9c1b76f779eeb8d1625db6dd9aa8955f8c39500cb7a3e84a8",
+        "blob": "81ed88e7bfda69316004e91269155b2fa9d58810",
+        "bytes": 1619131,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/assets/card-5.png": {
+        "expected_sha256": "84e6b79630750bfe142256820cd4599829069adf07bcda10e6dd8f2145e3a97b",
+        "actual_sha256": "84e6b79630750bfe142256820cd4599829069adf07bcda10e6dd8f2145e3a97b",
+        "blob": "904a502e75ae664b127b089bee98789b9d02c3a0",
+        "bytes": 1582358,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/component.tsx": {
+        "expected_sha256": "0e850eaa8af9c099105a2d6f2281f53a2ec60bb280fd2e38cf13d530960cfef0",
+        "actual_sha256": "0e850eaa8af9c099105a2d6f2281f53a2ec60bb280fd2e38cf13d530960cfef0",
+        "blob": "4ca5ca59b31f7f70e8b6a8dc90648d278cb4bbf7",
+        "bytes": 16575,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/element.yaml": {
+        "expected_sha256": "26d1c73f538ecb3d320edd3ab57d6002265c8b5c6afad8a7e763fe22767e4532",
+        "actual_sha256": "26d1c73f538ecb3d320edd3ab57d6002265c8b5c6afad8a7e763fe22767e4532",
+        "blob": "8acfb89878fce9b206e5368283d21582b86e27b5",
+        "bytes": 3848,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/end-spanning-layer/timing.ts": {
+        "expected_sha256": "32cfbaf31869f9e87848108f9ffbf40ac29205ad663d47d80756c2bef7358fe1",
+        "actual_sha256": "32cfbaf31869f9e87848108f9ffbf40ac29205ad663d47d80756c2bef7358fe1",
+        "blob": "48b55acd03e6a7e2d89fc1e3b330a0d2abd5c188",
+        "bytes": 3630,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/ending-carousel/component.tsx": {
+        "expected_sha256": "01385f7bd429b0c0d3fc3471d6dd162e45de8117c9539304419a4069a930dfad",
+        "actual_sha256": "01385f7bd429b0c0d3fc3471d6dd162e45de8117c9539304419a4069a930dfad",
+        "blob": "79ecd5a48e49e942d9b8fec7dd9d2b83162d187f",
+        "bytes": 5408,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/ending-carousel/element.yaml": {
+        "expected_sha256": "6494d7c7f64f5ed1e4077194ebf671ec3631770766e414450ab9b7f43b6e35ff",
+        "actual_sha256": "6494d7c7f64f5ed1e4077194ebf671ec3631770766e414450ab9b7f43b6e35ff",
+        "blob": "832cb633cd3808f472ba7961f670ae9fc0646c82",
+        "bytes": 1124,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/event-card/component.tsx": {
+        "expected_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "actual_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "blob": "d4d6834322d85fa2f9072f95cb6950289eca9479",
+        "bytes": 4079,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/event-card/element.yaml": {
+        "expected_sha256": "78b3ab23b731d50e29a64b42fe49dfc4ea98a953f6d8bdc705d6733822f8affa",
+        "actual_sha256": "78b3ab23b731d50e29a64b42fe49dfc4ea98a953f6d8bdc705d6733822f8affa",
+        "blob": "ff29d684702404fea0e032438c8af66880767961",
+        "bytes": 1897,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/assets/frame.png": {
+        "expected_sha256": "730113561d7848cea6156c3c0e4f08c1d2db693d7522671cf654f044de528605",
+        "actual_sha256": "730113561d7848cea6156c3c0e4f08c1d2db693d7522671cf654f044de528605",
+        "blob": "ee81f42d271b805ae28330bc53102d3a3f3c641c",
+        "bytes": 2949,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/component.tsx": {
+        "expected_sha256": "a7f9fd70cf64740c6979ba603d78b960badcd6daee02e3265a9df561810d8256",
+        "actual_sha256": "a7f9fd70cf64740c6979ba603d78b960badcd6daee02e3265a9df561810d8256",
+        "blob": "a766c3c70a98a1eaf10b6980a6a26dade6beb7d0",
+        "bytes": 1356,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/frame-overlay/element.yaml": {
+        "expected_sha256": "efef8f1e414089d11e0349af42c56c186f54f22b54b76e168ea54bea33ed1c62",
+        "actual_sha256": "efef8f1e414089d11e0349af42c56c186f54f22b54b76e168ea54bea33ed1c62",
+        "blob": "ad62c2bc3d3c3f0faa5fe951aad4558565c9280a",
+        "bytes": 764,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/model-trends/component.tsx": {
+        "expected_sha256": "498e7818f2c8ad7fbb011bc5e8028b67572b03e8ea073061c0ff8821500f1bc2",
+        "actual_sha256": "498e7818f2c8ad7fbb011bc5e8028b67572b03e8ea073061c0ff8821500f1bc2",
+        "blob": "f463142ba2306f8af0826fde3abe77868d794615",
+        "bytes": 28239,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/model-trends/element.yaml": {
+        "expected_sha256": "e4b4d7cfc22ad2479d1f9c56e1bdd18ab1a9711ea47c9bca3a9305d8492b21b9",
+        "actual_sha256": "e4b4d7cfc22ad2479d1f9c56e1bdd18ab1a9711ea47c9bca3a9305d8492b21b9",
+        "blob": "f42e1092e13b86a16b3570fed35b408ccf3e23cd",
+        "bytes": 2456,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/neon-orbit-card/component.tsx": {
+        "expected_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "actual_sha256": "2e8f46e346b44807205880cd8a128e88227dc2b05b1fb8c4dddac5bb277ac4f3",
+        "blob": "d4d6834322d85fa2f9072f95cb6950289eca9479",
+        "bytes": 4079,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/neon-orbit-card/element.yaml": {
+        "expected_sha256": "ce1c7788633135f6302e6ba312b0bc7b7ed80808095a0b3a5b8c67f0e2b415de",
+        "actual_sha256": "ce1c7788633135f6302e6ba312b0bc7b7ed80808095a0b3a5b8c67f0e2b415de",
+        "blob": "e92fa49e6e4bfbc38da5c3c6f2a8e398185bbf33",
+        "bytes": 1867,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/scrolling-guide/component.tsx": {
+        "expected_sha256": "356324b56de0dc7c63bcda3e4f28a22fe08c924f932fcdedd552b3f56259ad78",
+        "actual_sha256": "356324b56de0dc7c63bcda3e4f28a22fe08c924f932fcdedd552b3f56259ad78",
+        "blob": "cd53292648b690965c6fb7a527f5c5fdd8145c39",
+        "bytes": 6490,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/scrolling-guide/element.yaml": {
+        "expected_sha256": "ca4dc8f57158814a875b6b7718eb5caebe9fe2abb5d0f269ecb7176eecd9212c",
+        "actual_sha256": "ca4dc8f57158814a875b6b7718eb5caebe9fe2abb5d0f269ecb7176eecd9212c",
+        "blob": "e9c7b222441b34724b7f8eb4f7d5548de0e08805",
+        "bytes": 1528,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/sliding-media/component.tsx": {
+        "expected_sha256": "56065d85fedb4a74da10e4fc6d134585b15e82614c8b96c5d3147a7d8a45cb2d",
+        "actual_sha256": "56065d85fedb4a74da10e4fc6d134585b15e82614c8b96c5d3147a7d8a45cb2d",
+        "blob": "4ebc84c4f01072e5e9215f5e7b4b2c93a74b9799",
+        "bytes": 2696,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/sliding-media/element.yaml": {
+        "expected_sha256": "02366e3d3ed5da688c9fb2d9015f81f8543554a9ec22a6acfa552bb1416a5986",
+        "actual_sha256": "02366e3d3ed5da688c9fb2d9015f81f8543554a9ec22a6acfa552bb1416a5986",
+        "blob": "44ab9ebd9d818032a3093642e0eec144d923c2a3",
+        "bytes": 646,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/text-card/component.tsx": {
+        "expected_sha256": "a717914bb0bcbeead78658bb9f05e9bd37a5545df49142d4e07cd73d27e39686",
+        "actual_sha256": "a717914bb0bcbeead78658bb9f05e9bd37a5545df49142d4e07cd73d27e39686",
+        "blob": "fb77c064c555324f670279d8f4d02250f11599a0",
+        "bytes": 19768,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/text-card/element.yaml": {
+        "expected_sha256": "080127fb507ee2fcfe1e4a8bddc53d0c5c7b12e16cd922b386bf802907a408d4",
+        "actual_sha256": "080127fb507ee2fcfe1e4a8bddc53d0c5c7b12e16cd922b386bf802907a408d4",
+        "blob": "54af124d0b7b02da5831ca9962d38f8a387ea7c0",
+        "bytes": 1802,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/component.tsx": {
+        "expected_sha256": "3100bf2baec6d395ed7c8cc4a9164df720260616b89de1f71ab751060669c3a2",
+        "actual_sha256": "3100bf2baec6d395ed7c8cc4a9164df720260616b89de1f71ab751060669c3a2",
+        "blob": "eddf264cc6e87ec46d318f3ec8aa21cacd31fe99",
+        "bytes": 14066,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-asset-overlay/element.yaml": {
+        "expected_sha256": "1c6e78dd2c2fd54218c21a21dc330775db88642a251ab9a775b910dffc1a5ff5",
+        "actual_sha256": "1c6e78dd2c2fd54218c21a21dc330775db88642a251ab9a775b910dffc1a5ff5",
+        "blob": "0865fc122ce5c23e7d7d2d92601b0a68d4167ae0",
+        "bytes": 771,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/component.tsx": {
+        "expected_sha256": "3a6856e4d332a5e8c1983c2a3ea65972873950821e99e7a572ec4890e01c94a0",
+        "actual_sha256": "3a6856e4d332a5e8c1983c2a3ea65972873950821e99e7a572ec4890e01c94a0",
+        "blob": "09f717011e2b75e42d41ab8b364f92824dbf66f2",
+        "bytes": 10904,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/effects/vibe-comfy-bumper/element.yaml": {
+        "expected_sha256": "f134e11545c2104db341b6c40c34394797e9b7c2889480017dbc3d8b22f3a958",
+        "actual_sha256": "f134e11545c2104db341b6c40c34394797e9b7c2889480017dbc3d8b22f3a958",
+        "blob": "c45b14c67557f80f94b4d187531256b702e66fb6",
+        "bytes": 787,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/rendering/elements/seam-intent.ts": {
+        "expected_sha256": "00dcfa82b5378637b7e9da00685e6ea38f077ce729b179491df3691116d4abc2",
+        "actual_sha256": "00dcfa82b5378637b7e9da00685e6ea38f077ce729b179491df3691116d4abc2",
+        "blob": "29329f7b02d9f4ab500687ee0d53b72986c20669",
+        "bytes": 4835,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/shared/clip-effects.ts": {
+        "expected_sha256": "418cb06503e0e330b27f388e7f1bcce72196e3ddd74e22a4af2ea9d2b3617025",
+        "actual_sha256": "418cb06503e0e330b27f388e7f1bcce72196e3ddd74e22a4af2ea9d2b3617025",
+        "blob": "ddf2b0a1e06c4babf7b08f40696f7d0a6a976008",
+        "bytes": 4504,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/local/shared/readiness-image.tsx": {
+        "expected_sha256": "353c117886d9dcc0932ae16e25ca4b85e2433919ceaebff7834a96142441dd99",
+        "actual_sha256": "353c117886d9dcc0932ae16e25ca4b85e2433919ceaebff7834a96142441dd99",
+        "blob": "0c3c27886a2b803790b6513ee10d9fcafdcf47e4",
+        "bytes": 5129,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/editor/catalog.ts": {
+        "expected_sha256": "f4fa4077339b35ec91482ca7e6cd51dc79edc21969500122688b040ee500c94d",
+        "actual_sha256": "f4fa4077339b35ec91482ca7e6cd51dc79edc21969500122688b040ee500c94d",
+        "blob": "f87d7fae0c3a6e15dc2d2278ae795b47c108d663",
+        "bytes": 1046,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/elements/catalog.ts": {
+        "expected_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92",
+        "actual_sha256": "e38812e0b8959a26de3031e9422e07cd351d5111e5a5caefd50f15ad83352b92",
+        "blob": "141c8c739f888170459106db21e38cb676238082",
+        "bytes": 167755,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/fade-up/element.yaml": {
+        "expected_sha256": "2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+        "actual_sha256": "2534d142fb47e573489ddc08727c26292492f377c6ba39881ee9d1005eb1081d",
+        "blob": "90cce426db10f498c73d60c72422e49cfe5d6bde",
+        "bytes": 1038,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/fade/element.yaml": {
+        "expected_sha256": "65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+        "actual_sha256": "65df111c8e261dded80fb0be284d9aaaafc926dca8052e4e378225a5dcbd864b",
+        "blob": "3ac89e15e9638fa001458955051e9fff80828efc",
+        "bytes": 1082,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/scale-in/element.yaml": {
+        "expected_sha256": "f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+        "actual_sha256": "f69a5e42688a7d4f34297e8f10d7e0427aae412116766896bd9e4ee5174889ca",
+        "blob": "a56970ac9be9b06d0b1a1771aef9b74876189caa",
+        "bytes": 1047,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/slide-left/element.yaml": {
+        "expected_sha256": "a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+        "actual_sha256": "a5ef46a8f2c54c0a355759c049b2968ee76d69e0e31526100768a17d1c747f87",
+        "blob": "3ac03d041b22e03d16b4bfee996812eb0d849360",
+        "bytes": 1065,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/slide-up/element.yaml": {
+        "expected_sha256": "bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+        "actual_sha256": "bd3d0b249ddd8ac4f0f64e4874123ab3fdaf2afbed29dff65b0753543cb0a91b",
+        "blob": "611b031f79897db177b10df2097346ee5fd5d3c8",
+        "bytes": 1039,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/animations/type-on/element.yaml": {
+        "expected_sha256": "44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+        "actual_sha256": "44d95f566471cda32ad0ab522f62e7a4ed730dc41098760f704b31c838bcfb1c",
+        "blob": "8e0bb0d601838541bcd91d7f592795b73321c138",
+        "bytes": 1143,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/component.tsx": {
+        "expected_sha256": "c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+        "actual_sha256": "c7b0fed74f60b78a49b5874c547bd1ef80f1e4ba625515bbca25442407b178a6",
+        "blob": "525f8f6d2a6a6f8b5693a6cc0c7781190dc321a1",
+        "bytes": 2136,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/audio-reactive-colour/element.yaml": {
+        "expected_sha256": "1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+        "actual_sha256": "1554e36f53f9a69f07f132a31a6db373c9b9b9b1d77281171cefe15777e306a0",
+        "blob": "64780dde6fc6bbc04ecb4c12dbc4347074df9fe6",
+        "bytes": 2143,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/effects/text-card/element.yaml": {
+        "expected_sha256": "e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+        "actual_sha256": "e478beaa5a0f949c472fcbfb8c21068381ef4181b5ed2eee7c48e1171663daea",
+        "blob": "5c9ad9f26fd47a53af48f5b5e3af20cb3a02003b",
+        "bytes": 1127,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/transitions/cross-fade/element.yaml": {
+        "expected_sha256": "d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+        "actual_sha256": "d1bf5a452ff6b8637e380a7eafb1bc90d4fcf5e3e91de557622ba727b7110eb4",
+        "blob": "208ccf015900c742d7147d9a10e697da6bdb1b8b",
+        "bytes": 1090,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/rendering/elements/transitions/fade/element.yaml": {
+        "expected_sha256": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+        "actual_sha256": "28f1b4f74919f026418ee2b1d1d7a294a6674cb7ef5709e0db95ee6f9dc9c7c2",
+        "blob": "306345ca6ae98e05aa78392e6945038fda206ca2",
+        "bytes": 1042,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/element_contracts.ts": {
+        "expected_sha256": "3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066",
+        "actual_sha256": "3d3f639bea957170408a69584da4bac932efe508769e1f5887007fd4eaaff066",
+        "blob": "22f1e23ffdc8aea675ed830fbe766cce5907ee6b",
+        "bytes": 1613,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/managed-media-policy.ts": {
+        "expected_sha256": "712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
+        "actual_sha256": "712fc4cb008226ff9578f37fb857dc62ae8601c8b4ad4e2de6687fbc24d9c8d5",
+        "blob": "e0e4a2fd62c6b41ecb0c25f754a817d5d5079fb7",
+        "bytes": 790,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/managed-media.tsx": {
+        "expected_sha256": "7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
+        "actual_sha256": "7e010dbd196c1c4dc00eaa40178e47b43ad4a8d203de8db536697b5137c23209",
+        "blob": "8f3adde1af8e183152b4a5d0fd62e48f76e7152e",
+        "bytes": 1117,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/shared/readiness-image.tsx": {
+        "expected_sha256": "5fcf2539131fd75dfbedffb71b075bf165c840404a1036451dcf874ea486832f",
+        "actual_sha256": "5fcf2539131fd75dfbedffb71b075bf165c840404a1036451dcf874ea486832f",
+        "blob": "c682c5cc700f7b606a931b2a4bd5d66a5b28c7c4",
+        "bytes": 5108,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": {
+        "expected_sha256": "0f368d460f81e2fb9c61f2f952e3f5ae7a38ded8b8a0d7ed8fd33580b62f4ea5",
+        "actual_sha256": "0f368d460f81e2fb9c61f2f952e3f5ae7a38ded8b8a0d7ed8fd33580b62f4ea5",
+        "blob": "e2b3541865a8e65851972ef2920d990a53c45f02",
+        "bytes": 13966,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": {
+        "expected_sha256": "52a9956ce1451002072037dc07f27f6b66e0b372803be34c7cdb5165d36f7f07",
+        "actual_sha256": "52a9956ce1451002072037dc07f27f6b66e0b372803be34c7cdb5165d36f7f07",
+        "blob": "4745cee765623b6383bea95b1db54c1969bbad1f",
+        "bytes": 46607,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts": {
+        "expected_sha256": "dd4e81c2fbab6657dc1b17e94f3f8ebe567157140b16550243644b6518caf303",
+        "actual_sha256": "dd4e81c2fbab6657dc1b17e94f3f8ebe567157140b16550243644b6518caf303",
+        "blob": "7625bf6104fd451d08ebf944ba94aeff2d4dbd78",
+        "bytes": 1247,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx": {
+        "expected_sha256": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
+        "actual_sha256": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
+        "blob": "288fb03ca832619c0436d051748755ecb18afc52",
+        "bytes": 1045,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx": {
+        "expected_sha256": "4ec0bdc5812ef3c3d369b0e77a1f4d7b876827b94b96e60f99538195f657daf3",
+        "actual_sha256": "4ec0bdc5812ef3c3d369b0e77a1f4d7b876827b94b96e60f99538195f657daf3",
+        "blob": "6d95f906163ab05e5d0da9436d2ff24a032841c8",
+        "bytes": 15339,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": {
+        "expected_sha256": "581da5ac3f663c60a37d02204c72dd285ff88390bc1e7fa35b7ebd5eb68bda58",
+        "actual_sha256": "581da5ac3f663c60a37d02204c72dd285ff88390bc1e7fa35b7ebd5eb68bda58",
+        "blob": "2506b1417a18c5fd16a404c89afb9d0cf1cac9c0",
+        "bytes": 13348,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": {
+        "expected_sha256": "01770ecde256668dd2258c7a7f2d866c741147e50ca8407e3afe0058b5dd64d8",
+        "actual_sha256": "01770ecde256668dd2258c7a7f2d866c741147e50ca8407e3afe0058b5dd64d8",
+        "blob": "8571ccff8472ccbf35bd534c56054d379756d628",
+        "bytes": 77299,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": {
+        "expected_sha256": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
+        "actual_sha256": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
+        "blob": "76c884ce43f86768bc810b21fe52e6f1692611f2",
+        "bytes": 6802,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": {
+        "expected_sha256": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
+        "actual_sha256": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
+        "blob": "672aa546a12264ef3d7935e046d507114be6e413",
+        "bytes": 13006,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts": {
+        "expected_sha256": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",
+        "actual_sha256": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",
+        "blob": "f4afe193abe2b9d1062b21a0add8917e4c9c8b11",
+        "bytes": 2431,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/model.ts": {
+        "expected_sha256": "eba3a13cdb9884c0ca684f39f15cd02e709a73ae795c8358f3980156e99b2061",
+        "actual_sha256": "eba3a13cdb9884c0ca684f39f15cd02e709a73ae795c8358f3980156e99b2061",
+        "blob": "5c0c95f62c2504844df8901221bff9b07f8b387c",
+        "bytes": 22772,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/rows.ts": {
+        "expected_sha256": "114868a212a28132ab923fefebb32f5891594a11fc307ed9ee9841aa3421c2cc",
+        "actual_sha256": "114868a212a28132ab923fefebb32f5891594a11fc307ed9ee9841aa3421c2cc",
+        "blob": "83c11da604fccdc144dd675e2789afbe19185b2d",
+        "bytes": 5370,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/ui.ts": {
+        "expected_sha256": "eddc38f6b6fdc798c0e67a77898ffc484947b267e7f2d19f19381c7bc95e1f2d",
+        "actual_sha256": "eddc38f6b6fdc798c0e67a77898ffc484947b267e7f2d19f19381c7bc95e1f2d",
+        "blob": "acb9767543fdcbe671d81744428023cdc288c484",
+        "bytes": 2538,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample.ts": {
+        "expected_sha256": "fab89126e5fa8e2e5110617e334c6bd0c52f0d54e89dac4e541d4a8909063ce8",
+        "actual_sha256": "fab89126e5fa8e2e5110617e334c6bd0c52f0d54e89dac4e541d4a8909063ce8",
+        "blob": "5fd0bd1ecd06406be29005cd956bf53bd5e67e7d",
+        "bytes": 638502,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": {
+        "expected_sha256": "b45a3835e46b98a21793f23f66222ab12e5a66266be9840fc503c749bca1b7cb",
+        "actual_sha256": "b45a3835e46b98a21793f23f66222ab12e5a66266be9840fc503c749bca1b7cb",
+        "blob": "3c4611a12c87a1880fdf56f4f092719cf49c3222",
+        "bytes": 10172,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/identity.ts": {
+        "expected_sha256": "b295f5b94eb47fa34612c40faac3508eacb27e89a1369525d526dfb17c2dbdf2",
+        "actual_sha256": "b295f5b94eb47fa34612c40faac3508eacb27e89a1369525d526dfb17c2dbdf2",
+        "blob": "2062b9c5cff384d72ae676a929477048cf1c527a",
+        "bytes": 227,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": {
+        "expected_sha256": "cc68382529a0c4ddb07c0a6616ec52501edd1518c8e095c111260398fafceae4",
+        "actual_sha256": "cc68382529a0c4ddb07c0a6616ec52501edd1518c8e095c111260398fafceae4",
+        "blob": "439d7ccce6f10fc0db8f1bd1a9515643fe8099e7",
+        "bytes": 31730,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/shotStillRenderer.tsx": {
+        "expected_sha256": "12f10827613b561f25ca27b7aca0de7afa0d7c8b14e4da7a53087e0117942bea",
+        "actual_sha256": "12f10827613b561f25ca27b7aca0de7afa0d7c8b14e4da7a53087e0117942bea",
+        "blob": "9b6efe00d2bc6ad4d05fcd9b96aebd869d9d61d8",
+        "bytes": 3415,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/shotStills.ts": {
+        "expected_sha256": "147d7965ec7aed6a232dcb3405a2168565c3d15525beee1ceb351016f8852b83",
+        "actual_sha256": "147d7965ec7aed6a232dcb3405a2168565c3d15525beee1ceb351016f8852b83",
+        "blob": "1dcaedc4669fd4fb1626240493b555f5fc4201bb",
+        "bytes": 4397,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/threejs-live-editor/useShotStill.ts": {
+        "expected_sha256": "7bd997ed889e63172019dcbe418a77a9af9e0de1f993a9cff8bd2d786186ce03",
+        "actual_sha256": "7bd997ed889e63172019dcbe418a77a9af9e0de1f993a9cff8bd2d786186ce03",
+        "blob": "24fa813e1d06cb31814abaf575e62c23ef750221",
+        "bytes": 548,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": {
+        "expected_sha256": "9eb80ec0f6cd9249a6af618cddf284c2e411bf8ff8a4475d2a87b5ab25a19555",
+        "actual_sha256": "9eb80ec0f6cd9249a6af618cddf284c2e411bf8ff8a4475d2a87b5ab25a19555",
+        "blob": "087647b7c8f6b9f3b6cd28b6a61ae65e28775ada",
+        "bytes": 17637,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": {
+        "expected_sha256": "2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
+        "actual_sha256": "2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
+        "blob": "8b6ce0a8e89d9d636688a705cc9e7212b77f65f3",
+        "bytes": 50549,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/rendering/ui/transcript/extension.tsx": {
+        "expected_sha256": "870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
+        "actual_sha256": "870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
+        "blob": "c02e0a1c7a368abbcef101fe88c12f098510902a",
+        "bytes": 2339,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/video_editing/pack.yaml": {
+        "expected_sha256": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+        "actual_sha256": "53ad0207af00cd880a3e8261c03f9caab69cc59b471064d141b4e8c36c125216",
+        "blob": "602e61f15f96131b912fe24479cfffce3adb31ce",
+        "bytes": 48599,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/packs/video_editing/ui/video-editor/entry.json": {
+        "expected_sha256": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+        "actual_sha256": "ae53de8e3eb3b8fe6157a18f7bdaabda7d0f6886a120f45482e05c982a6523b0",
+        "blob": "779c776f91aa4965cb7a9bf80e0434a51c36b971",
+        "bytes": 87,
+        "mode": "100644",
+        "match": true
+      },
+      "astrid/tools/catalog.json": {
+        "expected_sha256": "05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+        "actual_sha256": "05677b1f9cd9f931c9681edee821e848f243159787e44cdc2cda2e4136fdf237",
+        "blob": "03cc949a32b856e70de27b5b6bf47e2fe729057a",
+        "bytes": 848,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/DepartureMono-Regular.woff2": {
+        "expected_sha256": "5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+        "actual_sha256": "5b4fed1daa90708aa9c6ee1190abca9dc22164a1c1def0020386e46b61038cfb",
+        "blob": "b4a23dc1dad1c934005d0862e62c0294636afb08",
+        "bytes": 22496,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/FONT_PROVENANCE.md": {
+        "expected_sha256": "f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+        "actual_sha256": "f67cf424fcb63d4fc17e5cef0e4dbeea837aae1eb3f1eb1e081170c5822e2eec",
+        "blob": "4de498d512804075f9cd1d27cabe1c5c5b048576",
+        "bytes": 10900,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Bold.woff2": {
+        "expected_sha256": "2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+        "actual_sha256": "2fdaa469d51ef618d648e27819f10a1df08721ed2331614c3123850162cc147a",
+        "blob": "32f059ea6ce850dc7155b92e8ebd28e62d390c50",
+        "bytes": 20452,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-BoldItalic.woff2": {
+        "expected_sha256": "e5b0682ff74c6798100255daafaf5d5496c5ddec596aec663fdd0afb3470b609",
+        "actual_sha256": "e5b0682ff74c6798100255daafaf5d5496c5ddec596aec663fdd0afb3470b609",
+        "blob": "aaf4860ecc8c1766372fb0c740ce465e10a13c78",
+        "bytes": 22476,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Italic.woff2": {
+        "expected_sha256": "2df3d4a4d0cefc6440710666fa425627e54cb73707224bec044bca8e65940222",
+        "actual_sha256": "2df3d4a4d0cefc6440710666fa425627e54cb73707224bec044bca8e65940222",
+        "blob": "b9a2dd38b55219a94bfc4a0ac06ddca8610b7272",
+        "bytes": 22272,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Gelasio-Regular.woff2": {
+        "expected_sha256": "698c2aa61ec1960371b6ed32e6120f028fa614613256f4b9e3f5d10ceb013eb5",
+        "actual_sha256": "698c2aa61ec1960371b6ed32e6120f028fa614613256f4b9e3f5d10ceb013eb5",
+        "blob": "d88339c9f4767d26fce04ce2db4afea67e1581f5",
+        "bytes": 20284,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Inter-Bold.woff2": {
+        "expected_sha256": "aeaf0d0fa3262f4df2da7acf660544cb15aa24dcb63e574daed6ba7e92333a01",
+        "actual_sha256": "aeaf0d0fa3262f4df2da7acf660544cb15aa24dcb63e574daed6ba7e92333a01",
+        "blob": "167215319fb51fa7a28377924626467e08e39f90",
+        "bytes": 41296,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Inter-Regular.woff2": {
+        "expected_sha256": "5f04e9f02a74eab4ec87eda5b79b5be1c0567c868688b0a08564b2fe5c6da928",
+        "actual_sha256": "5f04e9f02a74eab4ec87eda5b79b5be1c0567c868688b0a08564b2fe5c6da928",
+        "blob": "9093edd30c8961d965600d6af11d1eb2a8219380",
+        "bytes": 40128,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/JetBrainsMono-Bold.woff2": {
+        "expected_sha256": "a1475eef9934d6b3a6d15494f312ee1056b7556d59b1e22cb4e0c618338cd170",
+        "actual_sha256": "a1475eef9934d6b3a6d15494f312ee1056b7556d59b1e22cb4e0c618338cd170",
+        "blob": "2fb6479b9506e334b64f41e6cab590cb7904e736",
+        "bytes": 36856,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/JetBrainsMono-Regular.woff2": {
+        "expected_sha256": "2955337d809a64d58c56730b8344315198ec76214e02710774dd72d6a5de7b87",
+        "actual_sha256": "2955337d809a64d58c56730b8344315198ec76214e02710774dd72d6a5de7b87",
+        "blob": "2607796520ed48b2cf24ae52e869fc458c192c6b",
+        "bytes": 35416,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/OFL-1.1.txt": {
+        "expected_sha256": "c7dbb2126d9c73c641332b4f78f27c5f2bb8c7b1ed906add91d0f6ff3ee3e549",
+        "actual_sha256": "c7dbb2126d9c73c641332b4f78f27c5f2bb8c7b1ed906add91d0f6ff3ee3e549",
+        "blob": "559c8d616b1f3506e99b4b4e1bcbe6b8ead3a4c8",
+        "bytes": 4708,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/public/fonts/Sixtyfour.woff2": {
+        "expected_sha256": "0c35bb8333a12a822333f10fc4fd22e607b80a254b8b31faa8eed1cd4badc24e",
+        "actual_sha256": "0c35bb8333a12a822333f10fc4fd22e607b80a254b8b31faa8eed1cd4badc24e",
+        "blob": "368300391c703dcc22e6ea33fa9cff1cd377d385",
+        "bytes": 7608,
+        "mode": "100644",
+        "match": true
+      },
+      "remotion/src/fonts.ts": {
+        "expected_sha256": "5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb",
+        "actual_sha256": "5292071414d67cfaeee2eb7c04724d030809f5ef0ed6a3fbaaff58cde98d9bdb",
+        "blob": "07361b450c3dcc3c18d01c181838f155c86bbd62",
+        "bytes": 3964,
+        "mode": "100644",
+        "match": true
+      }
+    }
+  },
+  "runtime_mappings": [
+    {
+      "target": "src/integrations/runtime/fixtures/responses/commit_conflict_409.json",
+      "source": "conformance/responses/commit_conflict_409.json",
+      "lock_sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "app_sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "runtime_sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "app_blob": "95ca5b88b47a438f93a594b963f840df3bd58bc6",
+      "runtime_blob": "95ca5b88b47a438f93a594b963f840df3bd58bc6",
+      "app_bytes": 1410,
+      "runtime_bytes": 1410,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/events_page_1_200.json",
+      "source": "conformance/responses/events_page_1_200.json",
+      "lock_sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "app_sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "runtime_sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "app_blob": "c6c9a23fc2a3697237ef0db392d667a89e7ef142",
+      "runtime_blob": "c6c9a23fc2a3697237ef0db392d667a89e7ef142",
+      "app_bytes": 958,
+      "runtime_bytes": 958,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/events_page_2_200.json",
+      "source": "conformance/responses/events_page_2_200.json",
+      "lock_sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "app_sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "runtime_sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "app_blob": "84cf81251cdf65edc64b41370ee534aee4f80733",
+      "runtime_blob": "84cf81251cdf65edc64b41370ee534aee4f80733",
+      "app_bytes": 1083,
+      "runtime_bytes": 1083,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/invalid_cursor_400.json",
+      "source": "conformance/responses/invalid_cursor_400.json",
+      "lock_sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "app_sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "runtime_sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "app_blob": "85ff34fdc09b0b406b8dc2e52c84054226cc8d54",
+      "runtime_blob": "85ff34fdc09b0b406b8dc2e52c84054226cc8d54",
+      "app_bytes": 332,
+      "runtime_bytes": 332,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/managed_outputs_200.json",
+      "source": "conformance/responses/managed_outputs_200.json",
+      "lock_sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "app_sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "runtime_sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "app_blob": "eff74de004a243ffb0373ec42718fd5de7ae14ff",
+      "runtime_blob": "eff74de004a243ffb0373ec42718fd5de7ae14ff",
+      "app_bytes": 1899,
+      "runtime_bytes": 1899,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/not_found_404.json",
+      "source": "conformance/responses/not_found_404.json",
+      "lock_sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "app_sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "runtime_sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "app_blob": "12bfad21717a9452a975f1c598645ee8788ddaec",
+      "runtime_blob": "12bfad21717a9452a975f1c598645ee8788ddaec",
+      "app_bytes": 317,
+      "runtime_bytes": 317,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/retired_route_410.json",
+      "source": "conformance/responses/retired_route_410.json",
+      "lock_sha256": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
+      "app_sha256": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
+      "runtime_sha256": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
+      "app_blob": "163c07ee90b09ca851534f229b9af3083a177912",
+      "runtime_blob": "163c07ee90b09ca851534f229b9af3083a177912",
+      "app_bytes": 724,
+      "runtime_bytes": 724,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/task_admission_201.json",
+      "source": "conformance/responses/task_admission_201.json",
+      "lock_sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "app_sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "runtime_sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "app_blob": "a45919fe3df8e35326aca4cfcf69f1a898a4a783",
+      "runtime_blob": "a45919fe3df8e35326aca4cfcf69f1a898a4a783",
+      "app_bytes": 2505,
+      "runtime_bytes": 2505,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/task_read_200.json",
+      "source": "conformance/responses/task_read_200.json",
+      "lock_sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "app_sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "runtime_sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "app_blob": "22ce96486ed1be2efdae3a3c99156eeb13b9665f",
+      "runtime_blob": "22ce96486ed1be2efdae3a3c99156eeb13b9665f",
+      "app_bytes": 793,
+      "runtime_bytes": 793,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/fixtures/responses/validation_error_422.json",
+      "source": "conformance/responses/validation_error_422.json",
+      "lock_sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "app_sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "runtime_sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "app_blob": "8dd5e32ab9b94b8c5faf2c3380ce31724578bb7d",
+      "runtime_blob": "8dd5e32ab9b94b8c5faf2c3380ce31724578bb7d",
+      "app_bytes": 418,
+      "runtime_bytes": 418,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/generated-contract-metadata.ts",
+      "source": "packages/typescript/src/contract-metadata.ts",
+      "lock_sha256": "adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c",
+      "app_sha256": "adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c",
+      "runtime_sha256": "adedd98ba6672fc1ab7476fccb69b1380fc23f09edd42a80a9b2294182a2e15c",
+      "app_blob": "100bc43789a8949591358035d8163ab48c95068e",
+      "runtime_blob": "100bc43789a8949591358035d8163ab48c95068e",
+      "app_bytes": 3265,
+      "runtime_bytes": 3265,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/generated.ts",
+      "source": "packages/typescript/src/generated.ts",
+      "lock_sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "app_sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "runtime_sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "app_blob": "eaee6688c68cd657f55fd5675d8b5199bf7867ec",
+      "runtime_blob": "eaee6688c68cd657f55fd5675d8b5199bf7867ec",
+      "app_bytes": 81398,
+      "runtime_bytes": 81398,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "src/integrations/runtime/timeline-commit-types.ts",
+      "source": "packages/typescript/src/timeline-commit-types.ts",
+      "lock_sha256": "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674",
+      "app_sha256": "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674",
+      "runtime_sha256": "b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674",
+      "app_blob": "347bae5ac98677a7ee0de1bb685bbfe9829c7842",
+      "runtime_blob": "347bae5ac98677a7ee0de1bb685bbfe9829c7842",
+      "app_bytes": 20981,
+      "runtime_bytes": 20981,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    },
+    {
+      "target": "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json",
+      "source": "contract/schemas/timeline-config.schema.json",
+      "lock_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "app_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "runtime_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "app_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+      "runtime_blob": "a59d42e663a4e137ef15fea709b1e6380c0dc4dc",
+      "app_bytes": 13285,
+      "runtime_bytes": 13285,
+      "modes": [
+        "100644",
+        "100644"
+      ],
+      "hashes_match": true,
+      "bytes_match": true,
+      "mode_match": true
+    }
+  ],
+  "mechanical_checks": {
+    "all_json_parse": true,
+    "current_identity_commit_tree_lengths_40": true,
+    "current_sha256_lengths_64": true,
+    "historical_stale_prefix_disclosed": true,
+    "manifest_other_keys_conserved": true
+  },
+  "historical_originals": {
+    "author": [
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/adoption.json",
+        "sha256": "804873381c393f6f4aa5e57d038d561c0d5a29fae97d4586847441a730c9c6eb",
+        "bytes": 1557,
+        "stale_agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/source-custody.json",
+        "sha256": "2ce1d96594d5063d8af09c6866615ed9fa7012f726d374d6dad6f036b3133d06",
+        "bytes": 1145,
+        "stale_agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-Agent-final-vendor-0022/evidence/handoff.md",
+        "sha256": "f33c2e7f417fdec4c046afc9d469542225b913bddff25bd86d91dc5a3260ceb9",
+        "bytes": 1198,
+        "stale_agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+      }
+    ],
+    "reviewer": [
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/review.json",
+        "sha256": "181f7ff3dc21181e52eb0310574beb0fee0d0d26fdaa44f07f429f7d111aa3ce",
+        "bytes": 3561,
+        "stale_agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-final-custody-review-0029/evidence/source-manifest.json",
+        "sha256": "792fd86c1fcce9d99e2801d069c1a633987cb524fb885a370d1c8f7975f5d84c",
+        "bytes": 2095,
+        "stale_agent_tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58"
+      }
+    ]
+  },
+  "reused_proof": {
+    "agent_source_review": "agt-U2-D141-source-receiving-review-0015 PASS_SOURCE_QUALIFICATION, source-intake-only",
+    "runtime_source_review": "independent rt-U1-D141-final-review-2350 PASS, 119/119 receipt reused",
+    "app_source_review": "app-U3-D141 source proof PASS at its recorded scope; no semantic review repeated"
+  },
+  "claims_not_made": [
+    "full suite",
+    "browser/live sockets",
+    "REG0",
+    "MAIN GO",
+    "safety qualification"
+  ]
+}

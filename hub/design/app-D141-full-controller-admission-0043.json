@@ -1,0 +1,9 @@
+{
+  "worker": "app-F-D141-full-pristine-controller-0043",
+  "at": "2026-10-26T00:42:39.754967+00:00",
+  "available_bytes": 5433016320,
+  "floor": 5200000000,
+  "checked_once_at_controller_dispatch": true,
+  "no_local_heavy_body": true,
+  "authority": "managers/app/INBOX.md MAIN GO D141c 00:42Z"
+}

@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-26T00:38:35.528445+00:00",
+  "worker": "app-U4p-D141-identity-correction-0033",
+  "manager_read_only_git_identity_check": "PASS",
+  "code_change": "none",
+  "original_records": "retained unchanged",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-identity-correction-0033/evidence/correction.json",
+      "published": "design/app-U4p-D141-identity-correction-0033-correction.json",
+      "sha256": "9cfd819d65a6c800f87a03f3b27e6190af59cb53b3645b4910bd34eb9b87b14d",
+      "bytes": 5177
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-identity-correction-0033/evidence/handoff.md",
+      "published": "design/app-U4p-D141-identity-correction-0033-handoff.md",
+      "sha256": "458852b265ec621dc76a809b49683a5273a7d73d2a12814491967040a0cfbf47",
+      "bytes": 1597
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-identity-correction-0033/evidence/identity.json",
+      "published": "design/app-U4p-D141-identity-correction-0033-identity.json",
+      "sha256": "91132d59fc726738a48d204ea2e2d690bc21b9cd6a66f85dd80252f38e4aa6ca",
+      "bytes": 167625
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-U4p-D141-identity-correction-0033/evidence/validation.md",
+      "published": "design/app-U4p-D141-identity-correction-0033-validation.md",
+      "sha256": "4c71cb45da8fa85605935d23a9b9ba5566a8ff615f092efc2ce8c2467d78e537",
+      "bytes": 1631
+    }
+  ]
+}
