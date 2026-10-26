@@ -1,0 +1,29 @@
+{
+  "schema": "timeline.agent.d141l.binding-review-manifest.v1",
+  "subject_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+  "subject_source_manifest_sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+  "subject_files_sha256": {
+    "controller-continuation.sh": "34da660a9ec94b2a31080cbd83c092b1c8208ab061fca39fa0e78c25a79d24bf",
+    "binding-source.py": "258867d9fe1c44fbd6c54f7e1f8179c93bde1c2bad205c0c4ae08abe70d59180",
+    "check-source.py": "3add53f0c0f75c8f877757ec860924cd3085d8ea9cd88c9cd18b93afbabcbba2",
+    "command-cut.sh": "b679d5e8141a2a3284c80f453211e1aa0b04dcf462a9ae60213906a62f5f372f",
+    "command-pristine.sh": "8446275790163adf6eca899d45bd4e81ab58c7fb77ebc4f9dcc34119e3aaa54f",
+    "owner-brief.txt": "2602f4f47c9f6b8f35b8dba81e9cc7122fc69b264607a0db2c6a96eaccaf96eb",
+    "positive.manifest": "cd2077a73503f427c9191318d41bc5ae0c386bd8d47795f2927ba700c971e9f5",
+    "poison.manifest": "218df2d86a451e19a49d991a58dfa80d356bbdaac7963cd14cddc05ccdbd2bf3",
+    "tiny-controls.sh": "89ddaa6fa4f51bfab20fe872b0a7dc54980b2b9d8398011365641f5d39960197",
+    "source-manifest.json": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"
+  },
+  "integrated_product": {
+    "agent": ["ecdc242ed9b673f641759ecf029f95e89a2c6f92", "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"],
+    "runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+    "app": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "operational_derivative_base": ["6a2d1c22ec800229812f4d756d7198aece8111ed", "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"],
+  "pristine": {
+    "agent": ["64197afa297f86f1e738238d5e80aff6d33e303a", "6c0488b3efdfa47479b0ad1b7bd20608383be26e"],
+    "runtime": ["fa9cd5464a8b37b02f971de375e56be846cd69e2", "124e10dbcd54fb90219e783ec11aa34f8c91590c"]
+  },
+  "review_trace": {"path": "/home/user/work/wt/agt-F-D141l-binding-final-review-next/evidence/disk-trace.txt", "sha256": "ecc4a5830f609c06535daf41b6f88a4bdaa188139fb79dec9f121bbde8023326", "samples": 5, "minimum_available_bytes": 4616032256, "stop_bytes": 4000000000}
+}

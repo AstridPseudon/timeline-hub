@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.agent.d141l.binding-review.v1",
+  "task": "F D141l independent final binding review",
+  "subject": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+  "verdict": "PASS_SOURCE",
+  "source_status": "READY_SOURCE_D141aa_NOT_RUN_LIVE",
+  "findings": [],
+  "adjudication": {
+    "prior_sol_findings": {
+      "stale_composition_pin": "closed; subject uses operational base 6a2d1c22ec/tree57f68e1f and keeps product Composition 635f4de0/tree5ab5191a",
+      "pre_route_refusal": "closed; controller reaches row-CAS, immediate row readback, request-test, dispatcher-owned execution, wait-test and native inspection",
+      "row_brief_race": "bounded by MAIN D141aa; post-body CMD/BASE_CMD and row hash mismatch is INVALID and uses request-stop-test --withdraw"
+    },
+    "plain_artifact_binding": "sufficient: native request/result directory, snap, summary, status, exit, log, command JUnit/custody seal and cut D73 manifest/runmanifest are associated without a new authority protocol",
+    "prospective_boundary": "no live request, result or body was expected or claimed"
+  },
+  "source_checks": {
+    "author_exact_checker": {"exit": 0, "association_cases": 10, "lifecycle_cases": 38, "native_admission_expression_cases": 10},
+    "independent_exact_checker_recorded_in_subject": {"exit": 0, "association_cases": 10, "lifecycle_cases": 38, "native_admission_expression_cases": 10},
+    "tiny_positive": {"exit": 17, "calls": 1},
+    "tiny_poison": {"exit": 1, "calls": 0},
+    "local_read_only_checks": "PASS"
+  },
+  "limitations": [
+    "The subject worker disclosed a 26.079119-second handoff gap and a 15.966516-second post-reap trace gap; both are retained honestly and prevent uninterrupted worker-trace acceptance, but are not a source-path defect.",
+    "Live native admission, measurement, REG evidence and product/full-suite qualification remain unverified by design."
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "utc": "2026-10-26T09:57:14.436947+00:00",
+  "worker": "agt-F-D141l-binding-final-review-next",
+  "ref": "tl/agt-F-D141l-binding-final-review-next",
+  "commit": "6dc2ce2a1df17e92cb110e6211f6cf2c526c6ec1",
+  "scope": "Static SOURCE PASS only. Required same checker was not freshly executed. Completion owed. Repo-relative output error; exact committed originals recovered, no merge.",
+  "files": [
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/review.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/review.json",
+      "published": "design/agt-F-D141l-binding-final-review-next-review.json",
+      "bytes": 1988,
+      "sha256": "13d70c32a7542b810605c0cf6597757571addffb75d1d71b95454f67c5c71445"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/findings.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/findings.md",
+      "published": "design/agt-F-D141l-binding-final-review-next-findings.md",
+      "bytes": 2192,
+      "sha256": "dab1570e52c5974ad1faf36c41cd499a4e5f92e45a784193de189d0981ec04ca"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/source-map.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/source-map.json",
+      "published": "design/agt-F-D141l-binding-final-review-next-source-map.json",
+      "bytes": 1161,
+      "sha256": "594c170d73161ec1ef5b14db517d5c82236c2f1f1e1a7db223e6ec97e724c566"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/source-manifest.json",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/source-manifest.json",
+      "published": "design/agt-F-D141l-binding-final-review-next-source-manifest.json",
+      "bytes": 2356,
+      "sha256": "3b6ced40aec4f5e10886801f1b0a41c6addf4b3dd5f64ab3b7ff1052651597fe"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/validation.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/validation.md",
+      "published": "design/agt-F-D141l-binding-final-review-next-validation.md",
+      "bytes": 2167,
+      "sha256": "0f4d91a77dbd393e4b18310069c30f98d4bab95bd14d3c7c9e8d7f024afce3a3"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/handoff.md",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/handoff.md",
+      "published": "design/agt-F-D141l-binding-final-review-next-handoff.md",
+      "bytes": 1390,
+      "sha256": "aaf9bb12eb5eafcd6432e623be8ed7c565b8146473487e34af84d0178356d980"
+    },
+    {
+      "git_source": "tl/agt-F-D141l-binding-final-review-next:evidence/disk-trace.txt",
+      "recovered": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-review-next/evidence/recovered-review-originals/disk-trace.txt",
+      "published": "design/agt-F-D141l-binding-final-review-next-disk-trace.txt",
+      "bytes": 445,
+      "sha256": "ecc4a5830f609c06535daf41b6f88a4bdaa188139fb79dec9f121bbde8023326"
+    }
+  ]
+}
