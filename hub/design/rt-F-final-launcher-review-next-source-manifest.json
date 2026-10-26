@@ -1,0 +1,55 @@
+{
+  "format": "timeline-f-final-launcher-protected-review-v1",
+  "status": "FAIL",
+  "source_publication": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-F-final-launcher-author-publication-1728.json",
+  "author_terminal": {
+    "status": "PASS",
+    "same_check_sha256": "a850c28bb5872e9f8adad7ebb35730f5369078630e2cacf4094e5198c0338413",
+    "candidate_sha256": "c9fd51d178d736c2073d7936f031e3b38a813149f42aa3d85edfb4974d82565c",
+    "builder_invoked": false,
+    "actual10589": "unchanged FAIL exit1; builderNOTRUN"
+  },
+  "registry_preimage": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "selected_old_rows": {
+      "core-v2-final-integration": "3846de6ed008eb00df1920a67e0e591233ebb5be80229fddc06bb10333071437",
+      "delivery-v2-final": "95714eb061e7a1c7093be48046ea01e8d0eb4af47c35d76d3e36656a2994d050",
+      "delivery-v2-dryrun": "edf64ce81841ee1a804a08a5c5ca654041fa4622e9896df7545ca30a4e1a2bde"
+    },
+    "preserved_proof_rows": ["full-d141-cut", "full-d141-pristine", "d141-p5-cut", "full-d141-pristine-targeted15"]
+  },
+  "candidate_files": {
+    "check.sh": {"sha256": "16af7a95c308d85feff4d4f198b9187a2af0f48f99d76997f2a8e2868dac6332", "mode": "0755"},
+    "core-inventory.json": {"sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14", "mode": "0644"},
+    "delivery_gate_build.py": {"sha256": "a26c2817e81ee1a725d7087ea0f4dd9cc3512d4d9c0d511407106cedc75d74c8", "mode": "0755"},
+    "delivery_lifecycle.py": {"sha256": "7607908a006fbedff58112ffbc4cb0bb68112615250c00de325b3e2e49fd63d3", "mode": "0644"},
+    "install-final-services.py": {"sha256": "8469b0785dd741fa00d031acb26ed8e4aced33cb4b1e548eed230943f9d558db", "mode": "0644"},
+    "run-final-delivery.py": {"sha256": "0a043d1c06d0c0b824e418108682341615248ad19d7aa39754fd6234a740d85a", "mode": "0644"},
+    "run-final-services.py": {"sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7", "mode": "0644"},
+    "runtime-final-service-rows.txt": {"sha256": "c9fd51d178d736c2073d7936f031e3b38a813149f42aa3d85edfb4974d82565c", "mode": "0644"}
+  },
+  "pinned_external_closure": {
+    "builder": {"sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca", "mode": "0755"},
+    "source_tuple": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+    "gate_tuple": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8"
+  },
+  "intrinsic_finding": {
+    "id": "F-FINAL-DRYRUN-ARGV",
+    "severity": "blocking",
+    "candidate_row": "runtime delivery-v2-dryrun",
+    "candidate_line": 3,
+    "wrapper_value": "candidate/delivery-v2-receipt.json",
+    "missing_options": ["--wrapper-sha", "--builder", "--builder-sha", "--receipt"],
+    "canonical_activation": false
+  },
+  "scope_limits": {
+    "lifecycle": "tiny harmless stub only; not whole-author monitor",
+    "real_builder": false,
+    "real_dryrun": false,
+    "staging_clone": false,
+    "request_test": false,
+    "canonical_install": false,
+    "full_suite": false
+  }
+}

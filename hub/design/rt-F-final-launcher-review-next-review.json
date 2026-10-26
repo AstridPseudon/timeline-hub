@@ -1,0 +1,28 @@
+{
+  "review": "rt-F-final-launcher-review-next",
+  "status": "FAIL",
+  "source": "runtime-F-final-launcher-author-publication-1728.json",
+  "same_check_sha256": "a850c28bb5872e9f8adad7ebb35730f5369078630e2cacf4094e5198c0338413",
+  "author_acceptance": "PASS",
+  "independent_final_row_startup": {
+    "original": {"status": "FAIL", "exit": 1, "reason": "ModuleNotFoundError: delivery_lifecycle"},
+    "candidate": {"status": "PASS", "exit": 0, "mode": "--help", "builder_invoked": false},
+    "environment": {"cwd": "/home/user/work/runtime", "PYTHONPATH": "unset", "PYTHONHOME": "unset", "NODE_PATH": "unset"}
+  },
+  "finding_count": 1,
+  "findings": [
+    {
+      "id": "F-FINAL-DRYRUN-ARGV",
+      "severity": "blocking",
+      "row": "runtime delivery-v2-dryrun",
+      "line": 3,
+      "summary": "candidate row points --wrapper at delivery-v2-receipt.json and omits --wrapper-sha, --builder, --builder-sha, and --receipt",
+      "source_control_gap": "author check-launcher.py selects only delivery-v2-final; scoped installer authenticates row bytes/hash, not command shape",
+      "repair_made": false
+    }
+  ],
+  "scoped_cas": "PASS",
+  "source_closure": "PASS",
+  "canonical_activation": "REFUSED",
+  "limits": ["tiny stub lifecycle only", "no builder", "no dryrun", "no clone", "no request-test", "no full suite"]
+}

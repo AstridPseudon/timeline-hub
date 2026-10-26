@@ -1,0 +1,27 @@
+monitor_pid=2
+2026-10-26T17:27:29Z available_kb=5015068
+2026-10-26T17:27:34Z available_kb=5015052
+2026-10-26T17:27:39Z available_kb=5014996
+2026-10-26T17:27:44Z available_kb=5014896
+2026-10-26T17:27:49Z available_kb=5014884
+2026-10-26T17:27:54Z available_kb=5014844
+2026-10-26T17:27:59Z available_kb=5014828
+2026-10-26T17:28:04Z available_kb=5012808
+2026-10-26T17:28:09Z available_kb=5012800
+2026-10-26T17:28:14Z available_kb=5012800
+2026-10-26T17:28:19Z available_kb=5012796
+2026-10-26T17:28:24Z available_kb=5012768
+2026-10-26T17:28:29Z available_kb=5012768
+2026-10-26T17:28:34Z available_kb=5012764
+2026-10-26T17:28:39Z available_kb=5012764
+2026-10-26T17:28:44Z available_kb=5012756
+2026-10-26T17:28:49Z available_kb=5012748
+2026-10-26T17:28:54Z available_kb=5012748
+2026-10-26T17:28:59Z available_kb=5012728
+2026-10-26T17:29:04Z available_kb=5012728
+review_monitor_start=2
+review_child_pid=3
+2026-10-26T17:29:17Z review_available_bytes=5132455936
+2026-10-26T17:29:22Z review_available_bytes=5132451840
+review_child_exit=0 waited_reaped=1
+review_monitor_exit=0

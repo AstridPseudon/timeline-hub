@@ -1,0 +1,51 @@
+{
+  "at": "2026-10-26T17:35:41.913526+00:00",
+  "worker": "rt-F-final-launcher-wholepath-1731",
+  "scope": "Finite successor audit originals. Worker wrote relative evidence into source branch; exact byte transport from Git, no historical path reconstruction. F3 stale7b1f describes original historical installer, whose postactivation refusal is expected; current successor049591 source distinct. F1,F2,F4 match known import/dryrun/tuple-existence gaps. Own two-sample trace is bounded, not wholeworker monitoring.",
+  "source_ref": "tl/rt-F-final-launcher-wholepath-1731",
+  "source_head": "9442a1ee9c929574b78095b25b41a855aad52c5d",
+  "outputs": [
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-report.md",
+      "sha256": "454bac20733929e01b417e1f0e8356f5db545287df60843135d64605fe4ca4da",
+      "bytes": 1682
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-findings.md",
+      "sha256": "b9c1b81e8c3dabac4f20e47d0d9bf59ab0dc830b1c3c1a4363724b9868979f50",
+      "bytes": 4241
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/source-map.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-source-map.json",
+      "sha256": "7c824532a63e50e611bfe14a9e4995a33ad8f9f031438c24c6e00564cc9bc3f5",
+      "bytes": 4992
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-validation.md",
+      "sha256": "b09bb0fe8da6d00fe16a809bac4404cba1c91a4db7f070476f9f013773a99266",
+      "bytes": 2486
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-handoff.md",
+      "sha256": "9572a5571ac94f5e439e8f956de0c9ce994d796c84baf528d4d3e61b4d6c0742",
+      "bytes": 1250
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-disk-trace.txt",
+      "sha256": "e3062f13e09eba5430edb27b9d084a9c4afc6044c30e4bbe693b74e404efa61e",
+      "bytes": 154
+    },
+    {
+      "source_git": "9442a1ee9c929574b78095b25b41a855aad52c5d:evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-wholepath-1731-sampler-lifecycle.json",
+      "sha256": "683e569af3d0c59743bf17e809107aa11d451851916e4e1325403dac68a3924a",
+      "bytes": 350
+    }
+  ]
+}

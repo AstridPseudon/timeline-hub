@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T17:31:13.522546+00:00",
+  "scope": "Intrinsic FAIL dryrun row missing required args. Same script and scoped privateCAS PASS do not qualify source or real CLI. No activation or body.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-report.md",
+      "sha256": "a1907cde3852eff2e394f928f03d9f99fbd2a2bfaa01e21d89c511441f4ad92f",
+      "bytes": 824
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-review.json",
+      "sha256": "0c860c70a9fca90141209e5245642eea338c481b02004c56ed6628fbb03bc32c",
+      "bytes": 1327
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-findings.md",
+      "sha256": "0a8caa18ce55b6fb33aa4c2212fe3153b67d5ac00be136fd59addce0c93226e0",
+      "bytes": 2274
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-source-manifest.json",
+      "sha256": "7f1fe2414d57537be1ce28a23f087a505fe8245ba6d7815be67717f3ccdd3a05",
+      "bytes": 3198
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-validation.md",
+      "sha256": "43cf7a6aab6f5ee2d08d85355a9042ad6c8dba013ea22e478e54362c8f0b423f",
+      "bytes": 2159
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-handoff.md",
+      "sha256": "38cab76f22d4df1e84ea01db6893a78830c000deafff815dcdec56826605e42c",
+      "bytes": 919
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-disk-trace.txt",
+      "sha256": "f8e215ffaa8c03f61b056223fa987de69869fed11343dc3a730aced00d57a54a",
+      "bytes": 1064
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-review-next-sampler-lifecycle.json",
+      "sha256": "4b6ddabae50dcdd8453a78127e86981bd492fc66a2b9a095083bceae28df5ea9",
+      "bytes": 565
+    }
+  ]
+}
