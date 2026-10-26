@@ -382,3 +382,57 @@ describe('twilight reading palette', () => {
     expect(themeForDarkness(DUSK_SWITCH.at)).toBe('dark');
   });
 });
+
+describe('twilight colour', () => {
+  const channels = (css: string) => css.match(/\d+/g)!.map(Number);
+  const luminance = (rgb: number[]) => {
+    const linear = rgb.map(c => c / 255).map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+  };
+  const contrast = (a: number[], b: number[]) => {
+    const [x, y] = [luminance(a), luminance(b)];
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+  /** Spread between the strongest and weakest channel: 0 for a grey. */
+  const chroma = (rgb: number[] | Uint8ClampedArray) => Math.max(...rgb) - Math.min(...rgb);
+
+  it('keeps the page\'s weakest text at AA on its paper at every hour', () => {
+    // The muted ink the page sets straight on its paper (--astrid-muted), day and night.
+    const muted = { day: [0x61, 0x5e, 0x55], night: [0xac, 0xa3, 0x95] };
+    for (let step = 0; step <= 100; step++) {
+      const { paper, ink } = pageDusk(step / 100);
+      expect(contrast(ink ? muted.night : muted.day, channels(paper)), `${step}: muted on ${paper}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('colours the paper like the sky through twilight instead of greying it', () => {
+    // Golden hour, sunset, afterglow, civil twilight held to the switch, then the blue hour after it.
+    for (const darkness of [0.12, 0.26, 0.34, DUSK_SWITCH.hold, DUSK_SWITCH.at - 0.001, DUSK_SWITCH.at, 0.6]) {
+      expect(chroma(channels(pagePaperFor(darkness))), `paper at ${darkness}`).toBeGreaterThanOrEqual(12);
+    }
+    const [r, , b] = channels(pagePaperFor(DUSK_SWITCH.hold));
+    expect(b).toBeGreaterThan(r);
+    const [nr, , nb] = channels(pagePaperFor(1));
+    expect(nb).toBeGreaterThan(nr);
+  });
+
+  it('keeps panels clean day paper until the switch and night charcoal after it, never a grey between', () => {
+    expect(pageDusk(DUSK_SWITCH.at - 0.001).dusk).toBe(0);
+    expect(pageDusk(DUSK_SWITCH.at).dusk).toBeGreaterThan(0.88);
+    for (const token of ['--background', '--card', '--wes-pink', '--wes-lavender', '--retro', '--primary']) {
+      expect(duskTokens(DUSK_SWITCH.at - 0.001)[token], token).toBe(duskTokens(0)[token]);
+    }
+  });
+
+  it('lights the clouds in the sunset and twilight colours rather than grey', () => {
+    const cloudChroma = (night: number) => {
+      const pixels = renderPublicAstridSky({
+        columns: 120, rows: 80, state: { ...skyState(13, OCTOBER), night, body: 'none', stars: 0 }, phase: 0.6, intensity: 0.5, layer: 'near',
+      });
+      let least = Infinity;
+      for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3]) least = Math.min(least, chroma(pixels.subarray(i, i + 3)));
+      return least;
+    };
+    for (const night of [0.28, 0.36, 0.44, 0.5]) expect(cloudChroma(night), `clouds at ${night}`).toBeGreaterThanOrEqual(15);
+  });
+});

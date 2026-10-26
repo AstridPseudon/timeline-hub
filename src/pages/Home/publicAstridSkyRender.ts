@@ -90,21 +90,31 @@ export function pageDarkness(darkness: number): number {
   return darkness < DUSK_SWITCH.at ? Math.min(darkness, DUSK_SWITCH.hold) : Math.max(darkness, DUSK_SWITCH.resume);
 }
 
-/** Page colour stops through twilight: day cream, a dusky taupe at mid-twilight, the near-black of night. */
-const PAPER_STOPS: readonly Rgb[] = [[247, 244, 237], [124, 113, 101], [14, 13, 11]];
+/**
+ * The page's paper is the colour of the sky at that hour, keyed by the page's darkness: cream by day, warm
+ * gold as the sun gets low, peach at sunset, rose in the afterglow and lavender in civil twilight, all light
+ * enough for dark ink; then, after the switch, the indigo of the blue hour deepening to a blue-black night,
+ * dark enough for light ink. Each step blends through OKLab, so the hues pass into one another cleanly
+ * rather than through grey. Dawn runs the same way back.
+ */
+const PAPER_KEYS: ReadonlyArray<readonly [number, Rgb]> = [
+  [0, [247, 244, 237]],
+  [0.12, [250, 238, 218]],
+  [0.26, [248, 229, 214]],
+  [0.34, [242, 222, 221]],
+  [DUSK_SWITCH.hold, [229, 220, 234]],
+  [DUSK_SWITCH.resume, [42, 44, 74]],
+  [0.7, [22, 24, 42]],
+  [1, [13, 14, 23]],
+];
 /** Text and icons switch with the paper at mid-twilight. Blending them independently would create a
  *  muddy dark-on-dark interval while the paper has already moved to its night state. */
 const INK_CENTRE = 0.46;
-/** Panels are always lighter than the page, so they start turning a little earlier and the page a little
- *  later: that way both pass their mid-tone together, and every piece of text turns at the same moment. */
+/** After the switch the panels settle from a lifted charcoal into full night, a little faster than the
+ *  paper deepens, so they arrive as one dark palette rather than drifting through mid-tones. */
 const PANEL_CENTRE = 0.43;
-const PAPER_CENTRE = 0.475;
 
-/** The page's dusk values for a given sky darkness: its background colour, how far surfaces have
- *  shifted to their night colours, and how far text has. */
-/** How sharply the page's surfaces pass through their mid-tones. They drift slowly through early dusk,
- *  turn quickly around the moment the text changes, then settle slowly into night, so text is never
- *  long on a surface close to its own tone. Real light falls fastest around civil dusk too. */
+/** How sharply the page's surfaces settle into night after the switch. */
 const DUSK_STEEPNESS = 26;
 const logistic = (x: number) => 1 / (1 + Math.exp(-x));
 /** Surface progress (0 day → 1 night) for a given sky darkness, eased around the text's change. */
@@ -113,23 +123,36 @@ export function surfaceDusk(darkness: number, centre = PANEL_CENTRE): number {
   return clamp01((at(darkness) - at(0)) / (at(1) - at(0)));
 }
 
-/** Near the change, surfaces are close to mid-tone, where only near-full-contrast text stays readable.
- *  Secondary (muted) text firms up towards full ink over this span of darkness either side of it. */
+/** Secondary (muted) text firms up towards full ink over this span of darkness either side of the
+ *  switch, so it never thins out while the page's colours are on the move. */
 const FIRM_SPAN = 0.3;
 
+/** The page's paper for a (page) darkness, from PAPER_KEYS. */
+function paperAt(darkness: number): Rgb {
+  const next = PAPER_KEYS.findIndex(([at]) => at >= darkness);
+  if (next <= 0) return PAPER_KEYS[next < 0 ? PAPER_KEYS.length - 1 : 0][1];
+  const [fromAt, from] = PAPER_KEYS[next - 1];
+  const [toAt, to] = PAPER_KEYS[next];
+  const t = (darkness - fromAt) / (toAt - fromAt);
+  const a = rgbToOklab(from.map((c) => c / 255) as Lab);
+  const b = rgbToOklab(to.map((c) => c / 255) as Lab);
+  return oklabToRgb([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]).map((c) => Math.round(c * 255)) as unknown as Rgb;
+}
+
+/** The page's dusk values for a given sky darkness: its background colour, how far surfaces have
+ *  shifted to their night colours, and how far text has. */
 export function pageDusk(skyDarkness: number): { paper: string; dusk: number; ink: number; inkPage: number; firm: number } {
   const darkness = pageDarkness(skyDarkness);
-  const d = surfaceDusk(darkness);
-  const p = surfaceDusk(darkness, PAPER_CENTRE);
-  const [a, b] = p < 0.5 ? [PAPER_STOPS[0], PAPER_STOPS[1]] : [PAPER_STOPS[1], PAPER_STOPS[2]];
-  const [r, g, bl] = mix(a, b, p < 0.5 ? p / 0.5 : (p - 0.5) / 0.5).map(Math.round);
+  const [r, g, b] = paperAt(darkness);
   const near = clamp01(1 - Math.abs(clamp01(darkness) - INK_CENTRE) / FIRM_SPAN);
-  // Paper and ink must cross together. The sky and paper may keep changing live, but the reading palette
-  // is a two-state contract: dark ink on light paper before the switch, light ink on dark paper after it.
+  // Paper and ink must cross together. The sky and paper keep changing live, but the reading palette is a
+  // two-state contract: dark ink on light paper before the switch, light ink on dark paper after it. The
+  // panels keep it too: clean day paper until the switch (only the sky behind them carries the hour's
+  // colour), lifted night charcoal after it, never a grey in between.
   const ink = skyDarkness < DUSK_SWITCH.at ? 0 : 1;
   return {
-    paper: `rgb(${r}, ${g}, ${bl})`,
-    dusk: d,
+    paper: `rgb(${r}, ${g}, ${b})`,
+    dusk: ink && surfaceDusk(darkness),
     ink,
     inkPage: ink,
     firm: near * near * (3 - 2 * near),
@@ -284,19 +307,14 @@ export function blendHslToken(day: string, night: string, t: number): string {
 
 /** The editor's design tokens for a given sky darkness. */
 const FIRMING_TOKENS = new Set(['--muted-foreground', '--secondary-foreground', '--accent-foreground']);
-// Reading surfaces retain light paper or dark charcoal through twilight. The sky
-// keeps its continuous lighting; chrome must not pass through a muddy mid-tone.
-const READING_SURFACES = new Set([
-  '--background', '--card', '--popover', '--secondary', '--muted', '--accent', '--border', '--input',
-  '--sidebar-background', '--sidebar-accent', '--sidebar-border',
-]);
 
+/** Surfaces keep their day colours until the switch and their night ones after it (see pageDusk): the sky
+ *  carries twilight's continuous light, the chrome never passes through a muddy mid-tone. */
 export function duskTokens(darkness: number): Record<string, string> {
   const { dusk, ink, firm } = pageDusk(darkness);
   const foreground = DUSK_TOKENS.find(([name]) => name === '--foreground')!;
   return Object.fromEntries(DUSK_TOKENS.map(([name, day, night, kind]) => {
-    const surface = READING_SURFACES.has(name) ? (ink === 0 ? Math.min(dusk, 0.08) : Math.max(dusk, 0.88)) : dusk;
-    let value = blendHslToken(day, night, kind === 'ink' ? ink : surface);
+    let value = blendHslToken(day, night, kind === 'ink' ? ink : dusk);
     if (FIRMING_TOKENS.has(name)) value = blendHslToken(value, blendHslToken(foreground[1], foreground[2], ink), firm);
     return [name, value];
   }));
@@ -402,63 +420,68 @@ interface SkyPalette {
   moonMare: Rgb;
   moonShadow: Rgb;
   star: Rgb;
-  /** Cloud tones: sunlit top, body, shaded underside. */
+  /** Cloud tones: top rim, body, underside. */
   cloudLight: Rgb;
   cloudBody: Rgb;
   cloudShade: Rgb;
-  /** The same clouds at night, in darker tones. */
-  nightCloudLight: Rgb;
-  nightCloudBody: Rgb;
-  nightCloudShade: Rgb;
 }
 
 /** Flat tones only: the sky follows the pixel-mink rules (square pixels, no gradients or glow). */
-const PALETTES: Record<PublicAstridSkyTheme, SkyPalette> = {
-  light: {
-    sunLow: [235, 161, 114],
-    sunHigh: [244, 210, 182],
-    moonHighlight: [236, 230, 220],
-    moonLit: [226, 218, 205],
-    moonLimb: [218, 209, 195],
-    moonCraterShadow: [205, 195, 180],
-    moonMare: [210, 201, 187],
-    moonShadow: [238, 234, 227],
-    // Warm ink: present on the cream page without reading as dark spots.
-    star: [150, 136, 117],
-    // A shade darker than the cream page, so clouds read over plain paper as well as over the sun.
-    cloudLight: [250, 247, 241],
-    cloudBody: [239, 233, 223],
-    cloudShade: [226, 217, 203],
-    nightCloudLight: [233, 228, 219],
-    nightCloudBody: [228, 222, 212],
-    nightCloudShade: [216, 209, 197],
-  },
-  dark: {
-    sunLow: [100, 41, 26],
-    sunHigh: [75, 44, 32],
-    moonHighlight: [84, 79, 73],
-    moonLit: [70, 66, 61],
-    moonLimb: [63, 60, 55],
-    moonCraterShadow: [50, 47, 44],
-    moonMare: [57, 54, 50],
-    moonShadow: [28, 26, 24],
-    star: [226, 211, 190],
-    cloudLight: [58, 51, 43],
-    cloudBody: [42, 37, 31],
-    cloudShade: [29, 26, 22],
-    // Lifted clear of the night sky (near-black) so the clouds still read as soft shapes at night.
-    nightCloudLight: [58, 53, 47],
-    nightCloudBody: [43, 40, 36],
-    nightCloudShade: [33, 31, 28],
-  },
+const DAY_SKY: SkyPalette = {
+  sunLow: [235, 161, 114],
+  sunHigh: [244, 210, 182],
+  moonHighlight: [236, 230, 220],
+  moonLit: [226, 218, 205],
+  moonLimb: [218, 209, 195],
+  moonCraterShadow: [205, 195, 180],
+  moonMare: [210, 201, 187],
+  moonShadow: [238, 234, 227],
+  // Warm ink: present on the cream page without reading as dark spots.
+  star: [150, 136, 117],
+  // A shade darker than the cream page, so clouds read over plain paper as well as over the sun.
+  cloudLight: [250, 247, 241],
+  cloudBody: [239, 233, 223],
+  cloudShade: [226, 217, 203],
 };
+const NIGHT_SKY: SkyPalette = {
+  sunLow: [100, 41, 26],
+  sunHigh: [75, 44, 32],
+  // A dim silver moon that belongs to the blue-black sky; the stars stay warm against it.
+  moonHighlight: [86, 88, 102],
+  moonLit: [72, 74, 88],
+  moonLimb: [64, 66, 80],
+  moonCraterShadow: [50, 52, 66],
+  moonMare: [58, 60, 74],
+  moonShadow: [27, 28, 41],
+  star: [226, 211, 190],
+  // Slate, lifted clear of the blue-black night so the clouds still read as soft shapes.
+  cloudLight: [60, 62, 86],
+  cloudBody: [45, 47, 68],
+  cloudShade: [34, 36, 54],
+};
+/**
+ * The sky's colours through the day, keyed by how dark it is, like the page's paper (see PAPER_KEYS). Each
+ * key only sets what can be seen then: the sun has set by the sunset key and the moon is not up until
+ * after twilight. At sunset the low sun turns coral and lights the clouds from below; in twilight they turn
+ * dusky mauve with the last rose glow underneath, a mid-tone that sits as dusk cloud on the lavender page
+ * before the switch and as afterglow on the indigo one after it; by night they are slate.
+ */
+const SKY_KEYS: ReadonlyArray<readonly [number, SkyPalette]> = [
+  [0, DAY_SKY],
+  [0.28, { ...DAY_SKY, sunLow: [240, 132, 92], sunHigh: [247, 182, 146], cloudLight: [253, 233, 216], cloudBody: [247, 214, 198], cloudShade: [238, 178, 160] }],
+  [0.44, { ...NIGHT_SKY, star: [246, 238, 226], cloudLight: [198, 180, 206], cloudBody: [181, 161, 188], cloudShade: [198, 148, 162] }],
+  [0.8, NIGHT_SKY],
+];
 
-/** The sky's colours blend from the day palette to the night one as the sky darkens, like the page. */
+/** The sky's colours for a darkness, blended between the keys either side of it. */
 function blendPalette(darkness: number): SkyPalette {
-  const day = PALETTES.light;
-  const night = PALETTES.dark;
+  const next = SKY_KEYS.findIndex(([at]) => at >= darkness);
+  if (next <= 0) return SKY_KEYS[next < 0 ? SKY_KEYS.length - 1 : 0][1];
+  const [fromAt, from] = SKY_KEYS[next - 1];
+  const [toAt, to] = SKY_KEYS[next];
+  const t = (darkness - fromAt) / (toAt - fromAt);
   const out = {} as Record<keyof SkyPalette, Rgb>;
-  for (const key of Object.keys(day) as Array<keyof SkyPalette>) out[key] = mix(day[key], night[key], darkness);
+  for (const key of Object.keys(from) as Array<keyof SkyPalette>) out[key] = mix(from[key], to[key], t);
   return out as SkyPalette;
 }
 
@@ -845,7 +868,6 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput, output?
   const layer = input.layer ?? 'all';
   const quietAt = (x: number, y: number) => (input.quiet ? input.quiet[y * columns + x] / QUIET_LEVELS : 0);
   const cloudOpacity = ambientAlpha * Math.min(1, 1.6 * cloudStrength);
-  const toneAt = (dayTone: Rgb, nightTone: Rgb) => mix(dayTone, nightTone, state.night);
   const paintClouds = (cloudLayer: CloudLayer, paint: (x: number, y: number, tone: Rgb, share: number, quiet: number) => void) => {
     for (const cloud of cloudShapes(columns, rows, state.hours, cloudLayer)) {
       const u = cloud.unit;
@@ -878,12 +900,10 @@ export function renderPublicAstridSky(input: PublicAstridSkyRenderInput, output?
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
           if (!inside(x, y)) continue;
-          // The same shape and shading by day and night; only the tones darken after dusk.
+          // The same shape and shading by day and night; only the tones change with the light.
           const underside = !inside(x, y + 1);
           const top = !inside(x, y - rim);
-          const dayTone = underside ? palette.cloudShade : top ? palette.cloudLight : palette.cloudBody;
-          const nightTone = underside ? palette.nightCloudShade : top ? palette.nightCloudLight : palette.nightCloudBody;
-          paint(x, y, toneAt(dayTone, nightTone), cloudLayer.opacity, quiet);
+          paint(x, y, underside ? palette.cloudShade : top ? palette.cloudLight : palette.cloudBody, cloudLayer.opacity, quiet);
         }
       }
     }

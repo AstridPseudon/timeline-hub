@@ -1231,13 +1231,12 @@
 }
 
 
-/* Dusk: the page's colours follow how dark the visitor's sky is, on both App and Agent, and change
-   gradually rather than switching. The page sets two 0→1 values from the sky (see onSkyDarkness):
-   --astrid-dusk for surfaces, borders and lines, which shift across the whole of twilight, and
-   --astrid-dusk-ink for text and icons, which shift over a short window in the middle, so text spends
-   as little time as possible near its background's tone. Near that change --astrid-dusk-firm rises,
-   firming secondary text up towards full ink, since only near-full contrast reads on mid-tone surfaces. Values are generated from the day and night
-   palettes. The page colour itself (--astrid-paper) is set inline from the sky. */
+/* Dusk: the page's colours follow the visitor's sky, on both App and Agent. The page colour itself
+   (--astrid-paper) is set inline from the sky and carries the hour's colour: gold, peach, rose, lavender,
+   then the blue hour and night (see PAPER_KEYS). Everything drawn on it keeps a two-state reading palette
+   (see pageDusk): --astrid-dusk for surfaces, borders and lines and --astrid-dusk-ink for text and icons
+   are 0 (clean day paper and ink) until mid-twilight and night after it, so no panel ever passes through a
+   muddy mid-tone. Around that switch --astrid-dusk-firm firms secondary text up towards full ink. */
 .astrid-public-site[data-dusk] {
   /* The night dot grid, like graph paper under a terminal, fading in with the dark. */
   background-image: radial-gradient(rgb(243 238 228 / calc(.09 * var(--astrid-dusk))) 1px, transparent 1.3px);
@@ -1298,7 +1297,7 @@
   stroke: color-mix(in oklab, rgba(169, 71, 20, 0.85), rgba(240, 124, 58, 0.95) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-callout-connectors circle {
-  fill: color-mix(in oklab, none, rgb(240, 124, 58) calc(var(--astrid-dusk) * 100%));
+  fill: color-mix(in oklab, rgb(184, 79, 24), rgb(240, 124, 58) calc(var(--astrid-dusk) * 100%));
   stroke: color-mix(in oklab, rgb(184, 79, 24), rgb(22, 20, 16) calc(var(--astrid-dusk) * 100%));
 }
 .astrid-public-site[data-dusk] .astrid-callout-connectors .astrid-callout-ping {
