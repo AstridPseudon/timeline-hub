@@ -46,3 +46,27 @@ Naive sum is about 140 days. Removing the shared work (one registry and manifest
 - SCHEMA_DIGEST couples command extensions to releases.
 - Python and TypeScript resolvers must agree on anchors and markers.
 - Transcript authority is deferred, which blocks word-anchored producers.
+
+## Revision (owner challenge, 26 Oct, three independent views)
+All three views agree the 110–140 day plan is over-engineered for the stated goal: commands, views and visual add-ons for agent users.
+
+| Reviewer | Minimal version | Estimate |
+|---|---|---|
+| Opus | three plain-Python primitives in a pack folder | 10–13 days |
+| Codex Sol | narrow CLI/MCP commands, read-only views and overlays | 15–25 days |
+| Sonnet | same three primitives | 10–12.5 days |
+
+**Minimal design**
+- command = fn(timeline, **args) through Timeline.commit(fn);
+- view = fn(bundle) -> text, registry-fed `show --as`;
+- overlay = the existing visualize Layer/Check;
+- one generalised discover() over pack dirs, which also honours ASTRID_PACKS_PATH;
+- CLI to MCP comes for free.
+
+**Gaps found**
+- The v3 pack manifest has no slot for commands, views or overlays (additionalProperties: false).
+- Overlay discovery ignores ASTRID_PACKS_PATH.
+
+**Deferred:** markers, signals, proposals, editable views, App panels, sandboxing, element parity, the conformance harness.
+
+**Recommendation:** about 3 weeks, one engineer. Add markers later only if keeping clips on the beat automatically matters.
