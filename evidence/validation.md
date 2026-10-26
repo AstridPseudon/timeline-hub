@@ -1,36 +1,45 @@
 # Validation
 
-The same author/reviewer invocation is:
+Review subject: `agt-F-D141l-binding-final-next` exact final-next evidence source.
+
+The subject packet records the author and one independent run of the identical command:
 
 ```bash
-PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P evidence/check-source.py check
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence/check-source.py check
 ```
 
-Result: exit 0, `control_status=PASS`,
-`pair_status=WAITING_FOR_GENUINE_CONTROLLER_BINDING`, `admission_cases=10`,
-`lifecycle_cases=36`. The retained control log is
-`control-logs/check-1792999454132331673.json`.
+Both recorded runs exited 0 with `control_status=PASS` and
+`pair_status=READY_SOURCE_D141aa_NOT_RUN_LIVE`; each reported 10 association,
+38 lifecycle, and 10 native-admission-expression cases. The unchanged launcher
+controls reported positive exit 17/call 1 and Agent-SHA-only poison exit 1/call 0.
 
-Direct checks also passed:
+My non-mutating checks against the exact subject source also passed:
 
 ```bash
-bash -n evidence/command-cut.sh evidence/command-pristine.sh evidence/controller-continuation.sh evidence/tiny-controls.sh evidence/positive-stub.sh
-PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -P -c 'import ast, pathlib; [ast.parse(pathlib.Path(p).read_text()) for p in ["evidence/check-source.py", "evidence/binding-source.py"]]'
-evidence/controller-continuation.sh check
+bash -n controller-continuation.sh command-cut.sh command-pristine.sh tiny-controls.sh positive-stub.sh
 ```
 
-The checker executed the unchanged production launcher controls: positive
-exit 17 with one stub call, poison exit 1 with zero calls. Its isolated binding
-fixture exercised one positive only in the explicit fixture path and nine
-negative path/hash/tuple/brief/service/request cases through the same consumer;
-fixtures cannot pass `consume`. The 36 lifecycle controls preserve body,
-monitor, evidence, raw/JUnit, KEEP, cleanup, disk and final-status propagation.
+Result: exit 0.
 
-No pytest collection/body, request-test, test-run, row installation, service
-submission, P4, heavy suite, product import, lint or typecheck was run. Lint
-and typecheck are N/A because these are operational evidence scripts, not
-product sources. Python syntax/AST and shell syntax were checked.
+```bash
+/home/user/work/venv-agent/bin/python -P -c '<ast.parse all subject Python; json.loads all subject JSON>'
+```
 
-The copied disk trace is retained from the prior source-only control packet,
-with its disclosed historical gap preserved. It remains above the continuous
-4 GB stop; it is not a claim of a new heavy run.
+Result: exit 0. `controller-continuation.sh check`, `binding-source.py
+dispatch-readiness`, and `binding-source.py dispatch-witness 4714564096` each
+exited 0. Subject source hashes, owner-brief byte equality, product/pristine
+tuples, and the 4,714,564,096-byte controller witness were read back.
+
+No product lint/typecheck applies: this is an operational shell/Python source
+review, not product code. No live CAS, row install, request-test, test-run,
+wait-test, withdrawal, provider, body, collection, pytest, full suite, or
+shared dependency action was run. Live native results, REG evidence, and product
+qualification remain prospective and unverified.
+
+The subject checker was not invoked a third time from this reviewer worktree
+because its hard-coded `ROOT` writes private control logs under the retired
+subject worker directory, outside this worker’s write scope. The recorded exact
+author and independent runs are retained and were independently inspected.
+
+Review trace: five samples at five-second cadence, all above the 4,000,000,000
+byte stop; minimum 4,616,032,256 bytes. No trace gap occurred in this review.

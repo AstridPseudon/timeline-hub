@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.d141l.binding-review-source-map.v1",
+  "subject_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+  "sources": {
+    "controller-continuation.sh": {
+      "row_readback_and_queue": [58, 85],
+      "invalid_withdrawal": [96, 103],
+      "phase_and_pair_outcomes": [105, 145],
+      "single_controller_dispatch": [149, 160]
+    },
+    "binding-source.py": {
+      "request_and_owner_brief": [56, 126],
+      "native_identity": [140, 167],
+      "terminal_artifact_binding": [170, 257]
+    },
+    "check-source.py": {
+      "isolated_future_route": [293, 567],
+      "native_admission_expressions": [570, 603],
+      "lifecycle_cases": [606, 688],
+      "checker_summary": [691, 733]
+    },
+    "command-cut.sh": {"body_and_native_binding": [219, 258]},
+    "source-manifest.json": {"tuple_and_brief_metadata": [1, 300]}
+  },
+  "review_basis": [
+    "PLAN.md §3 F/U2",
+    "/home/user/timeline-hub/hub/design/commit-v2.md",
+    "MAIN D141aa ruling supplied in task brief",
+    "agt-F-D141l-binding-sol-review-next/evidence/findings.md"
+  ]
+}

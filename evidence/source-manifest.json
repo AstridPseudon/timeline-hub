@@ -1,208 +1,29 @@
 {
-  "integrated": {
-    "agent": {
-      "path": "/home/user/work/agent",
-      "sha": "ecdc242ed9b673f641759ecf029f95e89a2c6f92",
-      "tree": "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735",
-      "parents": "ecdc242ed9b673f641759ecf029f95e89a2c6f92 432f9dcbc66fb80b539d9ef709a63ef8065dbc92 00ec0f2f841401b69dad26fb1b23d31cce11efab"
-    },
-    "runtime": {
-      "path": "/home/user/work/runtime",
-      "sha": "95d98f038320d5d46bd679ac000ab3e15825c935",
-      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
-      "parents": "95d98f038320d5d46bd679ac000ab3e15825c935 857e4c3bce8fd7fc862d7e6e5831e63f24e8cce5 012889c1b0bbfe5f290f757cb6d31dd7d995ccc7"
-    },
-    "app": {
-      "path": "/home/user/work/app",
-      "sha": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
-      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa",
-      "parents": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d 5344c53e3063001bb3255bd0c9cd32cc5e77967f fdea805191f466fa67dc0f2ea118da31bf86028f"
-    },
-    "composition": {
-      "path": "/home/user/work/composition",
-      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
-      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
-      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a"
-    }
+  "schema": "timeline.agent.d141l.binding-review-manifest.v1",
+  "subject_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-binding-final-next/evidence",
+  "subject_source_manifest_sha256": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4",
+  "subject_files_sha256": {
+    "controller-continuation.sh": "34da660a9ec94b2a31080cbd83c092b1c8208ab061fca39fa0e78c25a79d24bf",
+    "binding-source.py": "258867d9fe1c44fbd6c54f7e1f8179c93bde1c2bad205c0c4ae08abe70d59180",
+    "check-source.py": "3add53f0c0f75c8f877757ec860924cd3085d8ea9cd88c9cd18b93afbabcbba2",
+    "command-cut.sh": "b679d5e8141a2a3284c80f453211e1aa0b04dcf462a9ae60213906a62f5f372f",
+    "command-pristine.sh": "8446275790163adf6eca899d45bd4e81ab58c7fb77ebc4f9dcc34119e3aaa54f",
+    "owner-brief.txt": "2602f4f47c9f6b8f35b8dba81e9cc7122fc69b264607a0db2c6a96eaccaf96eb",
+    "positive.manifest": "cd2077a73503f427c9191318d41bc5ae0c386bd8d47795f2927ba700c971e9f5",
+    "poison.manifest": "218df2d86a451e19a49d991a58dfa80d356bbdaac7963cd14cddc05ccdbd2bf3",
+    "tiny-controls.sh": "89ddaa6fa4f51bfab20fe872b0a7dc54980b2b9d8398011365641f5d39960197",
+    "source-manifest.json": "62a814f708e3238eea7006220490699e9ca3ec99258c9548e8c240fa2622aef4"
   },
+  "integrated_product": {
+    "agent": ["ecdc242ed9b673f641759ecf029f95e89a2c6f92", "d362fe9dfdbd0c1fc8e0739c193ed2b74a7d2735"],
+    "runtime": ["95d98f038320d5d46bd679ac000ab3e15825c935", "78df31d62c5b9ba4c84dee4ea346e43a767718c1"],
+    "app": ["82e9e13ddf1d7ec6c736521b2eb091dca9877598", "6a6e49eb4461b5ca1a7fa1247653bc794f26d710"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"]
+  },
+  "operational_derivative_base": ["6a2d1c22ec800229812f4d756d7198aece8111ed", "57f68e1fad9c84ce0c0a2fa10f9a2f8defb1a847"],
   "pristine": {
-    "agent": {
-      "path": "/home/user/work/wt/agt-pin-64197afa",
-      "sha": "64197afa297f86f1e738238d5e80aff6d33e303a",
-      "tree": "6c0488b3efdfa47479b0ad1b7bd20608383be26e",
-      "parents": "64197afa297f86f1e738238d5e80aff6d33e303a d02bcfb66c895b8889aedefbfc732c42f0ab372b"
-    },
-    "runtime": {
-      "path": "/home/user/work/wt/rt-pin-fa9cd546",
-      "sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2",
-      "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c",
-      "parents": "fa9cd5464a8b37b02f971de375e56be846cd69e2 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
-    }
+    "agent": ["64197afa297f86f1e738238d5e80aff6d33e303a", "6c0488b3efdfa47479b0ad1b7bd20608383be26e"],
+    "runtime": ["fa9cd5464a8b37b02f971de375e56be846cd69e2", "124e10dbcd54fb90219e783ec11aa34f8c91590c"]
   },
-  "roots": {
-    "cut": [
-      "tests/editing_conformance",
-      "tests/sdk",
-      "tests/timeline",
-      "tests/core/timeline",
-      "tests/core/test_timeline_element_orphan_cleanup.py",
-      "tests/core/test_timeline_element_publication.py",
-      "tests/core/test_timeline_element_publication_runtime.py",
-      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
-      "tests/core/rendering/test_local_schema.py",
-      "tests/packs/timeline",
-      "tests/packs/rendering/test_composition_package.py",
-      "tests/packs/rendering/test_live_scene_composition.py",
-      "tests/packs/rendering/test_render_export_task_adapter.py",
-      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
-      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
-      "tests/packs/video_editing/test_runtime_publication_chain.py",
-      "tests/stage1/test_cold_launch_autobootstrap.py",
-      "tests/test_installer_schema.py",
-      "tests/test_installer_sources.py",
-      "tests/test_installer_bootstrap_schema.py",
-      "tests/test_timeline_clip_replacement.py",
-      "tests/v10/test_timelines_create.py"
-    ],
-    "pristine": [
-      "tests/editing_conformance",
-      "tests/sdk",
-      "tests/timeline",
-      "tests/core/timeline",
-      "tests/core/test_timeline_element_publication.py",
-      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
-      "tests/packs/timeline",
-      "tests/packs/rendering/test_live_scene_composition.py",
-      "tests/packs/rendering/test_render_export_task_adapter.py",
-      "tests/packs/rendering/test_timeline_filmstrip_cards.py",
-      "tests/packs/rendering/test_timeline_filmstrip_execution.py",
-      "tests/packs/video_editing/test_runtime_publication_chain.py",
-      "tests/stage1/test_cold_launch_autobootstrap.py",
-      "tests/test_installer_schema.py",
-      "tests/test_installer_sources.py",
-      "tests/test_timeline_clip_replacement.py",
-      "tests/v10/test_timelines_create.py"
-    ]
-  },
-  "absent_pristine_roots": [
-    "tests/core/test_timeline_element_orphan_cleanup.py",
-    "tests/core/test_timeline_element_publication_runtime.py",
-    "tests/core/rendering/test_local_schema.py",
-    "tests/packs/rendering/test_composition_package.py",
-    "tests/test_installer_bootstrap_schema.py"
-  ],
-  "receipts": {
-    "agent-U4a-D141-postREG-home-0622.json": {
-      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-U4a-D141-postREG-home-0622.json",
-      "sha256": "aa6f52232f7f6e7c5baaf5c35606cdc8ed13867b13f0acc09cf8d6493b67e768"
-    },
-    "app-D141s-postREG-source-home-0545.json": {
-      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141s-postREG-source-home-0545.json",
-      "sha256": "da9319ce349ff86004afe6989f9eff17eaee946a1981462d449f05a5fac08efc"
-    }
-  },
-  "admission": {
-    "status": "WAITING_FOR_GENUINE_CONTROLLER_BINDING",
-    "cut": null,
-    "pristine": null,
-    "seam": "suites.conf agent agent-core-full still invokes0309 with fixed0249 receipt/brief, service24049 terminal refusal; no existing current-pair row/receipt/brief binding. The controller-continuation consumes the future binding through the same request-test/test-run route; source preparation cannot create controller admission."
-  },
-  "controller_preparation": {
-    "source_dispatch_witness_utc": "2026-10-26T07:17:49.555834+00:00",
-    "source_dispatch_free_bytes": 4512456704,
-    "source_dispatch_floor_bytes": 4500000000,
-    "heavy_dispatch_floor_bytes": 4714564096,
-    "continuous_stop_bytes": 4000000000,
-    "controller_script": "controller-continuation.sh",
-    "binding_consumer": "binding-source.py",
-    "request_route": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
-    "service_route": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
-    "rows_installed": false,
-    "real_pair_started": false
-  },
-  "historical_trace_gap": {
-    "dispatch_utc": "2026-10-26T04:57:57.501491+00:00",
-    "first_available_source_work_sample": "2026-10-26T05:00:57Z",
-    "statement": "No sample covers the earlier dispatch interval. The older 254-sample receipt trace is retained evidence and is not backfilled as this return."
-  },
-  "historical_receipts": [
-    "26496",
-    "27388",
-    "10086"
-  ],
-  "file_sha256": {
-    "command-cut.sh": "b8da4457a51ad390a133d76b2006ac7df93ecc39c6a054b8c8399004b6e8e16e",
-    "command-pristine.sh": "4282604bb6e09cbad539fe2f2db08bb7648d1d8c4d6f9543586a41983c125b0c",
-    "check-source.py": "d4bc6466e1db95a34fe22a6b477ecc2b7ec629ba6543b2551005b6083e7b6338",
-    "tiny-controls.sh": "80696c61e1638c3d1c9aa9b8e4c745ed7fa4ea726c892ffa79d3317476c406ea",
-    "positive-stub.sh": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0",
-    "positive.manifest": "4f48ecc162d4080dd6a56443085d84bed1e3afb7b6874a91a7abe2e8f3e7d551",
-    "poison.manifest": "abeacca8779d029bffc71a261407d44f526c89e5633f90f22dfe87a260849f40",
-    "rows.txt": "99ac04418135cffe5bbdb5adcc5d6867d5bde71656d643a1d3b080ce5b9e2436",
-    "binding-source.py": "ee8e85069c794b199cc84aa1a97829d8857e134875972c82656d2777cd2f62e0",
-    "controller-continuation.sh": "0910421e5864a42b8a93b23911724b71f24bfd596bb3638f8334b4dcb66096b1",
-    "admission-derivation.json": "a02a6472a7fe87e2ce22da356e6fcf63e52cfa5f0b8ba32b24fb91662332b9e8"
-  },
-  "protected_tests": {
-    "sha256": {
-      "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py": "8239ad0c3ac7de05d7ab0efac7b12c34532df33f7f22f33c9c270f0aeb30f213",
-      "tests/editing_conformance/test_p4_ten_note_v2_runtime.py": "c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0",
-      "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py": "02ffa65700ff1c4d2e4a017fbaef6f646d100de5af61bc85e9003866eb927f36"
-    },
-    "bytes_equal_8585_reference": true,
-    "previous_path_dependent_aggregate": "b183e62ff08f9a56a9fe074cc84729eb9dba15e29f6590fe177df3ee42f4d6ac",
-    "current_normal_path_aggregate": "acf46e7d51ce8e931ac28a44edf7f7bfa495c72388238f6d90fe19c6e9690d1f"
-  },
-  "retained_original_sha256": {
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/log.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/BENCH-LEASE-RESULT": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/request": "8c287077cff85f837f822299c9d1efb3ebcfa3ab070e4a76262a604c040bf09a",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/KEEP": "c7cde8022846cd6aff9b189e32dc3aa4f3eea733835d469093054391490627b2",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/summary": "47e6e0deab6e6778faa229e8e260a0362224d9b622b753d3a65dac46341b0c9c",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/snap": "c8f830c38533e1a27fd26a53b69cc281b17e93c96db8e75d63cf04640e775659",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/status": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/heavy": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026032321-26496/runner.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/log.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/BENCH-LEASE-RESULT": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/request": "588ef182f27953ace4060a094a08af4d3887f54f1ee66c4fe2acca8a5c76cb51",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/KEEP": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/summary": "2d4b85b01519138b937278275ff5ddc0f36ad3ce897c93a7c1c857a910fcd3ca",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/snap": "56599fb8de162884cb2f329e189cca860a5a80d81bf19789275d9c8091e49284",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/status": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-d141b-pristine-comparator-2358-1026003644-27388/runner.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/log.txt": "a47b1c149e1f400b531cc532da352cdbf3ee298871938b4a7379803ff0f43bef",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/BENCH-LEASE-RESULT": "37a40f08d8548dba289b9b0bb35bcf63b359f6d37ee86044ebc6b6da080b9ec1",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/request": "20d18d526ebe3bc848eb82659025636c41bf810b48dc5de2d4c590b9baf58b97",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/KEEP": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/summary": "9376311d8eb310841c1c11ea68c5db328a8460029cc53b54a12a2bd244ac9aa1",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/snap": "bafb1ccf86bf672184f7d2592c9cc0533d6edcfcb86604b844c618f431bbd3f0",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/status": "9f56e761d79bfdb34304a012586cb04d16b435ef6130091a97702e559260a2f2",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/ext": "674058f54cc53daef1c5d501bf5840914350f7959074a5c3765a4ff12b8efe33",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1026011042-10086/runner.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-review-0508/evidence/findings.md": "d99e7555ca0317d8e539e0771ad505b87dcdd49b10eb41815903826069537486",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-command-review-0626/evidence/findings.md": "ad677528eb1f866b7c5a71b0b52a015d4540daa0245123f72ae2311fcb871c7f",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/command-cut.sh": "b3693e96c02cfbe89e094c2013370fcf4feb2e8f386a98860ecec4c2a30d11d2",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/command-pristine.sh": "17800a0228c98c1859c55ea5f5b0ef08fe8824295c3dc40a9fcbef079259b2f9",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/check-source.py": "c5af3e45c06a8ab9c068f628178224442ef19277d7094bae2dfebd7c3988c128",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/source-manifest.json": "bd95b4aef1317f41e99a86940f413a99b9dce5b277aaa01bcdfdf29b2472ab5e",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/positive.manifest": "62520c9e9cfddbfb7c45a279d64ffd15115d2a947031e53de7b5fff52bf760ad",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141l-proof-return-0515/evidence/poison.manifest": "aa1c3e46cb4ae33a4a1bfa0d683b6881f79daf29bcfe17063657273526269a7f",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh": "cc16a840e049cfbabaa662b175cf094eba10af871bb166123a5339741adbc6d8",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/positive.manifest": "5a4d5640ff927e0c3b4d7d1ad19ecc40e77fcf6298a173d822e8b3dfe5c0d643",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/poison.manifest": "222693fc9fb9b8a9abc5620c6f49eb1b872dd8d42a73c38abb8a69b319d3c1fc",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-final-review-0318/evidence/findings.md": "0b0d69d784b5692419e6c50a7a1a541acdc324278c581edb636c9eab91247e98",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/status": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/exit": "b03c70ff0d641a363f1a021413a098dce02e4c68b75f3a47aa10044f42ee1784",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/request": "b24dbb308426413e975506918e63d0a71a3aca9d56f46badf959460ec2c062fa",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/summary": "ad9dc64fafd1745beb836fb84c25ee69d4f9bb22c492b0945ea3da69fb725289",
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-agent-core-full-1026025151-24049/log.txt": "f7e5887a53ce26ea36acf9abf32d2c99c73d2dc641114648db9b813645ba29f8"
-  },
-  "production_rows": {
-    "agent-core-full": "agent agent-core-full /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-terminal-floor-return-sol-0309/evidence/measurement-command.sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/evidence/admission.json /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141i-cut-controller-0249/brief.md",
-    "d141b-pristine-comparator-2358": "agent d141b-pristine-comparator-2358 test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/command.sh -a -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/service-row.txt && test \"$(sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/command.sh | awk '{print $1}')\" = db0c2f366597cba1e4a4a067366fda38049fdcb15640d82a26b4dbac41d1043e && exec /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D141b-command-sol-0019/evidence/command.sh"
-  }
+  "review_trace": {"path": "/home/user/work/wt/agt-F-D141l-binding-final-review-next/evidence/disk-trace.txt", "sha256": "ecc4a5830f609c06535daf41b6f88a4bdaa188139fb79dec9f121bbde8023326", "samples": 5, "minimum_available_bytes": 4616032256, "stop_bytes": 4000000000}
 }

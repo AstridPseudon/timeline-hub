@@ -1,30 +1,24 @@
-# F D141l handoff
+# Handoff
 
-Status: `WAITING_FOR_GENUINE_CONTROLLER_BINDING`.
+`PASS_SOURCE` / `READY_SOURCE_D141aa_NOT_RUN_LIVE`.
 
-The finite seam is now executable at the source boundary: a future controller
-receipt and normal request/service/brief materialization can be consumed by one
-owned command without changing the reviewed commands or inventing an
-admission. The packet is not `READY` for the real pair because no current
-service ID, request, receipt or installable row exists yet.
+The final-next packet is source-complete for the settled D141aa continuation:
+Agent is the sole row writer; the installed row is read back immediately before
+`request-test`; the queued dispatcher owns `test-run`; `wait-test` observes the
+same returned service ID; native CMD/BASE_CMD, row hash, source tuple, brief,
+request, snapshot, terminal, JUnit/custody and D73 artifacts are checked; and
+any mismatch is invalidated and withdrawn without credit. A valid failed cut
+retains its nonzero result and still runs pristine. No new guard, lease, kit,
+interface, protocol, or Runtime v2 validator was introduced.
 
-The exact unsupported/stale producer boundary is the live suite registration
-at `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf`:
+The final-next worker’s own trace limitations remain visible: a 26.079119-second
+handoff gap and a 15.966516-second post-reap gap prevent an uninterrupted worker
+trace claim. This is an honest acceptance limitation, not a reason to restore
+the removed readiness refusal. Source-only absence of a future native result is
+expected.
 
-- line 31 still invokes the old 0309 measurement command with the fixed 0249
-  receipt/brief and terminal service `agent-agent-core-full-1026025151-24049`;
-- line 188 still points at the old 0030-era pristine comparator route.
-
-The consumers are the existing `bin/request-test` request/queue path and
-`bin/test-run` row/snapshot/receipt path. This worker did not alter either.
-The old 0249 record is a genuine terminal refusal and is rejected by the new
-consumer as current admission. The next controller action is therefore to
-create the real current request/service binding once at 4,714,564,096 bytes,
-then run `controller-continuation.sh materialize` and only afterward dispatch
-the existing recipes one heavy at a time.
-
-Preserved: current Agent/Runtime/App/Composition tuple, pristine Agent/Runtime
-tuple, 22 cut roots, 17 pristine roots and source-backed absent-pristine N/A
-roots; original receipts 26496/27388/10086; KEEP/raw/JUnit custody controls;
-the historical trace gap; old 19479/8912 held unstarted; D89d floor arithmetic;
-and the no-product-change boundary.
+Next step: orchestrator may consume the source review, keeping live admission,
+body measurement, REG/product qualification, and the worker trace limitation
+separate. If live execution is later authorized, use one genuine controller
+dispatch at 4,714,564,096 bytes, native same-suite heavy admission at
+4,700,000,000 bytes, and the existing five-second/4,000,000,000-byte body stop.
