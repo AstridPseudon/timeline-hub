@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "kind": "read_only_source_manifest",
+  "source_root": "/home/user/work/app",
+  "source_head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+  "source_tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+  "source_status": "clean",
+  "normal_homes": {
+    "app": {"path": "/home/user/work/app", "head": "867cb2737af1b46dc608c7cd37c349e920fe9422", "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd", "status": "clean"},
+    "agent": {"path": "/home/user/work/agent", "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70", "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a", "status": "clean"},
+    "runtime": {"path": "/home/user/work/runtime", "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "tree": "ac5b862744bece65b2e30565db1777bacd60da28", "status": "clean"},
+    "composition": {"path": "/home/user/work/composition", "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "status": "clean"}
+  },
+  "app_sources": [
+    {"path": "scripts/testing/d66-plain-stack.mjs", "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f", "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93", "bytes": 49914, "lines": 914, "role": "D66 selector and D73 submit implementation"},
+    {"path": "tests/e2e/local/three-products.mounted-readiness.spec.ts", "sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593", "git_blob": "ba85a25085b61bd2e8e3960ab0260a91c6f9650a", "bytes": 18101, "lines": 374, "role": "D66 readiness source"},
+    {"path": "tests/e2e/local/three-products.p1-chain.spec.ts", "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde", "bytes": 88437, "lines": 1688, "selectors": ["p1"], "cases": 2},
+    {"path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637", "git_blob": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019", "bytes": 78876, "lines": 1295, "selectors": ["p2-automatic-child-placement", "p2-register-asset"], "cases": 2},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "git_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6", "bytes": 54668, "lines": 955, "selectors": ["p2-popup-add"], "cases": 1},
+    {"path": "tests/e2e/local/three-products.p2-tour.spec.ts", "sha256": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4", "git_blob": "63dd04ef1055dbb380642f27f24d47e1fd104625", "bytes": 41262, "lines": 818, "selectors": ["p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk"], "cases": 3},
+    {"path": "tests/e2e/local/three-products.spec.ts", "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b", "git_blob": "ed083c0aab1a3c995be14e5b774fbb1cb877111b", "bytes": 224170, "lines": 3453, "selectors": ["p3"], "cases": 1}
+  ],
+  "control_inputs": [
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md", "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075", "role": "settled plan"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-recipe.json", "sha256": "4d7d89eea571542715f0386532bde64de796c30524b8579c9f8203b06c793818", "role": "independently PASS existing recipe"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-journey-prep-2346-handoff.md", "sha256": "6f67ced810e93bfa2684fee4286bbfc21b9992bc488da80e198fee9c878c02cf", "role": "recipe handoff"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-final-source-home-0039.json", "sha256": "7d82093bfb162bec89ec3fd4d946bc071adcb05b2494927daf04fa5e94f98280", "role": "final four-way source identity"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-review.json", "sha256": "06403daaf46bbd9a87e0de12f5e806bfd56e0219ae7156c2b81b4659c21155cd", "role": "independent packet review"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-findings.md", "sha256": "5bbce1aad66dd84a80b5bb355d924a9c96fc06ccf4c48bc3c5ea9c56336f235b", "role": "independent packet findings"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-validation.md", "sha256": "0dc71e01749dadbbe66fc5068c9f0d623e1ee7807c0723e38385690494968609", "role": "read-only validation"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-packets-final-review-0003-handoff.md", "sha256": "598206f5e1ad4878d1818b3ec426b16fd8dee47e1de4692b56307ddbe48a6f84", "role": "packet handoff"},
+    {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/INBOX.md", "sha256": "a5ae6e8bde9d8cd59d266cb1024ffe14dc98081035a56d9e42c1b69babadd7c4", "role": "recorded MAIN GO"}
+  ],
+  "checkout_receipts": {
+    "app": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-867cb2737af1b46dc608c7cd37c349e920fe9422", "status": "missing"},
+    "agent": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-28e56cacb42d3da85b02e5b3543895b44f3d0f70", "status": "missing"},
+    "runtime": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d", "status": "missing"},
+    "composition": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "status": "present_existing_receipt_not_D141_submission", "content": "exists: /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9f40"}
+  },
+  "service_receipts": {"status": "not_requested", "reason": "source-only binding; controller0043 owns the local heavy slot"},
+  "historical_not_reused": true
+}

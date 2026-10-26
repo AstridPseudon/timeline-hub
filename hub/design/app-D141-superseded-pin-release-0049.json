@@ -1,0 +1,16 @@
+{
+  "at": "2026-10-26T00:49:38.290952+00:00",
+  "host_receipt": "design/app-pin-host-process-use-0047.md",
+  "fresh_guards": "design/app-D141-superseded-pin-recheck-0049.json",
+  "recycled": [
+    "agt-pin-070dfc5e",
+    "rt-pin-ab1e4f61"
+  ],
+  "results": [
+    "PASS",
+    "PASS"
+  ],
+  "current_available_bytes": 4984889344,
+  "raw_keep_unchanged": true,
+  "source_git_objects_branches_reports_retained": true
+}

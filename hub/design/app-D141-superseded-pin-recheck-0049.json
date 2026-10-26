@@ -1,0 +1,24 @@
+{
+  "at": "2026-10-26T00:49:00.397654+00:00",
+  "host_receipt": "design/app-pin-host-process-use-0047.md",
+  "targets": [
+    {
+      "name": "agt-pin-070dfc5e",
+      "head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "clean": true,
+      "noncurrent": true,
+      "active_references": [],
+      "keep_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "guards": "PASS"
+    },
+    {
+      "name": "rt-pin-ab1e4f61",
+      "head": "ab1e4f6141987706132916e2da16477f5a019464",
+      "clean": true,
+      "noncurrent": true,
+      "active_references": [],
+      "keep_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "guards": "PASS"
+    }
+  ]
+}

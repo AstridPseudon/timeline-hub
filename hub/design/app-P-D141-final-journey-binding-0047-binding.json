@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "task": "D141",
+  "kind": "final_receiving_binding",
+  "status": "immutable_source_bound_execution_pending",
+  "execution": "none",
+  "authority": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "main_go": "D141c, 00:42Z",
+    "main_go_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app/INBOX.md:14429",
+    "scope": ["U3", "U4p", "A2", "A3", "A4", "P1", "P2-six", "P3", "F"],
+    "holds": ["D141 stops D136/B022/SWAP/Element/profiling/own-test investigations", "D130 absolute hold"],
+    "not_claimed": ["safety qualification", "REG0", "GO beyond recorded MAIN GO", "ZIP", "broad P2 qualification"]
+  },
+  "source_tuple": {
+    "app": {
+      "repo": "app",
+      "head": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+      "tree": "2b44a46ca51d880c6a00da4c19aa8629b55eb7dd",
+      "normal_home": "/home/user/work/app",
+      "source_home_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D141-final-source-home-0039.json",
+      "stable_future_target": "app-pin-867cb273",
+      "clean_verified": true
+    },
+    "agent": {
+      "repo": "agent",
+      "head": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "tree": "2ebe2ddf5a61f013953ab1e21d51ebaab746e58a",
+      "normal_home": "/home/user/work/agent",
+      "clean_verified": true
+    },
+    "runtime": {
+      "repo": "runtime",
+      "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28",
+      "normal_home": "/home/user/work/runtime",
+      "clean_verified": true
+    },
+    "composition": {
+      "repo": "composition",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "normal_home": "/home/user/work/composition",
+      "clean_verified": true
+    }
+  },
+  "selectors": [
+    {
+      "id": "p1",
+      "route": "p1",
+      "journey": "P1 original chain",
+      "files": ["tests/e2e/local/three-products.p1-chain.spec.ts"],
+      "d66_count": 2,
+      "test_titles": [
+        "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+        "P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message"
+      ],
+      "d66_grep": null,
+      "preserve": ["exact original cases", "full history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-automatic-child-placement",
+      "route": "p2-automatic-child-placement",
+      "journey": "P2 placement",
+      "files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo"],
+      "d66_grep": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$",
+      "preserve": ["real import/auth selection", "occurrence.add-media", "canonical closure", "history", "reload", "dialog-gone before guarded Undo", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-popup-add",
+      "route": "p2-popup-add",
+      "journey": "P2 popup ADD",
+      "files": ["tests/e2e/local/three-products.p2-popup.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit"],
+      "d66_grep": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$",
+      "preserve": ["exact C0 v2 request", "occurrence fork/add-media", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-parent-move",
+      "route": "p2-parent-move",
+      "journey": "P2 parent move",
+      "files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo"],
+      "d66_grep": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo$",
+      "preserve": ["exact doc.patch field guards", "fields merge", "canonical closure", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-single",
+      "route": "p2-transition-none-single",
+      "journey": "P2 single transition clear",
+      "files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo"],
+      "d66_grep": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo$",
+      "preserve": ["remove before present/value", "raw absence", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-transition-none-bulk",
+      "route": "p2-transition-none-bulk",
+      "journey": "P2 bulk transition clear",
+      "files": ["tests/e2e/local/three-products.p2-tour.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo"],
+      "d66_grep": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo$",
+      "preserve": ["ordered two removes", "opaque/list order", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p2-register-asset",
+      "route": "p2-register-asset",
+      "journey": "P2 registerAsset",
+      "files": ["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo"],
+      "d66_grep": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$",
+      "preserve": ["real file drop", "exact media/registry fields", "history", "reload", "guarded inverse", "zero legacy traffic"]
+    },
+    {
+      "id": "p3",
+      "route": "p3",
+      "journey": "P3 Gate5 original",
+      "files": ["tests/e2e/local/three-products.spec.ts"],
+      "d66_count": 1,
+      "test_titles": ["M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent"],
+      "d66_grep": "M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$",
+      "preserve": ["recovery mount", "C0 v2 envelope", "command/step/read/merge", "strict metadata", "canonical history", "restart", "guarded undo", "zero legacy traffic"]
+    }
+  ],
+  "excluded": {
+    "p2": ["broad p2", "p2-popup-swap", "p2-element"],
+    "reason": "explicit owner morning cut; exclusions are not skipped or weakened predicates"
+  },
+  "d66": {
+    "script": "/home/user/work/app/scripts/testing/d66-plain-stack.mjs",
+    "script_sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+    "script_git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93",
+    "readiness": "tests/e2e/local/three-products.mounted-readiness.spec.ts",
+    "readiness_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "node": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version_receipt": "v20.19.4 (retained recipe/tool receipt; not re-executed by this worker)",
+    "npm_version_receipt": "10.8.2 (retained recipe/tool receipt; not re-executed by this worker)",
+    "python_version_receipt": "3.13.16 (retained recipe/tool receipt; not re-executed by this worker)",
+    "runtime_identity": "AstridRuntime/0.1 Python/3.13.16",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "supported_modes": ["--submit", "--preflight"],
+    "unsupported_for_this_binding": ["p2", "p2-popup-swap", "p2-element", "--collect", "--launch", "run"]
+  },
+  "d73": {
+    "route": "existing D66 --submit path",
+    "submit_behavior": ["capture clean normal-home tuple", "request four detached exact checkouts", "wait for checkout receipts", "register paired preflight/normal rows atomically", "request preflight", "wait for PASS", "request normal"],
+    "service_commands": ["request-test <app-pin-target> <selector>-preflight --no-cache", "wait-test <preflight-id>", "request-test <app-pin-target> <selector> --no-cache"],
+    "source_checkout_prefixes": {"app": "app-pin", "agent": "agt-pin", "runtime": "rt-pin", "composition": "vw-pin"},
+    "receipt_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-{role}-{full-head}",
+    "result_paths": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/{service-result-id}",
+    "submit_plan_default": "/tmp/d66-{selector}/{selector}-submit-plan.json",
+    "normal_app_target": "app-pin-867cb273",
+    "unique_suite_names": "d141-{selector}-867cb273-submit and d141-{selector}-867cb273-submit-preflight",
+    "missing_now": ["four D141 checkout receipts", "eight D141 paired service rows/plans", "eight preflight IDs/receipts", "eight normal IDs/receipts"],
+    "receipt_policy": "Do not fabricate missing receipts; the actual heavy controller's ordinary D73 submit route requests them."
+  },
+  "execution_policy": {
+    "serial_order": ["p1", "p2-automatic-child-placement", "p2-popup-add", "p2-parent-move", "p2-transition-none-single", "p2-transition-none-bulk", "p2-register-asset", "p3"],
+    "heavy_lock": "central service/browser lock, one body at a time",
+    "admission": "measure once at controller dispatch: >5200000000 available bytes",
+    "stop": "stop newest non-gate admission at 4000000000 available bytes",
+    "contamination_clearance": ["env -u NODE_PATH", "env -u ASTRID_PUBLIC_CHECKOUT", "env -u ASTRID_APP_DIRECT_DIST", "env -u APP_DIRECT_DIST", "no direct dist/local root/ad hoc overlay"],
+    "proof_credit": "none until terminal receipts on this exact tuple"
+  },
+  "contract_guard": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args,created]", "label", "steps[id,label,intent,tags,command_ordinals,patch,reads]", "merge fields|atomic", "reads", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
+    "replies": ["accepted", "merged[data+receipt]", "canonical", "digest", "normalizedcommands", "idmap", "base", "previous", "accepted", "landing", "rebased_onto", "merge_mode", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict[reason,head]", "invalid[code,path,hint,suggestedcommand]", "preview[would_status,nullreceipt]"],
+    "changed": false
+  },
+  "inputs": {
+    "original_tails_preserved": true,
+    "original_inputs_preserved": true,
+    "original_predicates_preserved": true,
+    "ast_hashes": "not recorded in retained recipe; do not compute or infer; consume only if an existing cut record requires them",
+    "future_receipts": "honest ordinary-route outputs, not present at binding time"
+  }
+}

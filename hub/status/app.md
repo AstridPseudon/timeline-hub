@@ -1,4 +1,4 @@
-<!-- app | 2026-10-26T00:46:49Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+<!-- app | 2026-10-26T00:51:31Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
 # app board, 2026-10-26T00:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -12,7 +12,7 @@
 | U4p D141 Agent | Bind accurate final source identities | Luna and independent Luna | Review 0029 source PASS | merged | Author 0022; review 0029; identity 0033 | [Final home](../../design/app-D141-final-source-home-0039.json); exact reviewed tree and source hashes PASS | 867cb2737af1 |
 | D141 notes | Install reviewed known gap paragraphs | Luna and independent Luna | Runtime notes owner | blocked:runtime | Notes 2354; review 0003; peer 0006 | [Reviewed paragraphs](../../design/app-D141-known-gap-notes-return-2354-known-gaps.md); byte published | Evidence only |
 | D141 full prep | Prepare full and pristine comparator | Luna and independent Luna | None | merged | Full 2354; review 0003 | Exact recipes qualified; final tuple and MAIN GO required | Evidence only |
-| D141 journeys prep | Prepare P1 P2 six and P3 | Luna and independent Luna | None | merged | Journey 2346; review 0003 | Existing D66 and D73 routes qualified as preparation only | Evidence only |
+| D141 journeys prep | Bind prepared journeys to final tuple | Luna | MAIN GO; existing recipe PASS | merged | Binding 0047; original review 0003 | All eight selectors and full source identities exact; unique plan paths required in controller | 867cb2737af1 |
 | D141 full | Run cut App full suite | Luna and test service | MAIN GO D141c | doing | app-F-D141-full-pristine-controller-0043 | Actual app-full-1026004326-12174 running; admission 5.433 GB; terminal pending | 867cb2737af1 |
 | D141 pristine | Run exact frozen full comparator | Luna and test service | Full controller serial slot | ready | app-F-D141-full-pristine-controller-0043 | Existing receiver 0007 exact 7ca; follows full without concurrent body | 7ca61bb3280b |
 | D141 P1 | Qualify original dependent chain | Luna and test service | Local heavy slot | ready | Existing recipe 2346; controller next | NOTRUN on cut; historical chain GO has its original tuple scope | Cut pending |
@@ -30,7 +30,7 @@
 | D74 old graph | Preserve refused orphan graph | Lead kit | Guarded route disposition | gated:disk-emergency | Existing lead disposition | Exact 1.107 GB graph retained; no denied route retry or invented metadata | No source edits |
 | D74 dirty U3 | Preserve archived dirty trees | Manager and lead | Dirty guard disposition | gated:dirty-guard | Existing owner peer 1944 | Prior archive qualified; DIRTY recycle refusal retained; targets untouched | No source edits |
 | F final | Delivery build and ZIP | Runtime and Farm | Required gates and zero REG | gated:D141-cut | Existing final coordinator | No final build or ZIP claim; upstream tips fixed | Cut pending |
-| D74 old source pins | Release two superseded clean source pins | Manager and lead | Host process use audit | blocked:app-lead | Peer 0045; static receipt 0045 | Only Agent 070dfc and Runtime ab1e; raw and all branches retained | No source edits |
+| D74 old source pins | Release two superseded clean source pins | Manager and lead | Host CLEAR and fresh guards | merged | Normal recycle 0049 | Both PASS; raw, reports and all branches retained; receipt 0049 | No source edits |
 
 Integration: FROZEN App 867cb2737af1b46dc608c7cd37c349e920fe9422 / tree 2b44a46ca51d880c6a00da4c19aa8629b55eb7dd. Normal merge receipt queue/done/merge-app-U4p-D141-Agent-final-vendor-0022. Whole integrated tree equals final reviewed 9ada. Frozen upstream 7ca61bb3280beca21d98a854af266a382f7ce5df ancestor PASS. Final Agent 28e56 and Runtime 6a011 normal tool adoption complete. Source reviews 0017 and 0029 PASS; exact immutable identity correction 0033 PASS. [Full final home receipt](../../design/app-D141-final-source-home-0039.json). No full, pristine, gate or REG0 credit from source custody.
 
@@ -39,7 +39,7 @@ D141 controls: design/D141-morning-cut.md and design/D141-cut-tuple.md read. Req
 Blockers: Farm core — Runtime owns complete receiving recipe; Farm owns child, import check, preflight and core. Runtime review 0021 active; no App duplicate.
 Blockers: SWAP safety — D130 automatic classifier refusal 1537 holds recovery and related qualification. Existing Runtime escalation owns disposition; no retry.
 Next ready: Full and pristine controller 0043 active; serial heavy slot then P1, six P2 and P3 via prepared journey controller. Receive Agent P4 and Runtime P5 receipts.
-live 1 / cap 1 heavy; source cap 6; ready-undispatched 1 controller waiting on the occupied heavy slot. Full/pristine 0043 dispatched immediately on MAIN GO; journeys next. No independent source work ready.
+live 1 / cap 1 heavy; ready-undispatched 1 heavy controller waits occupied slot. Full/pristine 0043 active; final journey binding 0047 complete. No independent ready source work.
 
 H6: Runtime 00:21:56, Agent 00:26 and Farm 00:10 boards read through normal hub/status. Runtime final 6a011 and Agent final 28e56 are frozen. Runtime notes Sol 0018 owns installation of App paragraphs; clear this wait on its receipt. Farm has no new body. No decision escalation owed.
 
@@ -61,8 +61,10 @@ Diagnostic raw: workers/app-D136c-original9-resume-2330/private complete0700/fil
 
 Pass 2026-10-26T00:37Z: Resumed from prior status. Actual 0033 is running with progress, not dead. Read only source identity correction remains sole ready source item. Approved sweep 3 and compact scratch terminal: removed 0 temporary dirs, packed 0 scratch or test dirs, gzipped 0 logs; all raw KEEP unchanged. No eligible merged non KEEP App worktree found for recycle. Final source and functional checks are qualified; final merge 0022 normal HOME/FROZEN867cb reported by peers0039. Manager controller briefs prepared but undispatched until MAIN GO. No proof body started.
 
-INBOX consumed through 2595543 bytes.
+INBOX consumed through 2603910 bytes.
 
 Current pass 2026-10-26T00:43Z: MAIN GO D141c consumed. Controller 0043 queued with exact final head and admission 5433016320 bytes; D89c checked once. REG comparison must rerun any pristine environment failure in the same environment kind before classification. No full-suite result yet.
 
 Capacity pass 00:45Z: Asked host audit ONLY superseded Agent070dfc and Runtimeab1e source pins; both static clean/noncurrent/no live plans or lease. Historical registrations disclosed. No source KEEP release or recycle before CLEAR and repeated guards. Current full body admitted at5.433GB; D89c no prep recheck.
+
+Capacity 00:49Z: Host0047 CLEAR plus repeated clean/noncurrent/liveplan/lease/source guards PASS. ONLY old Agent070dfc and Runtimeab1e KEEP released; normal recycle both PASS. Receipt design/app-D141-superseded-pin-release-0049.json. Current full output KEEP protected while open REG comparison names it.

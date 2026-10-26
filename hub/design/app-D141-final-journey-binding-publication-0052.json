@@ -1,0 +1,34 @@
+{
+  "at": "2026-10-26T00:51:36.577401+00:00",
+  "worker": "app-P-D141-final-journey-binding-0047",
+  "scope": "read only final source binding; no body",
+  "files": [
+    {
+      "path": "design/app-P-D141-final-journey-binding-0047-binding.json",
+      "sha256": "623047d6207c10264001c16d534bcf3edc0ff8a1d79e753e0520cbbd579387d8",
+      "bytes": 11408
+    },
+    {
+      "path": "design/app-P-D141-final-journey-binding-0047-commands.md",
+      "sha256": "2cf2d1bd9f81592736c02b820c3cbb2c248e729bae5c5f1acb5470c14b1ce5d2",
+      "bytes": 5834
+    },
+    {
+      "path": "design/app-P-D141-final-journey-binding-0047-handoff.md",
+      "sha256": "19d6595eab575e722509cfed41646249b6280df259301260c3019d7d0c61d594",
+      "bytes": 2138
+    },
+    {
+      "path": "design/app-P-D141-final-journey-binding-0047-source-manifest.json",
+      "sha256": "49799ea231e1037c671b6f2e42f369c854ce99ce16d68522f09371786f7f49e5",
+      "bytes": 6432
+    },
+    {
+      "path": "design/app-P-D141-final-journey-binding-0047-validation.md",
+      "sha256": "14a5f3417c57c8c7f3b93485ad42f5ec812249f1a9f9f73814dfee2aab745694",
+      "bytes": 3548
+    }
+  ],
+  "manager_note": "Commands are templates. Next controller MUST supply unique D66_SUBMIT_PLAN_PATH and D66_OUTPUT_DIR per selector; supported in actual D66 lines494-498. Do not reuse default /tmp/d66-selector plan, which may represent a historical tuple. No authored files rewritten.",
+  "manager_exact_identity_and_selector_check": "PASS"
+}
