@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-26T08:06:09.474886+00:00",
+  "worker": "app-F-D141l-runtime-wholepath-0752",
+  "available_bytes": 4951023616,
+  "floor": 4600000000,
+  "heavy": false,
+  "live_before": [],
+  "source_only": true,
+  "peer": "peer-runtime-to-app-agent-20261026T0752Z-finite-wholepath-host.md"
+}
