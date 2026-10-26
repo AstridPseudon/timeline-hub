@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-26T02:01:54.388277+00:00",
+  "authority": "MAIN sweep relay02:03; ordinary guarded recycle only",
+  "inventory": [
+    {
+      "path": "/home/user/work/wt/agt-pin-28e56cac",
+      "disposition": "KEEP current cut or frozen pristine"
+    },
+    {
+      "path": "/home/user/work/wt/app-A2-D141-approved-read-interface-sol-0149",
+      "disposition": "KEEP live author or journey controller"
+    },
+    {
+      "path": "/home/user/work/wt/app-D141-pristine-receiver-0007",
+      "disposition": "KEEP current cut or frozen pristine"
+    },
+    {
+      "path": "/home/user/work/wt/app-P-D141-cut-journeys-resume-0127",
+      "disposition": "KEEP live author or journey controller"
+    },
+    {
+      "path": "/home/user/work/wt/app-U3b-recover-r1",
+      "disposition": "KEEP known DIRTY/refused U3; no recycle retry"
+    },
+    {
+      "path": "/home/user/work/wt/app-U3b-upstream-editor",
+      "disposition": "KEEP known DIRTY/refused U3; no recycle retry"
+    },
+    {
+      "path": "/home/user/work/wt/app-U3c-review",
+      "disposition": "KEEP locked initializing old U3; no actual matching worker metadata; no manual Git route"
+    },
+    {
+      "path": "/home/user/work/wt/app-bundle1-agent",
+      "git_clean": true,
+      "disposition": "No actual matching worker metadata for bin/recycle; no invented metadata or manual Git route",
+      "status_count": 0
+    },
+    {
+      "path": "/home/user/work/wt/app-bundle1-runtime",
+      "git_clean": true,
+      "disposition": "No actual matching worker metadata for bin/recycle; no invented metadata or manual Git route",
+      "status_count": 0
+    },
+    {
+      "path": "/home/user/work/wt/app-m2-private13-resolution-repair-bootstrap-real-r2-deps",
+      "disposition": "STOP hardlink guard0157; no retry"
+    },
+    {
+      "path": "/home/user/work/wt/app-pin-867cb273",
+      "disposition": "KEEP current cut or frozen pristine"
+    },
+    {
+      "path": "/home/user/work/wt/rt-pin-6a011d58",
+      "disposition": "KEEP current cut or frozen pristine"
+    },
+    {
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "disposition": "KEEP current cut or frozen pristine"
+    }
+  ],
+  "eligible_names": [],
+  "result": "All existing worktrees classified; zero eligible ordinary recycle target. No KEEP release or mutation."
+}

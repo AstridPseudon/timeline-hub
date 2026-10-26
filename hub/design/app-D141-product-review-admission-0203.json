@@ -1,0 +1,8 @@
+{
+  "at": "2026-10-26T02:02:39.185380+00:00",
+  "worker": "app-A2-D141-read-interface-protected-review-0203",
+  "available": 4781002752,
+  "rule": "D89b source only no actual heavy, >=4.6GB; stop4GB",
+  "candidate": "a1955216f947f9d84c3154d3bd715e65bc945452",
+  "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6"
+}
