@@ -1,0 +1,27 @@
+{
+  "format": "timeline-d141z-review-sampler-lifecycle-v2",
+  "first_tool_attempt": {
+    "started_before_reads": true,
+    "mode": "detached background shell",
+    "continuity": "FAILED",
+    "reason": "terminal sandbox reaped the detached process across the first tool boundary",
+    "trace_path": "evidence/disk-trace.txt"
+  },
+  "bounded_persistent_attempt": {
+    "started_after_prior_reads": true,
+    "pty_session_id": 73143,
+    "command": "ulimit -v 4194304; owned PTY shell sampling df/du on actual disk every 5 seconds",
+    "actual_disk_observation": "df -B1 and du -sx -B1; no virtual-memory/process census",
+    "worker_keep": "workerKEEP",
+    "trace_lines_at_stop": 276,
+    "trace_bytes_at_stop": 22588,
+    "continuity_through_final_evidence": true
+  },
+  "explicit_stop_wait_reap": {
+    "stop": "Ctrl-C/SIGINT sent through PTY session",
+    "session_exit_code": 1,
+    "wait": "write_stdin returned completed session",
+    "reap_check": "post-stop pgrep for sampler command found no matching sampler; only the check command itself matched its search string"
+  },
+  "honesty": "Neither the first detached attempt nor the author's earlier late trace is claimed as whole-review continuous PASS. The second trace is a late bounded review trace only; its terminal stop was explicit but returned 1 on Ctrl-C."
+}

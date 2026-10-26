@@ -1,0 +1,71 @@
+{
+  "utc": "2026-10-26T09:24:29.494876+00:00",
+  "result": "FAIL",
+  "source": "8e42d6f663d506be02f5f63b9e56596884648b50",
+  "check_pass": true,
+  "intrinsic_finding": "F5 mounted cancellation/control-pipe/parent-death",
+  "venue_gap": "F1 three missing App-host inputs",
+  "files": [
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/sampler-lifecycle.json",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-sampler-lifecycle.json",
+      "sha256": "08c6fa2134c055c4c16f003e59b8c271e0ae192a6965cf875b353bd771f7de1d",
+      "bytes": 1326
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/controls.json",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-controls.json",
+      "sha256": "41662ae8a053b8b7d5fa979cd39620242c04740262061a6c717dd5605f3062f8",
+      "bytes": 1182
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/source-manifest.json",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-source-manifest.json",
+      "sha256": "4273947e35093055bf991fb0e6c3cffe930a2b4ed3b7353a9783510c365f25d7",
+      "bytes": 1479
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/review.json",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-review.json",
+      "sha256": "c6d988604e71aac94fdac63ae0549fc3c65ebc2634732098fa238660910ed253",
+      "bytes": 1831
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/disk-trace.txt",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-disk-trace.txt",
+      "sha256": "9a3510951411a1271da5fc4f215ba0a6a16db2546c50a555480331f236241acb",
+      "bytes": 22588
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/validation.md",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-validation.md",
+      "sha256": "80ea33d369571c37572cf84d59f2aa5d3ddf219dd793d0976b24e4f2b48bf114",
+      "bytes": 1597
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/source-map.json",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-source-map.json",
+      "sha256": "e2e6f43f688a47c3bc10d648150c9f730a6fed47e99789fda73ee1740f0923ad",
+      "bytes": 2700
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/findings.md",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-findings.md",
+      "sha256": "b2a0f291a7da98ecf07e980a55d00b986849e3f505a90b43158958f5b31bbc5c",
+      "bytes": 3712
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/handoff.md",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-handoff.md",
+      "sha256": "e104ebab19d724815dc4e9f6974496c4351876d082b051ad8f83ee007445e61e",
+      "bytes": 1084
+    },
+    {
+      "source": "workers/app-F-D141z-build-stop-final-review-0920/evidence/report.md",
+      "published": "design/app-F-D141z-build-stop-final-review-0920-report.md",
+      "sha256": "9f05be46be9db0bbd98b509e58cfd786c26f6a8f83ae93210798a6492c65b50b",
+      "bytes": 1613
+    }
+  ],
+  "trace_whole_review_pass": false
+}

@@ -1,0 +1,24 @@
+{
+  "format": "timeline-d141z-return-source-manifest-v1",
+  "base": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+  "candidate_head": "8e42d6f663d506be02f5f63b9e56596884648b50",
+  "declared_source_files": [
+    {"path": "ops-d141z-build-stop/run-final-delivery.py", "sha256": "71ad92fae4dbe70dd2f0b8b7977bc72d0c2d5c583fd7bedf67b93f3a971af154"},
+    {"path": "ops-d141z-build-stop/delivery_lifecycle.py", "sha256": "9af0d64d7799ba085e906c046421566c409e38ea4781d228c63d6c05a56ddfa9"},
+    {"path": "ops-d141z-build-stop/check.sh", "sha256": "39f9c7edaaa4d06bab11f9a2d448801d30398a8be0b644946672ab357f8ea462"},
+    {"path": "ops-d141z-build-stop/install-map.json", "sha256": "8964c8b343d37a3742285fe25caaf02e439628d8ac7203f4d7ae390a075e6d1a"}
+  ],
+  "changed_paths_from_base": [
+    {"status": "D", "path": "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc"},
+    {"status": "D", "path": "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc"},
+    {"status": "M", "path": "ops-d141z-build-stop/check.sh"},
+    {"status": "M", "path": "ops-d141z-build-stop/delivery_lifecycle.py"},
+    {"status": "M", "path": "ops-d141z-build-stop/install-map.json"},
+    {"status": "M", "path": "ops-d141z-build-stop/run-final-delivery.py"}
+  ],
+  "deleted_only_as_authorized": [
+    "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc",
+    "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc"
+  ],
+  "worktree_status": "clean"
+}

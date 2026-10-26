@@ -1,0 +1,17 @@
+{
+  "format": "timeline-d141z-independent-controls-v2",
+  "result": "FAIL",
+  "exact_shared_acceptance": {"command": "bash ops-d141z-build-stop/check.sh", "sha256": "39f9c7edaaa4d06bab11f9a2d448801d30398a8be0b644946672ab357f8ea462", "exit_code": 0, "result": "PASS"},
+  "private_challenging_controls": {
+    "equal_4000000000_floor": {"command": "python3 private-controls/equal-floor.py", "exit_code": 0, "result": "PASS; lifecycle exit 75"},
+    "ast": "PASS",
+    "redirected_cache_py_compile": "PASS",
+    "bash_n": "PASS",
+    "ruff_select_F": "PASS",
+    "git_diff_check": "PASS",
+    "source_scope": "PASS; four declared modifications plus two authorized pyc deletions",
+    "f1_exact_input_existence": "PASS; three canonical Runtime coordinates absent",
+    "f5_surface_comparison": "FAIL for candidate qualification; donor has mounted cancellation, parent death, and control pipe; candidate does not"
+  },
+  "prohibited_actions": {"real_delivery_build": false, "dry_run_or_rehearsal": false, "zip": false, "canonical_install": false, "service_or_queue_write": false, "full_suite": false, "package_install": false, "test_run_dispatch": false, "runtime_wire_change": false}
+}

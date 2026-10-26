@@ -1,0 +1,40 @@
+{
+  "format": "timeline-d141z-independent-return-review-v1",
+  "result": "FAIL",
+  "base": "32bc911afcb2648e54be4432c5aa96cbdacf4eae",
+  "candidate_head": "8e42d6f663d506be02f5f63b9e56596884648b50",
+  "intrinsic_source_verdict": "FAIL",
+  "intrinsic_blocking_finding": "F5 mounted cancellation/parent-death/control-pipe semantics absent",
+  "venue_input_readiness": "NOT_READY_F1",
+  "original_final_caller_sha256": "45a506394d2d0fd025809c921fd446d363bc0d624d7170a049d88b5c6704e191",
+  "candidate_files": [
+    "ops-d141z-build-stop/run-final-delivery.py",
+    "ops-d141z-build-stop/delivery_lifecycle.py",
+    "ops-d141z-build-stop/check.sh",
+    "ops-d141z-build-stop/install-map.json"
+  ],
+  "deleted_authorized_files": [
+    "ops-d141z-build-stop/__pycache__/delivery_lifecycle.cpython-313.pyc",
+    "ops-d141z-build-stop/__pycache__/run-final-delivery.cpython-313.pyc"
+  ],
+  "findings": [
+    {"id": "F1", "severity": "venue_blocking", "status": "finite_missing_input"},
+    {"id": "F2", "severity": "blocking", "status": "corrected"},
+    {"id": "F3", "severity": "operational_gap", "status": "metadata_only_external_ownership_unverified"},
+    {"id": "F4", "severity": "bounded_pass", "status": "corrected_source_control"},
+    {"id": "F5", "severity": "blocking", "status": "unfixed"},
+    {"id": "F6", "severity": "scope", "status": "corrected"}
+  ],
+  "exact_acceptance": {
+    "command": "bash ops-d141z-build-stop/check.sh",
+    "sha256_check_sh": "39f9c7edaaa4d06bab11f9a2d448801d30398a8be0b644946672ab357f8ea462",
+    "result": "PASS",
+    "exit_code": 0
+  },
+  "private_equal_floor": {"value": 4000000000, "result": "PASS", "exit_code": 75},
+  "real_delivery_build": false,
+  "canonical_install": false,
+  "normal_service_invocation": false,
+  "runtime_wire_changed": false,
+  "historical_0741_backfilled": false
+}

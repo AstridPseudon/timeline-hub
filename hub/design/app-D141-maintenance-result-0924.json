@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-26T09:24:56.306980+00:00",
+  "free_before": 4699414528,
+  "free_after": 4695961600,
+  "baseline_keep_count": 45,
+  "baseline_keep_changes": [],
+  "eligible_recycle": [],
+  "sweep_exit": 0,
+  "sweep_output": "sweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4482M -> 4479M",
+  "sweep_broken_pipe_diagnostics": true,
+  "compact_exit": 0,
+  "compact_output": "packed 0 scratch dirs; free 4479M -> 4480M\ngzipped 1 old worker logs; free now 4477M\npacked 0 finished test-run dirs; free now 4478M\n",
+  "held_targets_untouched": true
+}

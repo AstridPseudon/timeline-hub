@@ -1,0 +1,34 @@
+{
+  "utc": "2026-10-26T09:29:06.234595+00:00",
+  "publication_sha256": "7b5a4ca657cdf96bfd9d0512f2c7f9f538c0dbe5b1a89fe2dadc99860eb5c4f2",
+  "result": "PASS_TRANSPORT_THREE_GENUINE_SOURCE_ORIGINALS",
+  "files": [
+    {
+      "original_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/run-final-services.py",
+      "local_safe_original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-run-final-services.py",
+      "sha256": "8aea49759e600d18f5ed1f5e297269aa8dddad3a24024f776ac37e7c7d53acd7",
+      "bytes": 18055,
+      "original_mode": "0o644",
+      "canonical_path_present_on_app": false
+    },
+    {
+      "original_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-route-return-sol-2349/evidence/candidate/core-inventory.json",
+      "local_safe_original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-core-inventory.json",
+      "sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+      "bytes": 25664,
+      "original_mode": "0o644",
+      "canonical_path_present_on_app": false
+    },
+    {
+      "original_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D68-review-1554/evidence/delivery_gate_build.py",
+      "local_safe_original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D141z-final-dependency-0913-delivery_gate_build.py",
+      "sha256": "bae840fad6ea496457a3d6138609ce9d89b0b10825827c94f855257bce6c6779",
+      "bytes": 14909,
+      "original_mode": "0o755",
+      "canonical_path_present_on_app": false
+    }
+  ],
+  "canonical_install": false,
+  "real_caller_executed": false,
+  "scope": "F1 source input publication received; Main source custody distinct from App canonical path absence"
+}
