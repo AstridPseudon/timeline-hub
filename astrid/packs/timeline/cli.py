@@ -194,6 +194,27 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
     return print_result(result, as_json=parsed.json)
 
 
+def _cmd_export(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline_transfer import export_timeline
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+
+    try:
+        receipt = export_timeline(parsed.client, parsed.project, parsed.ref, parsed.out)
+        return print_result(DomainResult.success(receipt), as_json=parsed.json)
+    except Exception as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            "validation_error", str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
+        )), as_json=parsed.json)
+
+
+def _configure_export(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Saved timeline UUID, ULID, or slug.")
+    subparser.add_argument("--out", required=True, type=Path, help="Destination .astrid archive.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_export)
+
+
 def _cmd_list(parsed: argparse.Namespace) -> int:
     result = parsed.client.timelines.list(
         parsed.project, include_archived=parsed.include_archived
@@ -3844,6 +3865,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("export", help="Export the saved head and its media into a .astrid archive.", configure=_configure_export),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("edit", help="Edit a detached timeline working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
