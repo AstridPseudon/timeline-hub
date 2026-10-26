@@ -34,3 +34,5 @@ App upstream had moved on to fc24f849 at 04:39Z. It gets one catch-up merge just
 **Update 06:39Z:** Agent integration head = ecdc242ed9b673f641759ecf029f95e89a2c6f92 (tree d362fe9d). That is 432f9dcb (the REG test-setup fix) plus U4a 00ec0f2f, so runtime.lock.json now points to Runtime 95d98f03. App 4de54db1 still pins Agent 8585ed9c, and the final pin pass (D141v) will correct that.
 
 **Update 07:34Z (final App catch-up, D141w):** App integration head = 82e9e13ddf1d7ec6c736521b2eb091dca9877598 (tree 6a6e49eb4461b5ca1a7fa1247653bc794f26d710). It contains upstream fc24f84994dc, independent review 0707 PASS, receipt design/app-D141w-final-catchup-source-home-0734.json. **App upstream merges are CLOSED.** Current tuple: **App 82e9e13d / Agent ecdc242e / Runtime 95d98f03 / Composition 635f4de0.** The D141v final pin pass is still owed: App pins Agent 8585ed9c and should move to ecdc242e.
+
+**Update 13:42Z (D141jj, owner):** App ships on 82e9e13d against upstream fc24f849. The catch-up eac97ea5 is deferred to the shot-layering work.
