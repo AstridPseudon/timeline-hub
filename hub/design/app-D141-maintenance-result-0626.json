@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-26T06:26:37Z",
+  "before_available_bytes": 4511789056,
+  "after_available_bytes": 4496265216,
+  "protected_markers_before": 33,
+  "protected_markers_after": 34,
+  "changed_or_missing": [],
+  "new_markers": [
+    "workers/app-F-D141l-freeze2-unit-controller-0606/KEEP"
+  ],
+  "sweep_stdout": "rite error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nls: write error: Broken pipe\nsweep-tmp: removed 0 dirs older than 3h (nothing touched inside for 1 h); /tmp free 4303M -> 4297M\n",
+  "compact_stdout": "packed 0 scratch dirs; free 4303M -> 4297M\ngzipped 1 old worker logs; free now 4297M\npacked 0 finished test-run dirs; free now 4295M\n",
+  "note": "Concurrent admitted full body runs; before/after is not cleanup consumption. No recycle eligibility; held and live source paths retained."
+}
