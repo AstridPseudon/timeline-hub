@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog.tsx';
 import { toast } from '@/shared/components/ui/toast.tsx';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 import type { VisualSeamReport } from '@/tools/video-editor/data/visualSeamContract.ts';
@@ -137,11 +138,14 @@ export function TimelineRenderControls({
   previewActionButtonClass,
   afterRenderControl,
   compact = false,
+  iconOnly = false,
 }: {
   previewActionButtonClass: string;
   afterRenderControl?: ReactNode;
   /** The phone's row: progress reads as a bare percentage and the secondary buttons keep only their icons. */
   compact?: boolean;
+  /** A narrow preview row: Render keeps only its download icon, named and tooltipped as "Render". */
+  iconOnly?: boolean;
 }) {
   const chrome = useTimelineChromeContext();
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -262,21 +266,33 @@ export function TimelineRenderControls({
       ].filter(Boolean).join(' · ')
     : filename;
 
+  const renderButton = (
+    <Button
+      ref={renderButtonRef}
+      type="button"
+      size="sm"
+      className={`gap-1.5 ${previewActionButtonClass}${iconOnly ? ' aspect-square px-0' : ''}`}
+      aria-label={iconOnly ? 'Render' : undefined}
+      onClick={() => void chrome.startRender()}
+      disabled={chrome.renderStatus === 'rendering'}
+    >
+      <Download className="h-3.5 w-3.5" />
+      {chrome.renderStatus === 'rendering' && chrome.renderProgress
+        ? compact || iconOnly ? `${chrome.renderProgress.percent}%` : `Render ${chrome.renderProgress.percent}%`
+        : iconOnly ? null : 'Render'}
+    </Button>
+  );
+
   return (
     <>
-      <Button
-        ref={renderButtonRef}
-        type="button"
-        size="sm"
-        className={`gap-1.5 ${previewActionButtonClass}`}
-        onClick={() => void chrome.startRender()}
-        disabled={chrome.renderStatus === 'rendering'}
-      >
-        <Download className="h-3.5 w-3.5" />
-        {chrome.renderStatus === 'rendering' && chrome.renderProgress
-          ? compact ? `${chrome.renderProgress.percent}%` : `Render ${chrome.renderProgress.percent}%`
-          : 'Render'}
-      </Button>
+      {iconOnly ? (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>{renderButton}</TooltipTrigger>
+            <TooltipContent>Render</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : renderButton}
       {afterRenderControl}
       {hasResult && (
         <Button

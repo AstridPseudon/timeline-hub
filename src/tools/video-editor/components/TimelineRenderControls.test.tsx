@@ -434,3 +434,16 @@ it('places a supplied pane control immediately after Render and before cancellat
   expect(renderButton.nextElementSibling).toBe(panelButton);
   expect(panelButton.nextElementSibling).toBe(screen.getByRole('button', { name: 'Cancel render' }));
 });
+
+it('keeps only the download icon for Render in a narrow preview row, with its name and tooltip', () => {
+  mocks.useTimelineChromeContext.mockReturnValue(chrome({ renderStatus: 'idle', renderResultUrl: null }));
+  const { rerender } = render(<TimelineRenderControls previewActionButtonClass="" iconOnly />);
+  const iconButton = screen.getByRole('button', { name: 'Render' });
+  expect(iconButton.textContent).toBe('');
+  expect(iconButton.className).toContain('aspect-square');
+
+  rerender(<TimelineRenderControls previewActionButtonClass="" />);
+  const labelButton = screen.getByRole('button', { name: 'Render' });
+  expect(labelButton.textContent).toBe('Render');
+  expect(labelButton.className).not.toContain('aspect-square');
+});
