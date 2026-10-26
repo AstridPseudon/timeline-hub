@@ -1,0 +1,77 @@
+{
+  "schema": "timeline.agent.u4a.d141.host-receiving-review.v1",
+  "worker": "rt-U4a-D141-host-receiving-review-0549",
+  "task": "U4a D141",
+  "verdict": "PASS_SOURCE_TOOLS",
+  "scope": "Independent normal Runtime receiving review and authorized evidence cleanup; provenance-only lock adoption.",
+  "candidate": {
+    "repo": "agent",
+    "branch": "tl/rt-U4a-D141-host-receiving-review-0549",
+    "commit": "c2a34f59235ad491c75bc4036b9dc4d0f6532f30",
+    "tree_before_cleanup": "8178c088036384a9e5abe0e78815dca534604a3d",
+    "base_commit": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "base_tree": "92a3ffdb5a8bf476e10bfa1bbda3e2856fb9938c",
+    "final_source_diff": [
+      "runtime.lock.json"
+    ],
+    "source_status_after_cleanup": "clean_except_runtime_lock_delta"
+  },
+  "lock_delta": {
+    "path": "runtime.lock.json",
+    "before_source_commit": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "after_source_commit": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "entry_count": 15,
+    "only_structural_difference_from_base": "source_commit"
+  },
+  "producer": {
+    "checkout": "/home/user/work/runtime",
+    "ref": "tl/integration",
+    "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "clean_before": true,
+    "clean_after": true,
+    "manifest": "contract/artifacts.json",
+    "manifest_bytes_equal_committed_head": true,
+    "manifest_unchanged_from_original_6a_to_95d": true
+  },
+  "conservation": {
+    "mapped_payloads": 15,
+    "consumer_bytes_equal_agent_baseline": true,
+    "consumer_bytes_equal_final_runtime_sources": true,
+    "consumer_bytes_equal_independent_0513_map": true,
+    "modes_equal": true,
+    "mode_comparison": "worktree 0644 permission bits compared with Git tree 100644 mode; producer sources 100644"
+  },
+  "caller": {
+    "generated_client": "astrid_runtime_client/generated.py::WorkspaceClient.commit_timeline",
+    "existing_wrapper": "astrid/sdk/workspace_client.py::WorkspaceClient.commit_timeline",
+    "route": "commitTimeline",
+    "unchanged_from_baseline": true
+  },
+  "cleanup": {
+    "deleted": [
+      "evidence/receiving.json",
+      "evidence/handoff.md"
+    ],
+    "restored_exact_baseline": [
+      "evidence/source-manifest.json",
+      "evidence/validation.md"
+    ],
+    "restored_modes": {
+      "evidence/source-manifest.json": "0644/100644",
+      "evidence/validation.md": "0644/100644"
+    }
+  },
+  "checks": {
+    "vendor_lock": "PASS exit 0",
+    "artifact_manifest": "PASS exit 0",
+    "targeted_pytest": "PASS 24 passed in 5.20s",
+    "ast": "PASS 5 files",
+    "ruff": "PASS",
+    "diff_check": "PASS"
+  },
+  "limits": [
+    "No product/client/schema/config/test/fixture/generated/pin source edits.",
+    "No full suite, browser, live service, TypeScript, release, or product-proof claim."
+  ]
+}

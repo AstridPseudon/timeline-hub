@@ -1,0 +1,27 @@
+{
+  "head": "00ec0f2f841401b69dad26fb1b23d31cce11efab",
+  "tree": "5d334b48e68d583a633e5bb658238be0d96b08c4",
+  "source_control": "PASS",
+  "files": [
+    {
+      "path": "design/rt-U4a-D141-host-receiving-review-0549-source-manifest.json",
+      "sha256": "cc9e1f438373b1f2df48d7857c53770f2bb9d3612566abc781de4f006e6df553"
+    },
+    {
+      "path": "design/rt-U4a-D141-host-receiving-review-0549-review.json",
+      "sha256": "050b29fb5170058e8b01cf588ce60f01b29649fc1271ef29cef0d461cc7e50ae"
+    },
+    {
+      "path": "design/rt-U4a-D141-host-receiving-review-0549-validation.md",
+      "sha256": "b14594c2879f5718deb523a125cd0a346f28c361c8d842049ac280bf8ea1890d"
+    },
+    {
+      "path": "design/rt-U4a-D141-host-receiving-review-0549-findings.md",
+      "sha256": "d95a440ef44bea15bf861b02851af2e077f647d7849410670a0c970cb96c6c0d"
+    },
+    {
+      "path": "design/rt-U4a-D141-host-receiving-review-0549-handoff.md",
+      "sha256": "f8628e7e31bc0a3a49f5e7d7c41e3a118ee53ce1ad2f5200d9443a3ccba70ef2"
+    }
+  ]
+}

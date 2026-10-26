@@ -1,0 +1,158 @@
+{
+  "scope": "Closed unreferenced Runtime manager stdout dated20-21Oct only; ownership singlelink no activefd noKEEP nolease; lossless verified",
+  "files": [
+    {
+      "source": "managers/runtime/rounds/20261020T0316Z.log",
+      "archive": "managers/runtime/rounds/20261020T0316Z.log.gz",
+      "before_bytes": 1541,
+      "after_bytes": 895,
+      "content_sha256": "7aa5948cfd8ca88e182bf8dd2b7b7cc7049d6e4460971a1f8341e4791c18c0e8",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261020T0318Z.log",
+      "archive": "managers/runtime/rounds/20261020T0318Z.log.gz",
+      "before_bytes": 14981,
+      "after_bytes": 5429,
+      "content_sha256": "0f0c139dabc1a757a2e6fa858f8003994bab767c55cf64cbabfba5facfca2727",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261020T0513Z.log",
+      "archive": "managers/runtime/rounds/20261020T0513Z.log.gz",
+      "before_bytes": 58028,
+      "after_bytes": 18831,
+      "content_sha256": "4e3763839f262e7df6b600e6ffa25a62623f6ee360bcc847c24822ac96b90f65",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261020T1950Z.log",
+      "archive": "managers/runtime/rounds/20261020T1950Z.log.gz",
+      "before_bytes": 558372,
+      "after_bytes": 194162,
+      "content_sha256": "ccdcfbfb33775fe8214467c132fc4ec7cf9da64006ab41afcc0c9e2ea4fef121",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0033Z.log",
+      "archive": "managers/runtime/rounds/20261021T0033Z.log.gz",
+      "before_bytes": 981208,
+      "after_bytes": 305702,
+      "content_sha256": "56ad7f0fce5042a3c029356908b6934dc8f149a1aa445e8b739a94a4a0c2d603",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0400Z.log",
+      "archive": "managers/runtime/rounds/20261021T0400Z.log.gz",
+      "before_bytes": 879899,
+      "after_bytes": 286154,
+      "content_sha256": "bfdf338bf863cb3ab38469f7ce0f1988b053112198a73da11d3a4163ed849b8b",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0411Z.log",
+      "archive": "managers/runtime/rounds/20261021T0411Z.log.gz",
+      "before_bytes": 822150,
+      "after_bytes": 262998,
+      "content_sha256": "8c247f393ace5a404f2c17126e94372c4824bf49b7dc53d93c23b7286d01da1f",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0413Z.log",
+      "archive": "managers/runtime/rounds/20261021T0413Z.log.gz",
+      "before_bytes": 864948,
+      "after_bytes": 279541,
+      "content_sha256": "ff666fd9da35b394826e94c622f5589c19b41765aeaae778c40052387b666aac",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0415Z.log",
+      "archive": "managers/runtime/rounds/20261021T0415Z.log.gz",
+      "before_bytes": 792788,
+      "after_bytes": 272043,
+      "content_sha256": "bdb7a71ade01b3c8f91532808840fe1ea1c16848296a962e226111ae6cf1533e",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0417Z.log",
+      "archive": "managers/runtime/rounds/20261021T0417Z.log.gz",
+      "before_bytes": 742442,
+      "after_bytes": 253378,
+      "content_sha256": "a6b50aabf429a68b033f18035137b0c44543eb0552a09ed0314f579e0886edf1",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0418Z.log",
+      "archive": "managers/runtime/rounds/20261021T0418Z.log.gz",
+      "before_bytes": 701101,
+      "after_bytes": 236877,
+      "content_sha256": "aa87e9ef0018876972be8ffb8f211b95a9f7c3ac4a620e8e2857b64cc030c271",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0420Z.log",
+      "archive": "managers/runtime/rounds/20261021T0420Z.log.gz",
+      "before_bytes": 886028,
+      "after_bytes": 285920,
+      "content_sha256": "05403d75a821ace7b2471660629dd1d3c79049f6a18b85e9c277a2eb2621125f",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0427Z.log",
+      "archive": "managers/runtime/rounds/20261021T0427Z.log.gz",
+      "before_bytes": 700564,
+      "after_bytes": 236717,
+      "content_sha256": "9b71792bc8ff4846866303c631e78a41aeefa22c07182e6a0b1ae5925d3cdbd2",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0430Z.log",
+      "archive": "managers/runtime/rounds/20261021T0430Z.log.gz",
+      "before_bytes": 857602,
+      "after_bytes": 273467,
+      "content_sha256": "ae86881b46d816f7a840c37c08aafdc0369da2fb5e18c13d39ec372e250e251e",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0434Z.log",
+      "archive": "managers/runtime/rounds/20261021T0434Z.log.gz",
+      "before_bytes": 748294,
+      "after_bytes": 253764,
+      "content_sha256": "ab663bd07586e89d6686178b4cc878bbb59b9c8ea8c97e077bfdeb8dba7ad0df",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0437Z.log",
+      "archive": "managers/runtime/rounds/20261021T0437Z.log.gz",
+      "before_bytes": 858551,
+      "after_bytes": 273936,
+      "content_sha256": "b687841191ce9e1fe41787188544c032a8c9b4e331445a127b9d14f708280c04",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0626Z.log",
+      "archive": "managers/runtime/rounds/20261021T0626Z.log.gz",
+      "before_bytes": 822569,
+      "after_bytes": 268276,
+      "content_sha256": "99d16560342a6e5e7575cf5d9b0d38cabfc99440519eb90113283417ddf007c7",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T0722Z.log",
+      "archive": "managers/runtime/rounds/20261021T0722Z.log.gz",
+      "before_bytes": 933922,
+      "after_bytes": 303386,
+      "content_sha256": "08363947f6ac527f62cdc0962799aa2f7f8550222dab12af7f97507a68c08ce3",
+      "verified": true
+    },
+    {
+      "source": "managers/runtime/rounds/20261021T1131Z.log",
+      "archive": "managers/runtime/rounds/20261021T1131Z.log.gz",
+      "before_bytes": 936940,
+      "after_bytes": 306322,
+      "content_sha256": "c1471bf4b4579c8e2ca6433fcc15f08b80641f8679820705b291d97551a69ea1",
+      "verified": true
+    }
+  ],
+  "saved_bytes": 8844130
+}
