@@ -1,1 +1,1 @@
-2026-10-26T08:14:53Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (no new instructions); hub-repack real run + delivery-build form still await the owner's own words; perms rules intact
+2026-10-26T09:02:05Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (no new instructions since 07:2xZ); hub-repack real run + delivery-build form await the owner's own words; perms rules intact
