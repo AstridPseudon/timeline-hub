@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-26T17:40:40.903574+00:00",
+  "scope": "PASS protected firstreturn source, SAME8c1a6ebb and independent realCLI private registry with exact existing tuples. No intrinsic findings. Reviewer initial extra dryrun fixture reused trace then fresh isolated correction, original failedcontrol retained. No canonical activation/build.",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-report.md",
+      "sha256": "2148685c33f33c7a29616f104ce45f87581bb57596935fa6f86b1e5311e74e8d",
+      "bytes": 1833
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-review.json",
+      "sha256": "a75095b838442c4453c08b24be2c221a8e830f74bb6039f757600a614d1360ab",
+      "bytes": 1755
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-findings.md",
+      "sha256": "4fc4e5ba8141f4e2559fd0bfae9ab00e263fe88fb66762d18c9cc47ddd9921b9",
+      "bytes": 864
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/source-manifest.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-source-manifest.json",
+      "sha256": "0065f2bb78d0cd84eb0baa2e5ea126171a014aba403e6c671dac9f66a604e571",
+      "bytes": 1706
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-validation.md",
+      "sha256": "786705a3990acdef739163bdd2a27bff31ff4c53cf78c3e2964863f9c74e1c6b",
+      "bytes": 3666
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-handoff.md",
+      "sha256": "6a185667a4de34b75ec066a62dd7beb64a69e604d9fbeb8ddc92c3c231c76480",
+      "bytes": 642
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-disk-trace.txt",
+      "sha256": "f2397cca52e0866a165963e58462c2e6fe98894d7dd04809dd5e766594c6926c",
+      "bytes": 112
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-review-next/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-review-next-sampler-lifecycle.json",
+      "sha256": "2c7d78f4b1808afc058089cc7a7deeaa65b690b31c0842c19d6bc8f4e6b50695",
+      "bytes": 2237
+    }
+  ]
+}

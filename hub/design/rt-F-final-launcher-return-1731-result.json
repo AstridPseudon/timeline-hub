@@ -1,0 +1,16 @@
+{
+  "builder_invoked": false,
+  "candidate_sha256": "d86ef7ee366adff5bcf2297f40cb247e14b8d818f2dd147b97bb26cb8a974f18",
+  "canonical_tuples_written": false,
+  "gate_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8",
+  "import_fix": "final and dryrun rows add only hashchecked script-parent setup",
+  "pythonpath_unset": true,
+  "real_registry_install": false,
+  "registered_rows": [
+    "core-v2-final-integration",
+    "delivery-v2-final",
+    "delivery-v2-dryrun"
+  ],
+  "status": "PASS",
+  "tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561"
+}

@@ -1,0 +1,3 @@
+monitor_pid=2 child_pid=3 floor=4000000000
+t=0.001 free_bytes=5122301952
+child_exit=0 waited=1 stop_floor=False

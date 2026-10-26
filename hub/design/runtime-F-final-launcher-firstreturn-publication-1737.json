@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-26T17:37:02.233164+00:00",
+  "scope": "Author terminal exit0/source controls PASS only. Author mentions protected review but no independent review has run on this return; actual independent is pending. No activation or builder.",
+  "same_check_sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+  "outputs": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/result.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-1731-result.json",
+      "sha256": "86a803c653e078fcb57487c215b0ff9bbc3a221d6d287b8c28f700b2ddf05596",
+      "bytes": 604
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-1731-report.md",
+      "sha256": "7270d4e0ade2c43c2e4aeb0ccb7b28d994f5750038c660660a1695dbd1f6ff54",
+      "bytes": 733
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/disk-trace.txt",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-1731-disk-trace.txt",
+      "sha256": "42fb03222a87352c7e9b7a9aebe5b7b87380fdaa00078dfd19d3fd53198f795d",
+      "bytes": 103
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/sampler-lifecycle.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-1731-sampler-lifecycle.json",
+      "sha256": "6e954cd7a5c8e50b1c73b21685e03630e4774737caa4707041fd53f69d043dff",
+      "bytes": 2209
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/check-launcher.py",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-final-launcher-return-1731-check-launcher.py",
+      "sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+      "bytes": 12332
+    }
+  ]
+}

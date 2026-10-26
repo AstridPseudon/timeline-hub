@@ -1,0 +1,40 @@
+{
+  "review": "rt-F-final-launcher-return-review-next",
+  "status": "PASS",
+  "source_publication": "runtime-F-final-launcher-firstreturn-publication-1737.json",
+  "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/candidate",
+  "registry_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+  "same_check_sha256": "8c1a6ebbb1779a8d1c5e72d50196289bfb9d18ac69609963e16d57b4b17a5603",
+  "acceptance": {
+    "status": "PASS",
+    "registered_rows": [
+      "core-v2-final-integration",
+      "delivery-v2-final",
+      "delivery-v2-dryrun"
+    ],
+    "original_registered_exec": "FAIL as required: ModuleNotFoundError: delivery_lifecycle",
+    "candidate_final": "PASS with PYTHONPATH/PYTHONHOME/NODE_PATH unset",
+    "candidate_dryrun": "PASS with PYTHONPATH/PYTHONHOME/NODE_PATH unset",
+    "builder_invoked": false,
+    "canonical_tuples_written": false,
+    "real_registry_install": false,
+    "tuple_sha256": "90b9da111d31a6f866795332521b6b6c660c1bfd2a9da92ee0c6d97683c1a561",
+    "gate_sha256": "eec639784d85238545dfa244d4c8f79a7385f9d946f0453dc12115e5b8dbbec8"
+  },
+  "independent_cli": {
+    "status": "PASS",
+    "mode": "--install against private registry copy",
+    "existing_canonical_tuples": true,
+    "canonical_registry_written": false,
+    "private_backup_sha256": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15",
+    "real_registry_sha256_after": "0495919f9ab694d034ca53d77877c90d5553560ac3bbcbf7e90e8b268e227e15"
+  },
+  "disk": {
+    "floor_bytes": 4000000000,
+    "minimum_observed_bytes": 5122301952,
+    "monitor_exit": 0,
+    "child_exit": 0,
+    "waited_and_reaped": true
+  },
+  "findings": []
+}

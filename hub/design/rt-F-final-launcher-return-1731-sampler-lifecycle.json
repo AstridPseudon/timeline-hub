@@ -1,0 +1,52 @@
+[
+  {
+    "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+    "control_pipe": false,
+    "exit": 0,
+    "external_dispatch_floor_bytes": 4860000000,
+    "job_id": "delivery-build",
+    "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/tmp/launcher-acceptance-j0ij_nyi/delivery-v2-final/timeline-delivery-KEEP/KEEP",
+    "parent_pid": 2,
+    "process_exit": 0,
+    "process_groups": [
+      125,
+      127
+    ],
+    "reaped_pids": [
+      127
+    ],
+    "sampler_binding": "ready\t65024\t2130249\t0\t600\t1\t70cf64ed9e6a9c578defb91b74e331defcb15c5542e0691ed72b402c5d365941",
+    "sampler_exit": 0,
+    "status": "complete",
+    "stop_floor_bytes": 4000000000,
+    "stop_reason": null,
+    "terminal": "normal",
+    "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/tmp/launcher-acceptance-j0ij_nyi/delivery-v2-final/timeline-delivery-KEEP/disk-trace.tsv",
+    "trace_status": "PASS"
+  },
+  {
+    "admission_owner": "normal dispatcher test-run; no private lifecycle admission",
+    "control_pipe": false,
+    "exit": 0,
+    "external_dispatch_floor_bytes": 4860000000,
+    "job_id": "delivery-build",
+    "keep": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/tmp/launcher-acceptance-j0ij_nyi/delivery-v2-dryrun/timeline-delivery-KEEP/KEEP",
+    "parent_pid": 2,
+    "process_exit": 0,
+    "process_groups": [
+      265,
+      267
+    ],
+    "reaped_pids": [
+      267
+    ],
+    "sampler_binding": "ready\t65024\t2130260\t0\t600\t1\t9b334884772c63139e92206c304045af4b1718e4ed921920be7173878579ac6f",
+    "sampler_exit": 0,
+    "status": "complete",
+    "stop_floor_bytes": 4000000000,
+    "stop_reason": null,
+    "terminal": "normal",
+    "trace": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-launcher-return-1731/evidence/tmp/launcher-acceptance-j0ij_nyi/delivery-v2-dryrun/timeline-delivery-KEEP/disk-trace.tsv",
+    "trace_status": "PASS"
+  }
+]

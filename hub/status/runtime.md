@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T17:36:17Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 4m -->
-# runtime board, 2026-10-26T17:31:29.302394+00:00
+<!-- main | 2026-10-26T17:41:57Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
+# runtime board, 2026-10-26T17:40:53.654266+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -95,8 +95,8 @@
 
 | D141 H90 pristine queue | Cancel obsolete full pristine 8912 | Manager route | Main H90 15:43 | merged | Supported stop test; dispatcher15:44 | [Cancelled while queued; originals and KEEP exact](../../design/runtime-D141-H90-pristine8912-cancelled-1545.json). No body. | No source change |
 
-Next ready: Protected review of complete launcher successor, then scoped activation and readback; actual build remains gated by those results.
-live 2 / cap 6; ready-undispatched 0. One samebranch firstreturn and mandatory read-only wholepath continuation queued; no heavy or canonical write.
+Next ready: Independent corrected installation readback after actual installer terminal, then normal F-final build and artifact review.
+live 1 / cap 6; ready-undispatched 0. Sole scoped installer queued; independent installation readback and normal build gated behind actual result.
 | F D141jj harness path | Retain complete phase map | Luna read only | Finite Sol F1 to F6 | merged | rt-F-D141jj-harness-wholepath-return-1637 | [Finite map](../../design/runtime-D141jj-harness-wholepath-return-publication-1642.json). Three fixture defects; all seven purposes audited. No source qualification. | Evidence only |
 
 Blockers: Safety — D130 and all retained protected targets stay held. Main 16:18 forbids further cleanup if a floor trips; stop and report. Raw KEEP and held 19479 remain.
@@ -138,11 +138,15 @@ Current pass 2026-10-26T17:12:02.856514+00:00: Actual installer terminal exit0. 
 
 Current pass 2026-10-26T17:16:38.771003+00:00: Actual independent installation review terminal exit0 and bounded PASS. Source11, actual tuple hashes and exact predecessor plus three rows independently conserved; four protected Runtime rows and outside bytes exact. Structured evidence bundle absent; actual safe report and raw log control, monitor PTY/wait limits retained. Sole rt-F-final-build-next queued immediately at5150625792 under Main GO, --net --heavy, unchanged4.86GB/wholegroup4GB route. No cleanup or second checker. INBOX 1936116 HEADER 256846 consumed.
 
-| F-final launcher | Repair all concrete row and CLI defects | Luna | Protected firstreview FAIL | doing | rt-F-final-launcher-return-1731 | [FAIL dryrun argv](../../design/runtime-F-final-launcher-first-FAIL-publication-1731.json). Complete samebranch firstreturn; real3row/CLI controls required. | Private only |
-| F-final launcher path | Audit complete successor activation path | Luna read only | Firstfix did not clear gate | doing | rt-F-final-launcher-wholepath-1731 | Mandatory finite continuation: everyrow, originalpaths, actualCLI and existingtuples. Original1719 map retained. | Evidence only |
+| F-final launcher | Activate protected concrete launcher correction | Luna and protected Luna | Independent firstreturn PASS | merging | rt-F-final-launcher-install-next | [PASS exactrows and realCLI](../../design/runtime-F-final-launcher-independent-PASS-publication-1740.json). Source correction qualified; actual scopedactivation queued. | Original source11 unchanged |
+| F-final launcher path | Retain finite successor-path audit | Luna read only | Independent1731 terminal | merged | rt-F-final-launcher-wholepath-1731 | [Git originals](../../design/runtime-F-final-launcher-wholepath-publication-1736.json). Historical7b1f observation scoped; known current gaps covered by return. | Evidence only |
 
 Current pass 2026-10-26T17:20:27.447560+00:00: Actual normal10589 service FAIL exit1 in0s, ModuleNotFoundError delivery_lifecycle under hashchecked python-c exec; builder NOTRUN, no staging or ZIP. Worker report exit0 separately. Published originals1719. Two Luna source workers queued immediately at5147631616: complete minimal production-launch row/CAS author plus independent finite wholepath reader. Protected successor review then scoped install/readback before another build; no source tuple, canonical source11, live registry or notes change by manager; no cleanup. Main16:18 floors retained.
 
 Current pass 2026-10-26T17:27:41.906297+00:00: Completed finite launcher wholepath audit published1725. Author1719 terminal0/PASS same actualcommand/privateCAS script a850c28b; protectedreview-next queued immediately at5136560128. No canonical row/source/tuple/notes edit or builder. Live1, no heavy. bin/workers rt-F-final read; no ready peer row or newdecision. Main floortrip no-cleanup remains.
 
 Current pass 2026-10-26T17:31:29.302394+00:00: Firstprotected launcherreview terminal intrinsicFAIL dryrun command omissions; SAMEcheckPASS scoped but only selectedfinalrow. All8 originals published1731. Samebranch Luna1731 firstreturn plus mandatory independent wholepath1731 queued immediately at5132210176. Include actual productionpaths and CLI existingtuple guard in complete return; no clonedharness, canonicalwrite, newservice or builder. Original10589 prebuilderFAIL retained. No decision or cleanup owed.
+
+Current pass 2026-10-26T17:37:43.235989+00:00: Luna firstreturn1731 terminal authorPASS all3concrete rows/actualCLI/privateCAS, no canonicalwrites. Protectedreturn-review-next queued immediately5124435968, SAME8c1a6ebb. Source publication1737 scopes authored protectedreview wording as selfcheck only. Finite reader1736 Git-originaltransport, historical7b1f limit explicit. Exact scopedactivationbrief ready; no newservice/body/cleanup or sourcepinchange.
+
+Current pass 2026-10-26T17:40:53.654266+00:00: Actual firstreturn protectedreview terminal0/substantivePASS no intrinsicfindings. SAME8c1a6ebb plus extra realCLI privateinstall existingtuples and all3commands independentlyPASS; originalextra reusedtrace failure and freshcorrectedfixture retained. Publication1740. Scopedcanonicalinstaller queued immediately5117112320, no sourceauthor/repeatedcontrols/Opusgate because returnPASSED. Independent readback follows; no body/cleanup.
