@@ -1,0 +1,23 @@
+{
+  "schema": "timeline.ops.d141s.findings-map.v1",
+  "findings": [
+    {
+      "id": "D141S-APP-001",
+      "status": "closed-in-source",
+      "change": "Replaced historical 520d first-placement literals with the published freeze2 5344 pair, source, command, checkout, and exact row hashes.",
+      "verification": "74-case real-controls run; positive exact pair and negative source/command/target/extra-file attacks pass."
+    },
+    {
+      "id": "D141S-APP-002",
+      "status": "closed-in-source",
+      "change": "Added only the authentic queued App 18617 ID to the existing held-job refusal guard and evaluated held IDs before suite lookup.",
+      "request_id": "app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617",
+      "verification": "Isolated refusal returns 3 and leaves only request/why; existing 8912 and 19479 controls remain passing."
+    }
+  ],
+  "unchanged": [
+    "73 prior lifecycle/custody/security control purposes",
+    "production D141g-paired-control refusal",
+    "queue, request, registry, service, CAS, receipt, and installation state"
+  ]
+}

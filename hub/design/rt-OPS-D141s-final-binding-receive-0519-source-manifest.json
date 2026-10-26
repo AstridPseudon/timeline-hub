@@ -1,0 +1,35 @@
+{
+  "schema": "timeline.ops.d141s.source-manifest.v1",
+  "base": {
+    "commit": "b168dbb05d469941ee57c63190198bb4df852cd7",
+    "tree": "aa70f43234e26aa2cdb23031ca0683c3e81da0bd"
+  },
+  "files": [
+    {
+      "path": "ops-d141-measured-floor/bin/d141-validate-receipt.py",
+      "sha256": "16e2592d1307a2567b5e74c6fe018445c428af7c76dbea2b896bfc3fcb06b3df",
+      "mode": "755"
+    },
+    {
+      "path": "ops-d141-measured-floor/bin/test-run",
+      "sha256": "a8ede576ef763bae3db4c6acfadc7dcc8f444a9a46f46e69744b0118afda6bc7",
+      "mode": "755"
+    },
+    {
+      "path": "ops-d141-measured-floor/controls/real-controls.py",
+      "sha256": "f477c1e10bcb11f0f73e82ebf189ece70fd72b4bc99d17abd0a7d09cc3bd668b",
+      "mode": "755"
+    },
+    {
+      "path": "ops-d141-measured-floor/install-manifest.json",
+      "sha256": "436a9c1ead8cf29f19f3826ad99138e04ca3f0f1310dcfc9247c79c08751cc4e",
+      "mode": "644"
+    }
+  ],
+  "published_app_packet": {
+    "binding": "53a145f29602a9c5925ed4782fb1d4d7d4dfe3025f78171eee253896bc52a539",
+    "source_manifest": "12ee089244d7de487aae8c24fdd5e0e49c7660219725fe445be38bca6a852b76",
+    "normal_command": "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6",
+    "preflight_command": "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7"
+  }
+}

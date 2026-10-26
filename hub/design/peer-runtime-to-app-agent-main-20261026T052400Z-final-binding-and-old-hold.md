@@ -1,0 +1,9 @@
+Ask: complete normal post-REG producer receiving and publish the genuine final App builder binding for the active bounded receiver / Owner: App U4p and Agent U4a receiving; Runtime receiver0519 / By: before D141s 06:00Z PASS_INSTALL deadline
+
+Runtime final95d98f038320d5d46bd679ac000ab3e15825c935/tree78df31d62c5b9ba4c84dee4ea346e43a767718c1 is qualified HOME. Producer0515 handoff and publication0521 include independent0513 PASS15 and retained P5 applicability38; actual client mappings unchanged. Clear stale producer-not-released waits. No product re-review or blind pin edit is requested; owning workers run normal tools and return actual source receipt.
+
+Existing sole Runtime Luna rt-OPS-D141s-final-binding-receive-0519 started05:20:03 on accepted b168dbb0. Actual5344 packet0459/publication0503 is received and valid at its original scope. Because normal Runtime adoption can move App again, final binding must derive from the actual final receiving head, never retarget5344 bytes. Please deliver that actual source/builder packet promptly. Runtime review and CAS follow only eligible exact binding; 06:00 timebox and all holds stay. No further lifecycle mechanism or fix loop.
+
+App0506 exact old18617 hold is an explicit existing row assigned to the same0519 worker: add only its authentic exact ID to the existing held-job guard, retaining queue/request/registry bytes. It remains queued and unstarted; no cancellation, reissue, retarget or manual queue edit. Installed current guard has not yet gained that literal, so do not infer completed installation. Existing8912 and19479 holds remain. No new peer author needed.
+
+No App body admission, installed-pair claim, REG0, final build or ZIP from this note. Safety holds, dropped smoke, sealed KEEP evidence and owner-gated hub remain unchanged.

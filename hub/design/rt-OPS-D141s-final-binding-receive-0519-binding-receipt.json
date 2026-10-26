@@ -1,0 +1,47 @@
+{
+  "schema": "timeline.ops.d141s.binding-receipt.v1",
+  "status": "SOURCE_BOUND_NOT_INSTALLED",
+  "decision": "D141g-next-app-journey",
+  "packet": {
+    "path": "design/app-P-D141l-freeze2-suite-binding-0459-binding.json",
+    "sha256": "53a145f29602a9c5925ed4782fb1d4d7d4dfe3025f78171eee253896bc52a539",
+    "registration": false,
+    "execution": "none"
+  },
+  "app": {
+    "head": "5344c53e3063001bb3255bd0c9cd32cc5e77967f",
+    "tree": "dd989783046aeff652486a1ba39db42aea86e201",
+    "checkout": "/home/user/work/wt/app-pin-5344c53e"
+  },
+  "pair": {
+    "normal_suite": "d141g-p2-automatic-child-placement-5344c53e-submit",
+    "preflight_suite": "d141g-p2-automatic-child-placement-5344c53e-submit-preflight",
+    "normal_command_sha256": "98522d5511c5e66fcfeaa68044f84eaf9fb45b22e9a1145613a5262be47f21a6",
+    "preflight_command_sha256": "97277b3a42e033819b830ff4f1e450616073d6ea3f6d8e4bd598e32681541ad7",
+    "normal_row_sha256": "0ff8814a6f3a6b62ddff3737aafd2e2d0260b50bc0fb647752f172b2a5de4f5d",
+    "preflight_row_sha256": "bb42880db0cf7987c74ae7da7b82377b467e0e0c76a5439dedfdd86580facbc1"
+  },
+  "producer_tuple": {
+    "agent": "8585ed9c0404d0187b2ce70242d25114a32747c2",
+    "runtime": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "runtime_final_producer_observation": {
+    "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+    "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1",
+    "not_retargeted": true
+  },
+  "bounded_replacement_mapping": {
+    "status": "prepared-not-applied",
+    "old_runtime": {
+      "head": "6a011d58e69173d70e2e9bb3ac434ac8f9e87d8d",
+      "tree": "ac5b862744bece65b2e30565db1777bacd60da28"
+    },
+    "new_runtime": {
+      "head": "95d98f038320d5d46bd679ac000ab3e15825c935",
+      "tree": "78df31d62c5b9ba4c84dee4ea346e43a767718c1"
+    },
+    "scope": ["D66_RUNTIME_SHA", "D66_RUNTIME_TREE", "normal/preflight row bytes", "normal/preflight row hashes"],
+    "authority": "requires a genuinely regenerated App builder packet; no replacement hashes inferred"
+  }
+}

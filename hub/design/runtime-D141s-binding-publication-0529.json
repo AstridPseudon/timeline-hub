@@ -1,0 +1,29 @@
+{
+  "source": "2733c720c555c2853ce73b5b74d7896aa1fe8b38",
+  "files": [
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-controls.json",
+      "sha256": "3d0e701654cae003ba54f08117fd606e03e59c4b42582aa73048ac6352cb010c"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-source-manifest.json",
+      "sha256": "4eeec33ea8f0a70963feabb1792005cd5cef717bb964aeed3ca4b3e722806c51"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-validation.md",
+      "sha256": "a0c1b32673e0231e3088e234de74d9b9b04c9bc80528c3cd2bc1accd6173899c"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-findings-map.json",
+      "sha256": "0dab6f17bd7f1f097917063d90d3b61839b8ef6f58406093455451080a7269d3"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-handoff.md",
+      "sha256": "45cf10748a9c2f1998f8dbe747f13f51b1b7eaff06a24cf2073c3650ae8282b2"
+    },
+    {
+      "path": "design/rt-OPS-D141s-final-binding-receive-0519-binding-receipt.json",
+      "sha256": "56de967c3a184baa633b45261be80e5b3d33b1f77e8d74b05ac008478f8be9fe"
+    }
+  ]
+}

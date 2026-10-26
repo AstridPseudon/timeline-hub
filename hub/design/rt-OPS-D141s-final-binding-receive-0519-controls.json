@@ -1,0 +1,23 @@
+{
+  "schema": "timeline.ops.d141s.controls.v1",
+  "command": "TMPDIR=/tmp/w-210f1cd415/d141s-controls PYTHONDONTWRITEBYTECODE=1 python3 -I ops-d141-measured-floor/controls/real-controls.py",
+  "result": "PASS",
+  "case_count": 74,
+  "prior_case_count": 73,
+  "added_cases": [
+    "prospective-freeze2-pair-binding",
+    "held-app-pin-867cb273-d141-p2-transition-none-single-867cb273-submit-preflight-1026015050-18617"
+  ],
+  "verdict": {
+    "SEC001": "PASS",
+    "SEC002": "PASS",
+    "freeze2": "NEEDS",
+    "release": "NOT_READY"
+  },
+  "publication_smoke": "installed -> hub/kit -> received bin copies and hashes verified",
+  "held_18617": {
+    "returncode": 3,
+    "artifacts": ["request", "why"],
+    "body_started": false
+  }
+}
