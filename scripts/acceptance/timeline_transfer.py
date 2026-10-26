@@ -1142,6 +1142,12 @@ def render_attempt(args: argparse.Namespace) -> int:
                 "Remotion readiness requires an existing Node 20 executable and the installed "
                 "banodoco_timeline_schema package; acceptance does not install dependencies"
             )
+        remotion_project = (source_path / "remotion").resolve()
+        if not (remotion_project / "node_modules").is_dir():
+            raise NativeRenderUnavailable(
+                f"Remotion readiness requires the existing dependency closure at "
+                f"{remotion_project / 'node_modules'}; acceptance does not install dependencies"
+            )
         from astrid.core.env_vars import (
             ASTRID_NODE_EXECUTABLE,
             ASTRID_REMOTION_PROJECT_DIR,
@@ -1155,7 +1161,7 @@ def render_attempt(args: argparse.Namespace) -> int:
 
         render_env = dict(os.environ)
         render_env[ASTRID_NODE_EXECUTABLE] = str(Path(node).resolve())
-        render_env[ASTRID_REMOTION_PROJECT_DIR] = str((source_path / "remotion").resolve())
+        render_env[ASTRID_REMOTION_PROJECT_DIR] = str(remotion_project)
         render_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(
             Path(schema_spec.origin).resolve().parent.parent
         )
