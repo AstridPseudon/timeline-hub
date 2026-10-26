@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T18:26:18Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
-# runtime board, 2026-10-26T18:25:24.897125+00:00
+<!-- main | 2026-10-26T18:31:48Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-26T18:31:19.024637+00:00
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 R0 U1 R2r R5 | Retain prior approved source and proofs | Luna and Sol | Prior approvals | merged | Historical authors and independent reviews | [Prior evidence](../../design/runtime-prior-proof-evidence-0051.md); no historical proof is retargeted to the cut. | Historical heads |
@@ -178,3 +178,9 @@ Current pass 2026-10-26T18:16:18.774882+00:00: PLAN and MANAGER-COMMON read firs
 Current pass 2026-10-26T18:17:39.976574+00:00: PLAN and MANAGER-COMMON read first; INBOX1938506 and HEADER262518 unchanged. Main18:10 safety hold and18:11:59 instruction remain controlling. Complete worker census exit0; zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked; no released Runtime dependency or named ZIP. No dispatch, cleanup, repack, retry, alternate route or artifact review. Free 3941060608 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T181739Z-pass.json).
 
 Current pass 2026-10-26T18:25:24.897125+00:00: PLAN and MANAGER-COMMON read first; INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 instruction remain controlling. Complete bin/workers rt- exit0; zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked; no released Runtime dependency or named ZIP. No dispatch, cleanup, repack, retry, alternate route or artifact review. Free 3936145408 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T182524Z-pass.json).
+
+
+Current pass 2026-10-26T18:26:51.362647+00:00: PLAN and MANAGER-COMMON read first; INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 instruction remain controlling. Complete bin/workers rt- exit0; zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked; no released Runtime dependency or named ZIP. No dispatch, cleanup, repack, retry, alternate route or artifact review. Free 3935145984 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T182651Z-pass.json).
+
+
+Current pass 2026-10-26T18:31:19.024637+00:00: PLAN and MANAGER-COMMON read first; INBOX 1938506 and HEADER 262518 unchanged. Main18:10 safety hold and18:11:59 Runtime HOLD remain controlling. Complete bin/workers rt- exit0, 2716 rows, zero Runtime running markers. All33 original hashes and sizes exact. App, Agent and Farm owner boards checked and unchanged; no released Runtime dependency or named ZIP. No dispatch, cleanup, repack, retry, alternate route or artifact review. Historical census metadata warnings retained without repair. Free 3933118464 bytes. live0/cap0/ready-undispatched0. Round stops on recorded safety refusal. [Pass evidence](rounds/20261026T183119Z-pass.json).
