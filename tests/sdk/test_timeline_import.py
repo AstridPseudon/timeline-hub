@@ -12,6 +12,7 @@ import pytest
 from astrid.sdk.remote import RemoteMedia
 from astrid.sdk.workspace_client import WorkspaceClient
 from astrid.sdk import timeline_import
+from astrid.sdk.timeline_export import export_timeline
 
 
 def _archive(path: Path, *, payload: bytes = b"media-content", media_rows=None, transcript_names=(), elements=()):
@@ -221,6 +222,65 @@ def test_workspace_client_stream_and_import_methods_keep_publish_signature():
     assert calls[1][0] == "stream" and calls[1][1] == ("project", stream)
     assert calls[1][2]["expected_digest"] == "sha256:" + "a" * 64
     assert calls[2] == ("import", ("project", {"timeline_id": "new"}), {"idempotency_key": "import-key"})
+
+
+def test_sdk_export_then_import_round_trips_unknown_unpinned_effect(tmp_path):
+    fixture_path = Path(__file__).parents[1] / "editing_scenarios" / "fixtures" / "empty.json"
+    source = json.loads(fixture_path.read_text(encoding="utf-8"))
+    source["project_id"] = "source-project"
+    source["timeline_id"] = "source-timeline"
+    source["placements"] = []
+    source["shots"] = {}
+    unknown_id = "effect-not-in-source-catalog"
+    clip = {"id": "unknown-occurrence", "clipType": unknown_id, "track": "effects", "at": 0, "hold": 1}
+    source["parent"]["clips"] = [clip]
+    source["parent"]["config"]["clips"] = [clip]
+
+    calls = []
+
+    class Transport:
+        def list_timelines(self, _project, *, cursor=None, limit=50):
+            return ([{"timeline_id": "source-timeline", "name": "Unknown effect fixture"}], None)
+
+        def list_documents(self, _project, *, cursor=None, limit=50, kind=None):
+            return ([], None)
+
+        def list_project_objects(self, _project, *, cursor=None, limit=100):
+            return ([], None)
+
+    class Timelines:
+        def open_bundle(self, _project, _timeline):
+            return SimpleNamespace(ok=True, data={
+                "bundle": source, "project_id": "source-project", "timeline_id": "source-timeline",
+            })
+
+        def import_timeline(self, project_id, body, *, idempotency_key):
+            calls.append((project_id, body, idempotency_key))
+            return SimpleNamespace(ok=True, data={"timeline_id": body["timeline_id"], "name": body["name"]})
+
+    class Media:
+        def import_stream(self, **kwargs):
+            pytest.fail(f"empty fixture unexpectedly uploaded media: {kwargs.get('filename')}")
+
+    client = SimpleNamespace(
+        projects=SimpleNamespace(show=lambda _project: SimpleNamespace(ok=True, data={"project_id": "target-project"})),
+        timelines=Timelines(), media=Media(), _transport=Transport(),
+    )
+    archive_path = tmp_path / "unknown-effect.astrid"
+    export_timeline(client, "source-project", "source-timeline", archive_path)
+
+    with zipfile.ZipFile(archive_path) as archive:
+        exported_manifest = json.loads(archive.read("manifest.json"))
+    unresolved = next(row for row in exported_manifest["elements"] if row["id"] == unknown_id)
+    assert unresolved == {"packId": "", "kind": "effect", "id": unknown_id, "revision": "", "pinned": False}
+
+    receipt = timeline_import.import_timeline(client, archive_path, "target-project")
+    assert len(calls) == 1
+    project_id, body, _key = calls[0]
+    assert project_id == "target-project"
+    assert body["differences"]["missing_effects"] == [unresolved]
+    assert body["differences"]["different_effects"] == []
+    assert receipt["missing_effects"] == [unresolved]
 
 
 def test_export_cli_uses_selected_project_when_option_is_omitted(tmp_path, monkeypatch):

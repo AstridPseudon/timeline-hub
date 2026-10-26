@@ -70,7 +70,9 @@ def check_import_manifest(manifest: Mapping[str, Any], *, elements: Any = None) 
         if not isinstance(raw, Mapping):
             _fail(f"timeline manifest element {index} must be an object")
         item = dict(raw)
-        for field in ("packId", "kind", "id"):
+        if not isinstance(item.get("packId"), str):
+            _fail(f"timeline manifest element {index} requires packId to be a string")
+        for field in ("kind", "id"):
             if not isinstance(item.get(field), str) or not item[field]:
                 _fail(f"timeline manifest element {index} requires a non-empty {field}")
         if "pinned" in item and not isinstance(item["pinned"], bool):
@@ -78,8 +80,8 @@ def check_import_manifest(manifest: Mapping[str, Any], *, elements: Any = None) 
         if item.get("revision") is not None and not isinstance(item.get("revision"), str):
             _fail(f"timeline manifest element {index}.revision must be a string")
         key = _descriptor_key(item)
-        if not all(key):
-            _fail(f"timeline manifest element {index} is missing packId, kind, or id")
+        if not key[0] and item.get("pinned") is not False:
+            _fail(f"timeline manifest element {index} requires pinned=false when packId is empty")
         if key in seen:
             _fail(f"timeline manifest repeats element {key[2]!r}")
         seen.add(key)

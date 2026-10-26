@@ -120,6 +120,43 @@ def test_check_import_manifest_reports_unpinned_missing_and_different():
     assert [row["id"] for row in result["different_effects"]] == ["changed"]
 
 
+def test_check_import_manifest_accepts_only_unpinned_unresolved_empty_pack_identity():
+    unresolved = {"packId": "", "kind": "effect", "id": "not-installed", "revision": "", "pinned": False}
+    result = check_import_manifest({"format": "astrid.timeline/1", "elements": [unresolved]}, elements=[])
+    assert result == {"missing_effects": [unresolved], "different_effects": []}
+
+    for invalid in (
+        {"kind": "effect", "id": "not-installed", "pinned": False},
+        {"packId": None, "kind": "effect", "id": "not-installed", "pinned": False},
+        {"packId": 7, "kind": "effect", "id": "not-installed", "pinned": False},
+    ):
+        with pytest.raises(TimelineEditError, match="packId to be a string"):
+            check_import_manifest({"format": "astrid.timeline/1", "elements": [invalid]}, elements=[])
+
+    for invalid in (
+        {**unresolved, "revision": "rev-a", "pinned": True},
+        {key: value for key, value in unresolved.items() if key != "pinned"},
+    ):
+        with pytest.raises(TimelineEditError, match="requires pinned=false when packId is empty"):
+            check_import_manifest({"format": "astrid.timeline/1", "elements": [invalid]}, elements=[])
+
+
+def test_blank_manifest_pack_cannot_hide_catalogued_project_pack_element():
+    source = _source_bundle()
+    clip = {"id": "project-effect", "clipType": "project-glow", "track": "effects", "at": 0, "hold": 1}
+    source["parent"]["clips"] = [clip]
+    source["parent"]["config"]["clips"] = [copy.deepcopy(clip)]
+    manifest = {"format": "astrid.timeline/1", "elements": [
+        {"packId": "", "kind": "effect", "id": "project-glow", "revision": "", "pinned": False},
+    ]}
+    with pytest.raises(TimelineEditError, match="inventory does not match"):
+        prepare_import(
+            source, manifest, {}, "target", elements=[
+                {"packId": "project_0123456789abcdefabcd", "kind": "effect", "id": "project-glow", "revision": "rev"},
+            ], timeline_id="target-timeline",
+        )
+
+
 def test_builtin_hold_clip_round_trips_through_inventory_and_prepare():
     from astrid.core.element.catalog import list_element_descriptors
     from astrid.sdk.timeline_export import inventory_elements
