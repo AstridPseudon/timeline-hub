@@ -1,1 +1,1 @@
-2026-10-26T11:49:19Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; farm stands by (no new instructions); hub-repack real run + delivery-build form await the owner's own words; perms rules intact
+2026-10-26T12:57:45Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; NEW job F-shot-layering-prep (read-only, MAIN D141ii(5)) handed to the manager; waits for design/shot-layering-PLAN.md to arrive via hub sync; hub-repack real run + delivery-build form await the owner
