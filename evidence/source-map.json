@@ -1,0 +1,110 @@
+{
+  "schema": "timeline.app.p4.path-independent-source-map.v1",
+  "repositories": {
+    "agent": "/home/user/peteromallet/astrid-agent",
+    "runtime": "/home/user/banodoco/banodoco-workspace-runtime",
+    "app": "/home/user/banodoco/reigh-app",
+    "composition": "/home/user/peteromallet/timeline-composition"
+  },
+  "contract": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sections": {
+      "1_request": "60-275",
+      "2_doc_patch": "276-594",
+      "3_conflicts": "595-702",
+      "4_replies": "703-1562",
+      "5_undo": "1563-4543",
+      "7_history": "4609-end"
+    },
+    "key_lines": "14-33,60-155,254-274,703-715,1268-1434,1563-1642,4609-end"
+  },
+  "actual_p4_graph": {
+    "launcher": {
+      "commit": "28e56cacb42d3da85b02e5b3543895b44f3d0f70",
+      "blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988",
+      "path": "tools/p4-d73-pinned-launch.sh",
+      "evidence": [
+        "24-58: manifest requires and verifies Agent/Runtime/App/Composition sha/tree/path, but App is metadata guard only",
+        "75-122: preflight imports Agent, Runtime, schema and checks pinned Composition package version",
+        "125-161: body uses PYTHONPATH=agent:runtime and executes the supplied pytest command"
+      ]
+    },
+    "selected_tests": [
+      {
+        "path": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+        "blob": "033482ec2b94c5ae4a6b5c456e2d9fab3f454022",
+        "evidence": "15-32 imports Agent SDK and native ingress fixture; 70-135 executes CLI/sheet through runtime.client and asserts accepted canonical document; 211-235 reads history"
+      },
+      {
+        "path": "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+        "blob": "afc9c112527692536a065de8cdbfc7a25c19bc26",
+        "evidence": "17-29 imports Agent timeline/emitter and real ingress fixture; 194-456 performs ten-note commit, history, per-step undo and redo"
+      },
+      {
+        "path": "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py",
+        "blob": "192efbfa14607f0edfb362d47d5238645c64e984",
+        "evidence": "10-24 imports Agent timeline/emitter and ten-note fixture; 71-135 preserves request/reply assertions; 194-270 drives peer conflict and public-function rerun"
+      }
+    ],
+    "daemon_and_transport": [
+      {
+        "path": "tests/editing_conformance/test_native_batch_ingress.py",
+        "blob": "b002de2e7315e578123169ba1ac340cb79171fac",
+        "evidence": "43-109 starts RuntimeDaemon, imports RuntimeHandler/generated WorkspaceClient, sends HTTP through RuntimeHandler, records commit calls/history"
+      },
+      {
+        "path": "tests/helpers/runtime.py",
+        "blob": "1bee9cef89f89723b5b8815d7e471c97968964c8",
+        "evidence": "40-43 reads vendored Runtime commit; 71-105 locates/loads pinned Runtime; 118-124 constructs RuntimeDaemon"
+      }
+    ],
+    "runtime_body": [
+      {
+        "path": "runtime_protocol/server.py",
+        "blob": "046722a7a7a3b4ea0971520af6206d6a29e6b224",
+        "evidence": "301-341 canonical commit handler; 405-414 recognizes POST commit route; 552-553 dispatches it; 575-585 lists commit history; 1230-1235 routes commit under daemon handling"
+      },
+      {
+        "path": "runtime_protocol/service.py",
+        "blob": "9522969da2818772590032e695323d4e010943a0",
+        "evidence": "2468-2483 validates canonical commit request and enters execution; 2485-2525 performs coordinator authorization/idempotency setup"
+      },
+      {
+        "path": "runtime_protocol/timeline_commit_execution.py",
+        "blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+        "evidence": "365-431 performs replay lookup, provider.commit, outcome verification and accepted/preview/refusal result handling"
+      }
+    ]
+  },
+  "app_delta_graph": {
+    "from": "867cb2737af1b46dc608c7cd37c349e920fe9422",
+    "to": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "files": [
+      "src/integrations/runtime/dataProvider.ts",
+      "src/shared/lib/placement/placementService.ts",
+      "src/tools/video-editor/data/DataProvider.ts",
+      "src/tools/video-editor/lib/shot-group-pack-commands.ts",
+      "src/tools/video-editor/lib/shot-group-pack-commands.test.ts"
+    ],
+    "edges_within_app": [
+      "dataProvider.ts:997-1005 -> RuntimeDataProvider basis/display pairing",
+      "placementService.ts:247-335,338-357 -> App outbox send provider.commitTimeline",
+      "shot-group-pack-commands.ts:378-419 -> prepareTimelineDocumentMutation -> App placement store",
+      "shot-group-pack-commands.ts:444-470 -> App loadTimelineDocument/mutateTimelineDocument",
+      "shot-group-pack-commands.test.ts:22-132 -> App-only mock/fake router"
+    ],
+    "edges_to_actual_p4": [],
+    "negative_evidence": "No changed App file is named in the launcher command, selected Agent imports, Runtime fixture import chain, or Runtime provider/history chain. App pin appears only in launcher manifest validation."
+  },
+  "composition": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "role": "documentary host and preflight package identity; no semantic edit provider edge"
+  },
+  "placement_0225": {
+    "ref": "tl/app-P2-D141-materialization-expectation-0225",
+    "commit": "5fe3e4debec5fb030f772ca41f16c86cc80e6150",
+    "tree": "af51793b7cc9b2d0426e629bce1d9e4529a7edb6",
+    "comparison": "ref == candidate 5fe; diff 867..ref is exactly the same five files"
+  }
+}
