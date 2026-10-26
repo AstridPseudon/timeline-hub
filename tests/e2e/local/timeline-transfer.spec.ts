@@ -10,6 +10,7 @@ import { test as base } from './support/app.ts';
 // An ephemeral (incognito-style) browser context caps OPFS writes near 0.5 GiB, far below the 2.2 GB large archive. A
 // persistent profile gets the real quota, so this case drives its own persistent Chrome instead of the shared fixture context.
 let pageCrashed = false;
+let forbiddenProbe: () => string[] = () => [];
 const cleanups: Array<() => void> = [];
 const test = base.extend({
   page: async ({ harness }, use) => {
@@ -17,7 +18,7 @@ const test = base.extend({
     const downloads = process.env.PLAYWRIGHT_DOWNLOADS_PATH;
     if (downloads) mkdirSync(downloads, { recursive: true, mode: 0o700 });
     const context = await chromium.launchPersistentContext(userDataDir, {
-      channel: 'chrome', args: harness.chromiumArgs, permissions: ['local-network-access'], acceptDownloads: true,
+      channel: 'chrome', args: harness.chromiumArgs.map((arg) => arg.startsWith('--host-resolver-rules=') ? `${arg}, MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost` : arg), // the last rule makes every other external host unresolvable permissions: ['local-network-access'], acceptDownloads: true,
       ...(downloads ? { downloadsPath: downloads } : {}),
     });
     const page = context.pages()[0] ?? await context.newPage();
@@ -36,6 +37,7 @@ async function settleTransfer(page: Page, testInfo: TestInfo, label: 'Export' | 
   const failed = page.locator('.group.destructive');
   const started = Date.now();
   while (Date.now() - started < timeout) {
+    if (forbiddenProbe().length) throw new Error(`${label}: the editor requested a forbidden URL: ${forbiddenProbe()[0]}`);
     if (pageCrashed || page.isClosed()) throw new Error(`${label} failed after ${((Date.now() - started) / 1000).toFixed(1)} s: the browser page crashed or closed`);
     if (await ok.first().isVisible().catch(() => false)) return;
     if (await failed.first().isVisible().catch(() => false)) {
@@ -99,21 +101,17 @@ test('CLI-imported archive exports and imports into a fresh project, then plays'
   const appOrigin = appMode === 'hosted' ? harness.origin : process.env.N4_LOCAL_APP_ORIGIN;
   expect(appOrigin, 'local flow requires N4_LOCAL_APP_ORIGIN').toBeTruthy();
   const allowedOrigins = new Set([appOrigin!, harness.origin, sandboxDoor.origin]);
-  // Observation never pauses a request, and the blocking route uses a RegExp matcher: Playwright serializes a RegExp for
-  // server-side matching, but a function matcher means "intercept everything" and would push every multi-hundred-MB media
-  // body through the Node worker (the stall seen on the large case). Only forbidden origins / ports match the blocking route.
-  const escapeRe = (text: string) => text.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
-  const allowedAlternatives = [...allowedOrigins].map(escapeRe).join('|');
-  const forbiddenUrl = new RegExp(
-    `^(?:https?|wss?):\\/\\/[^/?#]*:(?:${[...blockedPorts].join('|')})(?:[/?#]|$)|^(?!(?:${allowedAlternatives})(?:[/?#]|$))(?:https?|wss?):\\/\\/`,
-  );
+  // No page.route at all: any route (even a RegExp one) makes Chromium pause every request through the Node worker, including the
+  // multi-hundred-MB media uploads of the large case. Instead the browser itself cannot resolve external hosts (host-resolver rules in
+  // the page fixture), every request is observed, and any request outside the allowed origins or on :17340 / :2222 fails the test at once.
+  const forbiddenUrl = new RegExp(`^(?:https?|wss?):\\/\\/[^/?#]*:(?:${[...blockedPorts].join('|')})(?:[/?#]|$)|^(?!(?:${[...allowedOrigins].map((o) => o.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')).join('|')})(?:[/?#]|$))(?:https?|wss?):\\/\\/`);
+  forbiddenProbe = () => forbiddenRequests;
   let observedCount = 0;
   page.on('request', (request) => {
     observedCount += 1;
     if (observedRequests.length < 5000) observedRequests.push(`${request.method()} ${request.url()}`);
     if (forbiddenUrl.test(request.url())) forbiddenRequests.push(request.url());
   });
-  await page.route(forbiddenUrl, (route) => route.abort('blockedbyclient'));
 
   // Memory evidence for the Node side: the Playwright worker and its driver parent, every 10 s.
   const rssFile = browserEvidencePath(testInfo, 'timeline-transfer/node-rss.csv');
