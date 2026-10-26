@@ -1,0 +1,27 @@
+{
+  "review": "U3 D141w independent final catch-up",
+  "verdict": "PASS",
+  "affected_execution_paths": {
+    "prior_4de_full_failure_ids": "Unchanged by this source delta; Main D141w permits unchanged full evidence to stand.",
+    "node": "No new Node issue found under the exact supported Node20.19.4 acceptance run.",
+    "P1": "Unaffected: no timeline writer, outbox, or save-funnel source path changed.",
+    "P2": "Unaffected by this delta.",
+    "P3": "Unaffected by this delta.",
+    "P4": "Unaffected by this delta.",
+    "P5": "Unaffected by this delta.",
+    "journeys": "Must bind the actual final head when run by the journey/full-test service.",
+    "D141v": "Later pinning work is separate; expected 8585 versus Agent ecdc drift is not a defect for this review."
+  },
+  "contract_proof": {
+    "status": "unchanged",
+    "preserved": [
+      "complete v2 request fields and command/step schema",
+      "merge fields, reads, Idempotency-Key, dry_run, source, rationale, group_id",
+      "accepted/merged reply data and receipt/canonical document fields",
+      "conflict and invalid error shapes",
+      "preview would_status and null receipt"
+    ],
+    "basis": "Runtime client/schema/locks/manifests/vendor/e2e and persisted outbox/save-funnel paths are outside the 21-path candidate delta and equal base."
+  },
+  "validation_caveat": "Scoped ESLint remains exit 1 only for the three pre-existing AgentSetupCard exhaustive-deps diagnostics recorded in review.json."
+}

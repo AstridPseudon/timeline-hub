@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-26T07:32:30.996766+00:00",
+  "repo": "app",
+  "head": "82e9e13ddf1d7ec6c736521b2eb091dca9877598",
+  "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+  "parents": [
+    "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "4937203f545a77fa3ca7597493e009c84eebeffa"
+  ],
+  "reviewed_candidate": "4937203f545a77fa3ca7597493e009c84eebeffa",
+  "candidate_tree_equals_home": true,
+  "clean": true,
+  "freeze3_upstream": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+  "source_review": "app-U3-D141w-final-catchup-review-0707",
+  "source_verdict": "PASS",
+  "tests": "255 PASS; app and node types PASS",
+  "lint": "exit1: three independently pre-existing AgentSetupCard exhaustive-deps errors retained",
+  "behavior_go": false,
+  "final_pin_pass": "D141v gated all-lane REG closure"
+}

@@ -1,0 +1,48 @@
+{
+  "review": "U3 D141w independent final catch-up",
+  "candidate": {
+    "commit": "4937203f545a77fa3ca7597493e009c84eebeffa",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "branch": "tl/app-U3-D141w-final-catchup-review-0707"
+  },
+  "parents": {
+    "base": {
+      "commit": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"
+    },
+    "upstream": {
+      "commit": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+      "tree": "faf477adef3ec24c9cc359486ac16866500ab219"
+    }
+  },
+  "candidate_delta_paths": [
+    "src/integrations/astrid/chatCopy.ts",
+    "src/integrations/astrid/localAgents.ts",
+    "src/shared/components/conversation/ConversationMessage.tsx",
+    "src/shared/components/conversation/actionGroupLogs.test.ts",
+    "src/shared/components/conversation/actionGroupLogs.ts",
+    "src/shared/components/conversation/contracts.ts",
+    "src/shared/components/conversation/conversationExport.test.ts",
+    "src/shared/components/conversation/conversationExport.ts",
+    "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatComposer.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentChatMessage.test.tsx",
+    "src/tools/video-editor/components/AgentChat/AgentSetupCard.tsx",
+    "src/tools/video-editor/components/AgentChat/AstridOpenRouterKeyForm.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatModels.tsx",
+    "src/tools/video-editor/hooks/useAgentSession.taskLinks.test.ts",
+    "src/tools/video-editor/hooks/useAgentSession.test.tsx",
+    "src/tools/video-editor/hooks/useAgentSession.ts",
+    "src/tools/video-editor/types/agent-session.ts"
+  ],
+  "delta_proofs": {
+    "candidate_vs_base_path_set_equals_upstream_vs_upstream_base": true,
+    "outside_21_paths_unchanged_from_base": true,
+    "upstream_test_deltas_conserved": true,
+    "author_extra_change": "Only let-to-const in useAgentSession.test.tsx; no test inputs, assertions, or predicates changed.",
+    "ancestry": "Exact two-parent candidate merge; no unreviewed unrelated author ancestry found."
+  }
+}

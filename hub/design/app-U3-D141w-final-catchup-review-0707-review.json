@@ -1,0 +1,56 @@
+{
+  "task": "U3 D141w independent final catch-up review",
+  "review_verdict": "PASS",
+  "source_qualification": "PASS",
+  "candidate": {
+    "commit": "4937203f545a77fa3ca7597493e009c84eebeffa",
+    "tree": "6a6e49eb4461b5ca1a7fa1247653bc794f26d710",
+    "parents": [
+      "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+      "fc24f84994dc36cfae9349112782ab4d91dbc73b"
+    ]
+  },
+  "base_parent": {
+    "commit": "4de54db14bdc9ddc2ce2e5887258b03acbffd30d",
+    "tree": "84c3fb7f73f08c22220f8e808962fe3f24aaa0aa"
+  },
+  "upstream_parent": {
+    "commit": "fc24f84994dc36cfae9349112782ab4d91dbc73b",
+    "tree": "faf477adef3ec24c9cc359486ac16866500ab219"
+  },
+  "scope": {
+    "candidate_delta_paths": 21,
+    "upstream_delta_paths": 21,
+    "candidate_delta_equals_upstream_delta": true,
+    "merge_resolution_paths": [
+      "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "src/tools/video-editor/components/AgentChat/NewChatModels.tsx"
+    ],
+    "outside_sensitive_paths_equal_base": true,
+    "worktree_clean": true
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "pre-existing-validation-debt",
+      "status": "retained-not-caused-by-candidate",
+      "summary": "Scoped ESLint reports three react-hooks/exhaustive-deps errors in AgentSetupCard.tsx.",
+      "details": [
+        "Line 78: missing dependency agents.",
+        "Line 114: missing dependency models.",
+        "Line 143: missing dependency models."
+      ],
+      "comparison": "The exact error-producing AgentSetupCard code is unchanged between base 4de, upstream fc24, and candidate 493; no suppression or source repair was made."
+    }
+  ],
+  "source_review": {
+    "agent_chat_and_new_chat_models": "Resolved local and upstream intentions are both present, including chat export, complete tool logs, model/key choices, session/connection/door behavior, and auth-related setup paths.",
+    "runtime_contract": "No Runtime client, schema, outbox, save funnel, lock, manifest, vendor, or e2e path changed; complete-v2 request/reply contract is not altered.",
+    "tests": "Incoming upstream test deltas are present; the only extra author change is let-to-const in useAgentSession.test.tsx with no input, assertion, or predicate change.",
+    "fallbacks_or_optionalization": "No dropped upstream work, ghost fallback, optionalization, skip, or xfail was found."
+  },
+  "limits": [
+    "No full, browser, body, request, or live-socket suite was run per task instructions.",
+    "The requested historical control-doc path was unavailable in this environment; the repository's commit-v2 contract was used for the wire-contract audit."
+  ]
+}
