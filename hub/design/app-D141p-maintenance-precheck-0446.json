@@ -1,0 +1,246 @@
+{
+  "at": "2026-10-26T04:44:04.872431+00:00",
+  "available_bytes": 4946587648,
+  "keep_markers": [
+    {
+      "path": "tests/app-D127c-Node20-proof-sol-2021-d127c-node20-three-controls-2021-1025202505-11856/KEEP",
+      "sha256": "84c562e67f0bbeacce34a3ea4f0cfa25c78d7e871d5243de13c1663f20e7154c",
+      "mode": "0o644",
+      "bytes": 94
+    },
+    {
+      "path": "tests/app-D127c-mounted-selection-sol-1935-targeted-1025194027-30318/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "tests/app-D134-managed16-2033-targeted-1025203534-28015/KEEP",
+      "sha256": "19b040bf54bf7e373669dfd9fd7072be32c30303f66839e8603c9d38e31e22ac",
+      "mode": "0o644",
+      "bytes": 97
+    },
+    {
+      "path": "tests/app-D141-pristine-receiver-0007-full-1026010029-23581/KEEP",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644",
+      "bytes": 1
+    },
+    {
+      "path": "tests/app-U3-D135-upstream-merge-1958-targeted-1025200053-30876/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "tests/app-full-1026004326-12174/KEEP",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mode": "0o644",
+      "bytes": 1
+    },
+    {
+      "path": "tests/app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721/KEEP",
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644",
+      "bytes": 147
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p1-867cb273-submit-1026012801-17879/KEEP",
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644",
+      "bytes": 85
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p1-867cb273-submit-preflight-1026012027-3972/KEEP",
+      "sha256": "d62f5e71fd8387757c6a4622f7c0ec9d79357708a2be72cf946277139b3e1373",
+      "mode": "0o600",
+      "bytes": 114
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-1026013236-3118/KEEP",
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644",
+      "bytes": 85
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-automatic-child-placement-867cb273-submit-preflight-1026013205-10335/KEEP",
+      "sha256": "6a672e851e71b2c394b9fc0abf99ab0a01b96e123a1d8616b524db6ea587af84",
+      "mode": "0o644",
+      "bytes": 85
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-1026014621-25698/KEEP",
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644",
+      "bytes": 105
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-parent-move-867cb273-submit-preflight-1026014551-1988/KEEP",
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644",
+      "bytes": 105
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-1026014140-1368/KEEP",
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644",
+      "bytes": 105
+    },
+    {
+      "path": "tests/app-pin-867cb273-d141-p2-popup-add-867cb273-submit-preflight-1026013710-14987/KEEP",
+      "sha256": "bce54325867af74827a963807534ad0312d16d15415a91514a91d2df407f3d9a",
+      "mode": "0o644",
+      "bytes": 105
+    },
+    {
+      "path": "tests/app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-1025210853-15200/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "tests/app-pin-b5c9eadf-d73-p2-element-b5c9eadf-submit-preflight-1025210823-4786/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016/KEEP",
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644",
+      "bytes": 147
+    },
+    {
+      "path": "tests/app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250/KEEP",
+      "sha256": "f86cab5ec4753f0dbebdbaaaa5c1a08a7faeca044f130e60b6bc1f3bdce55cef",
+      "mode": "0o644",
+      "bytes": 147
+    },
+    {
+      "path": "workers/agt-pin-28e56cac/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/app-D136a-typed-output-original9-2136/KEEP",
+      "sha256": "93d0c6043d39cdf99105e7c4d372f40ce065ea5a50fb698083f8ead7b674592c",
+      "mode": "0o644",
+      "bytes": 202
+    },
+    {
+      "path": "workers/app-D136c-original9-controller-2331/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/app-D136c-original9-resume-2330/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/app-P1-local-OPS-1830/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/app-pin-867cb273/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/rt-pin-6a011d58/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    },
+    {
+      "path": "workers/vw-pin-635f4de0/KEEP",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "0o644",
+      "bytes": 0
+    }
+  ],
+  "worktrees": [
+    {
+      "path": "/home/user/work/wt/agt-pin-28e56cac",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": true,
+      "held": false
+    },
+    {
+      "path": "/home/user/work/wt/app-U3b-recover-r1",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-U3b-upstream-editor",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-U3c-review",
+      "has_actual_meta": false,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-bundle1-agent",
+      "has_actual_meta": false,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-bundle1-runtime",
+      "has_actual_meta": false,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-m2-private13-resolution-repair-bootstrap-real-r2-deps",
+      "has_actual_meta": false,
+      "running": false,
+      "KEEP": false,
+      "held": true
+    },
+    {
+      "path": "/home/user/work/wt/app-pin-867cb273",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": true,
+      "held": false
+    },
+    {
+      "path": "/home/user/work/wt/rt-pin-6a011d58",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": true,
+      "held": false
+    },
+    {
+      "path": "/home/user/work/wt/vw-pin-635f4de0",
+      "has_actual_meta": true,
+      "running": false,
+      "KEEP": true,
+      "held": false
+    }
+  ],
+  "helpers": {
+    "compact-scratch": "f8e7953bf4e1e46bb5b9cafe8f0ef25778c74e864505d9e10c4f23d9cd892d84",
+    "sweep-tmp": "c78619cc350d088efab1addd7f63a17e34c6cae7c6aa0d07cbbe38536d19ca53",
+    "recycle": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb"
+  },
+  "guard": "No new eligible ended nonKEEP worktree; current pins and existing dirty, hardlink, missing metadata and locked holds retained. Hub untouched."
+}
