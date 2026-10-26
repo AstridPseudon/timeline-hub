@@ -373,6 +373,58 @@ def test_windows_real_rename_race_detected_and_no_write_to_replacement(tmp_path)
         dirfd.close_pinned(identity)
 
 
+def test_atomic_json_write_restricts_temp_before_writing_windows_acl(monkeypatch, tmp_path):
+    """A Windows 0600 mode argument leaves inherited ACLs unchanged."""
+    original_write = dirfd.os.write
+    protected = set()
+    events = []
+
+    def is_owner_only(fd):
+        return fd in protected
+
+    def validate(fd):
+        if not is_owner_only(fd):
+            raise PermissionError("inherited DACL is not private")
+
+    def owner_only(fd, *, directory=None):
+        assert directory is None
+        with pytest.raises(PermissionError, match="inherited DACL is not private"):
+            validate(fd)
+        events.append("reader-rejected")
+        protected.add(fd)
+        events.append("restricted")
+
+    def write(fd, data):
+        validate(fd)
+        events.append("reader-accepted")
+        events.append("written")
+        return original_write(fd, data)
+
+    monkeypatch.setattr(platform, "owner_only", owner_only)
+    monkeypatch.setattr(dirfd.os, "write", write)
+
+    target = tmp_path / "process-control.json"
+    dirfd.atomic_json_write(target, b"{}\n")
+
+    assert events == ["reader-rejected", "restricted", "reader-accepted", "written"]
+    assert target.read_bytes() == b"{}\n"
+
+
+def test_atomic_json_write_keeps_old_target_if_acl_restriction_fails(monkeypatch, tmp_path):
+    target = tmp_path / "process-control.json"
+    target.write_bytes(b"old\n")
+
+    def deny(_fd, *, directory=None):
+        raise PermissionError("cannot protect temp file")
+
+    monkeypatch.setattr(platform, "owner_only", deny)
+    with pytest.raises(PermissionError, match="cannot protect temp file"):
+        dirfd.atomic_json_write(target, b"new\n")
+
+    assert target.read_bytes() == b"old\n"
+    assert list(tmp_path.iterdir()) == [target]
+
+
 @requires_windows_dirfd_adapter
 def test_windows_real_long_paths_and_native_identity(tmp_path):
     fs = dirfd.filesystem
