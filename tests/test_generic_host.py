@@ -4340,17 +4340,26 @@ class _IdleReadinessRuntime(FakeRuntime):
 @pytest.fixture
 def idle_remotion_host(tmp_path, monkeypatch):
     from astrid.core.rendering import remotion_runtime as runtime
+    from runtime_protocol import platform
+
     project, schema = tmp_path / "native-project", tmp_path / "schema"
     project.mkdir(); schema.mkdir()
     node = tmp_path / "node"
     node.write_bytes(b"fixture node identity")
     node.chmod(0o700)
+    # The merged host binds idle reuse to the successful launch reference as
+    # well as these tool paths. Native validation itself is faked below.
+    reference = tmp_path / "launch-validation.json"
+    reference.write_bytes(b'{"fixture":"idle-readiness-launch"}')
+    platform.owner_only(reference)
     values = {
         "HOME": str(tmp_path), "TMPDIR": str(tmp_path),
         "ASTRID_REMOTION_PROJECT_DIR": str(project), "ASTRID_NODE_EXECUTABLE": str(node),
         "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(schema),
         "ASTRID_SOURCE_STATE": str(tmp_path / "source-state"),
         "XDG_STATE_HOME": str(tmp_path / "state"), "XDG_CONFIG_HOME": str(tmp_path / "config"),
+        **dict(zip(runtime._REF_ENV_KEYS, (str(reference), hashlib.sha256(reference.read_bytes()).hexdigest(),
+                                          "idle-launch", "host"))),
     }
     for name, value in values.items():
         monkeypatch.setenv(name, value)
