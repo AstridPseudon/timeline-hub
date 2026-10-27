@@ -163,8 +163,8 @@ class Timeline(Checkout):
         asset_alias = None
         if self._evaluating:
             identity = "\0".join(pin[key] for key in ("object_id", "generation_id", "variant_id"))
-            cache_key = "asset:" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
-            asset_alias = self._identity_cache.setdefault(cache_key, "media-" + uuid.uuid4().hex)
+            identity_key = "asset:" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
+            asset_alias = self._identity_cache.setdefault(identity_key, "media-" + uuid.uuid4().hex)
         length = requested_duration if requested_duration is not None else number(
             verified.get("duration_seconds") or 1.0, "hold", positive=True)
 
