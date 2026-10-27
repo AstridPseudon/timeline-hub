@@ -164,9 +164,10 @@ class _LookupMixin:
 
     def _word_list(self) -> list[Word]:
         found: list[tuple[float, float, str, str, str, int, str]] = []
-        for sid in self._shot_ids():
+        for sid in [*self._shot_ids(), PARENT_SHOT]:
             start = self._shot_start(sid)
-            for clip in self._internal(sid)["clips"]:
+            clips = self._parent_clips() if sid == PARENT_SHOT else self._internal(sid)["clips"]
+            for clip in clips:
                 if not self._is_audio(sid, clip):
                     continue
                 segment = intent.line(clip) or str(clip.get("id") or "")

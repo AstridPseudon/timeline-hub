@@ -423,9 +423,13 @@ class _EditMixin:
         sync with its picture. Clips wholly inside the window are removed.
         Returns the seconds removed.
         """
-        a, b = self.quantize(self.time(start)), self.quantize(self.time(end))
+        raw_a, raw_b = self.time(start), self.time(end)
+        if (not math.isfinite(raw_a) or not math.isfinite(raw_b) or raw_a < 0 or raw_b < 0
+                or raw_b <= raw_a):
+            raise TimelineEditError("the window to remove must have finite start < end")
+        a, b = self.quantize(raw_a), self.quantize(raw_b)
         if b <= a:
-            raise TimelineEditError("the window to remove must have start < end")
+            raise TimelineEditError("the window to remove must have finite start < end after frame rounding")
         self._keep_inside = keep_inside
         try:
             return self._shift_after(a, -(b - a), cut_window=(a, b), skip=skip)
@@ -435,6 +439,10 @@ class _EditMixin:
     @music_keyword
     def close_gap(self, *, before: Any, keep: float = 0.0) -> float:
         """Close the silence before a word (and ripple everything after it). Returns the seconds removed."""
+        if (isinstance(keep, bool) or not isinstance(keep, (int, float))
+                or not math.isfinite(float(keep)) or float(keep) < 0):
+            raise TimelineEditError("keep must be a finite, nonnegative number of seconds")
+        keep = float(keep)
         word = self._as_word(before) or self.word(str(before))
         previous = [w for w in self.words() if w.end <= word.start + 1e-6 and w.id != word.id]
         if not previous:
@@ -448,14 +456,24 @@ class _EditMixin:
             removed = self.ripple_delete(gap_start, word.start, keep_inside=True)
         finally:
             self._orphan_reason = reason
-        self.retime()  # kept clips land on their cut's new start
+        if self.bundle.get("placements"):
+            self.retime()  # kept shot clips land on their cut's new start
         return removed
 
     @music_keyword
     def insert_time(self, at: Any, seconds: float, *, skip: Sequence[Mapping[str, Any]] = ()) -> float:
         """Open ``seconds`` at a time and ripple everything after it later (picture spanning it is held longer)."""
-        t = self.quantize(self.time(at))
-        return self._shift_after(t, self.quantize(seconds), cut_window=None, skip=skip)
+        if (isinstance(seconds, bool) or not isinstance(seconds, (int, float))
+                or not math.isfinite(float(seconds)) or float(seconds) <= 0):
+            raise TimelineEditError("seconds must be a finite, positive number of seconds")
+        raw_at = self.time(at)
+        if not math.isfinite(raw_at) or raw_at < 0:
+            raise TimelineEditError("at must resolve to a finite, nonnegative timeline time")
+        t = self.quantize(raw_at)
+        delta = self.quantize(float(seconds))
+        if delta <= 0:
+            raise TimelineEditError("seconds must remain positive after frame rounding")
+        return self._shift_after(t, delta, cut_window=None, skip=skip)
 
     # ---- slots (real footage to film) and stand-ins ---------------------------
     @property
