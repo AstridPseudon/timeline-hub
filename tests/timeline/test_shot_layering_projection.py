@@ -20,7 +20,7 @@ from tests.helpers.runtime import locate_runtime
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot-layering-v1.json"
 # Exact Runtime conformance/fixtures/shot-layering-v1.json, shared with the App.
-FIXTURE_SHA256 = "c779ef38d4f47368967a5afab2704548c70c0f27c646f8ebab6be74ad3cf63a7"
+FIXTURE_SHA256 = "7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56"
 CASES = json.loads(FIXTURE.read_bytes())["cases"]
 
 
@@ -73,7 +73,8 @@ def test_shared_fixture_projection(project, case, caplog):
     expected = case["expected"]
     tracks = projection.config["tracks"]
     assert [track["id"] for track in tracks] == expected["track_order"]
-    assert [{"id": track["id"], "app": {"group": track["app"]["group"]}}
+    assert [{"id": track["id"], **({"role": track["role"]} if "role" in track else {}),
+             "app": {"group": track["app"]["group"]}}
             for track in tracks if "group" in track.get("app", {})] == expected["group_tracks"]
     assert {
         clip.get("app", {}).get("astrid_shot_composition", {}).get("source_clip_id", clip["id"]): clip["track"]
@@ -98,9 +99,13 @@ def test_source_role_visual_track_is_grouped(project):
     projection = project(case["input"])
     tracks = projection.config["tracks"]
     assert tracks[2] == {
-        "id": "occ-vision~source-plate", "kind": "visual", "role": "source",
+        "id": "occ-vision~source-plate", "kind": "visual", "role": "output",
         "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}},
     }
+    assert {
+        "id": "occ-vision~source-plate", "role": "output",
+        "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}},
+    } in case["expected"]["group_tracks"]
     assert [track["id"] for track in tracks[:4]] == [
         "occ-vision~plate", "occ-vision~type", "occ-vision~source-plate", "picture",
     ]

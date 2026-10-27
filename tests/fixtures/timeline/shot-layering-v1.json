@@ -100,7 +100,7 @@
         "group_tracks": [
           {"id": "occ-vision~plate", "app": {"group": {"id": "occ-vision", "sourceTrack": "plate"}}},
           {"id": "occ-vision~type", "app": {"group": {"id": "occ-vision", "sourceTrack": "type"}}},
-          {"id": "occ-vision~source-plate", "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}}}
+          {"id": "occ-vision~source-plate", "role": "output", "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}}}
         ],
         "clip_tracks": {"clip-0": "type", "vision-plate": "occ-vision~plate", "vision-title": "occ-vision~type", "vision-source-plate": "occ-vision~source-plate", "vision-audio": "audio"},
         "transparent_windows_ms": [[21100, 28700]],
