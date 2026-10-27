@@ -46,6 +46,143 @@ def _imports_in_commands(commands):
     return imports
 
 
+def _clip_interval(clip):
+    """Return a clip's timeline interval in seconds when its timing is known."""
+    start = clip.get("at", clip.get("start"))
+    if not isinstance(start, (int, float)) or isinstance(start, bool):
+        return None
+    if isinstance(clip.get("hold"), (int, float)) and not isinstance(clip.get("hold"), bool):
+        end = start + clip["hold"]
+    elif all(isinstance(clip.get(key), (int, float)) and not isinstance(clip.get(key), bool)
+             for key in ("from", "to")):
+        end = start + clip["to"] - clip["from"]
+    else:
+        return None
+    return (float(start), float(end)) if end > start else None
+
+
+def _effect_intervals(clip, interval, fps):
+    """Get the temporal windows represented by common clip effect fields."""
+    start, end = interval
+    windows = []
+
+    def duration(value):
+        if not isinstance(value, Mapping):
+            return None
+        frames = value.get("durationFrames")
+        seconds = value.get("duration")
+        result = (frames / fps if isinstance(frames, (int, float)) and not isinstance(frames, bool)
+                  else seconds if isinstance(seconds, (int, float)) and not isinstance(seconds, bool)
+                  else None)
+        return min(end - start, float(result)) if result and result > 0 else None
+
+    for key in ("entrance", "exit", "transition"):
+        effect = clip.get(key)
+        length = duration(effect)
+        if length is not None:
+            windows.append((start, start + length) if key == "entrance" else (end - length, end))
+    for key in ("effects", "animations"):
+        entries = clip.get(key)
+        if isinstance(entries, list):
+            for effect in entries:
+                if not isinstance(effect, Mapping):
+                    continue
+                length = duration(effect)
+                offset_frames = effect.get("startFrame")
+                offset = (offset_frames / fps if isinstance(offset_frames, (int, float))
+                          and not isinstance(offset_frames, bool) else effect.get("start", 0))
+                if length is not None and isinstance(offset, (int, float)) and not isinstance(offset, bool):
+                    lo = max(start, start + offset)
+                    hi = min(end, lo + length)
+                    if hi > lo:
+                        windows.append((lo, hi))
+    return windows
+
+
+def _changed_ranges(before, after):
+    """Describe changed timeline time from exact accepted before/after bundles."""
+    from ._command_state import equal
+
+    def clips(bundle):
+        parent = bundle.get("parent") if isinstance(bundle, Mapping) else None
+        rows = parent.get("clips", []) if isinstance(parent, Mapping) else []
+        return {str(row.get("id")): row for row in rows
+                if isinstance(row, Mapping) and row.get("id") is not None}
+
+    old, new = clips(before), clips(after)
+    old_fps = before.get("parent", {}).get("config", {}).get("output", {}).get("fps", 30)
+    new_fps = after.get("parent", {}).get("config", {}).get("output", {}).get("fps", 30)
+    fps = float(old_fps) if isinstance(old_fps, (int, float)) and old_fps > 0 else 30.0
+    if isinstance(new_fps, (int, float)) and new_fps > 0:
+        fps = max(fps, float(new_fps))
+    spans = []
+    changed = set(old) | set(new)
+    changed = {identity for identity in changed if not equal(old.get(identity), new.get(identity))}
+    for identity in changed:
+        for snapshot, peers in ((old, new), (new, old)):
+            clip = snapshot.get(identity)
+            if clip is None:
+                continue
+            interval = _clip_interval(clip)
+            if interval is None:
+                continue
+            old_clip = old.get(identity, {})
+            new_clip = new.get(identity, {})
+            effect_keys = {"entrance", "exit", "transition", "effects", "animations"}
+            effect_only = (old_clip.keys() | new_clip.keys()) and all(
+                key in effect_keys or equal(old_clip.get(key), new_clip.get(key))
+                for key in old_clip.keys() | new_clip.keys())
+            if effect_only:
+                before_effects = len(spans)
+                for key in effect_keys:
+                    if not equal(old_clip.get(key), new_clip.get(key)):
+                        spans.extend(_effect_intervals(clip, interval, fps))
+                if len(spans) == before_effects:
+                    spans.append(interval)
+            else:
+                spans.append(interval)
+            # A transition can affect the adjacent same-track clip as well.
+            if any(not equal(old_clip.get(key), new_clip.get(key))
+                   for key in ("exit", "transition", "effects", "animations")):
+                affected = _effect_intervals(clip, interval, fps) or [interval]
+                for neighbor in peers.values():
+                    neighbor_interval = _clip_interval(neighbor)
+                    if (neighbor_interval is not None and neighbor.get("track") == clip.get("track")
+                            and neighbor.get("id") != identity):
+                        for effect_start, effect_end in affected:
+                            lo = max(effect_start, neighbor_interval[0])
+                            hi = min(effect_end, neighbor_interval[1])
+                            if hi > lo:
+                                spans.append((lo, hi))
+    def placements(bundle):
+        rows = bundle.get("placements", []) if isinstance(bundle, Mapping) else []
+        return {str(row.get("occurrence_id")): row for row in rows
+                if isinstance(row, Mapping) and row.get("occurrence_id") is not None}
+
+    old_placements, new_placements = placements(before), placements(after)
+    for identity in old_placements.keys() | new_placements.keys():
+        old_row, new_row = old_placements.get(identity), new_placements.get(identity)
+        if equal(old_row, new_row):
+            continue
+        for row in (old_row, new_row):
+            if row is None:
+                continue
+            placement = row.get("placement")
+            start_ms = placement.get("start_ms") if isinstance(placement, Mapping) else None
+            duration_ms = row.get("duration_ms")
+            if (isinstance(start_ms, (int, float)) and not isinstance(start_ms, bool)
+                    and isinstance(duration_ms, (int, float)) and not isinstance(duration_ms, bool)
+                    and duration_ms > 0):
+                spans.append((float(start_ms) / 1000, (float(start_ms) + float(duration_ms)) / 1000))
+    merged = []
+    for start, end in sorted((lo, hi) for lo, hi in spans if hi > lo):
+        if merged and start <= merged[-1]["end"]:
+            merged[-1]["end"] = max(merged[-1]["end"], end)
+        else:
+            merged.append({"start": start, "end": end})
+    return merged
+
+
 class Timeline(Checkout):
     """A local edit session whose only publication boundary is ``commit``.
 
@@ -71,6 +208,7 @@ class Timeline(Checkout):
 
     def _adopt(self, bundle):
         self.bundle = copy.deepcopy(bundle)
+        self._base_bundle = copy.deepcopy(bundle)
         self._runtime_document = self.bundle.get("source_mapping", {}).pop("_runtime_document", None)
         self._command_bundle = copy.deepcopy(self.bundle)
         self._commands: list[dict[str, Any]] = []
@@ -284,11 +422,30 @@ class Timeline(Checkout):
         from .commit import bundle_from_document
 
         if result["data"]["status"] != "preview":
+            data = result["data"]
+            previous_revision = data.get("previous_revision_id")
+            previous_publication = data.get("previous_publication_id")
+            accepted_revision = data.get("accepted_revision_id")
+            if all(isinstance(value, str) and value for value in
+                   (previous_revision, previous_publication, accepted_revision)):
+                from .store import fetch_bundle
+
+                if previous_revision == self._basis.get("revision_id"):
+                    before = self._base_bundle
+                else:
+                    before = fetch_bundle(self.session.project_id, self.session.timeline_id,
+                                          revision_id=previous_revision,
+                                          publication_id=previous_publication,
+                                          client=self.session.client)
+                after = bundle_from_document(data["canonical_document"])
+                ranges = _changed_ranges(before, after)
+                data["changed_ranges"] = ranges
+                result["changed_ranges"] = copy.deepcopy(ranges)
             # Adopt the entire landed document, including the other writer's edits.
-            bundle = bundle_from_document(result["data"]["canonical_document"])
+            bundle = bundle_from_document(data["canonical_document"])
             bundle["base_parent"]["publication_id"] = result["receipt"]["receipt_id"]
             self._adopt(bundle)
-            self._basis = {"revision_id": result["data"]["accepted_revision_id"],
+            self._basis = {"revision_id": data["accepted_revision_id"],
                            "publication_id": result["receipt"]["receipt_id"]}
         return result
 
