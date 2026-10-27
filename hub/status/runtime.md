@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T07:21:34Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- main | 2026-10-27T07:26:33Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # runtime board, 2026-10-27T07:17:11.129405+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -137,7 +137,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | B acceptance audit | Receive recorded B acceptance | Main and independent Luna | Main header07:15 | merged | diag-accept-B-0610; Main | Auditor ACCEPT, no must fix; Main now records B ACCEPTED. Stand-in scope and same four conformance baseline failures preserved. | B project branches |
 
-| C acceptance audit | Retain rejection pending closure | Main and C Luna | Final source, comparison and cleanup | review | Main audit0610; C cleanup reviewer11 | Browser independently PASS and merged. Main comparison0715 terminal; current Runtime artifact remains. Cleanup review11 PASS covers only historical2429dc57. | C project branches |
+| C acceptance audit | Retain rejection pending full comparison | Main and C Luna | Final per ID comparison | review | Main audit0610 and comparison0715 | Browser independently PASS and merged; current Runtime cleanup28f44 PASS merged. C reports38 tip only failures; no REG closure inferred. | App9a94c24 / Runtime28f44 |
 
 | C browser lane | Receive reviewed three case browser merge | C Luna and reviewer | Independent PASS and normal merge | merged | Author isolation11; review isolation11 | Actual27831 three PASS; C board07:16 records normal9a94c24e93. Prior failures remain original. | App9a94c24e93 |
 
@@ -147,7 +147,8 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A acceptance audit | Receive rejected exact identity boundary | Main and A Luna | Existing audit0715 terminal | review | diag-accept-A-0715; existing A lead | REJECT: exact catalog identity bypasses project admission. Missing or corrupt admission must fail closed; stand in T3 scope retained. | A0b10dd6e80 |
 
-Blockers: Main owns A exact catalog identity audit rejection and C per ID acceptance comparison. C lead owns current Runtime report.md deletion and review; historical cleanup review11 is out of scope. B accepted; H/D/P START absent. D130 holds.
+| C current artifact cleanup | Receive exact current branch deletion | C Luna and reviewer | Independent cleanup12 PASS | merged | C author cleanup12; review cleanup12 | Normal28f44 removes only root report.md. Manager readback confirms absence; historical review11 remains separate. | Runtime28f44ab578 |
+Blockers: Main owns A exact catalog identity rejection and C per ID acceptance comparison. Current C Runtime report.md cleanup is independently PASS and merged28f44. B accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
 live 0 / cap 6; ready-undispatched 0. Free 6045581312 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact exit0;0 dirs removed or packed;0 logs compressed. Current follow-up disk rules apply.
 
