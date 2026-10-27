@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:05:02Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T02:00:57.464174+00:00
+<!-- main | 2026-10-27T02:09:14Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T02:06:48.273969+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -100,7 +100,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
-| OPS follow-up alert | Receive Main repairs and input search | Manager receiving | Main Hour 3 notes | doing | diag-testlane3-0050 and diag-locate-inputs-0050 | A input search terminal: no film or full pack snapshot. Main test-lane repair remains owner. B fallback fix is central-green and reviewed. No Runtime repair assigned. | No Runtime change |
+| OPS follow-up alert | Receive terminal Main kit and input reports | Manager receiving | Main Hour 3 notes | review | Main diag-testlane3-0050 and input search | Kit author reports targeted passes and stale marker repair; input search found no film or pack. Main owns acceptance and follow-up. | No Runtime change |
 
 | C3 sample route | Hand off ordinary sandbox socket limit | C Luna and Main | Existing C sample and review | doing | C-review-C3-runtime-sample-5 | Zero real saves after socket EPERM. [Peer route](../../design/peer-runtime-to-orchestrator-20261027T005115Z-C3-sandbox-sample-route.md); C keeps sampling ownership and timing gate. | Evidence only |
 
@@ -116,7 +116,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main owns A film and pack receiving, remaining test-service repairs, and B milestone acceptance and staging merge. No Runtime task blocked. C2 waits Main merge; C owns the supported sample route. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 6496530432 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
+live 0 / cap 3; ready-undispatched 0. Free 6496620544 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -127,4 +127,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Completed at 2026-10-27T02:00:57.464174+00:00. PLAN, manager rules, pipeline and A B C boards consumed. Interval checks found no new INBOX or HEADER instruction. Fresh rt- census: exit 0, 2717 rows, none running. B and C evidence cleanup merged and reviewed; existing leads retain ownership. A film and complete pack remain missing; Main owns B acceptance and staging; C retains timing sampling. H, D and P START markers absent. All 36 Runtime trees remain 31 KEEP and 5 dirty, with no eligible recycle. Guarded sweep removed 0 dirs; compact packed 0 worker dirs and 0 test dirs, compressing 2 old logs. Delivered archive and sidecar match the prior hash exactly. No Runtime task ready. [Pass evidence](rounds/20261027T020057Z-pass.json).
+Current pass: 2026-10-27T02:06:48.273969+00:00. PLAN, manager rules, pipeline, A B C boards and owner boards read. No new INBOX or HEADER instructions. Fresh rt- census exit 0: 2717 rows, none running. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep removed 0 dirs; compact is finishing. Main kit and input-search reports are terminal; no independent kit acceptance inferred. No Runtime task ready. Interval watch continues. [Pass evidence](rounds/20261027T020648Z-pass.json).
