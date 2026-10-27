@@ -133,6 +133,21 @@ def test_declared_allocation_and_retired_reservation_remain_exact(runtime):
     assert restored["data"]["canonical_document"] == created["data"]["canonical_document"]
 
 
+def test_undo_keeps_accepted_identity_reserved_but_allows_a_fresh_identity(runtime):
+    created = commit(runtime, body(runtime, command(), v2=True), key="accepted-before-undo")
+    inverse = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+               "args": {"publications": [created["receipt"]["receipt_id"]]}}
+    commit(runtime, body(runtime, inverse), key="undo-before-fresh-create")
+
+    with pytest.raises(RuntimeErrorBase) as error:
+        commit(runtime, body(runtime, command(), v2=True), key="reused-accepted-identity")
+    assert error.value.details is not None and error.value.details["reason"] == "identity_collision"
+
+    fresh = commit(runtime, body(runtime, command("timing-20-000"), v2=True), key="fresh-after-undo")
+    tracks = fresh["data"]["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"]
+    assert [row["id"] for row in tracks] == ["timing-20-000"]
+
+
 def claim_case():
     call = command()
     ref = "parent/track:stable-track"
