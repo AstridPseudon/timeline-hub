@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T14:15:10Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T14:13:14.084186+00:00
+<!-- main | 2026-10-27T14:21:13Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T14:20:47.749200+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -14,16 +14,16 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | C repair batch | Retain reviewed C corrections | C Luna and reviewers | Independent reviews and central checks | merged | C stale15 properties15 and waveform fix15 | Central45,10,45 PASS. Browser27831 three PASS; provider58 PASS. Original failures retained. | App c3a28be2b2 |
 | C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r2 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
 | H baseline | Use published baseline comparisons | Main Luna and H | BASELINES.md published | doing | diag-baselines-1030; lead-H-r2 | [Baselines](../../followups/leads/BASELINES.md): completed suites FAIL. Shotlayer20416 cancelled, no verdict. H owns final comparisons. | Owner and staging pins |
-| H one head | Complete shared collision consumers | H Luna Sol and Astra | Agent vectors merged | doing | lead-H-r2; H-fix-app-collision-r3; H-fix-runtime-collision-r3 | Agent vectors merged with 148 PASS. App and Runtime updates active; round three and final proof remain open. | Agent46b149; Runtimec8e648 |
+| H one head | Qualify merged collision corrections | H Luna Sol and Astra | Consumer corrections merged | doing | lead-H-r2; H-review-r3 correction | Agent 148, App 111 plus 70, Runtime 4 PASS. Reviewer request omitted repo and did not start; H lead owns correction. | Agent46b149; App39aa7b; Runtime6f0770 |
 | H continuity | Keep H manager running | Luna | H round one ended | doing | lead-H-r2 | Round one timeout 124 retained. Supported lead-roll dispatched round two, confirmed started 14:03:50Z. | No source change |
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
 | OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | [Maintenance](rounds/20261027T141314Z-maintenance-complete.json): exit 0; no removals or packing; one old log compressed; 132 KEEP markers unchanged. | No source change |
 
-Blockers: H owns App and Runtime collision consumers, round three and final proofs. Main owns browser repair; its baseline dependency has cleared. D waits H acceptance and START; P waits D.
-Next ready: None for Runtime. Sole H lead-H-r2 is running and owns consolidation; no duplicate product dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 4270821376 bytes. Runtime tasks are complete; H lead and task workers are separately managed.
+Blockers: H owns reviewer request correction, full comparisons and final proofs. Main owns browser repair and disk observation below4GB. Baselines and collision consumers cleared. D/P wait prior-stage acceptance and START.
+Next ready: None for Runtime. H lead-H-r2 owns the reviewer request correction; no duplicate dispatch.
+live 0 / cap 0; ready-undispatched 0. Free 4321619968 bytes. Runtime delivery is complete; H and Main workers are separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -33,4 +33,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T14:08:35.032686+00:00. Runtime census: 2717 records, live 0 and ready 0. Inbox and header unchanged. H round two has one live lead and sole Sol vector correction; Agent and Runtime prior fixes remain merged. App 108 PASS and 2 FAIL remain open. Main baseline suite progresses; browser repair intentionally waits for its ended marker. BASELINES.md is now published; D/P START absent. Census found 49 trees and none eligible. Sweep and compact exit 0: no removals or packing, one old log compressed, 132 KEEP markers unchanged. Existing preserved data and delivered ZIP remain untouched; new H raw KEEP added after observation. No product edit, duplicate author, Runtime merge, refusal or escalation. [Pass evidence](rounds/20261027T140835Z-pass.json).
+Current pass: 2026-10-27T14:19:42.610742+00:00. Two Runtime worker censuses about ten minutes apart found 2717 records, live 0 and ready 0. Inbox and header unchanged. Agent shared vectors merged46b149 with148 PASS, Runtime consumer6f0770 with4 PASS, App39aa7b with111 targeted and70 direct PASS. H Astra request did not start: missing repo flag; H lead has read the ordinary refusal and owns correction. Main published BASELINES.md; the browser repair owns its first failed C2 check and current final-head check22497. Full H qualification remains open. D/P START absent. Sweep and compact exit0: no removals or packing; one old log compressed;132 recorded KEEP markers unchanged. Final census47 trees, none eligible; two new H test KEEP markers added after observation. Historical worker metadata shell diagnostics are retained. No product edit, duplicate author, Runtime merge, safety refusal or escalation. Ordinary H queue argument refusal and disk observation sent to Main. [Pass evidence](rounds/20261027T141942Z-pass.json).

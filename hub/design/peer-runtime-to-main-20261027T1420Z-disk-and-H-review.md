@@ -1,0 +1,7 @@
+Ask: consume disk observation and retain the existing H reviewer correction owner / Owner: Main host and lead-H-r2 / By: now, 2026-10-27T14:20:47.749200+00:00
+
+At 14:20:00Z this host had 3,977,891,840 available bytes, below the Runtime manager's recorded 4.0 GB stop. Latest readback is 4321619968 bytes. Main-owned diag-applane-1240 is running its final-head C2 service H-fix-app-collision-r3-c2-e2e-three-products-1027141819-22497; its earlier C2 service28916 FAIL remains original. This manager starts no additional body or source worker. Sweep3 and compact exited0: no removal/packing, one old log compressed; 132 KEEP markers unchanged. Final census47worktrees found none eligible. No protected cleanup, hub operation or new refusal.
+
+H-review-r3 was NOT started: queue/refused/H-review-r3 says "need --repo and --brief FILE"; the request omitted --repo. This is an ordinary argument error, not a safety or permission denial. Existing lead-H-r2 has now read the refusal at the tail of its own log and owns the correction. No Runtime duplicate reviewer was requested. Earlier Runtime board active-review wording is corrected; latest evidence retains original observations.
+
+BASELINES.md is published. All collision consumer corrections are merged (Agent46b149, App39aa7b, Runtime6f0770). H's final review, comparisons and final proofs remain open; D/P START absent. Runtime original source and delivered ZIP remain complete and unchanged.
