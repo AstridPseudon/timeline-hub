@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from astrid.core.timeline.banodoco_schema import (
@@ -26,14 +27,22 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
     elif isinstance(ref, dict):
         _raise_unknown_keys(path, ref, frozenset({"id", "durationFrames", "easing", "params"}))
         animation_id = ref.get("id")
-        if "durationFrames" in ref and (
-            not isinstance(ref.get("durationFrames"), (int, float)) or float(ref["durationFrames"]) <= 0
-        ):
-            raise ValueError(f"{path}.durationFrames must be a positive number")
-        if "easing" in ref and not isinstance(ref.get("easing"), str):
-            raise ValueError(f"{path}.easing must be a string")
+        if "durationFrames" in ref:
+            frames = ref["durationFrames"]
+            if (isinstance(frames, bool) or not isinstance(frames, (int, float))
+                    or not float(frames).is_integer() or float(frames) <= 0):
+                raise ValueError(f"{path}.durationFrames must be a positive whole frame count")
         if "params" in ref and not isinstance(ref.get("params"), dict):
             raise ValueError(f"{path}.params must be an object")
+        params = ref.get("params", {})
+        easing = ref.get("easing", params.get("easing"))
+        if "easing" in ref and "easing" in params and ref["easing"] != params["easing"]:
+            raise ValueError(f"{path} has conflicting easing values")
+        if easing is not None and (
+            not isinstance(easing, str)
+            or easing not in {"linear", "in", "out", "in-out", "step", "ease-in", "ease-out", "ease-in-out", "inOut", "inout", "in_out"}
+        ):
+            raise ValueError(f"{path}.params.easing {easing!r} is not supported by the installed animations")
     else:
         raise ValueError(f"{path} must be an animation id string or object")
     if not isinstance(animation_id, str) or not animation_id:
@@ -42,6 +51,13 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
         raise ValueError(f"{path} animation id {animation_id!r} is not present in the animations catalog")
     from astrid.core.timeline.banodoco_schema import _animation_meta
     meta = _animation_meta(animation_id)
+    from astrid.core.timeline.clip_fields import _animations as builtin_animations
+    if animation_id in builtin_animations():
+        params = ref.get("params", {}) if isinstance(ref, dict) else {}
+        _raise_unknown_keys(f"{path}.params", params, frozenset({"easing"}))
+    easing = ref.get("easing", ref.get("params", {}).get("easing")) if isinstance(ref, dict) else None
+    if easing is not None and animation_id not in builtin_animations() and meta.get("supportsEasing") is not True:
+        raise ValueError(f"{path} animation {animation_id!r} cannot consume explicit easing")
     meta_phase = meta.get("phase")
     phase_matches = (
         meta_phase in (None, "any", phase)
@@ -82,6 +98,20 @@ def _schema_params_for_animation_refs(schema: dict[str, Any], params: dict[str, 
     return next_params
 
 
+def _animation_shape_for_shared_schema(value: Any, fps: float) -> Any:
+    """Project canonical package refs into the pinned schema's older field shape."""
+    if not isinstance(value, dict) or "id" not in value:
+        return value
+    legacy = {"type": value["id"]}
+    if "durationFrames" in value:
+        legacy["duration"] = float(value["durationFrames"]) / fps
+    if "params" in value:
+        legacy["params"] = dict(value["params"])
+    if "easing" in value:
+        legacy.setdefault("params", {})["easing"] = value["easing"]
+    return legacy
+
+
 def _validate_effect_params(effect_id: str, params: Any, path: str, theme: str | None = None) -> None:
     if params is None:
         return
@@ -110,16 +140,23 @@ def _transition_reference(value: Any, path: str) -> tuple[str, float | None]:
     transition_id = value.get("id", value.get("type"))
     if not isinstance(transition_id, str) or not transition_id:
         raise ValueError(f"{path}.id must be a non-empty string")
-    if "params" in value and not isinstance(value.get("params"), dict):
-        raise ValueError(f"{path}.params must be an object")
+    if "params" in value and value.get("params") not in (None, {}):
+        raise ValueError(f"{path}.params are not supported by the installed transitions")
+    if "id" in value and "type" in value and value["id"] != value["type"]:
+        raise ValueError(f"{path} id and type must agree")
     duration_frames = value.get("durationFrames")
     duration_seconds = value.get("duration")
+    if duration_frames is not None and duration_seconds is not None:
+        raise ValueError(f"{path} must use duration seconds or durationFrames, not both")
     if duration_frames is not None:
-        if not isinstance(duration_frames, (int, float)) or float(duration_frames) <= 0:
-            raise ValueError(f"{path}.durationFrames must be a positive number")
+        if (isinstance(duration_frames, bool) or not isinstance(duration_frames, (int, float))
+                or not math.isfinite(float(duration_frames)) or float(duration_frames) <= 0
+                or not float(duration_frames).is_integer()):
+            raise ValueError(f"{path}.durationFrames must be a positive whole frame count")
         return transition_id, float(duration_frames)
     if duration_seconds is not None:
-        if not isinstance(duration_seconds, (int, float)) or float(duration_seconds) <= 0:
+        if (isinstance(duration_seconds, bool) or not isinstance(duration_seconds, (int, float))
+                or not math.isfinite(float(duration_seconds)) or float(duration_seconds) <= 0):
             raise ValueError(f"{path}.duration must be a positive number")
         return transition_id, None
     return transition_id, None
@@ -216,6 +253,15 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
     # then run the Banodoco-only semantic checks (effect-id registry,
     # transition durations).
     normalized_for_shared = _known_timeline_payload(config)
+    fps = float(_timeline_fps(config))
+    from astrid.core.timeline.banodoco_schema import _animation_ids
+    known_animation_ids = _animation_ids()
+    for index, clip in enumerate(config.get("clips", [])):
+        if not isinstance(clip, dict):
+            continue
+        for phase in ("entrance", "exit"):
+            if phase in clip:
+                _validate_animation_reference(clip[phase], phase, f"clips[{index}].{phase}", known_animation_ids)
     # Top-level ``app`` is the editor-extension metadata namespace owned by
     # Astrid's container contract. The currently pinned shared render schema
     # does not declare that namespace, so validate the renderable subset while
@@ -224,16 +270,22 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
     if isinstance(normalized_for_shared.get("clips"), list):
         normalized_for_shared["clips"] = [
             (
-                _normalize_clip_for_validation(
-                    {key: value for key, value in c.items() if key != "label"}
-                )
+                _normalize_clip_for_validation({
+                    **{
+                        key: value for key, value in c.items()
+                        if key not in {"label", "entrance", "exit"}
+                    },
+                    **{
+                        phase: _animation_shape_for_shared_schema(c[phase], fps)
+                        for phase in ("entrance", "exit") if phase in c
+                    },
+                })
                 if isinstance(c, dict)
                 else c
             )
             for c in normalized_for_shared["clips"]
         ]
     _validate_shared_timeline(normalized_for_shared)
-    fps = _timeline_fps(config)
     tracks = config.get("tracks")
     if tracks is not None:
         if not isinstance(tracks, list):
