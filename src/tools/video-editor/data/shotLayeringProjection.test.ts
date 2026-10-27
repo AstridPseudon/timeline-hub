@@ -6,11 +6,13 @@ import layeringFixture from './shot-layering-v1.fixture.json';
 import compositionFixture from './shotComposition.fixture.json';
 import { createShotCompositionAdapter } from './shotCompositionAdapter.ts';
 import { CanonicalCompositionProjectionError, projectCanonicalComposition } from './shotCompositionProjection.ts';
+import { projectOutputTimelineConfig } from './timelineOutputProjection.ts';
+import { coversFrame, visualSeamSourceTrack } from './visualSeamCoverage.ts';
 import type { ResolvedTimelineConfig, TimelineClip } from '@/tools/video-editor/types/index.ts';
 
-// Runtime commit 5a7a2059c37c6ccd33e66839095756697468ea46.
+// Runtime commit 54f35c64d382f04132a52c115e0460dfd1dfcf3c.
 const canonicalPath = 'conformance/fixtures/shot-layering-v1.json';
-const canonicalSha256 = '3c75d3ede4f868bedc46bfebe1c6988e159a58d4edf444986509e9a87f8fba1e';
+const canonicalSha256 = 'c779ef38d4f47368967a5afab2704548c70c0f27c646f8ebab6be74ad3cf63a7';
 
 type LayeringCase = typeof layeringFixture.cases[number];
 
@@ -56,6 +58,26 @@ describe('shared Runtime shot-layering projection cases', () => {
     const gaps = [{ kind: 'pause', track: 'picture', startFrame: 60, endFrame: 75 }];
     expect(report({ visualSeamContract: { gaps } }).report.structuralIssues).toEqual([]);
     expect(report({ visualSeamContract: { gaps: [{ ...gaps[0], endFrame: 76 }] } }).report.blocked).toBe(true);
+  });
+
+  it('keeps canonical Source visuals eligible for output and source-track seam mapping', () => {
+    const testCase = layeringFixture.cases.find((entry) => entry.id === 'film-picture-over-type')!;
+    const { config } = projectCase(testCase);
+    const track = config.tracks.find((entry) => entry.id === 'occ-vision~source-plate');
+    const clip = config.clips.find((entry) => entry.id === 'occ-vision:vision-source-plate')!;
+    expect(track).toMatchObject({
+      role: 'output', app: { group: { id: 'occ-vision', sourceTrack: 'source-plate' } },
+    });
+    expect(clip).toMatchObject({
+      track: 'occ-vision~source-plate', asset: 'vision-footage', assetEntry: { file: 'object-vision-footage' },
+    });
+    expect(coversFrame(clip, track, config)).toBe(true);
+    expect(visualSeamSourceTrack(track)).toBe('source-plate');
+    const output = projectOutputTimelineConfig(config);
+    expect(output.excludedClipIds).toEqual([]);
+    expect(output.config.clips).toContainEqual(clip);
+    expect(testCase.input.shot_revisions[0].internal_timeline_revision.timeline.tracks)
+      .toContainEqual({ id: 'source-plate', kind: 'visual', role: 'source' });
   });
 
   it.each(layeringFixture.cases)('$id', (testCase) => {

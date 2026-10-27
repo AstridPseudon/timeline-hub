@@ -262,7 +262,7 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
-  it('filters child Source lanes before extent, asset selection and track merging', () => {
+  it('keeps child Source visuals in their occurrence while filtering parent Source lanes', () => {
     const normalized = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
       tracks: [
@@ -291,10 +291,15 @@ describe('canonical shot-composition downstream projection', () => {
       'occ-4:beta-video',
       'occ-5:alpha-copy-video',
       'occ-1:short-output',
+      'occ-1:long-source',
     ]));
-    expect(projection.config.clips).toHaveLength(6);
-    expect(projection.config.clips.some((clip) => clip.id === 'occ-1:long-source')).toBe(false);
+    expect(projection.config.clips).toHaveLength(7);
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-1:long-source'))
+      .toMatchObject({ track: 'occ-1~source-video', hold: 4 });
     expect(projection.config.clips.some((clip) => clip.id === 'parent-source')).toBe(false);
+    expect(projection.config.tracks.find((track) => track.id === 'occ-1~source-video')).toMatchObject({
+      kind: 'visual', role: 'output', app: { group: { id: 'occ-1', sourceTrack: 'source-video' } },
+    });
     expect(projection.config.tracks.find((track) => track.id === 'occ-1~video')).toMatchObject({ kind: 'visual' });
     expect(projection.config.tracks.find((track) => track.id === 'occ-1~video')?.role).toBeUndefined();
     expect(projection.config.clips.find((clip) => clip.id === 'occ-1:short-output')?.hold).toBe(4);

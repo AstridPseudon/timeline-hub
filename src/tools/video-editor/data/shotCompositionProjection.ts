@@ -179,7 +179,16 @@ function childTimeline(occurrence: CanonicalShotOccurrence): JsonObject {
       occurrence.occurrenceId,
     );
   }
-  return timeline;
+  // Inner visuals belong to the occurrence's output block, including Source
+  // lanes. Normalize only the projected roles so later output/seam consumers
+  // retain them; authored roles and the audio filtering stay unchanged.
+  const tracks = Array.isArray(timeline.tracks) ? timeline.tracks.map((rawTrack) => {
+    const track = record(rawTrack);
+    return track && track.kind !== 'audio' && track.role === 'source'
+      ? { ...track, role: 'output' }
+      : rawTrack;
+  }) : timeline.tracks;
+  return outputTimeline({ ...timeline, tracks });
 }
 
 function assetRegistryFor(
@@ -246,7 +255,7 @@ function assetRegistryFor(
   };
 
   for (const occurrence of occurrences) {
-    const timeline = outputTimeline(childTimeline(occurrence));
+    const timeline = childTimeline(occurrence);
     const selectedAssetIds = new Set(
       (Array.isArray(timeline.clips) ? timeline.clips : []).flatMap((rawClip) => {
         const clip = record(rawClip);
@@ -295,7 +304,7 @@ function groupedTracksFor(
   const tracks = [...(baseConfig?.tracks ?? [])];
   const trackIds = new Set(tracks.map((track) => track.id));
   for (const occurrence of occurrences) {
-    const timeline = outputTimeline(childTimeline(occurrence));
+    const timeline = childTimeline(occurrence);
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
@@ -326,7 +335,7 @@ function groupedTracksFor(
   }
   const blocks = new Map<string | null, TrackDefinition[]>();
   for (const occurrence of occurrences) {
-    const timeline = outputTimeline(childTimeline(occurrence));
+    const timeline = childTimeline(occurrence);
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
     const visualTracks: TrackDefinition[] = [];
     const sourceIds = new Set<string>();
@@ -344,7 +353,7 @@ function groupedTracksFor(
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
       const id = text(track?.id);
-      if (!id || trackRole({ id, role: track?.role as TrackDefinition['role'] }) === 'source') continue;
+      if (!id) continue;
       if (track?.kind !== 'audio') addVisual(id, track ?? {});
     }
     // Legacy clips may omit a track definition. Keep them renderable within
@@ -572,7 +581,7 @@ export function projectCanonicalComposition(
     }
     const identity = identityForOccurrence(occurrence);
     occurrenceIdentities.set(occurrence.occurrenceId, identity);
-    const timeline = outputTimeline(childTimeline(occurrence));
+    const timeline = childTimeline(occurrence);
     const contentDurationMs = timelineContentExtentMs(timeline);
     const effectiveDurationMs = timelineOccurrenceEffectiveDurationMs(
       occurrence,
