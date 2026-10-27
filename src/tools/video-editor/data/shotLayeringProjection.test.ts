@@ -9,6 +9,7 @@ import { CanonicalCompositionProjectionError, projectCanonicalComposition } from
 import { projectOutputTimelineConfig } from './timelineOutputProjection.ts';
 import { coversFrame, visualSeamSourceTrack } from './visualSeamCoverage.ts';
 import type { ResolvedTimelineConfig, TimelineClip } from '@/tools/video-editor/types/index.ts';
+import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 
 // Exact shared Agent/Runtime fixture bytes.
 const canonicalPath = 'conformance/fixtures/shot-layering-v1.json';
@@ -80,6 +81,34 @@ describe('shared Runtime shot-layering projection cases', () => {
       .toContainEqual({ id: 'source-plate', kind: 'visual', role: 'source' });
   });
 
+  it.each(['child-audio-parent-visual', 'child-visual-parent-audio'])('preserves App playback timing for %s', (caseId) => {
+    const testCase = layeringFixture.cases.find((entry) => entry.id === caseId)!;
+    const { config } = projectCase(testCase);
+    const visual = caseId === 'child-visual-parent-audio';
+    // App derives the occurrence extent from child content (4s); the shared
+    // fixture's stored 2s placement remains provenance, not a playback cap.
+    const expected = [
+      { id: 'trim-inherited', from: visual ? 0.475 : 0.125, to: visual ? 2.475 : 2.125, hold: undefined, speed: visual ? 1.5 : undefined, durationMs: 2000, timelineDuration: visual ? 2 / 1.5 : 2 },
+      { id: 'hold-inherited', from: visual ? 0.475 : 0.125, to: undefined, hold: 4, speed: visual ? 1.5 : undefined, durationMs: 4000, timelineDuration: visual ? 4 / 1.5 : 4 },
+      { id: 'trim-child-speed', from: visual ? 0.475 : 0.125, to: visual ? 4.475 : 4.125, hold: undefined, speed: 2, durationMs: 4000, timelineDuration: 2 },
+      { id: 'hold-child-speed', from: visual ? 0.475 : 0.125, to: undefined, hold: 4, speed: 2, durationMs: 4000, timelineDuration: 2 },
+      { id: 'compatible-audio', from: 0.125, to: 2.125, hold: undefined, speed: undefined, durationMs: 2000, timelineDuration: 2 },
+    ];
+    for (const { id, durationMs, timelineDuration, ...timing } of expected) {
+      const clip = config.clips.find((entry) => entry.id === `occ-collision:${id}`)!;
+      expect(clip).toBeDefined();
+      expect(clip.at).toBe(1);
+      expect({ from: clip.from, to: clip.to, hold: clip.hold, speed: clip.speed }).toStrictEqual(timing);
+      expect(getClipTimelineDuration(clip)).toBeCloseTo(timelineDuration, 6);
+      expect(clip.app?.canonicalTiming).toStrictEqual({
+        sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: timing.speed ?? 1,
+        gain: 1, muted: false, durationMs, occurrenceTrackId: 'picture',
+        occurrenceStartMs: 1000, occurrenceDurationMs: 4000, storedOccurrenceDurationMs: 2000,
+      });
+    }
+    expect(config.clips.find((clip) => clip.id === 'parent-clip')).toMatchObject({ at: 0.5, hold: 1, track: 'shared' });
+  });
+
   it.each(layeringFixture.cases)('$id', (testCase) => {
     const before = JSON.stringify(testCase);
     const projection = projectCase(testCase);
@@ -111,8 +140,7 @@ describe('shared Runtime shot-layering projection cases', () => {
       for (const rawClip of timeline.clips) {
         const clip = config.clips.find((entry) => entry.id === `${occurrence.occurrence_id}:${rawClip.id}`)!;
         expect(clip).toBeDefined();
-        // Preserve the duration-only vectors' timing checks. Trim/speed
-        // playback has independent coverage in shotCompositionProjection.test.
+        // Trim/speed collision vectors have exact App timing assertions above.
         if (!('from' in rawClip)) {
           expect(clip).toMatchObject({ at: (occurrence.at_ms + rawClip.at_ms) / 1000, hold: rawClip.duration_ms / 1000 });
         }

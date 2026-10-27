@@ -37,7 +37,7 @@ function authoredRecoveryClips(config: TimelineConfig, occurrenceId: string): Ti
   const prefix = `${occurrenceId}:`;
   const trackPrefix = `${occurrenceId}~`;
   return config.clips.map((clip) => {
-    const { assetEntry: _assetEntry, ...withoutAssetEntry } = clip as typeof clip & { assetEntry?: unknown };
+    const { assetEntry: _assetEntry, app: _app, ...withoutAssetEntry } = clip as typeof clip & { assetEntry?: unknown };
     const app = clip.app ? { ...clip.app } : undefined;
     for (const key of ['group', 'canonical', 'canonicalTiming', 'canonicalEffects']) {
       if (app) Reflect.deleteProperty(app, key);
@@ -796,15 +796,20 @@ describe('shot timeline popup persistence', () => {
       clips: config.clips.map((clip) => ({ ...clip, to: 2, duration: 2 })),
     };
     const provider = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
+    const baseline = structuredClone((await provider.loadTimeline('shot')).config);
     provider.setDraftState(true);
 
     expect(provider.adoptCleanBaseline(nextConfig, nextComposition)).toBe(false);
     const loaded = await provider.loadTimeline('shot');
-    expect(loaded.config).toMatchObject({
-      output: config.output,
-      tracks: [{ id: 'video' }, { id: 'audio' }],
-      clips: [{ id: 'alpha-video' }, { id: 'alpha-audio' }],
-    });
+    expect(baseline.clips).toMatchObject([
+      { id: 'alpha-video', hold: 2 },
+      { id: 'alpha-audio', hold: 2 },
+    ]);
+    for (const clip of baseline.clips) {
+      expect(clip).not.toHaveProperty('to');
+      expect(clip).not.toHaveProperty('duration');
+    }
+    expect(loaded.config).toStrictEqual(baseline);
   });
 
   it.each(['shot-local', 'projected'])('round-trips %s child clips without projection IDs or groups', async (source) => {
@@ -1001,11 +1006,20 @@ describe('shot timeline popup persistence', () => {
     );
   });
 
-  it.each(['shot-local', 'projected'])('sanitizes %s clips and projected tracks in durable recovery and retry bytes', async (source) => {
+  it.each([
+    { source: 'shot-local', authoredMetadata: true },
+    { source: 'projected', authoredMetadata: true },
+    { source: 'shot-local', authoredMetadata: false },
+    { source: 'projected', authoredMetadata: false },
+  ])('sanitizes $source clips (authored metadata: $authoredMetadata) in durable recovery and retry bytes', async ({ source, authoredMetadata }) => {
     resetFakeIndexedDB();
     const graph = structuredClone(fixture);
-    const childTrack = graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
-      .internal_timeline_revision.timeline.tracks.find((track) => track.id === 'video') as Record<string, unknown>;
+    const childTimeline = graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
+      .internal_timeline_revision.timeline;
+    if (!authoredMetadata) {
+      for (const clip of childTimeline.clips) Reflect.deleteProperty(clip, 'app');
+    }
+    const childTrack = childTimeline.tracks.find((track) => track.id === 'video') as Record<string, unknown>;
     childTrack.app = { authoredTrackMetadata: { preserve: [null, false, 7] } };
     childTrack.opaqueTrackMetadata = { preserve: { nested: true } };
     const baseAdapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
@@ -1020,21 +1034,29 @@ describe('shot timeline popup persistence', () => {
     const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
     const provider = createShotTimelineDataProvider(projected, composition, 'occ-1', adapter);
     const loaded = await provider.loadTimeline('shot-recovery');
+    const clipApp = {
+      group: { id: 'occ-1', sourceTrack: 'video' },
+      canonical: { occurrenceId: 'occ-1' },
+      canonicalTiming: { occurrenceStartMs: 0, occurrenceDurationMs: 2000 },
+      canonicalEffects: { inherited: true },
+      ...(authoredMetadata ? { authoredClipMetadata: { preserve: [null, false, 7] } } : {}),
+    };
     const edited = {
       ...loaded.config,
       tracks: projected.tracks,
       clips: [
         ...(source === 'projected' ? projected.clips : loaded.config.clips).map((clip) => ({
           ...clip, track: clip.track === 'audio' ? 'audio' : 'occ-1~video', hold: 1.5,
-          app: { ...clip.app, group: { id: 'occ-1', sourceTrack: 'video' }, authoredClipMetadata: { preserve: [null, false, 7] } },
+          app: { ...clipApp, ...clip.app },
         })),
         {
           id: 'new-child-clip', track: 'occ-1~video', at: 1.5, hold: 0.5, clipType: 'text',
           text: { content: 'New child' },
-          app: { group: { id: 'occ-1', sourceTrack: 'video' }, authoredClipMetadata: { preserve: [null, false, 7] } },
+          app: { ...clipApp },
         },
       ],
     };
+    const originalEdited = structuredClone(edited);
 
     await expect(provider.saveTimeline('shot-recovery', edited, 1)).rejects.toThrow('keep recovery draft');
 
@@ -1099,9 +1121,14 @@ describe('shot timeline popup persistence', () => {
       expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'canonicalTiming'))).toBe(true);
       expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'canonicalEffects'))).toBe(true);
       for (const clip of timeline.clips) {
-        expect(clip.app).toMatchObject({ authoredClipMetadata: { preserve: [null, false, 7] } });
+        if (authoredMetadata) {
+          expect(clip.app).toMatchObject({ authoredClipMetadata: { preserve: [null, false, 7] } });
+        } else {
+          expect(clip).not.toHaveProperty('app');
+        }
       }
     }
+    expect(edited).toStrictEqual(originalEdited);
     expect(edited.clips.map((clip) => clip.track)).toEqual(['occ-1~video', 'audio', 'occ-1~video']);
     expect(edited.clips.every((clip) => clip.app.group)).toBe(true);
 

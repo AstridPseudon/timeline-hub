@@ -877,6 +877,58 @@ describe('shot popup A3 save ingress', () => {
     await reopened.dispose();
   });
 
+  it('keeps generated-only clip metadata out of the durable outbox across reopen and retry', async () => {
+    const graph = structuredClone(fixture);
+    const timeline = graph.shot_revisions.find((shot) => shot.revision_id === 'rev-b')!.internal_timeline_revision.timeline;
+    for (const clip of timeline.clips) Reflect.deleteProperty(clip, 'app');
+    const before = canonicalDocument();
+    for (const clip of before.internal_timeline_revisions[0].payload.clips as Array<Record<string, unknown>>) {
+      Reflect.deleteProperty(clip, 'app');
+    }
+    const h = harness(before, graph);
+    const next: typeof h.config = h.add();
+    next.clips = next.clips.map((clip) => ({
+      ...clip, label: 'Authored label',
+      app: {
+        ...clip.app,
+        canonical: clip.app?.canonical ?? { occurrenceId: 'occ-3' },
+        canonicalTiming: clip.app?.canonicalTiming ?? { storedOccurrenceDurationMs: 1200 },
+        canonicalEffects: { inherited: true },
+      },
+    }));
+    const original = structuredClone(next);
+    h.send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    const first = h.mount();
+    try {
+      await expect(first.saveTimeline('popup-timeline', next, 1)).rejects.toThrow('unacknowledged');
+      const [stored] = await h.records();
+      const saved = savedDocument(stored).internal_timeline_revisions[0].payload.clips as Array<Record<string, unknown>>;
+      expect(saved.map((clip) => clip.id)).toEqual(['alpha-video-b', 'popup-added-a3']);
+      for (const clip of saved) {
+        expect(clip.label).toBe('Authored label');
+        expect(clip).not.toHaveProperty('app');
+      }
+      const exact = structuredClone(stored.pending!.request);
+      expect(exact.body).not.toMatch(/canonical(?:Timing|Effects)?/);
+      expect(next).toStrictEqual(original);
+      await first.dispose();
+      const reopened = h.mount();
+      try {
+        expect(await reopened.getLocalSaveState()).toMatchObject({ status: 'recovery', recoverableOwners: [stored.ownerId] });
+        h.send.mockImplementationOnce(async (request, key) => {
+          expect(JSON.stringify(request)).toBe(exact.body);
+          expect(key).toBe(exact.key);
+          expect(savedDocument((await h.records())[0])).toEqual(savedDocument(stored));
+          return h.reply(request, key, savedDocument(stored));
+        });
+        await reopened.recoverLocalSaves(stored.ownerId);
+        expect(h.send).toHaveBeenCalledTimes(2);
+        expect(await reopened.getLocalSaveState()).toMatchObject({ status: 'saved' });
+        expect((await h.records())[0].intents).toEqual([]);
+      } finally { await reopened.dispose(); }
+    } finally { await first.dispose(); }
+  });
+
   it.each(['conflict', 'invalid'] as const)('rolls back a %s reply, retaining the exact rejected request through recovery', async (code) => {
     const h = harness();
     const details = code === 'conflict' ? { status: 'conflict', head: { revision_id: 'agent-head', publication_id: 'agent-pub' }, reason: 'dependency_changed' }
