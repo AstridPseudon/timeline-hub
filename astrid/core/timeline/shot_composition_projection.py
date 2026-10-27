@@ -250,7 +250,7 @@ def _add_assets(registry: dict[str, Any], revision: Mapping[str, Any]) -> None:
 def _build_track_group(
     config: dict[str, Any], timeline: Mapping[str, Any], occurrence: Mapping[str, Any]
 ) -> dict[str, str]:
-    """Insert a visual block at the parent row; retain the audio merge by id."""
+    """Group all visual tracks, including source-role tracks; merge audio by id."""
     tracks = config.setdefault("tracks", [])
     by_id = {row.get("id"): row for row in tracks if isinstance(row, Mapping)}
     shot_tracks = timeline.get("tracks", [])
