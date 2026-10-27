@@ -191,6 +191,37 @@ def test_canonical_render_admits_incoming_transition_with_linear_easing(transiti
     assert config == original
 
 
+def test_canonical_render_admits_legacy_crossfade_alias_with_seconds_duration():
+    snapshot = _snapshot(_Runtime())
+    config = {
+        "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
+        "clips": [
+            {"id": "a", "track": "v1", "at": 0, "from": 0, "to": 1},
+            {"id": "b", "track": "v1", "at": 1, "from": 0, "to": 1,
+             "transition": {"type": "crossfade", "duration": 0.5,
+                            "params": {"easing": "linear"}}},
+            {"id": "c", "track": "v1", "at": 2, "from": 0, "to": 0.1},
+        ],
+    }
+
+    validate_managed_render_snapshot(replace(snapshot, config=config, expansion={"canonical": True}))
+
+
+def test_canonical_render_admits_incoming_crossfade_string_alias():
+    snapshot = _snapshot(_Runtime())
+    config = {
+        "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
+        "clips": [
+            {"id": "a", "track": "v1", "at": 0, "from": 0, "to": 1},
+            {"id": "b", "track": "v1", "at": 1, "from": 0, "to": 1,
+             "transition": "crossfade"},
+            {"id": "c", "track": "v1", "at": 2, "from": 0, "to": 0.1},
+        ],
+    }
+
+    validate_managed_render_snapshot(replace(snapshot, config=config, expansion={"canonical": True}))
+
+
 @pytest.mark.parametrize("field,value", [
     ("params", {"easing": "ease-out"}), ("params", {"custom": 1}),
     ("align", "start"), ("incomingPolicy", "other"),

@@ -209,6 +209,8 @@ def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float, *, canon
             transition_id, duration_frames = _transition_reference(
                 clip["transition"], f"clips[{index}].transition", canonical=canonical,
             )
+            if canonical and transition_id == "crossfade":
+                transition_id = "cross-fade"
             if known_ids and transition_id not in known_ids:
                 raise ValueError(
                     f"clips[{index}].transition id {transition_id!r} is not present in the transitions catalog"
