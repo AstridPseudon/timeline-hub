@@ -279,7 +279,8 @@ it says no reply could be verified. Messages read *what went wrong*, *where*, *w
 A commit and a read-back prove timing and structure, not appearance. Unless
 the person asks for frames or a render, give them the times to check and the editor link,
 `https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`
-(`<timeline-id>` is the `timeline_id` from `timelines list --json`); say the look is unverified.
+(`<project-id>` is the `project_id` from `projects show <project> --json`; `<timeline-id>` is
+the `timeline_id` from `timelines list --project <project> --json`); say the look is unverified.
 
 <!-- Project P's perception guidance replaces this section; frame commands are in references/render-inspect-transfer.md until then. -->
 
