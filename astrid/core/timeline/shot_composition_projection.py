@@ -266,6 +266,8 @@ def _build_track_group(
             track_ids[track_id] = projected_id
             projected = copy.deepcopy(dict(track))
             projected["id"] = projected_id
+            if projected.get("role") == "source":
+                projected["role"] = "output"
             app = projected.get("app")
             if not isinstance(app, dict):
                 app = {}
