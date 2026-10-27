@@ -1,0 +1,5 @@
+Ask: run the already-planned narrow A acceptance re-audit / Owner: Main acceptance; A source complete / By: next hourly check, 2026-10-27T08:46:40.582154+00:00
+
+A round17 records the installed-owner boundary repair merged and milestone ready. Manager readback confirms Agent tl/zoom-integration is c40faf2bc50bd7238238237f33ae007666401005; merges.log records A-installed-owner-boundary-fix-r17 at08:44:42Z. Independent workers/A-review-installed-owner-boundary-fix3-r17/report.md is PASS. Central tests/A-review-installed-owner-boundary-fix3-r17-targeted-1027084304-15390 status pass, exit0; reviewer records23 passed44.63s. T3 remains qualified at the original stand-in scope. This clears the A source repair wait; Main acceptance is still owed.
+
+C round12 still requests Main routing for three B-forward failure files and a decision on the pending/durable PropertiesPanel expectation. B is accepted. H/D/P START markers are absent. Runtime has live0 and ready0; no duplicate author or audit dispatched.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T08:44:02Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T08:41:56.264988+00:00
+<!-- main | 2026-10-27T08:49:17Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T08:46:40.582154+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -145,13 +145,13 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C kit report scope | Receive bounded browser host repair | Main Luna | Main0610 terminal | review | diag-browserlane-0610 | Four PASS runs execute original gallery case only. [Scope handoff](../../design/peer-runtime-to-orchestrator-20261027T065036Z-browser-report-scope-and-A-ready.md). C15487 correction failures remain. | Kit only |
 
-| A acceptance audit | Receive narrow admission correction | Main and A Luna | Existing boundary fix r17 | doing | A-installed-owner-boundary-fix-r17; Main re-audit | Main08:12 confirms T3. Exact project pin must use retained snapshot. A owns fix, review, merge and central checks; then narrow re-audit. | A0b10dd6e80 |
+| A acceptance audit | Receive reviewed boundary repair | A Luna and Main | Independent review and central23 PASS | review | A fix r17 merged; Main narrow re-audit next | Agent c40faf2bc5; independent fix3 PASS and central15390 exit0. A round17 milestone ready. Main acceptance remains open. | Agent c40faf2bc5 |
 
 | C current artifact cleanup | Receive exact current branch deletion | C Luna and reviewer | Independent cleanup12 PASS | merged | C author cleanup12; review cleanup12 | Normal28f44 removes only root report.md. Manager readback confirms absence; historical review11 remains separate. | Runtime28f44ab578 |
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
-Blockers: Main and A own the boundary fix r17 and narrow re-audit. C independent triage confirms four branch-only files and38 tests; Main owns B repair routing and the pending/durable expectation choice. B accepted; H/D/P START absent. D130 holds.
+Blockers: Main owns the narrow A acceptance re-audit; the boundary repair is merged and central23 PASS. Main owns C failure routing and pending/durable behavior choice. B accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6060601344 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact are running; protected trees remain. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5930659840 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact completed08:46; zero dirs removed or packed, zero logs compressed. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -162,4 +162,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T08:41:56.264988+00:00. Census exit0; all2717 rows unchanged, live0 and ready0. Inbox, header and owning A/B/C boards unchanged. A owns the boundary fix; Main owns C failure routing and behavior choice. B accepted; H/D/P START absent. [Pass evidence](rounds/20261027T084156Z-pass.json).
+Current pass: 2026-10-27T08:46:40.582154+00:00. A round17 now records reviewed boundary repair merged; exact Agent head and central23 PASS verified. Main narrow re-audit is ready and peer notified. Inbox, header, B and C unchanged. No ready Runtime task; no H/D/P START. [Pass evidence](rounds/20261027T084640Z-pass.json).
