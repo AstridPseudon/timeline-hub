@@ -6,7 +6,7 @@ storage boundaries:
 * ``flatten(stored)``: a stored film (one shot per chapter, plus film-level clips, registry and track order on the
   parent) becomes the flat working shot. The stored form is kept under ``structure_base``.
 * ``split(flat)``: the flat shot becomes the stored form. Each chapter is a real shot (a split film's chapters are
-  its shot placements, anchored to cuts in the flat form; a one-shot film's come from its labels, once, at restructure); music and any clip that crosses a chapter wall (by more than 1 ms) is a film-level (parent) clip.
+  its shot placements, anchored to cuts in the flat form; a one-shot film's come from its labels, once, at restructure); music and unsupported clips that cross a chapter wall (by more than 1 ms) are film-level clips.
 
 ``renderer_input`` / ``assert_equivalent`` project a stored form exactly as the renderer does and prove two forms
 hand the renderer the same thing, so a restructure that would change a frame or a sample refuses to publish.
@@ -24,10 +24,48 @@ from astrid.core.timeline.cuts import bundle_fps, clip_duration
 from astrid.core.timeline.parent_registry import effective_parent_registry
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import AUDIO_KINDS, TimelineEditError, _num, _r
-from astrid.sdk.timeline.doc import _row_start, _set_length, _set_row_start
+from astrid.sdk.timeline.doc import _filter_words, _row_start, _set_length, _set_row_start
 
 STRUCTURE_KEY = "structure_base"
 WALL_TOLERANCE = 0.001  # a clip crossing a wall by no more than 1 ms stays in its chapter
+_PIECE_MARKER = "timeline_restructure_piece"
+
+
+def _cutter_for(clip: Mapping[str, Any]):
+    """Dispatch hook for clip-type-specific cutters; None keeps the clip on the legacy hoist path."""
+    kind = str(clip.get("clipType") or clip.get("type") or clip.get("kind") or "media").lower()
+    if kind in {"media", "image", "video", "still", "text"}:
+        return _cut_clip
+    return None
+
+
+def _piece_shape(clip: Mapping[str, Any]) -> str:
+    if clip.get("hold") is not None:
+        return "hold_window" if clip.get("from") is not None and clip.get("to") is not None else "hold"
+    if clip.get("from") is not None or clip.get("to") is not None:
+        return "window"
+    return "duration" if clip.get("duration") is not None else "hold"
+
+
+def _cut_clip(clip: Mapping[str, Any], start: float, end: float, chapter: Chapter,
+              *, piece_id: str | None = None) -> dict[str, Any]:
+    """Make one chapter-relative interval of a media clip, advancing its source by elapsed * speed."""
+    value = copy.deepcopy(dict(clip))
+    speed = _num(clip.get("speed"), 1.0) or 1.0
+    elapsed = max(0.0, start - _num(clip.get("at")))
+    if piece_id is not None:
+        value["id"] = piece_id
+    value["at"] = _r(max(0.0, start - chapter.start_ms / 1000.0))
+    if clip.get("from") is not None:
+        value["from"] = _r(_num(clip.get("from")) + elapsed * speed)
+    length = max(0.0, end - start)
+    shape = _piece_shape(clip)
+    if shape in {"hold", "hold_window", "window"}:
+        _set_length(value, length)
+    else:
+        value["duration"] = _r(length * speed)
+    _filter_words(value, elapsed, elapsed + length, shift=-elapsed)
+    return value
 
 
 # ------------------------------------------------------------------ reading the stored form
@@ -407,6 +445,7 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     for clip in internal.get("clips") or []:
         s = _num(clip.get("at"))
         e = s + clip_duration(clip)
+        render_end = min(e, end_s)
         # A nearest-ms wall can sit up to 0.5 ms after the source's frame-aligned
         # start. Treat starts within the same 1 ms tolerance as belonging to the
         # new chapter, so rounding the wall does not strand that chapter's first
@@ -419,6 +458,35 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
             why = "music" if tl._is_music(sid, clip) else (
                 f"crosses the wall at {chapters[k + 1].start_ms / 1000:g} s into {chapters[k + 1].name}"
                 if k + 1 < len(chapters) and e > chapters[k + 1].start_ms / 1000.0 + (1e-6 if tl._is_audio(sid, clip) else WALL_TOLERANCE) else None)
+        cutter = _cutter_for(clip)
+        can_cut = why != "music" and cutter is not None and not tl._is_audio(sid, clip)
+        if can_cut and (why or e > end_s + 1e-9) and s < end_s:
+            segments = []
+            for chapter in chapters:
+                lo = max(s, chapter.start_ms / 1000.0)
+                hi = min(render_end, chapter.end_ms / 1000.0)
+                if hi - lo > 1e-9:
+                    segments.append((chapter, lo, hi))
+            if len(segments) > 1:
+                source_id = str(clip.get("id"))
+                shape = _piece_shape(clip)
+                for index, (chapter, lo, hi) in enumerate(segments):
+                    piece_id = _stable_id("chapter-piece", flat.get("timeline_id", ""), source_id,
+                                          chapter.name, chapter.start_ms, index)
+                    piece = cutter(clip, lo, hi, chapter, piece_id=piece_id)
+                    app = piece.setdefault("app", {})
+                    if not isinstance(app, dict):
+                        app = piece["app"] = {}
+                    astrid = app.setdefault("astrid", {})
+                    if not isinstance(astrid, dict):
+                        astrid = app["astrid"] = {}
+                    astrid[_PIECE_MARKER] = {"id": source_id, "index": index, "count": len(segments), "shape": shape}
+                    chapter.clips.append(piece)
+                continue
+            if len(segments) == 1 and e > end_s + 1e-9:
+                chapter, lo, hi = segments[0]
+                chapter.clips.append(cutter(clip, lo, hi, chapter))
+                continue
         if why:
             value = copy.deepcopy(clip)
             if e > end_s + 1e-9:  # the one occurrence used to clip it at the film's end; a tail would lengthen the render
@@ -428,6 +496,8 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
         else:
             value = copy.deepcopy(clip)
             value["at"] = _r(max(0.0, s - chapters[k].start_ms / 1000.0))
+            if e > end_s + 1e-9 and s < end_s and not tl._is_audio(sid, clip):
+                _set_length(value, end_s - s)
             chapters[k].clips.append(value)
     return Plan(chapters, film, reasons, _layer_order(tl.bundle.get("parent", {}).get("config", {}).get("tracks") or [], internal.get("tracks") or []),
                 copy.deepcopy((internal.get("registry") or {}).get("assets") or {}), end_ms)
@@ -585,6 +655,11 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
         app = clip.get("app")
         if isinstance(app, dict):
             app.pop("astrid_shot_composition", None)
+            astrid = app.get("astrid")
+            if isinstance(astrid, dict):
+                astrid.pop(_PIECE_MARKER, None)
+                if not astrid:
+                    app.pop("astrid")
             if not app:
                 clip.pop("app")
         for selector in ("asset", "asset_id"):
