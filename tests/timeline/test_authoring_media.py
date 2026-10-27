@@ -336,7 +336,8 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
             self.calls.append((request, kwargs))
             raise CommitConflict({
                 "code": "conflict", "message": "parent composition head is stale",
-                "details": {"status": "conflict"},
+                "details": {"status": "conflict", "reason": "stale_head",
+                             "detail": "Runtime rejected the stale parent head."},
             })
 
     session = Session()
@@ -358,8 +359,11 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
         "argv",
         [str(script), "publish", "--file", str(document), "--idempotency-key", "stale-edit"],
     )
-    with pytest.raises(CommitConflict, match="parent composition head is stale"):
+    with pytest.raises(CommitConflict) as stale:
         helper.main()
+    assert stale.value.headline == "The edit was made from an older timeline; nothing was committed"
+    assert stale.value.detail == "Runtime rejected the stale parent head."
+    assert stale.value.cause["details"]["reason"] == "stale_head"
     assert document.read_text() == json.dumps(work)
     assert document.with_suffix(".check.json").exists()
     assert document.with_suffix(".imports.json").exists()

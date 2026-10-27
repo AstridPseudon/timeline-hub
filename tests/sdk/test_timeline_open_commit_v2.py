@@ -20,8 +20,10 @@ from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown
 from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid_runtime_client import ApiError
+from tests.sdk import test_timeline_sync as _sync_test
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
-from tests.sdk.test_timeline_sync import connected  # noqa: F401
+
+connected = _sync_test.connected
 
 
 def opened(connected):
@@ -259,7 +261,7 @@ def test_unknown_outcome_retries_exact_request_without_reevaluation(connected, m
         working.move("parent/clip:a", 7)
 
     with pytest.raises(CommitOutcomeUnknown) as unknown:
-        tl.commit(edit, idempotency_key="stable")
+        tl.commit(edit, key="stable")
     forbidden = ("fail", "error", "lost", "not committed")
     assert unknown.value.outcome == "unknown"
     assert all(word not in unknown.value.headline.lower() for word in forbidden)
@@ -271,9 +273,46 @@ def test_unknown_outcome_retries_exact_request_without_reevaluation(connected, m
     assert len(sent) == 2 and sent[0] == sent[1]
     assert sent[1][1] == frozen["key"] == "stable"
     assert len(generated.accepted) == 1 and at(reopened) == 7
-    replay = reopened.commit(edit, idempotency_key="stable")
+    replay = reopened.commit(edit, key="stable")
     assert replay["replayed"] is True
+    assert evaluations == [1]
     assert not any(word in replay["summary"].lower() for word in ("again", "redo", "re-appl"))
+
+
+def test_public_idempotency_key_alias_remains_supported(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+    result = tl.commit(lambda working: working.move("parent/clip:a", 3),
+                       idempotency_key="legacy-key")
+    assert generated.calls[-1][1] == "legacy-key"
+    assert result["receipt"] is not None
+
+
+def test_public_key_and_idempotency_key_conflict_before_state_mutation(connected):
+    tl = opened(connected)
+    _, generated, path = connected
+    before = path.read_bytes()
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(True)
+        working.move("parent/clip:a", 3)
+
+    with pytest.raises(TimelineEditError, match="pass key or idempotency_key, not both"):
+        tl.commit(edit, key="new-key", idempotency_key="legacy-key")
+    assert path.read_bytes() == before
+    assert evaluations == [] and generated.calls == []
+
+
+def test_public_key_submits_fixed_command_list(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+    command = {"schema_version": 1, "op": "clip.move", "version": "1",
+               "select": "parent/clip:a", "args": {"on": 3}}
+    tl.commit([command], label="Fixed move", key="fixed-key")
+    body, sent_key = generated.calls[-1]
+    assert sent_key == "fixed-key"
+    assert json.loads(body)["commands"] == [command]
 
 
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
@@ -408,7 +447,7 @@ def test_preview_refusal_leaves_no_pending_request_or_key_reservation(connected)
     generated.refusal = ApiError(409, "conflict", "preview refused", details={"status": "refused"})
     with pytest.raises(CommitConflict):
         tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True,
-                  idempotency_key="caller-key")
+                  key="caller-key")
     state = json.loads(path.read_text())
     assert state["pending"] == [] and state["flight"] is None
     assert "commit_options" not in state and "evaluation" not in state

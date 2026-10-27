@@ -479,7 +479,9 @@ def test_lost_ack_reload_retains_dependent_trim_and_fresh_suffix_key(connected, 
     if conflicting:
         with pytest.raises(CommitConflict):
             tl.flush()
-        assert pending(connected)['pending'] == [suffix]
+        rejected = pending(connected)
+        assert rejected['pending'] == [] and rejected['flight'] is None
+        assert rejected['rejected']['commands'] == [suffix]
     else:
         result = tl.flush()
         assert result['data']['commands'] == [suffix]

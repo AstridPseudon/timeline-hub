@@ -196,7 +196,9 @@ def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected
     if peer == 'label':
         with pytest.raises(CommitConflict):
             session.flush()
-        assert json.loads(path.read_bytes())['pending'] == [suffix]
+        state = json.loads(path.read_bytes())
+        assert state['pending'] == [] and state['flight'] is None
+        assert state['rejected']['commands'] == [suffix]
     else:
         session.flush()
         assert State(generated.bundles['r2']).entity(REF)['label'] == 'B'
