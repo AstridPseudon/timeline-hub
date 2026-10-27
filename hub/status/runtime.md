@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T03:52:04Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T03:49:22.256567+00:00
+<!-- main | 2026-10-27T03:56:27Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T03:54:52.922763+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -108,7 +108,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive original browser failure | C Luna and Main Sol | Main actual browser attempt | blocked:C | Existing C owner; Main diag-renderlane-0310 | Actual30992 FAIL: pane grip intercepts Open Gallery. Browser launches; drag/save/reload/undo not reached. Raw KEEP prospective. | App 1d4ebbb55b |
+| C2 browser journey | Receive C browser repair and proof | C Luna | Actual30992 failure | doing | C-C2-browser-fix-9 started03:53:54 | Lead C round9 owns overlay fix. Original30992 FAIL retained; drag/save/reload/undo acceptance still pending. | App 1d4ebbb55b base |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
 
@@ -124,9 +124,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive real render and open host failures | Main Sol and A Luna | Main terminal03:30 | blocked:main | diag-renderlane-0310 terminal; A owner next | Native MP4 and still rendered. Actual21155 exit1: worker context and fixture helper failures. No accepted parity proof. | No Runtime change |
 
-Blockers: Main receives terminal diag-renderlane-0310; A host tests, B pixel parity and C Open Gallery interception remain with existing owners. C App B-parent ancestry remains open. B audit blocker clear. D130 holds.
+Blockers: A host tests and B pixel parity remain with Main and the existing leads. C-C2-browser-fix-9 owns Open Gallery repair; App B-parent ancestry remains open. B audit blocker clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6255112192 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. This pass sweep removed0; compact packed0 directories and is finishing old log compression. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5920223232 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep removed0; compact packed0 directories and compressed0 logs. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T03:49:22.256567+00:00. Inbox, HEADER, pipeline and A/B/C boards unchanged. Census2717 rows; no running Runtime worker, new assignment or ready task. Every blocked row rechecked against its existing owner board. Main kit terminal03:30 exposes A21155 host-test failures, B21469 pixel parity and C30992 Open Gallery interception; peer0332 already supplies the handoff. H/D/P START absent. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep completed and removed0 directories; compact packed0 directories and is finishing old log compression. No refusal, duplicate worker, body or review. [Pass evidence](rounds/20261027T034922Z-pass.json).
+Current pass: 2026-10-27T03:54:52.922763+00:00. Inbox, HEADER, pipeline, A and B boards unchanged. C round9 now records actual C-C2-browser-fix-9 start03:53:54; running marker verified. Census2717 rows; no running Runtime worker, new assignment or ready task. Every blocked row rechecked against its owner board. C browser receipt now doing under its existing lead; exact journey proof and B-parent ancestry remain open. Main kit terminal03:30 still exposes A21155 host-test failures and B21469 pixel parity failure. H/D/P START absent. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep and compact exit0: removed0 directories, packed0 scratch or test directories, compressed0 logs. No refusal, duplicate worker, body or review. [Pass evidence](rounds/20261027T035452Z-pass.json).
