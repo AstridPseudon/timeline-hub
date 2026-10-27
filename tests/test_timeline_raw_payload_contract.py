@@ -126,7 +126,7 @@ def test_prepared_schema_accepts_canonical_and_drawable_legacy_visual_fields(vis
 @pytest.mark.parametrize("field,malformed", [
     ("tracks", {}), ("tracks", [None]), ("tracks", [{"id": 4}]),
     ("tracks", [{"role": "draft"}]), ("clips", {}), ("clips", [None]),
-    ("clips", [{"track": []}]),
+    ("clips", [{"track": []}]), ("clips", [{"effects": {}}]),
     ("effects", {}), ("effects", [False]), ("assets", {}),
     ("audio", {}), ("audio", [False]), ("layout", []),
     ("registry", []), ("output", []), ("output", {"fps": False}),

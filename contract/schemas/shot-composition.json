@@ -124,20 +124,10 @@
           "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/clipType"
         },
         "effects": {
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/OpenMap"
-              }
-            },
-            {
-              "type": "object",
-              "additionalProperties": {
-                "type": "number"
-              }
-            }
-          ]
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OpenMap"
+          }
         },
         "meta": {
           "$ref": "timeline-config.schema.json#/definitions/Meta"
