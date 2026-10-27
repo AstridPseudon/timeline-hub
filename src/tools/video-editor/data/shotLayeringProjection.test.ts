@@ -125,7 +125,11 @@ describe('shared Runtime shot-layering projection cases', () => {
 const placementMessage = 'Shot opacity and transforms are not supported yet. Remove them from the shot placement to render this timeline.';
 
 describe('shot placement compositing admission', () => {
-  it.each([{ transform: { opacity: 0.5 } }, { transform: { x: 0 } }, { transform: { scale: 1 } }, { opacity: 0 }, { opacity: 1 }])('refuses non-empty %j', (placement) => {
+  it.each([
+    { transform: { opacity: 0.5 } }, { transform: { x: 0 } }, { transform: { y: 0 } },
+    { transform: { width: 100 } }, { transform: { height: 100 } }, { transform: { cropTop: 0 } },
+    { transform: { scale: 1.2 } }, { opacity: 0 },
+  ])('refuses visual transform %j', (placement) => {
     const graph = structuredClone(compositionFixture);
     Object.assign(graph.occurrences[0], placement);
     const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
@@ -136,7 +140,11 @@ describe('shot placement compositing admission', () => {
     }
   });
 
-  it.each([{}, { transform: {} }, { transform: null, opacity: null }, { transform: '', opacity: '' }, { transform: [], opacity: {} }])('accepts empty %j and keeps child opacity', (placement) => {
+  it.each([
+    {}, { transform: {} }, { transform: null, opacity: null }, { transform: '', opacity: '' },
+    { transform: [], opacity: {} }, { transform: { scale: 1, opacity: 1, blend: 'screen' } },
+    { transform: { customEffect: 'soft-light' } }, { opacity: 1 },
+  ])('accepts no-op %j and keeps child opacity', (placement) => {
     const graph = structuredClone(compositionFixture);
     Object.assign(graph.occurrences[0], placement);
     const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);

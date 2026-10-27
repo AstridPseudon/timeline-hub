@@ -80,6 +80,16 @@ function record(value: unknown): JsonObject | null {
     : null;
 }
 
+function changesShotPicture(transform: unknown, opacity: unknown): boolean {
+  const values = record(transform);
+  if (typeof opacity === 'number' && opacity !== 1) return true;
+  if (!values) return false;
+  return Object.entries(values).some(([key, value]) => {
+    if (key === 'opacity' || key === 'scale') return typeof value === 'number' && value !== 1;
+    return key === 'x' || key === 'y' || key === 'width' || key === 'height' || key.startsWith('crop');
+  });
+}
+
 function text(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
 }
@@ -611,9 +621,8 @@ export function projectCanonicalComposition(
 
   for (const occurrence of outputOccurrences) {
     const authored = composition.contract.occurrences.find((entry) => entry.occurrence_id === occurrence.occurrenceId);
-    const nonEmpty = (value: unknown): boolean => value !== undefined && value !== null && value !== ''
-      && (typeof value !== 'object' || Object.keys(value).length > 0);
-    if (nonEmpty(occurrence.transform) || nonEmpty(authored?.transform) || nonEmpty(authored?.opacity)) {
+    if (changesShotPicture(occurrence.transform, authored?.opacity)
+      || changesShotPicture(authored?.transform, authored?.opacity)) {
       throw new CanonicalCompositionProjectionError(
         'unsupported_placement',
         'Shot opacity and transforms are not supported yet. Remove them from the shot placement to render this timeline.',
