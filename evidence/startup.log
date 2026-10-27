@@ -1,0 +1,40 @@
+{"provider_loaded": "astrid-v1"}
+{"startup": "failed", "exception": "PermissionError", "reason": "[Errno 1] Operation not permitted"}
+Traceback (most recent call last):
+  File "/tmp/w-23303af769/startup_probe.py", line 21, in <module>
+    daemon.start()
+    ~~~~~~~~~~~~^^
+  File "/home/user/work/wt/C-C3-runtime-sample-5/runtime_protocol/daemon.py", line 126, in start
+    self._start(rotate_credentials=False)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/C-C3-runtime-sample-5/runtime_protocol/daemon.py", line 274, in _start
+    self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
+                 ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 453, in __init__
+    self.socket = socket.socket(self.address_family,
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+                                self.socket_type)
+                                ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socket.py", line 233, in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 1] Operation not permitted
+Traceback (most recent call last):
+  File "/tmp/w-23303af769/startup_probe.py", line 21, in <module>
+    daemon.start()
+    ~~~~~~~~~~~~^^
+  File "/home/user/work/wt/C-C3-runtime-sample-5/runtime_protocol/daemon.py", line 126, in start
+    self._start(rotate_credentials=False)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/C-C3-runtime-sample-5/runtime_protocol/daemon.py", line 274, in _start
+    self.httpd = RuntimeHTTPServer((self.host, self.port), RuntimeHandler)
+                 ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 453, in __init__
+    self.socket = socket.socket(self.address_family,
+                  ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+                                self.socket_type)
+                                ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socket.py", line 233, in __init__
+    _socket.socket.__init__(self, family, type, proto, fileno)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 1] Operation not permitted
