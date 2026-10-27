@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T08:17:37Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T08:14:00.794726+00:00
+<!-- main | 2026-10-27T08:22:50Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T08:19:33.797296+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -132,12 +132,12 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-| C2 full App comparison | Receive controlling staging comparison | C and Main Luna | Main08:12 correction | review | C full10; Main baseline0715; C lead | Main records staging5 files32 tests versus C7 files41 tests. Fix two extra files or prove staging flakiness twice; final full follows. Prior38 count remains historical. | C App9a94c24e93 |
+| C2 full App comparison | Receive independently reviewed failure attribution | C Luna and reviewer | Main routing and contract decision | review | C triage12 and independent review12 | Current tip7 files41 tests; staging5 files32. Four branch-only files38 tests; net subtraction hides staging-only cases. Lead08:17 owns handoff. | App9a94c24e93 |
 
 
 | B acceptance audit | Receive recorded B acceptance | Main and independent Luna | Main header07:15 | merged | diag-accept-B-0610; Main | Auditor ACCEPT, no must fix; Main now records B ACCEPTED. Stand-in scope and same four conformance baseline failures preserved. | B project branches |
 
-| C acceptance audit | Receive two-file correction | Main and C Luna | Main08:12 correction | review | Main audit0610; baseline0715; C lead | Browser and Runtime cleanup closed. Main requires correction of two extra files and nine tests, or two staging flake proofs; final full suite then acceptance. | App9a94c24 / Runtime28f44 |
+| C acceptance audit | Receive B and C repair ownership | Main and C Luna | Independent triage12 | review | Main audit0610; C lead12 | Three failing files follow B forward source; PropertiesPanel expectation follows C pending/durable behavior. Main owns routing and scope choice. | App9a94c24 / Runtime28f44 |
 
 | C browser lane | Receive reviewed three case browser merge | C Luna and reviewer | Independent PASS and normal merge | merged | Author isolation11; review isolation11 | Actual27831 three PASS; C board07:16 records normal9a94c24e93. Prior failures remain original. | App9a94c24e93 |
 
@@ -149,9 +149,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C current artifact cleanup | Receive exact current branch deletion | C Luna and reviewer | Independent cleanup12 PASS | merged | C author cleanup12; review cleanup12 | Normal28f44 removes only root report.md. Manager readback confirms absence; historical review11 remains separate. | Runtime28f44ab578 |
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
-Blockers: Main and A own the exact pin admission fix r17 and narrow re-audit. Main and C own the two extra failing files and nine tests, then final full verification. B accepted; H/D/P START absent. D130 holds.
+Blockers: Main and A own the boundary fix r17 and narrow re-audit. C independent triage confirms four branch-only files and38 tests; Main owns B repair routing and the pending/durable expectation choice. B accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5609713664 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Sweep and compact exit0; zero dirs removed or packed and no old logs compressed. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5935636480 bytes. Runtime trees:36;31 KEEP and5 dirty; none eligible for recycle. Sweep and compact exit0; zero directories removed or packed and zero logs compressed. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -162,4 +162,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T08:14:00.794726+00:00. Worker census exit0, all2717 rows unchanged, live0 and ready0. Inbox and header unchanged; new A/C Main08:12 directions consumed. A existing boundary fix r17 and Main narrow re-audit own its remaining rejection. Main records staging5 failed files32 tests versus C7 files41 tests; C owns two extra files and nine tests, or two staging flake proofs, then final full. Earlier38 tip-only comparison stays historical. B accepted; H/D/P START absent. Main directs old unused Runtime tl/integration be left unchanged; no repair or reversal. Guarded sweep and compact exit0, no directories removed or packed and no logs compressed. All36 Runtime trees remain31 KEEP and5 dirty; no eligible recycle. No refusal or duplicate dispatch. [Pass evidence](rounds/20261027T081400Z-pass.json).
+Current pass: 2026-10-27T08:19:33.797296+00:00. Worker census exit0, all2717 rows unchanged, live0 and ready0. Inbox and header unchanged. A boundary fix retains its owning lead. C08:17 records completed independent triage: four branch-only files38 tests, with three B-forward paths and PropertiesPanel pending/durable expectation. Main owns routing and scope choice; no duplicate Runtime task. B accepted; H/D/P START absent. Guarded sweep and compact exit0; zero directories removed or packed and zero logs compressed. Protected and dirty worktrees retained. [Pass evidence](rounds/20261027T081933Z-pass.json).
