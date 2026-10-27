@@ -813,6 +813,85 @@ describe('shot timeline popup persistence', () => {
     });
   });
 
+  it('sanitizes projected tracks in durable recovery and retry bytes', async () => {
+    resetFakeIndexedDB();
+    const graph = structuredClone(fixture);
+    const childTrack = graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
+      .internal_timeline_revision.timeline.tracks.find((track) => track.id === 'video') as Record<string, unknown>;
+    childTrack.app = { authoredTrackMetadata: { preserve: [null, false, 7] } };
+    childTrack.opaqueTrackMetadata = { preserve: { nested: true } };
+    const baseAdapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
+    const composition = baseAdapter.prepare(graph);
+    const projected = projectCanonicalComposition({
+      ...composition,
+      occurrences: [composition.occurrences.find((occurrence) => occurrence.occurrenceId === 'occ-1')!],
+    }).config;
+    const publish = vi.fn()
+      .mockRejectedValueOnce(Object.assign(new Error('keep recovery draft'), { status: 503 }))
+      .mockImplementation(async (request) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const provider = createShotTimelineDataProvider(projected, composition, 'occ-1', adapter);
+    const loaded = await provider.loadTimeline('shot-recovery');
+    const edited = {
+      ...loaded.config,
+      // Simulate the projected editor representation at the save boundary;
+      // the child clips remain locally identified so their edit is retained.
+      tracks: projected.tracks,
+      clips: loaded.config.clips.map((clip) => ({ ...clip, hold: 1.5 })),
+    };
+
+    await expect(provider.saveTimeline('shot-recovery', edited, 1)).rejects.toThrow('keep recovery draft');
+
+    const recoveryKey = shotTimelineRecoveryId('document-primary', 'occ-1');
+    const recovery = await loadTimelineDraft(recoveryKey);
+    expect(recovery).not.toBeNull();
+    const recoveryGraph = recovery!.draft.canonicalPublication!.graph as unknown as typeof fixture;
+    const recoveryOccurrence = recoveryGraph.occurrences.find((occurrence) => occurrence.occurrence_id === 'occ-1')!;
+    const recoveryTimeline = recoveryGraph.shot_revisions
+      .find((revision) => revision.shot_id === recoveryOccurrence.shot_id
+        && revision.revision_id === recoveryOccurrence.revision_id)!
+      .internal_timeline_revision.timeline;
+    expect(recoveryTimeline.tracks.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(recoveryTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+    expect(recoveryTimeline.tracks.find((track) => track.id === 'video')).toMatchObject({
+      app: { authoredTrackMetadata: { preserve: [null, false, 7] } },
+      opaqueTrackMetadata: { preserve: { nested: true } },
+    });
+    expect(recoveryTimeline.clips.find((clip) => clip.track === 'video')).toMatchObject({
+      hold: 1.5,
+    });
+
+    const recoveryConfig = recovery!.draft.config as TimelineConfig;
+    expect(recoveryConfig.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(recoveryConfig.tracks?.every((track) => !track.app?.group)).toBe(true);
+    expect(recoveryConfig.clips.find((clip) => clip.track === 'video')).toMatchObject({
+      hold: 1.5,
+    });
+
+    const reopened = createShotTimelineDataProvider(projected, composition, 'occ-1', adapter);
+    const reloaded = await reopened.loadTimeline('shot-recovery-reload');
+    expect(reloaded.config.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(reloaded.config.tracks?.every((track) => !track.app?.group)).toBe(true);
+    expect(reloaded.config.clips.find((clip) => clip.track === 'video')).toMatchObject({
+      hold: 1.5,
+    });
+
+    await expect(reopened.saveTimeline('shot-recovery-reload', reloaded.config, reloaded.configVersion)).resolves.toBe(2);
+    const retryGraph = publish.mock.calls[1]![0].graph as unknown as typeof fixture;
+    const retryOccurrence = retryGraph.occurrences.find((occurrence) => occurrence.occurrence_id === 'occ-1')!;
+    const retryTimeline = retryGraph.shot_revisions
+      .find((revision) => revision.shot_id === retryOccurrence.shot_id
+        && revision.revision_id === retryOccurrence.revision_id)!
+      .internal_timeline_revision.timeline;
+    expect(retryTimeline.tracks.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(retryTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+    expect(retryTimeline.clips.find((clip) => clip.track === 'video')).toMatchObject({
+      hold: 1.5,
+    });
+
+    await clearTimelineDraft(recoveryKey);
+  });
+
 
   it('separates per-open editor cache identity from stable occurrence recovery identity', () => {
     const token = createShotTimelineEditorSessionToken();
@@ -1174,7 +1253,12 @@ describe('shot timeline popup persistence', () => {
     expect(recovered.config.clips).toEqual(draft.clips);
     await expect(reopened.saveTimeline('fresh-session', draft, 1)).rejects.toMatchObject({ status: 409 });
     expect(publish).toHaveBeenCalledWith(expect.objectContaining({ expectedHeadRevisionId: base.headRevisionId }));
-    expect((await loadTimelineDraft(recoveryKey))?.draft.config).toEqual(draft);
+    const persisted = (await loadTimelineDraft(recoveryKey))?.draft.config as TimelineConfig;
+    const { tracks: _persistedTracks, ...persistedWithoutTracks } = persisted;
+    const { tracks: _draftTracks, ...draftWithoutTracks } = draft;
+    expect(persistedWithoutTracks).toEqual(draftWithoutTracks);
+    expect(persisted.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(persisted.tracks?.every((track) => !track.app?.group)).toBe(true);
   });
 
   it('preserves inactive child state through projection, popup save, and re-enable', async () => {
