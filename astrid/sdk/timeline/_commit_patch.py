@@ -477,13 +477,17 @@ class CommitPatch:
             self.inverse_effects[ordinal] = getattr(ctx, 'inverse_effects', [])
             _restore_inverse_baselines(ctx.state.bundle, ctx.inverse_sources)
             stages = self.inverse_stages[ordinal] = []
+            stage_has_writes = getattr(ctx, 'inverse_stage_has_writes',
+                                       [True] * len(ctx.inverse_stages))
+            last_effectful = next((index for index in range(len(stage_has_writes) - 1, -1, -1)
+                                   if stage_has_writes[index]), len(stage_has_writes) - 1)
             # Equal historical bytes must not replace the authenticated input revision.
             before = self.closures[ordinal]
             for index, (_, bundle) in enumerate(ctx.inverse_stages):
-                # The last native stage precedes retained-input reconciliation.
-                # Project its completed boundary, including the authenticated
-                # manifest used by acceptance to reuse a historical parent pin.
-                completed = index == len(ctx.inverse_stages) - 1
+                # Retained-input reconciliation describes the completed inverse.
+                # Attach it to the last effectful stage, then keep that canonical
+                # identity through any trailing stages that recorded no writes.
+                completed = index >= last_effectful
                 if completed:
                     bundle = ctx.state.bundle
                 after = inverse_closure(bundle, ctx.inverse_sources,

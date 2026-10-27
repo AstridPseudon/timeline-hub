@@ -1128,6 +1128,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     ctx.inverse_sources = ([source for entry in records.entries for source in records.load_boundary(entry)]
                            if isinstance(records, AcceptedRecords) else [])
     ctx.inverse_stages = []
+    ctx.inverse_stage_has_writes = []
     ctx.inverse_effects = []
     for publication, step_id, commands in inverse_stages(records):
         stage_before = copy.deepcopy(ctx.state.bundle)
@@ -1177,6 +1178,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                          if owner in live and local in ctx.state.bundle['shots']]
                 remember(physical, ref, only_if_needed=True)
         ctx.inverse_stages.append((stage_before, copy.deepcopy(ctx.state.bundle)))
+        ctx.inverse_stage_has_writes.append(any(
+            record['writes'] or record.get('derived_writes') for record in commands))
         ctx.inverse_effects.append(commands[0].get('_inverse_effects') if len(commands) == 1 else None)
         if step_id is not None:
             # Keep native segment boundaries in the authenticated recorder. The
