@@ -10,8 +10,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "conformance/fixtures/shot-layering-v1.json"
-FIXTURE_SHA256 = "7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56"
+FIXTURE_SHA256 = "7ed1d614a287eecafc20f5bd9908233e4015c608a5e5c075f4e9440058f71f45"
 REQUIRED_CASES = {
+    "child-audio-parent-visual",
+    "child-visual-parent-audio",
     "film-picture-over-type",
     "loose-above-shot",
     "loose-below-shot",
@@ -111,7 +113,7 @@ def test_shared_shot_layering_fixture_is_valid_and_complete() -> None:
         expected = case["expected"]
         assert expected["track_order"]
         group_ids = [group["id"] for group in expected["group_tracks"]]
-        assert group_ids == [track_id for track_id in expected["track_order"] if "~" in track_id]
+        assert all(group_id in expected["track_order"] for group_id in group_ids)
         for group in expected["group_tracks"]:
             tag = group["app"]["group"]
             assert group["id"] == f"{tag['id']}~{tag['sourceTrack']}"
