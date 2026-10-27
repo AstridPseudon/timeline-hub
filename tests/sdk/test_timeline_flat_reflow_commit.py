@@ -141,6 +141,42 @@ def test_flat_ripple_function_commit_and_immediate_undo_are_exact(arranged_sessi
     assert undone["data"]["canonical_document"] == original
 
 
+@pytest.mark.parametrize("operation", ["insert", "delete", "close-gap"])
+def test_flat_ripple_composes_with_free_edits_under_one_capture_guard(arranged_session, operation):
+    tl, realm, calls = arranged_session
+    original = _flat_audio_picture_fixture(realm, short_gap=operation == "close-gap")
+
+    def edit(t):
+        t.bundle["parent"]["name"] = "Ripple with surrounding edits"
+        t.bundle["parent"]["custom"] = {"before": True}
+        if operation == "insert":
+            t.insert_time(4, 2)
+        elif operation == "delete":
+            t.ripple_delete(4, 6)
+        else:
+            observed = next(word for word in t.words() if word.text == "after")
+            t.close_gap(before=observed.id)
+        t.bundle["parent"]["custom"]["after"] = True
+        # Helpers edit the evaluation checkout; only commit() may publish it.
+        assert calls == [] and realm.accepted == []
+
+    result = tl.commit(edit)
+    assert len(calls) == len(realm.accepted) == 1
+    assert calls[0]["merge"] == "atomic" and "reads" not in calls[0]
+    assert calls[0]["commands"] and all(command["op"] == "doc.patch" for command in calls[0]["commands"])
+    assert all({"kind": "scope", "ref": "timeline", "path": []} in step["reads"]
+               for step in calls[0]["steps"])
+
+    landed = result["data"]["canonical_document"]
+    payload = landed["parent_revision"]["payload"]
+    assert payload["name"] == "Ripple with surrounding edits"
+    assert payload["custom"] == {"before": True, "after": True}
+
+    undone = tl.undo(publications=[result["receipt"]["receipt_id"]])
+    assert len(calls) == len(realm.accepted) == 2
+    assert undone["data"]["canonical_document"] == original
+
+
 @pytest.mark.parametrize("damage", ["split-id-collision", "source-overrun"])
 def test_flat_ripple_refusal_is_atomic(arranged_session, damage):
     tl, realm, calls = arranged_session
