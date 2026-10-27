@@ -199,6 +199,34 @@ def test_acknowledged_function_key_replays_original_request_read_only(connected)
     assert client is session.client
 
 
+def test_function_key_replays_original_receipt_after_undo_without_evaluation(connected):
+    from astrid.sdk import timeline
+
+    client, generated, path = connected
+    editor = timeline.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(True)
+        working.move("parent/clip:a", 3)
+
+    accepted = editor.commit(edit, idempotency_key="edit-key")
+    original_request = generated.calls[-1]
+    editor.undo(publications=[accepted["receipt"]["receipt_id"]])
+    head_after_undo = copy.deepcopy(editor.session._state()["base"])
+
+    replayed = editor.commit(
+        lambda working: pytest.fail("acknowledged function must replay before evaluation"),
+        idempotency_key="edit-key",
+    )
+
+    assert evaluations == [True]
+    assert replayed["receipt"] == accepted["receipt"]
+    assert generated.calls[-1] == original_request
+    assert editor.session._state()["base"] == head_after_undo
+    assert json.loads(path.read_bytes())["base"] == head_after_undo
+
+
 def test_function_replay_refuses_key_acknowledged_for_literal_edit(connected):
     session = open_session(connected)
     command = capture_move(initial_bundle(), "parent/clip:a", 3)
