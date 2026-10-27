@@ -64,9 +64,34 @@ console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().
                 ASTRID_TEST_NODE_MODULES=str(root / "remotion/node_modules"),
                 ASTRID_TIMELINE_SCHEMA_PYTHONPATH=str(root / "astrid/core/timeline/schema/timeline-config.schema.json"),
             )
+            # Registry generator probes intentionally drop PYTHONPATH. A tiny
+            # private venv gives those children the same Runtime/source imports
+            # without writing into the shared dependency environment.
+            overlay = Path(short) / "python"
+            shared_python = "/home/user/work/venv-agent/bin/python"
+            subprocess.check_call([shared_python, "-m", "venv", "--without-pip", str(overlay)], env=env)
+            shared_site = Path(subprocess.check_output([
+                shared_python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"], env=env, text=True).strip())
+            private_site = overlay / "lib" / shared_site.parent.name / "site-packages"
+            private_site.mkdir(parents=True, exist_ok=True)
+            (private_site / "renderlane.pth").write_text(
+                f"import site; site.addsitedir({str(shared_site)!r})\n"
+                f"import sys; sys.path[:0] = {[str(root), runtime]!r}\n")
+            python = str(overlay / "bin/python")
+            generated = subprocess.call([
+                python, "scripts/gen_remotion_types.py",
+                "--include-element-registries"], env=env)
+            if generated:
+                return generated
+            smoke = root / "remotion/.renderlane.mjs"
+            shutil.copyfile(ORCH / "bin/renderlane-agent.mjs", smoke)
+            env["RENDERLANE_OUTPUT"] = str(result / "agent-render-smoke")
+            smoke_code = subprocess.call([str(NODE / "node"), str(smoke)], env=env)
+            if smoke_code:
+                return smoke_code
             # The old real-pack-host path was removed; this is its current real
             # host/claim/execute/settle/CAS acceptance test, not a mocked render.
-            command = ["/home/user/work/venv-agent/bin/python", "-m", "pytest",
+            command = [python, "-m", "pytest",
                        "-q", "-s", "-o", "addopts=", "-p", "no:cacheprovider",
                        "-m", "integration", *(selectors or [
                            "tests/integrations/test_generic_host_remotion_render.py"])]
@@ -79,7 +104,14 @@ console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().
         else:
             raise ValueError(f"unknown lane {lane}")
         print("command: " + " ".join(command), flush=True)
-        return subprocess.call(command, env=env)
+        code = subprocess.call(command, env=env)
+        if code and lane == "render-proof":
+            probes = Path(short) / "astrid-probe-logs"
+            for log in probes.glob("*.log"):
+                destination = result / "probe-logs" / log.name
+                destination.parent.mkdir(exist_ok=True)
+                destination.write_bytes(log.read_bytes()[-1_000_000:])
+        return code
 
 
 if __name__ == "__main__":

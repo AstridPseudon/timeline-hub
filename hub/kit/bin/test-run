@@ -108,7 +108,7 @@ if [ -z "$RUN" ]; then
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
   KIT_KEY=
   case "$suite" in browser-toolchain|browser-journey|render-proof|preview-vs-export|real-pack-host-integration)
-    KIT_KEY=$(sha256sum "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" | sha256sum)
+    KIT_KEY=$(sha256sum "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
     KIT_KEY+=$(for dependency in agent runtime; do git -C /home/user/work/$dependency rev-parse HEAD; done)
     ;;
   esac
@@ -393,12 +393,16 @@ case $repo in
         for scoped in "$module"/.[!.]* "$module"/*; do
           [ -e "$scoped" ] || continue
           [ "$name/$(basename "$scoped")" = @banodoco/timeline-composition ] && continue
+          [ "$name/$(basename "$scoped")" = @remotion/cli ] && continue
           ln -s "$(readlink -f "$scoped")" "$SNAP/remotion/node_modules/$name/$(basename "$scoped")"
         done
       else
         ln -s "$(readlink -f "$module")" "$SNAP/remotion/node_modules/$name"
       fi
     done
+    # Render admission requires the CLI's real path to stay inside its project.
+    # Only this small package is copied; all other peers remain read-only links.
+    cp -a "$(realpath "$REMOTION_NM/@remotion/cli")" "$SNAP/remotion/node_modules/@remotion/cli"
     COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/remotion/package.json")
     [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/remotion/$COMPOSITION_ARCHIVE" ] || bad "staging Remotion Composition archive missing"
     mkdir -p "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
