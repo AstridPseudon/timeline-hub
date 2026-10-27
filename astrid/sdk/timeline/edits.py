@@ -36,6 +36,38 @@ class _EditMixin:
     _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
     _parent_clips: Callable[[], list[dict[str, Any]]]  # defined on _LookupMixin; declared so this mixin's readers are typed
 
+    def add_text(self, text: str, *, at: float, hold: float, track: str = "titles", id: str | None = None) -> Clip:
+        """Add a literal parent text clip using the existing admitted clip birth."""
+        if not isinstance(text, str) or not text.strip():
+            raise TimelineEditError("text must be a nonempty string")
+        start, duration = float(at), float(hold)
+        if not math.isfinite(start) or start < 0:
+            raise TimelineEditError("at must be finite and nonnegative")
+        if not math.isfinite(duration) or duration <= 0:
+            raise TimelineEditError("hold must be finite and positive")
+        if not isinstance(track, str) or not track:
+            raise TimelineEditError("track must be a nonempty parent track ID")
+        clip_id = id or self._new_id("am-type")
+        if any(clip.id == clip_id for clip in self.clips()):
+            raise TimelineEditError(f"clip ID {clip_id!r} already exists")
+        if self._parent_clip_list() is None:
+            raise TimelineEditError("parent text requires a parent clip collection")
+        row = {"id": clip_id, "clipType": "am-type", "track": track,
+               "at": self.quantize(start), "hold": self.quantize(duration), "params": {"text": text}}
+        self.track(track, kind="visual")
+        command = getattr(self, "command", None)
+        if callable(command):
+            from ._clip_commands import capture_clip_add
+
+            command(capture_clip_add(self.bundle, "parent", row), label="Add text")
+            return self.clip(clip_id)
+        clips = self._parent_clip_list()
+        if clips is None:
+            raise TimelineEditError("parent text requires a parent clip collection")
+        clips.append(row)
+        self._mcache = None
+        return Clip(self, PARENT_SHOT, row)
+
     # ---- structural edits ---------------------------------------------------
     def arrange(self, ids: Sequence[str], *, at: float = 0, gap: float = 0) -> None:
         """Place exact occurrence IDs in caller order, preserving their lengths and owners.

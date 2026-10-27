@@ -8,23 +8,40 @@ import json
 import math
 import re
 from contextlib import contextmanager
-from dataclasses import dataclass, replace as _dc_replace
+from dataclasses import dataclass
+from dataclasses import replace as _dc_replace
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import clip_fields as cf
 from astrid.core.timeline import moments as mo
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
+from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline import look as _look
 from astrid.sdk.timeline import store as _store
-from astrid.sdk.timeline._common import (TIME_RE, TimelineEditError, _Suggest, _length_seconds, _norm, _num, _r)
+from astrid.sdk.timeline._common import (
+    PARENT_SHOT,
+    TIME_RE,
+    TimelineEditError,
+    _length_seconds,
+    _norm,
+    _num,
+    _r,
+    _Suggest,
+)
+from astrid.sdk.timeline.doc import _get_path, _read_words, _set_length, _set_path
 from astrid.sdk.timeline.selection import ROLE_VOCABULARY, Selection
-from astrid.sdk.timeline.doc import (_get_path, _read_words, _set_length, _set_path)
-from astrid.sdk.timeline.units import (element_units, formula_from_spec, from_canvas, param_unit, parse_formula_value, parse_moment_value, to_canvas, trim_source_interval)
-
+from astrid.sdk.timeline.units import (
+    element_units,
+    formula_from_spec,
+    from_canvas,
+    param_unit,
+    parse_formula_value,
+    parse_moment_value,
+    to_canvas,
+    trim_source_interval,
+)
 
 # ----------------------------------------------------------------------- views
 
@@ -421,10 +438,12 @@ class Clip(_Suggest):
             self._tl.notes.append(f"{self.address}: already ends with its cut (no change)")
             return self
         self._check_source_fits(new)
+        has_duration_intent = (intent.cut_of(self.data) is not None or intent.until(self.data) is not None
+                               or intent.for_s(self.data) is not None)
         _set_length(self.data, new)
-        if intent.cut_of(self.data) or intent.until(self.data):
+        if has_duration_intent:
             intent.set_until(self.data, None)
-            intent.set_for(self.data, self._tl.quantize(seconds))
+            intent.set_for(self.data, new)
         return self
 
     def _check_source_fits(self, length: float) -> None:
@@ -696,7 +715,9 @@ class Clip(_Suggest):
         frame (its moment gets the offset that says so)."""
         if track == self.track:
             return self
-        if not any(str(t.get("id")) == track for t in self._tl._internal(self.shot_id).get("tracks") or []):
+        tracks = (self._tl._parent_track_list() if self.shot_id == PARENT_SHOT
+                  else self._tl._internal(self.shot_id).get("tracks"))
+        if not any(str(t.get("id")) == track for t in tracks or []):
             raise TimelineEditError(f"{self.address}: no track {track!r} in this shot")
         was_picture, start, on = self._tl._is_picture(self), self.start, intent.on(self.data)
         self.data["track"] = track
@@ -764,11 +785,43 @@ class Clip(_Suggest):
         return self
 
     def remove(self) -> None:
-        clips = self._tl._internal(self.shot_id)["clips"]
+        command = getattr(self._tl, "command", None)
+        if self.shot_id == PARENT_SHOT and callable(command):
+            from .capture import capture_clip_delete
+
+            command(capture_clip_delete(self._tl.bundle, f"parent/clip:{self.id}"), label="Remove clip")
+            return
+        clips = (self._tl._parent_clip_list() if self.shot_id == PARENT_SHOT
+                 else self._tl._internal(self.shot_id)["clips"])
+        if not isinstance(clips, list):
+            raise TimelineEditError(f"{self.address}: its clip collection is unavailable")
         clips[:] = [c for c in clips if c is not self.data]
+        self._tl._mcache = None
 
     def _set_start(self, seconds: float) -> None:
         self.data["at"] = _r(seconds - self._tl._shot_start(self.shot_id))
+
+
+class _TrackRef:
+    """A narrow parent-track handle for the existing label command."""
+
+    def __init__(self, tl: "Checkout", track_id: str, data: dict[str, Any]):  # noqa: F821
+        self._tl = tl
+        self.id = track_id
+        self.data = data
+
+    def rename(self, label: str) -> "_TrackRef":
+        if not isinstance(label, str) or not label.strip():
+            raise TimelineEditError("track label must be a nonempty string")
+        command = getattr(self._tl, "command", None)
+        if callable(command):
+            from ._scalar_commands import capture_track_set
+
+            captured = capture_track_set(self._tl.bundle, f"parent/track:{self.id}", values={"label": label})
+            command(captured, label="Rename track")
+        else:
+            self.data["label"] = label
+        return self
 
 
 class Cut(_Suggest):
