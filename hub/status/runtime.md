@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T01:56:36Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- main | 2026-10-27T02:00:49Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
 # runtime board, 2026-10-27T01:55:03.310085+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -127,4 +127,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Checked at 2026-10-27T01:55:03.310085+00:00. PLAN, manager rules, latest pipeline and A B C boards consumed. INBOX and HEADER unchanged. Fresh rt- census: exit 0, 2717 rows, none running. B and C cleanup now merged and reviewed. A film and complete pack remain missing; Main owns B acceptance and staging; C retains timing sampling. H, D and P START markers absent. All Runtime trees KEEP or dirty, so no eligible recycle. Sweep removed 0 dirs; compact packed 0 dirs and compressed 2 old logs, final scan pending. Delivered archive and sidecar match prior hash. [Pass evidence](rounds/20261027T015503Z-pass.json).
+Current pass: Checked at 2026-10-27T01:55:03.310085+00:00. PLAN, manager rules, latest pipeline and A B C boards consumed. INBOX and HEADER unchanged. Fresh rt- census: exit 0, 2717 rows, none running. B and C cleanup now merged and reviewed. A film and complete pack remain missing; Main owns B acceptance and staging; C retains timing sampling. H, D and P START markers absent. All Runtime trees KEEP or dirty, so no eligible recycle. Sweep removed 0 dirs; compact completed: 0 worker dirs and 0 test dirs packed, 2 old logs compressed. Delivered archive and sidecar match prior hash. [Pass evidence](rounds/20261027T015503Z-pass.json).
