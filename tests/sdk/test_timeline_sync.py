@@ -44,6 +44,7 @@ class Generated:
         self.bundles = {"r0": initial_bundle()}
         self.head = {"revision_id": "r0", "publication_id": "pub0"}
         self.calls, self.accepted, self.records = [], {}, {}
+        self.entries, self.boundaries = [], {}
         self.publications = {"r0": "pub0"}
         self.lose_ack = False
         self.refusal = None
@@ -71,8 +72,24 @@ class Generated:
             return copy.deepcopy(response)
         inverse_records = []
         if body["commands"][0]["op"] == "timeline.inverse":
-            for publication in body["commands"][0]["args"]["publications"]:
+            publications = body["commands"][0]["args"]["publications"]
+            entries = [entry for entry in self.entries if entry["publication_id"] in publications]
+            for publication in publications:
                 inverse_records.extend(self.records[publication])
+            if any("physical_ref" in binding for record in inverse_records
+                   for binding in record.get("bindings", [])):
+                from astrid.sdk.timeline._collections import AcceptedRecords
+                from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+                from astrid.sdk.timeline._step_undo import select_inverse_records
+
+                def load_boundary(entry):
+                    return self.boundaries[entry["publication_id"]]
+
+                accepted = AcceptedRecords(entries, inverse_records, load_boundary)
+                resolver = inverse_address_resolver(entries, self.bundles[self.head["revision_id"]],
+                                                   load_boundary=load_boundary)
+                inverse_records = select_inverse_records(
+                    accepted, body["commands"][0]["args"].get("steps"), address_resolver=resolver)
         try:
             if body["commands"][0]["op"] == "timeline.restore":
                 target = body["commands"][0]["args"]["revision_id"]
@@ -118,6 +135,12 @@ class Generated:
         self.bundles[revision] = plan.bundle
         self.records[publication] = plan.records
         self.publications[revision] = publication
+        entry = {"publication_id": publication, "revision_id": revision,
+                 "previous": copy.deepcopy(self.head),
+                 "records": {"commands": plan.records, "steps": copy.deepcopy(body.get("steps"))}}
+        self.entries.append(entry)
+        self.boundaries[publication] = (copy.deepcopy(self.bundles[body["base_revision_id"]]),
+                                        copy.deepcopy(plan.bundle))
         self.head = {"revision_id": revision, "publication_id": publication}
         self.accepted[idempotency_key] = (raw, copy.deepcopy(response))
         if self.lose_ack:

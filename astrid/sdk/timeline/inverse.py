@@ -10,9 +10,11 @@ from ._collections import (
     arrange,
     container,
     member,
-    order as collection_order,
     restoration_orders,
     selection_overlap,
+)
+from ._collections import (
+    order as collection_order,
 )
 from ._command_state import (
     ABSENT,
@@ -1040,7 +1042,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     dependencies = selected_dependencies(records)
     address_resolver = getattr(records, 'address_resolver', None)
     if any('physical_ref' in binding for record in records for binding in record.get('bindings', [])):
-        if not isinstance(records, AcceptedRecords) or address_resolver is None:
+        if not isinstance(records, AcceptedRecords) or not callable(address_resolver):
             raise CommandError('inverse needs authenticated physical binding normalization', kind='history_unavailable')
     _validate_materializations(records)
     check_step_dependents(records, state=ctx.state)
