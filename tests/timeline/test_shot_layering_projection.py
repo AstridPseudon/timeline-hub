@@ -165,11 +165,13 @@ def test_grouping_preserves_media_specific_speed_and_source_offset(project, chil
 
 
 @pytest.mark.parametrize("placement", [
-    {"transform": {"opacity": 0}}, {"transform": {"scale": 1}},
-    {"transform": {"opaque": True}}, {"opacity": 0}, {"opacity": 1},
+    {"transform": {"opacity": 0}}, {"transform": {"scale": 1.1}},
+    {"transform": {"x": 0}}, {"transform": {"y": 0}},
+    {"transform": {"width": 100}}, {"transform": {"height": 100}},
+    {"transform": {"cropCustom": 0}}, {"opacity": 0},
 ])
 @pytest.mark.parametrize("blank", [False, True])
-def test_nonempty_placement_compositing_is_refused_even_for_empty_shots(project, placement, blank):
+def test_visual_placement_transform_is_refused_even_for_empty_shots(project, placement, blank):
     graph = source_graph()
     graph["occurrences"][0].update(placement)
     if blank:
@@ -183,8 +185,12 @@ def test_nonempty_placement_compositing_is_refused_even_for_empty_shots(project,
     )
 
 
-@pytest.mark.parametrize("placement", [{}, {"transform": {}}, {"transform": None, "opacity": None}])
-def test_empty_placement_keeps_child_geometry_and_audio(project, placement):
+@pytest.mark.parametrize("placement", [
+    {}, {"transform": {}}, {"transform": None, "opacity": None},
+    {"transform": {"opacity": 1}}, {"transform": {"scale": 1}},
+    {"opacity": 1}, {"transform": {"opaque": True}},
+])
+def test_noop_placement_transform_is_accepted_and_keeps_child_geometry_and_audio(project, placement):
     graph = source_graph()
     graph["occurrences"][0].update(placement, gain=0.5, muted=True)
     revision = next(r for r in graph["shot_revisions"] if r["shot_id"] == "shot-alpha" and r["revision_id"] == "rev-a")

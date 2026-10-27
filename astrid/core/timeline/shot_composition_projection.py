@@ -232,7 +232,19 @@ def _placement_speed(value: Any, *, path: str) -> float:
 
 def _apply_placement_transform(occurrence: Mapping[str, Any], *, path: str) -> None:
     """Refuse placement compositing that cannot be applied to the whole group."""
-    if any(occurrence.get(key) not in (None, {}, [], "") for key in ("opacity", "transform")):
+    transform = occurrence.get("transform")
+    has_visual_geometry = isinstance(transform, Mapping) and any(
+        key in transform
+        for key in ("x", "y", "width", "height")
+    ) or (
+        isinstance(transform, Mapping)
+        and any(str(key).startswith("crop") for key in transform)
+    )
+    has_non_default_opacity = occurrence.get("opacity") not in (None, 1) or (
+        isinstance(transform, Mapping) and transform.get("opacity") not in (None, 1)
+    )
+    has_non_default_scale = isinstance(transform, Mapping) and transform.get("scale", 1) not in (None, 1)
+    if has_visual_geometry or has_non_default_opacity or has_non_default_scale:
         raise ShotCompositionProjectionError(
             "Shot opacity and transforms are not supported yet. "
             "Remove them from the shot placement to render this timeline."
