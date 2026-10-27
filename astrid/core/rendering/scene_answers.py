@@ -54,6 +54,8 @@ def frames_at(scene: Mapping[str, Any], frames: Iterable[int]) -> list[dict[str,
 def _query(payload: dict[str, Any], frames: Iterable[int]) -> list[dict[str, Any]]:
     requested = list(frames)
     payload = {**payload, "frames": requested}
+    if "NODE_OPTIONS" in os.environ or "NODE_PATH" in os.environ:
+        raise SceneQueryUnavailable("unsupported loader override in scene query environment")
     try:
         from astrid.core.rendering.remotion_runtime import RemotionValidationError
     except ImportError as exc:

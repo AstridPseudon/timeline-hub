@@ -240,6 +240,12 @@ def test_registered_plate_ssr_preserves_existing_draw_and_default_theme(prepared
     from astrid.core.theme import builtin_theme
 
     props, basis, _ = prepared_root([plate()])
+    # Keep the SSR hashes scoped to plate rendering; occurrence track grouping
+    # is covered by the shot-layering tests and changes the composition shell.
+    props = {**props, "timeline": {**props["timeline"],
+                                    "tracks": [{"id": "picture", "kind": "visual", "label": "Picture"}],
+                                    "clips": [{**clip, "track": "picture"}
+                                              for clip in props["timeline"]["clips"]]}}
     cases = {
         "empty": {}, "fill": {"fill": "paper"}, "token": {"fill": "  ink  "},
         "image": {"src": SRC},
