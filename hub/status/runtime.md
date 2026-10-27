@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T05:55:12Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T05:53:26.925739+00:00
+<!-- main | 2026-10-27T05:59:47Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T05:59:42.666238+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -128,15 +128,15 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive usable pinned render lane | Main Sol and Luna | Main05:12 named lane release | merged | diag-renderlane2-0440 | Main records generic host1 PASS and named lane usable. Original9312 cleanup failure retained; A-owned proof is separate and not accepted. | No Runtime change |
 
-| A stand-in proof | Receive actual pinned-element proof | A Luna | Named lane available | doing | A-T3-proof-standin-r13 | Actual17297 running after C full ended. Real export, pinned revisions, fail-closed snapshots and local Vite comparison remain unqualified. | A branch |
+| A stand-in proof | Receive actual pinned-element proof | A Luna | Named lane available | doing | A-T3-proof-standin-r13 | Real export and local Vite proof active. Earlier harness failures retained; no independent result or acceptance. | A branch |
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-| C2 full App comparison | Receive current C App full-unit proof | C Luna | Integrated three corrections | doing | C-full-unit-10 | Actual27955 exit1:19957 PASS41 FAIL across7 files in801s. Existing worker owns staging comparison and review; no C acceptance. | C App1a02991e0e |
+| C2 full App comparison | Receive bounded full App comparison | C Luna | Integrated three corrections | review | C full10 and compare10 terminal | Full27955:19957 PASS41 FAIL. Compare17018 matches41 on C26d9; staging inheritance unproved. Main notified0556. | C App1a02991e0e |
 
-Blockers: A owns the real pinned-element proof. C owns final B recovery receiving, browser safety proof and the full App comparison. B reports milestone ready; Main acceptance remains pending. H/D/P acceptance and START gates remain closed. D130 holds.
+Blockers: A owns the real pinned-element proof. C owns the full App staging comparison; earlier C-head comparison is narrower. Main owns acceptance. B reports milestone ready; Main acceptance remains pending. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5516685312 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact05:33/05:37 removed0 dirs,packed0 dirs and gzipped7 logs. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5847818240 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact05:33/05:37 removed0 dirs,packed0 dirs and gzipped7 logs. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -147,4 +147,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T05:51:52.057028+00:00. PLAN, common rules, inbox, header, owner boards and current pipeline checked. Runtime census2717 has zero live rows; no ready Runtime work. All monitored inputs are unchanged. C full App suite27955 ended exit1 with19957 PASS41 FAIL; existing worker owns staging comparison. A pinned-element17297 now running. Both original workers remain active. B milestone is ready for Main acceptance. H/D/P START markers absent. Fresh Runtime tree census:36 total,31 KEEP,5 dirty,zero eligible recycle. No cleanup of protected data. [Pass evidence](rounds/20261027T055117Z-pass.json).
+Current pass: 2026-10-27T05:59:42.666238+00:00. Two passes this round. Runtime census2717 has zero live workers and no ready task. Inbox and header unchanged; C board changed. Full App27955 ended19957 PASS41 FAIL plus collection failure. Existing compare17018 reproduces41 on earlier C26d9, not staging. [Main scope handoff](../../design/peer-runtime-to-main-20261027T055631Z-C-comparison-scope.md) sent; no duplicate source or test dispatched. A original proof worker remains active. B milestone awaits Main acceptance. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Last guarded maintenance05:33/05:37 retained; no protected cleanup. [Pass evidence](rounds/20261027T055905Z-pass.json).
