@@ -66,7 +66,8 @@ def _selection(session, bundle, source):
     return _verified(transport, project, pin)
 
 
-def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, values=None):
+def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, values=None,
+                        asset_alias=None):
     """Build the shared native track and media placement recipe."""
     kind = verified['media_type'].split('/', 1)[0]
     if kind not in ('image', 'video', 'audio'):
@@ -96,7 +97,7 @@ def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, 
         raise TimelineEditError(f'track {track!r} is not active; use --track {suggestion}')
     row = {'id': clip_id or 'clip-' + uuid.uuid4().hex,
            'clipType': 'audio' if kind == 'audio' else 'media', 'track': track,
-           'asset': pin['asset'], 'at': on, 'hold': duration, **dict(values or {})}
+           'asset': asset_alias or pin['asset'], 'at': on, 'hold': duration, **dict(values or {})}
     if kind in ('video', 'audio'):
         row.update({'from': 0, 'to': duration, 'speed': 1})
     commands = []
