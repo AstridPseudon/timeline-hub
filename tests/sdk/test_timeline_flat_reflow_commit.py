@@ -164,6 +164,7 @@ def test_flat_ripple_composes_with_free_edits_under_one_capture_guard(arranged_s
     assert len(calls) == len(realm.accepted) == 1
     assert calls[0]["merge"] == "atomic" and "reads" not in calls[0]
     assert calls[0]["commands"] and all(command["op"] == "doc.patch" for command in calls[0]["commands"])
+    assert calls[0]["steps"]
     assert all({"kind": "scope", "ref": "timeline", "path": []} in step["reads"]
                for step in calls[0]["steps"])
 
@@ -171,6 +172,8 @@ def test_flat_ripple_composes_with_free_edits_under_one_capture_guard(arranged_s
     payload = landed["parent_revision"]["payload"]
     assert payload["name"] == "Ripple with surrounding edits"
     assert payload["custom"] == {"before": True, "after": True}
+    after = next(row for row in payload["clips"] if row["id"] == "after")
+    assert after["at"] == pytest.approx({"insert": 10, "delete": 6, "close-gap": 5.1}[operation])
 
     undone = tl.undo(publications=[result["receipt"]["receipt_id"]])
     assert len(calls) == len(realm.accepted) == 2
