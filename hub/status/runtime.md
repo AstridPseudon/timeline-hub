@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T20:36:16Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T20:35:30.348168+00:00
+<!-- main | 2026-10-27T20:42:32Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T20:42:02.272653+00:00
 
 Original Runtime delivery is complete. H and D retain ownership of active follow-up work.
 
@@ -14,22 +14,22 @@ Original Runtime delivery is complete. H and D retain ownership of active follow
 | H C3 sampler | Qualify save and restart proof | H Luna and service | Matching one-head checkout | review | H-proof-c3-sampler | 28319: 1 PASS, five saves durable after restart. Handler296 to402ms. H owns acceptance; raw KEEP is prospective. | Runtime7636c4; Agent46b149 |
 | H Runtime full | Qualify Runtime full results | H lead and Luna | Actual matched-lane run | review | H-tests-runtime-final-r3 | 7448: 7412 PASS,48 FAIL,25 ERROR. Bad IDs match baseline by name; report binds Runtime1697 to Agent88a9. | Runtime1697f17510 |
 | H Runtime route | Retain source route diagnosis | Luna and independent Luna | Independent source-map PASS | merged | rt-OPS-H-runtime-consumer-review-1711 | [Source PASS](../../design/runtime-H-runtime-consumer-independent-publication-20261027T171745Z.json); historical import inferred, no origin capture. | No source change |
-| H audit | Complete authorized crosser cutter | H Sol and Luna | Complete integrated proofs | doing | H-sol-crosser-cutter-r3; L14 and L15 lineage | L14 107 PASS,1 FAIL at frame31. Precise-start normalization also under audit. H owns final tests; r2 must not merge. | r3 private branch |
+| H audit | Complete authorized crosser cutter | H Sol and Luna | Complete integrated proofs | doing | H-sol-crosser-cutter-r3; H-crosser-L15 | L14 pytest111 PASS; summary wrapper failed. L15 first focused15 PASS,1 FAIL; no cutter merge yet. H owns final checks. | r3 private branch |
 | H App full | Qualify post sprite sync full results | H lead and Luna | Final source run | review | H-tests-app-final-r5 | 10676: 20037 PASS,10 baseline failures plus known schema collection failure. H records no new failure names; final acceptance remains open. | App3c1f6e3984 |
 | H Agent lanes | Requalify after crosser repair | H lead and Sol | Authorized cutter merged | blocked:H | H-sol-crosser-cutter; H manager | Prior910 PASS,41 FAIL;22 new restructure failures. Recheck35 files and full suite after the repair. | Agent314a6d2bbb |
-| H and D continuity | Keep phase managers moving | Phase leads and taste worker | Phase work remains open | doing | Main lead roll; H Sol; lead-D-r3 | H r10 is active; cutter unmerged. Main owns render-lane diagnosis. D owns provisional project id source with136 PASS and1 baseline failure. | H and D own final acceptance |
+| H and D continuity | Keep phase managers moving | Phase leads and taste worker | Phase work remains open | doing | lead-H-r10; lead-D-r4 | H cutter active. Main owns render lane. D persona6 and project id verification active; final E14 waits for H. | H and D own acceptance |
 | D merged editing | Retain reviewed editing work | D Sol and Luna splits | Central merged-head tests | merged | lead-D-r2 and named D workers | E1 E2 E3 E4 E5 E6 E7 E8 E10 E11 merged. Combined416 PASS,16 native integration PASS; supplemental gaps remain. | Agentd1fe087ed5; Runtimeb8e4e8 |
 | D E9 undo | Retain matched mixed undo proof | D Sol and Lunas | E13 return merged | merged | D-E13-r2-paired-verify-r1 | Exact matched candidate2 PASS through authenticated Runtime. Combined worker reused exact-tree cache. Historical wrong-pin failure retained. | Agent3c0666; Runtimed3ba026 |
 | D E12 | Retain merged preview and literal lists | D Luna and lead | Fresh no-code verification | merged | D-E12-r1; D-E12-integrate-r2 | 235 targeted PASS,5 integration deselected; Ruff and diff PASS. D records merged source and owns final acceptance. | Agent6fc24f72ec |
 | D next editing | Await final H for E14 | D Luna and taste workers | Accepted H merged forward | gated:H | lead-D-r3; D-post-E13-r2-combined-r1 | E13 combined453 PASS,22 deselected; matching paired2 PASS. D owns E14 and final acceptance after H. | Agent3c0666beca |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive on owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Retain guarded maintenance | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | Supported recycle removed one ended control worktree; D source worktree was already absent. Sweep and compact are running. KEEP and ZIP verification pending. | No source change |
+| OPS headroom | Protect live evidence and maintain disk | Runtime manager | Supported tools and KEEP guards | doing | Runtime manager | No eligible ended source: control worktree is in active service140. Added five prospective KEEP markers; maintenance active. | No source change |
 
-Blockers: H owns r3 half-frame sprite and precise-start repairs, final renders and 35-file/full qualification. Main diag-renderlane3-2030 owns the cleanup lane failure. R2 must not merge.
-Blockers: D owns E14, final guides and acceptance after accepted H is merged forward. Project id source is terminal and provisional; D owns review/integration. Earlier combined453 and paired2 PASS stay scoped.
+Blockers: H owns L15 projected timing and fallback repair, final renders and35-file/full qualification. Main diag-renderlane3-2030 owns the cleanup lane. R2 must not merge.
+Blockers: D owns E14, final guides and acceptance after accepted H is merged forward. Project id source is provisional and awaits healthy service qualification; D owns review/integration. Earlier combined453 and paired2 PASS stay scoped.
 Next ready: None for Runtime. H owns cutter and final qualification. D E14 remains gated on accepted H; P and the follow-up ZIP remain gated.
-live 0 / cap 3; ready-undispatched 0. Free 6036283392 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
+live 0 / cap 3; ready-undispatched 0. Free 6062723072 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
 
 Earlier detailed board: [preserved status](rounds/20261027T174711Z-prior-status.md). Full historical delivery rows: [historical board](rounds/20261027T114133Z-prior-status.md). Every original failure, proof tuple, custody limit, refusal, raw KEEP hold and deferred source remains unchanged.
 
@@ -37,10 +37,12 @@ Delivered archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timel
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled. Four recipient patch and bundle checks passed within documented scope. Historical PENDING prose, whitespace findings and monitor limits remain disclosed; this is not a full-suite or global behavior PASS.
 
-Current pass evidence: [management pass](rounds/20261027T203302Z-pass.json). Inbox has no new bytes after1941564; the header hash is unchanged. Runtime census has2719 worker records and no live Runtime worker. No Runtime source task is ready.
+Current pass evidence: [management pass](rounds/20261027T203957Z-pass.json). Inbox has no new bytes after1941564; the board header is unchanged. Runtime census exit0:2719 rows and no live Runtime worker. Historical meta parsing warnings are retained in the pass record. No Runtime source task is ready.
 
-H round10 is active. Sol r3 and L14 own the half-frame sprite and normalization repairs; L15 is prepared for the next serial source step. Main's diag-renderlane3-2030 owns the pre-cutter control cleanup failure. Final35-file Agent and full-suite qualification remain with H. The controlling Runtime run7448 remains7412 PASS,48 FAIL and25 ERROR on Runtime1697 with Agent88a9; the H summary currently repeats older totals. App run10676 is20037 PASS,10 baseline failures plus the known schema collection failure. These remain bounded worker classifications pending H acceptance.
+H r10 and its cutter are active. L15 owns projected timing and full-frame fallback; its first focused run has15 PASS and1 FAIL. Final35-file Agent and full qualification remain with H. Main diag-renderlane3-2030 owns the cleanup lane. The controlling Runtime run7448 remains7412 PASS,48 FAIL and25 ERROR on Runtime1697 with Agent88a9; H summary currently lists older totals. App run10676 remains20037 PASS,10 baseline failures plus the known schema collection failure. These are bounded worker classifications pending H acceptance.
 
-D owns the provisional guide source and E14 after H acceptance. Its combined453 and paired2 PASS remain scoped. P START is absent; the follow-up ZIP remains gated. No Runtime product edit, new worker or test request was made.
+D r4 has dispatched project id verification and persona6. Earlier broad136 PASS plus1 baseline failure and focused125 pytest PASS retain their original postprocessing limits. Combined453 and paired2 PASS remain scoped. E14 still waits for accepted H; P START is absent. No Runtime product edit, worker or test request was made.
 
-Guarded maintenance is running. Supported recycle removed the ended, clean H-control-agent-renderproof-pin worktree; its branch and ORCH evidence remain. D-T1-project-id-r1 was already absent when checked. The action is recorded in the existing deletion ledger. Sweep and compact receipts and final KEEP verification follow in this pass. [Previous board](rounds/20261027T203302Z-prior-status.md) retains all historical proof and refusal limits.
+The ended H-control-agent-renderproof-pin source worktree was recreated for active pinned-element-render service140. It is protected and was not recycled. Five prospective KEEP markers now preserve that source and open control/L15 tests, including control render-proof13620. All 371 starting KEEP markers are hash and mode exact; the delivered ZIP still matches its sidecar. Guarded sweep and compact are running.
+
+Round continuity: [previous board](rounds/20261027T203957Z-prior-status.md) preserves every historical delivery, proof and refusal limit. H owns cutter repair and final qualification; Main owns the render lane; D owns guides and later E14.

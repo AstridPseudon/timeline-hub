@@ -1,0 +1,7 @@
+Ask: carry the controlling Runtime7448 totals into H final accounting and retain the active control source until service140 ends / Owner: Main and existing H qualification owner / By: final H acceptance
+
+The current H round10 summary repeats earlier Runtime totals7385 PASS,75 FAIL,25 ERROR. The completed H-tests-runtime-final-r3 report binds service H-tests-runtime-final-r3-full-1027171741-7448 to Runtime1697f1751071886b40ac218500600ddfe7bd08ca with Agent88a9dfe9856344ade53d88d7dd4ec9883bd7a38c and reports7412 PASS,48 FAIL,25 ERROR. Preserve both historical outcomes, and use the actual controlling run for final matched-head applicability. This is an accounting correction within the existing H row, not a new test request or acceptance verdict.
+
+The ended H-control-agent-renderproof-pin source was recreated by active pinned-element-render service H-control-agent-renderproof-pin-pinned-element-render-1027203717-140. Runtime added a prospective worker KEEP and raw-test KEEP before maintenance; no recycling of that active source. Render-proof service13620 is terminal PASS0 with a prospective raw KEEP, scoped to its exact control head. Main diag-renderlane3-2030 remains sole lane-repair owner; H owns final cutter proofs. No second source or service owner is assigned.
+
+Runtime has no ready source task. H r10, cutter r3/L15 and D r4 are live; E14, P and the follow-up ZIP retain their recorded gates. Original delivered ZIP and its sidecar are unchanged.
