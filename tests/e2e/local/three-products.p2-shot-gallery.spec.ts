@@ -1,8 +1,8 @@
 import { expect, type Page, type Request, type Response } from '@playwright/test';
 import { THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { openEmbeddedCanonicalShot, test as appTest } from './support/app.ts';
+import { openEmbeddedCanonicalShot, revisionBody, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
-import type { CanonicalDocument, CommitRequest, CommitAcceptedMutation } from '../../../src/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitRequest, CommitAcceptedMutation, Manifest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const CEILING = { timeout: 90_000 };
@@ -47,12 +47,38 @@ function parentContainsClip(document: CanonicalDocument, clipId: string): boolea
   return [...parentClips, ...configClips].some((clip) => object(clip, 'parent clip').id === clipId);
 }
 
+async function canonicalDocumentAt(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string): Promise<CanonicalDocument> {
+  const parent = await revisionBody(harness, revisionId) as Record<string, any>;
+  const manifest = parent.dependency_manifest as Manifest;
+  const root = `/v1/projects/${harness.seed.projectId}`;
+  const shots = await Promise.all(manifest.shots.map(async (pin) => {
+    const response = await harness.runtimeJson('GET', `${root}/shots/${pin.shot_id}/revisions/${pin.revision_id}`);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return { ...pin, payload: response.body.payload };
+  }));
+  const internals = await Promise.all(manifest.internal_timelines.map(async (pin) => {
+    const response = await harness.runtimeJson('GET', `${root}/timelines/${pin.timeline_id}/revisions/${pin.revision_id}`);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    return { ...pin, payload: response.body.payload };
+  }));
+  return {
+    schema_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed.timelineId,
+    parent_revision: { revision_id: parent.revision_id, content_digest: parent.content_digest, payload: parent.payload },
+    shot_revisions: shots,
+    internal_timeline_revisions: internals,
+    dependency_manifest: manifest,
+  };
+}
+
 async function openTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed): Promise<void> {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await page.goto(`${harness.origin}/tools/video-editor`);
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(harness.seed.projectName);
   await expect(page.getByRole('textbox', { name: 'Track name' }).first()).toBeVisible();
+  await expect(page.locator('[data-testid="runtime-not-connected"]')).toHaveCount(0);
   expect(seed.timelineId).toBe(harness.seed.timelineId);
 }
 
@@ -112,6 +138,9 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
 
   // Use the existing lockable bottom gallery. This is intentionally opened before
   // the shot editor so the journey proves that the gallery stays usable behind it.
+  // The closed desktop control is an intentionally small hoverable grip; expand it
+  // before clicking its opacity-hidden Open Gallery action.
+  await page.locator('[data-pane-control][data-pane-control-side="bottom"]').hover();
   await page.getByRole('button', { name: 'Open Gallery', exact: true }).click();
   await expect(page.getByTestId('generations-pane')).toBeVisible();
   await page.getByRole('button', { name: 'Lock pane', exact: true }).click();
@@ -121,10 +150,8 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
   const beforeHead = await harness.runtimeJson<{ head_revision_id: string }>(
     'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
   );
-  const before = await harness.runtimeJson<CanonicalDocument>(
-    'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${beforeHead.body.head_revision_id}`,
-  );
-  const beforeChild = childClips(before.body, seed.occurrenceId);
+  const before = await canonicalDocumentAt(harness, seed, beforeHead.body.head_revision_id);
+  const beforeChild = childClips(before, seed.occurrenceId);
 
   const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
   await expect(page.locator('[data-dialog-backdrop]')).toHaveCount(0);
@@ -158,9 +185,9 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
   });
   expect(undo.body.commands[0]).toMatchObject({ op: 'timeline.inverse' });
   const undone = undo.json.data.canonical_document;
-  expect(undone.parent_revision.payload).toEqual(before.body.parent_revision.payload);
-  expect(undone.shot_revisions).toEqual(before.body.shot_revisions);
-  expect(undone.internal_timeline_revisions).toEqual(before.body.internal_timeline_revisions);
+  expect(undone.parent_revision.payload).toEqual(before.parent_revision.payload);
+  expect(undone.shot_revisions).toEqual(before.shot_revisions);
+  expect(undone.internal_timeline_revisions).toEqual(before.internal_timeline_revisions);
 
   const undoneDialog = await reloadAndOpenShot(page, seed, undone.parent_revision.revision_id);
   await expect(undoneDialog.locator(`.clip-action[data-clip-id="${projectedClipId}"]`)).toHaveCount(0);
