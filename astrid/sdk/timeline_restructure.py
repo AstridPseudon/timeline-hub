@@ -31,11 +31,20 @@ WALL_TOLERANCE = 0.001  # a clip crossing a wall by no more than 1 ms stays in i
 _PIECE_MARKER = "timeline_restructure_piece"
 
 
+_OVER_MARKER = "timeline_restructure_over"
+
+
+def _clip_kind(clip: Mapping[str, Any]) -> str:
+    return str(clip.get("clipType") or clip.get("clip_type") or clip.get("type") or clip.get("kind") or "media").lower()
+
+
 def _cutter_for(clip: Mapping[str, Any]):
-    """Dispatch hook for clip-type-specific cutters; None keeps the clip on the legacy hoist path."""
-    kind = str(clip.get("clipType") or clip.get("type") or clip.get("kind") or "media").lower()
+    """Dispatch hook for faithfully cuttable visual types; None keeps the clip on an over row."""
+    kind = _clip_kind(clip)
     if kind in {"media", "image", "video", "still", "text"}:
         return _cut_clip
+    if kind == "am-sprite":
+        return _cut_sprite
     return None
 
 
@@ -65,6 +74,50 @@ def _cut_clip(clip: Mapping[str, Any], start: float, end: float, chapter: Chapte
     else:
         value["duration"] = _r(length * speed)
     _filter_words(value, elapsed, elapsed + length, shift=-elapsed)
+    return value
+
+
+def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chapter,
+                *, piece_id: str | None = None, fps: float = 30.0) -> dict[str, Any]:
+    """Cut an am-sprite while preserving its clip-local animation clock and held poses."""
+    value = _cut_clip(clip, start, end, chapter, piece_id=piece_id)
+    params = value.get("params")
+    params = copy.deepcopy(dict(params)) if isinstance(params, Mapping) else {}
+    original_params = clip.get("params") if isinstance(clip.get("params"), Mapping) else {}
+    speed = _num(clip.get("speed"), 1.0) or 1.0
+    phase = max(0, int(round((start - _num(clip.get("at"))) * speed * fps)))
+    if phase:
+        step = max(1, int(round(_num(original_params.get("stepFrames"), 2) or 2)))
+        active_at = (phase // step) * step
+        keyframes = original_params.get("keyframes")
+        if isinstance(keyframes, list):
+            ordered = sorted((copy.deepcopy(k) for k in keyframes if isinstance(k, Mapping)),
+                             key=lambda k: _num(k.get("frame")))
+            active: dict[str, Any] = {}
+            for key in ordered:
+                if _num(key.get("frame"), -1) <= active_at:
+                    for field in ("x", "y", "flipX"):
+                        if field in key:
+                            active[field] = key[field]
+            base = {field: original_params[field] for field in ("x", "y", "flipX") if field in original_params}
+            base.update(active)
+            shifted = [{**copy.deepcopy(dict(k)), "frame": int(_num(k.get("frame"))) - phase}
+                       for k in ordered if _num(k.get("frame"), -1) > active_at]
+            params["keyframes"] = ([{"frame": active_at - phase, **base}] if base else []) + shifted
+        else:
+            params["keyframes"] = [{"frame": active_at - phase,
+                                     **{k: original_params[k] for k in ("x", "y", "flipX") if k in original_params}}]
+        for field in ("blinkAt",):
+            if isinstance(original_params.get(field), list):
+                params[field] = [int(_num(n)) - phase for n in original_params[field] if _num(n) + 2 > phase]
+            elif original_params.get(field) is not None:
+                params[field] = int(_num(original_params[field])) - phase if _num(original_params[field]) + 2 > phase else None
+        silhouette = original_params.get("silhouette")
+        if isinstance(silhouette, Mapping) and silhouette.get("until") is not None:
+            params["silhouette"] = {**copy.deepcopy(dict(silhouette)),
+                                     "until": int(_num(silhouette["until"])) - phase}
+        params["frameOffset"] = int(_num(original_params.get("frameOffset"))) + phase
+    value["params"] = params
     return value
 
 
@@ -246,6 +299,16 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
     if len(lists) == 2 and lists[0] != lists[1]:
         raise TimelineEditError("the parent holds two different clip lists (clips and config.clips)")
     clips = [copy.deepcopy(c) for c in (lists[0] if lists else [])]
+    for clip in clips:
+        app = clip.get("app")
+        astrid = app.get("astrid") if isinstance(app, Mapping) else None
+        marker = astrid.pop(_OVER_MARKER, None) if isinstance(astrid, dict) else None
+        if isinstance(marker, Mapping):
+            clip["track"] = marker.get("track", clip.get("track"))
+        if isinstance(astrid, dict) and not astrid:
+            app.pop("astrid")
+        if isinstance(app, dict) and not app:
+            clip.pop("app")
     assets: dict[str, Any] = {}
     tracks: dict[str, Any] = {}
 
@@ -385,6 +448,7 @@ class Plan:
     tracks: list[dict[str, Any]]
     assets: dict[str, Any]
     end_ms: int
+    over_clips: list[tuple[str, str, str, str]] = field(default_factory=list)
 
 
 def _walls(tl: Any, runs: list[dict[str, str]], end_ms: int) -> list[int]:
@@ -442,6 +506,11 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     internal = tl.bundle["shots"][sid]["internal_timeline"]
     film: list[dict[str, Any]] = []
     reasons: dict[str, str] = {}
+    over_clips: list[tuple[str, str, str, str]] = []
+    fps = bundle_fps(dict(flat)) or 30.0
+    tracks = _layer_order(tl.bundle.get("parent", {}).get("config", {}).get("tracks") or [], internal.get("tracks") or [])
+    track_defs = {str(t.get("id")): t for t in tracks}
+    over_rows: dict[str, str] = {}
     for clip in internal.get("clips") or []:
         s = _num(clip.get("at"))
         e = s + clip_duration(clip)
@@ -473,14 +542,18 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                 for index, (chapter, lo, hi) in enumerate(segments):
                     piece_id = _stable_id("chapter-piece", flat.get("timeline_id", ""), source_id,
                                           chapter.name, chapter.start_ms, index)
-                    piece = cutter(clip, lo, hi, chapter, piece_id=piece_id)
+                    piece = cutter(clip, lo, hi, chapter, piece_id=piece_id, fps=fps) if cutter is _cut_sprite \
+                        else cutter(clip, lo, hi, chapter, piece_id=piece_id)
                     app = piece.setdefault("app", {})
                     if not isinstance(app, dict):
                         app = piece["app"] = {}
                     astrid = app.setdefault("astrid", {})
                     if not isinstance(astrid, dict):
                         astrid = app["astrid"] = {}
-                    astrid[_PIECE_MARKER] = {"id": source_id, "index": index, "count": len(segments), "shape": shape}
+                    marker = {"id": source_id, "index": index, "count": len(segments), "shape": shape}
+                    if _clip_kind(clip) == "am-sprite" and _num((piece.get("params") or {}).get("frameOffset")):
+                        marker["sprite_frame_offset"] = int(_num(piece["params"]["frameOffset"]))
+                    astrid[_PIECE_MARKER] = marker
                     chapter.clips.append(piece)
                 continue
             if len(segments) == 1 and e > end_s + 1e-9:
@@ -491,6 +564,41 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
             value = copy.deepcopy(clip)
             if e > end_s + 1e-9:  # the one occurrence used to clip it at the film's end; a tail would lengthen the render
                 _set_length(value, end_s - s)
+            if not can_cut and not tl._is_audio(sid, clip) and not tl._is_music(sid, clip):
+                source_track = str(clip.get("track") or "picture")
+                base_track = str(flat.get("placements", [{}])[0].get("track") or
+                                 (flat.get("placements", [{}])[0].get("placement") or {}).get("track") or "picture")
+                stored = flat.get(STRUCTURE_KEY) or {}
+                matching_row = next((r for r in _rows(stored) if str(r.get("shot_id")) in (stored.get("shots") or {})
+                                     and _shot_name(stored["shots"][str(r["shot_id"])]) == chapters[k].name), None)
+                if matching_row is not None:
+                    base_track = str(matching_row.get("track") or (matching_row.get("placement") or {}).get("track") or base_track)
+                over_track = over_rows.get(base_track)
+                if over_track is None:
+                    base_def = track_defs.get(base_track, {"id": base_track, "kind": "visual"})
+                    candidate = f"{base_track}-over"
+                    suffix = 2
+                    while candidate in track_defs:
+                        candidate = f"{base_track}-over-{suffix}"
+                        suffix += 1
+                    over_track = candidate
+                    over_rows[base_track] = over_track
+                    over_def = copy.deepcopy(dict(base_def))
+                    over_def["id"] = over_track
+                    over_def["name"] = f"{base_def.get('name') or base_track} over"
+                    at = next((i for i, t in enumerate(tracks) if str(t.get("id")) == base_track), 0)
+                    tracks.insert(at, over_def)
+                    track_defs[over_track] = over_def
+                app = value.setdefault("app", {})
+                if not isinstance(app, dict):
+                    app = value["app"] = {}
+                astrid = app.setdefault("astrid", {})
+                if not isinstance(astrid, dict):
+                    astrid = app["astrid"] = {}
+                astrid[_OVER_MARKER] = {"track": source_track, "row": base_track}
+                value["track"] = over_track
+                label = str(value.get("name") or value.get("label") or value.get("asset") or "")
+                over_clips.append((str(value.get("id")), label, _clip_kind(value), over_track))
             film.append(value)
             reasons[str(value.get("id"))] = why
         else:
@@ -499,8 +607,8 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
             if e > end_s + 1e-9 and s < end_s and not tl._is_audio(sid, clip):
                 _set_length(value, end_s - s)
             chapters[k].clips.append(value)
-    return Plan(chapters, film, reasons, _layer_order(tl.bundle.get("parent", {}).get("config", {}).get("tracks") or [], internal.get("tracks") or []),
-                copy.deepcopy((internal.get("registry") or {}).get("assets") or {}), end_ms)
+    return Plan(chapters, film, reasons, tracks,
+                copy.deepcopy((internal.get("registry") or {}).get("assets") or {}), end_ms, over_clips)
 
 
 def _strings(value: Any):
@@ -658,6 +766,7 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
             astrid = app.get("astrid")
             if isinstance(astrid, dict):
                 astrid.pop(_PIECE_MARKER, None)
+                astrid.pop(_OVER_MARKER, None)
                 if not astrid:
                     app.pop("astrid")
             if not app:
@@ -722,7 +831,12 @@ def describe(flat: Mapping[str, Any]) -> list[str]:
     lines.append(f"film-level clips ({len(planned.film_clips)}): stored on the film, not in a chapter")
     for clip in planned.film_clips:
         s = _num(clip.get("at"))
-        lines.append(f"  {str(clip.get('id')):<28} {clip.get('track')!s:<8} {s:9.3f}-{s + clip_duration(clip):.3f} s  {planned.reasons[str(clip.get('id'))]}")
+        lines.append(f"  {str(clip.get('id')):<28} {clip.get('track')!s:<16} {s:9.3f}-{s + clip_duration(clip):.3f} s  {planned.reasons[str(clip.get('id'))]}")
+    if planned.over_clips:
+        lines.append("uncuttable visual clips on rows above their shot occurrence:")
+        for clip_id, name, kind, track in planned.over_clips:
+            suffix = f" ({name})" if name else ""
+            lines.append(f"  {clip_id}{suffix} [{kind}] -> {track}")
     lines.append(f"total: {sum(len(c.clips) for c in planned.chapters)} chapter clips + {len(planned.film_clips)} film-level clips, "
                  f"{len(planned.chapters)} chapter shots, {planned.end_ms / 1000:.3f} s")
     return lines
