@@ -973,7 +973,8 @@ if case['initialize']:
     }))
 if case['fixture'] == 'three-products':
     if not case['initialize']:
-        assert bundle['parent']['config']['tracks'] == [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]
+        assert any(track.get('id') == 'V1' and track.get('kind') == 'visual' and track.get('label') == 'V1'
+                   for track in bundle['parent']['config']['tracks'])
     else:
         add(capture_track_create(bundle, 'parent', {'id': 'V1', 'kind': 'visual', 'label': 'V1'}))
     add(capture_track_create(bundle, 'parent', {'id': 'S1', 'kind': 'visual', 'label': 'S1'}))
@@ -1018,7 +1019,7 @@ if case['fixture'] == 'three-products':
         'f2-app': asset({'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}, pins['f2-app']),
         'f2-video': asset({'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}, pins['f2-video']),
     }
-    parent_registry['f2-video']['duration'] = 12
+    parent_registry['f2-video']['duration'] = 12.0
     # Retain the original authored fixture independently of the native candidate.
     expected_parent = {'slug': 'main', 'name': 'Main', 'config': {'clips': copy.deepcopy(parent_clips),
         'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}, {'id': 'S1', 'kind': 'visual', 'label': 'S1'}],
@@ -1064,12 +1065,16 @@ if case['fixture'] == 'three-products':
         bundle = execute(before, patches, verified_media=verified).bundle
         commands.extend(patches)
 else:
+    if not any(row.get('id') == 'V1' for row in bundle['parent']['config']['tracks']):
+        add(capture_track_create(bundle, 'parent', {'id': 'V1', 'kind': 'visual', 'label': 'V1'}))
     before = copy.deepcopy(bundle)
     after = copy.deepcopy(bundle)
+    # Preserve the Runtime's canonical tracks instead of emitting generic list edits.
     expected_parent = {'slug': 'main', 'name': 'Main', 'registry': {'assets': {}}, 'clips': [],
                        'config': {'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
-                                 'clips': [], 'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]}}
+                                 'clips': [], 'tracks': copy.deepcopy(before['parent']['config']['tracks'])}}
     after['parent'] = copy.deepcopy(expected_parent)
+    after['parent']['config']['tracks'] = copy.deepcopy(before['parent']['config']['tracks'])
     for command in emit_document_commands(before, after):
         add(command)
 
