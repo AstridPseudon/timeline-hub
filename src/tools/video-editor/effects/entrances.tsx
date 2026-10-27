@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react';
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 
 export type EffectComponentProps = {
   children: ReactNode;
@@ -9,10 +9,20 @@ export type EffectComponentProps = {
   params?: Record<string, unknown>;
 };
 
-const getNormalizedProgress = (frame: number, durationInFrames: number): number => {
+const getEasing = (params: Record<string, unknown> | undefined) => {
+  const easing = params?.easing;
+  if (easing === 'in' || easing === 'ease-in') return Easing.in(Easing.quad);
+  if (easing === 'out' || easing === 'ease-out') return Easing.out(Easing.quad);
+  if (easing === 'in-out' || easing === 'ease-in-out') return Easing.inOut(Easing.quad);
+  if (easing === 'step') return Easing.step0;
+  return Easing.linear;
+};
+
+const getNormalizedProgress = (frame: number, durationInFrames: number, params?: Record<string, unknown>): number => {
   return interpolate(frame, [0, Math.max(1, durationInFrames)], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
+    easing: getEasing(params),
   });
 };
 
@@ -23,38 +33,40 @@ const withTransform = (transform: string, opacity = 1): React.CSSProperties => (
   opacity,
 });
 
-export const SlideUpEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const SlideUpEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const progress = spring({ frame, fps, durationInFrames: effectFrames, config: { damping: 14, stiffness: 120 } });
+  const progress = !params?.easing
+    ? spring({ frame, fps, durationInFrames: effectFrames ?? 18, config: { damping: 14, stiffness: 120 } })
+    : getNormalizedProgress(frame, effectFrames ?? 18, params);
   const translateY = interpolate(progress, [0, 1], [80, 0]);
   return <AbsoluteFill style={withTransform(`translateY(${translateY}px)`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const SlideDownEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const SlideDownEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
-  const progress = getNormalizedProgress(frame, effectFrames ?? 18);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 18, params);
   const translateY = interpolate(progress, [0, 1], [-80, 0]);
   return <AbsoluteFill style={withTransform(`translateY(${translateY}px)`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const SlideLeftEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const SlideLeftEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
-  const progress = getNormalizedProgress(frame, effectFrames ?? 18);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 18, params);
   const translateX = interpolate(progress, [0, 1], [180, 0]);
   return <AbsoluteFill style={withTransform(`translateX(${translateX}px)`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const SlideRightEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const SlideRightEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
-  const progress = getNormalizedProgress(frame, effectFrames ?? 18);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 18, params);
   const translateX = interpolate(progress, [0, 1], [-180, 0]);
   return <AbsoluteFill style={withTransform(`translateX(${translateX}px)`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const ZoomInEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const ZoomInEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
-  const progress = getNormalizedProgress(frame, effectFrames ?? 16);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 16, params);
   const scale = interpolate(progress, [0, 1], [0.75, 1]);
   return <AbsoluteFill style={withTransform(`scale(${scale})`, progress)}>{children}</AbsoluteFill>;
 };
@@ -74,10 +86,30 @@ export const PulseEntrance: FC<EffectComponentProps> = ({ children, effectFrames
   return <AbsoluteFill style={withTransform(`scale(${scale})`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const FadeEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
+export const FadeEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
   const frame = useCurrentFrame();
-  const progress = getNormalizedProgress(frame, effectFrames ?? 12);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 12, params);
   return <AbsoluteFill style={withTransform('none', progress)}>{children}</AbsoluteFill>;
+};
+
+export const FadeUpEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
+  const frame = useCurrentFrame();
+  const progress = getNormalizedProgress(frame, effectFrames ?? 18, params);
+  const translateY = interpolate(progress, [0, 1], [40, 0]);
+  return <AbsoluteFill style={withTransform(`translateY(${translateY}px)`, progress)}>{children}</AbsoluteFill>;
+};
+
+export const ScaleInEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
+  const frame = useCurrentFrame();
+  const progress = getNormalizedProgress(frame, effectFrames ?? 18, params);
+  const scale = interpolate(progress, [0, 1], [0.85, 1]);
+  return <AbsoluteFill style={withTransform(`scale(${scale})`, progress)}>{children}</AbsoluteFill>;
+};
+
+export const TypeOnEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params }) => {
+  const frame = useCurrentFrame();
+  const progress = getNormalizedProgress(frame, effectFrames ?? 120, params);
+  return <AbsoluteFill style={{ clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` }}>{children}</AbsoluteFill>;
 };
 
 export const FlipEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {

@@ -22,6 +22,22 @@ export const SlideDownExit: FC<EffectComponentProps> = ({ children, durationInFr
   return <AbsoluteFill style={{ width: '100%', height: '100%', transform: `translateY(${translateY}px)`, opacity }}>{children}</AbsoluteFill>;
 };
 
+export const SlideUpExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames }) => {
+  const frame = useCurrentFrame();
+  const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 18);
+  const translateY = interpolate(progress, [0, 1], [0, -120]);
+  const opacity = interpolate(progress, [0, 1], [1, 0]);
+  return <AbsoluteFill style={{ width: '100%', height: '100%', transform: `translateY(${translateY}px)`, opacity }}>{children}</AbsoluteFill>;
+};
+
+export const SlideLeftExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames }) => {
+  const frame = useCurrentFrame();
+  const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 18);
+  const translateX = interpolate(progress, [0, 1], [0, -180]);
+  const opacity = interpolate(progress, [0, 1], [1, 0]);
+  return <AbsoluteFill style={{ width: '100%', height: '100%', transform: `translateX(${translateX}px)`, opacity }}>{children}</AbsoluteFill>;
+};
+
 export const ZoomOutExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames }) => {
   const frame = useCurrentFrame();
   const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 14);

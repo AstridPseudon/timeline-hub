@@ -10,6 +10,7 @@ import { validateAndCoerceParams } from '@/tools/video-editor/effects/validatePa
 import {
   BounceEntrance,
   FadeEntrance,
+  FadeUpEntrance,
   FlipEntrance,
   MeteoriteEntrance,
   PulseEntrance,
@@ -17,6 +18,8 @@ import {
   SlideLeftEntrance,
   SlideRightEntrance,
   SlideUpEntrance,
+  ScaleInEntrance,
+  TypeOnEntrance,
   ZoomInEntrance,
   ZoomSpinEntrance,
   type EffectComponentProps,
@@ -34,6 +37,8 @@ import {
   FlipExit,
   ShrinkExit,
   SlideDownExit,
+  SlideLeftExit,
+  SlideUpExit,
   ZoomOutExit,
 } from '@/tools/video-editor/effects/exits.tsx';
 import type { ParameterSchema, ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
@@ -49,6 +54,9 @@ export const entranceEffects: Record<string, ClipEffectComponent> = {
   'zoom-spin': ZoomSpinEntrance,
   pulse: PulseEntrance,
   fade: FadeEntrance,
+  'fade-up': FadeUpEntrance,
+  'scale-in': ScaleInEntrance,
+  'type-on': TypeOnEntrance,
   flip: FlipEntrance,
   bounce: BounceEntrance,
   meteorite: MeteoriteEntrance,
@@ -59,6 +67,9 @@ export const exitEffects: Record<string, ClipEffectComponent> = {
   'zoom-out': ZoomOutExit,
   flip: FlipExit,
   'fade-out': FadeOutExit,
+  fade: FadeOutExit,
+  'slide-up': SlideUpExit,
+  'slide-left': SlideLeftExit,
   shrink: ShrinkExit,
   dissolve: DissolveExit,
 };
@@ -181,6 +192,7 @@ export const wrapWithClipEffects = (
   effectRegistrySnapshot?: EffectRegistrySnapshot,
 ): ReactNode => {
   let wrapped = content;
+  const missing = new Set<string>();
   const legacyRegistry = effectRegistrySnapshot ? null : getEffectRegistry();
 
   const continuousEffect = clip.continuous;
@@ -193,6 +205,7 @@ export const wrapWithClipEffects = (
     : null;
   if (continuousEffect && !continuous) {
     console.warn('[EffectWrap] continuous effect NOT FOUND for clip=%s type=%s', clip.id, continuousEffect.type);
+    missing.add(continuousEffect.type);
   }
   if (continuous) {
     wrapped = wrapWithEffect(wrapped, continuous, {
@@ -205,7 +218,10 @@ export const wrapWithClipEffects = (
     });
   }
 
-  const entranceEffect = clip.entrance;
+  // Exact pinned animation refs are composed by the host animation wrapper in
+  // TimelineRenderer. Applying their phase fields again here would double draw.
+  const phaseEffectsHandledByHost = clip.elementRef?.kind === 'animation';
+  const entranceEffect = phaseEffectsHandledByHost ? undefined : clip.entrance;
   const entranceRecord = entranceEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, entranceEffect.type)
     : undefined;
@@ -213,6 +229,7 @@ export const wrapWithClipEffects = (
     ? entranceRecord?.component
       ?? (legacyRegistry ? lookupEffect(entranceEffects, entranceEffect.type) : null)
     : null;
+  if (entranceEffect && !entrance) missing.add(entranceEffect.type);
   if (entrance) {
     wrapped = wrapWithEffect(wrapped, entrance, {
       effectName: entranceEffect!.type,
@@ -224,7 +241,7 @@ export const wrapWithClipEffects = (
     });
   }
 
-  const exitEffect = clip.exit;
+  const exitEffect = phaseEffectsHandledByHost ? undefined : clip.exit;
   const exitRecord = exitEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, exitEffect.type)
     : undefined;
@@ -232,6 +249,7 @@ export const wrapWithClipEffects = (
     ? exitRecord?.component
       ?? (legacyRegistry ? lookupEffect(exitEffects, exitEffect.type) : null)
     : null;
+  if (exitEffect && !exit) missing.add(exitEffect.type);
   if (exit) {
     wrapped = wrapWithEffect(wrapped, exit, {
       effectName: exitEffect!.type,
@@ -241,6 +259,22 @@ export const wrapWithClipEffects = (
       params: exitEffect!.params,
       schema: exitRecord?.schema ?? legacyRegistry?.getSchema(exitEffect!.type),
     });
+  }
+
+  if (missing.size > 0) {
+    wrapped = (
+      <EffectErrorBoundary effectName="missing clip effect" fallback={wrapped}>
+        <div
+          data-testid="missing-clip-effect-placeholder"
+          data-clip-id={clip.id}
+          data-effect-types={[...missing].join(',')}
+          style={{ color: '#fff', background: '#5b0000', padding: 8 }}
+        >
+          {`Clip ${clip.id} has unresolved effect(s): ${[...missing].join(', ')}`}
+          {wrapped}
+        </div>
+      </EffectErrorBoundary>
+    );
   }
 
   return wrapped;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { FC, PropsWithChildren } from 'react';
+import type { FC, PropsWithChildren, ReactElement } from 'react';
 import { useEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +11,7 @@ import {
   type TransitionRegistryRecord,
 } from '@/tools/video-editor/transitions/registry/index.ts';
 import { VisualClip } from '@/tools/video-editor/compositions/VisualClip.tsx';
+import { wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import type { RenderMaterialRef } from '@astrid/editor-sdk';
 import type { ShaderEffectRegistryRecord, ShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/types.ts';
@@ -47,7 +48,16 @@ vi.mock('remotion', async () => ({
   Sequence: ({ children, ...props }: PropsWithChildren<Record<string, unknown>>) => (
     <div data-testid="sequence" {...props}>{children}</div>
   ),
-  interpolate: () => 0.5,
+  interpolate: vi.fn(() => 0.5),
+  spring: () => 0.5,
+  Easing: {
+    linear: (value: number) => value,
+    quad: (value: number) => value * value,
+    in: (fn: (value: number) => number) => fn,
+    out: (fn: (value: number) => number) => fn,
+    inOut: (fn: (value: number) => number) => fn,
+    step0: () => 0,
+  },
   useCurrentFrame: () => currentFrame,
   useRemotionEnvironment: () => currentEnvironment,
   useVideoConfig: () => ({ fps: 30, width: 1920, height: 1080 }),
@@ -720,5 +730,41 @@ describe('VisualClip transition rendering', () => {
     await waitFor(() => {
       expect(screen.getByTestId('missing-transition-placeholder')).toBeInTheDocument();
     });
+  });
+});
+
+describe('App animation phase preview', () => {
+  it('draws package animation IDs in their declared entrance and exit phases', () => {
+    const entrance = render(wrapWithClipEffects(
+      <div>content</div>,
+      mediaClip({ entrance: { type: 'fade-up', duration: 1, params: { easing: 'in' } } }),
+      30,
+      30,
+    ) as ReactElement);
+    const entranceStyle = screen.getAllByTestId('absolute-fill')
+      .map((node) => node.getAttribute('data-style'))
+      .find((style) => style?.includes('translateY(20px)'));
+    expect(entranceStyle).toContain('translateY(20px)');
+    entrance.unmount();
+
+    render(wrapWithClipEffects(
+      <div>content</div>,
+      mediaClip({ exit: { type: 'slide-up', duration: 1 } }),
+      30,
+      30,
+    ) as ReactElement);
+    expect(screen.getAllByTestId('absolute-fill')
+      .some((node) => node.getAttribute('data-style')?.includes('translateY(-60px)'))).toBe(true);
+  });
+
+  it('shows a diagnostic when an accepted phase animation cannot resolve', () => {
+    render(wrapWithClipEffects(
+      <div>content</div>,
+      mediaClip({ exit: { type: 'missing-pinned-animation', duration: 1 } }),
+      30,
+      30,
+    ) as ReactElement);
+    expect(screen.getByTestId('missing-clip-effect-placeholder').textContent)
+      .toContain('missing-pinned-animation');
   });
 });

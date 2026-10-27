@@ -101,6 +101,52 @@ describe('Astrid element operation adapter', () => {
     await expect(stale.execute(operation)).rejects.toThrow('captured timeline head changed');
   });
 
+  it('preserves contributed effect arrays when setting a fade and keeps legacy fade records', async () => {
+    const payload = {
+      ...documentPayload(),
+      config: {
+        ...documentPayload().config,
+        clips: [
+          { id: 'a', at: 0, track: 'picture', hold: 2, effects: [{ id: 'glow', params: { amount: 0.5 } }] },
+          documentPayload().config.clips[1],
+        ],
+      },
+    };
+    const save = vi.fn(async (_ref, input) => ({ ...payload, config: input.config, config_version: 8 }));
+    const adapter = new AstridElementOperationAdapter(context(), { get: async () => payload, save }, 'astrid-intro');
+
+    const result = await adapter.execute({
+      name: 'timeline.set_clip_fade', project: 'astrid-intro', timeline: 'main',
+      expected_version: 7, clip_id: 'a', fade_in: 0.2, fade_out: 0.3,
+    });
+
+    expect(result.config?.clips[0]).toMatchObject({
+      effects: [{ id: 'glow', params: { amount: 0.5 } }],
+      entrance: { type: 'fade', duration: 0.2 },
+      exit: { type: 'fade', duration: 0.3 },
+    });
+
+    const legacyPayload = {
+      ...documentPayload(),
+      config: {
+        ...documentPayload().config,
+        clips: [
+          { id: 'a', at: 0, track: 'picture', hold: 2, effects: { legacy: 1 } },
+          documentPayload().config.clips[1],
+        ],
+      },
+    };
+    const legacyAdapter = new AstridElementOperationAdapter(context(), {
+      get: async () => legacyPayload,
+      save: async (_ref, input) => ({ ...legacyPayload, config: input.config, config_version: 8 }),
+    }, 'astrid-intro');
+    const legacyResult = await legacyAdapter.execute({
+      name: 'timeline.set_clip_fade', project: 'astrid-intro', timeline: 'main',
+      expected_version: 7, clip_id: 'a', fade_in: 0.4,
+    });
+    expect(legacyResult.config?.clips[0].effects).toEqual({ legacy: 1, fade_in: 0.4 });
+  });
+
   it('applies and reloads an element through the active mounted save owner', async () => {
     const ownedContext = buildAstridAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
     let payload = { ...documentPayload(), registry: { assets: { source: { type: 'image/png', file: 'managed:source' } } } };
