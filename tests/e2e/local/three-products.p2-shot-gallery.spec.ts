@@ -129,6 +129,57 @@ async function dragGalleryImageIntoShot(page: Page): Promise<void> {
   });
 }
 
+async function dragGalleryImageOntoNewShotTrack(page: Page): Promise<boolean> {
+  return page.evaluate(async () => {
+    const source = [...document.querySelectorAll<HTMLElement>('[data-testid="generations-pane"] [data-gallery-item-id]')]
+      .find((tile) => tile.querySelector('img'));
+    const wrapper = document.querySelector<HTMLElement>('[role="dialog"] .timeline-wrapper');
+    const row = wrapper?.querySelector<HTMLElement>('[data-row-id="V2"]');
+    const editArea = wrapper?.querySelector<HTMLElement>('.timeline-canvas-edit-area');
+    const firstAnchor = row?.querySelector<HTMLElement>('.clip-action[data-clip-id="f2-agent-clip"]');
+    if (!source) throw new Error('The locked bottom gallery has no draggable image tile.');
+    if (!wrapper || !row || !editArea) throw new Error('The open shot editor has no timeline drop area.');
+    if (!firstAnchor) throw new Error('The existing V2 timeline track has no seeded clip to anchor the drop.');
+    const rowBox = row.getBoundingClientRect();
+    const editAreaBox = editArea.getBoundingClientRect();
+    const firstBox = firstAnchor.getBoundingClientRect();
+    const clientX = firstBox.left + Math.max(1, firstBox.width / 2);
+    // Stay inside the edit area while sampling below the rendered row. The
+    // bottom edge is the new-track zone, so use the nearest in-bounds point
+    // when the viewport has less than 8px of empty space.
+    const clientY = Math.min(rowBox.bottom + 8, editAreaBox.bottom - 2);
+    if (clientY <= rowBox.bottom || clientY < editAreaBox.top || clientY > editAreaBox.bottom) {
+      throw new Error('The timeline edit area has no in-bounds empty space below the existing row.');
+    }
+    const dataTransfer = new DataTransfer();
+    const event = (type: 'dragstart' | 'dragover' | 'drop' | 'dragend') => new DragEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      clientX,
+      clientY,
+      dataTransfer,
+    });
+    source.dispatchEvent(event('dragstart'));
+    wrapper.dispatchEvent(event('dragover'));
+    const targetedNewTrack = await new Promise<boolean>((resolve) => {
+      const deadline = performance.now() + 1_000;
+      const waitForIndicator = () => {
+        if (editArea.classList.contains('drop-target-new-track')) {
+          resolve(true);
+        } else if (performance.now() >= deadline) {
+          resolve(false);
+        } else {
+          requestAnimationFrame(waitForIndicator);
+        }
+      };
+      requestAnimationFrame(waitForIndicator);
+    });
+    wrapper.dispatchEvent(event('drop'));
+    source.dispatchEvent(event('dragend'));
+    return targetedNewTrack;
+  });
+}
+
 async function reloadAndOpenShot(page: Page, seed: ThreeProductsSeed, revisionId: string) {
   await page.reload();
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
@@ -200,4 +251,92 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
 
   const undoneDialog = await reloadAndOpenShot(page, seed, undone.parent_revision.revision_id);
   await expect(undoneDialog.locator(`.clip-action[data-clip-id="${shotClipId}"]`)).toHaveCount(0);
+});
+
+appTest('C2 gallery drop onto a new shot track is refused without a commit or partial mutation', async ({ page, harness }) => {
+  const seed = await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14);
+  await openTimeline(page, harness, seed);
+
+  await page.locator('[data-pane-control][data-pane-control-side="bottom"]').hover();
+  await page.getByRole('button', { name: 'Open Gallery', exact: true }).click();
+  await expect(page.getByTestId('generations-pane')).toBeVisible();
+  await page.getByRole('button', { name: 'Lock pane', exact: true }).click();
+  const galleryImage = page.locator('[data-testid="generations-pane"] [data-gallery-item-id]:has(img)').first();
+  await expect(galleryImage).toBeVisible(CEILING);
+
+  const beforeHead = await harness.runtimeJson<{ head_revision_id: string }>(
+    'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
+  );
+  const before = await canonicalDocumentAt(harness, seed, beforeHead.body.head_revision_id);
+  const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
+  await expect(page.locator('[data-video-editor-instance]').first()).toHaveAttribute('inert', '');
+  await expect(galleryImage).toBeVisible();
+
+  const commitRequests: Request[] = [];
+  const recordCommit = (request: Request) => {
+    if (request.method() === 'POST' && COMMITS.test(new URL(request.url()).pathname)) commitRequests.push(request);
+  };
+  page.on('request', recordCommit);
+  const targetedNewTrack = await dragGalleryImageOntoNewShotTrack(page);
+  expect(targetedNewTrack, 'the gallery gesture must target the new-track drop zone').toBe(true);
+  await expect(page.getByText(
+    'Gallery drops onto a new shot track are not supported yet. Drop the gallery item onto an existing shot track; nothing was saved.',
+    { exact: true },
+  )).toBeVisible(CEILING);
+  await page.waitForTimeout(100);
+  page.off('request', recordCommit);
+
+  expect(commitRequests, 'the refused drop never reaches the Runtime commit endpoint').toHaveLength(0);
+  const afterHead = await harness.runtimeJson<{ head_revision_id: string }>(
+    'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
+  );
+  expect(afterHead.body.head_revision_id).toBe(beforeHead.body.head_revision_id);
+  const after = await canonicalDocumentAt(harness, seed, afterHead.body.head_revision_id);
+  expect(after.parent_revision.payload).toEqual(before.parent_revision.payload);
+  expect(after.shot_revisions).toEqual(before.shot_revisions);
+  expect(after.internal_timeline_revisions).toEqual(before.internal_timeline_revisions);
+});
+
+appTest('C2 shot editor blocks parent Undo while the locked bottom gallery remains usable', async ({ page, harness }) => {
+  const seed = await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14);
+  await openTimeline(page, harness, seed);
+
+  await page.locator('[data-pane-control][data-pane-control-side="bottom"]').hover();
+  await page.getByRole('button', { name: 'Open Gallery', exact: true }).click();
+  await expect(page.getByTestId('generations-pane')).toBeVisible();
+  await page.getByRole('button', { name: 'Lock pane', exact: true }).click();
+  const galleryImage = page.locator('[data-testid="generations-pane"] [data-gallery-item-id]:has(img)').first();
+  await expect(galleryImage).toBeVisible(CEILING);
+
+  const beforeHead = await harness.runtimeJson<{ head_revision_id: string }>(
+    'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
+  );
+  const before = await canonicalDocumentAt(harness, seed, beforeHead.body.head_revision_id);
+  const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
+  await expect(page.locator('[data-dialog-backdrop]')).toHaveCount(0);
+  const parentEditor = page.locator('[data-video-editor-instance]').first();
+  await expect(parentEditor).toHaveAttribute('inert', '');
+  await expect(galleryImage).toBeVisible();
+  await expect(dialog.locator('.timeline-wrapper').first()).toBeVisible();
+
+  const parentCommitRequests: Request[] = [];
+  const recordParentCommit = (request: Request) => {
+    if (request.method() === 'POST' && COMMITS.test(new URL(request.url()).pathname)) parentCommitRequests.push(request);
+  };
+  page.on('request', recordParentCommit);
+  const parentUndo = parentEditor.getByRole('button', { name: 'Undo', exact: true });
+  await expect(parentUndo).toBeEnabled();
+  await parentUndo.click({ force: true });
+  await page.waitForTimeout(250);
+  page.off('request', recordParentCommit);
+  expect(parentCommitRequests, 'the inert parent editor cannot submit Undo').toHaveLength(0);
+
+  const unchangedHead = await harness.runtimeJson<{ head_revision_id: string }>(
+    'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
+  );
+  expect(unchangedHead.body.head_revision_id).toBe(beforeHead.body.head_revision_id);
+  const unchanged = await canonicalDocumentAt(harness, seed, unchangedHead.body.head_revision_id);
+  expect(unchanged.parent_revision.payload).toEqual(before.parent_revision.payload);
+  expect(unchanged.shot_revisions).toEqual(before.shot_revisions);
+  expect(unchanged.internal_timeline_revisions).toEqual(before.internal_timeline_revisions);
 });
