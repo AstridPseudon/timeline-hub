@@ -95,34 +95,47 @@ def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chap
     # pending until their original activation step.
     frame_offset = _num(params.get("frameOffset"))
     step = max(1, int(_num(params.get("stepFrames"), 2)))
-    source_phase = offset * prior_speed * speed
-    source_cut = math.floor((source_phase + frame_offset) / step) * step - frame_offset
+    clock_offset = offset if not prior_clock else (prior_offset + offset) / speed
+    clock_speed = prior_speed * speed
+    prior_origin = math.floor(prior_offset * prior_speed) if prior_clock else 0
+    origin = math.floor(clock_offset * clock_speed)
+    source_phase = origin - prior_origin
+    source_cut = math.floor((origin + frame_offset) / step) * step - frame_offset - prior_origin
     pose = {key: params[key] for key in ("x", "y", "flipX") if key in params}
     has_keyframes = isinstance(params.get("keyframes"), list)
     future = []
-    for key in params.get("keyframes", []) if has_keyframes else []:
-        if not isinstance(key, Mapping):
-            continue
+    keys = params.get("keyframes", []) if has_keyframes else []
+    for key in sorted((key for key in keys if isinstance(key, Mapping)),
+                      key=lambda key: _num(key.get("frame"))):
         if _num(key.get("frame"), -1) <= source_cut:
             for field in ("x", "y", "flipX"):
                 if field in key:
                     pose[field] = key[field]
+    for key in keys:
+        if not isinstance(key, Mapping):
+            continue
+        if _num(key.get("frame"), -1) <= source_cut:
+            continue
         else:
             shifted = copy.deepcopy(dict(key))
-            shifted["frame"] = int(_num(key.get("frame")) - math.floor(source_phase))
+            # A pending key may precede local frame zero while waiting for the
+            # next held step. Zero has the same activation and remains admissible.
+            shifted["frame"] = max(0, int(_num(key.get("frame")) - source_phase))
             future.append(shifted)
-    params.update(pose)
-    if has_keyframes:
-        params["keyframes"] = future
-    clock_offset = offset if not prior_clock else (prior_offset + offset) / speed
+    if offset or prior_clock:
+        params.update(pose)
+        if has_keyframes:
+            params["keyframes"] = future
     params["sourceClock"] = {"offsetFrames": _r(clock_offset),
-                              "speed": prior_speed * speed}
+                              "speed": clock_speed}
     value["speed"] = 1.0
     # _cut_clip computed length using the original speed; pieces now run at 1x.
     if "hold" in value:
         value["hold"] = _r((end - start))
     if "from" in value and "to" in value:
         value["to"] = _r(_num(value["from"]) + (end - start))
+    if _piece_shape(clip) == "duration":
+        value["duration"] = _r(end - start)
     value["params"] = params
     return value
 
@@ -344,7 +357,7 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
             _set_length(original, total)
         else:
             original["duration"] = _r(total * speed)
-        if shape in {"window", "hold_window"}:
+        if shape in {"window", "hold_window"} and _clip_kind(original) != "am-sprite":
             if pieces[-1].get("to") is not None:
                 original["to"] = copy.deepcopy(pieces[-1]["to"])
         timed_words = []

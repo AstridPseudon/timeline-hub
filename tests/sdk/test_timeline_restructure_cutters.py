@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from astrid.sdk.timeline_restructure import differences, flatten, plan, split
-
 from tests.sdk.test_timeline_restructure import flat_film
 
 

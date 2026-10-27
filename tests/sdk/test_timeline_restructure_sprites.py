@@ -7,8 +7,8 @@ import jsonschema
 import pytest
 
 from astrid.core.element.schema import load_element_definition
-from astrid.sdk.timeline_restructure import describe, differences, flatten, plan, split
 from astrid.core.timeline.cuts import clip_duration
+from astrid.sdk.timeline_restructure import describe, differences, flatten, plan, split
 from tests.sdk.test_timeline_restructure import flat_film, published
 
 
@@ -194,4 +194,37 @@ def test_repeated_split_reuses_generated_over_rows_and_keeps_source_settings():
     second_generated = [track for track in second["parent"]["config"]["tracks"]
                         if track.get("app", {}).get("astrid", {}).get("timeline_restructure_over_row")]
     assert [track["id"] for track in second_generated] == ["picture-over-2"]
+
+
+def test_sprite_pose_uses_sorted_sparse_keys_and_pending_keys_stay_admissible():
+    flat = flat_film()
+    clips = flat["shots"]["film"]["internal_timeline"]["clips"]
+    clips.extend([
+        {"id": "unsorted", "clipType": "am-sprite", "track": "sprite", "at": 3.6333333333333333,
+         "hold": 2, "params": {"stepFrames": 2, "keyframes": [{"frame": 8, "x": 9}, {"frame": 2, "x": 4}]}},
+        {"id": "pending", "clipType": "am-sprite", "track": "sprite", "at": 3.6333333333333333,
+         "hold": 2, "params": {"stepFrames": 3, "keyframes": [{"frame": 10, "x": 7}]}},
+    ])
+    pieces = {clip["app"]["astrid"]["timeline_restructure_piece"]["id"]: clip
+              for clip in plan(flat).chapters[1].clips
+              if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id")
+              in {"unsorted", "pending"}}
+    assert pieces["unsorted"]["params"]["x"] == 9
+    assert pieces["pending"]["params"]["keyframes"] == [{"frame": 0, "x": 7}]
+    assert pieces["pending"]["params"].get("x", 0) == 0
+    assert differences(flat, split(flat)) == []
+
+
+@pytest.mark.parametrize("length", [{"hold": 4}, {"duration": 4}, {"from": 2, "to": 6}])
+def test_sprite_lengths_and_frame_zero_keys_round_trip_at_speed(length):
+    flat = flat_film()
+    original = {"id": "length-shape", "clipType": "am-sprite", "track": "sprite", "at": 3.5,
+                "speed": 2, "params": {"keyframes": [{"frame": 0, "x": 2}, {"frame": 30, "x": 8}]}, **length}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+    stored = split(flat)
+    assert differences(flat, stored) == []
+    back = flatten(stored)
+    restored = next(clip for shot in back["shots"].values()
+                    for clip in shot["internal_timeline"]["clips"] if clip["id"] == "length-shape")
+    assert restored == original
 
