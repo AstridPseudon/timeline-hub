@@ -95,11 +95,38 @@ def test_raw_conformance_payloads_validate_without_mutation():
         assert canonical_json(RuntimeService._complete_parent_payload(parent)["config"]) == canonical_json(case["payload"])
 
 
+@pytest.mark.parametrize("visual_fields", [
+    {
+        "entrance": {"id": "fade-up", "durationFrames": 12, "easing": "ease-out",
+                     "params": {"easing": "ease-out"}},
+        "exit": {"id": "slide-up", "durationFrames": 8},
+        "transition": {"id": "cross-fade", "durationFrames": 10},
+    },
+    {
+        "entrance": {"type": "fade", "duration": 0.5},
+        "exit": {"type": "fade", "duration": 0.25},
+        "transition": {"type": "crossfade", "duration": 0.4},
+    },
+])
+def test_prepared_schema_accepts_canonical_and_drawable_legacy_visual_fields(visual_fields):
+    value = prepared()
+    document = value["canonical_document"]
+    clip = {"id": "visual", **copy.deepcopy(visual_fields),
+            "params": {"entrance": {"id": "project-custom", "durationFrames": 12}}}
+    document["parent_revision"]["payload"]["clips"] = [clip]
+    document["parent_revision"]["payload"]["config"]["clips"] = [copy.deepcopy(clip)]
+    document["internal_timeline_revisions"][0]["payload"]["clips"] = [copy.deepcopy(clip)]
+
+    before = canonical_json(value)
+    validate_commit_value(value, "PreparedCommit")
+    assert canonical_json(value) == before
+
+
 @pytest.mark.parametrize("location", ["parent", "internal"])
 @pytest.mark.parametrize("field,malformed", [
     ("tracks", {}), ("tracks", [None]), ("tracks", [{"id": 4}]),
     ("tracks", [{"role": "draft"}]), ("clips", {}), ("clips", [None]),
-    ("clips", [{"track": []}]), ("clips", [{"effects": {}}]),
+    ("clips", [{"track": []}]),
     ("effects", {}), ("effects", [False]), ("assets", {}),
     ("audio", {}), ("audio", [False]), ("layout", []),
     ("registry", []), ("output", []), ("output", {"fps": False}),

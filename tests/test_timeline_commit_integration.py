@@ -8,10 +8,13 @@ from __future__ import annotations
 import copy
 import io
 import json
+import os
+import subprocess
 import sys
 import wave
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from threading import Barrier, Lock
 from types import SimpleNamespace
 
@@ -233,6 +236,215 @@ def rows(service):
     # Rejection/retry must leave the entire durable store unchanged, including
     # projections, sequence allocation, receipts, retained inputs and history.
     return tuple(service.store.conn.iterdump())
+
+
+def _commit_visual_field(editing, field, value, key, *, use_agent_setter=True):
+    from astrid.core.timeline.clip_fields import write
+    from astrid.sdk.timeline._command_state import present
+
+    document = editing.document()
+    before_clips = copy.deepcopy(document["parent_revision"]["payload"]["clips"])
+    after_clips = copy.deepcopy(before_clips)
+    target = next(clip for clip in after_clips if clip["id"] == "music-bed")
+    if field in ("entrance", "exit", "transition") and use_agent_setter:
+        write(target, field, copy.deepcopy(value), fps=24)
+        expected = copy.deepcopy(target[field])
+    else:
+        target[field] = copy.deepcopy(value)
+        expected = copy.deepcopy(value)
+    change = {"op": "set", "ref": "parent", "path": ["clips"],
+              "before": present(before_clips), "value": after_clips}
+    command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    body = editing.body([command])
+    body["steps"][0]["patch"] = [change]
+    accepted = editing.commit(body, key)
+    editing.assert_readback(accepted)
+    stored = next(clip for clip in accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"]
+                  if clip["id"] == "music-bed")
+    assert stored[field] == expected
+    return accepted
+
+
+def _visual_stand_in(editing):
+    """Turn the fixture clip into deterministic text on its visual track."""
+    from astrid.sdk.timeline._command_state import present
+
+    document = editing.document()
+    clips = copy.deepcopy(document["parent_revision"]["payload"]["clips"])
+    music = next(clip for clip in clips if clip["id"] == "music-bed")
+    music["track"] = "picture"
+    music["clipType"] = "text"
+    music.pop("asset", None)
+    music.pop("volume", None)
+    music["text"] = {"content": "Visual field publication proof"}
+    music["params"] = {
+        "entrance": "custom-element-setting",
+        "custom": {
+            "opaque": [None, False, {"easing": "package-owned"}],
+            "entrance": {"future": [None, "nested entrance"]},
+            "exit": {"future": [False, "nested exit"]},
+            "transition": {"future": [0, "nested transition"]},
+        },
+    }
+    change = {"op": "set", "ref": "parent", "path": ["clips"],
+              "before": present(document["parent_revision"]["payload"]["clips"]), "value": clips}
+    command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    request = editing.body([command])
+    request["steps"][0]["patch"] = [change]
+    accepted = editing.commit(request, "visual-stand-in")
+    editing.assert_readback(accepted)
+    clip = next(clip for clip in accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"]
+                if clip["id"] == "music-bed")
+    assert clip["track"] == "picture" and clip["clipType"] == "text"
+    assert clip["params"] == music["params"]
+    return clip
+
+
+def test_agent_written_visual_fields_validate_and_read_back_from_published_revision(editing):
+    _visual_stand_in(editing)
+    cases = [
+        ("entrance.fade", "entrance", {"id": "fade", "durationFrames": 12,
+                                         "params": {"easing": "step"}}, True),
+        ("entrance.fade.linear", "entrance", {"id": "fade", "durationFrames": 12,
+                                                "params": {"easing": "linear"}}, True),
+        ("entrance.fade-up", "entrance", {"id": "fade-up", "durationFrames": 18}, True),
+        ("entrance.scale-in", "entrance", {"id": "scale-in", "durationFrames": 18}, True),
+        ("exit.fade", "exit", {"id": "fade", "durationFrames": 12}, True),
+        ("exit.slide-up", "exit", {"id": "slide-up", "durationFrames": 12}, True),
+        ("transition.fade.default", "transition", {"id": "fade"}, True),
+        ("transition.cross-fade.default", "transition", {"id": "cross-fade"}, True),
+        ("transition.fade.explicit-frames", "transition", {"id": "fade", "durationFrames": 8}, True),
+        ("transition.cross-fade.legacy-seconds", "transition", {"type": "crossfade", "duration": 0.5}, False),
+        ("effects.array", "effects", [{"fade_in": 0.25}, {"fade_out": 0.5}], False),
+        ("effects.object", "effects", {"fade_in": 0.25, "fade_out": 0.5}, False),
+    ]
+    handoff = []
+    for case_key, field, value, use_agent_setter in cases:
+        before = editing.document()
+        clip_before = next(clip for clip in before["parent_revision"]["payload"]["clips"]
+                           if clip["id"] == "music-bed")
+        opaque_params = copy.deepcopy(clip_before["params"])
+        accepted = _commit_visual_field(editing, field, value, "visual-field-" + case_key,
+                                        use_agent_setter=use_agent_setter)
+        document = accepted["data"]["canonical_document"]
+        revision = document["parent_revision"]["revision_id"]
+        readback = editing.service.get_project_parent_composition_revision(
+            editing.project, editing.timeline, revision,
+        )
+        clip = next(clip for clip in readback["payload"]["clips"] if clip["id"] == "music-bed")
+        authored = next(authored for authored in document["parent_revision"]["payload"]["clips"]
+                        if authored["id"] == "music-bed")
+        assert clip[field] == authored[field]
+        assert clip["params"] == opaque_params
+        config = readback["payload"]["config"]
+        visual_overrides = (config.get("theme_overrides") or {}).get("visual") or {}
+        handoff.append({
+            "case_key": case_key,
+            "accepted_revision": {"project_id": editing.project, "timeline_id": editing.timeline,
+                                  "revision_id": revision,
+                                  "publication_id": accepted["receipt"]["receipt_id"]},
+            "authored_visual_fields": {field: copy.deepcopy(value)},
+            "frame_basis": {
+                "setter_fps": 24,
+                "published_output": copy.deepcopy(config.get("output")),
+                "published_canvas": copy.deepcopy(visual_overrides.get("canvas")),
+            },
+            "published_readback_config": copy.deepcopy(config),
+        })
+    output_dir = os.environ.get("D66_OUTPUT_DIR")
+    if output_dir:
+        path = Path(output_dir) / "runtime-visual-fields-readback.json"
+        from astrid.sdk.timeline import commit as agent_commit
+
+        checkout = os.environ.get("ASTRID_CHECKOUT")
+        pin = subprocess.check_output(
+            ["git", "-C", checkout, "rev-parse", "HEAD"], text=True,
+        ).strip() if checkout else None
+        expected_pin = (Path(__file__).with_name("astrid-agent.pin").read_text().strip()
+                        if checkout else None)
+        assert pin == expected_pin
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"agent_pin": pin, "agent_pin_source": "tests/astrid-agent.pin",
+                                   "agent_checkout": checkout, "output_path": str(path),
+                                   "agent_provider_import": agent_commit.__file__,
+                                   "expected_agent_pin": expected_pin, "cases": handoff},
+                                  indent=2, sort_keys=True) + "\n")
+        print(f"Agent pin={pin} imported={agent_commit.__file__} readback={path}")
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrance", {"type": "fade", "duration": 0.5}),
+    ("exit", {"type": "fade", "duration": 0.25}),
+    ("transition", {"type": "crossfade", "duration": 0.4}),
+])
+def test_drawable_legacy_visual_fields_survive_publication_readback(editing, field, value):
+    _visual_stand_in(editing)
+    _commit_visual_field(editing, field, value, "legacy-visual-field-" + field, use_agent_setter=False)
+
+
+def test_agent_provider_refuses_top_level_type_on_without_publication(editing):
+    _visual_stand_in(editing)
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase, match="type-on cannot draw as a top-level clip animation"):
+        _commit_visual_field(editing, "entrance", {"id": "type-on", "durationFrames": 48},
+                             "unsupported-top-level-type-on", use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
+def test_agent_provider_refuses_animation_in_unsupported_phase_without_publication(editing):
+    _visual_stand_in(editing)
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase, match="animation 'slide-up'.*expected 'entrance'"):
+        _commit_visual_field(editing, "entrance", {"id": "slide-up", "durationFrames": 12},
+                             "unsupported-animation-phase", use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrance", {"id": "not-installed", "durationFrames": 12}),
+    ("entrance", {"id": "fade", "durationFrames": 12, "params": {"easing": "bounce"}}),
+    ("entrance", {"id": "fade", "durationFrames": 12, "params": {"amplitude": 2}}),
+    ("transition", {"type": "wipe", "duration": 0.4}),
+])
+def test_unsupported_visual_fields_refuse_before_publication(editing, field, value):
+    _visual_stand_in(editing)
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase):
+        _commit_visual_field(editing, field, value, "unsupported-visual-" + field, use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
+def test_visual_candidate_is_refused_before_publication_when_builtin_phase_is_unsupported(editing, monkeypatch):
+    from astrid.sdk.timeline import validation as agent_validation
+
+    _visual_stand_in(editing)
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    validate = agent_validation.validate_final_candidate
+
+    def inject_before_agent_validation(bundle, *args, **kwargs):
+        candidate = copy.deepcopy(bundle)
+        target = next(clip for clip in candidate["parent"]["clips"] if clip["id"] == "music-bed")
+        target["entrance"] = {"id": "slide-up", "durationFrames": 12}
+        mirror = next(clip for clip in candidate["parent"]["config"]["clips"]
+                      if clip["id"] == "music-bed")
+        mirror["entrance"] = {"id": "slide-up", "durationFrames": 12}
+        return validate(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(agent_validation, "validate_final_candidate", inject_before_agent_validation)
+    with pytest.raises(RuntimeErrorBase, match="animation 'slide-up'.*expected 'entrance'"):
+        editing.commit(editing.body([editing.move("music-bed", 1)]), "unsupported-visual-ref")
+
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
 
 
 def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
