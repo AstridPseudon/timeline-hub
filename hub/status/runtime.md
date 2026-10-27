@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T03:17:48Z | dispatcher heartbeat 20s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T03:17:43.326826+00:00
+<!-- main | 2026-10-27T03:22:30Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T03:21:38.067330+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -108,9 +108,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive real browser behavior proof | C Luna and Main Sol | Main render repair | blocked:main | diag-renderlane-0310; C spec and review8 | Spec sound; Chromium SIGTRAP before body. Main03:12 names shared render/browser repair. Behavior remains NOTRUN. | App 1d4ebbb55b |
+| C2 browser journey | Receive original browser failure | C Luna and Main Sol | Main actual browser attempt | blocked:C | Existing C owner; Main diag-renderlane-0310 | Actual30992 FAIL: pane grip intercepts Open Gallery. Browser launches; drag/save/reload/undo not reached. Raw KEEP prospective. | App 1d4ebbb55b |
 
-| B5 audit receiving | Receive B audit corrections | B Sol and Luna | Main03:12 audit direction | doing | B-T4-role-parity-app-6; B role Agent and Runtime6 | App fix running; Agent and Runtime authors exit0, B independent reviews owed. Original UNSOUND findings retained. | B project branches |
+| B5 audit receiving | Receive B audit corrections | B Sol and Luna | Three independent reviews | doing | B three authors and review6 workers | All three reviewer directories now present; existing B lead owns reviews and central reruns. Original UNSOUND findings retained. | B project branches |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -122,11 +122,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive central render repair | Main Sol and A Luna | Main03:12 kit assignment | blocked:main | diag-renderlane-0310 | Shared A/B render and C2 browser repair started03:09. Real preview/export parity remains unmeasured. | No render proof |
+| A stand-in environment | Receive central render repair | Main Sol and A Luna | Main current real render attempt | blocked:main | diag-renderlane-0310 | Wrapper controls PASS; real A/B render attempts remain Main owned. B original9064 failed old Headless mode; parity unmeasured. | No accepted render proof |
 
-Blockers: Main diag-renderlane-0310 owns A/B renderer and C2 browser prerequisites. B lead6 owns audit corrections and independent reviews. C App B-parent ancestry remains absent. C3 is closed at step1; no optimization wait. D130 holds.
+Blockers: Main diag-renderlane-0310 owns A/B renderer repair. C owner receives actual Open Gallery pointer interception; browser launch wait cleared for30992. B lead owns three audit-fix reviews. C App B-parent ancestry remains absent. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5206810624 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads and Main render owner.
+live 0 / cap 6; ready-undispatched 0. Free 5788733440 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Current follow-up disk rules apply. Existing project owners retain all active work.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T03:17:43.326826+00:00. Inbox and HEADER unchanged; A/B/C owner boards now include Main03:12 decisions. Main Sol diag-renderlane-0310 started03:09 for all three renderer/browser blockers. B audit correction authors are active or terminal under B lead6; B owns their independent reviews. C3 accepted at step1 with optimization later only on a real slow sample. App B-parent ancestry remains absent. H/D/P START markers absent. Runtime census2717 rows, no live Runtime worker or ready task. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded maintenance earlier this round reclaimed0; no new refusal. [Pass evidence](rounds/20261027T031743Z-pass.json).
+Current pass: 2026-10-27T03:21:38.067330+00:00. Inbox and HEADER unchanged. Read all owner boards. Main browser repair reaches the actual page; C2 now fails Open Gallery pointer interception before drag/save. B original export9064 fails old Headless mode; Main corrects browser binary and owns current attempts. Both original raw dirs KEEP prospectively. B three review6 workers now present. No Runtime ready task or duplicate dispatch. H/D/P START markers absent. Guarded maintenance active; no new refusal. [Pass evidence](rounds/20261027T032138Z-pass.json).

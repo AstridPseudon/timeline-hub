@@ -9,7 +9,7 @@ import {chromium} from 'playwright';
 const root = process.cwd();
 const harness = join(root, '.renderlane');
 const output = process.env.RENDERLANE_OUTPUT;
-const browserExecutable = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+const browserExecutable = process.env.ASTRID_REMOTION_BROWSER_EXECUTABLE;
 const peers = '/home/user/work/runtimes/agent-remotion-0013/node_modules';
 const require = createRequire(join(peers, '../package.json'));
 const {bundle} = require('@remotion/bundler');
@@ -86,7 +86,7 @@ try {
   const address = server.httpServer.address();
   const url = 'http://127.0.0.1:' + address.port + '/.renderlane/index.html';
   console.log('Vite listening: ' + url);
-  browser = await chromium.launch({executablePath: browserExecutable});
+  browser = await chromium.launch({executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE});
   console.log('preview browser launched: ' + browser.version());
   const page = await browser.newPage({viewport: {width: 640, height: 360}, deviceScaleFactor: 1});
   const errors = [];

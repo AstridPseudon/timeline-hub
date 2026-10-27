@@ -9,6 +9,7 @@ import tempfile
 
 NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin")
 ORCH = Path(__file__).resolve().parent.parent
+REMOTION_BROWSER = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
 
 
 def main():
@@ -16,11 +17,15 @@ def main():
     root = Path.cwd()
     result = Path(os.environ["D66_OUTPUT_DIR"]).parent
     env = dict(os.environ)
+    runtime_source = env.get("ASTRID_RUNTIME_SOURCE")
+    if lane == "render-proof":
+        # Render validation deliberately rejects dispatcher Git/loader overrides.
+        env = {key: env[key] for key in ("HOME", "LANG", "PATH") if key in env}
     env.update(
         PATH=f"{NODE}:{env['PATH']}",
         NODE_OPTIONS="--max-old-space-size=6144",
         PLAYWRIGHT_CHROMIUM_EXECUTABLE="/opt/pw-browsers/chromium",
-        ASTRID_REMOTION_BROWSER_EXECUTABLE="/opt/pw-browsers/chromium",
+        ASTRID_REMOTION_BROWSER_EXECUTABLE=REMOTION_BROWSER,
         ASTRID_NODE_EXECUTABLE=str(NODE / "node"),
         PYTHONDONTWRITEBYTECODE="1",
     )
@@ -28,7 +33,7 @@ def main():
     # exceeds their 108-byte limit. Keep the directory private and short.
     with tempfile.TemporaryDirectory(prefix="tl-browser-", dir="/tmp") as short:
         env.update(TMPDIR=short, TMP=short, TEMP=short)
-        print(f"renderlane: {lane}; node={NODE / 'node'}; browser=/opt/pw-browsers/chromium; tmp={short}", flush=True)
+        print(f"renderlane: {lane}; node={NODE / 'node'}; browser=/opt/pw-browsers/chromium; remotion-browser={REMOTION_BROWSER}; tmp={short}", flush=True)
         if lane == "browser-toolchain":
             command = [str(NODE / "node"), "-e", """
 const {chromium}=require('playwright');
@@ -50,7 +55,8 @@ console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().
                        "test", "--config", "playwright.three-products.config.ts",
                        *(selectors or ["tests/e2e/local/three-products.p2-shot-gallery.spec.ts"])]
         elif lane == "render-proof":
-            runtime = env["ASTRID_RUNTIME_SOURCE"]
+            runtime = runtime_source
+            assert runtime, "test-run did not select the pinned Runtime source"
             env.update(
                 PYTHONPATH=f"{root}:{runtime}",
                 ASTRID_RUNTIME_CHECKOUT=runtime,

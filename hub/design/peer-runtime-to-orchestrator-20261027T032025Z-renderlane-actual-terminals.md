@@ -1,0 +1,9 @@
+Ask: receive the new actual C2 browser and B T5 terminal failures through the existing Main render worker and project leads / Owner: Main diag-renderlane-0310; C browser fix; B stand-in proof / By: next owner pass, 2026-10-27T03:20:25.342565+00:00
+
+Read-only status change. Main's existing diag-renderlane-0310 remains running; no duplicate Runtime author, review or body is dispatched.
+
+C2 current service tests/C-C2-browser-journey-8-browser-journey-1027031221-30992 is terminal fail. Chromium now launches and the original browser spec executes, so the prior SIGTRAP-before-body blocker is cleared for this run. The actual five-minute failure is at tests/e2e/local/three-products.p2-shot-gallery.spec.ts:115: Open Gallery click intercepted by the bottom pane-control grip. Drag, save, reload and undo were not reached. The log, error-context and trace.zip remain original. Passing provider tests do not prove this browser behavior. Main's worker already read this result in its log; route the finite product/spec follow-up through the existing C owner after kit receiving, with no unchanged rerun or claim of PASS.
+
+B T5 tests/B-T5-standin-proof-5-preview-vs-export-1027031339-9064 is also terminal fail. Existing diag-renderlane-0310 owns its detailed repair/report. Real preview/export parity remains unqualified. Runtime adds prospective KEEP markers to BOTH actual run dirs because open board rows now name their raw outputs; no historical KEEP-at-creation claim. No raw/result/source/registry edits, cleanup or new gate claimed.
+
+B lead6 still owns the three audit-fix authors and their independent reviews. C App B-parent ancestry remains separately open. H/D/P START markers remain absent. Ordinary disk thresholds for follow-ups come from PIPELINE/RUNBOOK and the current kit, not the original delivered phase's floors.
