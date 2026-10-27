@@ -58,6 +58,39 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it.each([
+    { transform: { opacity: 0.5 } },
+    { transform: { x: 0 } },
+    { transform: { cropAnything: 0 } },
+    { transform: { scale: 1.2 } },
+    { opacity: 0.5 },
+  ])('refuses picture-changing shot placement %j', (placement) => {
+    const graph = structuredClone(fixture);
+    Object.assign(graph.occurrences[0], placement);
+    const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+
+    expect(() => projectCanonicalComposition(composition)).toThrow(CanonicalCompositionProjectionError);
+    try {
+      projectCanonicalComposition(composition);
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'unsupported_placement', occurrenceId: 'occ-1' });
+    }
+  });
+
+  it.each([
+    { transform: {} },
+    { transform: { futureHint: 'preserve' } },
+    { transform: { opacity: 1 } },
+    { transform: { scale: 1 } },
+    { opacity: 1 },
+  ])('accepts no-op or opaque shot placement %j', (placement) => {
+    const graph = structuredClone(fixture);
+    Object.assign(graph.occurrences[0], placement);
+    const composition = createShotCompositionAdapter({ load: async () => graph }).prepare(graph);
+
+    expect(() => projectCanonicalComposition(composition)).not.toThrow();
+  });
+
   it('applies placement timing to visual media and keeps occurrence timing metadata-only for audio', () => {
     const graph = JSON.parse(JSON.stringify(fixture)) as typeof fixture;
     const vector = mediaProjectionFixture;
