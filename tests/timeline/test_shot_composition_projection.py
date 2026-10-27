@@ -52,7 +52,12 @@ def test_occurrence_timing_is_media_specific_and_matches_shared_projection_vecto
         if clip.get("shot_occurrence_id") == "occ-1"
     }
 
-    for clip_id, expected in vectors["expected"].items():
+    # Keep the shared fixture frozen; child declarations now win kind collisions.
+    expected_clips = {
+        **vectors["expected"],
+        "collision-parent-kind-wins": {"at": 0, "from": 0.125, "to": 2.125, "timeline_duration": 2},
+    }
+    for clip_id, expected in expected_clips.items():
         clip = clips[clip_id]
         assert clip["at"] == pytest.approx(expected["at"]), clip_id
         assert clip["from"] == pytest.approx(expected["from"]), clip_id
@@ -83,7 +88,7 @@ def test_shot_visual_group_keeps_inner_order_properties_and_audio_suffix():
     fixture = json.loads(ORDER_FIXTURE.read_text(encoding="utf-8"))
     config = {"tracks": copy.deepcopy(fixture["film_tracks"])}
     shot_tracks = fixture["shot_tracks"]
-    _build_track_group(config, {"tracks": shot_tracks}, {"occurrence_id": "occ", "track": "picture"})
+    _build_track_group(config, {"tracks": shot_tracks}, {"occurrence_id": "occ", "track": "picture"}, [])
     assert [track["id"] for track in config["tracks"]] == [
         "occ~chrome", "occ~type", "occ~fx", "occ~sprite", "occ~plate",
         "picture", "sprite", "plate", "vo", "music", "sfx",

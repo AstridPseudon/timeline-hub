@@ -316,32 +316,37 @@ def _add_assets(registry: dict[str, Any], revision: Mapping[str, Any]) -> None:
 
 
 def _build_track_group(
-    config: dict[str, Any], timeline: Mapping[str, Any], occurrence: Mapping[str, Any]
+    config: dict[str, Any], timeline: Mapping[str, Any], occurrence: Mapping[str, Any],
+    fallback_tracks: list[dict[str, Any]],
 ) -> dict[str, str]:
     """Group all visual tracks, including source-role tracks; merge audio by id."""
     tracks = config.setdefault("tracks", [])
     by_id = {row.get("id"): row for row in tracks if isinstance(row, Mapping)}
     shot_tracks = timeline.get("tracks", [])
-    group = []
+    group: list[dict[str, Any]] = []
     track_ids: dict[str, str] = {}
+
+    def add_visual(track_id: str, track: Mapping[str, Any]) -> None:
+        projected_id = f"{occurrence['occurrence_id']}~{track_id}"
+        track_ids[track_id] = projected_id
+        projected = copy.deepcopy(dict(track))
+        projected["id"] = projected_id
+        if projected.get("role") == "source":
+            projected["role"] = "output"
+        app = projected.get("app")
+        if not isinstance(app, dict):
+            app = {}
+            projected["app"] = app
+        app["group"] = {"id": occurrence["occurrence_id"], "sourceTrack": track_id}
+        group.append(projected)
+
     for index, raw in enumerate(shot_tracks):
         track = _mapping(raw, "internal_timeline_revision.timeline.tracks[]")
         track_id = track.get("id")
         if not isinstance(track_id, str) or not track_id:
             raise ShotCompositionProjectionError("internal track id must be a non-empty string")
         if track.get("kind") != "audio":
-            projected_id = f"{occurrence['occurrence_id']}~{track_id}"
-            track_ids[track_id] = projected_id
-            projected = copy.deepcopy(dict(track))
-            projected["id"] = projected_id
-            if projected.get("role") == "source":
-                projected["role"] = "output"
-            app = projected.get("app")
-            if not isinstance(app, dict):
-                app = {}
-                projected["app"] = app
-            app["group"] = {"id": occurrence["occurrence_id"], "sourceTrack": track_id}
-            group.append(projected)
+            add_visual(track_id, track)
         elif track_id not in by_id:
             preceding = next((str(item.get("id")) for item in reversed(shot_tracks[:index])
                               if isinstance(item, Mapping) and item.get("id") in by_id), None)
@@ -357,15 +362,27 @@ def _build_track_group(
             tracks.insert(insert_at, merged)
             by_id[track_id] = merged
 
+    declared_ids = {track.get("id") for track in shot_tracks}
+    for raw in timeline.get("clips", []):
+        clip = _mapping(raw, "internal_timeline_revision.timeline.clips[]")
+        track_id = clip.get("track")
+        # Match the App's fallback for legacy clips without track definitions;
+        # inherited audio remains shared, and visual clips stay in their shot.
+        if (isinstance(track_id, str) and track_id and track_id not in declared_ids
+                and track_id not in track_ids and by_id.get(track_id, {}).get("kind") != "audio"):
+            add_visual(track_id, {"id": track_id, "kind": "visual", "label": track_id})
+
     row = occurrence.get("track")
     insert_at = next((i for i, track in enumerate(tracks) if track.get("id") == row), -1)
     if insert_at == -1:
-        insert_at = 0
         _LOGGER.warning(
             'shot-layering: track "%s" not found — placing occurrence "%s" at top of stack',
             row, occurrence["occurrence_id"], extra={"code": "timeline-patch/target-not-found"},
         )
-    tracks[insert_at:insert_at] = group
+        # Prepend one block after all occurrences so later fallbacks stay later.
+        fallback_tracks.extend(group)
+    else:
+        tracks[insert_at:insert_at] = group
     return track_ids
 
 
@@ -490,6 +507,7 @@ def project_shot_composition(
     config_clips = [copy.deepcopy(dict(item)) for item in config.get("clips", [])]
     occurrences: list[dict[str, Any]] = []
     outputs: list[dict[str, Any]] = []
+    fallback_tracks: list[dict[str, Any]] = []
     for index, raw_occurrence in enumerate(prepared["occurrences"]):
         occurrence = dict(_mapping(raw_occurrence, f"occurrences[{index}]"))
         key = (occurrence["shot_id"], occurrence["revision_id"])
@@ -503,7 +521,7 @@ def project_shot_composition(
         if timeline.get("compositing") not in (None, "source_over", "normal"):
             raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")
         _apply_placement_transform(occurrence, path=f"occurrences[{index}]")
-        track_ids = _build_track_group(config, timeline, occurrence)
+        track_ids = _build_track_group(config, timeline, occurrence, fallback_tracks)
         start, end, duration = _occurrence_window(occurrence, path=f"occurrences[{index}]")
         occurrence["project_id"] = prepared["project"]["project_id"]
         occurrence["timeline_id"] = prepared["primary_timeline"]["document_id"]
@@ -533,7 +551,7 @@ def project_shot_composition(
                 occurrence_start=start,
                 occurrence_end=end,
                 occurrence_speed=speed,
-                track_definitions=[*config.get("tracks", []), *timeline.get("tracks", [])],
+                track_definitions=[*timeline.get("tracks", []), *config.get("tracks", [])],
                 path=f"shot_revisions[{index}].timeline.clips[{clip_index}]",
             )
             if projected is not None:
@@ -541,6 +559,7 @@ def project_shot_composition(
                 config_clips.append(projected)
         _add_assets(registry, revision)
 
+    config["tracks"] = [*fallback_tracks, *config.get("tracks", [])]
     config["clips"] = config_clips
     app = config.setdefault("app", {})
     if not isinstance(app, dict):
@@ -657,6 +676,7 @@ def project_runtime_parent_composition(
 
     occurrences: list[dict[str, Any]] = []
     outputs: list[dict[str, Any]] = []
+    fallback_tracks: list[dict[str, Any]] = []
     seen_occurrences: set[str] = set()
     for index, raw in enumerate(raw_occurrences):
         occurrence = copy.deepcopy(dict(_mapping(raw, f"occurrences[{index}]")))
@@ -703,7 +723,7 @@ def project_runtime_parent_composition(
         if timeline.get("compositing") not in (None, "source_over", "normal"):
             raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")
         _apply_placement_transform(occurrence, path=f"occurrences[{index}]")
-        track_ids = _build_track_group(config, timeline, occurrence)
+        track_ids = _build_track_group(config, timeline, occurrence, fallback_tracks)
 
         occurrence["revision_id"] = shot_revision_id
         occurrence["project_id"] = project_id
@@ -769,7 +789,7 @@ def project_runtime_parent_composition(
                 occurrence_start=start,
                 occurrence_end=end,
                 occurrence_speed=speed,
-                track_definitions=[*config.get("tracks", []), *timeline.get("tracks", [])],
+                track_definitions=[*timeline.get("tracks", []), *config.get("tracks", [])],
                 path=f"internal_timeline_revisions[{internal_revision_id!r}].payload.clips[{clip_index}]",
             )
             if projected is None:
@@ -781,6 +801,7 @@ def project_runtime_parent_composition(
             projected["track"] = track_ids.get(projected["track"], projected["track"])
             config["clips"].append(projected)
 
+    config["tracks"] = [*fallback_tracks, *config.get("tracks", [])]
     app = config.setdefault("app", {})
     if not isinstance(app, dict):
         app = {}
