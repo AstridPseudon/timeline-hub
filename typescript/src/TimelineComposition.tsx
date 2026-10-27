@@ -228,6 +228,25 @@ export const compileCanonicalTransitions = (tracks: {track: TrackDefinition; cli
   })};
 };
 
+const assertCanonicalTransitionsMatch = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[], fps: number,
+  theme: ReturnType<typeof useTheme>, registries: CompositionRegistries, compiled: CompiledCanonicalTransitions): void => {
+  const expected = compileCanonicalTransitions(tracks, fps, theme, registries);
+  if (compiled.tracks.length !== expected.tracks.length || expected.tracks.some(track => {
+    const actual = compiled.tracks.find(input => input.trackId === track.trackId);
+    return !actual || actual.clipIds.length !== track.clipIds.length
+      || actual.clipIds.some((id, index) => id !== track.clipIds[index])
+      || actual.incomingTransitions.length !== track.incomingTransitions.length
+      || actual.incomingTransitions.some((transition, index) => {
+        const wanted = track.incomingTransitions[index];
+        return transition === null ? wanted !== null
+          : !transition || typeof transition !== 'object' || wanted === null
+            || transition.T !== wanted.T || Object.keys(transition).some(key => key !== 'T');
+      });
+  })) {
+    throw new Error('transition/invalid-compilation: Compiled incoming transitions differ from their owning clips');
+  }
+};
+
 // Both native requested-frame metadata and drawing use this exact preparation boundary.
 export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: TimelineClip[]}[],
   assets: TimelineCompositionProps['assets'], fps: number, theme: ReturnType<typeof useTheme>,
@@ -235,16 +254,13 @@ export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: 
   capabilities: SceneCapabilities = {}, rendererIdentity = '', fontDigests: Readonly<Record<string, string>> = {},
   registries: CompositionRegistries = {}, compiledTransitions?: CompiledCanonicalTransitions) => {
   validateCompiledCanonicalTransitions(compiledTransitions, fps);
+  if (compiledTransitions !== undefined) assertCanonicalTransitionsMatch(tracks, fps, theme, registries, compiledTransitions);
   const resolved = resolveElementRegistries(theme, registries);
   return prepareScene(tracks.map(({track, clips}) => {
     const sorted = sortClipsByAt(clips);
     if (compiledTransitions !== undefined) {
       const compiled = compiledTransitions.tracks.find(input => input.trackId === track.id);
-      if (!compiled || !Array.isArray(compiled.clipIds) || compiled.clipIds.length !== sorted.length
-          || compiled.clipIds.some((id, index) => id !== sorted[index].id) || !Array.isArray(compiled.incomingTransitions)) {
-        throw new Error('transition/invalid-compilation: Compiled clip identities differ from the prepared track');
-      }
-      return {track, clips: sorted, transitions: [], incomingTransitions: compiled.incomingTransitions};
+      return {track, clips: sorted, transitions: [], incomingTransitions: compiled!.incomingTransitions};
     }
     return {track, clips: sorted, transitions: sorted.slice(0, -1).map((clip, index) =>
       resolveTransitionSpec(clip, sorted[index + 1], fps, theme, resolved))};
@@ -276,7 +292,9 @@ const renderVisualTrack = (
   }
 
   const prepared = prepareCompositionScene([{track, clips: sortedClips}], assets, fps, theme,
-    modifiers.width, modifiers.height, modifiers.registry, undefined, {}, '', {}, modifiers.registries, modifiers.compiledTransitions);
+    modifiers.width, modifiers.height, modifiers.registry, undefined, {}, '', {}, modifiers.registries,
+    modifiers.compiledTransitions && {...modifiers.compiledTransitions,
+      tracks: modifiers.compiledTransitions.tracks.filter(input => input.trackId === track.id)});
   const evaluated = querySceneFrame(prepared, globalFrame);
   const rendered = evaluated.layers.map(layer => renderVisualSequence(track, sortedClips[layer.clipIndex],
     assets, fps, theme, prepared.tracks[0].prepared.plans[layer.clipIndex], globalFrame, modifiers));
@@ -369,6 +387,10 @@ const TimelineCompositionBody = ({
 }): ReactElement => {
   const theme = useTheme();
   const globalFrame = useCurrentFrame();
+  if (modifiers.compiledTransitions !== undefined) {
+    assertCanonicalTransitionsMatch(visualTracks.map(track => ({track, clips: timeline.clips.filter(clip => clip.track === track.id)})),
+      fps, theme, modifiers.registries ?? {}, modifiers.compiledTransitions);
+  }
   return (
     <>
       <AbsoluteFill style={{position: 'relative', overflow: 'hidden'}}>

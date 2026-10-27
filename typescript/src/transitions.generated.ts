@@ -12,11 +12,11 @@ export const TRANSITION_REGISTRY: Readonly<Record<string, TransitionComponent>> 
 };
 export const TRANSITION_DEFAULTS: Readonly<Record<string, Record<string, unknown>>> = {
   "cross-fade": {
-    "durationFrames": 12,
+    "durationFrames": 8,
     "easing": "linear"
   },
   "fade": {
-    "durationFrames": 12,
+    "durationFrames": 8,
     "easing": "linear"
   }
 };
@@ -24,12 +24,12 @@ export const TRANSITION_META: Readonly<Record<string, Record<string, unknown>>> 
   "cross-fade": {
     "id": "cross-fade",
     "name": "Cross Fade",
-    "defaultDurationFrames": 12
+    "defaultDurationFrames": 8
   },
   "fade": {
     "id": "fade",
     "name": "Fade Transition",
-    "defaultDurationFrames": 12,
+    "defaultDurationFrames": 8,
     "aliases": [
       "cross-fade"
     ]
