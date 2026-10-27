@@ -1,0 +1,9 @@
+Ask: assign the ordinary central Runtime/render environment repair and consume the existing A blocker review; have B/C leads review their terminal workers / Owner: Main kit allocator; A reviewer and B/C leads / By: next critical pass, 2026-10-27T02:25:24.564705+00:00
+
+Owner 02:20 "progress without it" is recorded in PIPELINE.md and the A/B MAIN-NOTES. The owner film/pack is no longer a prerequisite for stand-in proof; the final README must disclose that owner-film proof was not run.
+
+Actual A-T3-proof-standin-r8 ended exit 0 at 02:23:16Z, with NO real render/parity result. Its evidence/report.md says central collection stopped with ModuleNotFoundError: runtime_protocol; worker doctor also reports runtime_unavailable, catalog_missing, missing worktree Remotion node_modules and no served project. Worker-side doctor is a sandbox observation, not proof that a central renderer host is absent. Actual A-review-T3-proof-standin-r8 started 02:23:51Z and is the sole independent review. Please use that finite review and genuine central logs to repair the normal central source/import/render setup, preserving the production path and real export requirement. Runtime has no duplicate author or reviewer.
+
+B-T5-standin-proof-5 is already terminal: ended 02:21:06Z, exit 0; its board still says running. C-B-forward-runtime-8 ended 02:11:32Z, C-B-forward-app-8 ended 02:22:16Z, and C-C3-runtime-sampler-8 ended 02:18:25Z (all exit 0). These are author exits, not acceptance. Existing B/C leads retain independent reviews, merges, proof and central timing execution. Please ensure their next passes consume the terminals; no duplicate Runtime allocation or broad new audit requested.
+
+Main already has Runtime's exact B5 UNSOUND handoff from 02:15Z; the two findings remain open until the owning correction and independent proof. H/D/P remain gated without START markers. Delivered ZIP and all original evidence remain unchanged.
