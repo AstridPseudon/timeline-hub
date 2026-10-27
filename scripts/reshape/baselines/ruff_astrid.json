@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/tl-merge-agent/.venv/bin/python",
+    "/home/user/work/venv-agent/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,10 +12,10 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2130,
+  "finding_count": 2128,
   "code_counts": {
     "F401": 140,
-    "I001": 196,
+    "I001": 194,
     "BLE001": 211,
     "E701": 442,
     "E702": 219,

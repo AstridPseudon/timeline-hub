@@ -11,18 +11,36 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
-from astrid.core.timeline.music_edit import plan_keep_end
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
-from astrid.sdk.timeline._common import (LOGICAL_PX, TimelineEditError, _norm, _num, _r)
-from astrid.sdk.timeline.doc import (_clock, _get_path, _post, _read_words, _row_start, _set_length, _set_path, _set_row_start, _split_audio, _trim_end, _trim_front)
-from astrid.sdk.timeline.model import (Clip, Voice, Word, _MomentContext, music_keyword, music_policy, retime_scope)
+from astrid.core.timeline.music_edit import plan_keep_end
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._common import LOGICAL_PX, PARENT_SHOT, TimelineEditError, _norm, _num, _r
+from astrid.sdk.timeline.doc import (
+    _clock,
+    _get_path,
+    _post,
+    _read_words,
+    _row_start,
+    _set_length,
+    _set_path,
+    _set_row_start,
+    _split_audio,
+    _trim_end,
+    _trim_front,
+)
+from astrid.sdk.timeline.model import (
+    Clip,
+    Voice,
+    Word,
+    _MomentContext,
+    music_keyword,
+    music_policy,
+    retime_scope,
+)
 from astrid.sdk.timeline.selection import Selection
-from astrid.sdk.timeline.units import (_unit_path, element_units, mark_offset_canvas)
-
+from astrid.sdk.timeline.units import _unit_path, element_units, mark_offset_canvas
 
 _EPS = 1e-6
 
@@ -935,6 +953,18 @@ class _ReflowMixin:
         """``delta < 0`` removes ``cut_window`` (it may cross shots); ``delta > 0`` opens time at ``t``."""
         skip_ids = {id(c) for c in skip}
         rows = sorted(self.bundle.get("placements") or [], key=_row_start)
+        if not rows:
+            planned, notes = self._plan_flat_shift(t, delta, cut_window=cut_window, skip=skip_ids)
+            parent = self.bundle.get("parent")
+            if isinstance(parent, dict):
+                source = self._parent_clip_list()
+                if source is not None:
+                    self._apply_flat_plan(source, planned)
+            self.notes.extend(notes)
+            if delta > 0:
+                return _r(delta)
+            a, b = cut_window or (t, t)
+            return _r(b - a)
         if delta > 0:
             self._record_change(t, t, delta, skip_ids)
             for row in rows:
@@ -965,6 +995,254 @@ class _ReflowMixin:
             removed += d
         self._shift_parent(b, -removed)
         return _r(removed)
+
+    def _plan_flat_shift(self, t: float, delta: float, *, cut_window: tuple[float, float] | None,
+                         skip: set[int]) -> tuple[list[dict[str, Any]], list[str]]:
+        """Plan a flat parent-clip time shift without changing the checkout."""
+        rows = self._parent_clip_list()
+        before = list(rows or [])
+        if not math.isfinite(float(t)) or not math.isfinite(float(delta)):
+            raise TimelineEditError("flat ripple needs finite timeline seconds")
+        ids: set[str] = set()
+        for clip in before:
+            if not isinstance(clip, dict):
+                raise TimelineEditError("flat ripple requires parent clips to be objects")
+            cid = clip.get("id")
+            if not isinstance(cid, str) or not cid:
+                raise TimelineEditError("flat ripple requires every parent clip to have a nonempty id")
+            if cid in ids:
+                raise TimelineEditError(f"flat ripple requires unique parent clip IDs; {cid!r} is repeated")
+            ids.add(cid)
+            at, speed = clip.get("at"), clip.get("speed", 1)
+            duration = clip_duration(clip)
+            if (isinstance(at, bool) or not isinstance(at, (int, float)) or not math.isfinite(float(at))
+                    or isinstance(speed, bool) or not isinstance(speed, (int, float)) or not math.isfinite(float(speed))
+                    or float(speed) <= 0 or not math.isfinite(duration) or duration <= 0):
+                raise TimelineEditError(f"flat ripple cannot safely time parent clip {cid!r}")
+            hold = clip.get("hold")
+            if hold is not None and (isinstance(hold, bool) or not isinstance(hold, (int, float))
+                                     or not math.isfinite(float(hold)) or float(hold) <= 0):
+                raise TimelineEditError(f"flat ripple cannot safely use the hold on {cid!r}")
+            if clip.get("from") is not None or clip.get("to") is not None:
+                source_in = clip.get("from")
+                if source_in is None:
+                    source_in = 0.0
+                source_out = clip.get("to")
+                if source_out is None and hold is not None and isinstance(source_in, (int, float)):
+                    source_out = float(source_in) + float(hold)
+                if (isinstance(source_in, bool) or not isinstance(source_in, (int, float))
+                        or isinstance(source_out, bool) or not isinstance(source_out, (int, float))
+                        or not math.isfinite(float(source_in)) or not math.isfinite(float(source_out))
+                        or float(source_in) < 0 or float(source_out) <= float(source_in)
+                        or (hold is not None and clip.get("to") is not None and abs(float(hold) -
+                            (float(source_out) - float(source_in))) > 1e-5)):
+                    raise TimelineEditError(f"flat ripple cannot safely use the source window on {cid!r}")
+
+        skipped = {i for i, clip in enumerate(before) if id(clip) in skip}
+        notes: list[str] = []
+        result: list[dict[str, Any]] = []
+        if delta > 0:
+            for i, original in enumerate(before):
+                clip = copy.deepcopy(original)
+                if i in skipped:
+                    result.append(clip)
+                    continue
+                start, end = _num(original.get("at")), _num(original.get("at")) + clip_duration(original)
+                if start >= t - 1e-6:
+                    self._check_flat_supported(original)
+                    clip["at"] = _r(start + delta)
+                    result.append(clip)
+                elif end > t + 1e-6:
+                    self._check_flat_supported(original)
+                    if self._is_audio(PARENT_SHOT, clip):
+                        if self._is_music(PARENT_SHOT, clip):
+                            if self._music == "plays_on":
+                                notes.append(f"music {clip.get('id')}: the bed plays on unchanged over the "
+                                             f"{delta:.2f} s opened at {t:.2f} s; what follows moved {delta:+.2f} s against its beats")
+                            # keep_end beds are planned below; music wins over transcript tags.
+                        elif intent.line(clip):
+                            result.extend(self._split_flat_audio(clip, t - start, gap=delta))
+                            continue
+                        # Other SFX finish at their existing end.
+                        result.append(clip)
+                    else:
+                        self._validate_parent_extension(clip, end - start + delta)
+                        _set_length(clip, end - start + delta)
+                        result.append(clip)
+                else:
+                    result.append(clip)
+            self._plan_flat_music(result, before, t, delta, notes, skip)
+            self._check_flat_skip_collisions(before, result, skipped)
+            self._check_parent_split_ids(result)
+            return result, notes
+
+        a, b = cut_window or (t, t)
+        amount = b - a
+        if not math.isfinite(a) or not math.isfinite(b) or amount <= 0:
+            raise TimelineEditError("the window to remove must have finite start < end")
+        for i, original in enumerate(before):
+            clip = copy.deepcopy(original)
+            if i in skipped:
+                result.append(clip)
+                continue
+            start = _num(original.get("at"))
+            end = start + clip_duration(original)
+            if end <= a + 1e-6:
+                result.append(clip)
+                continue
+            if start >= b - 1e-6:
+                self._check_flat_supported(original)
+                clip["at"] = _r(start - amount)
+                result.append(clip)
+                continue
+            self._check_flat_supported(original)
+            audio = self._is_audio(PARENT_SHOT, clip)
+            if start < a - 1e-6 and end > b + 1e-6:
+                if audio:
+                    if self._is_music(PARENT_SHOT, clip) and self._music == "plays_on":
+                        notes.append(f"music {clip.get('id')}: the bed plays on unchanged over the cut at "
+                                     f"{a:.2f} s; what follows moved {-amount:+.2f} s against its beats")
+                    elif not self._is_music(PARENT_SHOT, clip):
+                        result.extend(self._split_flat_audio(clip, a - start, cut=amount))
+                        continue
+                    # keep_end beds are planned below; plays_on beds remain unchanged.
+                else:
+                    _set_length(clip, end - start - amount)
+                result.append(clip)
+            elif start < a - 1e-6:  # only the tail is removed
+                _trim_end(clip, a - start)
+                result.append(clip)
+            elif end > b + 1e-6:  # remove the leading overlap, then land at the cut point
+                _trim_front(clip, b - start)
+                if audio or original.get("from") is not None or original.get("to") is not None:
+                    clip["from"] = _r(_num(original.get("from")) + (b - start) *
+                                      (_num(original.get("speed"), 1.0) or 1.0))
+                clip["at"] = _r(a)
+                result.append(clip)
+            else:  # entirely in the removed interval
+                if self._keep_inside:
+                    raise TimelineEditError(f"flat ripple cannot keep {clip.get('id')!r} inside a closed gap; "
+                                            "parent clips have no shot or cut to own an orphan")
+        if self._music == "keep_end":
+            self._plan_flat_music(result, before, a, -amount, notes, skip)
+        self._check_flat_skip_collisions(before, result, skipped)
+        self._check_parent_split_ids(result)
+        return result, notes
+
+    def _check_flat_supported(self, clip: Mapping[str, Any]) -> None:
+        """Refuse flat clips whose timing is driven by shot-local or animated dependencies."""
+        params = clip.get("params") if isinstance(clip.get("params"), Mapping) else {}
+        if (intent.on(clip) or intent.until(clip) or intent.for_s(clip) or intent.formulas(clip)
+                or intent.cut_of(clip) or intent.sequence(clip)
+                or any(key in clip or key in params for key in
+                       ("animation", "animations", "keyframes", "transition", "transitions"))):
+            raise TimelineEditError(f"flat ripple cannot safely move anchored, cut-linked, animated, or transition clip {clip.get('id')!r}")
+
+    @staticmethod
+    def _check_flat_skip_collisions(before: Sequence[dict[str, Any]], result: Sequence[dict[str, Any]],
+                                    skipped: set[int]) -> None:
+        """A skip keeps its clip fixed; refuse if the ripple newly lands a same-track clip on it."""
+        skipped_rows = [before[i] for i in skipped]
+        for skipped_clip in skipped_rows:
+            sid = str(skipped_clip.get("id") or "")
+            lane = skipped_clip.get("track")
+            old_start = _num(skipped_clip.get("at"))
+            old_end = old_start + clip_duration(skipped_clip)
+            for clip in result:
+                if str(clip.get("id") or "") == sid:
+                    continue
+                lane2 = clip.get("track")
+                if lane is not None and lane2 is not None and lane != lane2:
+                    continue
+                start, end = _num(clip.get("at")), _num(clip.get("at")) + clip_duration(clip)
+                if start >= old_end - 1e-6 or old_start >= end - 1e-6:
+                    continue
+                original = next((row for row in before if row.get("id") == clip.get("id")), None)
+                if original is None:
+                    raise TimelineEditError(f"flat ripple would overlap skipped clip {sid!r} with split clip {clip.get('id')!r}")
+                other_start = _num(original.get("at"))
+                other_end = other_start + clip_duration(original)
+                if other_start >= old_end - 1e-6 or old_start >= other_end - 1e-6:
+                    raise TimelineEditError(f"flat ripple would move {clip.get('id')!r} into skipped clip {sid!r}")
+
+    def _split_flat_audio(self, clip: dict[str, Any], at: float, *, cut: float = 0.0,
+                          gap: float = 0.0) -> list[dict[str, Any]]:
+        had_hold = "hold" in clip
+        speed = _num(clip.get("speed"), 1.0) or 1.0
+        total = clip_duration(clip)
+        source_in = _num(clip.get("from"))
+        pieces = _split_audio(clip, at, cut=cut, gap=gap)
+        if len(pieces) > 1:
+            pieces[1]["from"] = _r(source_in + (at + cut) * speed)
+            if had_hold:
+                pieces[1]["hold"] = _r((total - at - cut) * speed)
+        return pieces
+
+    def _plan_flat_music(self, result: list[dict[str, Any]], before: Sequence[dict[str, Any]],
+                         at: float, delta: float, notes: list[str], skip: set[int]) -> None:
+        """Apply keep_end's bar-aware source cut to flat music beds in the same pure plan."""
+        if self._music != "keep_end" or abs(delta) < 0.5 / self.fps - _EPS:
+            return
+        for original in before:
+            if id(original) in skip or not self._is_music(PARENT_SHOT, original):
+                continue
+            start, end = _num(original.get("at")), _num(original.get("at")) + clip_duration(original)
+            if not start < at < end:
+                continue
+            self._check_flat_supported(original)
+            bars, beats = intent.beat_sources(original, "downbeat"), intent.beat_sources(original)
+            cut = plan_keep_end(original, at=at, delta=delta, bars=bars, beats=beats, frame=1.0 / self.fps)
+            index = next((i for i, clip in enumerate(result) if clip.get("id") == original.get("id")), None)
+            if index is None:
+                continue
+            pieces = cut.pieces
+            taken = {str(clip.get("id")) for clip in result if clip.get("id") != original.get("id")}
+            placed: list[dict[str, Any]] = []
+            for piece in pieces:
+                piece = copy.deepcopy(piece)
+                base_id, suffix = str(piece.get("id") or original.get("id")), 2
+                while str(piece.get("id")) in taken:
+                    piece["id"] = f"{base_id}-{suffix}"
+                    suffix += 1
+                taken.add(str(piece.get("id")))
+                placed.append(piece)
+            result[index:index + 1] = placed
+            notes.append(f"music {original.get('id')}: {cut.note.removeprefix('music: ')}")
+
+    def _validate_parent_extension(self, clip: dict[str, Any], duration: float) -> None:
+        """Reject a picture hold that would require source frames past the registered file."""
+        if (clip.get("from") is None and clip.get("to") is None
+                or not (self._is_audio(PARENT_SHOT, clip) or clip.get("clipType") == "media")):
+            return
+        probe = copy.deepcopy(clip)
+        probe["from"] = _num(clip.get("from"))
+        if probe.get("to") is None:
+            probe["to"] = _r(probe["from"] + _num(probe.get("hold")))
+        Clip(self, PARENT_SHOT, probe)._check_source_fits(duration)
+
+    @staticmethod
+    def _apply_flat_plan(source: list[dict[str, Any]], planned: Sequence[dict[str, Any]]) -> None:
+        """Update surviving rows in place so Clip handles and explicit skips stay attached."""
+        old = {str(row.get("id")): row for row in source if isinstance(row, dict)}
+        applied: list[dict[str, Any]] = []
+        for replacement in planned:
+            existing = old.get(str(replacement.get("id")))
+            if existing is None:
+                applied.append(replacement)
+                continue
+            existing.clear()
+            existing.update(replacement)
+            applied.append(existing)
+        source[:] = applied
+
+    @staticmethod
+    def _check_parent_split_ids(rows: Sequence[dict[str, Any]]) -> None:
+        found: set[str] = set()
+        for clip in rows:
+            cid = str(clip.get("id") or "")
+            if not cid or cid in found:
+                raise TimelineEditError(f"flat ripple would create a colliding clip id {cid!r}")
+            found.add(cid)
 
     def _shot_sequences(self, sid: str) -> list[list[dict[str, Any]]]:
         """The sequences (a time-lapse's steps) of one shot, each in step order."""
