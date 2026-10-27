@@ -21,7 +21,10 @@ from astrid.core.timeline.validators.meta import validate_timeline_meta_location
 # validators.registry here.
 
 
-def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: set[str], *, nested: bool = False) -> None:
+def _validate_animation_reference(
+    ref: Any, phase: str, path: str, known_ids: set[str], *, nested: bool = False,
+    legacy_shape: bool = False,
+) -> None:
     if isinstance(ref, str):
         animation_id = ref
     elif isinstance(ref, dict):
@@ -48,11 +51,14 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
     from astrid.core.timeline.banodoco_schema import _animation_meta
     meta = _animation_meta(animation_id)
     from astrid.core.timeline.clip_fields import _animations as builtin_animations
-    if animation_id in builtin_animations() and not nested:
+    if animation_id in builtin_animations():
         params = ref.get("params", {}) if isinstance(ref, dict) else {}
-        _raise_unknown_keys(f"{path}.params", params, frozenset({"easing"}))
+        if not isinstance(params, dict):
+            raise ValueError(f"{path}.params must be an object")
+        if not nested:
+            _raise_unknown_keys(f"{path}.params", params, frozenset({"easing"}))
         easing = ref.get("easing", params.get("easing")) if isinstance(ref, dict) else None
-        if easing is not None and (not isinstance(easing, str) or easing not in {
+        if easing is not None and (not isinstance(easing, str) or easing.strip().lower() not in {
             "linear", "in", "out", "in-out", "step", "ease-in", "ease-out", "ease-in-out", "inOut", "inout", "in_out"
         }):
             raise ValueError(f"{path}.params.easing {easing!r} is not supported by the installed animations")
@@ -61,7 +67,7 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
         meta_phase in (None, "any", phase)
         or (isinstance(meta_phase, list) and phase in meta_phase)
     )
-    if not phase_matches:
+    if not phase_matches and not legacy_shape:
         raise ValueError(f"{path} animation {animation_id!r} has phase {meta_phase!r}, expected {phase!r}")
 
 
@@ -108,6 +114,27 @@ def _animation_shape_for_shared_schema(value: Any, fps: float) -> Any:
     if "easing" in value:
         legacy.setdefault("params", {})["easing"] = value["easing"]
     return legacy
+
+
+def _legacy_animation_for_validation(value: Any, fps: float) -> Any:
+    """Project public legacy animation forms into the canonical validator shape."""
+    if not isinstance(value, dict) or "id" in value:
+        return value
+    if "type" not in value:
+        return value
+    if "duration" in value and "durationFrames" in value:
+        return value
+    projected = {key: item for key, item in value.items() if key in {"type", "duration", "durationFrames", "params", "easing"}}
+    projected["id"] = projected.pop("type")
+    if "duration" in projected:
+        duration = projected.pop("duration")
+        if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not math.isfinite(float(duration)) or duration <= 0:
+            return value  # canonical validator reports the legacy shape's actual error below
+        frames = float(duration) * fps
+        if not math.isfinite(frames) or frames <= 0:
+            return value
+        projected["durationFrames"] = math.floor(frames + 0.5)
+    return projected
 
 
 def _validate_effect_params(effect_id: str, params: Any, path: str, theme: str | None = None) -> None:
@@ -259,7 +286,13 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
             continue
         for phase in ("entrance", "exit"):
             if phase in clip:
-                _validate_animation_reference(clip[phase], phase, f"clips[{index}].{phase}", known_animation_ids)
+                raw_reference = clip[phase]
+                legacy_reference = isinstance(raw_reference, dict) and "id" not in raw_reference and "type" in raw_reference
+                _validate_animation_reference(
+                    _legacy_animation_for_validation(raw_reference, fps), phase,
+                    f"clips[{index}].{phase}", known_animation_ids, nested=legacy_reference,
+                    legacy_shape=legacy_reference,
+                )
     # Top-level ``app`` is the editor-extension metadata namespace owned by
     # Astrid's container contract. The currently pinned shared render schema
     # does not declare that namespace, so validate the renderable subset while

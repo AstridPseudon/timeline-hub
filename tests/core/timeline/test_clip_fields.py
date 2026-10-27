@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import copy
 
 import jsonschema
 import pytest
@@ -485,7 +486,10 @@ def test_package_animation_ids_validate_in_their_declared_phases(phase, animatio
     "shape",
     [{"type": "fade", "duration": 0.2667}, "fade"],
 )
-def test_composition_and_string_entrance_shapes_are_refused(shape, _builtin_text_is_not_an_element):
+def test_legacy_animation_shape_validates_but_bare_string_is_refused(shape, _builtin_text_is_not_an_element):
+    if isinstance(shape, dict):
+        validate_timeline(_one_clip(shape), strict=False)
+        return
     with pytest.raises((ValueError, jsonschema.ValidationError)):
         validate_timeline(_one_clip(shape), strict=False)
 
@@ -504,7 +508,7 @@ def test_clip_without_entrance_passes_validate_timeline(_builtin_text_is_not_an_
         ("entrance", "fade ease=in-out", {"id": "fade", "params": {"easing": "in-out"}}),
         ("entrance", "fade 0.4s ease=in", {"id": "fade", "durationFrames": 12, "params": {"easing": "in"}}),
         ("entrance", "fade 12f ease=step", {"id": "fade", "durationFrames": 12, "params": {"easing": "step"}}),
-        ("entrance", "fade 12f ease=linear", {"id": "fade", "durationFrames": 12}),
+        ("entrance", "fade 12f ease=linear", {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}}),
         ("entrance", "fade 12f ease=inOut", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
         ("entrance", "fade 12f ease=in_out", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
         ("entrance", "fade 12f ease=OUT", {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
@@ -512,13 +516,13 @@ def test_clip_without_entrance_passes_validate_timeline(_builtin_text_is_not_an_
         ("entrance", {"type": "fade", "duration": 0.4, "params": {"easing": "out"}},
          {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
         ("entrance", {"type": "fade", "params": {"easing": "inOut"}}, {"id": "fade", "params": {"easing": "in-out"}}),
-        ("entrance", {"type": "fade", "params": {"easing": "linear"}}, {"id": "fade"}),
+        ("entrance", {"type": "fade", "params": {"easing": "linear"}}, {"id": "fade", "params": {"easing": "linear"}}),
         ("fade_in", "8f ease=out", {"id": "fade", "durationFrames": 8, "params": {"easing": "out"}}),
         ("fade_out", "8f ease=in", {"id": "fade", "durationFrames": 8, "params": {"easing": "in"}}),
         ("fade_in", "ease=step", {"id": "fade", "params": {"easing": "step"}}),
     ],
 )
-def test_easing_forms_store_params_only_when_not_linear(name, raw, stored):
+def test_easing_forms_preserve_explicit_params(name, raw, stored):
     path = {"entrance": "entrance", "exit": "exit", "fade_in": "entrance", "fade_out": "exit"}[name]
     assert cf.coerce(name, raw) == (path, stored)
 
@@ -565,7 +569,7 @@ def test_unsupported_animation_params_refuse():
         ("entrance", "fade 12f ease=out", "fade 12f ease=out"),
         ("entrance", "fade ease=in-out", "fade ease=in-out"),
         ("exit", "fade 12f ease=step", "fade 12f ease=step"),
-        ("entrance", "fade 12f ease=linear", "fade 12f"),
+        ("entrance", "fade 12f ease=linear", "fade 12f ease=linear"),
     ],
 )
 def test_easing_describe_round_trips(name, raw, human):
@@ -607,8 +611,34 @@ def test_legacy_inout_is_described_as_in_out_and_round_trips():
 def test_easing_stored_shapes_pass_validate_timeline(_builtin_text_is_not_an_element):
     for shape in (
         {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}},
+        {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}},
         {"id": "fade", "params": {"easing": "step"}},
         {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}},
     ):
         validate_timeline(_one_clip(shape), strict=False)
         validate_timeline(_one_clip(shape))
+
+
+def test_omitted_easing_stays_omitted_and_top_level_easing_normalizes():
+    assert cf.coerce("entrance", "fade 12f") == ("entrance", {"id": "fade", "durationFrames": 12})
+    assert cf.coerce("entrance", {"id": "fade", "easing": "linear"}) == (
+        "entrance", {"id": "fade", "params": {"easing": "linear"}},
+    )
+    with pytest.raises(ClipFieldError, match="conflicting easing"):
+        cf.coerce("entrance", {"id": "fade", "easing": "linear", "params": {"easing": "out"}})
+
+
+def test_top_level_canonical_easing_describes_and_round_trips():
+    clip = {"entrance": {"id": "fade", "durationFrames": 12, "easing": "linear"}}
+    assert cf.describe(clip) == {"entrance": "fade 12f ease=linear"}
+    round_trip: dict = {}
+    cf.write(round_trip, "entrance", cf.describe(clip)["entrance"])
+    assert round_trip == {"entrance": {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}}}
+
+
+def test_legacy_animation_forms_validate_without_mutating_input(_builtin_text_is_not_an_element):
+    legacy = _one_clip({"type": "fade", "duration": 0.4, "params": {"easing": "linear"}})
+    before = copy.deepcopy(legacy)
+    validate_timeline(legacy, strict=False)
+    assert legacy == before
+    validate_timeline(_one_clip({"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}}), strict=False)
