@@ -72,6 +72,22 @@ def test_ripple_delete_splits_crossing_audio_and_preserves_source_windows():
     assert by_id["later"].start == pytest.approx(6)
 
 
+def test_close_gap_before_a_word_preserves_the_source_window_of_crossing_voice():
+    voice = clip("voice", "A1", 0, 2, 10, hold=8, asset="voice")
+    intent.set_line(voice, "s1", [[1, 1.3, "before"], [5, 5.3, "after"]])
+    tl = checkout([voice, clip("later", "V1", 7, 0, 1)])
+
+    assert tl.close_gap(before='"after"') == pytest.approx(3.7)
+
+    by_id = {item.id: item for item in tl.clips()}
+    assert (by_id["voice"].start, by_id["voice"].end, by_id["voice"].data["from"],
+            by_id["voice"].data["to"]) == pytest.approx((0, 1.3, 2, 3.3))
+    assert (by_id["voice~1300"].start, by_id["voice~1300"].end, by_id["voice~1300"].data["from"],
+            by_id["voice~1300"].data["to"]) == pytest.approx((1.3, 4.3, 7, 10))
+    assert by_id["later"].start == pytest.approx(3.3)
+    assert tl.word("after").start == pytest.approx(1.3)
+
+
 def test_ripple_delete_refuses_a_new_overlap_with_a_skipped_clip():
     tl = checkout([clip("skipped", "V1", 2, 0, 2), clip("later", "V1", 6, 0, 2)])
     skipped = tl.clip("skipped")
