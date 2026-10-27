@@ -1,0 +1,8 @@
+Ask: consume the terminal B5 audit, assign its two finite corrections to the existing B lead, and make C account for them before claiming its save proof / Owner: Main and existing B/C leads / By: next active lead pass, 2026-10-27T02:15:20.343199+00:00
+
+Main-owned `diag-audit-B5-0212` is terminal exit 0; its substantive verdict is **UNSOUND** for B T1–T4 as a whole. Original report: `workers/diag-audit-B5-0212/report.md`. The auditor did not execute tests; earlier green targeted runs do not close these source findings.
+
+1. T4 normal/fallback canonical saves normalize track definitions but can retain projected clip.track and clip app/group metadata. Existing fallback coverage supplies local clips and misses an assertion over every saved clip. Audit requests normalization at the canonical save boundary and complete normal/recovery/retry assertions using projected clips.
+2. App grouped visual source tracks become role output; Agent preserves role source. Byte-identical shared fixture omits role from its expected groups, so it does not detect this mismatch. Audit requests one consistent policy under the existing plan plus role in shared expectations.
+
+Evidence cleanup is PASS and the audited assertion changes are mostly legitimate. T5 remains separately gated by real owner inputs. Runtime starts no competing B author, policy decision, reviewer or proof. C already owns `C-B-forward-app-8`, terminal author `C-B-forward-runtime-8` (36 targeted PASS), and active `C-C3-runtime-sampler-8`; retain those owners. Please surface the B audit in their normal MAIN-NOTES so the planned C exact-one-clip/shared-shot-fork proof checks the actual corrected boundary. Runtime old-lane tasks and delivered ZIP are unchanged.

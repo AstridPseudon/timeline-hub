@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:13:52Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T02:11:31.573220+00:00
+<!-- main | 2026-10-27T02:18:45Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-27T02:15:53.169295+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,7 +96,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Receive Main Hour 4 progress | Main and Luna leads | A B C owner plans | doing | A B C leads; Main B audit | A inputs absent; Main asked owner. B audit live. C direct B merge and service timing route released; existing C lead owns both. | Delivered ZIP unchanged |
+| Follow-up agenda | Receive Main Hour 4 progress | Main and Luna leads | A B C owner plans | doing | A B C leads; Main B audit | A inputs absent; Main asked owner. B5 audit UNSOUND; finite findings sent to Main. C owns B forwards and central timing sampler. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
@@ -104,7 +104,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive supported timing route release | C Luna and Main | Main Hour 4 note | doing | lead-C-r8 | Main directs sampler through central test service with loopback; C owns throwaway-project saves and real timing gate. Original socket EPERM retained. | No new sample result |
 
-| C2 B forward | Receive direct B merge release | C Luna | Main Hour 4 note | doing | lead-C-r8 | Main authorizes C to merge B forward in App and Runtime, then exact one-clip and shared-shot-fork proof. Prior staging wait cleared. | No merge result inferred |
+| C2 B forward | Receive direct B merge release | C Luna | Main Hour 4 note | doing | lead-C-r8 | Main authorizes C to merge B forward in App and Runtime, then exact one-clip and shared-shot-fork proof. Prior staging wait cleared. | Runtime author terminal; C review owed |
+
+| B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -116,9 +118,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-Blockers: Main owns the missing owner film and complete pack input ask and B milestone audit. C owns its released direct B merge and central-service timing sample. No Runtime task blocked. D130 holds.
+Blockers: Main owns the missing owner film and pack inputs and B5 audit corrections. C owns B forward merges and the central timing sample. No Runtime task blocked. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 5944410112 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
+live 0 / cap 3; ready-undispatched 0. Free 5273989120 bytes. Main and B/C own follow-ups. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -129,4 +131,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T02:11:31.573220+00:00. PLAN, manager rules, pipeline and boards consumed. Runtime INBOX and HEADER unchanged. Main Hour 4 notes clear kit repair and C route waits: B staging merge is superseded by direct C forward merge, and C samples through the central service. Actual lead-C-r8 and B audit are live; no duplicate Runtime dispatch. Final rt- census: 2717 rows, none running. All 36 Runtime trees remain 31 KEEP or 5 dirty, no eligible recycle. Sweep removed 0 dirs; compact packed 0 worker and 0 test dirs and compressed 1 old log. Delivered archive and sidecar still match. H, D and P START markers absent. [Pass evidence](rounds/20261027T021131Z-pass.json).
+Current pass: 2026-10-27T02:15:53.169295+00:00. PLAN, manager rules, pipeline, current boards and new-byte checks consumed. Runtime INBOX and HEADER unchanged. Runtime census: 2717 rows, none running. B5 audit is terminal UNSOUND; its finite two-finding handoff is sent to Main, with B/C retaining correction and proof ownership. C Runtime forward author is terminal with 36 PASS; its App forward and timing sampler remain active. No competing Runtime dispatch. H, D and P START markers absent. Guarded maintenance is running. Delivered archive hash and sidecar match. [Pass evidence](rounds/20261027T021553Z-pass.json).
