@@ -32,7 +32,12 @@ def _validation_baseline(service, project_id, timeline_id="main"):
     head = commits.bootstrap(project_id, timeline_id, authorize=lambda: None)
     source = commits.revision_closure(project_id, timeline_id, head["revision_id"])
     assert source["parent_revision"]["payload"] == {
-        "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
+        "config": {"clips": [], "tracks": [
+            {"id": "V1", "kind": "visual", "label": "V1", "scale": 1, "fit": "contain",
+             "opacity": 1, "blendMode": "normal"},
+            {"id": "A1", "kind": "audio", "label": "A1", "scale": 1, "fit": "contain",
+             "opacity": 1, "blendMode": "normal"},
+        ]}, "registry": {}, "clips": [], "occurrences": [],
     }
     assert source["shot_revisions"] == source["internal_timeline_revisions"] == []
     assert source["dependency_manifest"] == {"shots": [], "internal_timelines": [], "media": [], "documents": []}
@@ -798,7 +803,12 @@ def test_stale_publication_rolls_back_and_retry_conflicts(tmp_path):
             assert mismatch.value.failure["details"]["reason"] == "idempotency_mismatch"
             assert commits.head(project_id, "main") == head
             assert commits.revision_closure(project_id, "main", base["revision_id"])["parent_revision"]["payload"] == {
-                "config": {"clips": [], "tracks": []}, "registry": {}, "clips": [], "occurrences": [],
+                "config": {"clips": [], "tracks": [
+                    {"id": "V1", "kind": "visual", "label": "V1", "scale": 1, "fit": "contain",
+                     "opacity": 1, "blendMode": "normal"},
+                    {"id": "A1", "kind": "audio", "label": "A1", "scale": 1, "fit": "contain",
+                     "opacity": 1, "blendMode": "normal"},
+                ]}, "registry": {}, "clips": [], "occurrences": [],
             }
             assert commits.revision_closure(project_id, "main", head["revision_id"]) == first_pair[1]["canonical_document"]
     finally:
