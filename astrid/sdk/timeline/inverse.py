@@ -10,6 +10,7 @@ from ._collections import (
     arrange,
     container,
     member,
+    order as collection_order,
     restoration_orders,
     selection_overlap,
 )
@@ -1058,8 +1059,20 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     for (owner, kind), (_, expected) in orders.items():
         actual = ctx.select('collection.' + kind + 's', owner)
         if actual != expected:
-            raise CommandError('inverse collection membership/order changed',
-                               kind='selection_changed', ref=owner)
+            # Later accepted list moves can alter landing order while native
+            # delete writes still prove the same membership. Trust only the
+            # exact accepted output order, and only for that same membership.
+            authenticated = None
+            if isinstance(records, AcceptedRecords) and records.entries:
+                try:
+                    _, after = records.load_boundary(records.entries[-1])
+                    authenticated = collection_order(State(after), owner, kind)
+                except CommandError:
+                    authenticated = None
+            if (authenticated is None or actual != authenticated
+                    or len(actual) != len(expected) or set(actual) != set(expected)):
+                raise CommandError('inverse collection membership/order changed',
+                                   kind='selection_changed', ref=owner)
     for write in guarded_changes:
         guard(_physical_state(ctx.state, write['ref'], write['path'], records),
               write['ref'], write['path'], write['after'], kind='inverse_conflict')
