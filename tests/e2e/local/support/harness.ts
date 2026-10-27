@@ -1021,7 +1021,11 @@ if case['fixture'] == 'three-products':
     parent_registry['f2-video']['duration'] = 12.0
     # Retain the original authored fixture independently of the native candidate.
     expected_parent = {'slug': 'main', 'name': 'Main', 'config': {'clips': copy.deepcopy(parent_clips),
-        'tracks': copy.deepcopy(bundle['parent']['config']['tracks']),
+        'tracks': [
+            {'id': 'V1', 'kind': 'visual', 'scale': 1, 'fit': 'contain', 'opacity': 1, 'blendMode': 'normal', 'label': 'V1'},
+            {'id': 'A1', 'kind': 'audio', 'scale': 1, 'fit': 'contain', 'opacity': 1, 'blendMode': 'normal', 'label': 'A1'},
+            {'id': 'S1', 'kind': 'visual', 'scale': 1, 'fit': 'contain', 'opacity': 1, 'blendMode': 'normal', 'label': 'S1'},
+        ],
         'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
         'x_f2_opaque': case['opaque']['config'],
         'app': {'haus.astrid.scene-phase-markers': {'sceneMarkers': [{'id': 'ordinary-marker-a', 'time': 1}, {'id': 'ordinary-marker-b', 'time': 6}]}},
