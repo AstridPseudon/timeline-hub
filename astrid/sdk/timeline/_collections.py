@@ -213,6 +213,20 @@ def _boundary_order(state, owner, kind, record):
     return order(state, owner, kind)
 
 
+def _track_order_refs(value):
+    if (not isinstance(value, dict) or value.get('state') != 'present'
+            or not isinstance(value.get('value'), list)):
+        raise CommandError('track collection order image is unavailable', kind='history_unavailable')
+    refs = []
+    for row in value['value']:
+        if not isinstance(row, dict) or not _identity(row.get('id')):
+            raise CommandError('track collection order image is malformed', kind='history_unavailable')
+        refs.append('parent/track:' + row['id'])
+    if len(refs) != len(set(refs)):
+        raise CommandError('duplicate track collection identity', kind='history_unavailable')
+    return refs
+
+
 def restoration_orders(records, *, only=None):
     """Project only structural membership; inverse insert positions need a boundary."""
     touched = {member(w['ref'])[:2] for record in records for w in record['writes']
@@ -298,4 +312,23 @@ def restoration_orders(records, *, only=None):
                     raise CommandError('accepted boundary membership differs from writes', kind='history_unavailable')
                 final = proven
             result[owner, kind] = (prior[0] if prior else original, final)
+        # A document patch can reorder existing track rows between native
+        # track creates. Project only authenticated parent track-list writes,
+        # and only when they preserve the exact currently projected members.
+        # Membership still comes from native structural writes above.
+        if only is None:
+            for write in record['writes']:
+                if (record['command']['op'] != 'doc.patch' or write['ref'] != 'parent'
+                        or write['path'] != ['config', 'tracks']):
+                    continue
+                prior = result.get(('parent', 'track'))
+                if prior is None:
+                    continue
+                before = _track_order_refs(write['before'])
+                after = _track_order_refs(write['after'])
+                expected = prior[1]
+                if before != expected or len(after) != len(expected) or set(after) != set(expected):
+                    raise CommandError('track list patch is not a proven order permutation',
+                                       kind='history_unavailable')
+                result['parent', 'track'] = (prior[0], after)
     return result

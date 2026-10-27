@@ -11,7 +11,7 @@ from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline._command_state import CommandError
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
-from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.timeline.sync import CommitOutcomeUnknown, TimelineSession
 from tests.timeline.test_authoring_commit_media import realm  # noqa: F401
 
 
@@ -129,7 +129,7 @@ def test_wav_lost_ack_retry_keeps_original_import_and_disclosure(realm, tmp_path
         raise ConnectionError('lost audio acknowledgement after acceptance')
 
     monkeypatch.setattr(writer, 'commit_timeline', lose_ack)
-    with pytest.raises(ConnectionError, match='lost audio acknowledgement'):
+    with pytest.raises(CommitOutcomeUnknown, match='No reply could be verified'):
         session.add_media(source, on=0, duration=1, clip_id='voice', idempotency_key='lost-voice')
     flight = session.outbox.read()['flight']
     history = writer.list_timeline_commits(candidate['project_id'], candidate['timeline_id'])

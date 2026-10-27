@@ -5,8 +5,8 @@ import copy
 
 import pytest
 
-from astrid.sdk.timeline._collections import AcceptedRecords, arrange
-from astrid.sdk.timeline._command_state import CommandError, State
+from astrid.sdk.timeline._collections import AcceptedRecords, arrange, restoration_orders
+from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline._step_undo import inverse_stages, validate_nested_history
 from astrid.sdk.timeline.capture import capture_clip_delete
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
@@ -16,6 +16,32 @@ from tests.editing_conformance.test_recipe_m2_parent_media import args, clip_ids
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
 from tests.sdk.test_timeline_commit_provider import inverse
 from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
+
+
+def _track_create_record(identity, order, *, kind=None):
+    ref = f'parent/track:{identity}'
+    kind = kind or ('audio' if identity == 'A2' else 'visual')
+    return {
+        'command': {'op': 'track.create'},
+        'ordinal': len(order),
+        'created': [{'ref': ref, 'owner': 'parent', 'kind': 'track'}],
+        'writes': [{'ref': ref, 'path': [], 'before': ABSENT,
+                    'after': present({'id': identity, 'kind': kind})}],
+        'selections': [{'key': 'collection.tracks', 'owner': 'parent', 'members': list(order),
+                        'order': list(order), 'boundaries': list(order), 'query_version': 1,
+                        'policy': 'guard-membership'}],
+    }
+
+
+def _track_order_patch_record(before, after):
+    return {
+        'command': {'op': 'doc.patch'},
+        'ordinal': 2,
+        'writes': [{'ref': 'parent', 'path': ['config', 'tracks'],
+                    'before': present([{'id': item.rsplit(':', 1)[1]} for item in before]),
+                    'after': present([{'id': item.rsplit(':', 1)[1]} for item in after])}],
+        'selections': [],
+    }
 
 
 @pytest.fixture
@@ -132,3 +158,93 @@ def test_partial_stage_mirror_chain_rejects_a_broken_previous_image(chain):
         validate_nested_history(entry, {item['publication_id']: item for item in history}.__getitem__)
     assert error.value.kind == 'history_unavailable'
     assert history == original
+
+
+def test_structural_order_accepts_continuous_track_creation_stages():
+    initial = ['parent/track:V1', 'parent/track:A1']
+    after_picture_track = [*initial, 'parent/track:V2']
+    records = [_track_create_record('V2', initial),
+               _track_create_record('A2', after_picture_track)]
+
+    assert restoration_orders(records) == {
+        ('parent', 'track'): (initial, [*after_picture_track, 'parent/track:A2'])
+    }
+
+
+def test_provider_undo_restores_create_reorder_create_track_batch():
+    from tests.editing_conformance.test_doc_patch_v2 import change, patch, step, submit
+    from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse, track_create
+    realm = DetachedRealm()
+    before = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    after_v2 = ['picture', 'V2']
+    reordered = ['V2', 'picture']
+    calls = [
+        track_create('V2'),
+        patch(change(['config', 'tracks'], present({'id': 'V2', 'kind': 'visual',
+                                                    'opaque': {'clear': None}}),
+                     op='list.move', id='V2', order_before=after_v2, after_id=None)),
+        {'schema_version': 1, 'op': 'track.create', 'version': '1', 'select': 'parent',
+         'args': {'row': {'id': 'A2', 'kind': 'audio'}}},
+    ]
+    landed = submit(realm, *calls, reads=[],
+                    steps=[step('create-v2', 0, calls[0]), step('reorder-v2', 1, calls[1]),
+                           step('create-a2', 2, calls[2])])
+    assert [row['id'] for row in landed['data']['canonical_document']['parent_revision']['payload'][
+        'config']['tracks']] == [*reordered, 'A2']
+    entry = realm.entries[-1]
+    accepted = AcceptedRecords([entry], entry['records']['commands'], None)
+    create_records = {record['command']['args']['row']['id']: record
+                      for record in accepted if record['command']['op'] == 'track.create'}
+    assert _stage_restoration_orders(accepted, create_records['V2'])['parent', 'track'] == (
+        ['parent/track:picture'], ['parent/track:picture', 'parent/track:V2'])
+    assert _stage_restoration_orders(accepted, create_records['A2'])['parent', 'track'] == (
+        ['parent/track:V2', 'parent/track:picture'],
+        ['parent/track:V2', 'parent/track:picture', 'parent/track:A2'])
+
+    undone = realm.call([inverse([landed['receipt']['receipt_id']])])
+    assert undone['data']['canonical_document'] == before
+
+
+@pytest.mark.parametrize('damage', ['membership', 'duplicate', 'wrong-before', 'foreign-id', 'missing-image'])
+def test_structural_order_rejects_unproven_track_list_patch(damage):
+    initial = ['parent/track:V1', 'parent/track:A1']
+    after_v2_create = [*initial, 'parent/track:V2']
+    reordered = ['parent/track:V1', 'parent/track:V2', 'parent/track:A1']
+    before, after = after_v2_create, reordered
+    if damage == 'membership':
+        after = ['parent/track:V1', 'parent/track:V2', 'parent/track:alien']
+    elif damage == 'duplicate':
+        after = ['parent/track:V1', 'parent/track:V2', 'parent/track:V2']
+    elif damage == 'wrong-before':
+        before = reordered
+    elif damage == 'foreign-id':
+        after = ['parent/track:V1', 'parent/track:V2/bad', 'parent/track:A1']
+    elif damage == 'missing-image':
+        bad_patch = _track_order_patch_record(after_v2_create, reordered)
+        bad_patch['writes'][0]['after'] = {'state': 'absent'}
+        records = [_track_create_record('V2', initial), bad_patch,
+                   _track_create_record('A2', reordered)]
+        with pytest.raises(CommandError):
+            restoration_orders(records)
+        return
+    records = [_track_create_record('V2', initial),
+               _track_order_patch_record(before, after),
+               _track_create_record('A2', reordered)]
+
+    with pytest.raises(CommandError):
+        restoration_orders(records)
+
+
+def test_standalone_track_list_patch_is_not_projected_as_structural_membership():
+    before = ['parent/track:V1']
+    after = [*before, 'parent/track:declared']
+    assert restoration_orders([_track_order_patch_record(before, after)]) == {}
+
+
+def test_structural_order_rejects_disconnected_track_creation_stages():
+    initial = ['parent/track:V1', 'parent/track:A1']
+    records = [_track_create_record('V2', initial),
+               _track_create_record('A2', ['parent/track:V1', 'parent/track:A1', 'parent/track:other'])]
+
+    with pytest.raises(CommandError, match='dependent structural stages require staged reversal'):
+        restoration_orders(records)

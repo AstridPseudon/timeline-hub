@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import uuid
 from collections.abc import Mapping
 from typing import Any, cast
 
@@ -55,13 +56,16 @@ class Timeline(Checkout):
     keep external side effects out of its body because it can run three times.
     """
 
-    def __init__(self, session, bundle, base, *, evaluating=False, media_cache=None):
+    def __init__(self, session, bundle, base, *, evaluating=False, media_cache=None,
+                 identity_cache=None):
         # Initialize helper state without migrating/flattening the pinned bundle.
         super().__init__({})
         self.session = session
         self._basis = copy.deepcopy(base)
         self._evaluating = evaluating
         self._media_cache = copy.deepcopy(media_cache or {})
+        self._identity_cache = copy.deepcopy(identity_cache or {})
+        self._identity_ordinal = 0
         self._verified_media = []
         self._adopt(bundle)
 
@@ -81,6 +85,9 @@ class Timeline(Checkout):
 
     def add(self, source, *, at, hold=None, duration=None, track=None, id=None, clip_id=None, **options):
         """Stage media, retaining its exact content selection across reruns."""
+        identity_ordinal = self._identity_ordinal
+        if self._evaluating:
+            self._identity_ordinal += 1
         from pathlib import Path
 
         local_path = Path(source).expanduser() if isinstance(source, (str, Path)) else None
@@ -115,6 +122,9 @@ class Timeline(Checkout):
         clip_id = id if id is not None else clip_id
         if clip_id is not None and (not isinstance(clip_id, str) or not clip_id.strip()):
             raise TimelineEditError("media clip id must be a nonempty string")
+        if clip_id is None and self._evaluating:
+            slot = str(identity_ordinal)
+            clip_id = self._identity_cache.setdefault(slot, "clip-" + uuid.uuid4().hex)
         on = number(at, "at")
         if on < 0:
             raise TimelineEditError("at must not be negative")
@@ -150,12 +160,17 @@ class Timeline(Checkout):
         kind = verified.get("media_type", "").split("/", 1)[0]
         if kind not in {"image", "video", "audio"}:
             raise TimelineEditError("verified media must be an image, video, or audio file")
+        asset_alias = None
+        if self._evaluating:
+            identity = "\0".join(pin[key] for key in ("object_id", "generation_id", "variant_id"))
+            identity_key = "asset:" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
+            asset_alias = self._identity_cache.setdefault(identity_key, "media-" + uuid.uuid4().hex)
         length = requested_duration if requested_duration is not None else number(
             verified.get("duration_seconds") or 1.0, "hold", positive=True)
 
         self._capture_free_edits()
         commands = _placement_commands(self.bundle, pin, verified, on=on, duration=length,
-                                       track=track, clip_id=clip_id)
+                                       track=track, clip_id=clip_id, asset_alias=asset_alias)
         from .commands import execute
 
         capture_bundle = (self._execution_bundle(self._command_bundle)
@@ -393,8 +408,10 @@ class Timeline(Checkout):
                 bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
                                       revision_id=base["revision_id"], publication_id=base["publication_id"],
                                       client=self.session.client)
-                saved_cache = (evaluation.get("media_cache", {}) if function else {})
-                working = Timeline(self.session, bundle, base, evaluating=True, media_cache=saved_cache)
+                saved_cache = evaluation.get("media_cache", {})
+                saved_identities = evaluation.get("identity_cache", {})
+                working = Timeline(self.session, bundle, base, evaluating=True,
+                                   media_cache=saved_cache, identity_cache=saved_identities)
                 function(working)
                 count += 1
             else:
@@ -417,7 +434,8 @@ class Timeline(Checkout):
                     working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
                     evaluation={"kind": "function" if function else "label", "count": count,
-                                "media_cache": copy.deepcopy(working._media_cache)},
+                                "media_cache": copy.deepcopy(working._media_cache),
+                                "identity_cache": copy.deepcopy(working._identity_cache)},
                 )
             except CommitConflict as exc:
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
