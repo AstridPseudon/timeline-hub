@@ -268,24 +268,38 @@ class Timeline(Checkout):
                            "publication_id": result["receipt"]["receipt_id"]}
         return result
 
-    def commit(self, label_or_fn="Timeline edit", *, merge="fields", dry_run=False,
+    def commit(self, label_or_fn="Timeline edit", *, label=None, merge="fields", dry_run=False,
                reads=None, idempotency_key=None):
-        """Accept all edits, or evaluate ``fn(timeline)`` at most three times.
+        """Accept staged edits, a fixed command list, or evaluate ``fn`` up to three times.
 
         Only an explicit conflict permits reevaluation. Calling again after a
         transport/unknown outcome retries the durable original body/key first,
         even after reopening. Refused/invalid results never rerun the function.
-        Omitted reads remain omitted; doc.patch then receives conservative atomic
+        A command list is submitted as captured and never recaptured. Omitted
+        reads remain omitted; doc.patch then receives conservative atomic
         guarding from the provider. Preview never becomes this session's base.
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
         if merge not in {"fields", "atomic"}:
             raise TimelineEditError("merge must be fields or atomic")
+        if dry_run:
+            idempotency_key = None
         function = label_or_fn if callable(label_or_fn) else None
-        label = (getattr(function, "__name__", "Timeline edit") if function else label_or_fn)
-        if not isinstance(label, str) or not label.strip():
+        commands = label_or_fn if isinstance(label_or_fn, list) else None
+        if function:
+            commit_label = label or getattr(function, "__name__", "Timeline edit")
+        elif commands is not None:
+            commit_label = label or "Timeline edit"
+        else:
+            if label is not None and label_or_fn != "Timeline edit":
+                raise TimelineEditError("pass the commit label either positionally or by keyword")
+            commit_label = label or label_or_fn
+        if not isinstance(commit_label, str) or not commit_label.strip():
             raise TimelineEditError("commit requires a nonempty label or a function")
+        if commands is not None:
+            return self._commit_commands(commands, label=commit_label, merge=merge, dry_run=dry_run,
+                                         reads=reads, idempotency_key=idempotency_key)
         if function:
             replay = self.session.resolve_acknowledged(idempotency_key, dry_run=dry_run)
             if replay is not None:
@@ -359,7 +373,7 @@ class Timeline(Checkout):
                     step.setdefault("reads", []).append({"kind": "scope", "ref": "timeline", "path": []})
             try:
                 result = self.session.submit(
-                    working._commands, label=label, steps=steps, merge=effective_merge, reads=reads,
+                    working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
                     evaluation={"kind": "function" if function else "label", "count": count,
                                 "media_cache": copy.deepcopy(working._media_cache)},
@@ -372,7 +386,51 @@ class Timeline(Checkout):
                     state = self.session._state()
                     evaluation = state.get("evaluation") or evaluation
                 continue
+            if dry_run:
+                self._add_preview_diff(result, working.bundle)
             return self._accepted(result)
+
+    def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key):
+        """Submit an already captured list without rebuilding its guards or media pins."""
+        if not commands:
+            raise TimelineEditError("commit requires a nonempty command list")
+        if self._commands or self.bundle != self._command_bundle:
+            raise TimelineEditError("commit(command_list) requires a clean local session")
+        with self.session.outbox.locked():
+            state = self.session._state()
+        if state["base"] != self._basis:
+            raise TimelineEditError("session base changed; reopen before committing")
+        steps = []
+        for ordinal, command in enumerate(commands):
+            patch = (copy.deepcopy(command.get("args", {}).get("changes", []))
+                     if isinstance(command, Mapping) and command.get("op") == "doc.patch" else [])
+            steps.append({"id": f"step-{ordinal + 1}", "label": label, "intent": "", "tags": [],
+                          "command_ordinals": [ordinal], "patch": patch})
+        result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=reads,
+                                     idempotency_key=idempotency_key, dry_run=dry_run,
+                                     expected_state=state, base=state["base"])
+        if dry_run:
+            self._add_preview_diff(result, self.bundle)
+        return self._accepted(result)
+
+    @staticmethod
+    def _add_preview_diff(result, before_bundle):
+        """Pair Runtime's preview commands with a diff of authored document fields."""
+        from .commit import bundle_from_document
+        from .emitter import _diff, _payload_for_emit, _root_pairs
+
+        data = result.get("data", {})
+        document = data.get("canonical_document")
+        if isinstance(document, Mapping):
+            after_bundle = bundle_from_document(document)
+            changes = []
+            for ref, before, after in _root_pairs(before_bundle, after_bundle):
+                _diff(_payload_for_emit(ref, before), _payload_for_emit(ref, after), ref, (), changes)
+            if not changes:
+                changes = [{"op": command["op"], "ref": command.get("select"),
+                            "args": copy.deepcopy(command["args"])}
+                           for command in data.get("commands", [])]
+            data.setdefault("diff", {"changes": changes})
 
     def save(self, *args, **kwargs):
         raise TimelineEditError("use commit(label) to save a Runtime timeline")

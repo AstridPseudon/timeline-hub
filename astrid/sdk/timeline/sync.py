@@ -634,8 +634,6 @@ class TimelineSession:
                        if conflict_retry
                        else idempotency_key if idempotency_key is not None
                        else f"timeline-edit-{uuid.uuid4().hex}")
-                if key == state.get("preview_key"):
-                    raise TimelineEditError("use a fresh key after a preview")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
                           "count": len(state["pending"]), "fence": uuid.uuid4().hex,
                           "explicit_key": logical_key is not None}
@@ -714,9 +712,7 @@ class TimelineSession:
             # prefix and even started the next flight. Its response is read-only.
             if state["flight"] == flight:
                 self._flight_body(state, flight, idempotency_key, dry_run)
-                if dry_run:
-                    state["preview_key"] = flight["key"]
-                else:
+                if not dry_run:
                     if flight.get('explicit_key', idempotency_key is not None):
                         acknowledged = state.setdefault('acknowledged', {})
                         logical_key = flight.get('logical_key', flight['key'])
@@ -732,6 +728,7 @@ class TimelineSession:
                         del state["pending"][:flight["count"]]
                     state.pop("commit_options", None)
                     state.pop("evaluation", None)
+                state.pop("preview_key", None)
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)

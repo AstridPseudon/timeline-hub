@@ -6,6 +6,7 @@ remain separately owned. No test supplies a second patch executor.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 
@@ -280,23 +281,117 @@ def test_failed_ack_persistence_reconciles_without_running_function(connected, m
     assert len(generated.accepted) == 1 and at(restarted) == 7
 
 
-def test_dry_run_has_no_history_or_adopted_preview_base_and_next_key_is_fresh(connected):
+def test_dry_run_has_no_history_or_key_reservation_and_returns_commands_and_diff(connected):
     tl = opened(connected)
     _, generated, path = connected
     before = copy.deepcopy(tl.bundle)
     initial_head = tl.head
-    preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True)
+    preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True,
+                        idempotency_key="caller-key")
     assert preview["receipt"] is None and preview["data"]["status"] == "preview"
+    assert preview["data"]["commands"]
+    assert preview["data"]["diff"]["changes"]
+    assert preview["data"]["diff"]["changes"][0]["op"] == "clip.move"
     assert tl.bundle == before and tl.head == initial_head
     assert tl._journal == [] and generated.accepted == {} and generated.records == {}
     state = json.loads(path.read_text())
     assert state["base"] == initial_head and state["pending"] == [] and state["flight"] is None
-    tl.move("parent/clip:a", 6)
-    with pytest.raises(TimelineEditError, match="fresh key"):
-        tl.commit("Accept", idempotency_key=generated.calls[0][1])
-    tl.commit("Accept")
+    assert "preview_key" not in state
+    assert "commit_options" not in state and "evaluation" not in state and "acknowledged" not in state
+    accepted = tl.commit(preview["data"]["commands"], label="Accept preview", idempotency_key="caller-key")
+    assert accepted["receipt"] is not None
+    assert json.loads(generated.calls[1][0])["commands"] == preview["data"]["commands"]
     assert generated.calls[0][1] != generated.calls[1][1]
     assert len(generated.accepted) == 1 and at(tl) == 6
+    tl.undo(publications=[accepted["receipt"]["receipt_id"]])
+    assert generated.bundles[generated.head["revision_id"]]["parent"] == before["parent"]
+
+
+def test_fixed_list_does_not_recompute_after_conflict(connected, monkeypatch):
+    tl = opened(connected)
+    _, generated, path = connected
+    preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True)
+    commands = copy.deepcopy(preview["data"]["commands"])
+    sent = []
+
+    def refuse(*args, **kwargs):
+        sent.append(copy.deepcopy(args[2]))
+        raise conflict(generated)
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse)
+    with pytest.raises(CommitConflict):
+        tl.commit(commands, label="Fixed")
+    assert len(sent) == 1 and sent[0]["commands"] == commands
+    state = json.loads(path.read_text())
+    assert state["pending"] == commands and state["flight"] is not None
+
+
+def test_media_preview_list_reuse_keeps_verified_selection_without_reimport(connected, monkeypatch, tmp_path):
+    from astrid.sdk.timeline import media_add
+    from tests.sdk import test_timeline_sync as sync_test
+
+    tl = opened(connected)
+    _, generated, _ = connected
+    source = tmp_path / "preview.png"
+    payload = b"preview image"
+    source.write_bytes(payload)
+    digest = "sha256:" + hashlib.sha256(payload).hexdigest()
+    pin = {"asset": "preview-asset", "object_id": digest,
+           "generation_id": "preview-generation", "variant_id": "preview-variant",
+           "catalog_digest": "sha256:" + "a" * 64}
+    verified = {"selection": copy.deepcopy(pin), "media_type": "image/png", "size": len(payload),
+                "width": 1, "height": 1}
+    imports = []
+    monkeypatch.setattr("astrid.sdk.authoring_media._metadata", lambda _path: {
+        "digest": digest, "media_type": "image/png", "filename": source.name,
+        "width": 1, "height": 1,
+    })
+    monkeypatch.setattr(media_add, "_selection", lambda *_args: (imports.append(pin) or pin, verified))
+    execute = sync_test.execute
+    monkeypatch.setattr(sync_test, "execute", lambda bundle, commands, **kwargs: execute(
+        bundle, commands, verified_media=[verified], **kwargs))
+
+    preview = tl.commit(lambda working: working.add(source, at=0, hold=2, id="preview-clip"), dry_run=True)
+    commands = copy.deepcopy(preview["data"]["commands"])
+    assert preview["receipt"] is None
+    assert preview["imports"] == [{"object_id": digest, "generation_id": pin["generation_id"],
+                                    "variant_id": pin["variant_id"], "catalog_write": True,
+                                    "retained_on_undo": True}]
+    accepted = tl.commit(commands, label="Apply media preview")
+    submitted = json.loads(generated.calls[-1][0])["commands"]
+    assert submitted == commands and submitted[-1]["args"]["media"] == pin
+    assert len(imports) == 1 and accepted["receipt"] is not None
+
+
+def test_preview_then_function_call_evaluates_fresh_intent(connected):
+    tl = opened(connected)
+    _, generated, path = connected
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(at(working))
+        working.move("parent/clip:a", at(working) + 1)
+
+    preview = tl.commit(edit, dry_run=True)
+    accepted = tl.commit(edit)
+    assert preview["receipt"] is None and accepted["receipt"] is not None
+    assert evaluations == [0, 0]
+    state = json.loads(path.read_text())
+    assert state["pending"] == [] and state["flight"] is None
+    assert len(generated.accepted) == 1 and at(tl) == 1
+
+
+def test_preview_refusal_leaves_no_pending_request_or_key_reservation(connected):
+    tl = opened(connected)
+    _, generated, path = connected
+    generated.refusal = ApiError(409, "conflict", "preview refused", details={"status": "refused"})
+    with pytest.raises(CommitConflict):
+        tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True,
+                  idempotency_key="caller-key")
+    state = json.loads(path.read_text())
+    assert state["pending"] == [] and state["flight"] is None
+    assert "commit_options" not in state and "evaluation" not in state
+    assert "acknowledged" not in state and "preview_key" not in state
 
 
 def test_callback_exception_and_nested_commit_publish_nothing(connected):

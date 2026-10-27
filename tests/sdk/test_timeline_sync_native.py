@@ -275,7 +275,7 @@ def test_undo_preserves_pending_intent_and_metadata(connected):
     assert path.read_bytes() == persisted and generated.calls == []
 
 
-def test_undo_preview_keeps_base_and_requires_fresh_key(connected):
+def test_undo_preview_keeps_base_and_does_not_reserve_its_key(connected):
     _, generated, path = connected
     session = open_session(connected)
     publication = session.commit(label('Original'))['receipt']['receipt_id']
@@ -285,11 +285,9 @@ def test_undo_preview_keeps_base_and_requires_fresh_key(connected):
     assert state['base'] == {'revision_id': 'r1', 'publication_id': publication}
     assert state['pending'] == [] and state['flight'] is None
     assert 'commit_options' not in state
-    with pytest.raises(TimelineEditError, match='fresh key'):
-        session.undo([publication], idempotency_key='preview')
-    assert json.loads(path.read_bytes()) == state
-    session.undo([publication], idempotency_key='accepted-undo')
-    assert generated.calls[-1][1] == 'accepted-undo'
+    accepted = session.undo([publication], idempotency_key='preview')
+    assert accepted['receipt'] is not None
+    assert generated.calls[-1][1] == 'preview'
 
 
 def test_undo_retry_preserves_legacy_flight_without_adding_metadata(connected):

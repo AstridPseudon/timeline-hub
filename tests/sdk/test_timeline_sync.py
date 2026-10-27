@@ -618,19 +618,19 @@ def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, mo
     assert json.loads(path.read_bytes())["pending"] == []
 
 
-def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connected):
+def test_preview_remains_unsent_and_does_not_reserve_its_key(connected):
     session = open_session(connected)
     _, generated, path = connected
     preview = session.move("parent/clip:a", 5, dry_run=True, idempotency_key="preview")
     assert preview["receipt"] is None and "show_command" not in preview["data"]
     assert not generated.accepted
     assert json.loads(path.read_bytes())["pending"]
-    with pytest.raises(TimelineEditError, match="fresh key"):
-        session.flush(idempotency_key="preview")
-    accepted = session.flush()
+    accepted = session.flush(idempotency_key="preview")
+    assert accepted["receipt"] is not None
     publication = accepted["receipt"]["receipt_id"]
     session.undo([publication])
-    assert len({key for _, key in generated.calls}) == 3
+    assert generated.calls[0][1] == generated.calls[1][1] == "preview"
+    assert len({key for _, key in generated.calls}) == 2
     inverse = json.loads(generated.calls[-1][0])["commands"][0]
     assert inverse == {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
                        "args": {"publications": [publication]}}
