@@ -24,6 +24,10 @@ def test_structured_commit_failures_preserve_cause_and_machine_fields(status, re
     assert presented["outcome"] == "not_applied"
     assert presented["cause"] == failure
     assert presented["cause"]["details"]["reason"] == reason
+    if reason == "stale_head":
+        assert presented["headline"] == "The edit was made from an older timeline; nothing was committed"
+        assert presented["fix"] == "Reopen with Timeline.open(...) and make the edit again."
+        assert presented["detail"] == "provider message"
 
 
 def test_unknown_failure_wording_never_claims_failure_or_nonapplication():

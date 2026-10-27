@@ -37,7 +37,8 @@ class CommitConflict(TimelineEditError):
         elif fixed_list:
             self.presentation.update(
                 headline="The timeline changed since this list was made; nothing was committed",
-                detail="The list was not re-run. Review the latest timeline before applying new choices.",
+                detail=(self.failure.get("message") or
+                        "The list was not re-run. Review the latest timeline before applying new choices."),
                 fix=(f'Run astrid timelines discard {timeline_id} --project {project_id}, '
                      'preview again with dry_run=True, then commit the reviewed commands.'),
             )

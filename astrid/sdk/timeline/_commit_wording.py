@@ -27,7 +27,6 @@ _DETAILS = {
     "dependency_changed": "Something this edit depends on has changed.",
     "atomic_scope_changed": "This edit needs the whole timeline unchanged, and it changed.",
     "binding_changed": "A text or media binding this edit uses has changed.",
-    "stale_head": "Your session's starting point is no longer the latest revision.",
     "head_busy": "Another commit was being applied at the same moment.",
     "idempotency_mismatch": "A key names one edit. This request differs from the request first sent with it.",
     "not_pristine": "Creating with content needs a timeline with no edits yet.",

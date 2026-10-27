@@ -358,8 +358,10 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
         "argv",
         [str(script), "publish", "--file", str(document), "--idempotency-key", "stale-edit"],
     )
-    with pytest.raises(CommitConflict, match="parent composition head is stale"):
+    with pytest.raises(CommitConflict) as caught:
         helper.main()
+    assert caught.value.detail == "parent composition head is stale"
+    assert caught.value.cause["message"] == "parent composition head is stale"
     assert document.read_text() == json.dumps(work)
     assert document.with_suffix(".check.json").exists()
     assert document.with_suffix(".imports.json").exists()
