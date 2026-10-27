@@ -405,6 +405,24 @@ test('canonical conversion of [a,b(fade),c] is deterministic and both public ent
   assert.equal(JSON.stringify(clips), before);
 });
 
+test('omitted canonical transition durations use the eight-frame default for both incoming IDs and legacy references', () => {
+  for (const id of ['fade', 'cross-fade']) {
+    const makeClips = (transition: TimelineClip['transition']): TimelineClip[] => [
+      {id: 'a', track: track.id, at: 0, hold: 1},
+      {id: 'b', track: track.id, at: 1, hold: 1, transition},
+      {id: 'c', track: track.id, at: 2, hold: 1},
+    ];
+    const canonical = compileIncoming(makeClips({id}));
+    const legacy = compileIncoming(makeClips({type: id, duration: undefined}));
+    const explicit = compileIncoming(makeClips({id, durationFrames: 8}));
+
+    assert.deepEqual(canonical.tracks[0].incomingTransitions, [null, {T: 8}, null]);
+    assert.deepEqual(canonical, legacy);
+    assert.deepEqual(canonical, explicit);
+    assert.equal(prepareIncoming(makeClips({id})).tracks[0].prepared.plans[1].fadeIn?.to, 8);
+  }
+});
+
 test('compiled incoming ownership must match the current clips and all visual tracks', () => {
   const clips: TimelineClip[] = [
     {id: 'a', track: track.id, at: 0, hold: 1},

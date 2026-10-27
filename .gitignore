@@ -3,5 +3,5 @@ typescript/dist/
 typescript/test-dist/
 dist/
 *.tgz
-!artifacts/banodoco-timeline-composition-0.0.16.tgz
+!artifacts/banodoco-timeline-composition-0.0.17.tgz
 typescript/src/lib/remotion-primitives.generated.js
