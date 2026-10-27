@@ -1,0 +1,56 @@
+{
+  "time": "2026-10-27T17:17:45.430022+00:00",
+  "result": "PASS_SOURCE_MAP",
+  "scope": "Routing diagnosis only. No product changes, test body or phase/full-suite qualification.",
+  "controlling_correction": "Reviewer: historical matching Agent is source-backed inference, no effective-command/module-origin capture. Fixture does not directly assert provider __file__. Author originals preserved unchanged.",
+  "files": [
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-1707/evidence/findings.md",
+      "published": "design/rt-OPS-H-runtime-consumer-1707-findings.md",
+      "bytes": 4253,
+      "sha256": "40db3ac79a2df2b939efcbf2a9228d96de527e3bade049569e475524ec8cd754"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-1707/evidence/source-map.json",
+      "published": "design/rt-OPS-H-runtime-consumer-1707-source-map.json",
+      "bytes": 3792,
+      "sha256": "73715735291840101a426854fa66c1b8fa6ebd6156f3b538f67c427cf9a11cd0"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-1707/evidence/validation.md",
+      "published": "design/rt-OPS-H-runtime-consumer-1707-validation.md",
+      "bytes": 646,
+      "sha256": "73316b6eec234d331d02337596788d5f6d16fa5525c2843f2f03e691e36d947f"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-1707/evidence/handoff.md",
+      "published": "design/rt-OPS-H-runtime-consumer-1707-handoff.md",
+      "bytes": 1214,
+      "sha256": "4af45690060f29e63a7b406af853863379269bc8339bf6b00771f9d02707ee69"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-review-1711/evidence/review.json",
+      "published": "design/rt-OPS-H-runtime-consumer-review-1711-review.json",
+      "bytes": 7039,
+      "sha256": "86488f9dbf6a7eb9b34ba047b9fad62107a2e5dccd80e8c3e85f0ccc16aee37b"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-review-1711/evidence/findings.md",
+      "published": "design/rt-OPS-H-runtime-consumer-review-1711-findings.md",
+      "bytes": 4328,
+      "sha256": "d24b67b67d7af339f84483c1243ea31e064524bb9274ec922e5dcfbe36611c2b"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-review-1711/evidence/validation.md",
+      "published": "design/rt-OPS-H-runtime-consumer-review-1711-validation.md",
+      "bytes": 1546,
+      "sha256": "c16ba7151703bdd5b4dae2d88ba65da6159b8501357de6b8432e2d483446e963"
+    },
+    {
+      "source": "workers/rt-OPS-H-runtime-consumer-review-1711/evidence/handoff.md",
+      "published": "design/rt-OPS-H-runtime-consumer-review-1711-handoff.md",
+      "bytes": 1356,
+      "sha256": "5ddb241683604eea5f8613bd14538274981d4cebac7004f3a4940deae3ed04be"
+    }
+  ]
+}

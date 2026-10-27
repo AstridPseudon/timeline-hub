@@ -1,0 +1,71 @@
+{
+  "result": "PASS_SOURCE_MAP",
+  "scope": "Independent read-only H3 Runtime source map. This closes only the source-routing diagnosis; it is not an all-target pass or phase qualification.",
+  "current_mapping": {
+    "runtime_worker_base": "tl/one-head",
+    "runtime_worker_meta": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/H-tests-runtime-final/meta",
+    "runtime_commit": "d3969a86e62f5f8761533499e7d2e3f97195932b",
+    "runtime_tree": "61568665d2c58da55d2082065dc8b1d4142b8632",
+    "configured_suite_command": "env ASTRID_CHECKOUT=/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3",
+    "selector": "worker base tl/one-head => refs/heads/tl/one-head in /home/user/work/agent",
+    "selected_agent_commit": "88a9dfe9856344ade53d88d7dd4ec9883bd7a38c",
+    "selected_agent_worktree": "/home/user/work/wt-int/agent-88a9dfe98563",
+    "selected_worktree_head_verified": true,
+    "rewritten_effective_command": "env ASTRID_CHECKOUT=/home/user/work/wt-int/agent-88a9dfe98563 /home/user/work/venv-runtime/bin/python -m pytest -q -n 3",
+    "provider_import": "astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "runtime_import_control": "tests/astrid_checkout.py prepends resolved ASTRID_CHECKOUT to sys.path and removes already-imported astrid.* modules whose __file__ is outside that root; runtime_protocol/timeline_commit_provider.py imports astrid.sdk.timeline.commit and invokes create_runtime_commit_service.",
+    "assertion_limit": "The fixture does not directly assert astrid.sdk.timeline.commit.__file__. Source selection and import behavior support the path inference; no process-level module-origin capture exists.",
+    "agent_runtime_lock_source_commit": "1a0ce6a39dec6701b17918e5c7665745ae76c504",
+    "runtime_lock_meaning": "Contract-source lock metadata. It is not the selector for the Agent provider imported by Runtime."
+  },
+  "historical_run": {
+    "request_id": "H-tests-runtime-final-full-1027154307-24227",
+    "requested": "2026-10-27T15:43:07Z",
+    "runtime_commit": "d3969a86e62f5f8761533499e7d2e3f97195932b",
+    "runtime_tree": "61568665d2c58da55d2082065dc8b1d4142b8632",
+    "displayed_external_agent_metadata": "2d7b9a019431f5592967b2f29799af60da6934fc",
+    "displayed_metadata_semantics": "The runner computes external= from the unrewritten configured suite command, so it records /home/user/work/agent's integration checkout as dependency/cache metadata; it does not record ASTRID_CHECKOUT after Runtime-specific command rewriting.",
+    "selected_agent_source": "88a9dfe9856344ade53d88d7dd4ec9883bd7a38c (source-backed inference, not directly captured for this process)",
+    "run_counts": {"passed": 7385, "failed": 75, "errors": 25, "skipped": 26, "xfailed": 13},
+    "run_status": "fail",
+    "comparison_matching_source_run": {
+      "request_id": "H-tests-runtime-full-1027150617-4802",
+      "recorded_command": "env ASTRID_CHECKOUT=/home/user/work/wt-int/agent-88a9dfe98563 /home/user/work/venv-runtime/bin/python -m pytest -q -n 3",
+      "counts": {"passed": 7374, "failed": 77, "errors": 33, "skipped": 26, "xfail": 13},
+      "status": "fail"
+    },
+    "historical_evidence_limits": [
+      "The immutable 2026-10-27 14:13:15Z test-run backup predates the 15:43:07Z request and contains the tl/one-head selector and command rewrite. This supports that the selector was available to the original invocation.",
+      "The original summary says it was finalized from an existing log after runner death and has no effective command. runner.log records `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run: line 470: ol: command not found` and a syntax error near `fi` at line 477. The pytest log and final counts are retained, but there is no per-process module.__file__ capture.",
+      "The imported 88a9 source is therefore a source-backed inference from pre-request runner control flow, worker base, ref resolution, selected detached worktree, and Runtime bootstrap/import behavior, not direct historical process telemetry."
+    ]
+  },
+  "findings": [
+    {"id": "F1", "severity": "correction", "finding": "The author's mapping conclusion is correct for a new H worker at base tl/one-head, and the same selector was present in the retained pre-request runner backup. Historical use of it is strongly supported but must remain an inference because the original effective command and module origin were not captured."},
+    {"id": "F2", "severity": "correction", "finding": "The report overstates fixture evidence: astrid_checkout.py prepends the selected checkout and purges foreign-root modules, but does not itself assert the commit provider module's __file__. Other provider-related tests assert origins for selected Agent modules, not a persisted origin for this full run."},
+    {"id": "F3", "severity": "qualification-limit", "finding": "The 7,385 passed / 75 failed / 25 errors / 26 skipped / 13 xfailed result is a failed full suite. Even if H's baseline classifier found matching failures, source review cannot convert it into a passing full suite or phase qualification. H retains its final qualification and rerun decision."}
+  ],
+  "validation": {
+    "command": "bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+    "exit_code": 0,
+    "product_suite_run": false,
+    "product_or_kit_mutation": false,
+    "original_request_retried_or_retargeted": false
+  },
+  "sha256": {
+    "orch/bin/test-run": "cf7e02d2421de610d142b1fc0051dfde44027b7e3c79870090b3d10ae0098d60",
+    "orch/bin/test-run.20261027T1413Z.bak": "54681a7d429deddbcba5790e326e6d29d97dede494139fab8bb42c626b7a7d5a",
+    "orch/tests/suites.conf": "629f2772eca5eb651bdfa45cae009d10cddc564f933c519060b8c19ddae49693",
+    "runtime@d3969a86e62/tests/astrid_checkout.py": "68a9352f2b3bb101459aee6b996135e05f758e8bd12c6da8fb4e498cdf0485e7",
+    "runtime@d3969a86e62/runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+    "runtime@d3969a86e62/tests/test_timeline_commit_integration.py": "867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534",
+    "agent@88a9dfe985/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent@88a9dfe985/astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+    "historical/request": "09e6381fde0166f0aea652e765d19c37fe579ebca613a518c42e5f73d9a00aa9",
+    "historical/snap": "c7a946bf8e24f77efc538c20f42da487a57aec865612655bb7bd031cbb2af77e",
+    "historical/ext": "7a10171cc4c0805ab46102840ddd954d7773cd72b7f73ce34c86b34a07134cbc",
+    "historical/summary": "9e9d95eafdf08099ab60a96c4cfe83a40df1435875077572a2d5c14737cb54ad",
+    "historical/runner.log": "dce53e396766a3c98258b380a9d235bed7821e28b52eb3c46599ce1df4f4833a",
+    "historical/log.txt": "f6fdde4add23074d7710b6e3b2081aa2b69e973560f249a654311a3e216e218d"
+  }
+}

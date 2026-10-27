@@ -1,0 +1,61 @@
+{
+  "result": "PASS_SOURCE_MAP",
+  "routing": {
+    "runtime_suite": "runtime full",
+    "configured_command": "env ASTRID_CHECKOUT=/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -n 3",
+    "runtime_worker_base": "tl/one-head",
+    "agent_selector_ref": "refs/heads/tl/one-head",
+    "selected_agent_commit": "88a9dfe9856344ade53d88d7dd4ec9883bd7a38c",
+    "selected_agent_path": "/home/user/work/wt-int/agent-88a9dfe98563",
+    "actual_provider_module": "astrid.sdk.timeline.commit",
+    "provider_factory": "create_runtime_commit_service",
+    "agent_runtime_lock_source_commit": "1a0ce6a39dec6701b17918e5c7665745ae76c504",
+    "runtime_lock_note": "Contract-source lock metadata; independent of the Agent checkout selected for provider imports."
+  },
+  "historical_run": {
+    "request_id": "H-tests-runtime-final-full-1027154307-24227",
+    "requested": "2026-10-27T15:43:07Z",
+    "runtime_base_short": "d3969a86e6",
+    "runtime_commit": "d3969a86e62f5f8761533499e7d2e3f97195932b",
+    "runtime_tree": "61568665d2c58da55d2082065dc8b1d4142b8632",
+    "displayed_external_agent_metadata": "2d7b9a019431f5592967b2f29799af60da6934fc",
+    "displayed_metadata_semantics": "Cache/dependency metadata collected from the configured integration checkout before Runtime CMD rewriting; not provider import identity.",
+    "counts": {
+      "passed": 7385,
+      "failed": 75,
+      "errors": 25,
+      "skipped": 26,
+      "xfailed": 13
+    }
+  },
+  "sha256": {
+    "orch/bin/test-run": "cf7e02d2421de610d142b1fc0051dfde44027b7e3c79870090b3d10ae0098d60",
+    "orch/tests/suites.conf": "629f2772eca5eb651bdfa45cae009d10cddc564f933c519060b8c19ddae49693",
+    "runtime-at-d3969a86e62/tests/astrid_checkout.py": "68a9352f2b3bb101459aee6b996135e05f758e8bd12c6da8fb4e498cdf0485e7",
+    "runtime-at-d3969a86e62/runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+    "runtime-at-d3969a86e62/tests/test_timeline_commit_integration.py": "867a33c5c1cda39e1cb540d1fb378b3987eaacc8ceb89d67c3f23711ec400534",
+    "runtime-at-d3969a86e62/tests/test_shot_composition_runtime.py": "e5eb114b2daa5d34236d3a3cf7b4acca4f15b46be0775e2ea6134e90321b5897",
+    "agent-at-2d7b9a0194/runtime.lock.json": "1ef65130cce0fc43e9df2547dcad6a4069aa089c186d9bf1690baa1347461f33",
+    "agent-at-2d7b9a0194/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent-at-88a9dfe985/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent-at-2d7b9a0194/astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+    "agent-at-88a9dfe985/astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+    "orch/bin/test-run.20261027T1413Z.bak": "54681a7d429deddbcba5790e326e6d29d97dede494139fab8bb42c626b7a7d5a"
+  },
+  "matching_comparison": {
+    "request_id": "H-tests-runtime-full-1027150617-4802",
+    "effective_command": "env ASTRID_CHECKOUT=/home/user/work/wt-int/agent-88a9dfe98563 /home/user/work/venv-runtime/bin/python -m pytest -q -n 3",
+    "counts": {
+      "passed": 7374,
+      "failed": 77,
+      "errors": 33,
+      "skipped": 26,
+      "xfailed": 13
+    },
+    "interpretation": "Matching Agent selector; this full suite was also non-green."
+  },
+  "limits": [
+    "The full run did not persist a runtime module __file__ manifest; import identity follows from the recorded worker metadata, executable test-run selector, present detached worktree HEAD, and Runtime import/bootstrap source plus fixture path assertion.",
+    "No new full-suite run was requested, and this source map does not qualify the non-green full-suite result."
+  ]
+}
