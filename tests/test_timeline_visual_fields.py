@@ -16,7 +16,7 @@ def test_visual_field_provider_acceptance_and_refusal_regressions(editing):
     _visual_stand_in(editing)
     accepted = [
         ("entrance", {"id": "fade", "durationFrames": 12,
-                      "params": {"easing": "out"}}, True),
+                      "params": {"easing": " EASE-OUT "}}, False),
         ("entrance", {"id": "fade-up", "durationFrames": 18}, True),
         ("entrance", {"id": "scale-in", "durationFrames": 18}, True),
         ("entrance", {"id": "slide-left", "durationFrames": 18}, True),
@@ -74,6 +74,28 @@ def test_visual_field_provider_preserves_opaque_custom_data(editing):
     after = editing.document()
     assert next(row["params"] for row in after["parent_revision"]["payload"]["clips"]
                 if row["id"] == "music-bed") == original
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=RuntimeErrorBase,
+    reason="[declared-xfail:p1-top-level-text-hook] P1 top-level text-hook restoration requirement",
+)
+def test_supported_top_level_type_on_retains_original_roundtrip_expectations(editing):
+    # P1 must restore the top-level text hook before this original acceptance
+    # case can publish; keep its stored, read, and human-description checks.
+    from astrid.core.timeline import clip_fields as cf
+
+    _visual_stand_in(editing)
+    ref = {"id": "type-on", "durationFrames": 60,
+           "params": {"durationFraction": 0.55, "showCaret": True, "startFrame": 18}}
+    accepted = _commit_visual_field(editing, "entrance", ref,
+                                    "original-top-level-type-on-acceptance", use_agent_setter=False)
+    clip = next(row for row in accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"]
+                if row["id"] == "music-bed")
+    assert clip["entrance"] == ref
+    assert cf.read(clip, "entrance", fps=24) == ref
+    assert cf.describe(clip, fps=24)["entrance"] == "type-on 60f"
 
 
 @pytest.mark.parametrize("field,value", [

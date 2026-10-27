@@ -278,7 +278,15 @@ def _visual_stand_in(editing):
     music.pop("asset", None)
     music.pop("volume", None)
     music["text"] = {"content": "Visual field publication proof"}
-    music["params"] = {"custom": {"opaque": [None, False, {"easing": "package-owned"}]}}
+    music["params"] = {
+        "entrance": "custom-element-setting",
+        "custom": {
+            "opaque": [None, False, {"easing": "package-owned"}],
+            "entrance": {"future": [None, "nested entrance"]},
+            "exit": {"future": [False, "nested exit"]},
+            "transition": {"future": [0, "nested transition"]},
+        },
+    }
     change = {"op": "set", "ref": "parent", "path": ["clips"],
               "before": present(document["parent_revision"]["payload"]["clips"]), "value": clips}
     command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
