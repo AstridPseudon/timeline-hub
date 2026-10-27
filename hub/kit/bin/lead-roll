@@ -14,6 +14,8 @@ for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-
   le=$(date -d "$(cat $D/ended)" +%s); go=0
   for e in $O/workers/$X-*/ended; do [ -f "$e" ] && [ $(date -d "$(cat $e)" +%s) -gt $le ] && { go=1; break; }; done
   [ $(( $(date +%s) - le )) -gt 3300 ] && go=1
+  # 27 Oct 05:15Z: a new main note (STATUS.md changed over a minute after the round ended) also starts the next round
+  [ -f $L/$P/STATUS.md ] && [ $(stat -c %Y $L/$P/STATUS.md) -gt $((le + 60)) ] && go=1
   [ $go = 1 ] || continue
   N=$((last+1)); LM=gpt-5.6-luna; case $X in H|D|P) LM=gpt-6-luna;; esac; out=$($O/bin/request lead-$X-r$N --repo $R --base $B --model $LM --effort high --timeout 120 --brief $L/$P/LEAD-BRIEF.md 2>&1)
   echo "$(date -u +%FT%TZ) lead-roll: $out" | tee -a $L/lead-roll.log
