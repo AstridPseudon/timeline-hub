@@ -10,6 +10,48 @@ import tempfile
 NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin")
 ORCH = Path(__file__).resolve().parent.parent
 REMOTION_BROWSER = "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell"
+STAGING_REF = "refs/remotes/origin/staging/timeline-v2.1"
+
+
+def matching_checkout(repo, base):
+    project = Path("/home/user/work") / repo
+    ref = ""
+    if base.startswith("origin/"):
+        ref = f"refs/remotes/{base}"
+    elif base.startswith("tl/"):
+        ref = f"refs/heads/{base}"
+    resolved = subprocess.run(
+        ["git", "-C", str(project), "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        capture_output=True,
+        text=True,
+    ) if ref else None
+    if resolved is None or resolved.returncode:
+        ref = STAGING_REF
+    sha = subprocess.check_output(
+        ["git", "-C", str(project), "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        text=True,
+    ).strip()
+    checkout = Path("/home/user/work/wt-int") / f"{repo}-{sha[:12]}"
+    if checkout.is_symlink():
+        raise RuntimeError(f"refusing symlinked {repo} checkout: {checkout}")
+    if checkout.exists():
+        head = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
+        status = subprocess.check_output(["git", "-C", str(checkout), "status", "--porcelain"], text=True)
+        branch = subprocess.run(
+            ["git", "-C", str(checkout), "symbolic-ref", "-q", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if head != sha or status or branch:
+            raise RuntimeError(f"{repo} checkout is not a clean detached worktree at {sha}: {checkout}")
+    else:
+        subprocess.check_call(["git", "-C", str(project), "worktree", "add", "--detach", str(checkout), sha])
+    return str(checkout)
+
+
+def matching_sources():
+    base = os.environ.get("ASTRID_TEST_BASE", "")
+    return matching_checkout("agent", base), matching_checkout("runtime", base)
 
 
 def main():
@@ -43,12 +85,13 @@ if(await p.title()!=='central browser proof') throw Error('page failed');
 console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().catch(e=>{console.error(e);process.exitCode=1});
 """]
         elif lane == "browser-journey":
+            agent, runtime = matching_sources()
             env.update(
-                ASTRID_RUNTIME_CHECKOUT="/home/user/work/runtime",
+                ASTRID_RUNTIME_CHECKOUT=runtime,
                 ASTRID_RUNTIME_PYTHON="/home/user/work/venv-runtime/bin/python",
-                ASTRID_CHECKOUT="/home/user/work/agent",
+                ASTRID_CHECKOUT=agent,
                 ASTRID_PYTHON="/home/user/work/venv-agent/bin/python",
-                PYTHONPATH="/home/user/work/agent:/home/user/work/runtime",
+                PYTHONPATH=f"{agent}:{runtime}",
                 PLAYWRIGHT_OUTPUT_DIR=str(result / "browser-results"),
             )
             command = [str(NODE / "node"), str(root / "node_modules/@playwright/test/cli.js"),
@@ -96,10 +139,11 @@ console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().
                        "-m", "integration", *(selectors or [
                            "tests/integrations/test_generic_host_remotion_render.py"])]
         elif lane == "preview-vs-export":
+            agent, _runtime = matching_sources()
             harness = root / ".renderlane"
             harness.mkdir()
             shutil.copyfile(ORCH / "bin/renderlane-capture.mjs", harness / "capture.mjs")
-            env.update(ASTRID_CHECKOUT="/home/user/work/agent", RENDERLANE_OUTPUT=str(result / "captures"))
+            env.update(ASTRID_CHECKOUT=agent, RENDERLANE_OUTPUT=str(result / "captures"))
             command = [str(NODE / "node"), str(harness / "capture.mjs")]
         else:
             raise ValueError(f"unknown lane {lane}")

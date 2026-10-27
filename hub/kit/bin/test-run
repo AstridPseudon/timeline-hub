@@ -419,6 +419,13 @@ if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/hom
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
 TEST_PYTHONPATH=$SNAP
 ASTRID_RUNTIME_SOURCE=
+ASTRID_TEST_BASE=
+if [ "${target#integration:}" != "$target" ]; then
+  ASTRID_TEST_BASE=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
+elif [ -f "$O/workers/$target/meta" ]; then
+  ASTRID_TEST_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+fi
+export ASTRID_TEST_BASE
 if [ "$repo" = runtime ]; then
   AGENT_BASE=
   if [ "${target#integration:}" = "$target" ] && [ -f "$O/workers/$target/meta" ]; then
