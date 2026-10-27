@@ -144,10 +144,13 @@ async function dragGalleryImageOntoNewShotTrack(page: Page): Promise<boolean> {
     const editAreaBox = editArea.getBoundingClientRect();
     const firstBox = firstAnchor.getBoundingClientRect();
     const clientX = firstBox.left + Math.max(1, firstBox.width / 2);
-    // Sample well below the scroll area's rendered content so the coordinator
-    // resolves the bottom new-track zone even when the row has extra viewport
-    // space beneath it.
-    const clientY = Math.max(rowBox.bottom + 8, editAreaBox.bottom + 100);
+    // Stay inside the edit area while sampling below the rendered row. The
+    // bottom edge is the new-track zone, so use the nearest in-bounds point
+    // when the viewport has less than 8px of empty space.
+    const clientY = Math.min(rowBox.bottom + 8, editAreaBox.bottom - 2);
+    if (clientY <= rowBox.bottom || clientY < editAreaBox.top || clientY > editAreaBox.bottom) {
+      throw new Error('The timeline edit area has no in-bounds empty space below the existing row.');
+    }
     const dataTransfer = new DataTransfer();
     const event = (type: 'dragstart' | 'dragover' | 'drop' | 'dragend') => new DragEvent(type, {
       bubbles: true,
@@ -158,8 +161,19 @@ async function dragGalleryImageOntoNewShotTrack(page: Page): Promise<boolean> {
     });
     source.dispatchEvent(event('dragstart'));
     wrapper.dispatchEvent(event('dragover'));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const targetedNewTrack = editArea.classList.contains('drop-target-new-track');
+    const targetedNewTrack = await new Promise<boolean>((resolve) => {
+      const deadline = performance.now() + 1_000;
+      const waitForIndicator = () => {
+        if (editArea.classList.contains('drop-target-new-track')) {
+          resolve(true);
+        } else if (performance.now() >= deadline) {
+          resolve(false);
+        } else {
+          requestAnimationFrame(waitForIndicator);
+        }
+      };
+      requestAnimationFrame(waitForIndicator);
+    });
     wrapper.dispatchEvent(event('drop'));
     source.dispatchEvent(event('dragend'));
     return targetedNewTrack;
