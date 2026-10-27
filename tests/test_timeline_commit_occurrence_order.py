@@ -66,6 +66,7 @@ def test_occurrence_order_projects_exact_physical_rows(projection):
     "missing", "duplicate", "foreign", "owner", "value", "pin", "input-pin", "stale-order",
     "unbound-order", "unbound-move", "wrong-range", "wrong-change", "wrong-physical-owner",
     "sealed-order", "sealed-pin", "sealed-value", "sealed-anchor",
+    "added", "forged-pin", "physical-pin", "opaque", "wrong-landing", "bound-order", "sealed-id",
 ])
 def test_occurrence_order_rejects_forged_collection_observations(projection, damage):
     boundary, step, record, accepted, following = _order_case()
@@ -96,6 +97,19 @@ def test_occurrence_order_rejects_forged_collection_observations(projection, dam
         record["bindings"][0]["boundary"]["change_ordinal"] = 1
     elif damage == "wrong-physical-owner":
         boundary["shot-revision:revision-last"]["shot_id"] = "shot-first"
+    elif damage == "physical-pin":
+        boundary["parent"]["payload"]["occurrences"][0]["shot_revision_id"] = "revision-forged"
+    elif damage == "forged-pin":
+        rows[0]["shot_revision_id"] = "revision-forged"
+    elif damage == "added":
+        rows.append({"occurrence_id": "extra", "shot_id": "shot-extra", "shot_revision_id": "revision-extra",
+                     "placement": {"start_ms": 9000}, "extension": {"opaque": []}})
+    elif damage == "opaque":
+        rows[0]["extension"]["opaque"][2]["keep"] = "changed"
+    elif damage == "wrong-landing":
+        rows[0], rows[1] = rows[1], rows[0]
+    elif damage == "bound-order":
+        record["bindings"][0]["change"]["order_before"].reverse()
     else:
         for change in (step["patch"][0], record["command"]["args"]["changes"][0],
                        record["bindings"][0]["change"]):
@@ -105,6 +119,8 @@ def test_occurrence_order_rejects_forged_collection_observations(projection, dam
                 change["before"]["value"]["shot_revision_id"] = "revision-first"
             elif damage == "sealed-value":
                 change["before"]["value"]["placement"]["start_ms"] = 9000
+            elif damage == "sealed-id":
+                change["id"] = "first"
             else:
                 change["after_id"] = "first"
     original = copy.deepcopy(boundary)
