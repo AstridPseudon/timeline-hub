@@ -1,90 +1,84 @@
-# A-T3-proof-r4 qualification report
+# A-T3-proof-r4 evidence review
 
 Date: 2026-10-27
-Branch: `tl/A-T3-proof-r4` at `b9b60c6eb3` (`tl/zoom-integration`)
 
-## Owner sandbox and pack input
+## Verdict
 
-The approved sandbox copy and custom project pack were not available in this
-worker's accessible inputs. The exact missing inputs are:
+**PASS for the evidence/blocker review; the proof task remains BLOCKED.** The
+worker did not change product code or proof assertions, exercised the merged
+proof checks directly, distinguished direct evidence from the central Node 22
+failure, and stated the missing owner inputs precisely. This is not an
+end-to-end render qualification: the required owner sandbox and custom-pack
+snapshot were unavailable.
 
-- sandbox project `almost-ready`, timeline
-  `almost-ready-no-first-second-v2`, including shot clip
-  `c02-02-am-discord`;
-- the admitted smooth-zoom project-pack snapshot whose abbreviated revision is
-  `sha256:1b1e3523...`; the full digest, `elementRef`, and Runtime pin are not
-  available.
+## Branch and change review
 
-Read-only searches under the assigned worktree, worker scratch, orchestration
-worker/reports, and accessible `/home/user/{work,peteromallet,banodoco}` roots
-found no matching sandbox, pack, snapshot, MP4, or still artifacts. A direct
-read-only inspect attempt was:
+Compared `tl/A-T3-proof-r4` (`832eb8b55a`) with `tl/zoom-integration`
+(`b9b60c6eb3`): the only changed path is `evidence/report.md`, added as
+worker evidence. There is no product-code or test-source diff. Consequently,
+no assertions were removed, weakened, skipped, or marked `xfail`; no product
+implementation was changed.
 
-```text
-PYTHONPATH=$PWD:/home/user/work/runtime \
-ASTRID_PROJECT_PACKS_ROOT=/tmp/w-b5512899cf/no-owner-pack \
-/home/user/work/venv-agent/bin/python -m astrid.core.element.cli \
-  project-pack inspect --realm owner --project almost-ready
-```
+`git diff --check tl/zoom-integration..tl/A-T3-proof-r4` was clean after this
+report was written.
 
-Result: exit 1, `ServiceUnavailableError: neutral runtime bootstrap was not
-ready: No workspace is configured; run astrid-runtime workspace create or
-workspace attach.` No workspace was created or attached because that would not
-identify an owner-approved sandbox and could risk touching the owner's data.
+## Proof-test evidence
 
-Therefore placement on the real shot, the resulting `elementRef`/pin, the
-real child/browser/MP4 export, and local Vite preview capture could not be
-performed. No substitute source was used.
+The worker's direct Node 20.19.4 run used a private `/tmp` overlay and
+reported **27 passed in 40.19s**. Its command covered the placement test and
+`tests/packs/rendering/test_pinned_project_elements.py`, including:
 
-## Existing merged proof tests
+- placement on an occurrence/shot clip that began with built-in
+  `clipType: am-discord`;
+- two admitted revisions selected by full revision and dispatched with their
+  distinct assets; and
+- missing/corrupt retained snapshots failing closed without catalog fallback.
 
-Direct local command (using Node 20.19.4 and a private `/tmp` overlay whose
-package symlinks point read-only at the shared Remotion install):
-
-```text
-PYTHONPATH=$PWD:/home/user/work/runtime \
-PYTHONDONTWRITEBYTECODE=1 \
-ASTRID_REMOTION_PROJECT_DIR=/tmp/w-b5512899cf/pinned-export-host \
-ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
-/home/user/work/venv-agent/bin/python -m pytest -q \
-  tests/core/test_timeline_element_placement.py \
-  tests/packs/rendering/test_pinned_project_elements.py \
-  -o cache_dir=/tmp/w-b5512899cf/pinned-export-host/pytest-cache-2 \
-  --basetemp=/tmp/w-b5512899cf/pinned-export-host/pytest-basetemp-2
-```
-
-Result: **27 passed in 40.19s**. This covers initial placement on an
-occurrence/shot clip with only built-in `clipType: am-discord`, two distinct
-revisions in one render-local registry/assets selection, and missing/corrupt
-snapshot fail-closed cases without catalog fallback.
-
-The first local invocation was 26 passed, 1 failed because its temporary host
-lacked Node package resolution for `remotion/package.json`. The private
-overlay corrected that setup; no shared dependency or cache path was changed.
-
-Central service request:
+The required central request was also run exactly once:
 
 ```text
 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test \
-  A-T3-proof-r4 targeted --files \
-  "tests/core/test_timeline_element_placement.py tests/packs/rendering/test_pinned_project_elements.py"
+  A-review-T3-proof-r4 targeted --files \
+  "tests/packs/rendering/test_pinned_project_elements.py tests/packs/rendering/pinned_project_elements.mjs"
 ```
 
-Result: `A-T3-proof-r4-targeted-1027000123-31765`, **26 passed, 1 failed in
-37.27s**. The failure is
-`test_two_revisions_keep_source_dispatch_aliases_and_assets`; the service
-checkout used Node 22.22.0 and failed before the assertion with
-`Cannot find module ... remotion/package.json`. The full log is at:
+Result: `A-review-T3-proof-r4-targeted-1027000521-8928`, **failed exit 1**;
+**18 passed, 1 failed in 52.01s**. The one failure was
+`test_two_revisions_keep_source_dispatch_aliases_and_assets`; the central
+service used Node 22.22.0 and failed before the assertion because the JS
+subprocess could not resolve `remotion/package.json`:
 
-`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/A-T3-proof-r4-targeted-1027000123-31765/log.txt`
+```text
+Error: Cannot find module .../remotion/package.json
+Node.js v22.22.0
+```
 
-## Real-render/parity result
+This is a dependency/toolchain failure, not evidence that the proof assertion
+failed. The central result is consistent with the worker's direct Node 20
+evidence, which passed the same path using its private overlay.
 
-Not run. The required owner sandbox and full custom-pack digest/source were
-missing, so there are no export or local-Vite stills, clip-relative sample
-times, pixel measurements, or tolerance result to report. No MP4/browser/mock
-render was substituted.
+## Blocker and scope compliance
 
-No product code or assertions were changed. `git diff --check` passed and the
-worktree was clean before this evidence report was added.
+The worker precisely identified the unavailable owner-approved sandbox copy of
+project `almost-ready`, timeline `almost-ready-no-first-second-v2`, including
+shot clip `c02-02-am-discord`. It also identified the unavailable admitted
+smooth-zoom project-pack snapshot/source: only the abbreviated revision prefix
+`sha256:1b1e3523...` was known; the full digest, `elementRef`, and Runtime pin
+were unavailable.
 
+No substitute source or render was used. Therefore no real child/browser/MP4
+export, local Vite still capture, elementRef/pin result, or pixel comparison
+was claimed. That is the correct fail-closed outcome for the missing owner
+inputs.
+
+The required full suite, real render, and browser were not run. The worker
+evidence directory totals 2.7 MB; the largest file is a 2.6 MB run log, and
+there are no large fixtures, snapshots, MP4s, or still artifacts.
+
+## Next step
+
+Provide the owner-approved sandbox and the full admitted smooth-zoom
+project-pack revision/digest, then rerun placement, real export, local-Vite
+parity captures, and pixel comparisons. Re-run the central pinned-project
+target after the Node 22/Remotion dependency setup is repaired or the service
+uses the approved Node 20 overlay.
