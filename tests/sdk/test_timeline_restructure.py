@@ -1023,3 +1023,93 @@ def test_duplicate_commit_keeps_a_repeated_shot_shared(saved_source):
         if k not in ('shot_revision_id', 'revision_id')} for row in rows]
     assert document('t') == before
     assert [call['op'] for call in bodies[0]['commands']] == ['timeline.duplicate']
+
+
+def test_friendly_duplicate_reports_setup_and_copy_receipt_with_complete_fresh_maps(saved_source, tmp_path):
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    source = published(split(flat_film()))
+    again = copy.deepcopy(source['placements'][0])
+    again.update(occurrence_id='again', placement={'start_ms': 12000})
+    source['placements'].append(again)
+    client, project, document, bodies = saved_source(source)
+    original = document('t')
+    create_calls = []
+    create_empty = client.timelines.create_empty
+    client.timelines.create_empty = lambda **kw: create_calls.append(copy.deepcopy(kw)) or create_empty(**kw)
+
+    result = open_timeline(project, 't', client=client, outbox_path=tmp_path / 'source-outbox.json').duplicate(
+        as_='friendly-copy')
+
+    copied = document('friendly-copy')
+    rows = copied['parent_revision']['payload']['occurrences']
+    source_rows = original['parent_revision']['payload']['occurrences']
+    assert result['destination_setup']['timeline_id'] == 'friendly-copy'
+    assert result['destination_setup']['idempotency_key'] != result['copy_receipt']['idempotency_key']
+    if result['destination_setup']['receipt']:
+        assert result['copy_receipt']['receipt_id'] != result['destination_setup']['receipt']['receipt_id']
+    assert result['copy_receipt']['command_kind'] == 'timeline.commit'
+    assert len(create_calls) == 1
+    assert len(bodies) == 1 and [command['op'] for command in bodies[0]['commands']] == ['timeline.duplicate']
+    assert len(rows) == len(source_rows) == 4
+    assert len({row['shot_id'] for row in rows}) == len({row['shot_id'] for row in source_rows}) == 3
+    assert {row['shot_id'] for row in rows}.isdisjoint({row['shot_id'] for row in source_rows})
+    assert len({row['occurrence_id'] for row in rows}) == 4
+    assert {row['occurrence_id'] for row in rows}.isdisjoint({row['occurrence_id'] for row in source_rows})
+    assert rows[0]['shot_id'] == rows[-1]['shot_id']
+    assert len({row['shot_revision_id'] for row in rows}) == 3
+    assert len(copied['shot_revisions']) == len(copied['internal_timeline_revisions']) == 3
+    copied_bundle = bundle_from_document(copied)
+    source_bundle = bundle_from_document(original)
+    from astrid.sdk.timeline.native_timeline_duplicate import physical_content
+
+    source_content = physical_content(source_bundle)
+    copied_content = physical_content(copied_bundle)
+    shot_map = {source_row['shot_id']: copy_row['shot_id']
+                       for source_row, copy_row in zip(source_content['placements'], copied_content['placements'])}
+    from astrid.sdk.timeline_duplicate import assert_copy_equals_source
+
+    assert_copy_equals_source(source_content, copied_content, shot_map)
+    for source_shot, copy_shot in shot_map.items():
+        assert copied_content['shots'][copy_shot]['internal_timeline']['clips'] == source_content['shots'][source_shot]['internal_timeline']['clips']
+    assert document('t') == original
+
+
+def test_friendly_duplicate_retry_after_lost_ack_reuses_destination_and_copy(saved_source, tmp_path):
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    client, project, document, _ = saved_source(published(split(flat_film())))
+    original = document('t')
+    generated = client._remote._transport._generated
+    send = generated.commit_timeline
+    create_calls, sent = [], []
+    create_empty = client.timelines.create_empty
+    client.timelines.create_empty = lambda **kw: create_calls.append(copy.deepcopy(kw)) or create_empty(**kw)
+    lost = False
+
+    def lose_ack(p, t, body, *, idempotency_key):
+        nonlocal lost
+        sent.append((copy.deepcopy(body), idempotency_key))
+        result = send(p, t, body, idempotency_key=idempotency_key)
+        if not lost:
+            lost = True
+            raise WorkspaceClientError('lost duplicate acknowledgement')
+        return result
+
+    generated.commit_timeline = lose_ack
+    source_timeline = open_timeline(project, 't', client=client, outbox_path=tmp_path / 'source-outbox.json')
+    with pytest.raises(TimelineEditError, match='outcome is unknown'):
+        source_timeline.duplicate(as_='retry-copy')
+    result = source_timeline.duplicate(as_='retry-copy')
+
+    assert result['destination_setup']['timeline_id'] == 'retry-copy'
+    assert len(create_calls) == 2 and create_calls[0]['idempotency_key'] == create_calls[1]['idempotency_key']
+    assert len(sent) == 2 and sent[0] == sent[1]
+    history = client.timelines.history(project, 'retry-copy', limit=200).data['items']
+    assert len([item for item in history if item['intent'] != 'bootstrap']) == 1
+    assert result['copy_receipt']['receipt_id'] == next(
+        item['publication_id'] for item in history if item['intent'] != 'bootstrap'
+    )
+    assert document('t') == original
