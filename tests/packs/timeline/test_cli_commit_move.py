@@ -11,6 +11,7 @@ from astrid.packs.timeline import cli
 from astrid.sdk import storage_root
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.outbox import request_bytes
+from astrid_runtime_client import ApiError
 from tests.sdk.test_timeline_sync import connected as sync_connection  # noqa: F401
 from tests.sdk.test_timeline_sync import initial_bundle
 
@@ -146,6 +147,192 @@ def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys)
     assert generated.calls[0] == generated.calls[1]
 
 
+def test_discard_unknown_flight_drops_only_unsent_suffix_and_keeps_replay_metadata(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "3", "--json",
+               "--idempotency-key", "older-key") == 0
+    capsys.readouterr()
+    generated.lose_ack = True
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
+    capsys.readouterr()
+    before = json.loads(generated.path.read_bytes())
+    prefix = before["flight"]["count"]
+    before["pending"].append({"op": "clip.move", "select": "parent/clip:later", "args": {"on": 9.0}})
+    generated.path.write_text(json.dumps(before), encoding="utf-8")
+
+    assert run("discard", "t", "--project", "p") == 0
+    capsys.readouterr()
+    after = json.loads(generated.path.read_bytes())
+    assert after["flight"] == before["flight"]
+    assert after["pending"] == before["pending"][:prefix]
+    assert after["acknowledged"] == before["acknowledged"]
+    expected = copy.deepcopy(before)
+    expected["pending"] = before["pending"][:prefix]
+    assert after == expected
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 0
+    capsys.readouterr()
+    assert generated.calls[1] == generated.calls[2]
+    assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "3", "--json",
+               "--idempotency-key", "older-key") == 0
+    assert json.loads(capsys.readouterr().out)["receipt"]["receipt_id"] == "pub1"
+    assert len(generated.accepted) == 2
+
+
+def test_status_and_discard_report_and_clear_rejected_commands(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    state = json.loads(generated.path.read_bytes())
+    rejected_command = capture_move(initial_bundle(), "parent/clip:a", 5.0)
+    state["rejected"] = {
+        "base": state["base"], "commands": [rejected_command], "flight": {"key": "refused"},
+        "failure": {"code": "validation_error", "message": "refused", "details": {"status": "refused"}},
+        "commit_options": None, "evaluation": None,
+    }
+    state["pending"] = []
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status == {"status": "rejected", "command_count": 1}
+
+    assert run("discard", "t", "--project", "p") == 0
+    output = capsys.readouterr().out
+    assert "discarded recoverable connected-session commands" in output
+    saved = json.loads(generated.path.read_bytes())
+    assert saved.get("rejected") is None
+    assert saved["pending"] == [] and saved["flight"] is None
+
+
+def test_status_reports_malformed_connected_outbox_as_invalid_and_discard_leaves_it(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    generated.path.write_text("{bad json", encoding="utf-8")
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status == {"status": "invalid"}
+
+    assert run("discard", "t", "--project", "p") == 0
+    assert "could not be verified and was left untouched" in capsys.readouterr().out
+    assert generated.path.read_text(encoding="utf-8") == "{bad json"
+
+
+@pytest.mark.parametrize("corruption", [
+    {"kind": "unrecognized"}, {"kind": "commit"}, {"body": "["}, {"body": "[]"},
+    {"count": 0}, {"count": True},
+])
+def test_status_and_discard_leave_unrecognized_flight_untouched(command, capsys, corruption):
+    run, generated = command
+    generated.lose_ack = True
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
+    capsys.readouterr()
+    state = json.loads(generated.path.read_bytes())
+    state["flight"].update(corruption)
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status == {"status": "invalid"}
+    before = generated.path.read_bytes()
+
+    assert run("discard", "t", "--project", "p") == 0
+    assert "could not be verified and was left untouched" in capsys.readouterr().out
+    assert generated.path.read_bytes() == before
+
+
+@pytest.mark.parametrize("status", ["refused", "invalid"])
+def test_cli_final_refusal_can_be_reviewed_discarded_and_replanned(command, capsys, status):
+    run, generated = command
+    generated.refusal = ApiError(409, "refused", "edit refused", details={"status": status})
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
+    capsys.readouterr()
+    rejected = json.loads(generated.path.read_bytes())
+    assert rejected["pending"] == [] and rejected["flight"] is None
+    assert len(rejected["rejected"]["commands"]) == 1
+    assert run("status", "t", "--project", "p", "--json") == 0
+    assert json.loads(capsys.readouterr().out)["data"]["connected_session"] == {
+        "status": "rejected", "command_count": 1,
+    }
+    assert run("status", "t", "--project", "p", "--text") == 0
+    assert "last request was refused" in capsys.readouterr().out
+    assert run("discard", "t", "--project", "p") == 0
+    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    generated.refusal = None
+    assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "7", "--json") == 0
+    capsys.readouterr()
+    assert len(generated.accepted) == 1
+    assert json.loads(generated.calls[-1][0])["commands"][0]["select"] == "parent/clip:b"
+
+
+def test_discard_rechecks_scope_after_status_read(command, monkeypatch, capsys):
+    from astrid.packs.timeline import cli_working
+
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    inspect = cli_working._connected_outbox
+    changed = []
+
+    def change_scope(*args):
+        outbox, status, scope = inspect(*args)
+        with outbox.locked():
+            state = outbox.read()
+            state["scope"]["actor_id"] = "another-actor"
+            outbox.write(state)
+        changed.append(outbox.path.read_bytes())
+        return outbox, status, scope
+
+    monkeypatch.setattr(cli_working, "_connected_outbox", change_scope)
+    assert run("discard", "t", "--project", "p") == 0
+    assert "could not be verified and was left untouched" in capsys.readouterr().out
+    assert generated.path.read_bytes() == changed[0]
+
+
+def test_discard_write_failure_does_not_claim_success(command, monkeypatch, capsys):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    before = generated.path.read_bytes()
+
+    def fail_write(self, state):
+        raise OSError("outbox storage unavailable")
+
+    monkeypatch.setattr(Outbox, "write", fail_write)
+    assert run("discard", "t", "--project", "p") == 1
+    output = capsys.readouterr()
+    assert "discard could not be confirmed" in output.err
+    assert "discarded" not in output.out
+    assert generated.path.read_bytes() == before
+
+
+def test_discard_preserves_unknown_assembly_admission_for_exact_retry(tmp_path):
+    from astrid.packs.timeline.cli_working import _discard_recoverable_outbox
+    from astrid.sdk.workspace_client import WorkspaceClientError
+    from tests.sdk.test_timeline_assembly import _admit, _requester
+
+    session, generated, selectors, _associations, calls = _requester(tmp_path)
+    dispatch = session.client.tasks.dispatch_admission
+
+    def lose_ack(arguments):
+        dispatch(arguments)
+        raise WorkspaceClientError(0, "transport_error", "lost admission acknowledgement")
+
+    session.client.tasks.dispatch_admission = lose_ack
+    with pytest.raises(WorkspaceClientError):
+        _admit(session, selectors)
+    before = generated.path.read_bytes()
+    scope = json.loads(before)["scope"]
+    assert _discard_recoverable_outbox(session.outbox, scope) == "in_flight"
+    assert generated.path.read_bytes() == before
+    session.client.tasks.dispatch_admission = dispatch
+    assert _admit(session, selectors)["data"]["task_id"] == "assembler"
+    assert calls[0] == calls[1]
+
+
 def test_discard_clears_unsent_connected_commands(command, capsys):
     run, generated = command
     # Establish the connected outbox through the real session path, then
@@ -157,6 +344,10 @@ def test_discard_clears_unsent_connected_commands(command, capsys):
     state["pending"] = [{"op": "clip.move", "select": "parent/clip:a", "args": {"on": 5.0}}]
     generated.path.write_text(json.dumps(state), encoding="utf-8")
     generated.calls.clear()
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status == {"status": "pending", "command_count": 1}
 
     assert run("discard", "t", "--project", "p") == 0
     assert "discarded recoverable connected-session commands" in capsys.readouterr().out

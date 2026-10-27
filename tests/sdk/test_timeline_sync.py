@@ -413,6 +413,79 @@ def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(c
     assert json.loads(path.read_bytes())["rejected"]["commands"] == [rejected]
 
 
+@pytest.mark.parametrize("status", ["refused", "invalid"])
+def test_final_refusal_preserves_and_releases_dependent_queued_suffix(connected, monkeypatch, status):
+    session = open_session(connected)
+    _, generated, path = connected
+    entered, release = Event(), Event()
+    refusal = ApiError(409, status, "edit is not allowed",
+                       details={"status": status, "reason": "policy"})
+
+    def refuse_after_suffix(*args, **kwargs):
+        entered.set()
+        assert release.wait(10)
+        raise refusal
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse_after_suffix)
+    rejected = session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sending = pool.submit(session.flush, idempotency_key="rejected-with-suffix")
+        try:
+            assert entered.wait(10)
+            suffix = open_session(connected).queue_move("parent/clip:a", 7)
+        finally:
+            release.set()
+        with pytest.raises(CommitConflict):
+            sending.result(timeout=10)
+
+    state = json.loads(path.read_bytes())
+    assert state["flight"] is None
+    assert state["pending"] == []
+    assert state["rejected"]["commands"] == [rejected, suffix]
+    assert json.loads(state["rejected"]["flight"]["body"])["commands"] == [rejected]
+    before = path.read_bytes()
+    with pytest.raises(TimelineEditError, match="no pending"):
+        open_session(connected).flush()
+    assert path.read_bytes() == before
+
+
+def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    command = session.queue_move("parent/clip:a", 5)
+    write = session.outbox.write
+    refusal = ApiError(409, "refused", "edit is not allowed",
+                       details={"status": "refused", "reason": "policy"})
+    generated.refusal = refusal
+    send = generated.commit_timeline
+    durable_at_send = []
+
+    def capture_durable_flight(*args, **kwargs):
+        durable_at_send.append(path.read_bytes())
+        return send(*args, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", capture_durable_flight)
+
+    def fail_rejection(state):
+        if state.get("rejected"):
+            raise OSError("disk unavailable while recording refusal")
+        write(state)
+
+    monkeypatch.setattr(session.outbox, "write", fail_rejection)
+    with pytest.raises(OSError, match="recording refusal"):
+        session.flush(idempotency_key="rejected-edit")
+    assert len(durable_at_send) == 1
+    assert path.read_bytes() == durable_at_send[0]
+    flight = json.loads(durable_at_send[0])["flight"]
+    assert json.loads(flight["body"])["commands"] == [command]
+
+    monkeypatch.setattr(session.outbox, "write", write)
+    generated.refusal = None
+    open_session(connected).flush()
+    assert generated.calls[0] == generated.calls[1]
+    assert json.loads(path.read_bytes())["pending"] == []
+
+
 def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connected):
     session = open_session(connected)
     _, generated, path = connected
@@ -531,7 +604,7 @@ def test_blocked_send_allows_queue_and_acknowledges_only_frozen_prefix(connected
     assert len(generated.accepted) == 2
 
 
-@pytest.mark.parametrize("late", ["ack", "timeout", "conflict"])
+@pytest.mark.parametrize("late", ["ack", "timeout", "conflict", "refused"])
 def test_duplicate_flush_and_late_completion_cannot_overwrite_new_flight(connected, monkeypatch, late):
     session = open_session(connected)
     _, generated, path = connected
@@ -547,6 +620,8 @@ def test_duplicate_flush_and_late_completion_cannot_overwrite_new_flight(connect
                 raise ConnectionError("late timeout")
             if late == "conflict":
                 raise ApiError(409, "conflict", "late conflict", details={"status": "conflict"})
+            if late == "refused":
+                raise ApiError(409, "refused", "late refusal", details={"status": "refused"})
         elif kwargs["idempotency_key"] == "b":
             entered_b.set()
             assert release_b.wait(10)
@@ -568,7 +643,7 @@ def test_duplicate_flush_and_late_completion_cannot_overwrite_new_flight(connect
             if late == "ack":
                 first.result(timeout=10)
             else:
-                with pytest.raises(CommitConflict if late == "conflict" else WorkspaceClientError):
+                with pytest.raises(CommitConflict if late in {"conflict", "refused"} else WorkspaceClientError):
                     first.result(timeout=10)
             assert path.read_bytes() == newer
             assert json.loads(newer)["flight"]["key"] == "b"

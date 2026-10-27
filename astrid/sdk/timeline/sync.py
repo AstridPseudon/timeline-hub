@@ -627,19 +627,18 @@ class TimelineSession:
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
                         if details.get("status") in {"refused", "invalid"}:
-                            # The Runtime has definitively rejected this request.
-                            # Keep its captured intent available for review, but
-                            # release both the flight and its pending prefix so
-                            # it cannot wedge later edits.
+                            # Preserve the full queue for review, including any
+                            # suffix captured against the flight's optimistic
+                            # effects, and release it so it cannot run without them.
                             state["rejected"] = {
                                 "base": copy.deepcopy(state["base"]),
-                                "commands": copy.deepcopy(state["pending"][:flight["count"]]),
+                                "commands": copy.deepcopy(state["pending"]),
                                 "flight": copy.deepcopy(flight),
                                 "failure": copy.deepcopy(failure),
                                 "commit_options": copy.deepcopy(state.get("commit_options")),
                                 "evaluation": copy.deepcopy(state.get("evaluation")),
                             }
-                            del state["pending"][:flight["count"]]
+                            state["pending"] = []
                             state["flight"] = None
                             state.pop("conflict", None)
                             state.pop("commit_options", None)

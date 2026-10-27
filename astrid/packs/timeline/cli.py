@@ -2998,7 +2998,7 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     path = store.draft_path(project_id, timeline_id, draft_name)
     from astrid.packs.timeline.cli_working import _connected_outbox
 
-    _outbox, session_status = _connected_outbox(parsed, project_id, timeline_id)
+    _outbox, session_status, _scope = _connected_outbox(parsed, project_id, timeline_id)
     if getattr(parsed, "text", False):
         from astrid.packs.timeline.cli_common import status_text
 
@@ -3055,6 +3055,8 @@ def _print_session_status(status: Mapping[str, Any]) -> None:
         print(f"CONNECTED SESSION: last request was refused; {status.get('command_count', 0)} command(s) retained")
     elif state == "invalid":
         print("CONNECTED SESSION: saved outbox is invalid; no changes were made")
+    if status.get("rejected_command_count") and state != "rejected":
+        print(f"CONNECTED SESSION: an earlier refused request also has {status['rejected_command_count']} command(s) retained for review")
 
 
 def _edit_duration(value: str) -> float:
