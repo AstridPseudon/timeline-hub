@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:18:45Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T02:15:53.169295+00:00
+<!-- main | 2026-10-27T02:24:42Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-27T02:21:42.594844+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -102,7 +102,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | OPS follow-up alert | Receive accepted Main kit repair | Manager receiving | Main Hour 4 note | merged | Main diag-testlane3-0050 and input search | Main records test lane fixed. A T2 central 89 PASS; inputs absent. Runtime staging 22 FAIL and 12 ERROR remain disclosed as pre-existing. | No Runtime change |
 
-| C3 sample route | Receive supported timing route release | C Luna and Main | Main Hour 4 note | doing | lead-C-r8 | Main directs sampler through central test service with loopback; C owns throwaway-project saves and real timing gate. Original socket EPERM retained. | No new sample result |
+| C3 sample route | Receive prepared central sampler | C Sol and C lead | Main Hour 4 note | doing | C-C3-runtime-sampler-8; lead-C-r8 | Author exit 0; regression 32 PASS. Central HTTP run and stage timings remain pending under C; original socket limit retained. | No timing measurement |
 
 | C2 B forward | Receive direct B merge release | C Luna | Main Hour 4 note | doing | lead-C-r8 | Main authorizes C to merge B forward in App and Runtime, then exact one-clip and shared-shot-fork proof. Prior staging wait cleared. | Runtime author terminal; C review owed |
 
@@ -120,7 +120,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main owns the missing owner film and pack inputs and B5 audit corrections. C owns B forward merges and the central timing sample. No Runtime task blocked. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 5273989120 bytes. Main and B/C own follow-ups. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle.
+live 0 / cap 3; ready-undispatched 0. Free 5336612864 bytes. Main and B/C own follow-ups. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -131,4 +131,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T02:15:53.169295+00:00. PLAN, manager rules, pipeline, current boards and new-byte checks consumed. Runtime INBOX and HEADER unchanged. Runtime census: 2717 rows, none running. B5 audit is terminal UNSOUND; its finite two-finding handoff is sent to Main, with B/C retaining correction and proof ownership. C Runtime forward author is terminal with 36 PASS; its App forward and timing sampler remain active. No competing Runtime dispatch. H, D and P START markers absent. Guarded maintenance is running. Delivered archive hash and sidecar match. [Pass evidence](rounds/20261027T021553Z-pass.json).
+Current pass: 2026-10-27T02:21:42.594844+00:00. PLAN, manager rules, pipeline and boards consumed. Runtime INBOX and HEADER unchanged. Runtime census: 2717 rows, none running. Main received the B5 UNSOUND two-finding handoff; existing B/C leads retain correction and proof ownership. C Runtime forward and sampler authors are terminal; App forward and C lead remain active. Sampler central HTTP execution and measured timings remain pending. No competing Runtime dispatch. H, D and P START markers absent. Sweep removed 0 dirs; compact packed 0 worker and 0 test dirs and compressed 0 logs. No eligible recycle. Delivered archive hash and sidecar match; prior independent scope unchanged. [Pass evidence](rounds/20261027T022121Z-pass.json).
