@@ -6,9 +6,15 @@ import copy
 import pytest
 
 from astrid.sdk.timeline import _commit_timing_validation as timing_validation
+from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._timing_evaluators import _fps as production_fps
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.native_initialize import capture_initialize
+from astrid.sdk.timeline.validation import (
+    FinalCandidateError,
+    _authenticated_initialization_fps_removals,
+    _validate_fps,
+)
 from tests.editing_conformance.test_doc_patch_v2 import change, patch
 from tests.editing_conformance.test_pristine_initialize import empty_document
 from tests.sdk import test_timeline_commit_provider as provider
@@ -252,3 +258,54 @@ def test_initialization_still_requires_the_exact_base_pair(dry_run):
     assert realm.prepared == []
     assert realm.accepted == []
     assert realm.documents[head["revision_id"]] == document
+
+
+def test_fps_removal_requires_selected_authenticated_initialization_inverse():
+    before = {"parent": {"config": {"tracks": []}}, "shots": {}}
+    after = {"parent": {"config": {"tracks": [], "output": {"fps": 30}}}, "shots": {}}
+    baseline = {"parent": {"config": {"tracks": [], "output": {"fps": 24}}}, "shots": {}}
+    candidate = {"parent": {"config": {"tracks": []}}, "shots": {}}
+    source = {"ordinal": 0, "command": {"op": "timeline.init"}, "writes": [{
+        "ref": "parent", "path": ["config", "output"],
+        "before": {"state": "absent"}, "after": {"state": "present", "value": {"fps": 30}},
+    }]}
+    entry = {"publication_id": "initialize", "records": {"commands": [source]}}
+    accepted_init = AcceptedRecords([entry], [source], lambda _: (before, after))
+    inverse_record = {"command": {"op": "timeline.inverse"}, "writes": [{
+        "ref": "parent", "path": ["config", "output"],
+        "before": {"state": "present", "value": {"fps": 24}},
+        "after": {"state": "absent"},
+    }]}
+
+    assert _authenticated_initialization_fps_removals(
+        candidate, baseline, [inverse_record], accepted_init,
+    ) == {"parent.config.output.fps"}
+
+    source["command"] = {"op": "doc.patch"}
+    assert _authenticated_initialization_fps_removals(
+        candidate, baseline, [inverse_record], accepted_init,
+    ) == set()
+
+
+def test_inverse_cannot_remove_fps_from_an_existing_shot():
+    before = {"parent": {"config": {}}, "shots": {
+        "existing": {"internal_timeline": {"output": {}}},
+    }}
+    after = {"parent": {"config": {}}, "shots": {
+        "existing": {"internal_timeline": {"output": {"fps": 30}}},
+    }}
+    baseline = copy.deepcopy(after)
+    candidate = copy.deepcopy(before)
+    source = {"ordinal": 0, "command": {"op": "doc.patch"}, "created": [], "writes": [{
+        "ref": "shot:existing", "path": ["internal_timeline", "output", "fps"],
+        "before": {"state": "absent"}, "after": {"state": "present", "value": 30},
+    }]}
+    entry = {"publication_id": "add-shot-fps", "records": {"commands": [source]}}
+    accepted_patch = AcceptedRecords([entry], [source], lambda _: (before, after))
+    inverse_record = {"command": {"op": "timeline.inverse"}, "writes": [{
+        "ref": "shot:existing", "path": ["internal_timeline", "output", "fps"],
+        "before": {"state": "present", "value": 30}, "after": {"state": "absent"},
+    }]}
+
+    with pytest.raises(FinalCandidateError, match="all authored fps"):
+        _validate_fps(candidate, baseline, [inverse_record], accepted_patch)

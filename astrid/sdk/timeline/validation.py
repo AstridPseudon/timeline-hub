@@ -138,11 +138,112 @@ def _fps_basis(bundle: Mapping[str, Any]) -> str:
     }, sort_keys=True, allow_nan=False)
 
 
-def _validate_fps(candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None) -> None:
+def _authenticated_initialization_fps_removals(
+    candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
+    restoration_records: Sequence[Mapping[str, Any]], inverse_records: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    """Return FPS removed by the complete guarded inverse of ``timeline.init``."""
+    allowed: set[str] = set()
+    if baseline is None or not inverse_records or not restoration_records:
+        return allowed
+    parent = candidate.get("parent")
+    config = parent.get("config") if isinstance(parent, Mapping) else None
+    if isinstance(config, Mapping) and "output" in config:
+        return allowed
+    output_removed = any(
+        record.get("command", {}).get("op") == "timeline.inverse"
+        and any(write.get("ref") == "parent"
+                and write.get("path") in (["config", "output"], ["config", "output", "fps"])
+                and write.get("before", {}).get("state") == "present"
+                and write.get("after") == {"state": "absent"}
+                for write in record.get("writes", []))
+        for record in restoration_records)
+    if not output_removed:
+        return allowed
+
+    from ._step_undo import entry_records
+
+    for entry in getattr(inverse_records, "entries", ()):
+        selected = entry_records(inverse_records, entry)
+        if not equal(selected, entry.get("records", {}).get("commands")):
+            continue
+        init_records = [record for record in selected
+                        if record.get("command", {}).get("op") == "timeline.init"]
+        introduced = any(
+            write.get("ref") == "parent" and write.get("path") == ["config", "output"]
+            and write.get("before") == {"state": "absent"}
+            and write.get("after", {}).get("state") == "present"
+            and isinstance(write.get("after", {}).get("value"), Mapping)
+            and "fps" in write["after"]["value"]
+            for record in init_records for write in record.get("writes", []))
+        if not introduced:
+            continue
+        candidate_output = candidate.get("parent", {}).get("config", {}).get("output")
+        if ("parent.config.output.fps" not in _typed_fps_paths(baseline)
+                or candidate_output is not None):
+            continue
+        allowed.add("parent.config.output.fps")
+        break
+    return allowed
+
+
+def _authenticated_deleted_shot_fps_removals(
+    candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
+    restoration_records: Sequence[Mapping[str, Any]], inverse_records: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    """Allow FPS to disappear with the exact shot root created by that history."""
+    allowed: set[str] = set()
+    if baseline is None or not inverse_records or not restoration_records:
+        return allowed
+    before_shots = baseline.get("shots")
+    after_shots = candidate.get("shots")
+    if not isinstance(before_shots, Mapping) or not isinstance(after_shots, Mapping):
+        return allowed
+    births = set()
+    for source_record in inverse_records:
+        for fact in source_record.get("created", []):
+            ref = fact.get("ref") if isinstance(fact, Mapping) else None
+            if not isinstance(ref, str) or not ref.startswith("shot:"):
+                continue
+            for write in source_record.get("writes", []):
+                value = write.get("after", {}).get("value", {})
+                internal = value.get("internal_timeline") if isinstance(value, Mapping) else None
+                output = internal.get("output") if isinstance(internal, Mapping) else None
+                if (write.get("ref") == ref and write.get("path") == []
+                        and write.get("before") == {"state": "absent"}
+                        and write.get("after", {}).get("state") == "present"
+                        and isinstance(output, Mapping) and "fps" in output):
+                    births.add(ref)
+    deletions = {
+        write["ref"] for record in restoration_records
+        if record.get("command", {}).get("op") == "timeline.inverse"
+        for write in record.get("writes", [])
+        if write.get("ref", "").startswith("shot:") and write.get("path") == []
+        and write.get("before", {}).get("state") == "present"
+        and write.get("after") == {"state": "absent"}
+    }
+    for ref in births & deletions:
+        shot_id = ref.removeprefix("shot:")
+        fps_path = f"shots[{shot_id!r}].internal_timeline.output.fps"
+        if fps_path in _typed_fps_paths(baseline) and shot_id not in after_shots:
+            allowed.add(fps_path)
+    return allowed
+
+
+def _validate_fps(
+    candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
+    restoration_records: Sequence[Mapping[str, Any]] = (),
+    inverse_records: Sequence[Mapping[str, Any]] = (),
+) -> None:
     values = _fps_values(candidate)
     # New declarations (including pristine initialization) still pass value and
     # parity validation; every previously authored typed location must survive.
-    if baseline is not None and not _typed_fps_paths(baseline) <= _typed_fps_paths(candidate):
+    removed = (_authenticated_initialization_fps_removals(
+        candidate, baseline, restoration_records, inverse_records)
+        | _authenticated_deleted_shot_fps_removals(
+            candidate, baseline, restoration_records, inverse_records))
+    if (baseline is not None
+            and not _typed_fps_paths(baseline) <= (_typed_fps_paths(candidate) | removed)):
         _fail("candidate", "all authored fps declarations must retain their typed locations")
     if not values or all(rate == values[0][1] for _, rate in values[1:]):
         return
@@ -546,6 +647,7 @@ def validate_final_candidate(
     realm_id: str | None = None,
     source_bundles: Sequence[Mapping[str, Any]] = (),
     restoration_records: Sequence[Mapping[str, Any]] = (),
+    inverse_records: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     """Validate one complete candidate without changing it.
 
@@ -564,7 +666,7 @@ def validate_final_candidate(
         json.dumps(candidate, allow_nan=False)
     except (TypeError, ValueError) as exc:
         _fail("candidate", f"must be finite JSON: {exc}")
-    _validate_fps(candidate, baseline)
+    _validate_fps(candidate, baseline, restoration_records, inverse_records)
     parent_value: Any = candidate.get("parent")
     if not isinstance(parent_value, Mapping):
         _fail("candidate.parent", "must be an object")

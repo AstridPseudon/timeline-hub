@@ -2,13 +2,153 @@
 from __future__ import annotations
 
 import copy
+import io
+import subprocess
+import wave
 
 import pytest
 
 from tests.editing_conformance.test_pristine_initialize import GOLDEN
 from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+from tests.v10 import test_timelines_create
+
+runtime_create_case = test_timelines_create.runtime_create_case
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.mark.parametrize('explicit_tracks', [False, True])
+def test_remote_create_with_content_is_one_authored_commit_and_exact_undo(
+    runtime_create_case, explicit_tracks,
+):
+    case = runtime_create_case
+    service, project = case.service, case.project
+    image = subprocess.run(
+        ['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=red:s=16x16:r=1',
+         '-frames:v', '1', '-threads', '1', '-c:v', 'png', '-f', 'image2pipe', 'pipe:1'],
+        check=True, stdout=subprocess.PIPE,
+    ).stdout
+    image_id = service.ingest(
+        project, image, media_type='image/png', idempotency_key='content-picture',
+    )['data']['object_id']
+    audio = io.BytesIO()
+    with wave.open(audio, 'wb') as output:
+        output.setparams((1, 2, 8000, 0, 'NONE', 'not compressed'))
+        output.writeframes(b'\x00\x00' * 16000)
+    audio_id = service.ingest(
+        project, audio.getvalue(), media_type='audio/wav', idempotency_key='content-voice',
+    )['data']['object_id']
+    service.create_timeline(project, 'film', idempotency_key='content-shell')
+    initial = service.get_project_timeline(project, 'film')
+    bootstrap = service._timeline_commits()[0].revision_closure(
+        project, 'film', initial['head_revision_id'],
+    )
+    bootstrap = copy.deepcopy(bootstrap)
+    original_tracks = bootstrap['parent_revision']['payload']['config']['tracks']
+    tracks = ([{'id': 'picture', 'kind': 'visual'}, {'id': 'voice', 'kind': 'audio'}]
+              if explicit_tracks else original_tracks)
+    picture = next(row['id'] for row in tracks if row['kind'] == 'visual')
+    voice = next(row['id'] for row in tracks if row['kind'] == 'audio')
+    config = {
+        'theme_overrides': {'visual': {'canvas': {'width': 640, 'height': 360, 'fps': 24}}},
+        'clips': [
+            {'id': 'picture-clip', 'track': picture, 'clipType': 'image',
+             'at': 0, 'hold': 2, 'asset': 'picture'},
+            {'id': 'voice-clip', 'track': voice, 'clipType': 'audio',
+             'at': 0, 'hold': 2, 'asset': 'voice'},
+        ],
+        'registry': {'assets': {
+            'picture': {'media_id': image_id, 'type': 'image/png'},
+            'voice': {'media_id': audio_id, 'type': 'audio/wav'},
+        }},
+    }
+    if explicit_tracks:
+        config['tracks'] = tracks
+    created = case.timelines.create_empty(
+        project=project, timeline_id='film', config=config, idempotency_key='content',
+    )
+    assert created.ok, created.as_dict()
+    document = created.data['canonical_document']
+    payload = document['parent_revision']['payload']
+    assert payload['config']['output']['fps'] == 24
+    assert payload['clips'] == config['clips']
+    assert payload['config']['tracks'] == tracks
+    history = service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']
+    assert len(history) == 2
+    assert history[0]['intent'] == 'bootstrap'
+    assert history[1]['intent'] == 'recorded'
+    expected = [*(['parent/track:picture', 'parent/track:voice'] if explicit_tracks else []),
+                'parent/clip:picture-clip', 'parent/clip:voice-clip',
+                'parent/asset:picture', 'parent/asset:voice']
+    patch = next(record['command'] for record in history[1]['records']['commands']
+                 if record['command']['op'] == 'doc.patch')
+    assert patch['created'] == expected
+    pin = service.get_project_timeline(project, 'film')
+    request = {
+        'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+        'base_revision_id': pin['head_revision_id'],
+        'base_publication_id': pin['head_publication_id'],
+        'commands': [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
+                      'select': None, 'args': {'publications': [created.receipt.receipt_id]}}],
+    }
+    undone = service.commit_timeline(
+        project, 'film', request, idempotency_key='undo-content', publisher='editor',
+        invocation_path=f'/v1/projects/{project}/timelines/film/commit', authorize=lambda: None,
+    )
+    assert undone['data']['canonical_document'] == bootstrap
+    restored = undone['data']['canonical_document']['parent_revision']['payload']
+    assert 'output' not in restored['config']
+    assert 'theme_overrides' not in restored['config']
+
+
+@pytest.mark.parametrize('declaration', [None, ['parent/track:forged']])
+def test_remote_creation_refuses_missing_or_forged_created_ids(
+    runtime_create_case, monkeypatch, declaration,
+):
+    case = runtime_create_case
+    generated = case.timelines._client._generated
+    original = generated.commit_timeline
+
+    def forged_commit(project, timeline, body, **kwargs):
+        body = copy.deepcopy(body)
+        patch = next(command for command in body['commands'] if command['op'] == 'doc.patch')
+        if declaration is None:
+            patch.pop('created')
+        else:
+            patch['created'] = declaration
+        return original(project, timeline, body, **kwargs)
+
+    monkeypatch.setattr(generated, 'commit_timeline', forged_commit)
+    created = case.timelines.create_empty(
+        project=case.project, timeline_id='forged',
+        config={'tracks': [{'id': 'picture', 'kind': 'visual'}]},
+        idempotency_key='forged-content',
+    )
+    assert not created.ok
+    history = case.service.list_timeline_commits(
+        case.project, 'forged', authorize=lambda: None,
+    )['items']
+    assert len(history) == 1 and history[0]['intent'] == 'bootstrap'
+
+
+def test_remote_creation_requires_runtime_verified_media(runtime_create_case):
+    case = runtime_create_case
+    created = case.timelines.create_empty(
+        project=case.project, timeline_id='missing-media',
+        config={
+            'tracks': [{'id': 'voice', 'kind': 'audio'}],
+            'clips': [{'id': 'voice', 'track': 'voice', 'asset': 'voice',
+                       'clipType': 'audio', 'at': 0, 'hold': 1}],
+            'registry': {'assets': {'voice': {'media_id': 'sha256:' + '0' * 64,
+                                              'type': 'audio/wav'}}},
+        },
+        idempotency_key='missing-media',
+    )
+    assert not created.ok
+    history = case.service.list_timeline_commits(
+        case.project, 'missing-media', authorize=lambda: None,
+    )['items']
+    assert len(history) == 1 and history[0]['intent'] == 'bootstrap'
 
 
 @pytest.mark.parametrize('explicit_metadata', [False, True])

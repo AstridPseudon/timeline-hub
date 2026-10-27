@@ -1415,6 +1415,7 @@ class RuntimeCommitService:
                     realm_id=context.get('realm_id'),
                     source_bundles=[*inverse_sources, *closures.values()],
                     restoration_records=plan.records if inverse_records or restore else (),
+                    inverse_records=inverse_records,
                 )
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
