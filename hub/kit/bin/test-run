@@ -79,8 +79,8 @@ OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; 
     *) CMD+=" $f";;
   esac
 done; set +f
-[ "$suite" = targeted ] && [ "$repo" = runtime ] && [ -n "$files" ] && [ -z "$SELECTORS" ] && bad "targeted runtime run has no pytest selectors after filtering; no source-to-test mapping convention is registered; filtered changed paths:$FILTERED"
-HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
+[ "$suite" = targeted ] && [[ "$repo" = runtime || "$repo" = agent ]] && [ -n "$files" ] && [ -z "$SELECTORS" ] && bad "targeted $repo run has no pytest selectors after filtering; no source-to-test mapping convention is registered; filtered changed paths:$FILTERED"
+HV=light; case $suite in full*|browser-toolchain|browser-journey|render-proof|preview-vs-export|real-pack-host-integration|registered014-render-integration|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
@@ -354,10 +354,12 @@ case $repo in
     for module in "$SHARED_NM"/.[!.]* "$SHARED_NM"/*; do
       [ -e "$module" ] || continue
       name=$(basename "$module")
+      case "$name" in .vite|.cache) continue;; esac
       if [[ $name = @* && -d $module ]]; then
         mkdir -p "$SNAP/node_modules/$name"
         for scoped in "$module"/.[!.]* "$module"/*; do
           [ -e "$scoped" ] || continue
+          [ "$name/$(basename "$scoped")" = @banodoco/timeline-composition ] && continue
           ln -s "$(readlink -f "$scoped")" "$SNAP/node_modules/$name/$(basename "$scoped")"
         done
       else
@@ -378,10 +380,12 @@ case $repo in
     for module in "$REMOTION_NM"/.[!.]* "$REMOTION_NM"/*; do
       [ -e "$module" ] || continue
       name=$(basename "$module")
+      case "$name" in .vite|.cache) continue;; esac
       if [[ $name = @* && -d $module ]]; then
         mkdir -p "$SNAP/remotion/node_modules/$name"
         for scoped in "$module"/.[!.]* "$module"/*; do
           [ -e "$scoped" ] || continue
+          [ "$name/$(basename "$scoped")" = @banodoco/timeline-composition ] && continue
           ln -s "$(readlink -f "$scoped")" "$SNAP/remotion/node_modules/$name/$(basename "$scoped")"
         done
       else
