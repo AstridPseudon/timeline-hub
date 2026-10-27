@@ -330,12 +330,15 @@ def test_frozen_source_is_rechecked_before_staging(admitted, tmp_path):
 
 def test_builtin_pin_does_not_fetch_project_snapshot():
     runtime = _Runtime()
+    runtime.documents = SimpleNamespace(_identity=lambda: {"realm_id": "realm"})
     descriptor = catalog.list_element_descriptors("effects")[0]
+    # packId is the project-pack provenance marker; built-in refs are complete
+    # without it and must stay on the installed registry path.
     runtime.timeline["config"] = {
         "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
         "clips": [{"id": "builtin", "track": "v1", "at": 0, "hold": 1,
                    "clipType": descriptor["id"], "elementRef": {
-                       key: descriptor[key] for key in ("packId", "kind", "id", "revision")}}],
+                       key: descriptor[key] for key in ("kind", "id", "revision")}}],
         "app": {CARRIER: [{"untrusted": "authored carrier"}]},
     }
     snapshot = _snapshot(runtime)  # The fake intentionally has no project snapshot ports.
@@ -343,7 +346,7 @@ def test_builtin_pin_does_not_fetch_project_snapshot():
     assert selections(snapshot.config) == []
     registry = catalog._registry()
     ref = snapshot.config["clips"][0]["elementRef"]
-    assert registry.get("effect", ref["id"], pack_id=ref["packId"], revision=ref["revision"]) == registry.get("effect", ref["id"])
+    assert registry.get("effect", ref["id"], revision=ref["revision"]) == registry.get("effect", ref["id"])
 
 
 def test_render_uses_private_registries_under_global_lock(admitted, tmp_path, monkeypatch):

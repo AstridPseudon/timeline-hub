@@ -69,27 +69,19 @@ def _project_references(
 
 
 def _project_pack_owners(
-    config: Mapping[str, Any], *, client: Any
+    config: Mapping[str, Any]
 ) -> set[str]:
     """Identify owner-qualified project refs before catalog identity can hide them."""
-    refs = {}
+    owners = set()
     for clip in config.get("clips", []):
         ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
-        if (
-            isinstance(ref, Mapping)
-            and all(isinstance(ref.get(key), str) and ref[key]
-                    for key in ("packId", "kind", "id", "revision"))
-            and not ref["revision"].startswith("draft-")
-        ):
-            refs[ref["packId"]] = ref
-    documents = getattr(client, "documents", None)
-    if not refs or documents is None:
-        return set()
+        if isinstance(ref, Mapping) and isinstance(ref.get("packId"), str) and ref["packId"]:
+            owners.add(ref["packId"])
     # The timeline schema reserves packId for admitted project-pack refs.
     # Keep the owner qualified even when its project document is absent: the
     # resolver below must report that missing admission instead of downgrading
     # the ref to an exact-looking installed catalog entry.
-    return set(refs)
+    return owners
 
 
 def _clip_contexts(
@@ -144,9 +136,7 @@ def resolve_project_elements(config: Mapping[str, Any], *, project: str, client:
     realm = document_service._identity()["realm_id"] if document_service is not None else None
     refs = _project_references(
         result,
-        project_pack_owners=_project_pack_owners(
-            result, client=client
-        ),
+        project_pack_owners=_project_pack_owners(result),
     )
     if not refs:
         return result
