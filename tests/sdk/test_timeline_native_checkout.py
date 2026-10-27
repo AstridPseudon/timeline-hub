@@ -6,12 +6,13 @@ import json
 
 import pytest
 
-from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit_session import Timeline
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -30,6 +31,63 @@ def attached(connected, bundle=None):
         generated.bundles['r0'] = copy.deepcopy(bundle)
         generated.bundles['r0'].update(project_id='p', timeline_id='t')
     return Checkout.attach(open_session(connected))
+
+
+def test_function_commit_adapts_parent_text_tracks_delete_and_hold_then_undoes_once(connected):
+    from astrid.sdk import timeline_intent as intent
+
+    _, generated, _ = connected
+    before = copy.deepcopy(generated.bundles["r0"])
+    clips = before["parent"]["clips"]
+    intent.set_for(clips[0], 7)
+    publication = compile_authoring_candidate(before).publication
+    document = {
+        "schema_version": 1,
+        "project_id": "p",
+        "timeline_id": "t",
+        "parent_revision": {"revision_id": "r0", "content_digest": publication["content_digest"],
+                            "payload": publication["parent_composition"]},
+        "shot_revisions": publication["shot_revisions"],
+        "internal_timeline_revisions": publication["internal_timeline_revisions"],
+        "dependency_manifest": {**publication["dependency_manifest"], "documents": []},
+    }
+    before = bundle_from_document(document)
+    generated.bundles["r0"] = before
+    session = open_session(connected)
+    state = session._state()
+    tl = Timeline(session, session._bundle(state), state["base"])
+
+    def edit(t):
+        t.track("titles", above="picture").rename("Opening")
+        t.add_text("Chapter one", at=1, hold=3, track="titles", id="chapter-one")
+        t.clip("a").set_track("titles").hold_for(2.5)
+        t.clip("b").remove()
+
+    result = tl.commit(edit)
+    assert result["receipt"]["result"]["status"] == "accepted"
+    assert len(generated.calls) == 1
+    after = copy.deepcopy(generated.bundles[generated.head["revision_id"]])
+    assert [row["id"] for row in after["parent"]["config"]["tracks"]] == ["titles", "picture"]
+    assert after["parent"]["config"]["tracks"][0]["label"] == "Opening"
+    assert [row["id"] for row in after["parent"]["clips"]] == ["a", "chapter-one"]
+    assert after["parent"]["clips"][0]["hold"] == 2.5
+    assert intent.for_s(after["parent"]["clips"][0]) == 2.5
+
+    undone = tl.undo(publications=[result["receipt"]["receipt_id"]])
+    assert undone["data"]["status"] == "accepted"
+    restored = generated.bundles[generated.head["revision_id"]]
+    assert restored["parent"]["config"]["tracks"] == before["parent"]["config"]["tracks"]
+    assert restored["parent"]["clips"] == before["parent"]["clips"]
+
+    result = tl.commit(edit)
+    latest = generated.bundles[generated.head["revision_id"]]
+    State(latest).set("parent/clip:a", ["params", "color"], {"state": "present", "value": "teal"})
+    undone = tl.undo(publications=[result["receipt"]["receipt_id"]])
+    assert undone["data"]["status"] == "accepted"
+    selective = generated.bundles[generated.head["revision_id"]]
+    assert selective["parent"]["clips"][0] == {
+        **before["parent"]["clips"][0], "params": {**before["parent"]["clips"][0].get("params", {}),
+                                                        "color": "teal"}}
 
 
 def pending(connected):

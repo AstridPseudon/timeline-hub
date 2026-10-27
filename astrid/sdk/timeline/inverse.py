@@ -10,9 +10,11 @@ from ._collections import (
     arrange,
     container,
     member,
-    order as collection_order,
     restoration_orders,
     selection_overlap,
+)
+from ._collections import (
+    order as collection_order,
 )
 from ._command_state import (
     ABSENT,
@@ -107,6 +109,29 @@ def _physical_state(state, ref, path, records):
     order(state, 'parent', 'occurrence')
     return State({**state.bundle, 'parent': {
         **state.bundle['parent'], 'occurrences': state.bundle['placements']}}, closures=state.closures)
+
+
+def _physical_address_resolver(records):
+    """Resolve every accepted physical binding before using inverse history."""
+    bindings = [binding for record in records for binding in record.get('bindings', [])
+                if 'physical_ref' in binding]
+    if not bindings:
+        return None
+    resolver = getattr(records, 'address_resolver', None)
+    if not isinstance(records, AcceptedRecords) or not callable(resolver):
+        raise CommandError('inverse needs authenticated physical binding normalization',
+                           kind='history_unavailable')
+    for binding in bindings:
+        physical_ref = binding.get('physical_ref')
+        path = binding.get('path', [])
+        if not isinstance(physical_ref, str) or not isinstance(path, list):
+            raise CommandError('accepted physical binding is malformed', kind='history_unavailable')
+        address = resolver(binding, physical_ref, path)
+        if (not isinstance(address, tuple) or len(address) != 2
+                or not isinstance(address[0], str) or not isinstance(address[1], tuple)):
+            raise CommandError('accepted physical binding has no normalized address',
+                               kind='history_unavailable', ref=physical_ref)
+    return resolver
 
 
 def _input_read_state(state, read, record, records):
@@ -1038,10 +1063,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     from ._step_undo import check_step_dependents, inverse_stages, selected_dependencies
 
     dependencies = selected_dependencies(records)
-    address_resolver = getattr(records, 'address_resolver', None)
-    if any('physical_ref' in binding for record in records for binding in record.get('bindings', [])):
-        if not isinstance(records, AcceptedRecords) or address_resolver is None:
-            raise CommandError('inverse needs authenticated physical binding normalization', kind='history_unavailable')
+    address_resolver = _physical_address_resolver(records)
     _validate_materializations(records)
     check_step_dependents(records, state=ctx.state)
     check_intervening(records, intervening_records, state=ctx.state, include_dependents=True,

@@ -151,6 +151,42 @@ class _LookupMixin:
                 return min(matches, key=lambda c: (0 if c.start - 1e-6 <= point < c.end else 1, abs(c.start - point)))
         return self._pick(pool, query, where=f"cut {cut}" if cut is not None else "the timeline")
 
+    def track(self, track: str, *, above: str | None = None, kind: str = "visual"):
+        """Select or create a parent output track, optionally placing it above another track."""
+        if not isinstance(track, str) or not track.strip():
+            raise TimelineEditError("track requires a nonempty ID")
+        track = track.strip()
+        tracks = self._parent_track_list()
+        if tracks is None:
+            tracks = []
+        if above is not None:
+            if not isinstance(above, str) or not any(str(item.get("id")) == above for item in tracks):
+                raise TimelineEditError(f"no parent track {above!r}")
+            if above == track:
+                raise TimelineEditError("a track cannot be placed above itself")
+        row = next((item for item in tracks if str(item.get("id")) == track), None)
+        if row is None:
+            if kind not in {"visual", "audio"}:
+                raise TimelineEditError("track kind must be 'visual' or 'audio'")
+            row = {"id": track, "kind": kind, "role": "output"}
+            command = getattr(self, "command", None)
+            if callable(command):
+                command({"schema_version": 1, "op": "track.create", "version": "1",
+                         "select": "parent", "args": {"row": row}, "intent": {}},
+                        label="Create track")
+                tracks = self._parent_track_list(create=True) or []
+                row = next(item for item in tracks if str(item.get("id")) == track)
+            else:
+                tracks = self._parent_track_list(create=True) or tracks
+                tracks.append(row)
+        if above is not None:
+            tracks[:] = [item for item in tracks if str(item.get("id")) != track]
+            index = next(i for i, item in enumerate(tracks) if str(item.get("id")) == above)
+            tracks.insert(index, row)
+        from astrid.sdk.timeline.model import _TrackRef
+
+        return _TrackRef(self, track, row)
+
     def _matches(self, c: Clip, query: str) -> bool:
         text = str(query).strip()
         return (c.id == text or c.address == text or c.layer_name == text or c.id.startswith(text) or (c.asset or "").lower() == text.lower()
@@ -366,6 +402,30 @@ class _LookupMixin:
         directly on the parent, timeline-absolute, with no shot."""
         return [c for c in self._parent_clip_list() or [] if isinstance(c, dict)]
 
+    def _parent_track_list(self, *, create: bool = False) -> list[dict[str, Any]] | None:
+        parent = self.bundle.get("parent")
+        if not isinstance(parent, dict):
+            if not create:
+                return None
+            parent = self.bundle.setdefault("parent", {})
+        config = parent.get("config")
+        own = parent.get("tracks")
+        mirror = config.get("tracks") if isinstance(config, dict) else None
+        if own and mirror and own is not mirror and own != mirror:
+            raise TimelineEditError("the parent holds two different track lists (tracks and config.tracks)")
+        tracks = own or mirror
+        if not isinstance(tracks, list) and create:
+            if not isinstance(config, dict):
+                config = parent.setdefault("config", {})
+            tracks = config.setdefault("tracks", [])
+        if not isinstance(tracks, list):
+            return None
+        if "tracks" in parent:
+            parent["tracks"] = tracks
+        if isinstance(config, dict) and isinstance(config.get("tracks"), list):
+            config["tracks"] = tracks
+        return tracks
+
     def _shot_start(self, shot_id: str) -> float:
         if shot_id == PARENT_SHOT:
             return 0.0
@@ -403,7 +463,7 @@ class _LookupMixin:
 
     def _track_kind(self, shot_id: str, track: str) -> str:
         internal = self._internal(shot_id)
-        tracks = internal.get("tracks") or (internal.get("config") or {}).get("tracks") if shot_id == PARENT_SHOT else internal.get("tracks")
+        tracks = self._parent_track_list() if shot_id == PARENT_SHOT else internal.get("tracks")
         for t in tracks or []:
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()

@@ -64,6 +64,40 @@ def test_words_are_in_timeline_seconds_with_stable_ids():
     assert tl.word("went viral").id == "s1:1"  # phrases match their first word
 
 
+def test_parent_text_track_order_move_and_remove_are_thin_checkout_edits():
+    data = bundle()
+    data["parent"]["config"]["tracks"] = [
+        {"id": "picture", "kind": "visual", "role": "output"},
+        {"id": "music", "kind": "audio", "role": "output"},
+    ]
+    data["parent"]["clips"] = [
+        {"id": "parent-clip", "clipType": "media", "track": "picture", "at": 0, "hold": 2}
+    ]
+    tl = Checkout(data)
+
+    tl.track("titles", above="picture").rename("Opening")
+    added = tl.add_text("Chapter one", at=1, hold=3, track="titles", id="chapter-one")
+    added.set_track("picture")
+    tl.clip("parent-clip").remove()
+
+    assert [row["id"] for row in tl._parent_track_list()] == ["titles", "picture", "music"]
+    assert tl._parent_track_list()[0]["label"] == "Opening"
+    assert (added.id, added.track, added.text) == ("chapter-one", "picture", "Chapter one")
+    assert [clip.id for clip in tl.clips() if clip.shot_id == ""] == ["chapter-one"]
+
+
+def test_hold_for_replaces_stale_duration_intent():
+    data = bundle()
+    clip = data["shots"]["B"]["internal_timeline"]["clips"][1]
+    intent.set_for(clip, 9)
+    intent.set_until(clip, '"live"')
+    edited = Checkout(data).clip("b-type").hold_for(2.2)
+
+    assert edited.duration == pytest.approx(2.2)
+    assert intent.for_s(edited.data) == pytest.approx(2.2)
+    assert intent.until(edited.data) is None
+
+
 def test_first_draft_pins_the_fetched_bundle_for_edit_diffs(tmp_path, monkeypatch):
     from astrid.sdk.timeline import store
 
