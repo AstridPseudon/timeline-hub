@@ -134,17 +134,28 @@ def _validate_effect_params(effect_id: str, params: Any, path: str, theme: str |
     jsonschema.validate(_schema_params_for_animation_refs(schema, params), schema)
 
 
-def _transition_reference(value: Any, path: str) -> tuple[str, float | None]:
+def _transition_reference(value: Any, path: str, *, canonical: bool = False) -> tuple[str, float | None]:
     if isinstance(value, str):
         return value, None
     if not isinstance(value, dict):
         raise ValueError(f"{path} must be a transition id string or object")
-    _raise_unknown_keys(path, value, frozenset({"id", "type", "duration", "durationFrames", "params"}))
+    allowed = {"id", "type", "duration", "durationFrames", "params"}
+    if canonical:
+        allowed.update({"align", "incomingPolicy"})
+    _raise_unknown_keys(path, value, frozenset(allowed))
     transition_id = value.get("id", value.get("type"))
     if not isinstance(transition_id, str) or not transition_id:
         raise ValueError(f"{path}.id must be a non-empty string")
-    if "params" in value and value.get("params") not in (None, {}):
+    params = value.get("params")
+    if params not in (None, {}) and not (
+        canonical and transition_id in {"fade", "cross-fade", "crossfade"}
+        and params == {"easing": "linear"}
+    ):
         raise ValueError(f"{path}.params are not supported by the installed transitions")
+    if canonical and value.get("align", "end") != "end":
+        raise ValueError(f"{path}.align must be end")
+    if canonical and value.get("incomingPolicy", "preroll-crossfade") != "preroll-crossfade":
+        raise ValueError(f"{path}.incomingPolicy must be preroll-crossfade")
     if "id" in value and "type" in value and value["id"] != value["type"]:
         raise ValueError(f"{path} id and type must agree")
     duration_frames = value.get("durationFrames")
@@ -176,7 +187,7 @@ def _clip_duration_seconds(clip: dict[str, Any]) -> float | None:
     return None
 
 
-def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
+def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float, *, canonical: bool = False) -> None:
     known_ids: set[str] | None = None
     if any("transition" in clip for clip in clips):
         # Transition catalog integrity is part of validating a
@@ -195,11 +206,15 @@ def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
         for position, (index, clip) in enumerate(track_clips):
             if "transition" not in clip:
                 continue
-            transition_id, duration_frames = _transition_reference(clip["transition"], f"clips[{index}].transition")
+            transition_id, duration_frames = _transition_reference(
+                clip["transition"], f"clips[{index}].transition", canonical=canonical,
+            )
             if known_ids and transition_id not in known_ids:
                 raise ValueError(
                     f"clips[{index}].transition id {transition_id!r} is not present in the transitions catalog"
                 )
+            if canonical:
+                continue
             next_clip = track_clips[position + 1][1] if position + 1 < len(track_clips) else None
             current_duration = _clip_duration_seconds(clip)
             next_duration = _clip_duration_seconds(next_clip) if next_clip is not None else None
@@ -234,7 +249,7 @@ def _timeline_fps(config: dict[str, Any]) -> float:
     return 30.0
 
 
-def validate_timeline(config: Any, *, strict: bool = True) -> None:
+def validate_timeline(config: Any, *, strict: bool = True, canonical_transitions: bool = False) -> None:
     """Validate a Banodoco timeline.
 
     `clipType` is an open string for editor compatibility. Built-in media/text
@@ -287,6 +302,9 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
                         for phase in ("entrance", "exit")
                         if phase in c and isinstance(c[phase], dict) and "id" in c[phase]
                     },
+                    **({"transition": {k: v for k, v in c["transition"].items()
+                                       if k not in {"align", "incomingPolicy"}}}
+                       if canonical_transitions and isinstance(c.get("transition"), dict) else {}),
                 })
                 if isinstance(c, dict)
                 else c
@@ -358,4 +376,4 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
         if clip["id"] in clip_ids:
             raise ValueError(f"clips[{index}].id {clip['id']!r} is not unique")
         clip_ids.add(clip["id"])
-    _validate_clip_transitions(normalized_clips, float(fps))
+    _validate_clip_transitions(normalized_clips, float(fps), canonical=canonical_transitions)

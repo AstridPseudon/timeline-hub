@@ -1475,6 +1475,7 @@ def _prepare_managed_render_inputs(
             registry=expanded_registry,
             materialized_registry_hash=_expanded_config_hash(expanded_registry),
             expansion={
+                **({"canonical": True} if canonical_expansion is not None else {}),
                 "children": child_records,
                 "shots": [shot_records[key] for key in sorted(shot_records)],
                 "occurrences": shot_occurrences,
