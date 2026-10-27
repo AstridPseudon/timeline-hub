@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T09:04:34Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
-# runtime board, 2026-10-27T08:58:05.593947+00:00
+<!-- main | 2026-10-27T09:09:41Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
+# runtime board, 2026-10-27T09:05:34.406931+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -151,7 +151,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
 Blockers: Main owns the narrow A acceptance re-audit; the boundary repair is merged and central23 PASS. Main owns C failure routing and pending/durable behavior choice. B accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5928509440 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Sweep and compact exit0: zero deletions, packed dirs or compressed logs. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5927530496 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Sweep and compact exit0: zero deletions, packed dirs or compressed logs. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -162,4 +162,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T08:58:05.593947+00:00. Worker check exit0; all2717 rows unchanged, live0 and ready0. Inbox, header and A/B/C boards unchanged since08:51. A repair is merged and central23 PASS; Main owns its narrow acceptance re-audit and C routing/behavior choice. B accepted; H/D/P START absent. Guarded maintenance exit0 with no changes or refusal. [Pass evidence](rounds/20261027T0854Z-pass.json).
+Current pass: 2026-10-27T09:05:34.406931+00:00. Worker check exit0; all2717 rows unchanged, live0 and ready0. Inbox, header and A/B/C boards unchanged since08:58. A repair is merged and central23 PASS; Main owns its narrow acceptance re-audit and C routing/behavior choice. B accepted; H/D/P START absent. Guarded maintenance exit0 with no changes or refusal. [Pass evidence](rounds/20261027T0900Z-pass.json).
