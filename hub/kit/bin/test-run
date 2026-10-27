@@ -120,7 +120,7 @@ if [ -z "$RUN" ]; then
     cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
     basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
   [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
-  [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
+  [ $HV = heavy ] && [ $(alive heavy) -ge 2 ] && { echo "2 heavy runs already running (owner 27 Oct 12:10Z: parallel heavy runs; 2 fit the disk)" | tee $D/why; exit 3; }
   [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
   # 27 Oct 00:00Z (owner: "let it go right to the wire"): floors cut to what a run physically needs to finish; light 1.0 GB, heavy 2.0 GB (an App verify peaks at ~1.8 GB)
   FLOOR_BYTES=1000000000; if [ "$HV" = heavy ]; then FLOOR_BYTES=2000000000; [ "$suite" = agent-core-full ] && FLOOR_BYTES=2000000000; fi
