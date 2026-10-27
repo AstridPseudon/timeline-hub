@@ -320,7 +320,7 @@ def test_renderer_equivalence_detects_missing_piece_and_changed_source_offset():
     flat = flat_film()
     clips = flat["shots"]["film"]["internal_timeline"]["clips"]
     clips.append({"id": "media-cross", "clipType": "media", "track": "plate", "asset": "P",
-                  "at": 3.5, "from": 5.0, "to": 9.0, "hold": 4.0, "speed": 1.5})
+                  "at": 3.5, "from": 5.0, "to": 9.0, "hold": 4.0, "speed": 2.0})
     good = split(flat)
     second_shot = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
     second_piece = next(c for c in second_shot["clips"]
