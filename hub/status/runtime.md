@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:46:51Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T02:44:05.899718+00:00
+<!-- main | 2026-10-27T02:51:15Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T02:48:08.057690+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -106,7 +106,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 B forward | Resolve remaining App B-parent ancestry | C Luna | Required B merge parent | blocked:C | Existing C forward lineage; Main peer0241 | 92 tests PASS; required B parent absent. Runtime ancestry PASS. [Handoff](../../design/peer-runtime-to-orchestrator-20261027T024145Z-C-forward-ancestry-and-timing.md). | App 86c / Runtime 024d |
 
-| C2 save and fork | Receive exact provider persistence proof | C Luna | Current C App provider | doing | C-C2-save-fork-proof-8 | Started 02:39:41 on 86c. Provider assertions and independent review pending; browser drag/reload/undo remains unclaimed. | No proof verdict |
+| C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
+
+| C2 browser journey | Receive complete gallery browser proof | C Luna | Provider proof merged98784a1d | doing | C-C2-browser-journey-8 | Existing bottom-gallery drag, save, reload and undo proof in progress; no browser verdict yet. | C App branch |
 
 | B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
 
@@ -122,9 +124,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive central render blocker | Main kit and A Luna | Real renderer and local preview | blocked:main | Main kit allocator; A review r8 PASS | A author stopped before render on Runtime import and environment errors. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T022524Z-standin-environment-blocker.md). | No render or parity proof |
 
-Blockers: Main owns A/B central render prerequisites and B5 audit corrections. C owns the unresolved App B-parent ancestry finding and current save/fork proof. C3 synthetic timing wait is clear. D130 holds.
+Blockers: Main owns A/B central render prerequisites and B5 audit corrections. C owns unresolved App B-parent ancestry and browser proof after the qualified provider milestone. C3 synthetic timing wait is clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5962403840 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
+live 0 / cap 6; ready-undispatched 0. Free 5967650816 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -135,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T02:44:05.899718+00:00. PLAN, manager rules, pipeline and boards consumed. INBOX and HEADER unchanged. Runtime census: 2717 rows, none running. C3 central2349 and independent review PASS establish five synthetic saves and durable replays at183–264 ms; no production optimization or20-second reproduction claim. C App fixture bridge merged86c with independent92 PASS, but actual B-parent ancestry still fails; original finding sent to Main for existing C owner. C save/fork proof active on86c. A/B real preview/export parity remains unmeasured; Main retains render prerequisites and B5 UNSOUND findings. H/D/P START markers absent. Sweep removed0 with broken-pipe diagnostics; compact packed0 and compressed0. No eligible recycle. Prospective KEEP added to actual C3 raw run. Delivered ZIP and sidecar rehashed exact. [Pass evidence](rounds/20261027T024405Z-pass.json).
+Current pass: 2026-10-27T02:48:08.057690+00:00. PLAN, current manager rules, pipeline, owner boards and new inbox checks consumed. INBOX and HEADER unchanged. Runtime census2717, none running;31 KEEP and5 dirty retained trees, no eligible recycle. C provider proof independently PASS and merged98784a1d with central58 PASS. Browser drag/reload/undo unverified; App B-parent ancestry still fails, prior Main handoff controls. A/B real preview/export prerequisites stay Main-owned. H/D/P START markers absent. Guarded sweep and compact exit0, removed0, packed0 and compressed0; no refusal. Delivered archive and sidecar exact. [Pass evidence](rounds/20261027T024808Z-pass.json).
