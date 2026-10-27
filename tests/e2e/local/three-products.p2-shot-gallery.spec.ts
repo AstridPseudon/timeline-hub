@@ -102,11 +102,17 @@ async function dragGalleryImageIntoShot(page: Page): Promise<void> {
   await page.evaluate(() => {
     const source = [...document.querySelectorAll<HTMLElement>('[data-testid="generations-pane"] [data-gallery-item-id]')]
       .find((tile) => tile.querySelector('img'));
-    const target = document.querySelector<HTMLElement>('[role="dialog"] .timeline-wrapper');
+    const target = document.querySelector<HTMLElement>('[role="dialog"] .timeline-wrapper [data-row-id="V2"]');
+    const firstAnchor = target?.querySelector<HTMLElement>('.clip-action[data-clip-id="f2-agent-clip"]');
+    const lastAnchor = target?.querySelector<HTMLElement>('.clip-action[data-clip-id="f2-agent-clear-clip"]');
     if (!source) throw new Error('The locked bottom gallery has no draggable image tile.');
-    if (!target) throw new Error('The open shot editor has no timeline drop target.');
+    if (!target) throw new Error('The open shot editor has no existing V2 timeline track.');
+    if (!firstAnchor || !lastAnchor) throw new Error('The existing V2 timeline track has no seeded clips to anchor the drop.');
     const targetBox = target.getBoundingClientRect();
-    const clientX = targetBox.left + Math.max(1, targetBox.width / 2);
+    const firstBox = firstAnchor.getBoundingClientRect();
+    const lastBox = lastAnchor.getBoundingClientRect();
+    const pixelsPerSecond = (lastBox.left - firstBox.left) / 3;
+    const clientX = lastBox.right + pixelsPerSecond * 2.5;
     const clientY = targetBox.top + Math.max(1, targetBox.height / 2);
     const dataTransfer = new DataTransfer();
     const event = (type: 'dragstart' | 'dragover' | 'drop' | 'dragend') => new DragEvent(type, {
@@ -133,7 +139,7 @@ async function reloadAndOpenShot(page: Page, seed: ThreeProductsSeed, revisionId
 }
 
 appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, and undoes', async ({ page, harness }) => {
-  const seed = await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none');
+  const seed = await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14);
   await openTimeline(page, harness, seed);
 
   // Use the existing lockable bottom gallery. This is intentionally opened before
@@ -172,7 +178,7 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
   expect(afterChild).toHaveLength(beforeChild.length + 1);
   expect(parentContainsClip(after, row.id as string)).toBe(false);
 
-  const projectedClipId = `${seed.occurrenceId}:${row.id as string}`;
+  const projectedClipId = row.id as string;
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.locator(`.clip-action[data-clip-id="${projectedClipId}"]`)).toHaveCount(0);
 
