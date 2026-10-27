@@ -1093,6 +1093,20 @@ def test_retained_nested_ranges_bind_immediate_identity_and_exact_captures(retai
     assert (entry, step, records) == original
 
 
+def test_inverse_stage_rejects_empty_native_range_for_effectful_source(retained_nested_inverse):
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_ranges
+
+    entry = retained_nested_inverse
+    step, records = _nested_projection(entry)
+    stage = next(binding for binding in records["commands"][0]["bindings"]
+                 if binding["key"] == "inverse.stage")
+    stage["boundary"]["native_write_range"] = [0, 0]
+
+    with pytest.raises(CommitRejected, match="inverse stage native ranges"):
+        _inverse_stage_ranges(step, records, {entry["publication_id"]: entry})
+
+
 @pytest.mark.parametrize("mutation", [None, "publication", "step", "ordinal", "order", "omitted",
                                       "overlap", "effect", "native-before", "native-after", "digest"])
 def test_nested_inverse_authenticates_boundaries_without_durable_forgery(service, mutation):

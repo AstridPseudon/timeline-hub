@@ -181,6 +181,23 @@ def test_private_sequential_carrier_rejects_prepared_digest_and_boundary_tamperi
         assert auth.rows(service) == before
 
 
+def test_private_sequential_carrier_rejects_parent_revision_forgery_with_equal_payload_digest(service):
+    def mutate(capture, _prepared):
+        image = capture["landing"]["commands"][0]["input"]["parent_revision"]
+        payload, content_digest = copy.deepcopy(image["payload"]), image["content_digest"]
+        image["revision_id"] = "forged-parent-revision"
+        assert image["payload"] == payload and image["content_digest"] == content_digest
+
+    _provider_with_capture(service, mutate)
+    submitted = auth.body(service)
+    before = auth.rows(service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        auth.commit(service, submitted, key="sequential-private-parent-revision")
+    assert error.value.details is not None
+    assert error.value.details["reason"] == "invalid_records"
+    assert auth.rows(service) == before
+
+
 def test_private_sequential_carrier_rejects_boolean_command_ordinal(service):
     def mutate(capture, _prepared):
         capture["landing"]["commands"][0]["boundary"]["command_ordinal"] = True
