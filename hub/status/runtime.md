@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T06:14:35Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T06:12:19.525040+00:00
+<!-- main | 2026-10-27T06:20:12Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T06:15:16.659901+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -143,7 +143,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: A owns the real pinned-element proof. Main owns B acceptance after auditor ACCEPT. C owns the staging comparison, two browser journeys and Runtime review-artifact cleanup after auditor REJECT; Main owns the active browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5546176512 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact06:02 completed: removed0 dirs,packed0 dirs and gzipped1 log. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5540184064 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed: removed 0 dirs, packed 0 dirs and gzipped 0 logs; protected data retained. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -154,4 +154,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:12:19.525040+00:00. Two passes this round. Runtime census2717 has zero live workers and no ready task. Inbox and header unchanged; Main added B/C acceptance notes. Actual B audit0610 ACCEPT and C audit0610 REJECT read; Main acceptance is separate. C staging dispatch never produced a run, two browser journeys remain unverified and Runtime root report.md needs C worker cleanup. Existing Main browserlane0610 active. [Main handoff](../../design/peer-runtime-to-main-20261027T061148Z-acceptance-audits.md) sent; no Runtime duplicate. A proof still active, fresh log. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Guarded sweep/compact06:02 removed0 dirs,packed0 dirs,gzipped1 log; protected data retained. [Pass evidence](rounds/20261027T061025Z-pass.json).
+Current pass: 2026-10-27T06:15:16.659901+00:00. First pass this round. Runtime census 2717 has zero live workers and no ready task. Inbox and header unchanged. A proof and Main browser-lane repair are active with fresh logs. B auditor ACCEPT and C auditor REJECT remain distinct from Main acceptance; existing Main handoff 061148 names the exact C staging, browser and Runtime root report.md corrections. Main 06:12 notes retain the existing owners. No duplicate worker or body. H/D/P START markers absent. Runtime 36 trees remain 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed: removed 0 dirs, packed 0 dirs and gzipped 0 logs. [Pass evidence](rounds/20261027T061409Z-pass.json).
