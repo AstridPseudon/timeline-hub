@@ -19,7 +19,8 @@ timelines edit TL --project P --clip parent/clip:ID --trim-out 3.0 --idempotency
 timelines edit TL --project P --clip c30.cover --until Astrid --verify    # detached draft edit
 timelines check TL --project P --at '"Astrid" in n21'                      # look at any moment (fast; no queue)
 timelines check TL --project P --at 33.9 --zoom c08.loras   # + both sides cropped around a layer, full resolution
-timelines status TL --project P   ·   timelines undo TL --project P
+timelines status TL --project P   ·   timelines undo TL --project P   # local draft edits
+timelines undo TL --project P --commit RECEIPT_ID --idempotency-key undo-42   # an accepted commit
 ```
 `show`, `lint`, `diff`, `find` and `words` read the working copy; `--published` reads the live one.
 `timelines find TL "the conclusion"` (also `--text "Astrid."`, `--asset ROCKET`, `--line w23c`, `--cut c30`) → addresses and times.
@@ -133,6 +134,7 @@ tl.check().brief()  tl.changes()
 ```
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
+`on(33.9)` with a plain number is timeline seconds; on a clip in a cut it is stored as an offset from that cut's start (`+0.8s`, `+2f`), so it moves with the cut.
 `Checkout.draft(P, TL)` opens the detached working copy if one exists;
 its mutation/save methods stay local until an explicit commit. `--verify`/`check --at`
 write only their page and frames, in the fast lane's cache in the temp dir. In check,

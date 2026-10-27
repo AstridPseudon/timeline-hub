@@ -22,7 +22,9 @@ into the project catalog by content and stay there after undo.
 | Reviewed exact changes | `tl.commit(list)` from a preview |
 
 A function is intent: on a clash it is evaluated again on the newer
-timeline. A list is a decision: it is applied exactly or refused.
+timeline. A list is a decision: it is applied exactly or refused. Previewing a
+function and applying its list is one Python path; do not mix the CLI, the
+sheet and Python in one task.
 
 ## Opening and reading
 
@@ -32,6 +34,7 @@ from astrid.sdk.timeline.api import CommitConflict, Timeline, TimelineEditError
 tl = Timeline.open(project, timeline)          # configured runtime connection
 tl.clips(track="V1")                           # a filterable list
 tl.clip("intro")                               # one clip, or a refusal listing candidates
+tl.clips(asset="ROCKET")                       # by the asset key `show` prints
 tl.words(between=(10, 20))                     # spoken words with times
 tl.word("Meanwhile", n=1)
 tl.duration                                    # where the last picture ends, on any video track
@@ -45,12 +48,17 @@ from Runtime storage. Shot occurrence ids for `arrange` are
 `[p["occurrence_id"] for p in tl.bundle["placements"]]`, in their stored
 order.
 
+`tl.clip(name)` matches a clip id or id prefix, an address, a layer name, an
+asset key, an element id or on-screen text. When several clips match, it
+refuses and lists them; pass the exact id from `show`.
+
 `timelines history <timeline> --project <project> --json` lists commits newest
 first in `data.revisions`. Each row's `message` is the commit label,
-`publication_id` is its receipt id (what undo takes), `created_at` its time,
-and `source` is `app` for edits made in the editor. To undo a known edit whose
-receipt you lost, find its label there. When `data.complete` is false, Runtime
-could list only the head.
+`publication_id` is the same id a commit returns as `receipt["receipt_id"]`
+(what undo takes), `created_at` its time, and `source` says where it came
+from: `python` for `tl.commit`, `app` for the editor. To undo a known edit
+whose receipt you lost, find its label there. When `data.complete` is false,
+Runtime could list only the head.
 
 ## The four owner cases
 
@@ -91,23 +99,30 @@ r = tl.commit(preview["data"]["commands"], label="Recut")
 ```
 
 Case 1 imports up to twenty files and case 3 imports two; the imports are
-listed in the result and survive undo. `t.add` creates a missing track once,
-deriving its kind from the verified file; an existing track of the wrong
-kind refuses.
+listed in a preview and survive undo. With no `track`, `t.add` puts picture on
+`V1` and audio on the first audio track (`A1` if there is none). It creates a
+missing track once, as an audio or a picture track to match the verified
+file; an existing track of the wrong kind refuses.
 
 ## Helpers
 
-- **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio. A video
-  without `hold` uses its verified duration; `.trim(in, out)` then sets the
-  source window.
-- **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text.
-- **`t.track(id, above=)`**, **`.rename(label)`**: create, order and label
-  tracks.
+- **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio, at `at`
+  timeline seconds. `hold=N` holds a still for N seconds and plays source
+  seconds 0–N of a video or audio file; without `hold` a video or audio file
+  plays its verified duration. `.trim(in, out)` then sets the source window.
+- **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
+  timeline seconds for `hold` seconds.
+- **`t.track(id, above=)`**, **`.rename(label)`**: create a track or select
+  the existing one (never a second), and label it. `above=` places the track,
+  new or existing, above that track.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
-  timing. `trim` is in source seconds and keeps the start. A plain number
-  given to `on` is timeline seconds on a flat timeline; on a narrated film
-  whose clips belong to cuts it is an offset from the clip's cut, so use a
-  word or a moment string there.
+  timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
+  literal length on any clip; on video or audio the source window keeps its
+  in-point and a length the file cannot fill is refused. A plain number given
+  to `on` is always timeline seconds. On a narrated film, where a clip belongs
+  to a cut, it is stored relative to that cut's start, so the clip follows
+  its cut when the narration is re-flowed; to follow a word, give a moment
+  string.
 - **`clip.split(at, id=)`**: native split at timeline seconds; it returns the
   left half, which keeps the original id, and the right half gets `id`
   (`t.clip(id)`). Requires registry-backed parent media, an interior cut, an
@@ -116,7 +131,8 @@ kind refuses.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
   catalog key in place; the start stays.
 - **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
-- **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order. It keeps
+- **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order, from
+  `at`, `gap` apart (both timeline seconds). It keeps
   their ids, lengths and source windows, refuses unknown lengths and
   collisions with occurrences you did not select, and never ripples.
 
@@ -146,6 +162,11 @@ is held longer or shortened; audio spanning a removed window is split so later
 sound stays in sync; clips wholly inside a removed window are deleted. On a
 flat timeline a ripple refuses to move a clip that carries a moment string,
 animation or transition. Closing a hole on one track only is not supported.
+
+Cutting a film to 15 seconds with `t.ripple_delete(15, t.duration)` removes
+everything after 15 s on every track, including an end card. To keep the
+card, remove only up to it, `t.ripple_delete(15, t.clip("end-card").start)`:
+the card then starts at 15 s and the film ends one card later.
 
 `insert_time`, `ripple_delete` and `close_gap` each take `music=`:
 `"keep_end"` (default) cuts the bed at a bar with a crossfade so it still ends
