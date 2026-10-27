@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T06:41:39Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T06:39:03.535547+00:00
+<!-- main | 2026-10-27T06:46:47Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T06:45:41.188011+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -128,7 +128,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive usable pinned render lane | Main Sol and Luna | Main05:12 named lane release | merged | diag-renderlane2-0440 | Main records generic host1 PASS and named lane usable. Original9312 cleanup failure retained; A-owned proof is separate and not accepted. | No Runtime change |
 
-| A stand-in proof | Receive independent code review and actual reproof | A Luna | Fresh central proof and merge | review | Author r13; A review r13 | Author26842 one PASS. Independent code review PASS; fresh25125 queued behind staging4499. No T3 acceptance or merge inferred. | A candidate |
+| A stand-in proof | Receive independent render PASS | A Luna | A merge and Main acceptance | review | Author r13; independent r13 | Author26842 PASS; fresh independent25125 one PASS107.91s. Code review PASS. A owns normal merge; no acceptance inferred. | A candidate |
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
@@ -139,11 +139,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C acceptance audit | Receive independent C rejection | Luna | Staging and browser evidence; artifact cleanup | review | diag-accept-C-0610 | Auditor REJECT: staging NOTRUN; new-track and modal browser bodies unverified; Runtime root report.md artifact requires C worker cleanup. | C project branches |
 
-| C browser lane | Receive actual correction failures | Main and C Luna | Browser repair and C follow-up | doing | Main0610; C corrections11 | Actual15487 reached bodies:1 PASS2 FAIL. New-track and parent-safety failures retained. Separate modal24493 runs; no duplicate Runtime body. | No Runtime change |
+| C browser lane | Retain actual correction failures | Main and C Luna | Existing C and Main follow-up | doing | Main0610; C corrections11 | Actual15487:1 PASS2 FAIL. Separate24493 passes original gallery case only. New-track and parent Undo remain failed; C owns repair. | No Runtime change |
 
-Blockers: A owns fresh central25125 and merge after independent code review PASS. Main owns B acceptance. C owns actual38 C-only full failures, two browser15487 failures, separate modal24493 and Runtime report.md cleanup. Main owns browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
+Blockers: A owns normal merge after independent code and central25125 PASS; Main owns A and B acceptance. C owns38 C-only full failures, two browser15487 failures and Runtime report.md cleanup. Main owns browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5142790144 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep running; compact follows it. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 4972773376 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep exit0 removed0; compact exit0 packed0 and gzipped1 old log. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -154,4 +154,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:39:03.535547+00:00. Runtime live0 and ready0. Inbox/header unchanged. Staging4499 is terminal:19939 PASS32 FAIL and collection. Its author lists38 C-only failures versus staging, so prior baseline attribution is not accepted. Browser15487 reached the real bodies:1 PASS2 FAIL, both new-track and modal safety; separate24493 runs. A independent code review PASS but fresh25125 remains queued. Existing C and Main owners retain all follow-up. H/D/P START absent. Sweep finished exit0, removed0; compact underway. Protected worktrees retained. [Pass evidence](rounds/20261027T063826Z-pass.json).
+Current pass: 2026-10-27T06:45:41.188011+00:00. Two worker censuses this round: Runtime live0 and ready0. Inbox/header unchanged. A fresh independent25125 actual1 PASS107.91s plus code review PASS; normal merge remains A-owned. C staging4499 terminal19939 PASS32 FAIL plus collection; author lists38 C-only failures, no independent REG verdict inferred. Browser15487 reached actual correction bodies:1 PASS2 FAIL. Separately named modal24493 passes only original gallery case, not parent Undo safety. C lead-r11 and Main0610 retain repair ownership. H/D/P START absent. Guarded cleanup completed without removal or refusal; protected worktrees and original evidence retained. [Gate update](../../design/peer-runtime-to-orchestrator-20261027T064508Z-A-proof-PASS-C-terminal.md); [pass evidence](rounds/20261027T064541Z-pass.json).
