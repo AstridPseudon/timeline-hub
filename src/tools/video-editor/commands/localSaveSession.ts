@@ -108,10 +108,18 @@ export async function createLocalSaveSession(options: Options) {
   async function rollback() {
     const failure = record?.pending?.outcome;
     if (failure?.kind !== 'rejected') return false;
+    const inverse = record?.intents.some((intent) => {
+      const commands = saveOf(intent.payload).commands;
+      return commands?.some((command) => command.op === 'timeline.inverse') ?? false;
+    }) ?? false;
     const at = generation;
     // Retain the entire rejected chain in the outbox; only the visible preview rolls back.
-    publish(failure.error && typeof failure.error === 'object' && !Array.isArray(failure.error)
-      && failure.error.kind === 'conflict' ? 'conflict' : 'error', failure.error);
+    // A guarded inverse refusal is an authoritative-history conflict even
+    // when Runtime reports the guard as a typed refusal/validation response;
+    // the user must reload history before another undo can be offered.
+    const conflict = inverse || (failure.error && typeof failure.error === 'object' && !Array.isArray(failure.error)
+      && failure.error.kind === 'conflict');
+    publish(conflict ? 'conflict' : 'error', failure.error);
     try {
       const latest = await options.loadLatest();
       checkBasis(latest);

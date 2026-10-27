@@ -14,9 +14,10 @@ import type { HistoryEntry, HistoryPage, CommitRequest } from '@/integrations/ru
 import { bindElementParameterOwner, useTimelineSave } from './useTimelineSave';
 import type { UsePollSyncQueries } from './usePollSync';
 import { useClipEditing } from './useClipEditing';
-import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
-import { createTimelineStore, TimelineStoreProvider } from './timelineStore';
-import { ShotTimelineMediaControls } from '@/tools/travel-between-images/components/ShotTimelineMediaControls.tsx';
+import { useVideoEditorRuntime, VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
+import { createTimelineStore, TimelineStoreProvider, useTimelineEditorData, useTimelineEditorOps } from './timelineStore';
+import { useAssetManagement } from './useAssetManagement';
+import { useTimelineCommandsService } from './useTimelineCommandsService';
 import { createInteractionState, type InteractionStateRef } from '../lib/interaction-state';
 import { buildTimelineData, buildTimelineDataWithResolver, configToRows, type TimelineData } from '../lib/timeline-data';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
@@ -97,10 +98,92 @@ interface SetupResult {
   rerenderRuntime: (changes: Partial<VideoEditorRuntimeContextValue>) => void;
 }
 
+function PreparedMediaCommandHarness({
+  mode,
+  afterClipId,
+  time,
+}: {
+  mode: 'image' | 'video';
+  afterClipId?: string;
+  time: number;
+}) {
+  const runtime = useVideoEditorRuntime();
+  const editor = useTimelineEditorData();
+  const ops = useTimelineEditorOps();
+  const commands = useTimelineCommandsService();
+  const [error, setError] = React.useState<string | null>(null);
+  const visualTracks = editor.resolvedConfig?.tracks.filter(track => track.kind === 'visual' && track.role !== 'source') ?? [];
+  const selectedClip = afterClipId
+    ? editor.resolvedConfig?.clips.find(clip => clip.id === afterClipId)
+    : undefined;
+  const assets = useAssetManagement({
+    dataRef: editor.dataRef,
+    selectedTrackId: editor.selectedTrackId,
+    selectedProjectId: runtime.project.projectId,
+    selectClip: ops.selectClip,
+    setSelectedTrackId: ops.setSelectedTrackId,
+    applyEdit: ops.applyEdit,
+    patchRegistry: ops.patchRegistry,
+    invalidateAssetRegistry: async () => {},
+    resolveAssetUrl: async file => runtime.assetResolver.resolveAssetUrl(file),
+  });
+
+  const importMedia = async (file: File) => {
+    setError(null);
+    try {
+      const uploaded = mode === 'image'
+        ? await assets.uploadImageGeneration(file)
+        : await assets.uploadVideoGeneration(file);
+      let oldMediaSelection: Awaited<ReturnType<NonNullable<typeof runtime.provider.getProjectMediaSelection>>> | undefined;
+      if (afterClipId && selectedClip?.asset && runtime.provider.getProjectMediaSelection) {
+        const sourceEntry = editor.dataRef.current?.registry?.assets[selectedClip.asset];
+        if (sourceEntry?.generationId && sourceEntry.variantId) {
+          const query = { asset: selectedClip.asset, generation_id: sourceEntry.generationId, variant_id: sourceEntry.variantId };
+          try {
+            oldMediaSelection = await runtime.provider.getProjectMediaSelection(runtime.project.projectId, query);
+            if (oldMediaSelection.asset !== query.asset || oldMediaSelection.generation_id !== query.generation_id
+              || oldMediaSelection.variant_id !== query.variant_id) oldMediaSelection = undefined;
+          } catch {
+            // The command path retains the local preview and refuses the unverified draft on flush.
+          }
+        }
+      }
+      let preparedAsset = assets.prepareGenerationAsset(uploaded);
+      if (!preparedAsset) throw new Error('Could not resolve the registered project media selection.');
+      if (afterClipId && preparedAsset.mediaSelection) preparedAsset = { ...preparedAsset, assetKey: preparedAsset.mediaSelection.asset };
+      const result = commands.addClip({
+        preparedAsset,
+        trackId: selectedClip?.track ?? visualTracks[0]?.id,
+        time: selectedClip?.at ?? time,
+        ...(afterClipId ? { afterClipId, oldMediaSelection } : {
+          placementPolicy: { kind: 'occurrence-raw-track' as const, trackId: visualTracks[0]?.id ?? editor.selectedTrackId ?? '' },
+        }),
+      });
+      if (!result.ok) throw new Error(result.error.message);
+      if (afterClipId && !oldMediaSelection) setError('Could not resolve the source Runtime project media selection. Draft retained; reload the timeline, then import the media again.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not place media.');
+    }
+  };
+
+  return <>
+    <input
+      type="file"
+      aria-label="Test prepared media"
+      onChange={event => {
+        const file = event.currentTarget.files?.[0];
+        event.currentTarget.value = '';
+        if (file) void importMedia(file);
+      }}
+    />
+    {error ? <p role="alert">{error}</p> : null}
+  </>;
+}
+
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string; mediaTime?: () => number; provider?: DataProvider; suspend?: () => Promise<void> | undefined },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaHarness?: { mode: 'image' | 'video'; afterClipId?: string; time?: number }; provider?: DataProvider; suspend?: () => Promise<void> | undefined },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = original?.provider ?? {
@@ -140,7 +223,7 @@ function setup(
       <VideoEditorRuntimeProvider value={runtime}>
         <TimelineStoreProvider store={store}>
           {original?.strict ? <React.StrictMode>{children}</React.StrictMode> : original?.suspend ? <React.Suspense fallback={null}>{children}</React.Suspense> : children}
-          {original?.mediaControls ? <ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="timeline-1" /> : null}
+          {original?.mediaHarness ? <PreparedMediaCommandHarness {...original.mediaHarness} time={original.mediaHarness.time ?? 1.25} /> : null}
         </TimelineStoreProvider>
       </VideoEditorRuntimeProvider>
     </QueryClientProvider>
@@ -151,15 +234,15 @@ function setup(
       const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
         interactionStateRef, pendingOpsRef: save.pendingOpsRef, remoteHistory: save.localDocumentSave });
       React.useLayoutEffect(() => {
-        if (!original?.mediaControls) return;
+        if (!original?.mediaHarness) return;
         const state = store.getState();
         state.syncSlices({
           data: { ...state.data, data: save.data, dataRef: save.dataRef,
-            resolvedConfig: save.data?.resolvedConfig ?? null, selectedTrackId: 'V1', selectedClipIds: new Set(original.mediaAfterClipId ? [original.mediaAfterClipId] : []) },
+            resolvedConfig: save.data?.resolvedConfig ?? null, selectedTrackId: 'V1', selectedClipIds: new Set(original.mediaHarness?.afterClipId ? [original.mediaHarness.afterClipId] : []) },
           ops: { ...state.ops, applyEdit: save.applyEdit, patchRegistry: save.patchRegistry,
             selectClip: vi.fn(), setSelectedTrackId: save.setSelectedTrackId },
           chrome: { ...state.chrome, saveStatus: save.saveStatus },
-          playback: { ...state.playback, currentTime: original.mediaTime?.() ?? 1.25 },
+            playback: { ...state.playback, currentTime: original.mediaHarness.time ?? 1.25 },
         });
       }, [save.data, save.saveStatus]);
       const suspended = original?.suspend?.();
@@ -349,8 +432,7 @@ describe('useTimelineSave — recovered draft durability', () => {
       try {
         harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data,
           loadBasis: async () => landed ? { head: { revisionId: landed.data.accepted_revision_id, publicationId: landed.receipt.receipt_id }, canonicalDocument: landed.data.canonical_document } : initial,
-          mediaControls: true, mediaAfterClipId: mode === 'video' ? 'source' : undefined,
-          mediaTime: children ? () => imports ? 10 : 1.25 : undefined, capabilities: {
+          mediaHarness: { mode, ...(mode === 'video' ? { afterClipId: 'source' } : {}), time: children ? (imports ? 10 : 1.25) : 1.25 }, capabilities: {
             ...(outcome === 'missing selector' ? {} : { getProjectMediaSelection: runtime.getProjectMediaSelection.bind(runtime) }),
             getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
             commitTimeline: (request, key) => runtime.commitTimeline(request, key),
@@ -373,8 +455,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           expect(config.tracks[1]).toMatchObject({ label: null, app: null });
         }
         await act(async () => {
-          fireEvent.click(screen.getByRole('button', { name: mode === 'video' ? 'Add video after selected clip' : 'Add media' }));
-          fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+          fireEvent.change(screen.getByLabelText('Test prepared media'), {
             target: { files: [new File([mode], `new.${mode === 'video' ? 'mp4' : 'png'}`, { type: entry.type })] },
           });
         });
@@ -397,7 +478,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         }
         if (['missing old selection', 'mismatched old selection', 'extra old selection', 'missing old metadata', 'missing selector'].includes(outcome)) {
           if (outcome !== 'extra old selection') await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('source Runtime project media selection. Draft retained'));
-          await act(async () => { await expect(harness!.hook.result.current.localDocumentSave!.flush()).rejects.toThrow('both exact Runtime'); });
+          await act(async () => { await expect(harness!.hook.result.current.flushPendingSave()).rejects.toThrow('both exact Runtime'); });
           const [draft] = await createCommitOutbox().list(scope);
           expect(draft.intents).toEqual([]);
           expect(draft.pending).toBeUndefined();
@@ -499,8 +580,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           const accepted = structuredClone(landed!.data.canonical_document);
           const capture = vi.spyOn(harness.hook.result.current.localDocumentSave!, 'capture');
           await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: mode === 'video' ? 'Add video after selected clip' : 'Add media' }));
-            fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+            fireEvent.change(screen.getByLabelText('Test prepared media'), {
               target: { files: [new File([mode], `second.${mode === 'video' ? 'mp4' : 'png'}`, { type: entry.type })] },
             });
           });
@@ -983,8 +1063,8 @@ describe('useTimelineSave — recovered draft durability', () => {
       const assertInverseRequest = (post: typeof posted[number], ordinal: number, label: string) => {
         const body = JSON.parse(post.body) as CommitRequest;
         if (label === 'Undo timeline') checkUndo({ key: post.key, body },
-          { revision_id: `r${ordinal}`, publication_id: `p${ordinal}` }, false,
-          { projectId, timelineId, publicationId: `p${ordinal}` });
+          { revision_id: `r${ordinal}`, publication_id: `p${ordinal}` },
+          { projectId, timelineId, publicationId: `p${ordinal}`, action: 'Undo' });
         expect(post.key).toBeTruthy();
         expect(post.path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
         expect(Object.hasOwn(body, 'reads')).toBe(true);

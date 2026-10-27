@@ -64,6 +64,7 @@ it.each(['valid', 'dependent', 'conflict', 'missing', 'copied', 'forged', 'wrong
     const basis = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
     // Hold the ACK so the persisted pending request can be inspected directly.
     let acknowledge!: () => void;
+    let acknowledgeFinal!: () => void;
     const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
     const canonical = structuredClone(document);
     canonical.parent_revision.revision_id = 'r1';
@@ -173,16 +174,21 @@ it.each(['valid', 'dependent', 'conflict', 'missing', 'copied', 'forged', 'wrong
         expect(request.steps?.[0]).toMatchObject({ intent: 'timeline.update_element', tags: [], patch: request.commands[0].args.changes, reads: request.reads });
         expect(request.source).toEqual({ via: 'app' });
         if (control === 'dependent') {
+          await waitFor(() => expect(chat.editorContext?.elementContext?.selectedClips[0]?.params?.content).toBe('Before'));
+          await act(async () => { acknowledge(); });
+          await waitFor(() => expect(editor.data?.head?.headRevisionId).toBe('r1'));
           await waitFor(() => expect(chat.editorContext?.elementContext?.selectedClips[0]?.params?.content).toBe('After'));
           const finalResponse = acceptedCommit({ revision_id: 'r2', publication_id: 'p2' }, { revision_id: 'r1', publication_id: 'p1' });
           finalResponse.data.canonical_document = finalDocument;
-          send.mockImplementationOnce(async () => ({ response: finalResponse, accepted: { revisionId: 'r2', publicationId: 'p2' },
-            canonicalDocument: finalDocument, graph: {}, receipt: finalResponse.receipt }));
+          send.mockImplementationOnce(() => new Promise(resolve => {
+            acknowledgeFinal = () => resolve({ response: finalResponse, accepted: { revisionId: 'r2', publicationId: 'p2' },
+              canonicalDocument: finalDocument, graph: {}, receipt: finalResponse.receipt });
+          }));
           fireEvent.change(screen.getByLabelText('Content'), { target: { value: 'Final' } });
-          await waitFor(async () => expect((await createCommitOutbox().list(scope))[0].intents).toHaveLength(2));
+          await waitFor(() => expect(send).toHaveBeenCalledTimes(2));
           const [chained] = await createCommitOutbox().list(scope);
-          expect(chained.intents[1].basis).toEqual({ after: chained.intents[0].id });
-          expect(send).toHaveBeenCalledOnce();
+          expect(chained.intents[0].basis).toEqual({ after: stored.intents[0].id });
+          await act(async () => { acknowledgeFinal(); });
         }
         await act(async () => { acknowledge(); });
         await waitFor(() => expect(editor.data?.head?.headRevisionId).toBe(control === 'dependent' ? 'r2' : 'r1'));

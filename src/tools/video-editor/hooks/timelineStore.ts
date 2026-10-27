@@ -397,8 +397,6 @@ function createInitialChromeSlice(): TimelineChromeContextValue {
     handleAddTrack: noop,
     handleClearUnusedTracks: noop,
     unusedTrackCount: 0,
-    handleAddText: noop,
-    handleAddTextAt: noop,
     reloadFromServer: noopAsync,
     retrySaveAfterConflict: noopAsync,
     watchdogTripped: false,
