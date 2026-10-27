@@ -626,7 +626,30 @@ class TimelineSession:
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
-                        state["conflict"] = failure
+                        if details.get("status") in {"refused", "invalid"}:
+                            # Preserve the full queue for review, including any
+                            # suffix captured against the flight's optimistic
+                            # effects, and release it so it cannot run without them.
+                            state["rejected"] = {
+                                "base": copy.deepcopy(state["base"]),
+                                "commands": copy.deepcopy(state["pending"]),
+                                "flight": copy.deepcopy(flight),
+                                "failure": copy.deepcopy(failure),
+                                "commit_options": copy.deepcopy(state.get("commit_options")),
+                                "evaluation": copy.deepcopy(state.get("evaluation")),
+                            }
+                            state["pending"] = []
+                            state["flight"] = None
+                            state.pop("conflict", None)
+                            state.pop("commit_options", None)
+                            state.pop("evaluation", None)
+                            state.pop("rationale", None)
+                            state.pop("media_input", None)
+                        else:
+                            # Conflicts can still be replanned (including a
+                            # bounded function reevaluation), so retain the
+                            # request until that decision is made.
+                            state["conflict"] = failure
                         self.outbox.write(state)
                 raise CommitConflict(failure) from exc
             raise  # Ambiguous failure: never replace the durable flight.

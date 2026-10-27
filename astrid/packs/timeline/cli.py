@@ -2996,9 +2996,14 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     )
     draft_name = parsed.draft or store.current_draft(project_id, timeline_id)
     path = store.draft_path(project_id, timeline_id, draft_name)
+    from astrid.packs.timeline.cli_working import _connected_outbox
+
+    _outbox, session_status, _scope = _connected_outbox(parsed, project_id, timeline_id)
     if getattr(parsed, "text", False):
         from astrid.packs.timeline.cli_common import status_text
 
+        if session_status and session_status["status"] != "clear":
+            _print_session_status(session_status)
         return status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
     data: dict[str, Any] = {
         "timeline_id": timeline_id,
@@ -3006,6 +3011,8 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
         "draft": draft_name,
         "working_copy": "absent",
     }
+    if session_status is not None:
+        data["connected_session"] = session_status
     if path.is_file():
         checkout = Checkout.load(path)
         changes = checkout.changes()
@@ -3035,6 +3042,21 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
             }
         )
     return print_result(DomainResult.success(data), as_json=parsed.json)
+
+
+def _print_session_status(status: Mapping[str, Any]) -> None:
+    state = status.get("status")
+    if state == "in_flight":
+        print("CONNECTED SESSION: commit outcome unknown; its exact request is retained for retry"
+              + (f" (key {status['key']})" if status.get("key") else ""))
+    elif state == "pending":
+        print(f"CONNECTED SESSION: {status.get('command_count', 0)} queued command(s), not yet sent")
+    elif state == "rejected":
+        print(f"CONNECTED SESSION: last request was refused; {status.get('command_count', 0)} command(s) retained")
+    elif state == "invalid":
+        print("CONNECTED SESSION: saved outbox is invalid; no changes were made")
+    if status.get("rejected_command_count") and state != "rejected":
+        print(f"CONNECTED SESSION: an earlier refused request also has {status['rejected_command_count']} command(s) retained for review")
 
 
 def _edit_duration(value: str) -> float:
@@ -3939,8 +3961,8 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("undo", help="Undo local edits, or an accepted Runtime commit with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
     CommandSpec("redo", help="Redo local edits, or reverse an accepted undo with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
-    CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
-    CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
+    CommandSpec("status", help="Show the canonical head, working copy, and connected commit state.", configure=_configure_status),
+    CommandSpec("discard", help="Drop recoverable working edits; retain commits with unknown outcomes.", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
     CommandSpec("rename", help="Set a timeline's display name.", configure=_configure_working_verb("rename")),
     CommandSpec("restructure", help="Store chapters as shots and music / wall-crossing clips on the film (proven equal first).", configure=_configure_working_verb("restructure")),
