@@ -34,15 +34,23 @@ tl.clips(track="V1")                           # a filterable list
 tl.clip("intro")                               # one clip, or a refusal listing candidates
 tl.words(between=(10, 20))                     # spoken words with times
 tl.word("Meanwhile", n=1)
-tl.duration
+tl.duration                                    # where the last picture ends, on any video track
+max(c.end for c in tl.clips(track="V1"))       # where V1 ends
 ```
 
-Pass a `client=` to `Timeline.open` only when you already hold an
-authenticated SDK client; never recover credentials from Runtime storage.
-Shot occurrence ids for `arrange` are
-`[p["occurrence_id"] for p in tl.bundle["placements"]]`, in their current
-order. `timelines history <timeline> --json` lists past commits and their
-receipt ids.
+`timeline` is the slug or id that `timelines list --project <project>` prints;
+never guess one from a display title. Pass a `client=` to `Timeline.open` only
+when you already hold an authenticated SDK client; never recover credentials
+from Runtime storage. Shot occurrence ids for `arrange` are
+`[p["occurrence_id"] for p in tl.bundle["placements"]]`, in their stored
+order.
+
+`timelines history <timeline> --project <project> --json` lists commits newest
+first in `data.revisions`. Each row's `message` is the commit label,
+`publication_id` is its receipt id (what undo takes), `created_at` its time,
+and `source` is `app` for edits made in the editor. To undo a known edit whose
+receipt you lost, find its label there. When `data.complete` is false, Runtime
+could list only the head.
 
 ## The four owner cases
 
@@ -96,15 +104,17 @@ kind refuses.
 - **`t.track(id, above=)`**, **`.rename(label)`**: create, order and label
   tracks.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
-  timing. `trim` is in source seconds and keeps the start. On a narrated film
-  whose clips belong to cuts, a plain number given to `on` is an offset from
-  the clip's cut; use a word or a moment string there.
-- **`clip.split(at, id=)`**: native split at timeline seconds; the right half
-  gets `id`. Requires registry-backed parent media, an interior cut, an
+  timing. `trim` is in source seconds and keeps the start. A plain number
+  given to `on` is timeline seconds on a flat timeline; on a narrated film
+  whose clips belong to cuts it is an offset from the clip's cut, so use a
+  word or a moment string there.
+- **`clip.split(at, id=)`**: native split at timeline seconds; it returns the
+  left half, which keeps the original id, and the right half gets `id`
+  (`t.clip(id)`). Requires registry-backed parent media, an interior cut, an
   explicit source window for moving media, and no timing anchors,
   animation or parent transitions.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
-  catalog key in place; timing stays.
+  catalog key in place; the start stays.
 - **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
 - **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order. It keeps
   their ids, lengths and source windows, refuses unknown lengths and
@@ -116,10 +126,13 @@ Words are numbers you can compute with (`w.start`, `w.end`). A moment string
 (`'after "Astrid"'`, `'beat 2 after "Astrid"'`, `'"tool" in v20a #2'`) is
 stored on the clip and re-resolved when the narration moves; the grammar is
 in [the editing front door](../astrid/packs/rendering/docs/references/editing.md#moments).
-Beats are only reachable through moment strings today.
+A word said more than once must name its line and number, as `timelines words
+<timeline> <word>` prints them. Beats are reachable through moment strings;
+`timelines words <timeline> <word> --beats` prints the beats near one word.
+There is no full beat list.
 
-Ripple helpers work on flat picture and audio tracks inside a function, one
-commit and one undo each:
+Ripple helpers work on flat timelines inside a function, one commit and one
+undo each:
 
 ```python
 tl.commit(lambda t: t.insert_time(4, 2), label="Open 2 s at 4 s")
@@ -128,13 +141,19 @@ tl.commit(lambda t: t.close_gap(before=t.word("Meanwhile"), keep=0),
           label="Close gap before Meanwhile")
 ```
 
-Clips after the point move on every track; picture spanning it is held longer
-or shortened; audio spanning a removed window is split so later sound stays in
-sync; clips wholly inside a removed window are deleted. The music bed follows
-the `music=` policy: `"keep_end"` (default) cuts it at a bar with a crossfade
-so it still ends with the film; `"plays_on"` leaves it whole. Within one
-function each call sees the previous one, so times after a ripple have
-already moved.
+Clips after the point move on every track, text included; picture spanning it
+is held longer or shortened; audio spanning a removed window is split so later
+sound stays in sync; clips wholly inside a removed window are deleted. On a
+flat timeline a ripple refuses to move a clip that carries a moment string,
+animation or transition. Closing a hole on one track only is not supported.
+
+`insert_time`, `ripple_delete` and `close_gap` each take `music=`:
+`"keep_end"` (default) cuts the bed at a bar with a crossfade so it still ends
+with the film; `"plays_on"`, as in `t.ripple_delete(4, 6, music="plays_on")`,
+leaves the bed exactly where it was, neither cut nor moved, so what follows
+moves against its beats. `close_gap` measures the silence from the end of the
+previous word. Within one function each call sees the previous one, so times
+after a ripple have already moved.
 
 ## Preview and apply
 
@@ -153,8 +172,13 @@ clashes:
 1. a function is evaluated again on the new head, at most three evaluations
    in total;
 2. a list is refused at once;
-3. after that, `CommitConflict` is raised. Stop, report which edit did not
-   land, and leave the decision to the person.
+3. either way, `CommitConflict` is then raised. Stop, report which edit did
+   not land, and leave the decision to the person.
+
+The refused changes are kept for review. Run `timelines discard <timeline>
+--project <project>` before the next edit or preview on that timeline.
+`CommitConflict` is a subclass of `TimelineEditError`, so an `except` for it
+must come first.
 
 Function commits are guarded broadly: any concurrent commit can count as a
 clash. Precise read tracking is a planned follow-on, so expect reruns while
@@ -194,30 +218,44 @@ revision restore is a deliberate rollback, not undo.
 Run one function per timeline, with one key and one receipt each:
 
 ```python
+def swap_sponsor(t):
+    t.clip("sponsor-card").swap_asset("sponsor-2026.png")
+
+def record(ep, **row):
+    with open("sponsor-ledger.jsonl", "a") as f:
+        f.write(json.dumps({"timeline": ep, **row}) + "\n")
+
 for ep in episodes:
     try:
-        r = Timeline.open(project, ep).commit(add_outro, label="Add outro",
-                                              idempotency_key=f"outro-{ep}")
-        row = {"status": r["data"]["status"], "receipt": r["receipt"]["receipt_id"]}
-    except CommitConflict as exc:
-        row = {"status": "conflict", "detail": str(exc)}
-    except Exception as exc:
-        row = {"status": "refused", "detail": str(exc)}
-    ledger.append({"timeline": ep, **row})   # write it to a file as you go
+        tl = Timeline.open(project, ep)
+        if not any(c.id == "sponsor-card" for c in tl.clips()):
+            record(ep, status="skipped")             # every outcome gets a row
+            continue
+        r = tl.commit(swap_sponsor, label="Swap sponsor", idempotency_key=f"sponsor-{ep}")
+        record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
+    except CommitConflict as exc:                    # before the general case
+        record(ep, status="conflict", detail=str(exc))
+    except Exception as exc:                         # refused, or no verified reply
+        record(ep, status="error", detail=str(exc))
 ```
 
-Record progress per episode as it happens, continue past a clash, and report
-failures individually. Rerunning the loop is safe: landed keys return their
-receipts. There is no transaction across timelines. A preview list belongs
-to one timeline; preview a series with the function on one episode, then run
-the function per episode.
+Each outcome is written as it happens, so a crash loses nothing. Continue
+past a clash and report failures individually. Rerunning the loop is safe:
+landed keys return their receipts, and an unknown outcome is settled by the
+same key; discard a clashed timeline first. For "the end of V1", compute
+it from V1's clips; `t.duration` also counts V2 and titles. There is no
+transaction across timelines. A preview list belongs to one timeline: preview
+one episode with the function (or each, if each needs approval), then run the
+function per episode.
 
 `tl.duplicate(as_="variant-01")` creates the destination timeline, then
 copies the head into it with fresh shot and occurrence ids, returning
 `destination_setup` and `copy_receipt` separately. The source is only read.
 Its operation key comes from the project, source and name, so a retry never
-creates a second destination. `timelines archive` removes an unwanted copy.
-The CLI form is `timelines duplicate <timeline> --project <project> --slug variant-01`.
+creates a second destination. `timelines archive variant-01 --project
+<project>` removes an unwanted copy and `timelines recover variant-01
+--project <project>` restores it. The CLI form is `timelines duplicate
+<timeline> --project <project> --slug variant-01`.
 
 ## Direct CLI and the sheet
 
@@ -233,12 +271,12 @@ python3 -m astrid timelines edit <timeline> --project <project> \
 ```
 
 These three forms commit directly; each is one commit and one undo.
-`parent/clip:<id>` addresses a clip by its `show` id; `--on` is timeline
-seconds and `--trim-in`/`--trim-out` are file seconds. A still image has no
-source window; change its length with `--for`. Add audio and text with a
-Python function (`--add-media` is the legacy draft verb). Symbolic moments
-and the other `edit` flags still edit a detached working copy; prefer a
-Python function for those changes.
+`parent/clip:<id>` addresses a clip by its `show` id (`parent/clip:` is
+literal); `--on` is timeline seconds and `--trim-in`/`--trim-out` are file
+seconds. A still image has no source window; change its length with `--for`.
+Add audio and text with a Python function (`--add-media` is the legacy draft
+verb). Symbolic moments and the other `edit` flags still edit a detached
+working copy; prefer a Python function for those changes.
 
 For a table of cuts, `timelines show <timeline> --as sheet --native --range
 c10..c12 > cut.sheet`, edit the rows, then `timelines apply <timeline>
@@ -254,10 +292,12 @@ imports and how to undo.
 
 Every refusal should read as a headline (what went wrong), a detail (where:
 the clip, time or receipt) and a fix (what to do next). Ambiguous names list
-their candidates. `TimelineEditError` is local and nothing was sent;
-`CommitConflict.failure` carries Runtime's `message` and `details` (including
-`status` and the `current` head on a clash). Never describe an unknown outcome
-as a failure, a retry as a redo, or a preview as reserved.
+their candidates. `CommitConflict` is a `TimelineEditError`; its `failure`
+carries Runtime's `message` and `details` (including `status` and the
+`current` head on a clash). Other `TimelineEditError`s mean nothing landed,
+except one saying no reply could be verified: repeat that call with its key.
+Never describe an unknown outcome as a failure, a retry as a redo, or a
+preview as reserved.
 
 ## Looking at the result
 
@@ -269,7 +309,8 @@ The final perception guidance (project P) will replace this section.
 
 ## Not possible yet
 
-- Public beat list; a CLI word-anchor adapter.
+- Public beat list (only beats near one word); a CLI word-anchor adapter.
+- Ripple on one track only.
 - Grouping existing clips into a shot; regrouping beyond `timelines restructure`.
 - Cross-timeline transactions and group undo.
 - Aspect-ratio variants.
