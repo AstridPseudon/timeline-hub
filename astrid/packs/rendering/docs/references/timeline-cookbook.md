@@ -95,8 +95,9 @@ different extension or codec from a backend alias.
 
 ## Visual evidence
 
-Only when the user asks for a render or frames. By default, publish and point
-the user to the editor link instead.
+Render only when the user asks for one; by default, publish and point the
+user to the editor link. Look at composed frames of your own edits whenever it
+helps ([how to look](how-to-look.md)).
 
 `timelines visualize` accepts `png` or `md` formats and always produces the
 paired rendered filmstrip. A successful managed render is required;

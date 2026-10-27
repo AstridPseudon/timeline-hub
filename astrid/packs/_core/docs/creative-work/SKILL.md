@@ -15,7 +15,8 @@ Packs own execution guidance; this skill does not duplicate their procedures or
 create a new runtime pack.
 
 By default, publish edits and point the user to the editor link (see the
-rendering skill); render only when the user asks. When the user asks for a video
+rendering skill); render only when the user asks, but look at composed frames
+of your edits as often as helps. When the user asks for a video
 preview for feedback on reference frames, storyboards, timing, or an ongoing
 edit, use the rendering skill's review mode.
 The user needs visible shot names and timecodes to identify what to change.
