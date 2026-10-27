@@ -155,7 +155,7 @@ A cut's `why`/`hold` belong to the cut (they stay when its picture changes). `di
 `--script-gaps` uses the script's gaps) · `--line ID --take … --words …` · `--insert-line` · `--remove-line`.
 These forms edit the detached draft; check it, save `candidate.json`, and use
 the explicit `timelines commit` command above to accept supported changes.
-Everything after a change moves; clips on words follow them; the music bed stays whole. A removed line's
+Everything after a change moves; clips on words follow them; the music bed follows the policy below. A removed line's
 clips are kept as **orphans** (status, sheet and check list them; publish waits): `--cut c07 --on '"word" in w05'`
 moves an orphaned cut's picture to a new moment, `--clip X --on …` one layer, `--keep` accepts it in place,
 `--remove` drops it.
@@ -178,7 +178,8 @@ shows only lint that is new since checkout (`--all` for everything).
 > - No fade-in or entrance on our elements yet. The cookbook's `effects.fade_in` applies only to legacy `local` elements.
 > - Extending the film's content does not extend its rendered length yet, and `check` still says VALID. Look at the
 >   new end with `check TL --at <end>`: "out of range" means it does not render.
-> - A ripple (`insert_time`, `ripple_delete`, `close_gap`, each with `music=`) under `plays_on` leaves the bed exactly
->   where it was, neither cut nor moved, so what follows moves against its beats; the default `keep_end` cuts it at a bar.
+> - A ripple (`insert_time`, `ripple_delete`, `close_gap`, each with `music=`) under `plays_on` leaves a bed that spans
+>   the edit where it was, so what follows moves against its beats; the default `keep_end` cuts it at a bar, not at the
+>   edit point. A bed that begins at or inside the edit is pending E14 in both modes; do not promise it stays whole.
 > - `check --at` and `--verify` can be slow or fail ("frame owner closed"). Retry once; if it fails again, say so
 >   and do not publish a change you have not seen.

@@ -45,9 +45,17 @@ max(c.end for c in tl.clips(track="V1"))       # where V1 ends
 never guess one from a display title. Pass a `client=` to `Timeline.open` only
 when you already hold an authenticated SDK client; never recover credentials
 from Runtime storage. Shot occurrence ids for `arrange` are
-`[p["occurrence_id"] for p in tl.bundle["placements"]]`. Put them in the
-intended order yourself; do not assume the bundle's stored order is editorial
-order.
+`[p["occurrence_id"] for p in tl.bundle["placements"]]`. That list comes in
+the bundle's stored order, which is not promised to be time or editorial
+order; build the order you pass to `arrange` yourself. A placement's start is
+`at_ms`, or `placement.start_ms` when `at_ms` is absent (milliseconds), so
+time order is:
+
+```python
+def start_ms(p):
+    return p["at_ms"] if p.get("at_ms") is not None else (p.get("placement") or {}).get("start_ms", 0)
+by_time = [p["occurrence_id"] for p in sorted(tl.bundle["placements"], key=start_ms)]
+```
 
 `tl.clip(name)` matches a clip id or id prefix, an address, a layer name, an
 asset key, an element id or on-screen text. When several clips match, it
@@ -111,13 +119,15 @@ verified file; an existing track of the wrong kind refuses.
   without `hold` a video or audio file plays its verified duration.
   `.trim(in, out)` then sets the source window.
 - **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
-  timeline seconds for `hold` seconds; creates a missing track (runtime
-  behavior pending E14).
+  timeline seconds for `hold` seconds. A missing track is created as a
+  picture track; an existing track is used where it is, never moved. It takes
+  no position or style arguments. Runtime behavior is pending E14.
 - **`t.track(id, above=, kind=)`**, **`.rename(label)`**: create a track or
   select the existing one (never a second), optionally place it above another,
   and label it. Moving an existing track is not runtime-qualified (pending
-  E14). Use `t.track("music", kind="audio")` to name an audio bed track;
-  track-kind behavior is pending E14.
+  E14). `kind` is `"visual"` (default) or `"audio"`; `t.track("music",
+  kind="audio")` makes the audio track a music bed needs. Track-kind behavior
+  is pending E14.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
   timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
   literal length on any clip; on video or audio the source window keeps its
@@ -127,17 +137,17 @@ verified file; an existing track of the wrong kind refuses.
   to a cut, it is stored relative to that cut's start, so the clip follows
   its cut when the narration is re-flowed; to follow a word, give a moment
   string.
-- **`clip.split(at, id=)`**: supported over native split at timeline seconds;
-  it returns the
-  left half, which keeps the original id, and the right half gets `id`
+- **`clip.split(at, id=)`**: cuts at timeline seconds through native split and
+  returns the left half, which keeps the original id; the right half gets `id`
   (`t.clip(id)`). Requires registry-backed parent media, an interior cut, an
   explicit source window for moving media, and no timing anchors,
   animation or parent transitions.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
   catalog key in place; the start stays. From the source, pending E14
   confirmation: an image or video keeps its length; an audio clip that played
-  its whole file plays the whole replacement file. Swapping a music clip with
-  a beat grid to an asset without one may refuse until a grid is attached.
+  its whole file plays the whole replacement file. Swapping a music clip that
+  has a beat grid to a file without one may refuse until a grid is attached
+  (`clip.set_beats`).
 - **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
 - **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order, from
   `at`, `gap` apart (both timeline seconds). It keeps
@@ -168,12 +178,16 @@ tl.commit(lambda t: t.close_gap(before=t.word("Meanwhile"), keep=0),
 
 Clips after the point move on every track, text included; picture spanning it
 is held longer or shortened; clips wholly inside a removed window are deleted.
-The **music bed** is any audio clip on a track named `music` or with a beat
-grid. Other audio spanning a removed window is split at the edit point;
-`keep_end` cuts the bed at a bar with a crossfade. Name an audio bed track
-with `t.track("music", kind="audio")` (track-kind behavior pending E14). On a
-flat timeline a ripple refuses to move a clip that carries a moment string,
-animation or transition. Closing a hole on one track only is not supported.
+Other audio spanning a removed window is split at the edit point. The **music
+bed** is any audio clip on the track whose id is `music`, or with a beat grid.
+A bed that spans the edit is not cut at the edit point; the `music=` policy
+below decides what happens to it instead. To make a bed count, put it on
+`music`: `t.add(path, track="music")` creates a missing `music` track as an
+audio track, and `t.track("music", kind="audio")` creates one for
+`clip.set_track("music")` (`kind` defaults to `"visual"`). Track-kind behavior
+is pending E14. On a flat timeline a ripple refuses to move a clip that
+carries a moment string, animation or transition. Closing a hole on one track
+only is not supported.
 
 Cutting a film to 15 seconds with `t.ripple_delete(15, t.duration)` removes
 everything after 15 s on every track, including an end card. To keep the
@@ -181,13 +195,15 @@ card, remove only up to it, `t.ripple_delete(15, t.clip("end-card").start)`:
 the card then starts at 15 s and the film ends one card later.
 
 `insert_time`, `ripple_delete` and `close_gap` each take `music=`:
-`"keep_end"` (default) cuts the bed at a bar with a crossfade so it still ends
-with the film; `"plays_on"`, as in `t.ripple_delete(4, 6, music="plays_on")`,
-makes what follows move against the bed's beats. Do not assume the bed stays
-whole: behavior when it begins at the ripple window's start is pending E14.
-E14 must exercise that boundary case under `plays_on`; its observed result is
-not accepted as desired behavior. E14 also checks both modes at the accepted
-runtime.
+`"keep_end"` (default) cuts a spanning bed at a nearby bar, not at the edit
+point, with a crossfade so it still ends with the film; `"plays_on"`, as in
+`t.ripple_delete(4, 6, music="plays_on")`, leaves a spanning bed where it was
+and makes what follows move against its beats. Both modes are supported
+choices. Only a bed that begins at or inside the edit is unsettled, in either
+mode: E14 tests that case (including a bed that begins at the window's start
+under `plays_on`), and what it does today is not yet the intended behavior. Do
+not promise such a bed stays whole; read the bed's clips back after the
+commit and tell the person what changed.
 `close_gap` measures the silence from the end of the
 previous word. Within one function each call sees the previous one, so times
 after a ripple have already moved.
@@ -199,7 +215,9 @@ after a ripple have already moved.
 `receipt` `None`. It may import media and lists those imports. It takes no
 key and leaves nothing waiting to be sent. Applying the returned list keeps
 its exact references, media identities and the expectations it captured; it
-never selects again. Calling the function again re-evaluates it.
+never selects again. Calling the function again re-evaluates it and may
+produce something other than what was reviewed. Keep the list until the person
+answers; if it is lost, preview again and show the new diff.
 
 ## Conflicts with a person
 
@@ -247,8 +265,9 @@ astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotenc
 
 Undo restores the fields and order the commit changed, so unrelated later
 edits survive. It refuses when a later commit overlaps; undo that one first.
-Repeating an undo without its key can be refused by the same guard. Whole
-revision restore is a deliberate rollback, not undo.
+Repeating an undo without its key can be refused by the same guard. A refused
+commit made no revision, so "undo my last edit" means the last receipt that
+landed. Whole revision restore is a deliberate rollback, not undo.
 
 ## Series and variants
 
@@ -282,13 +301,14 @@ landed keys return their receipts, and an unknown outcome is settled by the
 same key; discard a clashed timeline first. For "the end of V1", compute
 it from V1's clips; `t.duration` also counts V2 and titles. There is no
 transaction across timelines. A preview list belongs to one timeline: apply
-the reviewed list to the approved episode; do not rerun its function after
-approval. Run the function for the other episodes (or preview each if each
+the reviewed literal list to the approved episode rather than rerunning its
+function. Run the function for the other episodes (or preview each if each
 needs approval).
 
 `tl.duplicate(as_="variant-01")` creates the destination timeline, then
-copies the head into it with fresh shot and occurrence ids while retaining clip
-ids (runtime behavior pending E14), returning
+copies the head into it with fresh shot and occurrence ids while keeping the
+source's clip ids, so the same names find the same clips (runtime behavior
+pending E14). It returns
 `destination_setup` and `copy_receipt` separately. The source is only read.
 Its operation key comes from the project, source and name, so a retry never
 creates a second destination. `timelines archive variant-01 --project

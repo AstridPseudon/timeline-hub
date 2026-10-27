@@ -60,7 +60,7 @@ newest first in `data.revisions`: `message` is the commit's label and
 from astrid.sdk.timeline.api import CommitConflict, Timeline, TimelineEditError
 
 tl = Timeline.open("<project>", "<timeline>")    # uses the configured runtime
-occurrences = [p["occurrence_id"] for p in tl.bundle["placements"]]
+occurrences = [p["occurrence_id"] for p in tl.bundle["placements"]]  # stored, not time, order
 ```
 
 - `tl.clips()` is every clip in time order, as a list. Filters: `track`,
@@ -101,16 +101,16 @@ after `commit` returns.
 | Call | Does |
 |---|---|
 | `t.add(path, at=, hold=, track=, id=)` | Imports a local image, video or audio file (relative to the working directory) and places it. See the note below |
-| `t.add_text(text, at=, hold=, track="titles", id=)` | Places a plain text clip at `at` timeline seconds for `hold` seconds, creating a missing track (runtime behavior pending E14) |
+| `t.add_text(text, at=, hold=, track="titles", id=)` | Places a plain text clip at `at` timeline seconds for `hold` seconds. A missing track is created as a picture track; an existing one is used where it is. No position or style arguments. Runtime behavior pending E14 |
 | `t.track("titles", above="V2", kind=)` | Creates that track, or selects the existing one (never a second), and can put it above `V2`; `.rename("Opening")` labels it. Moving an existing track is not runtime-qualified (pending E14) |
 | `clip.on(seconds)` | Moves the start to that timeline time; the length stays. See the note below |
 | `clip.trim(in_s, out_s)` | Sets the source window in **file** seconds; the start stays, the length follows |
 | `clip.hold_for(seconds)` | Sets a literal length; on video or audio the source window keeps its in-point and refuses a length the file cannot fill |
 | `clip.set_track("V2")` | Moves the clip to another existing track |
-| `clip.split(at, id="right-id")` | Cuts at timeline seconds and returns the left half, which keeps the original id; the right is `t.clip("right-id")` |
-| `clip.swap_asset(path_or_key)` | Plays another file (imported) or catalog key in place; the start stays. Pending E14: image and video keep their length; audio that played its whole file plays the whole new one. A music clip with a beat grid may refuse a swap to an asset without one until a grid is attached |
+| `clip.split(at, id="right-id")` | Cuts at timeline seconds and returns the left half, which keeps the original id; the right is `t.clip("right-id")`. Refuses a cut at either edge, a moving clip with no explicit source window, and a clip with a moment string, animation or transition |
+| `clip.swap_asset(path_or_key)` | Plays another file (imported) or catalog key in place; the start stays. Pending E14: image and video keep their length; audio that played its whole file plays the whole new one. Swapping a music clip that has a beat grid to a file without one may refuse until a grid is attached (`clip.set_beats`) |
 | `clip.remove()` | Deletes the clip and leaves its gap |
-| `t.arrange(occurrence_ids, at=0, gap=0)` | Places shot occurrences in the order of the supplied ID list from `at`, `gap` apart (timeline seconds), leaving their old slots empty; refuses to overlap a shot you did not select |
+| `t.arrange(occurrence_ids, at=0, gap=0)` | Places shot occurrences in the order of your ID list (build it: stored order is not time order; the guide shows how to sort by start), from `at`, `gap` apart (timeline seconds), leaving their old slots empty; refuses to overlap a shot you did not select |
 | `t.insert_time(at, seconds, music=)` | Opens time; everything later moves later |
 | `t.ripple_delete(start, end, music=)` | Removes a window from every track and closes it up |
 | `t.close_gap(before=word, keep=0, music=)` | Shortens the silence between the previous word and this one (a Word or its text) to `keep` seconds |
@@ -147,15 +147,18 @@ beats near that word with their moment strings. The grammar is in the front door
 ### Ripple is explicit
 
 `insert_time`, `ripple_delete` and `close_gap` move everything after the
-point on every track: picture, audio and text. Picture spanning the point is
-held longer (insert) or shortened (delete); clips wholly inside a removed
-window are deleted. A **music bed** is audio on `music` or has a beat grid.
-Other spanning audio is split at the edit point; default `keep_end` cuts the
-bed at a bar with a crossfade to end with the film. Name an audio bed track
-with `t.track("music", kind="audio")` (pending E14). With `plays_on`, the
-picture moves against the bed's beats; do not assume the bed stays whole. Its
-behavior when it begins at the ripple window's start is pending E14. A flat timeline ripple refuses to move clips
-with a moment string, animation or transition.
+point on every track. Picture spanning the point is held longer (insert) or
+shortened (delete); clips wholly inside a removed window are deleted; other
+audio spanning it is split there. The **music bed** (audio on the track with id
+`music`, or with a beat grid) that spans the edit is not cut at the edit point:
+default `keep_end` cuts it at a nearby bar, with a crossfade, so it still ends
+with the film; `plays_on` leaves it where it was and moves what follows
+against its beats. Only a bed that begins at or inside the edit is pending
+E14, in both modes: do not promise it stays whole; read it back and say what
+changed. Put a bed on `music` with
+`t.add(path, track="music")`, or `t.track("music", kind="audio")` (the default
+kind is `"visual"`) and `clip.set_track("music")`; pending E14. A flat ripple
+refuses to move clips with a moment string, animation or transition.
 
 A 15-second cut, `t.ripple_delete(15, t.duration)`, removes everything after
 15 s, an end card included. To keep the card, delete up to it:
@@ -174,9 +177,10 @@ r = tl.commit(changes, label="Recut", idempotency_key="recut-ep01")   # after ap
 ```
 
 The list applies exactly what was reviewed, on that one timeline;
-`tl.commit(recut)` instead re-evaluates the intent on the newest timeline.
-For a series, apply the reviewed list to the approved episode; do not rerun its
-function after approval. Run the function for the other episodes.
+`tl.commit(recut)` re-evaluates on the newest timeline and may differ. Keep
+`changes` until the person answers; if it is lost, preview again. For a series,
+apply the reviewed list (not a rerun) to the approved episode; run the function
+for the others.
 
 ## When someone else edits
 
@@ -203,7 +207,8 @@ Runtime merges changes that do not touch the same things (`status` is then
   row with your label: `tl.undo(publications=[receipt_id],
   idempotency_key="undo-recut-ep01")`. Undo restores only what that commit
   changed, so a later unrelated edit survives; a later overlapping commit
-  makes it refuse. Imported files stay in the catalog.
+  makes it refuse. Imported files stay in the catalog. A refused commit made
+  no revision, so "undo my last edit" means the last receipt that landed.
 
 ## A series: one function per timeline
 
@@ -236,7 +241,8 @@ for c in tl.clips()): record(ep, status="skipped"); continue`.
 
 **Variants** start from a copy; the source is only read. `tl.duplicate(as_="variant-a")`
 returns `destination_setup` and `copy_receipt` (a repeat returns the same copy).
-The copy retains clip ids (runtime behavior pending E14); open it with
+The copy keeps the source's clip ids, so the same names find the same clips;
+shot and occurrence ids are new (runtime behavior pending E14). Open it with
 `Timeline.open(project, "variant-a")`. `timelines archive variant-a --project
 <project>` removes an unwanted copy; `timelines recover` brings it back.
 
