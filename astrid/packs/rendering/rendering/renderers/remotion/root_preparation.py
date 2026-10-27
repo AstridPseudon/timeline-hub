@@ -63,7 +63,35 @@ def _accounted_attempt_root(
 
 
 @contextmanager
-def _prepared_remotion_root(
+def _prepared_remotion_root(*args: Any, **kwargs: Any) -> Iterator[Any]:
+    from astrid.core.rendering.project_elements import (
+        require_project_snapshots,
+        selections,
+        stage_project_elements,
+    )
+    from astrid.packs.rendering.rendering.renderers.remotion import run as backend
+
+    config = backend._serialize_timeline(args[0] if args else kwargs["timeline_path"])
+    require_project_snapshots(config)
+    if not selections(config):
+        with _prepared_remotion_root_selected(*args, **kwargs) as prepared:
+            yield prepared
+        return
+    parent = kwargs.get("staging_parent") or kwargs["provenance_out_path"].parent
+    Path(parent).mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix=".project-elements-", dir=parent) as temporary:
+        registry, pack_roots = stage_project_elements(
+            config, Path(temporary), registry=backend.load_default_registry(project_root=backend.REPO_ROOT),
+        )
+        with _prepared_remotion_root_selected(
+            *args, **kwargs, element_registry=registry, pack_roots=pack_roots,
+            registry_root=Path(temporary) / "host",
+        ) as prepared:
+            yield prepared
+
+
+@contextmanager
+def _prepared_remotion_root_selected(
     timeline_path: Path,
     assets_path: Path,
     staged_video: Path,
@@ -84,6 +112,9 @@ def _prepared_remotion_root(
     on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
     window: FrameWindow | None = None,
     composition_duration_frames: int | None = None,
+    element_registry: Any | None = None,
+    pack_roots: list[dict[str, str]] | None = None,
+    registry_root: Path | None = None,
 ) -> Iterator[tuple[
     dict[str, Any], Path, RemotionRuntimeTools, dict[str, Any], dict[str, Any],
     dict[str, Any], Path, int, str, Path, str | None, bool, Path | None, bool, Path,
@@ -107,14 +138,17 @@ def _prepared_remotion_root(
             composition_duration_frames=composition_duration_frames,
         )
     runtime_tools = backend._validate_project_dir(project_dir)
-    backend._regenerate_element_registries(project_dir, theme_path)
+    if element_registry is None:
+        backend._regenerate_element_registries(project_dir, theme_path)
+        registry_state = backend._effective_registry_state(theme_path)
+    else:
+        registry_state = backend._write_selected_element_registries(registry_root, element_registry)
     # Render admission: the catalog and the active composition's generated
     # EFFECT_REGISTRY must agree.  A catalog effect that the registry cannot
     # mount would otherwise pass validation and silently drop to the base
     # plate; fail closed here with an actionable diagnostic.
     timeline_data = backend._serialize_timeline(timeline_path)
-    backend._validate_renderer_effect_registry(project_dir, timeline_data)
-    registry_state = backend._effective_registry_state(theme_path)
+    backend._validate_renderer_effect_registry(registry_root or project_dir, timeline_data)
     backend._require_free_space(provenance_out_path.parent, min_free_gb)
     remotion_port = backend._available_remotion_port()
     remotion_origin = f"http://localhost:{remotion_port}"
@@ -232,7 +266,14 @@ def _prepared_remotion_root(
                 render_hash=render_hash,
                 composition_clip_types=composition_clip_types,
                 asset_registry=resolved_registry,
+                **({"registry": element_registry} if element_registry is not None else {}),
             )
+            if pack_roots:
+                stage_summary["project_pack_roots"] = pack_roots
+                stage_summary["project_registry_root"] = str(registry_root)
+                from astrid.core.rendering.project_elements import CARRIER
+
+                merged_props["timeline"]["app"].pop(CARRIER, None)
             if not frame_mode and composition_id == backend.DEFAULT_COMPOSITION_ID:
                 audio_attempt = Path(asset_lifecycle.enter_context(TemporaryDirectory(
                     prefix="normal-audio-attempt-",
