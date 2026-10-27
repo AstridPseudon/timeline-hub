@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T04:19:58Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+<!-- main | 2026-10-27T04:24:50Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # runtime board, 2026-10-27T04:16:48.925338+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -111,7 +111,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | C2 browser journey | Retain reviewed browser save reload undo | C Luna | Actual central proof and review | merged | C-C2-browser-adjust-9; independent review9 | Author23909 and reviewer29959: one browser test PASS each. Integrated tree313f84c equals reviewed tree. B-parent ancestry remains separate. | App26d9f9eb45 |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
-| B5 visual parity | Receive whole path export investigation | Main Luna and B lead | Source worker returned BLOCKED | doing | diag-deep-bexport-0415 started04:13:38 | Source20727 failed all seven pairs; no product diff. Canvas color and end frame differ; actual Agent export path remains to be qualified. | Agent1566 unchanged |
+| B5 visual parity | Receive completed export investigation | Main Luna and B lead | Main and B source disposition | blocked:B | diag-deep-bexport-0415 exit 0 | [Findings](../../workers/diag-deep-bexport-0415/evidence/findings.md): harness bypasses Agent export; background and end frame differ. No test or product change. | Agent1566 unchanged |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -125,7 +125,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive render host repair | A Luna and Main | Render fixture and context failures | doing | A-T3-renderlane-fix-r10 started04:10:16 | Test-only repair active; central request queued. Prior21155 exit1 remains disclosed. No accepted parity proof. | No Runtime change |
 
-Blockers: A render parity awaits its active repair and proof. B parity remains with Main investigator diag-deep-bexport-0415 and B lead. C browser proof is merged; required App B-parent ancestry remains open. D130 holds.
+Blockers: A render parity awaits its active repair and proof. B parity awaits Main and B disposition of completed investigator diag-deep-bexport-0415; peer0420 sent. C browser proof is merged; required App B-parent ancestry remains open. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
 live 0 / cap 6; ready-undispatched 0. Free 5518696448 bytes. Runtime trees: 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep removed 0; compact packed 0 and compressed 1 old log. Current follow-up disk rules apply.
 

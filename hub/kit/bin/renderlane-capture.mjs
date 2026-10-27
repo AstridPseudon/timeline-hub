@@ -19,27 +19,8 @@ assert.equal(await realpath(join(root, 'node_modules')), join(root, 'node_module
 for (const name of ['bundler', 'renderer']) {
   await symlink(join(peers, '@remotion', name), join(root, 'node_modules/@remotion', name));
 }
-const group = (id) => ({id: id + '~plate', kind: 'visual', app: {group: {id, sourceTrack: 'plate'}}});
-const config = {
-  output: {resolution: '640x360', fps: 30, file: 'standin.mp4'},
-  tracks: [group('occ-first'), group('occ-second'), {id: 'picture', kind: 'visual'},
-    {id: 'type', kind: 'visual'}, {id: 'audio', kind: 'audio'}],
-  clips: [
-    {id: 'loose-still', clipType: 'media', track: 'type', at: 23.867, hold: 5, asset: 'lower-still'},
-    ...['occ-first', 'occ-second'].flatMap((id, i) => [
-      {id: id + ':shot-a', clipType: 'media', track: id + '~plate', at: 23.867 + i * 2.5, hold: 0.9, asset: 'shot-a'},
-      {id: id + ':shot-b', clipType: 'media', track: id + '~plate', at: 25.367 + i * 2.5, hold: 1, asset: 'shot-b'},
-    ]),
-  ],
-  registry: {assets: {
-    'lower-still': {file: 'example-image1.jpg', type: 'image/jpeg'},
-    'shot-a': {file: 'example-image2.jpg', type: 'image/jpeg'},
-    'shot-b': {file: 'example-image1.jpg', type: 'image/jpeg'},
-  }},
-};
-await writeFile(join(harness, 'config.json'), JSON.stringify(config));
-await writeFile(join(output, 'config.json'), JSON.stringify(config, null, 2));
 await writeFile(join(harness, 'index.html'), '<html><body style="margin:0"><div id="player" style="width:640px;height:360px"></div><script type="module" src="./preview.tsx"></script></body></html>');
+let config;
 await writeFile(join(harness, 'preview.tsx'), `
 import React, {createRef} from 'react';
 import {createRoot} from 'react-dom/client';
@@ -53,7 +34,7 @@ const ref = createRef();
 const Component = () => <TimelineRenderer config={resolved} astridElementHost={INSTALLED_ASTRID_ELEMENT_HOST}/>;
 createRoot(document.getElementById('player')).render(<Player ref={ref} component={Component} inputProps={{}}
   durationInFrames={870} fps={30} compositionWidth={640} compositionHeight={360} controls={false}
-  style={{width:640,height:360,backgroundColor:'black'}}/>);
+  style={{width:640,height:360,backgroundColor:'#050814'}}/>);
 window.seekStandin = async frame => {
   if (!ref.current) throw Error('Player is not mounted');
   ref.current.seekTo(frame);
@@ -83,6 +64,39 @@ try {
     server: {host: '127.0.0.1', port: 0},
   });
   await server.listen();
+  const {createShotCompositionAdapter} = await server.ssrLoadModule('/src/tools/video-editor/data/shotCompositionAdapter.ts');
+  const {projectCanonicalComposition} = await server.ssrLoadModule('/src/tools/video-editor/data/shotCompositionProjection.ts');
+  const fixture = JSON.parse(await readFile(join(root, 'src/tools/video-editor/data/shotComposition.fixture.json'), 'utf8'));
+  fixture.occurrences = [fixture.occurrences[0], fixture.occurrences[3]].map((occurrence, index) => ({
+    ...occurrence,
+    occurrence_id: index === 0 ? 'occ-first' : 'occ-second',
+    ordinal: index,
+    at_ms: 23867 + index * 2500,
+    duration_ms: 2500,
+  }));
+  const prepared = createShotCompositionAdapter({load: async () => fixture}).prepare(fixture);
+  const projected = projectCanonicalComposition(prepared, {
+    output: {resolution: '640x360', fps: 30, file: 'standin.mp4'},
+    tracks: [
+      {id: 'picture', kind: 'visual', app: {group: {id: 'occ-first', sourceTrack: 'picture'}}},
+      {id: 'type', kind: 'visual'},
+      {id: 'audio', kind: 'audio'},
+    ],
+    clips: [{id: 'loose-still', clipType: 'media', track: 'type', at: 23.867, hold: 5, asset: 'lower-still'}],
+    registry: {assets: {}},
+  }).config;
+  assert(projected.clips.filter(clip => clip.id.startsWith('occ-')).every(clip => clip.app?.canonicalTiming),
+    'App canonical projection must provide canonicalTiming for every shot clip');
+  const imageFiles = ['intro-1.jpg', 'intro-3.jpg', 'intro-5.jpg', 'intro-2.jpg', 'intro-4.jpg'];
+  const assets = {};
+  const projectedClips = projected.clips.map((clip, index) => {
+    const asset = `standin-${index}`;
+    assets[asset] = {file: imageFiles[index], type: 'image/jpeg'};
+    return {...clip, asset, assetEntry: undefined};
+  });
+  config = {...projected, clips: projectedClips, registry: {assets}};
+  await writeFile(join(harness, 'config.json'), JSON.stringify(config));
+  await writeFile(join(output, 'config.json'), JSON.stringify(config, null, 2));
   const address = server.httpServer.address();
   const url = 'http://127.0.0.1:' + address.port + '/.renderlane/index.html';
   console.log('Vite listening: ' + url);

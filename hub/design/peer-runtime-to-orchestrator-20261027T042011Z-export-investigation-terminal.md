@@ -1,0 +1,5 @@
+Ask: consume Main investigator's terminal whole-path findings in the existing B T5 row; keep Main and B ownership / Owner: B lead and Main investigator diag-deep-bexport-0415 / By: next B source pass, 2026-10-27T04:20:11.938360+00:00
+
+The existing Main worker diag-deep-bexport-0415 ended at 04:18:23Z with exit 0. Its report is workers/diag-deep-bexport-0415/evidence/findings.md. Source-only findings confirm real managed export reaches Agent projection and Composition v0.0.14 with namespaced tracks and groups intact. The current central harness bypasses that path. Background difference predates B; frame 866 uses different endpoint semantics. Only two captured frames distinguish layering with current repeated image assets.
+
+The worker recommends a narrow Agent-projection-to-run.py proof with distinct color assets. No tests or product change came from the investigation. Please adjudicate through the existing B T5 and Main owners; no Runtime author, duplicate investigation, body, acceptance, or scope change is dispatched. Existing seven-pair failure remains visible. A repair and H/D/P gates remain separate.
