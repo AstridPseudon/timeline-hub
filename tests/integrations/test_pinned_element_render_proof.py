@@ -14,6 +14,7 @@ import copy
 import hashlib
 import json
 import os
+import shutil
 import socket
 import subprocess
 import time
@@ -42,12 +43,6 @@ from tests.integrations.test_generic_host_remotion_render import (  # noqa: E402
 from tests.packs.rendering.test_managed_timeline_render import _Runtime  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE = Path(
-    os.environ.get(
-        "ASTRID_T3_EVIDENCE_DIR",
-        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/A-T3-proof-standin-r13/evidence",
-    )
-)
 FPS = 10
 SAMPLES = {"very": 5, "next": 15, "day": 25}
 COLOURS = {"very": "#d94f70", "next": "#377dff"}
@@ -234,10 +229,31 @@ def remotion_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     problems = remotion_install_problems()
     if problems:
         pytest.fail("real pinned-element render prerequisites unavailable: " + "; ".join(problems), pytrace=False)
+    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+    if not node:
+        pytest.fail("real pinned-element render requires the provisioned Node executable", pytrace=False)
+    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).expanduser().resolve(strict=True)))
     _workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(tmp_path, monkeypatch)
     timeline_path.write_text(json.dumps({"tracks": [], "clips": []}), encoding="utf-8")
     assets_path.write_text(json.dumps({"assets": {}}), encoding="utf-8")
     return remotion
+
+
+@pytest.fixture
+def preview_runtime(remotion_project: Path) -> tuple[Path, Path]:
+    """Use the provisioned App checkout dependencies and Node executable."""
+    app_checkout = os.environ.get("ASTRID_APP_CHECKOUT")
+    if not app_checkout:
+        pytest.fail("pinned-element preview requires a provisioned ASTRID_APP_CHECKOUT", pytrace=False)
+    modules_path = (Path(app_checkout).expanduser() / "node_modules").resolve(strict=True)
+    required = (".bin/vite", "@remotion/player", "playwright", "react", "react-dom", "remotion")
+    missing = [name for name in required if not (modules_path / name).exists()]
+    if missing:
+        pytest.fail("pinned-element preview dependencies are missing: " + ", ".join(missing), pytrace=False)
+    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+    if not node:
+        pytest.fail("pinned-element preview requires the provisioned Node executable", pytrace=False)
+    return modules_path, Path(node).expanduser().resolve(strict=True)
 
 
 def _free_port() -> int:
@@ -246,9 +262,9 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _write_preview_app(root: Path, sources: dict[str, str]) -> None:
+def _write_preview_app(root: Path, sources: dict[str, str], node_modules: Path) -> None:
     root.mkdir(parents=True, exist_ok=True)
-    (root / "node_modules").symlink_to("/home/user/work/app/node_modules", target_is_directory=True)
+    (root / "node_modules").symlink_to(node_modules, target_is_directory=True)
     source_a = root / "revision-a.tsx"
     source_b = root / "revision-b.tsx"
     source_a.write_text(sources["very"], encoding="utf-8")
@@ -289,8 +305,10 @@ def _write_preview_app(root: Path, sources: dict[str, str]) -> None:
     )
 
 
-def _capture_vite_preview(root: Path, output: Path, frames: list[int]) -> dict[int, Path]:
-    vite = Path("/home/user/work/app/node_modules/.bin/vite")
+def _capture_vite_preview(
+    root: Path, output: Path, frames: list[int], *, node_modules: Path, node: Path
+) -> dict[int, Path]:
+    vite = node_modules / ".bin/vite"
     if not vite.is_file():
         pytest.fail(f"local Vite executable is unavailable: {vite}", pytrace=False)
     port = _free_port()
@@ -328,7 +346,7 @@ def _capture_vite_preview(root: Path, output: Path, frames: list[int]) -> dict[i
         )
         output.mkdir(parents=True, exist_ok=True)
         result = subprocess.run(
-            ["/opt/node22/bin/node", str(capture), f"http://127.0.0.1:{port}", json.dumps(frames), str(output)],
+            [str(node), str(capture), f"http://127.0.0.1:{port}", json.dumps(frames), str(output)],
             cwd=root,
             check=False,
             capture_output=True,
@@ -369,8 +387,10 @@ def _metrics(left: Path, right: Path) -> dict[str, float | int | bool]:
 def test_pinned_element_render_proof_on_standin(
     configured,
     remotion_project: Path,
+    preview_runtime: tuple[Path, Path],
     tmp_path: Path,
 ) -> None:
+    node_modules, node = preview_runtime
     runtime, refs, sources = _make_admitted_standin(configured)
     snapshot = resolve_managed_render_snapshot(
         project_ref="demo",
@@ -404,8 +424,11 @@ def test_pinned_element_render_proof_on_standin(
     assert all(path.is_file() and path.stat().st_size > 0 for path in export_frames.values())
 
     preview_root = tmp_path / "vite-preview"
-    _write_preview_app(preview_root, sources)
-    preview_frames = _capture_vite_preview(preview_root, tmp_path / "preview-frames", list(SAMPLES.values()))
+    _write_preview_app(preview_root, sources, node_modules)
+    preview_frames = _capture_vite_preview(
+        preview_root, tmp_path / "preview-frames", list(SAMPLES.values()),
+        node_modules=node_modules, node=node,
+    )
     parity = {
         label: _metrics(preview_frames[frame], export_frames[frame])
         for label, frame in SAMPLES.items()
@@ -460,9 +483,12 @@ def test_pinned_element_render_proof_on_standin(
         )
     corrupt_error = str(corrupt.value)
 
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
+    evidence_dir = Path(os.environ["ASTRID_T3_EVIDENCE_DIR"]).expanduser() if os.environ.get(
+        "ASTRID_T3_EVIDENCE_DIR"
+    ) else tmp_path / "evidence"
+    evidence_dir.mkdir(parents=True, exist_ok=True)
     source_digests = {label: "sha256:" + hashlib.sha256(source.encode()).hexdigest() for label, source in sources.items()}
-    (EVIDENCE / "standin-render-proof.json").write_text(
+    (evidence_dir / "standin-render-proof.json").write_text(
         json.dumps(
             {
                 "result": "PASS: proof on a stand-in, not the owner's film",

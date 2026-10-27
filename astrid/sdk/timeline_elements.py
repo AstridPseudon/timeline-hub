@@ -401,9 +401,9 @@ def place_element(owner: Any, project: str, timeline: str, *, realm: str, target
                   session: TimelineSession | None = None):
     """Place an admitted project-pack element on an occurrence shot clip.
 
-    A target without an element ref is a valid first placement. If it already
-    has one, the native command keeps the same id, kind, and pack owner as the
-    existing element-update route.
+    First placement supports effect elements on ``am-discord`` clips. If the
+    target already has an element ref, the native command keeps the same id,
+    kind, and pack owner as the existing element-update route.
     """
     key = idempotency_key
     try:
@@ -451,6 +451,9 @@ def place_element(owner: Any, project: str, timeline: str, *, realm: str, target
                     if not opened.ok:
                         return opened
                     before = _placement_clip(opened.data['bundle'], target)
+                    if ('elementRef' not in before and 'element_ref' not in before
+                            and element['kind'] != 'effect'):
+                        raise ValueError('First placement supports effect elements only')
                     if not _matches(data['commands'], calls):
                         raise ValueError('Acknowledged request identity has different original intent')
                     return _placement_result(session, data, receipt, before, target, expected_head, key)
@@ -466,6 +469,9 @@ def place_element(owner: Any, project: str, timeline: str, *, realm: str, target
         if not opened.ok:
             return opened
         before = _placement_clip(opened.data['bundle'], target)
+        if ('elementRef' not in before and 'element_ref' not in before
+                and element['kind'] != 'effect'):
+            raise ValueError('First placement supports effect elements only')
 
         def capture(state):
             if state['base']['revision_id'] != expected_head:
