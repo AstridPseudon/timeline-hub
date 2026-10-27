@@ -88,8 +88,8 @@ def _snapshot(runtime):
     return managed.resolve_managed_render_snapshot(project_ref="demo", timeline_ref="main", client=runtime)
 
 
-def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source"):
-    """Model an installed/local owner whose current catalog lacks this pin."""
+def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source", *, exact=False):
+    """Model an installed/local owner with a selected current catalog revision."""
     from astrid.core.pack import discovery
 
     monkeypatch.setattr(
@@ -97,7 +97,7 @@ def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source"):
         "discover_pack_metadata",
         lambda **_: (SimpleNamespace(id=ref["packId"], source_kind=source_kind),),
     )
-    current_revision = "sha256:" + "0" * 64
+    current_revision = ref["revision"] if exact else "sha256:" + "0" * 64
     monkeypatch.setattr(
         catalog,
         "list_element_descriptors",
@@ -152,6 +152,24 @@ def test_colliding_installed_owner_snapshot_failure_is_fail_closed(
             _snapshot(runtime)
     assert ref["revision"] in str(error.value)
     assert "$.clips[0]" in str(error.value)
+
+
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_exact_catalog_identity_collision_missing_admission_is_fail_closed(
+    admitted, monkeypatch, source_kind,
+):
+    runtime, refs, reads = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    runtime.documents.rows.clear()
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind, exact=True)
+        with pytest.raises(ValueError, match="snapshot missing") as error:
+            _snapshot(runtime)
+    assert ref["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
+    assert reads["documents"] == []
+    assert reads["objects"] == []
 
 
 def test_two_revisions_keep_source_dispatch_aliases_and_assets(admitted, tmp_path):
