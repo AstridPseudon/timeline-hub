@@ -938,6 +938,48 @@ def _inverse_stage_state(boundary, ref, path):
     return state
 
 
+def _inverse_stage_restore_clip_order(boundary, command):
+    """Restore a parent clip order proved by a source command's collection selection."""
+    recorded = command.get("selections", [])
+    require(isinstance(recorded, list) and all(isinstance(selection, dict) for selection in recorded),
+            "inverse stage source selections are malformed")
+    selections = [selection for selection in recorded
+                  if selection.get("key") == "collection.clips"
+                  and selection.get("owner") == "parent"]
+    if not selections:
+        return
+    require(len(selections) == 1, "inverse stage source clip order is ambiguous")
+    selection = selections[0]
+    members, order = selection.get("members"), selection.get("order")
+    require(selection.get("query_version") == 1
+            and selection.get("policy") == "guard-membership"
+            and isinstance(members, list) and isinstance(order, list)
+            and all(isinstance(ref, str) for ref in [*members, *order])
+            and len(members) == len(set(members))
+            and members == order == selection.get("boundaries")
+            and all(isinstance(ref, str) and re.fullmatch(r"parent/clip:[^/]+", ref)
+                    for ref in members),
+            "inverse stage source clip order is malformed")
+    payload = boundary["parent"]["payload"]
+    config = payload.get("config")
+    config_rows = config.get("clips") if isinstance(config, dict) else None
+    payload_rows = payload.get("clips")
+    rows = config_rows if isinstance(config_rows, list) else payload_rows
+    require(isinstance(rows, list), "inverse stage source clip collection is absent")
+    if isinstance(config_rows, list) and isinstance(payload_rows, list):
+        require(value_equal(config_rows, payload_rows),
+                "inverse stage source clip mirrors disagree")
+    by_id = {row.get("id"): row for row in rows if isinstance(row, dict)}
+    expected_ids = [ref.partition(":")[2] for ref in order]
+    require(len(by_id) == len(rows) and set(by_id) == set(expected_ids),
+            "inverse stage restored clip membership differs from its source selection")
+    restored = [by_id[identity] for identity in expected_ids]
+    if isinstance(config_rows, list):
+        config["clips"] = restored
+    if isinstance(payload_rows, list):
+        payload["clips"] = copy.deepcopy(restored)
+
+
 def _inverse_stage_root(boundary, ref):
     """Observe authored aggregate roots through authenticated physical images."""
     kind, _, identity = ref.partition(":")
@@ -1346,15 +1388,35 @@ def _inverse_stage_history(records, history):
                              "command_ordinals": ordinals, **partition} for partition in inherited)
             continue
         shared = _inverse_stage_shared_source(entry, source_step, commands)
-        native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
-                        for write in reversed([*command.get("writes", []),
-                            *(write for write in command.get("derived_writes", [])
-                              if write.get("ref") in clip_roots
-                              and write.get("path") in (["at"], ["hold"]))])]
+        native_sites = []
+        command_boundaries = []
+        native_end = 0
+        for command in reversed(source_commands):
+            command_writes = list(reversed([*command.get("writes", []),
+                *(write for write in command.get("derived_writes", [])
+                  if write.get("ref") in clip_roots
+                  and write.get("path") in (["at"], ["hold"]))]))
+            native_sites.extend((write["ref"], write["path"]) for write in command_writes)
+            native_end += len(command_writes)
+            structural_clip_write = any(
+                write["ref"].startswith("parent/clip:") and not write["path"]
+                and write["before"].get("state") == "present"
+                and write["after"].get("state") == "absent"
+                for write in command.get("writes", []))
+            if structural_clip_write:
+                selections = [selection for selection in command.get("selections", [])
+                              if selection.get("key") == "collection.clips"
+                              and selection.get("owner") == "parent"]
+                require(len(selections) == 1,
+                        "inverse stage structural clip write has no unique source order")
+                command_boundaries.append({"native_end": native_end,
+                                           "selection": copy.deepcopy(selections[0])})
         expected.append({"publication_id": publication, "step_id": source_step["id"],
                          "command_ordinals": ordinals,
                          "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
-                                          if shared is not None else native_sites), "shared": shared,
+                                          if shared is not None else native_sites),
+                         "command_boundaries": (command_boundaries if shared is None else []),
+                         "shared": shared,
                          "empty_native": (not native_sites and not source_step["patch"]
                                           and not any(command.get("writes")
                                                       or command.get("derived_writes")
@@ -1545,9 +1607,22 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         inherited_effects = stage["source_stage"].get("source_effects")
         root_checks = []
         native_sites = []
+        clip_order_boundaries = stage["source_stage"].get("command_boundaries", [])
+        require(all(type(item.get("native_end")) is int and 0 < item["native_end"] <= len(writes)
+                    for item in clip_order_boundaries)
+                and [item["native_end"] for item in clip_order_boundaries]
+                == sorted({item["native_end"] for item in clip_order_boundaries}),
+                "inverse stage source clip-order boundaries are malformed")
+        clip_order_boundary_index = 0
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
-        for write in writes:
+        for write_index, write in enumerate(writes):
+            while (clip_order_boundary_index < len(clip_order_boundaries)
+                   and clip_order_boundaries[clip_order_boundary_index]["native_end"] == write_index):
+                _inverse_stage_restore_clip_order(
+                    native_image, {"selections": [clip_order_boundaries[
+                        clip_order_boundary_index]["selection"]]})
+                clip_order_boundary_index += 1
             if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
                 root = write["ref"]
                 observed, physical = _inverse_stage_root(native_image, root)
@@ -1683,6 +1758,14 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                     for mirror in (("clips",) if write["ref"].startswith("parent/clip:") else ("registry",)):
                         if mirror in projected and mirror in projected.get("config", {}):
                             projected[mirror] = copy.deepcopy(projected["config"][mirror])
+        while (clip_order_boundary_index < len(clip_order_boundaries)
+               and clip_order_boundaries[clip_order_boundary_index]["native_end"] == len(writes)):
+            _inverse_stage_restore_clip_order(
+                native_image, {"selections": [clip_order_boundaries[
+                    clip_order_boundary_index]["selection"]]})
+            clip_order_boundary_index += 1
+        require(clip_order_boundary_index == len(clip_order_boundaries),
+                "inverse stage source clip-order boundary was not replayed")
         # A leaf native write can restore authored bytes while the accepted
         # source records an authenticated physical turnover.  In that case,
         # reverse the source materialization edges; never infer a new root or
