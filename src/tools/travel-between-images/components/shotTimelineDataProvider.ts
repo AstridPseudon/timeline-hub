@@ -408,7 +408,7 @@ function createCanonicalTimeline(
     // Apply to existing and newly authored clips on every save path, before
     // restoring identity and app collisions from the verified child bytes.
     const projectedClip = authoredClipFields(editorClip, occurrenceId);
-    const raw = counterparts.get(projectedClip.id);
+    const raw = counterparts.get(projectedClip.id) ?? null;
     // A clip absent from the verified identity map is a newly authored editor
     // clip (existing projected clips are present with either a raw match or a
     // null value when their identity is ambiguous). Keep it intact so popup
@@ -468,7 +468,7 @@ function restoreRawAppCollisionsInRecoveryDraft(
     tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
     clips: config.clips.map((editorClip) => {
       const projectedClip = authoredClipFields(editorClip, occurrenceId);
-      const raw = counterparts.get(projectedClip.id);
+      const raw = counterparts.get(projectedClip.id) ?? null;
       return stripProjectedClipFields(
         raw ? { ...projectedClip, id: String(raw.id) } : projectedClip,
         raw,
