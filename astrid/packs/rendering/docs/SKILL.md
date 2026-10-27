@@ -98,13 +98,13 @@ route and local timeline files are not authorities.
 ## Point the user to the editor; render only on request
 
 After any timeline edit, publish, then give the user the editor link and the
-times to look at. Do not render, open a fresh render, or capture composed
-frames as a step of the work. Render, or run `timelines visualize` for composed
-frames, only when the user asks for a render, an exported file, or frames.
+times to look at. Do not render or open a fresh render as a step of the work;
+render only when the user asks for a render or an exported file.
 
-To check your own edit without rendering, read timing and structure with
-`timelines show --as script` and declared placement with
-`timelines visualize --mode inputs`.
+Check your own visual edits by looking at composed frames with
+`timelines visualize`, as often as helps: [how to look](references/how-to-look.md)
+says when and which view. `timelines show --as script` reads timing and
+structure; it does not show appearance.
 
 Build the link from two ids:
 
@@ -121,10 +121,10 @@ https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-i
 
 Each published revision shows in the editor at once.
 
-## Visualize (on request)
+## Visualize
 
-The structural view and `--mode inputs` are render-free. Composed frames are
-for when the user asks for frames:
+Visualize does not start a video render. The structural view and `--mode inputs`
+show declared placement; composed frames show appearance:
 
 ```bash
 python3 -m astrid timelines show <timeline> --project <project> --json
@@ -132,7 +132,7 @@ python3 -m astrid timelines visualize <timeline> --project <project> \
   --mode inputs --format md --format png --json
 ```
 
-When the user asks for frames, look at the film the way they mean to, one page each (pass a window and the view follows it):
+Look at the film the way the question needs, one page each (pass a window and the view follows it; [how to look](references/how-to-look.md) says which):
 
 ```bash
 python3 -m astrid timelines visualize <timeline> --project <project>                          # overview: a tile per cut
@@ -226,7 +226,7 @@ For repeatable draft narration synchronization, use `video_editing.sync_draft_vo
 
 ### CLI checks and journal
 
-Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep, which captures composed frames; pass it unless the user asks for frames. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
+Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep, which captures composed frames. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
 
 Use `timelines log <timeline> --project <project> --verify --json` to verify the journal hash chain. A broken chain returns 1 with `error.code: validation_error`; a missing journal returns 0. See the [timeline editing guide](../../../../docs/timeline-editing-guide.md) for filters and details.
 
