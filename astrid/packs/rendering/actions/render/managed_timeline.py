@@ -794,7 +794,11 @@ def validate_managed_render_snapshot(snapshot: ManagedRenderSnapshot) -> None:
                 "Either omit config.output or provide resolution, fps, and file, then retry"
             )
     try:
-        timeline.validate_timeline(config)
+        timeline.validate_timeline(
+            config,
+            canonical_transitions=isinstance(snapshot.expansion, Mapping)
+            and snapshot.expansion.get("canonical") is True,
+        )
     except Exception as exc:
         raise _schema_validation_error(snapshot, exc) from exc
     _validate_pinned_element_references(snapshot, config)

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import hashlib
+from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -167,6 +169,40 @@ def _snapshot(runtime: _Runtime, *, expected_version: int | None = None):
         expected_version=expected_version,
         client=runtime,
     )
+
+
+@pytest.mark.parametrize("transition_id", ["fade", "cross-fade"])
+def test_canonical_render_admits_incoming_transition_with_linear_easing(transition_id):
+    snapshot = _snapshot(_Runtime())
+    config = {
+        "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
+        "clips": [
+            {"id": "a", "track": "v1", "at": 0, "from": 0, "to": 1},
+            {"id": "b", "track": "v1", "at": 1, "from": 0, "to": 1,
+             "transition": {"id": transition_id, "durationFrames": 12,
+                            "params": {"easing": "linear"}, "align": "end",
+                            "incomingPolicy": "preroll-crossfade"}},
+            {"id": "c", "track": "v1", "at": 2, "from": 0, "to": 0.1},
+        ],
+    }
+    original = deepcopy(config)
+    snapshot = replace(snapshot, config=config, expansion={"canonical": True})
+    validate_managed_render_snapshot(snapshot)
+    assert config == original
+
+
+@pytest.mark.parametrize("field,value", [
+    ("params", {"easing": "ease-out"}), ("params", {"custom": 1}),
+    ("align", "start"), ("incomingPolicy", "other"),
+])
+def test_canonical_render_rejects_unsupported_transition_options(field, value):
+    snapshot = _snapshot(_Runtime())
+    transition = {"id": "fade", "durationFrames": 12, field: value}
+    config = {"tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
+              "clips": [{"id": "a", "track": "v1", "at": 0, "from": 0, "to": 1,
+                         "transition": transition}]}
+    with pytest.raises(ManagedRenderValidationError):
+        validate_managed_render_snapshot(replace(snapshot, config=config, expansion={"canonical": True}))
 
 
 def test_resolve_requires_explicit_runtime_client_and_pins_runtime_identity() -> None:
@@ -359,6 +395,7 @@ def test_exact_parent_head_projects_pinned_children_with_unique_local_ids(
     ]
     assert authority["head_event_id"] == "parent-committed"
     assert authority["parent_revision_id"] == "parent-committed"
+    assert authority["expansion"]["canonical"] is True
     assert prepared["timeline_snapshot"]["metadata"] == {
         "host_transition_contract": "runtime-parent-closure/v1",
     }
