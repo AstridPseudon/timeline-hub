@@ -145,6 +145,20 @@ const stack = root.prepareCompositionScene([{track, clips: [clip, {...clip, id: 
 assert.deepEqual(evaluation.querySceneOcclusion(evaluation.querySceneFrame(stack, 0), 'card', .98),
   {status: 'known', occluderId: 'upper', fraction: 1});
 assert.equal(evaluation.querySceneFrame(prepare(), 0).layers[0].visible, 'unknown');
+const incomingClips = [{id: 'a', track: track.id, at: 0, hold: 1},
+  {id: 'b', track: track.id, at: 1, hold: 1, transition: {id: 'fade', durationFrames: 12}},
+  {id: 'c', track: track.id, at: 2, hold: 1}];
+const incomingTracks = [{track, clips: incomingClips}];
+const compiled = root.compileCanonicalTransitions(incomingTracks, 30, root.toRuntimeTheme(theme));
+assert.deepEqual(compiled.tracks[0].incomingTransitions, [null, {T: 12}, null]);
+const prepareIncoming = (tracks, vector) => root.prepareCompositionScene(tracks, assets, 30, root.toRuntimeTheme(theme),
+  1920, 1080, undefined, undefined, {}, '', {}, {}, vector);
+assert.deepEqual(evaluation.querySceneFrame(prepareIncoming(incomingTracks, compiled), 24).layers
+  .map(layer => [layer.clipId, layer.transitionOpacity]), [['a', 1], ['b', .5]]);
+const moved = incomingClips.map(item => item.id === 'b' ? {...item, transition: undefined}
+  : item.id === 'c' ? {...item, transition: {id: 'fade', durationFrames: 12}} : item);
+assert.throws(() => prepareIncoming([{track, clips: moved}], compiled), /transition\\/invalid-compilation/);
+assert.deepEqual(evaluation.querySceneFrame(prepareIncoming(incomingTracks), 24).layers.map(layer => layer.clipId), ['a']);
 const render = maps => {
   const composition = {id: 'test', width: 1920, height: 1080, fps: 30, durationInFrames: 60,
     defaultProps: {}, folderName: null, parentFolderName: null, component: () => null,

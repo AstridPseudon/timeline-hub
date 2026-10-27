@@ -404,3 +404,29 @@ test('canonical conversion of [a,b(fade),c] is deterministic and both public ent
   assert.deepEqual(querySceneFrame(prepare(clips, registries), 54).layers.map(layer => [layer.clipId, layer.transitionOpacity]), [['b', 0], ['c', 0]]);
   assert.equal(JSON.stringify(clips), before);
 });
+
+test('compiled incoming ownership must match the current clips and all visual tracks', () => {
+  const clips: TimelineClip[] = [
+    {id: 'a', track: track.id, at: 0, hold: 1},
+    {id: 'b', track: track.id, at: 1, hold: 1, transition: {id: 'fade', durationFrames: 12}},
+    {id: 'c', track: track.id, at: 2, hold: 1},
+  ];
+  const compiled = compileIncoming(clips);
+  const vector = (incomingTransitions: unknown) => ({fps: 30, tracks: [{...compiled.tracks[0], incomingTransitions}]} as CompiledCanonicalTransitions);
+  for (const stale of [vector([null, {T: 6}, null]), vector([null, null, {T: 12}]),
+    vector([null, {T: 12}]), vector([null, {T: 12, ignored: true}, null]),
+    {...compiled, tracks: [...compiled.tracks, {trackId: 'extra', clipIds: [], incomingTransitions: []}]}]) {
+    assert.throws(() => prepareIncoming(clips, {}, 30, stale), /transition\/invalid-compilation/);
+    assert.throws(() => render(incomingComposition(clips, {}, undefined, 30, stale), 24), /transition\/invalid-compilation/);
+  }
+  const moved = clips.map(clip => clip.id === 'b' ? {...clip, transition: undefined}
+    : clip.id === 'c' ? {...clip, transition: {id: 'fade', durationFrames: 12}} : clip);
+  assert.throws(() => prepareIncoming(moved, {}, 30, compiled), /transition\/invalid-compilation/);
+  assert.throws(() => render(incomingComposition(moved, {}, undefined, 30, compiled), 24), /transition\/invalid-compilation/);
+  const emptyTrack: TrackDefinition = {...track, id: 'empty'};
+  const tracks = [{track, clips}, {track: emptyTrack, clips: []}];
+  const both = compileCanonicalTransitions(tracks, 30, theme);
+  const timeline = {theme: 'default', tracks: [track, emptyTrack], clips};
+  assert.doesNotThrow(() => render(createElement(TimelineComposition, {timeline, assets, compiledTransitions: both}), 24));
+  assert.throws(() => render(createElement(TimelineComposition, {timeline, assets, compiledTransitions: compiled}), 24), /transition\/invalid-compilation/);
+});
