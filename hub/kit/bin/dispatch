@@ -25,6 +25,8 @@ if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | w
 WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
 mkdir -p $D; cp $BRIEF $D/brief.md; [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
 printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
+# 27 Oct 13:25Z: a worker based on anything but tl/integration merges back into its base unless --merge-target says otherwise (a missing target once sent an H fix to tl/integration)
+[ -z "$MTARGET" ] && [ "$BASE" != tl/integration ] && git -C /home/user/work/$REPO show-ref -q --verify "refs/heads/$BASE" && MTARGET=$BASE
 [ -n "$MTARGET" ] && printf 'target=%s\n' "$MTARGET" >> $D/meta
 [ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
 NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
