@@ -90,7 +90,7 @@ def test_ordered_derived_clip_mirrors_chain_within_one_command():
                 "before": {"state": "present", "value": before},
                 "after": {"state": "present", "value": after}}
 
-    record = {"writes": [], "derived_writes": [capture(initial, first), capture(first, second)],
+    record = {"ordinal": 4, "writes": [], "derived_writes": [capture(initial, first), capture(first, second)],
               "created": [], "dependencies": []}
     final_payload = {"config": {"clips": second}, "occurrences": []}
     following = {"bindings": [{"physical_ref": "parent", "revision_id": "final-parent",
@@ -104,5 +104,10 @@ def test_ordered_derived_clip_mirrors_chain_within_one_command():
 
     forged = copy.deepcopy(record)
     forged["derived_writes"][1]["before"] = {"state": "present", "value": initial}
+    with pytest.raises(CommitRejected, match="different input observation"):
+        command_output(boundary, forged, following)
+
+    forged = copy.deepcopy(record)
+    forged["derived_writes"][1]["cause"] = 3
     with pytest.raises(CommitRejected, match="different input observation"):
         command_output(boundary, forged, following)

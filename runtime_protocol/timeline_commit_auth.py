@@ -2441,7 +2441,8 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
         derived_mirror_site = (ref, tuple(path))
         chains_derived_mirror = (
             is_derived and "cause" in capture and ref == "parent"
-            and path and path[0] in {"config", "clips"}
+            and capture["cause"] == record.get("ordinal")
+            and tuple(path) in {("config", "clips"), ("clips",)}
         )
         if chains_derived_mirror and derived_mirror_site in derived_mirrors:
             expected_before = derived_mirrors[derived_mirror_site]
