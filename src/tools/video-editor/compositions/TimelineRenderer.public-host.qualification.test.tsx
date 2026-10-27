@@ -117,6 +117,29 @@ const makeProbeHost = () => {
 };
 
 describe('V009 public host behavior qualification', () => {
+  it('applies a top-level fade to a registered effect and prerolls its incoming transition', () => {
+    const { host } = makeProbeHost();
+    const config = baseConfig({
+      id: 'effect', clipType: 'probe', track: 'V1', at: 1, hold: 1, params: {},
+      elementRef: { id: 'probe', kind: 'effect', revision: 'r1' },
+      entrance: { id: 'fade', durationFrames: 12, easing: 'linear' },
+      transition: { id: 'fade', durationFrames: 8 },
+    });
+    config.clips.unshift({ id: 'previous', clipType: 'media', track: 'V1', at: 0, hold: 1 });
+    currentFrame = 0;
+    const view = render(<TimelineRenderer astridElementHost={host} config={config} />);
+    const effect = screen.getByTestId('probe-effect');
+    expect(effect.closest('[data-testid="sequence"]')).toHaveAttribute('from', '22');
+    let parent: HTMLElement | null = effect.parentElement;
+    let faded = false;
+    while (parent && parent !== view.container) {
+      faded ||= parent.style.opacity === '0';
+      parent = parent.parentElement;
+    }
+    expect(faded).toBe(true);
+    view.unmount();
+  });
+
   it('uses injected host values at typed effect, typed animation, legacy, and sequence helper callsites', () => {
     const typedEffect = makeProbeHost();
     const typedEffectView = render(<TimelineRenderer

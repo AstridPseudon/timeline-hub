@@ -461,6 +461,21 @@ describe('TimelineRenderer track lifetime', () => {
 });
 
 describe('TimelineRenderer registered sequences', () => {
+  it('prerolls an incoming text transition and stops at the authored end', async () => {
+    const { TextClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/TextClip.tsx')>(
+      '@/tools/video-editor/compositions/TextClip.tsx',
+    );
+    sequenceProps.length = 0;
+    const clip = {
+      id: 'incoming-text', clipType: 'text' as const, track: 'V1', at: 10, hold: 2,
+      text: { content: 'Text' }, transition: { id: 'fade', durationFrames: 8 },
+      app: { canonicalTiming: { occurrenceStartMs: 10_000, occurrenceDurationMs: 2_000 } },
+    } as ResolvedTimelineConfig['clips'][number];
+    render(<TextClipSequence clip={clip} track={{ id: 'V1', kind: 'visual', label: 'V1' }} fps={30}
+      predecessor={{ id: 'previous', clipType: 'hold', track: 'V1', at: 8, hold: 2 } as never} />);
+    expect(sequenceProps.find((props) => props.from === 292)).toMatchObject({ from: 292, durationInFrames: 68 });
+  });
+
   it('keeps a canonical visual image absent at the half-open end after transition expansion', async () => {
     const { VisualClipSequence } = await vi.importActual<typeof import('@/tools/video-editor/compositions/VisualClip.tsx')>(
       '@/tools/video-editor/compositions/VisualClip.tsx',

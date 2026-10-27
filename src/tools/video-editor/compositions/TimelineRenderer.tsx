@@ -21,8 +21,11 @@ import { LocalFontFaces } from '@/tools/video-editor/compositions/LocalFontFaces
 import { partitionTrackGroups } from './partitionTrackGroups.ts';
 import { EffectLayerSequence } from '@/tools/video-editor/compositions/EffectLayerSequence.tsx';
 import { TextClipSequence } from '@/tools/video-editor/compositions/TextClip.tsx';
+import { wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
+import { useOptionalEffectRegistryContext } from '@/tools/video-editor/effects/registry/index.ts';
 import { AudioReactiveColourSequence } from '@/tools/video-editor/compositions/AudioReactiveColour.tsx';
 import { VisualClip, VisualClipSequence } from '@/tools/video-editor/compositions/VisualClip.tsx';
+import { ClipTransition, clipSequenceTiming } from '@/tools/video-editor/compositions/ClipTransition.tsx';
 import { UnknownClipPlaceholderSequence } from '@/tools/video-editor/compositions/UnknownClipPlaceholder.tsx';
 import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes.ts';
 import {
@@ -289,6 +292,7 @@ type ThemeEffectSequenceProps = {
   fps: number;
   theme: RuntimeTheme;
   dynamicEntries: readonly DynamicSequenceComponentEntry[];
+  predecessor?: ResolvedTimelineClip | null;
 };
 
 const resolveAstridComponentAssetEntry = (
@@ -298,6 +302,12 @@ const resolveAstridComponentAssetEntry = (
     ? { ...assetEntry, file: assetEntry.src }
     : assetEntry
 );
+
+const ElementClipEffects: FC<{ clip: ResolvedTimelineClip; fps: number; children: ReactNode }> = ({ clip, fps, children }) => {
+  const registry = useOptionalEffectRegistryContext();
+  const content = <ClipTransition clip={clip} fps={fps}>{children}</ClipTransition>;
+  return <>{wrapWithClipEffects(content, clip, getClipDurationInFrames(clip, fps), fps, registry?.snapshot)}</>;
+};
 
 const ThemePackageComponent: FC<{
   component: FC<{
@@ -318,7 +328,7 @@ const ThemePackageComponent: FC<{
   return <Component clip={clip} params={clip.params} theme={theme} fps={fps} assetEntry={assetEntry} />;
 };
 
-const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, dynamicEntries }) => {
+const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, dynamicEntries, predecessor }) => {
   const host = useAstridElementHost();
   // Dynamic-aware lookup: prefer DB-stored components for `custom:` clipTypes;
   // fall back to the static SEQUENCE_COMPONENT_REGISTRY for built-ins.
@@ -340,16 +350,18 @@ const ThemeEffectSequence: FC<ThemeEffectSequenceProps> = ({ clip, fps, theme, d
   if (!Component) {
     return <UnknownClipPlaceholderSequence clip={clip} fps={fps} reason="unsupported" />;
   }
-  const durationInFrames = getClipDurationInFrames(clip, fps);
+  const { from, effectiveDuration } = clipSequenceTiming(clip, fps, predecessor);
   return (
     <Sequence
       key={clip.id}
-      from={Math.round(clip.at * fps)}
-      durationInFrames={durationInFrames}
+      from={from}
+      durationInFrames={effectiveDuration}
       premountFor={dynamicEntry ? 0 : previewPremountFor(fps)}
     >
       <ThemeProvider value={theme}>
-        <ThemePackageComponent component={Component} clip={clip} fps={fps} />
+        <ElementClipEffects clip={clip} fps={fps}>
+          <ThemePackageComponent component={Component} clip={clip} fps={fps} />
+        </ElementClipEffects>
       </ThemeProvider>
     </Sequence>
   );
@@ -361,6 +373,7 @@ const AstridEffectPreviewSequence: FC<{
   theme: RuntimeTheme;
   assetEntry?: ResolvedTimelineClip['assetEntry'];
   resolvedAssets: ResolvedTimelineConfig['registry'];
+  predecessor?: ResolvedTimelineClip | null;
   component?: ComponentType<{
     clip: ResolvedTimelineClip;
     params: Record<string, unknown>;
@@ -368,12 +381,12 @@ const AstridEffectPreviewSequence: FC<{
     fps: number;
     assetEntry?: ResolvedTimelineClip['assetEntry'];
   }>;
-}> = ({ clip, fps, theme, assetEntry, resolvedAssets, component }) => {
+}> = ({ clip, fps, theme, assetEntry, resolvedAssets, component, predecessor }) => {
   const host = useAstridElementHost();
   const Component = component ?? (clip.elementRef
     ? resolveHostComponent(host, clip.elementRef)
     : undefined);
-  const durationInFrames = getClipDurationInFrames(clip, fps);
+  const { from, effectiveDuration } = clipSequenceTiming(clip, fps, predecessor);
   if (!Component) return null;
   const ref = clip.elementRef;
   const owner = ref && host.descriptors.find(candidate => candidate.id === ref.id && candidate.kind === ref.kind
@@ -383,8 +396,8 @@ const AstridEffectPreviewSequence: FC<{
   return (
     <Sequence
       key={clip.id}
-      from={Math.max(0, Math.round(clip.at * fps))}
-      durationInFrames={durationInFrames}
+      from={from}
+      durationInFrames={effectiveDuration}
       // Canonical child clips are flattened into the parent preview, so they
       // cannot rely on ShotClipSequence to prepare their media. In particular
       // an Astrid effect replacing a still must mount its own first frame
@@ -392,13 +405,15 @@ const AstridEffectPreviewSequence: FC<{
       premountFor={previewPremountFor(fps)}
     >
       <ThemeProvider value={theme}>
-        <Component
-          clip={clip}
-          params={params}
-          theme={theme}
-          fps={fps}
-          assetEntry={resolveAstridComponentAssetEntry(assetEntry)}
-        />
+        <ElementClipEffects clip={clip} fps={fps}>
+          <Component
+            clip={clip}
+            params={params}
+            theme={theme}
+            fps={fps}
+            assetEntry={resolveAstridComponentAssetEntry(assetEntry)}
+          />
+        </ElementClipEffects>
       </ThemeProvider>
     </Sequence>
   );
@@ -1365,6 +1380,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 theme={theme}
                 assetEntry={clip.assetEntry}
                 resolvedAssets={renderConfig.registry}
+                predecessor={index > 0 ? sortedClips[index - 1] : null}
               />
             );
           }
@@ -1411,7 +1427,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
         }
 
         if (clip.clipType === 'text') {
-          return <TextClipSequence key={clip.id} clip={clip} track={track} fps={fps} />;
+          return <TextClipSequence key={clip.id} clip={clip} track={track} fps={fps} predecessor={index > 0 ? sortedClips[index - 1] : null} />;
         }
 
         if (clip.clipType === 'shot') {
@@ -1442,6 +1458,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
                 theme={theme}
                 assetEntry={clip.assetEntry}
                 resolvedAssets={renderConfig.registry}
+                predecessor={index > 0 ? sortedClips[index - 1] : null}
                 component={astridEffect}
               />
             );
@@ -1460,6 +1477,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
               fps={fps}
               theme={theme}
               dynamicEntries={dynamicEntries}
+              predecessor={index > 0 ? sortedClips[index - 1] : null}
             />
           );
         }
