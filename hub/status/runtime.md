@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:29:18Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T02:26:38.434693+00:00
+<!-- main | 2026-10-27T02:33:48Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T02:33:18.403961+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,7 +96,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner 02:20 stand-in decision | doing | A reviewer r8; B proof 5; C lead r8 | Owner-film input wait cleared. A evidence review PASS; real export unmeasured. B fixture checks PASS, real parity unmeasured. Main owns B5 UNSOUND corrections and new environment handoff. | Delivered ZIP unchanged |
+| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner 02:20 stand-in decision | doing | A and B evidence reviews; C lead r8 | Owner-film wait clear. A evidence PASS and B fixture App20/Agent43 PASS; real export/preview parity unmeasured. Main owns environment and B5 return. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
@@ -104,7 +104,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive prepared central sampler | C Sol and C lead | Main Hour 4 note | review | C-C3-runtime-sampler-8; lead-C-r8 | Author exit 0; regression 32 PASS. C owns review and central HTTP run; stage timings remain unmeasured. | No timing measurement |
 
-| C2 B forward | Receive direct B merge release | C Luna | Main Hour 4 note | review | C B forward Runtime and App 8; lead-C-r8 | Both authors exit 0. C owns independent reviews, merges and exact one-clip/shared-shot-fork proof. No competing Runtime allocation. | Private authors |
+| C2 B forward | Receive direct B merge release | C Luna | Main Hour 4 note | doing | C-fix-B-forward-app-8; lead-C-r8 | Both original authors terminal; C has active App return. C owns independent review, merge and exact one-clip/shared-shot-fork proof. | Private authors |
 
 | B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
 
@@ -122,7 +122,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main owns the central stand-in render environment repair and B5 audit corrections. C owns B forward reviews/merges and the central timing sample. Owner film/pack no longer gates stand-in proof. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5813760000 bytes. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. A/B/C follow-ups stay with their existing leads.
+live 0 / cap 6; ready-undispatched 0. Free 5965148160 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. A/B/C follow-ups stay with their existing leads.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -133,4 +133,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T02:26:38.434693+00:00. PLAN, manager rules, pipeline and boards consumed. INBOX and HEADER unchanged. Owner 02:20 stand-in decision consumed; film/pack wait cleared. Runtime census 2717 rows, none running. A author actual 02:23 terminal has no real render/parity result; independent review started 02:23:51 and ended evidence-only PASS. B central fixture App20 and Agent43 PASS; real preview/export remains unmeasured. Main peer 02:25:24 requests ordinary central environment repair and existing B/C terminal receiving. B proof and both C forward authors terminal; C central execution remains owed. No duplicate Runtime dispatch. H/D/P START markers absent. Guarded sweep3 and compact running; all 36 Runtime trees protected or dirty. Delivered archive last hash check remains exact. [Pass evidence](rounds/20261027T022638Z-pass.json).
+Current pass: 2026-10-27T02:33:18.403961+00:00. PLAN, manager rules, pipeline and boards consumed. INBOX and HEADER unchanged. Owner stand-in decision cleared the film/pack prerequisite. Runtime census: 2717 rows, none running. A evidence review PASS and B fixture App20/Agent43 PASS do not establish real visual parity. Main peer 02:25:24 names central render prerequisites and terminal B/C ownership; Main also retains B5 UNSOUND findings. C has an active App forward return and owns sampler review plus central timing execution. H/D/P START markers absent. Sweep removed 0; compact packed 0 scratch and test directories and compressed 0 logs. No eligible recycle. Delivered ZIP and sidecar rehashed exact; prior independent artifact scope unchanged. [Pass evidence](rounds/20261027T023300Z-pass.json).
