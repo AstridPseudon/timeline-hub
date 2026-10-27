@@ -411,9 +411,14 @@ function restoreRawAppCollisionsInRecoveryDraft(
   config: TimelineConfig,
   composition: PreparedShotComposition,
 ): TimelineConfig {
+  const occurrenceId = timelineOccurrenceId(config, composition);
   const counterparts = projectedClipCounterparts(composition, config.clips);
   return {
     ...config,
+    // Recovery is durable editor data too. Keep the authored track fields and
+    // raw app metadata, but never retain the projection's occurrence prefix or
+    // its group hint in the child timeline draft.
+    tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
     clips: config.clips.map((clip) => {
       const raw = counterparts.get(clip.id);
       const app = object(clip.app);
@@ -1638,8 +1643,10 @@ export function createShotTimelineDataProvider(
               // stored occurrence duration used to replay its preview. The
               // publication candidate above remains the sanitized canonical
               // graph; do not strip replay metadata from the stale draft.
-              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
-              : restoreRawAppCollisionsInRecoveryDraft(nextConfig, rawComposition),
+              config: restoreRawAppCollisionsInRecoveryDraft(
+                recoveryMatchesThisSave ? recoveryAtStart!.draft.config as TimelineConfig : nextConfig,
+                rawComposition,
+              ),
               registry: draftRegistry,
               canonicalPublication: candidate,
             };
