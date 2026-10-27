@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T03:31:07Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T03:29:36.287940+00:00
+<!-- main | 2026-10-27T03:35:18Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T03:32:35.221892+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -122,11 +122,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive current render findings | Main Sol and A Luna | Main real render qualification | blocked:main | diag-renderlane-0310 | Actual32723 FAIL/ERROR;2786 two FAIL. Registry discovery and missing fixture helper remain. A03:27 evidence review PASS at bounded scope. | No accepted parity proof |
+| A stand-in environment | Receive real render and open host failures | Main Sol and A Luna | Main terminal03:30 | blocked:main | diag-renderlane-0310 terminal; A owner next | Native MP4 and still rendered. Actual21155 exit1: worker context and fixture helper failures. No accepted parity proof. | No Runtime change |
 
-Blockers: Main diag-renderlane-0310 owns A registry/fixture and B pixel parity findings. C owner receives actual Open Gallery interception and App B-parent ancestry gap. B audit blocker clear. D130 holds.
+Blockers: Main receives terminal diag-renderlane-0310; A host tests, B pixel parity and C Open Gallery interception remain with existing owners. C App B-parent ancestry remains open. B audit blocker clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6088560640 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded maintenance reclaimed0. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 6253899776 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep in progress. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T03:29:36.287940+00:00. Inbox and HEADER unchanged. Read A03:27, B03:24 and C owner boards. B all3 fixes independently PASS, central122/43/4 and actual merges verified. Clear B audit blocker. Main render worker remains active; A actual failures and B pixel parity FAIL remain open. C browser now reaches page but Open Gallery click is intercepted; drag/save/reload/undo not reached. Original B parent still absent from C App ancestry. H/D/P START absent. Census2717 rows, no live Runtime or ready task. Both guarded tools exit0 reclaimed0; no refusal. Existing owners retained, no duplicate worker/body/review. [Pass evidence](rounds/20261027T032936Z-pass.json).
+Current pass: 2026-10-27T03:32:35.221892+00:00. Inbox and HEADER unchanged. Read A03:27, B03:24 and C02:15 boards and Main terminal03:30 render report. A real MP4/still success is bounded; actual21155 has two host-test failures. B21469 parity and C30992 Open Gallery interception remain FAIL. Main receives changed gate through [peer-runtime-to-orchestrator-20261027T033235Z-render-worker-terminal.md](../../design/peer-runtime-to-orchestrator-20261027T033235Z-render-worker-terminal.md). H/D/P START absent; no Runtime ready task or new dispatch. All protected trees retained. Maintenance completion follows.
