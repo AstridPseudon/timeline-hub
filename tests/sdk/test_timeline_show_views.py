@@ -188,6 +188,7 @@ def test_decimal_seconds_keeps_exact_rational_under_exact_key():
 def test_paging_prints_showing_hint_and_next_page(capsys):
     code, out = run(capsys, many_cuts(60), page=2, page_size=20)
     assert code == 0
+    assert "revision rev-0" in out
     assert "showing cuts 21–40 of 60" in out
     assert "next: --page 3" in out and "or --all" in out and "or --shot 1" in out and "or --range" in out
     assert "c20-plate" in out and "c39-plate" in out and "c40-plate" not in out
@@ -254,13 +255,13 @@ def test_working_copy_banner_and_edit_marks(tmp_path, monkeypatch, capsys):
     import astrid.sdk.timeline_checkout as checkout_module
 
     monkeypatch.setattr(checkout_module, "find_draft", lambda project, timeline, name="main", **kw: path)
-    code, out = run(capsys, doc)
+    code, out = run(capsys, doc, draft="main")
     assert code == 0
     first = out.splitlines()[0]
-    assert first.startswith("WORKING COPY · 1 clip changed vs published rev-0 · --published")
+    assert first.startswith("WORKING COPY main · 1 clip changed · base revision rev-0")
     assert any(line.startswith("✎") and "0.00" in line for line in out.splitlines())
 
-    code, out = run(capsys, doc, json=True)
+    code, out = run(capsys, doc, json=True, draft="main")
     working = json.loads(out)["data"]["working_copy"]
     assert working["draft"] == str(path) and working["edits"] == 1 and working["base_revision"] == "rev-0"
 
