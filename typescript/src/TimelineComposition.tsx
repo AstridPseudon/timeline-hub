@@ -240,9 +240,16 @@ export const prepareCompositionScene = (tracks: {track: TrackDefinition; clips: 
     const sorted = sortClipsByAt(clips);
     if (compiledTransitions !== undefined) {
       const compiled = compiledTransitions.tracks.find(input => input.trackId === track.id);
+      const expected = compileCanonicalTransitions([{track, clips: sorted}], fps, theme, registries).tracks[0];
       if (!compiled || !Array.isArray(compiled.clipIds) || compiled.clipIds.length !== sorted.length
-          || compiled.clipIds.some((id, index) => id !== sorted[index].id) || !Array.isArray(compiled.incomingTransitions)) {
-        throw new Error('transition/invalid-compilation: Compiled clip identities differ from the prepared track');
+          || compiled.clipIds.some((id, index) => id !== sorted[index].id) || !Array.isArray(compiled.incomingTransitions)
+          || compiled.incomingTransitions.length !== expected.incomingTransitions.length
+          || compiled.incomingTransitions.some((transition, index) =>
+            transition === null ? expected.incomingTransitions[index] !== null
+              : !transition || typeof transition !== 'object' || expected.incomingTransitions[index] === null
+                || transition.T !== expected.incomingTransitions[index]?.T
+                || Object.keys(transition).some(key => key !== 'T'))) {
+        throw new Error('transition/invalid-compilation: Compiled incoming transitions differ from their owning clips');
       }
       return {track, clips: sorted, transitions: [], incomingTransitions: compiled.incomingTransitions};
     }
@@ -321,6 +328,11 @@ export const TimelineComposition = (props: TimelineCompositionProps): ReactEleme
   validateCompiledCanonicalTransitions(props.compiledTransitions, fps);
   const visualTracks = [...getVisualTracks(timeline)].reverse();
   const audioTracks = getAudioTracks(timeline);
+  if (props.compiledTransitions !== undefined
+      && (props.compiledTransitions.tracks.length !== visualTracks.length
+        || visualTracks.some(track => !props.compiledTransitions!.tracks.some(input => input.trackId === track.id)))) {
+    throw new Error('transition/invalid-compilation: Compiled tracks differ from the visual timeline');
+  }
 
   return (
     <AbsoluteFill
