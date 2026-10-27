@@ -32,6 +32,7 @@ import {
   createShotTimelineInitialData,
   createShotTimelineEditorSessionToken,
   projectShotTimelineDraftComposition,
+  projectShotTimelineRenderConfig,
   shotTimelineDurationSeconds,
   shotTimelineSessionId,
   type ShotTimelineEditorHeadState,
@@ -268,7 +269,7 @@ function ShotTimelineEditorSurface({
   }, [canonicalHeadRevisionId, isAdoptingCanonicalHead, saveStatus]);
 
   const previewConfig = useMemo(
-    () => boundShotTimelinePreviewConfig(activeConfig, hardDurationSeconds),
+    () => boundShotTimelinePreviewConfig(projectShotTimelineRenderConfig(activeConfig), hardDurationSeconds),
     [activeConfig, hardDurationSeconds],
   );
 

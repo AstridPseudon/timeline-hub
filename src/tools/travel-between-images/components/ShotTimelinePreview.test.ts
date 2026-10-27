@@ -14,7 +14,7 @@ import { useTimelineHistory } from '@/tools/video-editor/hooks/useTimelineHistor
 import { createInteractionState } from '@/tools/video-editor/lib/interaction-state.ts';
 import { buildTimelineData, configToRows, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { getConfigSignature, getStableConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
-import type { TimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { ResolvedTimelineConfig, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { boundCanonicalClipToOccurrence } from '@/tools/video-editor/lib/canonicalRenderBounds.ts';
 import {
   clearTimelineDraft,
@@ -91,6 +91,7 @@ const popupChrome = vi.hoisted(() => ({
 const previewProps = vi.hoisted(() => ({
   currentTime: undefined as number | undefined,
   previewRevision: undefined as unknown,
+  config: undefined as ResolvedTimelineConfig | undefined,
 }));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
@@ -187,9 +188,10 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
 });
 
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({
-  RemotionPreview: (props: {currentTime?: number; previewRevision?: unknown}) => {
+  RemotionPreview: (props: {currentTime?: number; previewRevision?: unknown; config: ResolvedTimelineConfig}) => {
     previewProps.currentTime = props.currentTime;
     previewProps.previewRevision = props.previewRevision;
+    previewProps.config = props.config;
     return React.createElement('div', { 'data-testid': 'preview' });
   },
 }));
@@ -236,6 +238,7 @@ describe('shot timeline popup persistence', () => {
     vi.clearAllMocks();
     previewProps.currentTime = undefined;
     previewProps.previewRevision = undefined;
+    previewProps.config = undefined;
     popupChrome.reloadFromServer.mockResolvedValue(undefined);
   });
 
@@ -246,6 +249,24 @@ describe('shot timeline popup persistence', () => {
 
     await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
     expect(previewProps.currentTime).toBeUndefined();
+  });
+
+  it('passes film effects and child Source visuals to the mounted preview after loading authored data', async () => {
+    const graph = structuredClone(fixture);
+    const timeline = graph.shot_revisions.find((shot) => shot.shot_id === 'shot-alpha' && shot.revision_id === 'rev-a')!
+      .internal_timeline_revision.timeline;
+    const localEffects = [{ type: 'blur', params: { radius: 2 } }];
+    const shotEffects = [{ type: 'brightness', params: { amount: 0.5 } }];
+    Object.assign(timeline, { effects: shotEffects });
+    Object.assign(timeline.tracks[0], { role: 'source' });
+    Object.assign(timeline.clips[0], { effects: localEffects });
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(graph);
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+    await waitFor(() => expect(previewProps.config?.clips.some((clip) => clip.id === 'alpha-video')).toBe(true));
+    expect(previewProps.config?.clips.find((clip) => clip.id === 'alpha-video')?.effects).toEqual([...localEffects, ...shotEffects]);
+    expect(previewProps.config?.tracks.find((track) => track.id === 'video')?.role).toBe('output');
+    expect(timeline.clips[0]).toMatchObject({ effects: localEffects });
+    expect(timeline.tracks[0]).toMatchObject({ role: 'source' });
   });
 
   it('labels the embedded preview from the authoritative canonical head', async () => {

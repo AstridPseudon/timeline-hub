@@ -11,7 +11,8 @@ import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompo
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
 import type { CanonicalDocument, CommitRequest, MediaSelection, MediaSelectionQuery } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createCommitOutbox, type OutboxRecord } from '@/tools/video-editor/commands/commitOutbox.ts';
-import { createShotTimelineDataProvider } from './shotTimelineDataProvider.ts';
+import { createShotTimelineDataProvider, createShotTimelineInitialData, projectShotTimelineRenderConfig } from './shotTimelineDataProvider.ts';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { TimelineSaveError } from '@/tools/video-editor/data/DataProvider.ts';
 
 function canonicalDocument(): CanonicalDocument {
@@ -80,15 +81,15 @@ beforeEach(() => {
   });
 });
 
-function harness(before = canonicalDocument()) {
+function harness(before = canonicalDocument(), graph = fixture) {
   const oldPublish = vi.fn();
   const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: oldPublish });
-  const composition = adapter.prepare(fixture);
+  const composition = adapter.prepare(graph);
   const occurrence = composition.occurrences.find((value) => value.occurrenceId === 'occ-3')!;
   const config = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
   const initial: TimelineCommandBasis = {
     head: { revisionId: fixture.primary_timeline.head.revision_id, publicationId: 'pub-0' },
-    canonicalDocument: before, graph: fixture,
+    canonicalDocument: before, graph,
   };
   const outboxes = createCommitOutbox();
   const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
@@ -135,6 +136,90 @@ function savedDocument(record: OutboxRecord): CanonicalDocument {
 }
 
 describe('shot popup A3 save ingress', () => {
+  it('keeps initial-load and reload rendering in parity with film effects and child Source visuals', async () => {
+    const graph = structuredClone(fixture);
+    const shot = graph.shot_revisions.find((value) => value.revision_id === 'rev-b')!;
+    const timeline = shot.internal_timeline_revision.timeline;
+    const clipEffects = [{ type: 'blur', params: { radius: 2 } }];
+    const shotEffects = [{ type: 'brightness', params: { amount: 0.5 } }];
+    Object.assign(timeline, { effects: shotEffects });
+    Object.assign(timeline.tracks[0], { role: 'source' });
+    Object.assign(timeline.clips[0], { effects: clipEffects });
+    const before = canonicalDocument();
+    before.internal_timeline_revisions[0].payload = structuredClone(timeline);
+    const h = harness(before, graph);
+    vi.spyOn(h.adapter, 'load').mockResolvedValue(h.composition);
+    const provider = h.mount();
+    const initial = createShotTimelineInitialData(h.config, 1, h.composition, 'occ-3');
+    const originalGraph = structuredClone(graph);
+    try {
+      const reload = await provider.loadCanonicalTimeline!('popup-timeline');
+      const rebuilt = await buildTimelineData(reload.config, await provider.loadAssetRegistry(), provider.resolveAssetUrl);
+      for (const data of [initial, rebuilt]) {
+        expect(data.config.effects).toEqual(shotEffects);
+        expect(data.config.clips[0]).toMatchObject({ id: 'alpha-video-b', effects: clipEffects });
+        expect(data.config.tracks[0]).toMatchObject({ id: 'video', role: 'source' });
+        const render = projectShotTimelineRenderConfig(data.resolvedConfig);
+        expect(render.clips[0].effects).toEqual(h.config.clips[0].effects);
+        expect(render.clips[0].effects).toEqual([...clipEffects, ...shotEffects]);
+        expect(render.tracks[0]).toMatchObject({ id: 'video', role: 'output' });
+        expect(render.effects).toBeUndefined();
+        expect(data.config.clips[0].effects).toEqual(clipEffects);
+        expect(data.config.tracks[0].role).toBe('source');
+      }
+      h.send.mockImplementation(async (request, key) => h.reply(request, key, savedDocument((await h.records())[0])));
+      await provider.saveTimeline('popup-timeline', {
+        ...initial.config, clips: initial.config.clips.map((clip) => ({ ...clip, label: 'Authored edit' })),
+      }, 1, initial.registry);
+      const [request] = h.send.mock.calls[0];
+      expect(request.commands[0].args.changes).toEqual([{
+        op: 'set', ref: internalRef, path: ['clips', 'id:alpha-video-b', 'label'],
+        before: { state: 'absent' }, value: 'Authored edit',
+      }]);
+      expect(graph).toEqual(originalGraph);
+    } finally { await provider.dispose(); }
+  });
+
+  it.each(['add', 'replace'] as const)('resolves the accepted %s asset after canonical reload/discard', async (kind) => {
+    const h = harness();
+    h.before.internal_timeline_revisions[0].payload.registry = { assets: JSON.parse(JSON.stringify(h.config.registry)) };
+    const provider = h.mount();
+    const loaded = await provider.loadTimeline('popup-timeline');
+    const originalAsset = loaded.config.clips[0].asset!;
+    const asset = kind === 'add' ? 'popup-added-asset' : originalAsset;
+    const objectId = `sha256:${'a'.repeat(64)}`;
+    const registryBefore = await provider.loadAssetRegistry();
+    const nextRegistry = { ...registryBefore,
+      assets: { ...registryBefore.assets, [asset]: { file: objectId, type: 'video' } } };
+    const next = { ...loaded.config, clips: kind === 'add'
+      ? [...loaded.config.clips, { ...loaded.config.clips[0], id: 'added-asset-clip', asset }]
+      : loaded.config.clips.map((clip) => ({ ...clip, label: 'Replaced media' })) };
+    h.send.mockImplementation(async (request, key) => {
+      const accepted = h.reply(request, key, savedDocument((await h.records())[0]));
+      const shot = accepted.graph!.shot_revisions.find((value) => value.revision_id === 'rev-b')!;
+      const canonicalAsset = { ...shot.assets[0], asset_id: asset, object_id: objectId };
+      shot.assets = kind === 'add' ? [...shot.assets, canonicalAsset] : [canonicalAsset];
+      if (kind === 'add') {
+        const timeline = shot.internal_timeline_revision.timeline;
+        timeline.clips.push({ ...timeline.clips[0], id: 'added-asset-clip', asset_id: asset });
+      }
+      vi.spyOn(h.adapter, 'load').mockResolvedValue(h.adapter.prepare(accepted.graph!));
+      return accepted;
+    });
+    try {
+      await expect(provider.saveTimeline('popup-timeline', next, 1, nextRegistry)).resolves.toBe(2);
+      expect((await provider.loadAssetRegistry()).assets[asset]).toMatchObject({ file: objectId });
+      const reload = await provider.loadCanonicalTimeline!('popup-timeline');
+      const registry = await provider.loadAssetRegistry();
+      const data = await buildTimelineData(reload.config, registry, provider.resolveAssetUrl);
+      expect(registry.assets[asset]).toMatchObject({ file: objectId, media_id: objectId });
+      expect(data.resolvedConfig.clips.find((clip) => clip.asset === asset)?.assetEntry).toMatchObject({
+        src: `/api/astrid/v1/objects/${encodeURIComponent(objectId)}`,
+      });
+      expect(reload.config.clips.some((clip) => clip.asset === asset)).toBe(true);
+    } finally { await provider.dispose(); }
+  });
+
   it('captures dependent popup edits into the persisted owner before any flush or legacy save', async () => {
     const h = harness();
     const provider = h.mount();
