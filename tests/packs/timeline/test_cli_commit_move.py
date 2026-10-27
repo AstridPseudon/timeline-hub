@@ -145,6 +145,8 @@ def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys)
     capsys.readouterr()
     before = json.loads(generated.path.read_bytes())
     assert before["flight"] is not None
+    original_body = before["flight"]["body"]
+    original_key = before["flight"]["key"]
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
@@ -159,6 +161,7 @@ def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys)
     assert "did not undo it" in output
     after = json.loads(generated.path.read_bytes())
     assert after["flight"] == before["flight"]
+    assert after["flight"]["body"] == original_body and after["flight"]["key"] == original_key
     assert after["pending"] == before["pending"]
     assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 0
     capsys.readouterr()
@@ -220,6 +223,34 @@ def test_status_and_discard_report_and_clear_rejected_commands(command, capsys):
     saved = json.loads(generated.path.read_bytes())
     assert saved.get("rejected") is None
     assert saved["pending"] == [] and saved["flight"] is None
+
+
+def test_known_conflict_is_reported_not_applied_and_can_be_discarded(command, capsys):
+    run, generated = command
+    generated.refusal = ApiError(409, "conflict", "guards changed", details={
+        "status": "conflict", "reason": "selection_changed", "conflicts": [{"ref": "parent/clip:a"}],
+    })
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
+    error = json.loads(capsys.readouterr().out)["error"]
+    assert error["details"]["outcome"] == "not_applied"
+    assert error["details"]["headline"]
+    assert "astrid timelines discard t --project p" in error["details"]["fix"]
+    assert error["details"]["cause"]["details"]["reason"] == "selection_changed"
+    state = json.loads(generated.path.read_bytes())
+    assert state["flight"] is None and state["pending"] == []
+    assert state["rejected"]["commands"]
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status["status"] == "conflict" and status["outcome"] == "not_applied"
+    assert status["command_count"] == len(state["rejected"]["commands"])
+
+    assert run("discard", "t", "--project", "p") == 0
+    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    generated.refusal = None
+    assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "7", "--json") == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["data"]["accepted_publication_id"] == "pub1"
 
 
 def test_status_reports_malformed_connected_outbox_as_invalid_and_discard_leaves_it(command, capsys):
@@ -436,7 +467,7 @@ def test_ordinary_edit_move_with_unsupported_flags_keeps_legacy(command, monkeyp
 def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
     run, generated = command
     assert run("edit", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
-    assert capsys.readouterr().out.strip() == "preview only; no publication accepted"
+    assert "nothing committed or reserved" in capsys.readouterr().out
     assert generated.accepted == {}
     assert generated.head["revision_id"] == "r0"
 

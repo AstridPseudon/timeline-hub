@@ -3046,7 +3046,9 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
 
 def _print_session_status(status: Mapping[str, Any]) -> None:
     state = status.get("status")
-    if state == "in_flight":
+    if state == "conflict":
+        print(f"CONNECTED SESSION: conflict, not applied; {status.get('command_count', 0)} rejected command(s) retained for review")
+    elif state == "in_flight":
         print("CONNECTED SESSION: commit outcome unknown; its exact request is retained for retry"
               + (f" (key {status['key']})" if status.get("key") else ""))
     elif state == "pending":

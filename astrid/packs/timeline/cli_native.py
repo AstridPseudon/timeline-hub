@@ -81,7 +81,8 @@ def _commit_envelope(raw: Mapping[str, object], key: str) -> DomainResult:
             if isinstance(data, Mapping):
                 # ``TimelineSession.flush`` adds these presentation fields
                 # after Runtime's canonical result is sealed in the receipt.
-                for field in ("accepted_publication_id", "show_command"):
+                for field in ("accepted_publication_id", "show_command", "summary", "undo",
+                              "replayed", "confirmed", "attempts"):
                     if field in data:
                         enriched[field] = data[field]
             data = enriched
@@ -216,11 +217,16 @@ def _render_commit_result(
     project: str | None = None,
     ref: str | None = None,
 ) -> str:
-    if dry_run:
-        return f"preview only; no publication accepted{f' · {label}' if label else ''}"
     if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
         raise TypeError("native commit renderer received an invalid result envelope")
     data = value.data
+    if isinstance(data.get("summary"), str):
+        lines = [data["summary"]]
+        if data.get("show_command"):
+            lines.append(data["show_command"])
+        return "\n".join(lines)
+    if dry_run:
+        return f"preview only; no publication accepted{f' · {label}' if label else ''}"
     suffix = f" · {label}" if label else ""
     if summary is not None:
         from astrid.sdk.timeline.revisions import short_revision
@@ -524,11 +530,20 @@ def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
             result = session.move(parsed.clip, parsed.on, **options)
         shown = _commit_envelope(result, result["idempotency_key"])
     except Exception as exc:  # noqa: BLE001 - preserve pending work and render transport/semantic failures
-        message = str(exc) + (f"; edited sheet kept at {parsed.sheet_file}" if sheet else "")
+        presentation = getattr(exc, "presentation", None)
+        message = (presentation["headline"] if isinstance(presentation, Mapping)
+                   else str(exc))
+        if isinstance(presentation, Mapping):
+            message += f"\nfix: {presentation['fix']}"
+        message += f"; edited sheet kept at {parsed.sheet_file}" if sheet else ""
         if isinstance(exc, CommitConflict):
-            error = ErrorObject(exc.failure["code"], message, exc.failure["details"])
+            details = {**exc.failure["details"], **presentation} if isinstance(presentation, Mapping) else exc.failure["details"]
+            error = ErrorObject(exc.failure["code"], message, details)
         else:
-            error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, getattr(exc, "details", {}))
+            details = copy.deepcopy(getattr(exc, "details", {}) or {})
+            if isinstance(presentation, Mapping):
+                details.update(presentation)
+            error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, details)
         if inverse:
             import shlex
 

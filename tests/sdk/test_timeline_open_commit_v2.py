@@ -17,7 +17,7 @@ from astrid.sdk.timeline import api, commit_session
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
-from astrid.sdk.timeline.sync import CommitConflict
+from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown
 from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid_runtime_client import ApiError
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
@@ -167,7 +167,7 @@ def test_function_reads_each_returned_head_and_recomputes_with_new_keys(connecte
         evaluations.append((working.head, at(working)))
         working.move("parent/clip:a", at(working) + 1)
 
-    tl.commit(increment, idempotency_key="first-evaluation")
+    result = tl.commit(increment, idempotency_key="first-evaluation")
     assert [value for _, value in evaluations] == [0, 10, 20]
     assert [head["revision_id"] for head, _ in evaluations] == ["r0", "other-10", "other-20"]
     assert client.reads == ["r0", "r0", "other-10", "other-20"]
@@ -178,6 +178,8 @@ def test_function_reads_each_returned_head_and_recomputes_with_new_keys(connecte
     assert all(body["steps"][0]["reads"] == [{"kind": "scope", "ref": "timeline", "path": []}]
                for body, _ in sent)
     assert at(tl) == 21
+    assert result["attempts"] == 3
+    assert "after re-reading the timeline (3 attempts)" in result["summary"]
 
 
 def test_declared_function_reads_allow_fields(connected):
@@ -205,10 +207,15 @@ def test_three_evaluation_bound_survives_reopening(connected, monkeypatch):
         evaluations.append(at(working))
         working.move("parent/clip:a", at(working) + 1)
 
-    with pytest.raises(CommitConflict):
+    with pytest.raises(CommitConflict) as exhausted:
         tl.commit(edit)
+    assert exhausted.value.outcome == "not_applied"
+    assert "edit" in exhausted.value.headline and "3 times" in exhausted.value.detail
     assert evaluations == [0, 1, 2] and len(set(sent)) == 3
-    assert json.loads(path.read_text())["evaluation"]["count"] == 3
+    state = json.loads(path.read_text())
+    assert state["flight"] is None and state["pending"] == []
+    assert state["rejected"]["evaluation"]["count"] == 3
+    assert state["rejected"]["commands"]
     with pytest.raises(CommitConflict):
         opened(connected).commit(edit)
     assert len(evaluations) == len(sent) == 3
@@ -251,8 +258,12 @@ def test_unknown_outcome_retries_exact_request_without_reevaluation(connected, m
         evaluations.append(1)
         working.move("parent/clip:a", 7)
 
-    with pytest.raises(WorkspaceClientError):
+    with pytest.raises(CommitOutcomeUnknown) as unknown:
         tl.commit(edit, idempotency_key="stable")
+    forbidden = ("fail", "error", "lost", "not committed")
+    assert unknown.value.outcome == "unknown"
+    assert all(word not in unknown.value.headline.lower() for word in forbidden)
+    assert "stable" in unknown.value.fix
     frozen = json.loads(path.read_text())["flight"]
     reopened = opened(connected)
     reopened.commit(edit)
@@ -260,6 +271,9 @@ def test_unknown_outcome_retries_exact_request_without_reevaluation(connected, m
     assert len(sent) == 2 and sent[0] == sent[1]
     assert sent[1][1] == frozen["key"] == "stable"
     assert len(generated.accepted) == 1 and at(reopened) == 7
+    replay = reopened.commit(edit, idempotency_key="stable")
+    assert replay["replayed"] is True
+    assert not any(word in replay["summary"].lower() for word in ("again", "redo", "re-appl"))
 
 
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
@@ -289,6 +303,8 @@ def test_dry_run_has_no_history_or_key_reservation_and_returns_commands_and_diff
     preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True,
                         idempotency_key="caller-key")
     assert preview["receipt"] is None and preview["data"]["status"] == "preview"
+    assert "nothing committed or reserved" in preview["summary"]
+    assert preview["undo"] is None
     assert preview["data"]["commands"]
     assert preview["data"]["diff"]["changes"]
     assert preview["data"]["diff"]["changes"][0]["op"] == "clip.move"
@@ -300,6 +316,8 @@ def test_dry_run_has_no_history_or_key_reservation_and_returns_commands_and_diff
     assert "commit_options" not in state and "evaluation" not in state and "acknowledged" not in state
     accepted = tl.commit(preview["data"]["commands"], label="Accept preview", idempotency_key="caller-key")
     assert accepted["receipt"] is not None
+    assert accepted["undo"] == {"publications": [accepted["receipt"]["receipt_id"]]}
+    assert accepted["summary"].startswith('Committed "Accept preview" as ')
     assert json.loads(generated.calls[1][0])["commands"] == preview["data"]["commands"]
     assert generated.calls[0][1] != generated.calls[1][1]
     assert len(generated.accepted) == 1 and at(tl) == 6
@@ -323,7 +341,9 @@ def test_fixed_list_does_not_recompute_after_conflict(connected, monkeypatch):
         tl.commit(commands, label="Fixed")
     assert len(sent) == 1 and sent[0]["commands"] == commands
     state = json.loads(path.read_text())
-    assert state["pending"] == commands and state["flight"] is not None
+    assert state["pending"] == [] and state["flight"] is None
+    assert state["rejected"]["commands"] == commands
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
 
 
 def test_media_preview_list_reuse_keeps_verified_selection_without_reimport(connected, monkeypatch, tmp_path):
@@ -361,6 +381,7 @@ def test_media_preview_list_reuse_keeps_verified_selection_without_reimport(conn
     submitted = json.loads(generated.calls[-1][0])["commands"]
     assert submitted == commands and submitted[-1]["args"]["media"] == pin
     assert len(imports) == 1 and accepted["receipt"] is not None
+    assert "1 file(s) in the catalog; undo keeps them" in accepted["summary"]
 
 
 def test_preview_then_function_call_evaluates_fresh_intent(connected):
@@ -594,7 +615,7 @@ def test_conflict_replacement_preserves_later_pending_dependents(connected, monk
         tl.commit("Literal")
     with tl.session.outbox.locked():
         state = tl.session._state()
-        state["pending"].append(copy.deepcopy(state["pending"][0]))
+        state["pending"].append(copy.deepcopy(state["rejected"]["commands"][0]))
         tl.session.outbox.write(state)
     before = path.read_bytes()
     with pytest.raises(TimelineEditError, match="dependent"):

@@ -21,9 +21,55 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 
 class CommitConflict(TimelineEditError):
-    def __init__(self, failure):
+    def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
+                 timeline_id=None, project_id=None):
         self.failure = copy.deepcopy(failure)
-        super().__init__(failure.get("message", "timeline commit refused"))
+        from ._commit_wording import present_failure
+
+        self.presentation = present_failure(self.failure)
+        if attempts is not None:
+            self.presentation.update(
+                headline=f'The timeline kept changing; "{label or "Timeline edit"}" was not committed',
+                detail=f'Your function ran {attempts} times, re-reading the timeline each time, and each attempt met a newer change.',
+                fix=(f'Run astrid timelines discard {timeline_id} --project {project_id}, '
+                     'then call tl.commit(fn, ...) again.'),
+            )
+        elif fixed_list:
+            self.presentation.update(
+                headline="The timeline changed since this list was made; nothing was committed",
+                detail="The list was not re-run. Review the latest timeline before applying new choices.",
+                fix=(f'Run astrid timelines discard {timeline_id} --project {project_id}, '
+                     'preview again with dry_run=True, then commit the reviewed commands.'),
+            )
+        self.headline = self.presentation["headline"]
+        self.detail = self.presentation["detail"]
+        self.fix = self.presentation["fix"]
+        self.outcome = self.presentation["outcome"]
+        self.cause = self.presentation["cause"]
+        super().__init__(f"{self.headline}. {self.fix}")
+
+
+class CommitOutcomeUnknown(TimelineEditError, WorkspaceClientError):
+    """A sent request whose outcome cannot yet be verified."""
+
+    def __init__(self, cause, *, key=None):
+        from ._commit_wording import present_failure
+
+        failure = {"code": getattr(cause, "code", type(cause).__name__),
+                   "message": str(cause), "details": copy.deepcopy(getattr(cause, "details", {}))}
+        self.failure = failure
+        self.presentation = present_failure(failure, unknown=True)
+        self.headline = self.presentation["headline"]
+        self.detail = self.presentation["detail"]
+        self.fix = self.presentation["fix"]
+        self.outcome = "unknown"
+        self.cause = self.presentation["cause"]
+        if key:
+            self.fix = f'Call the same tl.commit(...) again with key "{key}" to confirm the saved request.'
+            self.presentation["fix"] = self.fix
+        message = f"{self.headline}. {self.fix}"
+        WorkspaceClientError.__init__(self, 0, "timeline_outcome_unknown", message,
+                                      {**self.presentation, "cause": failure})
 
 
 def _flight_kind(flight):
@@ -477,7 +523,7 @@ class TimelineSession:
         result = _response(self.client.timelines.commit(
             self.project_id, self.timeline_id, body, idempotency_key=flight['key']))
         data, receipt = _ack(result, body, flight, self.identity)
-        return self._present(result, data, receipt, imports=flight.get('imports', ()))
+        return self._present(result, data, receipt, imports=flight.get('imports', ()), replayed=True)
 
     def resolve_acknowledged(self, key, *, dry_run=False, via='python'):
         """Return a keyed function's acknowledged receipt without evaluating it.
@@ -568,9 +614,10 @@ class TimelineSession:
             self.outbox.write(state)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
-    def flush(self, *, idempotency_key=None, dry_run=False, via="python"):
+    def flush(self, *, idempotency_key=None, dry_run=False, via="python", release_conflict=True):
         """Send/retry exactly one prefix; leave newer local commands untouched."""
-        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via,
+                           release_conflict=release_conflict)
 
     def submit(self, commands, *, label, steps, merge="fields", reads=None,
                idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None):
@@ -587,6 +634,13 @@ class TimelineSession:
         def prepare(state):
             if state != expected_state:
                 raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
+            rejected = state.get("rejected")
+            rejected_failure = rejected.get("failure") if isinstance(rejected, dict) else None
+            rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, dict) else None
+            if isinstance(rejected_details, dict) and rejected_details.get("status") == "conflict":
+                if state["pending"]:
+                    raise TimelineEditError("pending dependent commands require revalidation before discarding the rejected conflict")
+                raise CommitConflict(rejected_failure)
             if state["pending"] or state["flight"] is not None:
                 if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
                     raise TimelineEditError("retry the original in-flight request before another edit")
@@ -606,9 +660,14 @@ class TimelineSession:
             state["commit_options"] = options
             state["evaluation"] = copy.deepcopy(evaluation)
 
-        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare)
+        release_conflict = (not isinstance(evaluation, dict)
+                            or evaluation.get("kind") != "function"
+                            or evaluation.get("count", 0) >= 3)
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare,
+                           release_conflict=release_conflict)
 
-    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None,
+               release_conflict=False):
         with self.outbox.locked():
             state = self._state()
             if prepare is not None:
@@ -616,6 +675,7 @@ class TimelineSession:
             flight = state["flight"]
             if _flight_kind(flight) == "assembly-admission":
                 raise TimelineEditError("retry the original assembly admission before flushing commands")
+            confirmed = flight is not None
             if flight is None:
                 if not state["pending"]:
                     raise TimelineEditError("no pending timeline commands")
@@ -698,14 +758,32 @@ class TimelineSession:
                             state.pop("rationale", None)
                             state.pop("media_input", None)
                         else:
-                            # Conflicts can still be replanned (including a
-                            # bounded function reevaluation), so retain the
-                            # request until that decision is made.
-                            state["conflict"] = failure
+                            if release_conflict:
+                                state["rejected"] = {
+                                    "base": copy.deepcopy(state["base"]),
+                                    "commands": copy.deepcopy(state["pending"]),
+                                    "flight": copy.deepcopy(flight),
+                                    "failure": copy.deepcopy(failure),
+                                    "commit_options": copy.deepcopy(state.get("commit_options")),
+                                    "evaluation": copy.deepcopy(state.get("evaluation")),
+                                }
+                                state["pending"] = []
+                                state["flight"] = None
+                                state.pop("conflict", None)
+                                state.pop("commit_options", None)
+                                state.pop("evaluation", None)
+                            else:
+                                # Function commits retain the known conflict only
+                                # while bounded reevaluation remains available.
+                                state["conflict"] = failure
                         self.outbox.write(state)
-                raise CommitConflict(failure) from exc
-            raise  # Ambiguous failure: never replace the durable flight.
-        data, receipt = _ack(result, body, flight, self.identity)
+                raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
+                                     timeline_id=self.timeline_id, project_id=self.project_id) from exc
+            raise CommitOutcomeUnknown(exc, key=flight["key"]) from exc  # Keep the durable flight byte-for-byte retryable.
+        try:
+            data, receipt = _ack(result, body, flight, self.identity)
+        except TimelineEditError as exc:
+            raise CommitOutcomeUnknown(exc, key=flight["key"]) from exc
         with self.outbox.locked():
             state = self._state()
             # A duplicate send may finish after another send acknowledged this
@@ -732,13 +810,49 @@ class TimelineSession:
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)
-        return self._present(result, data, receipt, imports=flight.get('imports', ()))
+        return self._present(result, data, receipt, imports=flight.get('imports', ()),
+                             confirmed=confirmed)
 
-    def _present(self, result, data, receipt, *, imports=()):
+    def _present(self, result, data, receipt, *, imports=(), replayed=False, confirmed=False):
         result = copy.deepcopy(result)
         result["data"] = copy.deepcopy(data)
         if imports:
             result['imports'] = copy.deepcopy(list(imports))
+        status = data.get("status")
+        label = data.get("label", "Timeline edit")
+        receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
+        if replayed and receipt_id:
+            summary = f'Already committed as {receipt_id}; nothing was run or changed now.'
+        elif confirmed and receipt_id:
+            summary = f'Confirmed "{label}" as {receipt_id}; the earlier request was applied once.'
+        elif status == "preview":
+            summary = f'Preview of "{label}": nothing committed or reserved.'
+            if imports:
+                summary += f" Media: {len(imports)} file(s) added to the catalog now; they stay even if you never apply."
+        elif status in {"accepted", "merged", "rebased"} and receipt_id:
+            commands = data.get("commands", [])
+            inverse = commands[0] if commands and isinstance(commands[0], dict) else {}
+            publications = inverse.get("args", {}).get("publications", []) if inverse.get("op") == "timeline.inverse" else []
+            if publications:
+                summary = f'Undid {publications[0]} as {receipt_id}.'
+            else:
+                summary = f'Committed "{label}" as {receipt_id}.'
+                if status in {"merged", "rebased"}:
+                    summary = f'Committed "{label}" as {receipt_id}, combined with newer changes to the timeline.'
+            if imports:
+                summary += f" Media: {len(imports)} file(s) in the catalog; undo keeps them."
+        else:
+            summary = f'Timeline result: {status or "completed"}.'
+        undo = {"publications": [receipt_id]} if receipt_id else None
+        result.update(status=status, receipt=copy.deepcopy(receipt), undo=undo,
+                      summary=summary, replayed=bool(replayed), confirmed=bool(confirmed))
+        result["data"]["summary"] = summary
+        if imports:
+            result["data"]["imports"] = copy.deepcopy(list(imports))
+        result["data"]["replayed"] = bool(replayed)
+        result["data"]["confirmed"] = bool(confirmed)
+        if undo is not None:
+            result["data"]["undo"] = copy.deepcopy(undo)
         if receipt is not None:
             result["data"]["accepted_publication_id"] = receipt["receipt_id"]
             result["data"]["show_command"] = shlex.join([

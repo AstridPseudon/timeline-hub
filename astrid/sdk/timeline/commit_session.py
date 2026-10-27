@@ -22,6 +22,30 @@ def emit_document_commands(before, after):
     return emit(before, after)
 
 
+def _imports_in_commands(commands):
+    """Disclose catalog media referenced by a reviewed fixed command list."""
+    imports, seen = [], set()
+
+    def visit(value):
+        if isinstance(value, Mapping):
+            if all(isinstance(value.get(key), str) and value[key]
+                   for key in ("object_id", "generation_id", "variant_id")):
+                identity = tuple(value[key] for key in ("object_id", "generation_id", "variant_id"))
+                if identity not in seen:
+                    seen.add(identity)
+                    imports.append({"object_id": identity[0], "generation_id": identity[1],
+                                    "variant_id": identity[2], "catalog_write": True,
+                                    "retained_on_undo": True})
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(commands)
+    return imports
+
+
 class Timeline(Checkout):
     """A local edit session whose only publication boundary is ``commit``.
 
@@ -306,6 +330,16 @@ class Timeline(Checkout):
                 return replay
         with self.session.outbox.locked():
             state = self.session._state()
+        rejected = state.get("rejected")
+        rejected_failure = rejected.get("failure") if isinstance(rejected, Mapping) else None
+        rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, Mapping) else None
+        if isinstance(rejected_details, Mapping) and rejected_details.get("status") == "conflict":
+            rejected_eval = rejected.get("evaluation") if isinstance(rejected, Mapping) else None
+            attempts = rejected_eval.get("count") if isinstance(rejected_eval, Mapping) and rejected_eval.get("kind") == "function" else None
+            raise CommitConflict(rejected_failure, attempts=attempts,
+                                 label=label_or_fn if isinstance(label_or_fn, str) else label,
+                                 timeline_id=self.session.timeline_id,
+                                 project_id=self.session.project_id)
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
@@ -324,7 +358,8 @@ class Timeline(Checkout):
                         or self._commands and self._commands != state["pending"]):
                     raise TimelineEditError("local edits differ from the original request; reopen to reconcile it")
                 try:
-                    result = self.session.flush(idempotency_key=idempotency_key, dry_run=dry_run)
+                    result = self.session.flush(idempotency_key=idempotency_key, dry_run=dry_run,
+                                                release_conflict=not function)
                 except CommitConflict as exc:
                     conflict = exc.failure
                     with self.session.outbox.locked():
@@ -335,7 +370,9 @@ class Timeline(Checkout):
             if conflict.get("details", {}).get("status") != "conflict":
                 raise CommitConflict(conflict)
             if not function or evaluation.get("kind") != "function" or count >= 3:
-                raise CommitConflict(conflict)
+                raise CommitConflict(conflict, attempts=count if function and count >= 3 else None,
+                                     label=commit_label, timeline_id=self.session.timeline_id,
+                                     project_id=self.session.project_id)
             base = _pin(conflict["details"]["current"])
         else:
             if not function and state["base"] != self._basis:
@@ -380,6 +417,10 @@ class Timeline(Checkout):
                 )
             except CommitConflict as exc:
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
+                    if function and count >= 3:
+                        raise CommitConflict(exc.failure, attempts=count, label=commit_label,
+                                             timeline_id=self.session.timeline_id,
+                                             project_id=self.session.project_id) from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
@@ -388,6 +429,15 @@ class Timeline(Checkout):
                 continue
             if dry_run:
                 self._add_preview_diff(result, working.bundle)
+            if function and count > 1:
+                result["attempts"] = count
+                result["data"]["attempts"] = count
+                summary = result.get("summary", "")
+                summary_base, separator, media = summary.partition(" Media:")
+                result["summary"] = summary_base.rstrip(".") + f" after re-reading the timeline ({count} attempts)."
+                if separator:
+                    result["summary"] += " Media:" + media
+                result["data"]["summary"] = result["summary"]
             return self._accepted(result)
 
     def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key):
@@ -406,9 +456,24 @@ class Timeline(Checkout):
                      if isinstance(command, Mapping) and command.get("op") == "doc.patch" else [])
             steps.append({"id": f"step-{ordinal + 1}", "label": label, "intent": "", "tags": [],
                           "command_ordinals": [ordinal], "patch": patch})
-        result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=reads,
-                                     idempotency_key=idempotency_key, dry_run=dry_run,
-                                     expected_state=state, base=state["base"])
+        try:
+            result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=reads,
+                                         idempotency_key=idempotency_key, dry_run=dry_run,
+                                         expected_state=state, base=state["base"])
+        except CommitConflict as exc:
+            if exc.failure.get("details", {}).get("status") == "conflict":
+                raise CommitConflict(exc.failure, label=label, fixed_list=True,
+                                     timeline_id=self.session.timeline_id,
+                                     project_id=self.session.project_id) from exc
+            raise
+        if not result.get("imports"):
+            imports = _imports_in_commands(commands)
+            if imports:
+                result["imports"] = imports
+                result["data"]["imports"] = copy.deepcopy(imports)
+                summary = result.get("summary", "")
+                result["summary"] = summary + f" Media: {len(imports)} file(s) in the catalog; undo keeps them."
+                result["data"]["summary"] = result["summary"]
         if dry_run:
             self._add_preview_diff(result, self.bundle)
         return self._accepted(result)

@@ -10,7 +10,6 @@ import argparse
 import copy
 import hashlib
 import json
-import re
 import shlex
 import sys
 from collections.abc import Mapping
@@ -19,7 +18,14 @@ from typing import Any
 
 from astrid.core.cli.domain_output import print_result
 from astrid.packs.timeline.cli_common import (
-    VerbError, clips_changed, draft_name, guard, need_project, working_banner, working_copy, working_copy_view,
+    VerbError,
+    clips_changed,
+    draft_name,
+    guard,
+    need_project,
+    working_banner,
+    working_copy,
+    working_copy_view,
 )
 
 
@@ -104,7 +110,13 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
         elif pending:
             status = {"status": "pending", "command_count": len(pending)}
         elif rejected:
-            status = {"status": "rejected", "command_count": len(rejected["commands"])}
+            failure = rejected.get("failure") if isinstance(rejected, Mapping) else None
+            details = failure.get("details") if isinstance(failure, Mapping) else None
+            known_conflict = isinstance(details, Mapping) and details.get("status") == "conflict"
+            status = {"status": "conflict" if known_conflict else "rejected",
+                      "command_count": len(rejected["commands"]),
+                      **({"outcome": "not_applied", "failure": copy.deepcopy(failure)}
+                         if known_conflict else {})}
         else:
             status = {"status": "clear"}
         if rejected and status["status"] != "rejected":
@@ -282,7 +294,9 @@ def _cmd_lint(parsed: argparse.Namespace) -> int:
 
     for finding in sorted(timeline_findings, key=lambda f: rank.get(f.severity, 3)):
         emit(finding)
-    from astrid.packs.rendering.actions.timeline_visualize.layers.base import checks as registered_checks
+    from astrid.packs.rendering.actions.timeline_visualize.layers.base import (
+        checks as registered_checks,
+    )
 
     ran = sorted(name for name in registered_checks() if name not in set((rules or {}).get("disable") or ())
                  and "frames" not in registered_checks()[name].needs)

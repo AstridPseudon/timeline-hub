@@ -1,6 +1,7 @@
 """Shared constants, the edit error, and small helpers used by every timeline module."""
 from __future__ import annotations
 
+import copy
 import difflib
 import math
 import re
@@ -34,6 +35,30 @@ POSITION_KEYS = frozenset({"x", "y"})
 
 class TimelineEditError(ValueError):
     """An edit that cannot be applied; the message says what to do instead."""
+
+
+class TimelineSelectionError(TimelineEditError):
+    """An ambiguous clip selection with bounded, machine-readable candidates."""
+
+    def __init__(self, query: str, candidates: list[dict[str, Any]], total: int):
+        shown = candidates[:12]
+        more = max(0, total - len(shown))
+        self.headline = f'"{query}" matches {total} clips; nothing was committed'
+        self.detail = "The edit needs exactly one target. Candidates are listed below."
+        self.fix = "Use one of the listed IDs, or narrow with near= or cut=."
+        self.outcome = "not_applied"
+        self.candidates = copy.deepcopy(shown)
+        self.cause = {"code": "ambiguous_ref", "message": self.headline,
+                      "details": {"status": "invalid", "reason": "ambiguous_ref",
+                                  "candidates": copy.deepcopy(shown), "more": more}}
+        self.details = {"status": "invalid", "reason": "ambiguous_ref",
+                        "candidates": copy.deepcopy(shown), "more": more,
+                        "headline": self.headline, "detail": self.detail,
+                        "fix": self.fix, "outcome": self.outcome,
+                        "cause": copy.deepcopy(self.cause)}
+        self.presentation = {key: getattr(self, key) for key in
+                             ("headline", "detail", "fix", "outcome", "cause", "candidates")}
+        super().__init__(f"{self.headline}. {self.fix}")
 
 
 def _media_kind(entry: Mapping[str, Any]) -> str | None:
