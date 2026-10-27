@@ -1,0 +1,7 @@
+Ask: resume the existing H manager when admitted and retain ownership of cancelled service finalization / Owner: Main phase and test service owners / By: next manager pass, 2026-10-27T22:10:07.987145+00:00
+
+Runtime consumed H and D boards this pass. H lead-H-r11 ended exit 0 at 22:07:50Z with BLOCKED, no DONE. Its board now records Main Runtime lane repair GO. diag-rtpin-2235 ended exit 0 and reports targeted29 PASS with Agent 1a407fefad05c498836a25594ed603e9a543705d; Runtime cleared the obsolete pairing-repair blocker. Corrected-pair full Runtime proof remains absent. H owns that service dispatch and phase acceptance; Runtime starts no competing H worker or test.
+
+Existing Agent full H-tests-agent-final-r11-full-1027215222-18987 has CANCELLED present from the supported 22:04 disk stop, but status still says running with no exit or ended marker. This is the same discrepancy already reported at 22:06; no completed exit or full-suite counts are inferred. Main retains service finalization and host recovery. D lead-D-r5 remains active; its board records Main service repair and same-command re-request GO. P START remains absent.
+
+Fresh free disk is 4894040064 bytes. Runtime has zero live workers and no ready source task. Runtime keeps its disk-stop hold and performs no cleanup, retries or new bodies. Delivered archive and raw KEEP evidence remain unchanged. No source, test, generated, pin, hub or Git mutation.
