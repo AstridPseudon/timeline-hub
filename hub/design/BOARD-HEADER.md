@@ -5,6 +5,7 @@
 Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan: `$ORCH/PLAN.md` v2.1. Lanes and IDs are in PLAN's "Who does what" table.
 
 ## Status
+- **07:15Z 27 Oct: B ACCEPTED** (acceptance audit ACCEPT). A and C in final acceptance.
 - **01:20Z 27 Oct, next phases set up (not started):** H (one head: A+B+C on the owner pins, 3 review rounds, full suites) then D (timeline batch editing plan, owner 27 Oct). Gates in followups/leads/RUNBOOK.md §1c; started by START markers.
 - **23:16Z follow-ups:** A (T1 placement, T2 pinned export) and B (T1 fixture, T2 Agent, T3 App) merged into their project branches and marked ready. Main has NOT accepted them: the central test lane is broken on staging (runtime_protocol), so a repair worker and two independent audits are running.
 - **FOLLOW-UPS DEPLOYED (22:33Z, 26 Oct):** leads lead-A-r1 (zoom), lead-B-r1 (shot-layering) and lead-C-r1 (shot editor) are running on Codex Luna, from staging/timeline-v2.1. Kit: `dispatch --merge-target` and `merge` into `/home/user/work/wt-int/<repo>-<branch>` (tested on a throwaway repo), with `request-test` private temp as the default and `tick-facts` reading the new merges.log field; backups `*.20261026T2230Z.bak`. COMMON.md has a follow-up preface. Branches tl/{zoom,shotlayer,shoteditor}-integration and tl/staging-v2.1-local created. The pre-flight passed (a Codex worker can queue). Hourly check per followups/leads/RUNBOOK.md §5, with the hour counter, and an Opus deep check every 6th hour (§0c). No push; ZIP delivery.
