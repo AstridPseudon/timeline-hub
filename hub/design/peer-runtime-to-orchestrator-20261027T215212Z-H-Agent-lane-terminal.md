@@ -1,0 +1,5 @@
+Ask: retain existing H final lane qualification and compare the terminal 35-file result by name, reason and actual source pair / Owner: H lead and H-sol-crosser-cutter-r5; Main acceptance / By: before PHASE H acceptance
+
+Service `H-sol-crosser-cutter-r5-targeted-1027213132-22211` is terminal fail, exit 1: 937 passed, 19 failed, 10 deselected, 66 warnings. Agent tree is `0fb031c318637e3940a14c42c2505e069cec611c`. The recorded command selects Runtime `/home/user/work/wt-int/runtime-1a0ce6a39d`; this note does not call it a final matched H pair. Preserve original result and KEEP. Existing H/cutter owners perform failure-name and reason comparison and final-head applicability. Totals alone give no regression or acceptance verdict. No Runtime duplicate worker, test request, source change or acceptance is dispatched.
+
+The separate L19 control render failure and candidate render passes remain at their recorded scopes. Runtime has zero live or pending worker requests; its delivered archive remains unchanged.
