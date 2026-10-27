@@ -530,9 +530,9 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
             return replay
 
         try:
+            from .timeline._command_state import equal
             from .timeline._common import TimelineEditError
             from .timeline.commands import execute
-            from .timeline._command_state import equal, present
             from .timeline.native_initialize import capture_initialize
             from .timeline.sync import CommitConflict, TimelineSession
 
@@ -587,35 +587,93 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 }
             authored_config.setdefault("output", default_output)
             authored_config.setdefault("clips", [])
-            # Creation already guards the entire pristine timeline atomically.
-            # Install its initial config as one observed value, including any
-            # explicit track choice, rather than emitting member removals.
+            from astrid.core.timeline.authoring_bundle import _collect_media
+
+            media_inputs = [
+                {"pin": {"media_id": media_id, "content_digest": media_id}}
+                for media_id in sorted(_collect_media(authored_config))
+            ]
+            # These values allow the local command capture to validate its
+            # references. Runtime independently re-reads each pin through
+            # raw_media_info before evaluating this request.
+            verified_media = [
+                {"object_id": value["pin"]["media_id"], "pin": value["pin"]}
+                for value in media_inputs
+            ]
+            if media_inputs:
+                commands.append({
+                    "schema_version": 1, "op": "media.admit", "version": "1",
+                    "select": None, "args": {"inputs": media_inputs},
+                })
+            initialization_command_end = len(commands)
+            # Creation guards the pristine timeline atomically. Apply only the
+            # caller's config differences, preserving explicit empty choices.
             initial_config = initialized["parent"]["config"]
             if not equal(initial_config, authored_config):
+                # Field patches preserve Runtime's clip/registry mirror
+                # projection. Derive IDs through the provider's allocation audit.
+                from .timeline._doc_patch import allocations, apply_change, value_at
+
+                before_parent = initialized["parent"]
+                after_parent = copy.deepcopy(before_parent)
+                changes = []
+                created = []
+                field_order = {"tracks": 0, "clips": 1}
+                fields = sorted(
+                    initial_config.keys() | authored_config.keys(),
+                    key=lambda field: (field_order.get(field, 2), field),
+                )
+                for field in fields:
+                    if field in initial_config and field in authored_config and equal(
+                        initial_config[field], authored_config[field]
+                    ):
+                        continue
+                    change = {
+                        "op": "set" if field in authored_config else "remove",
+                        "ref": "parent",
+                        "path": ["config", field],
+                        "before": value_at(before_parent, "parent", ["config", field]),
+                    }
+                    if field in authored_config:
+                        change["value"] = copy.deepcopy(authored_config[field])
+                    before_change_parent = after_parent
+                    next_parent, _ = apply_change(
+                        copy.deepcopy(after_parent), change, physical="parent",
+                    )
+                    created.extend(item["ref"] for item in allocations(
+                        None, "parent", before_change_parent, next_parent,
+                    ))
+                    changes.append(change)
+                    after_parent = next_parent
                 commands.append({
                     "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
-                    "args": {"changes": [{
-                        "op": "set", "ref": "parent", "path": ["config"],
-                        "before": present(copy.deepcopy(initial_config)), "value": authored_config,
-                    }]},
+                    "args": {"changes": changes},
+                    "created": created,
                 })
+            config_command_end = len(commands)
             label = "Create empty timeline"
             timeline_scope_read = [{"kind": "scope", "ref": "timeline", "path": []}]
             steps = [{
                 "id": "initialize", "label": label, "intent": label, "tags": [],
-                "command_ordinals": [0], "patch": [], "reads": copy.deepcopy(timeline_scope_read),
+                "command_ordinals": list(range(initialization_command_end)), "patch": [],
+                "reads": copy.deepcopy(timeline_scope_read),
             }]
-            if len(commands) > 1:
+            if config_command_end > initialization_command_end:
+                config_ordinals = list(range(initialization_command_end, config_command_end))
                 steps.append({
                     "id": "config", "label": label, "intent": label, "tags": [],
-                    "command_ordinals": list(range(1, len(commands))),
-                    "patch": [copy.deepcopy(change) for command in commands[1:]
-                              for change in command["args"]["changes"]],
+                    "command_ordinals": config_ordinals,
+                    "patch": [
+                        copy.deepcopy(change)
+                        for command in commands[initialization_command_end:config_command_end]
+                        if command["op"] == "doc.patch"
+                        for change in command["args"]["changes"]
+                    ],
                     "reads": copy.deepcopy(timeline_scope_read),
                 })
             result = session.commit_many(
                 commands, idempotency_key=init_key, label=label, steps=steps,
-                merge="atomic", reads=[],
+                merge="atomic", reads=[], verified_media=verified_media,
             )
             return self._native_empty_result(project_id, timeline_key, name, result, key)
         except CommitConflict as exc:
