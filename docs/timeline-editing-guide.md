@@ -55,9 +55,8 @@ refuses and lists them; pass the exact id from `show`.
 `timelines history <timeline> --project <project> --json` lists commits newest
 first in `data.revisions`. Each row's `message` is the commit label,
 `publication_id` is the same id a commit returns as `receipt["receipt_id"]`
-(what undo takes), `created_at` its time, and `source` says where it came
-from: `python` for `tl.commit`, `app` for the editor. To undo a known edit
-whose receipt you lost, find its label there. When `data.complete` is false,
+(what undo takes) and `created_at` its time. To undo a known edit whose
+receipt you lost, find its label there. When `data.complete` is false,
 Runtime could list only the head.
 
 ## The four owner cases
@@ -99,22 +98,20 @@ r = tl.commit(preview["data"]["commands"], label="Recut")
 ```
 
 Case 1 imports up to twenty files and case 3 imports two; the imports are
-listed in a preview and survive undo. With no `track`, `t.add` puts picture on
-`V1` and audio on the first audio track (`A1` if there is none). It creates a
-missing track once, as an audio or a picture track to match the verified
-file; an existing track of the wrong kind refuses.
+listed in a preview and survive undo. Name the `track` for `t.add`: it
+creates a missing track once, as an audio or a picture track to match the
+verified file; an existing track of the wrong kind refuses.
 
 ## Helpers
 
 - **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio, at `at`
-  timeline seconds. `hold=N` holds a still for N seconds and plays source
-  seconds 0–N of a video or audio file; without `hold` a video or audio file
-  plays its verified duration. `.trim(in, out)` then sets the source window.
+  timeline seconds. `hold=N` holds a still for N seconds; without `hold` a
+  video or audio file plays its verified duration. `.trim(in, out)` then sets
+  the source window.
 - **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
   timeline seconds for `hold` seconds.
-- **`t.track(id, above=)`**, **`.rename(label)`**: create a track or select
-  the existing one (never a second), and label it. `above=` places the track,
-  new or existing, above that track.
+- **`t.track(id, above=)`**, **`.rename(label)`**: create a track (above
+  `above`) or select the existing one (never a second), and label it.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
   timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
   literal length on any clip; on video or audio the source window keeps its

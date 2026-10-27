@@ -26,8 +26,8 @@ runtime owns every timeline and revision; change them only through the CLI or
   window**: the seconds of the file it plays.
 - A narrated film also has **cuts**, **shot occurrences** (`occurrence_id`)
   and spoken **words** with times. A flat timeline has only clips.
-- **One accepted commit is one undo**: one revision, one receipt.
-- **Nothing moves unless you say so**: ripple is its own explicit call.
+- **One accepted commit is one undo** (one revision, one receipt), and
+  **nothing moves unless you say so**: ripple is its own explicit call.
 
 ## Pick one path
 
@@ -53,9 +53,8 @@ python3 -m astrid timelines history <timeline> --project <project> --json
 Name a timeline by the slug or id that `list` prints, never by a title you
 guessed; pass `--project` whenever more than one project exists. `show` lists
 clip ids, tracks, times and source windows. `history --json` lists commits
-newest first in `data.revisions`: `message` is the commit's label,
-`publication_id` is the same id as that commit's `receipt_id`, and `source` is
-`python` for `tl.commit` and `app` for the editor. In Python:
+newest first in `data.revisions`: `message` is the commit's label and
+`publication_id` is the same id as that commit's `receipt_id`. In Python:
 
 ```python
 from astrid.sdk.timeline.api import CommitConflict, Timeline, TimelineEditError
@@ -77,7 +76,8 @@ occurrences = [p["occurrence_id"] for p in tl.bundle["placements"]]
 ## Edit with a function
 
 A function receives a fresh copy of the timeline and changes it in ordinary
-Python. Everything it does becomes **one commit**; if it raises, nothing is.
+Python. Everything it does becomes **one commit**; if it raises, nothing is
+committed.
 
 ```python
 def tighten_intro(t):
@@ -102,7 +102,7 @@ after `commit` returns.
 |---|---|
 | `t.add(path, at=, hold=, track=, id=)` | Imports a local image, video or audio file (relative to the working directory) and places it. See the note below |
 | `t.add_text(text, at=, hold=, track="titles", id=)` | Places a plain text clip at `at` timeline seconds for `hold` seconds |
-| `t.track("titles", above="V2")` | Creates that track or selects the existing one (never a second); `above=` puts it, new or existing, above that track; `.rename("Opening")` labels it |
+| `t.track("titles", above="V2")` | Creates that track above `V2`, or selects the existing one (never a second); `.rename("Opening")` labels it |
 | `clip.on(seconds)` | Moves the start to that timeline time; the length stays. See the note below |
 | `clip.trim(in_s, out_s)` | Sets the source window in **file** seconds; the start stays, the length follows |
 | `clip.hold_for(seconds)` | Sets a literal length; on video or audio the source window keeps its in-point and refuses a length the file cannot fill |
@@ -120,13 +120,11 @@ film the clip belongs to a cut, so the time is stored relative to that cut's
 start and the clip moves with the cut if the narration is re-flowed. To follow
 a word instead, give a moment string (below).
 
-**`t.add`:** `at` is timeline seconds. `hold=N` gives a still N seconds and
-plays seconds 0–N of a video or audio file; no `hold` plays the whole file.
-With no `track`, picture goes to `V1` and audio to the first audio track (else
-`A1`). A missing track is created as audio or picture to match the file; an
-existing track of the wrong kind refuses. Helpers chain:
-`t.add("a.mp4", at=0, track="V1", id="a").trim(0, 4)`; give new clips an
-explicit `id` so later steps and reports can name them.
+**`t.add`:** `at` is timeline seconds; `hold=N` gives a still N seconds, and
+a video or audio file without `hold` plays whole. Name the `track`: a missing
+one is created to match the file, a track of the wrong kind refuses. Helpers
+chain, `t.add("a.mp4", at=0, track="V1", id="a").trim(0, 4)`; give new clips
+an explicit `id` so later steps and reports can name them.
 
 ### Words and beats
 
@@ -190,7 +188,7 @@ Runtime merges changes that do not touch the same things (`status` is then
   a function's third clash. Do not retry on your own; tell the person which
   edit did not land, then run `timelines discard <timeline> --project
   <project>` (the refused changes stay saved) before you edit or preview again.
-- Say what happened: "applied after one rerun because the timeline moved".
+  Say what happened: "applied after one rerun because the timeline moved".
 
 ## Keys, retries and undo
 
@@ -284,8 +282,7 @@ the person asks for frames or a render, give them the editor link
 (`https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`)
 and the times to check, and say the look is unverified.
 
-<!-- Waiting for project P: its perception guidance replaces this section.
-Frame commands are in references/render-inspect-transfer.md until then. -->
+<!-- Project P's perception guidance replaces this section; frame commands are in references/render-inspect-transfer.md until then. -->
 
 ## Not possible yet
 
@@ -294,8 +291,7 @@ Frame commands are in references/render-inspect-transfer.md until then. -->
 - Grouping existing clips into a new shot (beyond `timelines restructure`).
 - A commit or undo across several timelines; loop per timeline.
 - Aspect-ratio variants: a copy keeps the master's canvas.
-- Split except at an interior point of plain parent media with no moment
-  anchors, animation or transitions.
+- Split except at an interior point of plain parent media (no moment anchors, animation or transitions).
 - A portable change file for the CLI; previews and lists are Python only.
 - One call that creates a timeline with content: `timelines create`, then commit.
 - Finding content by what it shows: get asset keys from an understanding tool, then `t.clips(asset=...)`.
