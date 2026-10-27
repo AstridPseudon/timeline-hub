@@ -133,6 +133,28 @@ def test_declared_allocation_and_retired_reservation_remain_exact(runtime):
     assert restored["data"]["canonical_document"] == created["data"]["canonical_document"]
 
 
+def test_rejected_allocation_does_not_reserve_identity_but_accepted_identity_does(runtime):
+    call = command()
+    rejected = {**call, "created": ["parent/track:other-track"]}
+    before = snapshot(runtime)
+    with pytest.raises(RuntimeErrorBase) as error:
+        commit(runtime, body(runtime, rejected), key="rejected-track")
+    assert error.value.details is not None and error.value.details["reason"] == "capture_mismatch"
+    assert snapshot(runtime) == before
+
+    accepted = {**call, "created": ["parent/track:stable-track"]}
+    accepted_body = body(runtime, accepted)
+    created = commit(runtime, accepted_body, key="accepted-track")
+    assert commit(runtime, accepted_body, key="accepted-track") == created
+    inverse = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+               "args": {"publications": [created["receipt"]["receipt_id"]]}}
+    commit(runtime, body(runtime, inverse), key="undo-accepted-track")
+
+    with pytest.raises(RuntimeErrorBase) as collision:
+        commit(runtime, body(runtime, accepted), key="retired-accepted-track")
+    assert collision.value.details is not None and collision.value.details["reason"] == "identity_collision"
+
+
 def claim_case():
     call = command()
     ref = "parent/track:stable-track"
