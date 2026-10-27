@@ -3520,10 +3520,20 @@
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/clipType"
             },
             "effects": {
-              "items": {
-                "$ref": "#/$defs/OpenMap"
-              },
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/OpenMap"
+                  },
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {
+                    "type": "number"
+                  },
+                  "type": "object"
+                }
+              ]
             },
             "id": {
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/id"

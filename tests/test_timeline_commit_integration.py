@@ -235,6 +235,74 @@ def rows(service):
     return tuple(service.store.conn.iterdump())
 
 
+def _commit_visual_field(editing, field, value, key, *, use_agent_setter=True):
+    from astrid.core.timeline.clip_fields import write
+    from astrid.sdk.timeline._command_state import present
+
+    document = editing.document()
+    before_clips = copy.deepcopy(document["parent_revision"]["payload"]["clips"])
+    after_clips = copy.deepcopy(before_clips)
+    target = next(clip for clip in after_clips if clip["id"] == "music-bed")
+    if field in ("entrance", "exit", "transition") and use_agent_setter:
+        write(target, field, copy.deepcopy(value), fps=24)
+        expected = copy.deepcopy(target[field])
+    else:
+        target[field] = copy.deepcopy(value)
+        expected = copy.deepcopy(value)
+    change = {"op": "set", "ref": "parent", "path": ["clips"],
+              "before": present(before_clips), "value": after_clips}
+    command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    body = editing.body([command])
+    body["steps"][0]["patch"] = [change]
+    accepted = editing.commit(body, key)
+    editing.assert_readback(accepted)
+    stored = next(clip for clip in accepted["data"]["canonical_document"]["parent_revision"]["payload"]["clips"]
+                  if clip["id"] == "music-bed")
+    assert stored[field] == expected
+    return accepted
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrance", {"id": "fade-up", "durationFrames": 12, "params": {"easing": "out"}}),
+    ("exit", {"id": "slide-up", "durationFrames": 8}),
+    ("transition", {"id": "cross-fade", "durationFrames": 10}),
+    ("effects", {"fade_in": 0.25, "fade_out": 0.5}),
+    ("effects", [{"fade_in": 0.25}, {"fade_out": 0.5}]),
+])
+def test_agent_written_visual_fields_validate_and_read_back_from_published_revision(editing, field, value):
+    _commit_visual_field(editing, field, value, "visual-field-" + field + "-" + str(type(value).__name__))
+
+
+@pytest.mark.parametrize("field,value", [
+    ("entrance", {"type": "fade", "duration": 0.5}),
+    ("exit", {"type": "fade", "duration": 0.25}),
+    ("transition", {"type": "crossfade", "duration": 0.4}),
+])
+def test_drawable_legacy_visual_fields_survive_publication_readback(editing, field, value):
+    _commit_visual_field(editing, field, value, "legacy-visual-field-" + field, use_agent_setter=False)
+
+
+def test_agent_provider_refuses_top_level_type_on_without_publication(editing):
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase, match="type-on cannot draw as a top-level clip animation"):
+        _commit_visual_field(editing, "entrance", {"id": "type-on", "durationFrames": 48},
+                             "unsupported-top-level-type-on", use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
+def test_agent_provider_refuses_animation_in_unsupported_phase_without_publication(editing):
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase, match="animation 'slide-up' is not supported for entrance"):
+        _commit_visual_field(editing, "entrance", {"id": "slide-up", "durationFrames": 12},
+                             "unsupported-animation-phase", use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
 def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     base, document = editing.head(), editing.document()
     first_body = editing.body([editing.move("music-bed", 1, document=document)], base)
@@ -268,39 +336,6 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     assert original["writes"] and original["reads"] and original["bindings"]
     assert original["selections"] and original["dependencies"]
     editing.assert_baseline()
-
-
-def test_visual_candidate_is_refused_before_publication_when_builtin_phase_is_unsupported(editing, monkeypatch):
-    from runtime_protocol.timeline_commit_auth import _authoring_parent_identity, images
-    from runtime_protocol.timeline_commit_port import RequestCommitPort
-    from runtime_protocol.timeline_commit_validation import digest
-
-    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
-    accept = RequestCommitPort.accept
-
-    def add_unsupported_visual_ref(port, prepared):
-        candidate = copy.deepcopy(prepared)
-        document = candidate["canonical_document"]
-        payload = document["parent_revision"]["payload"]
-        target = next(clip for clip in payload["clips"] if clip["id"] == "music-bed")
-        target["entrance"] = {"id": "slide-up", "durationFrames": 12}
-        mirror = next(clip for clip in payload["config"]["clips"] if clip["id"] == "music-bed")
-        mirror["entrance"] = {"id": "slide-up", "durationFrames": 12}
-        document["parent_revision"]["content_digest"] = digest(payload)
-        document["parent_revision"]["revision_id"] = _authoring_parent_identity(
-            images(document), (document["project_id"], document["timeline_id"]),
-            document["dependency_manifest"],
-        )
-        candidate["document_digest"] = digest(document)
-        return accept(port, candidate)
-
-    monkeypatch.setattr(RequestCommitPort, "accept", add_unsupported_visual_ref)
-    with pytest.raises(RuntimeErrorBase, match="not supported in entrance"):
-        editing.commit(editing.body([editing.move("music-bed", 1)]), "unsupported-visual-ref")
-
-    assert editing.head() == before_head
-    assert editing.history() == before_history
-    assert rows(editing.service) == before_rows
 
 
 @pytest.mark.parametrize("deleted_index", [0, -1])
