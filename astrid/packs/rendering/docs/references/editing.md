@@ -91,12 +91,13 @@ document commit accepts them.
 timelines edit TL --project P --clip c30.cover --until Astrid   # symbolic moments edit a detached working copy
 ```
 ```python
-from astrid.sdk import timeline
-tl = timeline.open("P", "TL", client=client)
-tl.move("parent/clip:c30-cover", 33.9)
-result = tl.commit("Move clip", idempotency_key="move-42")
+from astrid.sdk.timeline.api import Timeline
+tl = Timeline.open("P", "TL")
+result = tl.commit(lambda t: t.clip("c30.cover").until("Astrid"),
+                   label="Cover until Astrid", idempotency_key="cover-42")
 ```
 
+Python functions are the taught edit path; see the [editing skill](../SKILL.md).
 The detached `Checkout` surface below edits the local copy. Save an explicit
 candidate, then commit it through Runtime:
 
@@ -119,12 +120,11 @@ file/key for a retry.
 
 ## Python: the method table
 ```
-session = TimelineSession.open(P, TL, client=client)
-session.move("parent/clip:c30-cover", 33.9, idempotency_key="move-42")
-session.trim("parent/clip:c30-cover", out_s=3.0, idempotency_key="trim-42")
-session.commit(command, idempotency_key="command-42")
-session.commit_many(commands, idempotency_key="batch-42")
-session.undo([publication_id], idempotency_key="undo-42")
+tl = Timeline.open(P, TL)
+tl.commit(fn, label="…", idempotency_key="edit-42")          # one commit, reruns on a clash
+tl.commit(fn, label="…", dry_run=True)                       # preview: data.commands + data.diff
+tl.commit(preview["data"]["commands"], label="…")            # apply the reviewed list exactly
+tl.undo(publications=[receipt_id], idempotency_key="undo-42")
 
 # Read/check methods remain projection operations:
 tl = Checkout.draft(P, TL)   tl.find("the conclusion")  tl.time('end of c30')  tl.words()
@@ -158,8 +158,9 @@ moves an orphaned cut's picture to a new moment, `--clip X --on …` one layer, 
 `--remove` drops it.
 
 **What sets the film's length:** the end of its last cut (`Checkout.duration` is the latest cut end). The music bed
-is one clip and does NOT follow a ripple: after a removal it can end before the film (the re-flow report then says
-`music: the bed ends at …`). Fix it with `for` in the `sound` section (a known gap, below).
+follows the re-flow's music policy: `keep-end` (default) cuts it at a bar with a crossfade so it still ends with the
+film; `plays-on` (`--music plays-on`, Python `music="plays_on"`) leaves it whole, so after a removal it can end
+before the film (the re-flow report then says `music: the bed ends at …`). Fix that with `for` in the `sound` section.
 
 The native session never overwrites a change published after its original
 capture: Runtime rebases disjoint commands and refuses real clashes. Its outbox
@@ -174,6 +175,6 @@ shows only lint that is new since checkout (`--all` for everything).
 > - No fade-in or entrance on our elements yet. The cookbook's `effects.fade_in` applies only to legacy `local` elements.
 > - Extending the film's content does not extend its rendered length yet, and `check` still says VALID. Look at the
 >   new end with `check TL --at <end>`: "out of range" means it does not render.
-> - The music bed does not follow a ripple (see above).
+> - With `plays-on`, the music bed does not follow a ripple (see above).
 > - `check --at` and `--verify` can be slow or fail ("frame owner closed"). Retry once; if it fails again, say so
 >   and do not publish a change you have not seen.
