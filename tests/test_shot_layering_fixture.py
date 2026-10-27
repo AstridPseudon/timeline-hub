@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "conformance/fixtures/shot-layering-v1.json"
+FIXTURE_SHA256 = "7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56"
 REQUIRED_CASES = {
     "film-picture-over-type",
     "loose-above-shot",
@@ -90,6 +92,7 @@ def _assert_canonical_input(case: dict[str, Any]) -> None:
 def test_shared_shot_layering_fixture_is_valid_and_complete() -> None:
     fixture = load_shot_layering_fixture()
 
+    assert hashlib.sha256(FIXTURE.read_bytes()).hexdigest() == FIXTURE_SHA256
     assert fixture["$schema"] == "timeline.shot-layering/v1"
     assert fixture["schema_version"] == 1
     _assert_no_unknown(fixture)
