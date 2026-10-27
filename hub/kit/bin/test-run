@@ -8,6 +8,7 @@ SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
 bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
 alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+alive_render() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 "$(cat "$r")" 2>/dev/null && grep -Eq '^suite=(render-proof|pinned-element-render)$' "${r%running}request" 2>/dev/null && echo x; done | wc -l; }
 finalize_stale_run() {
   local stale_dir=$1 stale_id=${1##*/} pid rc=125 st=error target repo suite tree key
   [ "$(cat "$stale_dir/status" 2>/dev/null)" = running ] || return
@@ -108,7 +109,7 @@ if [ -z "$RUN" ]; then
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
   KIT_KEY=
   case "$suite" in browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
-    KIT_KEY=$(sha256sum "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
+    KIT_KEY=$(sha256sum "$SELF_DIR/test-run" "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
     KIT_KEY+=$(for dependency in agent runtime; do git -C /home/user/work/$dependency rev-parse HEAD; done)
     ;;
   esac
@@ -120,7 +121,14 @@ if [ -z "$RUN" ]; then
     cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
     basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
   [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
-  [ $HV = heavy ] && [ $(alive heavy) -ge 2 ] && { echo "2 heavy runs already running (owner 27 Oct 12:10Z: parallel heavy runs; 2 fit the disk)" | tee $D/why; exit 3; }
+  if [ "$HV" = heavy ]; then
+    if [ "$suite" = render-proof ] || [ "$suite" = pinned-element-render ]; then
+      [ "$(alive heavy)" -eq 0 ] || { echo "render lanes wait for other heavy runs (process custody needs an isolated heavy slot)" | tee "$D/why"; exit 3; }
+    else
+      [ "$(alive_render)" -eq 0 ] || { echo "render lane already owns the isolated heavy slot" | tee "$D/why"; exit 3; }
+      [ "$(alive heavy)" -lt 2 ] || { echo "2 heavy runs already running (owner 27 Oct 12:10Z: parallel heavy runs; 2 fit the disk)" | tee "$D/why"; exit 3; }
+    fi
+  fi
   [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
   # 27 Oct 00:00Z (owner: "let it go right to the wire"): floors cut to what a run physically needs to finish; light 1.0 GB, heavy 2.0 GB (an App verify peaks at ~1.8 GB)
   FLOOR_BYTES=1000000000; if [ "$HV" = heavy ]; then FLOOR_BYTES=2000000000; [ "$suite" = agent-core-full ] && FLOOR_BYTES=2000000000; fi
