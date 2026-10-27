@@ -142,16 +142,17 @@ def test_config_patch_must_declare_exact_created_ids():
         "id": "voice-clip", "track": "voice", "clipType": "audio", "at": 1,
         "hold": 1, "params": {},
     }]
+    after_config["registry"] = {"assets": {"voice-asset": {"type": "audio/wav"}}}
     change = {"op": "set", "ref": "parent", "path": ["config"],
               "before": {"state": "present", "value": before_config}, "value": after_config}
-    expected = ["parent/track:voice", "parent/clip:voice-clip"]
+    expected = ["parent/track:voice", "parent/clip:voice-clip", "parent/asset:voice-asset"]
 
     command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
                "args": {"changes": [change]}, "created": expected}
     plan = execute(bundle, [command])
     assert plan.commands[0]["created"] == expected
 
-    for forged in (None, [], [*expected, "parent/track:forged"]):
+    for forged in (None, [], [*expected, "parent/track:forged"], expected[:-1]):
         bad = copy.deepcopy(command)
         if forged is None:
             bad.pop("created")
@@ -159,3 +160,34 @@ def test_config_patch_must_declare_exact_created_ids():
             bad["created"] = forged
         with pytest.raises(TimelineEditError, match="declare every created identity"):
             execute(bundle, [bad])
+
+
+def test_native_create_replay_returns_the_original_create_with_content_receipt(monkeypatch):
+    created_ids = ["parent/track:voice", "parent/clip:voice-clip", "parent/asset:voice-asset"]
+    receipt = {
+        "idempotency_key": "create-content-head",
+        "command_kind": "timeline.commit",
+        "result": {"commands": [
+            {"op": "timeline.init"},
+            {"op": "doc.patch", "created": created_ids},
+        ]},
+    }
+    client = RemoteTimelines(SimpleNamespace())
+    monkeypatch.setattr(client, "_typed", lambda *args, **kwargs: SimpleNamespace(
+        ok=True, data={"items": [{"receipt": receipt}], "next_cursor": None}, error=None,
+    ))
+    seen = {}
+
+    def result(project_id, timeline_id, name, replay, result_key):
+        seen.update(project_id=project_id, timeline_id=timeline_id, name=name,
+                    replay=replay, result_key=result_key)
+        return "replayed"
+
+    monkeypatch.setattr(RemoteTimelines, "_native_empty_result", staticmethod(result))
+
+    assert client._native_empty_replay("project", "film", "create-content-head", "create-content") == "replayed"
+    assert seen == {
+        "project_id": "project", "timeline_id": "film", "name": None,
+        "replay": {"data": receipt["result"], "receipt": receipt},
+        "result_key": "create-content",
+    }
