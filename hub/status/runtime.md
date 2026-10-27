@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T05:20:17Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T05:15:13.743555+00:00
+<!-- main | 2026-10-27T05:30:39Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T05:29:38.521505+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,16 +104,16 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive measured central sampler | C Sol and Luna | Independent central sampler review | merged | C-C3-runtime-sampler-8; review PASS | Central 2349: 1 PASS, five saves and durable replays. Total 183–264 ms. Synthetic fixture does not justify optimizing the reported 20 seconds. | Runtime 0e238fa008 |
 
-| C2 B forward | Receive B ancestry and recovery repair | C and B Luna | B recovery fix and current tips | blocked:B | B-recovery-sanitize-9; C forward10 and review | B recovery author active. C App forward active; Runtime forward done with review active. Final B recovery adoption and C acceptance remain open. | Project branches |
+| C2 B forward | Receive B ancestry and recovery repair | C and B Luna | B recovery fix and current tips | blocked:B | B-recovery-sanitize-9; C forward10 and review | B recovery remains active. C App forward10 and Runtime review own receiving; final B recovery adoption and C acceptance remain open. | Project branches |
 
 | C2 save and fork | Retain bounded provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Central58 PASS retained. Browser new-track drop422 remains open under Main correction; source tests do not qualify that live path. | App98784a1d |
 
-| C2 browser journey | Retain historical browser run with correction | C Luna and Main | Restore meaningful assertion | review | C-C2-browser-adjust-9; Main corrections | Original author23909 and reviewer29959 PASS retained. Main finds weakened main-timeline assertion; C must restore it and rerun. No current C2 acceptance. | App26d9f9eb45 |
+| C2 browser journey | Review restored browser assertion | C Luna and reviewer | Meaningful parent-timeline assertion | review | C-C2-assertion-fix-10; C-review-C2-assertion-fix-10 | Author browser1 PASS; harness125 on trace validation. Independent review pending. Historical23909 and29959 remain original; no current C2 acceptance. | Private C candidate |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
 | B5 visual parity | Receive projection export proof | B Sol and Luna | Main05:12 bounded acceptance scope | doing | B-agent-export-proof-9; fixture c298029 reviewed | Fixture pin merged with central4 PASS. Real Agent export and staging conformance remain owed; Main excludes small renderer pixel differences from B. | B branches |
 
-| C2 safety and new track | Receive recorded browser repair scope | C Luna and Main | B recovery fix first | blocked:C | Existing C lead | Main authorizes provider new-track handling after B, meaningful parent-timeline assertion, nonmodal safety and full App staging comparison. | No Runtime change |
+| C2 safety and new track | Receive active browser corrections | C Luna | B recovery and forward; Main04:40 scope | doing | C-C2-new-track-10; C-C2-modal-safety-10 | Two authors active05:22. Durable new-track save or clear refusal and parent safety remain unqualified; full App comparison follows product corrections. | Private C candidates |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -133,7 +133,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: A owns the real pinned-element proof; Main cleared the old lane blocker. B owns recovery normalization, real Agent export and staging comparison. C owns assertion, new-track and parent-safety corrections after B. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 4403580928 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Last sweep and compact completed04:59; current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5020569600 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Last sweep and compact completed 04:59 with no reclamation. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -144,4 +144,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T05:15:13.743555+00:00. Inbox and HEADER unchanged; current RUNBOOK, PIPELINE and A B C boards consumed. Runtime census 2717 has no live worker or changed row. B fixture pin is independently reviewed, merged and central4 PASS; B recovery/export and C assertion/forward corrections remain with original leads. A owns actual pinned-element proof. H/D/P START absent. No eligible Runtime recycle or ready Runtime task. [Pass evidence](rounds/20261027T051513Z-pass.json).
+Current pass: 2026-10-27T05:29:38.521505+00:00. INBOX, HEADER and A B C boards unchanged since the previous pass. Runtime census: 2717 rows, no running worker or changed row. A owns actual pinned-element proof; B owns recovery and real export; C owns assertion, new-track and parent-safety corrections. H, D and P START markers absent. No ready Runtime task or eligible recycle. KEEP and dirty trees preserved. [Pass evidence](rounds/20261027T052846Z-pass.json).
