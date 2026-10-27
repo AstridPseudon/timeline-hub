@@ -141,26 +141,30 @@ def test_sprite_registered_ssr_preserves_drawing(sprite_ssr, tmp_path):
 
 
 def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr, tmp_path):
-    flat = flat_film()
-    params = {"x": 12, "y": 20, "flipX": False, "stepFrames": 2,
-              "keyframes": [{"frame": 2, "x": 14, "y": 20}, {"frame": 8, "x": 18, "y": 22},
-                            {"frame": 40, "x": 24, "y": 22, "flipX": True}],
-              "enter": "slideIn", "slideFrom": "left", "blinkAt": [48, 90],
-              "silhouette": {"until": 100}, "outline": {"px": 1, "pulse": 6}}
-    original = sprite(params, at=3.5, hold=5.0, id="sprite-seam")
-    flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
-    chapters = plan(flat).chapters
-    pieces = []
-    for chapter in chapters:
-        for clip in chapter.clips:
-            if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "sprite-seam":
-                piece = copy.deepcopy(clip)
-                piece["at"] += chapter.start_ms / 1000
-                pieces.append(piece)
-    before = prepared_props(tmp_path, [original], {"R": asset()})
-    after = prepared_props(tmp_path, pieces, {"R": asset()})
-    frames = list(range(105, 255))
-    assert sprite_ssr(before, frames) == sprite_ssr(after, frames)
+    cases = [(speed, step, enter) for speed in (.5, 1.5, 2.0) for step in (2, 3)
+             for enter in ("stamp", "slideIn")]
+    for case_index, (speed, step, enter) in enumerate(cases):
+        flat = flat_film()
+        params = {"x": 12, "y": 20, "flipX": False, "stepFrames": step, "frameOffset": 3,
+                  "keyframes": [{"frame": 2, "x": 14, "y": 20}, {"frame": 8, "x": 18, "y": 22},
+                                {"frame": 17, "y": 25}, {"frame": 40, "x": 24, "y": 22, "flipX": True}],
+                  "enter": enter, "slideFrom": "left", "blinkAt": [14, 15, 90],
+                  "frames": {"frameWidth": 8, "frameHeight": 16, "count": 4, "fps": 12,
+                             "sequence": [0, 2, 1, 3]},
+                  "silhouette": {"until": 100}, "outline": {"px": 1, "pulse": 6}}
+        original = sprite(params, at=3.5, hold=5.0, id=f"sprite-seam-{case_index}", speed=speed)
+        flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+        chapters = plan(flat).chapters
+        pieces = []
+        for chapter in chapters:
+            for clip in chapter.clips:
+                if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == original["id"]:
+                    piece = copy.deepcopy(clip)
+                    piece["at"] += chapter.start_ms / 1000
+                    pieces.append(piece)
+        before = prepared_props(tmp_path, [original], {"R": asset()})
+        after = prepared_props(tmp_path, pieces, {"R": asset()})
+        assert sprite_ssr(before, list(range(105, 255))) == sprite_ssr(after, list(range(105, 255)))
 
 
 def test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses(native_host, sprite_ssr, tmp_path):

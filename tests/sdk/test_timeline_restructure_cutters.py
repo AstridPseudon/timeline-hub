@@ -1,7 +1,7 @@
 """Core media cutters used when a flat timeline is split into chapter shots."""
 from __future__ import annotations
 
-from astrid.sdk.timeline_restructure import plan
+from astrid.sdk.timeline_restructure import differences, flatten, plan, split
 
 from tests.sdk.test_timeline_restructure import flat_film
 
@@ -78,3 +78,28 @@ def test_media_crosser_clips_at_film_end():
     assert len(pieces) == 1
     assert pieces[0]["from"] == 4.0 and pieces[0]["to"] == 5.0
     assert planned.film_clips == [clip for clip in planned.film_clips if clip["id"] != "tail"]
+
+
+def test_media_without_from_advances_from_implicit_zero_and_rejoins_timed_words():
+    flat = flat_film()
+    source = {"id": "worded-media", "clipType": "media", "track": "type", "asset": "P",
+              "at": 3.5, "hold": 2.0,
+              "app": {"astrid": {"words": [[0.2, 0.4, "before"], [0.55, 0.75, "after"]]}}}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+    stored = split(flat)
+    pieces = _clips_by_source(plan(flat).chapters, "worded-media")
+    assert [(piece["from"], piece["at"]) for piece in pieces] == [(0.0, 3.5), (0.5, 0.0)]
+    assert pieces[1]["app"]["astrid"]["words"] == [[0.05, 0.25, "after"]]
+    restored = next(clip for shot in flatten(stored)["shots"].values()
+                    for clip in shot["internal_timeline"]["clips"] if clip["id"] == "worded-media")
+    assert "from" not in restored
+    assert restored["app"]["astrid"]["words"] == source["app"]["astrid"]["words"]
+    assert differences(flat, stored) == []
+
+    changed = split(flat)
+    second = next(clip for shot in changed["shots"].values() for clip in shot["internal_timeline"]["clips"]
+                  if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "worded-media"
+                  and clip["app"]["astrid"]["timeline_restructure_piece"]["index"] == 1)
+    second["app"]["astrid"]["words"][0][2] = "edited"
+    assert differences(flat, changed)

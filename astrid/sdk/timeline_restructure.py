@@ -34,6 +34,7 @@ _ORDER_MARKER = "timeline_restructure_order"
 
 
 _OVER_MARKER = "timeline_restructure_over"
+_OVER_ROW_MARKER = "timeline_restructure_over_row"
 
 
 def _clip_kind(clip: Mapping[str, Any]) -> str:
@@ -67,7 +68,7 @@ def _cut_clip(clip: Mapping[str, Any], start: float, end: float, chapter: Chapte
     if piece_id is not None:
         value["id"] = piece_id
     value["at"] = _r(max(0.0, start - chapter.start_ms / 1000.0))
-    if _clip_kind(clip) in {"media", "video"} and clip.get("from") is not None:
+    if _clip_kind(clip) in {"media", "video"}:
         value["from"] = _r(_num(clip.get("from")) + elapsed * speed)
     length = max(0.0, end - start)
     shape = _piece_shape(clip)
@@ -81,47 +82,13 @@ def _cut_clip(clip: Mapping[str, Any], start: float, end: float, chapter: Chapte
 
 def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chapter,
                 *, piece_id: str | None = None, fps: float = 30.0) -> dict[str, Any]:
-    """Cut an am-sprite while preserving its clip-local animation clock and held poses."""
+    """Cut an am-sprite while keeping its original clip-local clock exactly."""
     value = _cut_clip(clip, start, end, chapter, piece_id=piece_id)
-    params = value.get("params")
-    params = copy.deepcopy(dict(params)) if isinstance(params, Mapping) else {}
-    original_params = clip.get("params") if isinstance(clip.get("params"), Mapping) else {}
+    params = copy.deepcopy(dict(clip.get("params") or {})) if isinstance(clip.get("params"), Mapping) else {}
     speed = _num(clip.get("speed"), 1.0) or 1.0
-    phase = max(0, int(math.floor((start - _num(clip.get("at"))) * fps * speed + 1e-9)))
-    if phase:
-        step = max(1, int(round(_num(original_params.get("stepFrames"), 2) or 2)))
-        active_at = (phase // step) * step
-        keyframes = original_params.get("keyframes")
-        if isinstance(keyframes, list):
-            ordered = sorted((copy.deepcopy(k) for k in keyframes if isinstance(k, Mapping)),
-                             key=lambda k: _num(k.get("frame")))
-            active: dict[str, Any] = {}
-            for key in ordered:
-                if _num(key.get("frame"), -1) <= active_at:
-                    for field in ("x", "y", "flipX"):
-                        if field in key:
-                            active[field] = key[field]
-            base = {"x": original_params.get("x", 0), "y": original_params.get("y", 0),
-                    "flipX": original_params.get("flipX", False)}
-            base.update(active)
-            shifted = [{**copy.deepcopy(dict(k)), "frame": int(_num(k.get("frame"))) - phase}
-                       for k in ordered if _num(k.get("frame"), -1) > active_at]
-            params.update(base)
-            params["keyframes"] = shifted
-        else:
-            params.update({"x": original_params.get("x", 0), "y": original_params.get("y", 0),
-                           "flipX": original_params.get("flipX", False)})
-            params["keyframes"] = []
-        for field in ("blinkAt",):
-            if isinstance(original_params.get(field), list):
-                params[field] = [int(_num(n)) - phase for n in original_params[field] if _num(n) + 2 > phase]
-            elif original_params.get(field) is not None:
-                params[field] = int(_num(original_params[field])) - phase if _num(original_params[field]) + 2 > phase else None
-        silhouette = original_params.get("silhouette")
-        if isinstance(silhouette, Mapping) and silhouette.get("until") is not None:
-            params["silhouette"] = {**copy.deepcopy(dict(silhouette)),
-                                     "until": int(_num(silhouette["until"])) - phase}
-        params["frameOffset"] = int(_num(original_params.get("frameOffset"))) + phase
+    offset = max(0, int(round(start * fps)) - int(round(_num(clip.get("at")) * fps)))
+    params["sourceClock"] = {"offsetFrames": offset, "speed": speed}
+    value["speed"] = 1.0
     value["params"] = params
     return value
 
@@ -315,7 +282,10 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
         pieces.sort(key=lambda item: (_piece_marker(item) or {}).get("index", -1))
         markers = [_piece_marker(piece) or {} for piece in pieces]
         if [marker.get("index") for marker in markers] != list(range(count)) \
-                or any(marker.get("count") != count or marker.get("shape") != first_marker.get("shape") for marker in markers):
+                or any(marker.get("count") != count or marker.get("shape") != first_marker.get("shape")
+                       or marker.get("source_from_present") != first_marker.get("source_from_present")
+                       or marker.get("source_speed_present") != first_marker.get("source_speed_present")
+                       or marker.get("source_speed") != first_marker.get("source_speed") for marker in markers):
             continue
         starts = [chapter_start + _num(piece.get("at")) for piece in pieces]
         lengths = [clip_duration(piece) for piece in pieces]
@@ -324,6 +294,15 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
         original = copy.deepcopy(pieces[0])
         original["id"] = source_id
         original["at"] = _r(starts[0])
+        if first_marker.get("source_from_present") is False:
+            original.pop("from", None)
+        if first_marker.get("source_speed_present"):
+            original["speed"] = copy.deepcopy(first_marker["source_speed"])
+        else:
+            original.pop("speed", None)
+        params = original.get("params")
+        if isinstance(params, dict):
+            params.pop("sourceClock", None)
         shape = str(first_marker.get("shape"))
         total = sum(lengths)
         speed = _num(original.get("speed"), 1.0) or 1.0
@@ -334,6 +313,17 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
         if shape in {"window", "hold_window"}:
             if pieces[-1].get("to") is not None:
                 original["to"] = copy.deepcopy(pieces[-1]["to"])
+        timed_words = []
+        for piece, start in zip(pieces, starts):
+            shift = start - starts[0]
+            for row in intent.words(piece):
+                if isinstance(row, (list, tuple)) and len(row) >= 2:
+                    timed_words.append([_r(_num(row[0]) + shift), _r(_num(row[1]) + shift), *copy.deepcopy(list(row[2:]))])
+                elif isinstance(row, Mapping) and "start" in row and "end" in row:
+                    timed_words.append({**copy.deepcopy(dict(row)), "start": _r(_num(row["start"]) + shift),
+                                        "end": _r(_num(row["end"]) + shift)})
+        if timed_words:
+            intent.map_timed(original, lambda _: timed_words)
         app = original.get("app")
         astrid = app.get("astrid") if isinstance(app, dict) else None
         if isinstance(astrid, dict):
@@ -677,9 +667,9 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                     astrid = app.setdefault("astrid", {})
                     if not isinstance(astrid, dict):
                         astrid = app["astrid"] = {}
-                    marker = {"id": source_id, "index": index, "count": len(segments), "shape": shape}
-                    if _clip_kind(clip) == "am-sprite" and _num((piece.get("params") or {}).get("frameOffset")):
-                        marker["sprite_frame_offset"] = int(_num(piece["params"]["frameOffset"]))
+                    marker = {"id": source_id, "index": index, "count": len(segments), "shape": shape,
+                              "source_from_present": "from" in clip, "source_speed_present": "speed" in clip,
+                              "source_speed": copy.deepcopy(clip.get("speed", 1.0))}
                     astrid[_PIECE_MARKER] = marker
                     chapter.clips.append(piece)
                 continue
@@ -702,6 +692,12 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                     base_track = str(matching_row.get("track") or (matching_row.get("placement") or {}).get("track") or base_track)
                 over_track = over_rows.get(base_track)
                 if over_track is None:
+                    over_track = next((track_id for track_id, definition in track_defs.items()
+                                       if isinstance(definition.get("app"), Mapping)
+                                       and isinstance(definition["app"].get("astrid"), Mapping)
+                                       and definition["app"]["astrid"].get(_OVER_ROW_MARKER) ==
+                                       {"sourceTrack": source_track, "row": base_track}), None)
+                if over_track is None:
                     base_def = track_defs.get(base_track, {"id": base_track, "kind": "visual"})
                     source_def = track_defs.get(source_track, base_def)
                     candidate = f"{base_track}-over"
@@ -713,7 +709,13 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                     over_rows[base_track] = over_track
                     over_def = copy.deepcopy(dict(source_def))
                     over_def["id"] = over_track
-                    over_def["name"] = f"{base_def.get('name') or base_track} over"
+                    app = over_def.setdefault("app", {})
+                    if not isinstance(app, dict):
+                        app = over_def["app"] = {}
+                    astrid = app.setdefault("astrid", {})
+                    if not isinstance(astrid, dict):
+                        astrid = app["astrid"] = {}
+                    astrid[_OVER_ROW_MARKER] = {"sourceTrack": source_track, "row": base_track}
                     at = next((i for i, t in enumerate(tracks) if str(t.get("id")) == base_track), 0)
                     tracks.insert(at, over_def)
                     track_defs[over_track] = over_def
@@ -960,7 +962,8 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
                 continue
             elapsed = max(0.0, t - start)
             speed = _num(clip.get("speed"), 1.0) or 1.0
-            source_at = _r(_num(clip.get("from")) + elapsed * speed) if clip.get("from") is not None else None
+            source_at = _r(_num(clip.get("from")) + elapsed * speed) if clip.get("from") is not None else (
+                _r(elapsed * speed) if _clip_kind(clip) in {"media", "video"} else None)
             active.append((str(clip.get("track")), json.dumps(clip, sort_keys=True, default=str),
                            _r(elapsed), source_at, speed))
         active_frames.append(tuple(active))
@@ -1043,16 +1046,24 @@ def _active_stack(bundle: Mapping[str, Any]) -> list[tuple[tuple[str, str, str],
         app = track.get("app") if isinstance(track.get("app"), Mapping) else {}
         group = app.get("group") if isinstance(app, Mapping) else None
         logical_track = str(group.get("sourceTrack")) if isinstance(group, Mapping) else track_id
+        clip_app = clip.get("app") if isinstance(clip.get("app"), Mapping) else {}
+        astrid = clip_app.get("astrid") if isinstance(clip_app, Mapping) else {}
+        over = astrid.get(_OVER_MARKER) if isinstance(astrid, Mapping) else None
+        if isinstance(over, Mapping) and over.get("track") is not None:
+            logical_track = str(over["track"])
         definition = copy.deepcopy(dict(track))
         definition["id"] = logical_track
         definition_app = definition.get("app")
         if isinstance(definition_app, dict):
             definition_app.pop("group", None)
+            definition_astrid = definition_app.get("astrid")
+            if isinstance(definition_astrid, dict):
+                definition_astrid.pop(_OVER_ROW_MARKER, None)
+                if not definition_astrid:
+                    definition_app.pop("astrid", None)
             if not definition_app:
                 definition.pop("app", None)
         definition_signature = json.dumps(definition, sort_keys=True, default=str)
-        clip_app = clip.get("app") if isinstance(clip.get("app"), Mapping) else {}
-        astrid = clip_app.get("astrid") if isinstance(clip_app, Mapping) else {}
         marker = astrid.get(_PIECE_MARKER) if isinstance(astrid, Mapping) else None
         provenance = clip_app.get("astrid_shot_composition")
         source_id = marker.get("id") if isinstance(marker, Mapping) else (

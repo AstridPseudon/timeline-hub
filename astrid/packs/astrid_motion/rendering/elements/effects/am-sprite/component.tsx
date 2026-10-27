@@ -34,6 +34,8 @@ type Params = {
   stepFrames?: 2 | 3;
   /** Source clip-local frame for a piece cut from an existing sprite clip. */
   frameOffset?: number;
+  /** Original output-frame clock for a chapter piece, before playback-rate flooring. */
+  sourceClock?: {offsetFrames: number; speed: number};
   enter?: 'stamp' | 'slideIn' | 'cut';
   slideFrom?: 'left' | 'right' | 'top' | 'bottom';
   slideDistance?: number;
@@ -57,7 +59,11 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   const scale = integerIn(params.scale, 1, 24, 6);
   const stepFrames = integerIn(params.stepFrames, 2, 3, 2);
   const frameOffset = integerIn(params.frameOffset, 0, 10000000, 0);
-  const sourceFrame = frame + frameOffset;
+  const clock = params.sourceClock;
+  const animationFrame = clock && Number.isFinite(clock.offsetFrames) && Number.isFinite(clock.speed) && clock.speed > 0
+    ? Math.floor((frame + clock.offsetFrames) * clock.speed)
+    : frame;
+  const sourceFrame = animationFrame + frameOffset;
   const sf = stepStart(sourceFrame, stepFrames) - frameOffset;
 
   // Active keyframe: the last one at or before this step. Keyframes apply
@@ -100,7 +106,7 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
     : params.blinkAt === undefined
       ? []
       : [params.blinkAt];
-  const blinking = blinks.some((at) => frame >= at && frame < at + 2);
+  const blinking = blinks.some((at) => animationFrame >= at && animationFrame < at + 2);
 
   const frames = params.frames;
   let index = 0;
@@ -125,7 +131,7 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   const artH = frames ? Math.max(1, Math.round(frames.frameHeight)) : res ? Number(res[2]) : 0;
   const rect = {x: (x + dx) * LOGICAL_PX, y: (y + dy) * LOGICAL_PX,
     width: artW * scale, height: artH * scale};
-  return {scale, x, y, dx, dy, flipX, visible, frames, index, artW, artH, rect};
+  return {scale, x, y, dx, dy, flipX, visible, frames, index, artW, artH, rect, animationFrame};
 };
 
 const prepareSpriteScene = ({clip, assetEntry, fps}: ComponentCapabilityContext): PreparedComponentCapability => ({
@@ -155,19 +161,19 @@ function AmSprite(props: ElementComponentProps): ReactElement | null {
   const frameOffset = integerIn(params.frameOffset, 0, 10000000, 0);
   const url = elementSource(props.assetEntry, params.src);
   if (!url) return null;
-  const {scale, x, y, dx, dy, flipX, visible, frames, index, artW, artH, rect} = spriteAt(params, props.assetEntry, frame, props.fps);
+  const {scale, x, y, dx, dy, flipX, visible, frames, index, artW, artH, rect, animationFrame} = spriteAt(params, props.assetEntry, frame, props.fps);
 
   // Silhouette and outline are CSS filters on the art (inside the scale), so
   // offsets are art px and land on the pixel grid. drop-shadow with 0 blur is a
   // hard 1-art-px ring; four of them make an outline.
   const sil = params.silhouette;
-  const silOn = sil === true || (typeof sil === 'object' && sil !== null && (sil.until === undefined || frame < sil.until));
+  const silOn = sil === true || (typeof sil === 'object' && sil !== null && (sil.until === undefined || animationFrame < sil.until));
   const ol = params.outline && typeof params.outline === 'object' ? params.outline : null;
   const filters: string[] = [];
   if (silOn) filters.push('brightness(0)');
   if (ol) {
     const pulse = Math.max(0, Math.round(finiteNumber(ol.pulse, 0)));
-    const wide = pulse > 0 && Math.floor((frame + frameOffset) / pulse) % 2 === 1;
+    const wide = pulse > 0 && Math.floor((animationFrame + frameOffset) / pulse) % 2 === 1;
     const w = Math.max(1, Math.round(finiteNumber(ol.px, 1))) + (wide ? 1 : 0);
     const c = typeof ol.color === 'string' ? ol.color : '#ED6B23';
     filters.push(`drop-shadow(${w}px 0 0 ${c})`, `drop-shadow(-${w}px 0 0 ${c})`, `drop-shadow(0 ${w}px 0 ${c})`, `drop-shadow(0 -${w}px 0 ${c})`);
