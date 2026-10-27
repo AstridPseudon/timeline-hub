@@ -152,6 +152,7 @@ const prepareSpriteScene = ({clip, assetEntry, fps}: ComponentCapabilityContext)
 function AmSprite(props: ElementComponentProps): ReactElement | null {
   const frame = useCurrentFrame();
   const params = narrowParams<Params>(props.params);
+  const frameOffset = integerIn(params.frameOffset, 0, 10000000, 0);
   const url = elementSource(props.assetEntry, params.src);
   if (!url) return null;
   const {scale, x, y, dx, dy, flipX, visible, frames, index, artW, artH, rect} = spriteAt(params, props.assetEntry, frame, props.fps);

@@ -13,6 +13,8 @@ from astrid.core.timeline.shot_composition_projection import project_shot_compos
 from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
 from astrid.sdk.timeline.units import from_canvas
 from tests.packs.rendering.test_scene_host import BASIS, ROOT, props
+from tests.sdk.test_timeline_restructure import flat_film
+from astrid.sdk.timeline_restructure import plan
 
 
 def prepared_props(tmp_path, clips, assets=None):
@@ -136,6 +138,29 @@ def test_sprite_registered_ssr_preserves_drawing(sprite_ssr, tmp_path):
         p = prepared_props(tmp_path, [sprite(params)], {'R': asset()})
         hashes.append([hashlib.sha256(html.encode()).hexdigest() for html in sprite_ssr(p, [0, 1, 2, 5, 6, 8, 12])])
     assert hashlib.sha256(json.dumps(hashes).encode()).hexdigest() == "963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b"
+
+
+def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr, tmp_path):
+    flat = flat_film()
+    params = {"x": 12, "y": 20, "flipX": False, "stepFrames": 2,
+              "keyframes": [{"frame": 2, "x": 14, "y": 20}, {"frame": 8, "x": 18, "y": 22},
+                            {"frame": 40, "x": 24, "y": 22, "flipX": True}],
+              "enter": "slideIn", "slideFrom": "left", "blinkAt": [48, 90],
+              "silhouette": {"until": 100}, "outline": {"px": 1, "pulse": 6}}
+    original = sprite(params, at=3.5, hold=5.0, id="sprite-seam")
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+    chapters = plan(flat).chapters
+    pieces = []
+    for chapter in chapters:
+        for clip in chapter.clips:
+            if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "sprite-seam":
+                piece = copy.deepcopy(clip)
+                piece["at"] += chapter.start_ms / 1000
+                pieces.append(piece)
+    before = prepared_props(tmp_path, [original], {"R": asset()})
+    after = prepared_props(tmp_path, pieces, {"R": asset()})
+    frames = list(range(105, 255))
+    assert sprite_ssr(before, frames) == sprite_ssr(after, frames)
 
 
 def test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses(native_host, sprite_ssr, tmp_path):

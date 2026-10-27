@@ -16,6 +16,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -29,6 +30,7 @@ from astrid.sdk.timeline.doc import _filter_words, _row_start, _set_length, _set
 STRUCTURE_KEY = "structure_base"
 WALL_TOLERANCE = 0.001  # a clip crossing a wall by no more than 1 ms stays in its chapter
 _PIECE_MARKER = "timeline_restructure_piece"
+_ORDER_MARKER = "timeline_restructure_order"
 
 
 _OVER_MARKER = "timeline_restructure_over"
@@ -65,7 +67,7 @@ def _cut_clip(clip: Mapping[str, Any], start: float, end: float, chapter: Chapte
     if piece_id is not None:
         value["id"] = piece_id
     value["at"] = _r(max(0.0, start - chapter.start_ms / 1000.0))
-    if clip.get("from") is not None:
+    if _clip_kind(clip) in {"media", "video"} and clip.get("from") is not None:
         value["from"] = _r(_num(clip.get("from")) + elapsed * speed)
     length = max(0.0, end - start)
     shape = _piece_shape(clip)
@@ -85,7 +87,7 @@ def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chap
     params = copy.deepcopy(dict(params)) if isinstance(params, Mapping) else {}
     original_params = clip.get("params") if isinstance(clip.get("params"), Mapping) else {}
     speed = _num(clip.get("speed"), 1.0) or 1.0
-    phase = max(0, int(round((start - _num(clip.get("at"))) * speed * fps)))
+    phase = max(0, int(math.floor((start - _num(clip.get("at"))) * fps * speed + 1e-9)))
     if phase:
         step = max(1, int(round(_num(original_params.get("stepFrames"), 2) or 2)))
         active_at = (phase // step) * step
@@ -99,14 +101,17 @@ def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chap
                     for field in ("x", "y", "flipX"):
                         if field in key:
                             active[field] = key[field]
-            base = {field: original_params[field] for field in ("x", "y", "flipX") if field in original_params}
+            base = {"x": original_params.get("x", 0), "y": original_params.get("y", 0),
+                    "flipX": original_params.get("flipX", False)}
             base.update(active)
             shifted = [{**copy.deepcopy(dict(k)), "frame": int(_num(k.get("frame"))) - phase}
                        for k in ordered if _num(k.get("frame"), -1) > active_at]
-            params["keyframes"] = ([{"frame": active_at - phase, **base}] if base else []) + shifted
+            params.update(base)
+            params["keyframes"] = shifted
         else:
-            params["keyframes"] = [{"frame": active_at - phase,
-                                     **{k: original_params[k] for k in ("x", "y", "flipX") if k in original_params}}]
+            params.update({"x": original_params.get("x", 0), "y": original_params.get("y", 0),
+                           "flipX": original_params.get("flipX", False)})
+            params["keyframes"] = []
         for field in ("blinkAt",):
             if isinstance(original_params.get(field), list):
                 params[field] = [int(_num(n)) - phase for n in original_params[field] if _num(n) + 2 > phase]
@@ -286,9 +291,104 @@ def _union_asset(held: Any, value: Any, error: str) -> Any:
     return {**copy.deepcopy(dict(held)), **{k: copy.deepcopy(v) for k, v in value.items() if k not in held}}
 
 
+def _piece_marker(clip: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    app = clip.get("app")
+    astrid = app.get("astrid") if isinstance(app, Mapping) else None
+    marker = astrid.get(_PIECE_MARKER) if isinstance(astrid, Mapping) else None
+    return marker if isinstance(marker, Mapping) else None
+
+
+def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float) -> list[dict[str, Any]]:
+    """Restore complete, unchanged cutter groups; leave incomplete or edited pieces alone."""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for clip in clips:
+        marker = _piece_marker(clip)
+        if marker and marker.get("id") is not None:
+            groups.setdefault(str(marker["id"]), []).append(clip)
+    consumed: set[int] = set()
+    replacements: dict[int, dict[str, Any]] = {}
+    for source_id, pieces in groups.items():
+        first_marker = _piece_marker(pieces[0]) or {}
+        count = first_marker.get("count")
+        if not isinstance(count, int) or count < 2 or len(pieces) != count:
+            continue
+        pieces.sort(key=lambda item: (_piece_marker(item) or {}).get("index", -1))
+        markers = [_piece_marker(piece) or {} for piece in pieces]
+        if [marker.get("index") for marker in markers] != list(range(count)) \
+                or any(marker.get("count") != count or marker.get("shape") != first_marker.get("shape") for marker in markers):
+            continue
+        starts = [chapter_start + _num(piece.get("at")) for piece in pieces]
+        lengths = [clip_duration(piece) for piece in pieces]
+        if any(abs(starts[i] + lengths[i] - starts[i + 1]) > 1e-6 for i in range(count - 1)):
+            continue
+        original = copy.deepcopy(pieces[0])
+        original["id"] = source_id
+        original["at"] = _r(starts[0])
+        shape = str(first_marker.get("shape"))
+        total = sum(lengths)
+        speed = _num(original.get("speed"), 1.0) or 1.0
+        if shape in {"hold", "hold_window", "window"}:
+            _set_length(original, total)
+        else:
+            original["duration"] = _r(total * speed)
+        if shape in {"window", "hold_window"}:
+            if pieces[-1].get("to") is not None:
+                original["to"] = copy.deepcopy(pieces[-1]["to"])
+        app = original.get("app")
+        astrid = app.get("astrid") if isinstance(app, dict) else None
+        if isinstance(astrid, dict):
+            astrid.pop(_PIECE_MARKER, None)
+            if not astrid:
+                app.pop("astrid", None)
+            if not app:
+                original.pop("app", None)
+        cutter = _cutter_for(original)
+        valid = cutter is not None
+        expected_pieces = []
+        for piece, start, length in zip(pieces, starts, lengths):
+            if not valid:
+                break
+            chapter_start = start - _num(piece.get("at"))
+            chapter = Chapter("", int(round(chapter_start * 1000)),
+                              int(round((chapter_start + length) * 1000)))
+            expected = cutter(original, start, start + length, chapter,
+                              piece_id=str(piece.get("id")), fps=fps) if cutter is _cut_sprite \
+                else cutter(original, start, start + length, chapter, piece_id=str(piece.get("id")))
+            expected_pieces.append(expected)
+        for actual, expected in zip(pieces, expected_pieces):
+            actual_clean = copy.deepcopy(actual)
+            expected_clean = copy.deepcopy(expected)
+            for candidate in (actual_clean, expected_clean):
+                app = candidate.get("app")
+                astrid = app.get("astrid") if isinstance(app, dict) else None
+                if isinstance(astrid, dict):
+                    astrid.pop(_PIECE_MARKER, None)
+                    if not astrid:
+                        app.pop("astrid", None)
+                    if not app:
+                        candidate.pop("app", None)
+            if actual_clean != expected_clean:
+                valid = False
+                break
+        if not valid:
+            continue
+        positions = {id(clip): index for index, clip in enumerate(clips)}
+        first_index = min(positions[id(piece)] for piece in pieces)
+        replacements[first_index] = original
+        consumed.update(id(piece) for piece in pieces)
+    result = []
+    for index, clip in enumerate(clips):
+        if index in replacements:
+            result.append(replacements[index])
+        if id(clip) not in consumed:
+            result.append(clip)
+    return result
+
+
 def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
     parent = copy.deepcopy(dict(view["parent"]))
     config = parent.setdefault("config", {})
+    fps = bundle_fps({"parent": parent}) or 30.0
     rows = view["rows"]
     pos = 0
     for row in rows:
@@ -376,6 +476,18 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
             ids.add(str(value.get("id")))
             value["at"] = _r(_num(value.get("at")) + start)
             clips.append(value)
+    clips = _rejoin_pieces(clips, 0.0, fps)
+    clips.sort(key=lambda clip: (clip.get("app", {}).get("astrid", {}).get(_ORDER_MARKER, float("inf")),
+                                 _num(clip.get("at"))))
+    for clip in clips:
+        app = clip.get("app")
+        astrid = app.get("astrid") if isinstance(app, dict) else None
+        if isinstance(astrid, dict):
+            astrid.pop(_ORDER_MARKER, None)
+            if not astrid:
+                app.pop("astrid", None)
+            if not app:
+                clip.pop("app", None)
     # the parent keeps everything but what moved into the flat shot
     parent["clips"] = []
     config.pop("clips", None)
@@ -398,7 +510,14 @@ def flatten(stored: dict[str, Any]) -> dict[str, Any]:
     if not is_split(stored):
         return stored
     cur = _flat_side(_view(stored, base=False))
-    base = _flat_side(_view(stored, base=True)) if _rows(stored, base=True) else cur
+    base = cur
+    if _rows(stored, base=True):
+        try:
+            base = _flat_side(_view(stored, base=True))
+        except TimelineEditError:
+            # A fresh split can add chapter placements to a pinned flat source mapping.
+            # Its original one-shot row overlaps those new rows and is not a flattenable base.
+            pass
     out = {k: copy.deepcopy(v) for k, v in stored.items()}
     wid = cur["shot_id"]
     out["parent"] = cur["parent"]
@@ -511,7 +630,15 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     tracks = _layer_order(tl.bundle.get("parent", {}).get("config", {}).get("tracks") or [], internal.get("tracks") or [])
     track_defs = {str(t.get("id")): t for t in tracks}
     over_rows: dict[str, str] = {}
-    for clip in internal.get("clips") or []:
+    for clip_order, clip in enumerate(internal.get("clips") or []):
+        clip = copy.deepcopy(clip)
+        app = clip.setdefault("app", {})
+        if not isinstance(app, dict):
+            app = clip["app"] = {}
+        astrid = app.setdefault("astrid", {})
+        if not isinstance(astrid, dict):
+            astrid = app["astrid"] = {}
+        astrid[_ORDER_MARKER] = clip_order
         s = _num(clip.get("at"))
         e = s + clip_duration(clip)
         render_end = min(e, end_s)
@@ -576,6 +703,7 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                 over_track = over_rows.get(base_track)
                 if over_track is None:
                     base_def = track_defs.get(base_track, {"id": base_track, "kind": "visual"})
+                    source_def = track_defs.get(source_track, base_def)
                     candidate = f"{base_track}-over"
                     suffix = 2
                     while candidate in track_defs:
@@ -583,7 +711,7 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                         suffix += 1
                     over_track = candidate
                     over_rows[base_track] = over_track
-                    over_def = copy.deepcopy(dict(base_def))
+                    over_def = copy.deepcopy(dict(source_def))
                     over_def["id"] = over_track
                     over_def["name"] = f"{base_def.get('name') or base_track} over"
                     at = next((i for i, t in enumerate(tracks) if str(t.get("id")) == base_track), 0)
@@ -660,6 +788,7 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
     if planned is None:
         return copy.deepcopy(work)
     old = copy.deepcopy(dict(flat.get(STRUCTURE_KEY) or work))  # the stored form this film was read from
+    prior_assets = copy.deepcopy(effective_parent_registry(old.get("parent") or {}).get("assets") or {})
     out = old
     out["parent"] = copy.deepcopy(work["parent"])
     parent, config = out["parent"], out["parent"].setdefault("config", {})
@@ -675,6 +804,12 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
     unused = set(planned.assets) - film_assets.union(*chapter_assets)
     registry = dict(parent.get("registry") or {}) if isinstance(parent.get("registry"), Mapping) else {}
     own = dict(registry.get("assets") or {})
+    for key, value in prior_assets.items():
+        if key in own:
+            own[key] = _union_asset(own[key], value,
+                                    f"the film registry and its prior form both define asset {key!r} differently")
+        else:
+            own[key] = copy.deepcopy(value)
     for key in planned.assets:
         if key in own:  # the film's copy becomes the union of its copy and the shots' (every copy of a key is the same)
             own[key] = _union_asset(own[key], planned.assets[key],
@@ -754,10 +889,39 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
         {"project_id": str(bundle.get("project_id")), "timeline_id": str(bundle.get("timeline_id")), "revision_id": "x", "payload": payload},
         shot_revisions=shot_revisions, internal_timeline_revisions=internals)
     assets = projected.registry.get("assets") or {}
-    audio_tracks = {str(t.get("id")) for t in projected.config.get("tracks") or [] if str(t.get("kind")) in AUDIO_KINDS} | AUDIO_KINDS
+    projected_tracks = projected.config.get("tracks") or []
+    clips_by_track: dict[str, list[Mapping[str, Any]]] = {}
+    for clip in projected.config["clips"]:
+        clips_by_track.setdefault(str(clip.get("track")), []).append(clip)
+    logical_tracks: dict[str, str] = {}
+    normalized_tracks = []
+    seen_tracks: set[str] = set()
+    for raw_track in projected_tracks:
+        track = copy.deepcopy(raw_track)
+        app = track.get("app") if isinstance(track.get("app"), Mapping) else {}
+        group = app.get("group") if isinstance(app, Mapping) else None
+        grouped = isinstance(group, Mapping)
+        logical_id = str(group.get("sourceTrack")) if grouped else str(track.get("id"))
+        logical_tracks[str(track.get("id"))] = logical_id
+        if not clips_by_track.get(str(track.get("id"))):
+            continue
+        track["id"] = logical_id
+        if grouped:
+            app = dict(app)
+            app.pop("group", None)
+            if app:
+                track["app"] = app
+            else:
+                track.pop("app", None)
+        if logical_id not in seen_tracks:
+            normalized_tracks.append(track)
+            seen_tracks.add(logical_id)
+    audio_tracks = {str(t.get("id")) for t in normalized_tracks if str(t.get("kind")) in AUDIO_KINDS} | AUDIO_KINDS
     per_track: dict[str, list[tuple[float, int, Any]]] = {}
+    render_clips: list[tuple[dict[str, Any], float, float, bool]] = []
     for index, original in enumerate(projected.config["clips"]):
         clip = copy.deepcopy(original)
+        clip["track"] = logical_tracks.get(str(clip.get("track")), str(clip.get("track")))
         for key in ("id", "shot_id", "shot_occurrence_id", "shot_name"):
             clip.pop(key, None)
         app = clip.get("app")
@@ -767,6 +931,7 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
             if isinstance(astrid, dict):
                 astrid.pop(_PIECE_MARKER, None)
                 astrid.pop(_OVER_MARKER, None)
+                astrid.pop(_ORDER_MARKER, None)
                 if not astrid:
                     app.pop("astrid")
             if not app:
@@ -782,11 +947,26 @@ def renderer_input(bundle: Mapping[str, Any]) -> dict[str, Any]:
         clip["at"] = _r(_num(clip.get("at")))
         clip.setdefault("volume", 1.0)
         audio = str(clip.get("track")) in audio_tracks
+        render_clips.append((clip, clip["at"], duration, audio))
         per_track.setdefault(str(clip.get("track")), []).append((clip["at"], index, (json.dumps(clip, sort_keys=True, default=str), duration, audio)))
     fps = bundle_fps(dict(bundle)) or 30.0
-    return {"tracks": [t.get("id") for t in projected.config.get("tracks") or []],
+    frames = timeline_render_duration_frames(projected.config, fps)
+    active_frames = []
+    for frame in range(frames):
+        t = frame / fps
+        active = []
+        for clip, start, duration, audio in render_clips:
+            if audio or start > t + 1e-9 or t >= start + duration - 1e-9:
+                continue
+            elapsed = max(0.0, t - start)
+            speed = _num(clip.get("speed"), 1.0) or 1.0
+            source_at = _r(_num(clip.get("from")) + elapsed * speed) if clip.get("from") is not None else None
+            active.append((str(clip.get("track")), json.dumps(clip, sort_keys=True, default=str),
+                           _r(elapsed), source_at, speed))
+        active_frames.append(tuple(active))
+    return {"tracks": {str(track["id"]): track for track in normalized_tracks},
             "clips": {t: [row for _, _, row in sorted(v, key=lambda r: (r[0], r[1]))] for t, v in per_track.items()},
-            "frames": timeline_render_duration_frames(projected.config, fps)}
+            "frames": frames, "active_frames": active_frames}
 
 
 def differences(before: Mapping[str, Any], after: Mapping[str, Any]) -> list[str]:
@@ -795,12 +975,25 @@ def differences(before: Mapping[str, Any], after: Mapping[str, Any]) -> list[str
         intent.migrate(value)  # legacy and namespaced intent are the same content
         return value
 
-    a, b = renderer_input(migrated(before)), renderer_input(migrated(after))
+    left, right = migrated(before), migrated(after)
+    stack_a, stack_b = _active_stack(left), _active_stack(right)
     out = []
+    if stack_a != stack_b:
+        frames = max(len(stack_a), len(stack_b))
+        frame = next((i for i in range(frames)
+                      if (stack_a[i] if i < len(stack_a) else ()) != (stack_b[i] if i < len(stack_b) else ())), 0)
+        out.append(f"active visual stacking / track order differs at frame {frame}: "
+                   f"{stack_a[frame] if frame < len(stack_a) else ()} vs "
+                   f"{stack_b[frame] if frame < len(stack_b) else ()}")
+    a, b = renderer_input(flatten(left)), renderer_input(flatten(right))
     if a["tracks"] != b["tracks"]:
-        out.append(f"track order differs: {a['tracks']} vs {b['tracks']}")
+        out.append(f"track order or definitions differ: {a['tracks']} vs {b['tracks']}")
     if a["frames"] != b["frames"]:
         out.append(f"duration differs: {a['frames']} vs {b['frames']} frames")
+    if a["active_frames"] != b["active_frames"]:
+        frame = next((i for i, (x, y) in enumerate(zip(a["active_frames"], b["active_frames"])) if x != y),
+                     min(len(a["active_frames"]), len(b["active_frames"])))
+        out.append(f"projected active clip state differs at frame {frame}")
     for track in sorted(set(a["clips"]) | set(b["clips"])):
         x, y = a["clips"].get(track, []), b["clips"].get(track, [])
         # a clip clipped at a chapter wall may differ by under a millisecond when it is picture (frames are 33 ms);
@@ -812,6 +1005,79 @@ def differences(before: Mapping[str, Any], after: Mapping[str, Any]) -> list[str
             out.append(f"track {track}: {len(x)} vs {len(y)} clips; first only-before {only_x}; only-after {only_y}"
                        if only_x or only_y else f"track {track}: same clips, different order")
     return out
+
+
+def _active_stack(bundle: Mapping[str, Any]) -> list[tuple[tuple[str, str, str], ...]]:
+    """Capture actual projected visual order at each output frame before flattening groups."""
+    from astrid.core.timeline.duration import timeline_render_duration_frames
+    from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
+
+    occurrences, shot_revisions, internals = [], [], []
+    for row in _rows(bundle):
+        sid = str(row["shot_id"])
+        occ = copy.deepcopy(row)
+        occ["shot_revision_id"] = f"r-{sid}"
+        occurrences.append(occ)
+        shot_revisions.append({"shot_id": sid, "revision_id": f"r-{sid}",
+                               "internal_timeline_revision_id": f"i-{sid}", "payload": {}})
+        internals.append({"revision_id": f"i-{sid}",
+                          "payload": copy.deepcopy(bundle["shots"][sid].get("internal_timeline") or {})})
+    payload = copy.deepcopy(bundle.get("parent") or {})
+    parent_track_defs = {str(track.get("id")): track
+                         for track in (payload.get("config") or {}).get("tracks") or []}
+    payload["occurrences"] = occurrences
+    projected = project_runtime_parent_composition(
+        {"project_id": str(bundle.get("project_id")), "timeline_id": str(bundle.get("timeline_id")),
+         "revision_id": "x", "payload": payload},
+        shot_revisions=shot_revisions, internal_timeline_revisions=internals)
+    fps = bundle_fps(dict(bundle)) or 30.0
+    frame_count = timeline_render_duration_frames(projected.config, fps)
+    track_defs = {str(track.get("id")): track for track in projected.config.get("tracks") or []}
+    ordered_ids = [str(track.get("id")) for track in projected.config.get("tracks") or []]
+    rows_by_track: dict[str, list[tuple[str, str, str, float, float]]] = {}
+    for clip in projected.config.get("clips") or []:
+        track_id = str(clip.get("track"))
+        track = track_defs.get(track_id, {})
+        if track.get("kind") == "audio" or track_id in AUDIO_KINDS:
+            continue
+        app = track.get("app") if isinstance(track.get("app"), Mapping) else {}
+        group = app.get("group") if isinstance(app, Mapping) else None
+        logical_track = str(group.get("sourceTrack")) if isinstance(group, Mapping) else track_id
+        definition = copy.deepcopy(dict(track))
+        definition["id"] = logical_track
+        definition_app = definition.get("app")
+        if isinstance(definition_app, dict):
+            definition_app.pop("group", None)
+            if not definition_app:
+                definition.pop("app", None)
+        definition_signature = json.dumps(definition, sort_keys=True, default=str)
+        clip_app = clip.get("app") if isinstance(clip.get("app"), Mapping) else {}
+        astrid = clip_app.get("astrid") if isinstance(clip_app, Mapping) else {}
+        marker = astrid.get(_PIECE_MARKER) if isinstance(astrid, Mapping) else None
+        provenance = clip_app.get("astrid_shot_composition")
+        source_id = marker.get("id") if isinstance(marker, Mapping) else (
+            provenance.get("source_clip_id") if isinstance(provenance, Mapping) else clip.get("id"))
+        start = _num(clip.get("at"))
+        end = start + clip_duration(clip)
+        rows_by_track.setdefault(track_id, []).append((logical_track, str(source_id), definition_signature, start, end))
+    stacks = []
+    for frame in range(frame_count):
+        t = frame / fps
+        active = []
+        for occurrence in occurrences:
+            start = _row_start(occurrence) / 1000.0
+            end = start + _num(occurrence.get("duration_ms")) / 1000.0
+            if start <= t + 1e-9 and t < end - 1e-9:
+                row_track = str(occurrence.get("track") or (occurrence.get("placement") or {}).get("track") or "picture")
+                row_definition = parent_track_defs.get(row_track)
+                active.append((f"@row:{row_track}", "", json.dumps(row_definition, sort_keys=True, default=str)
+                               if row_definition is not None else "missing"))
+        for track_id in ordered_ids:
+            for logical_track, source_id, definition_signature, start, end in rows_by_track.get(track_id, []):
+                if start <= t + 1e-9 and t < end - 1e-9:
+                    active.append((logical_track, source_id, definition_signature))
+        stacks.append(tuple(active))
+    return stacks
 
 
 def assert_equivalent(before: Mapping[str, Any], after: Mapping[str, Any]) -> None:
