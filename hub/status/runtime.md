@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T21:42:27Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T21:40:01.259171+00:00
+<!-- main | 2026-10-27T21:47:50Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T21:46:10.060024+00:00
 
 Runtime delivery is complete. H and D own follow-up implementation and acceptance. Runtime has no ready source task.
 
@@ -12,7 +12,8 @@ Runtime delivery is complete. H and D own follow-up implementation and acceptanc
 | H source | Complete B and C integration | H Sol and workers | Main transfer and H START | doing | lead-H-r11; H-sol-crosser-cutter-r5 | L18 audit found no actionable product issue; local sampling gap is disclosed. L19 controls and final proof are H owned. R2 must not merge. | Private2dda329c03 |
 | H corrections | Retain reviewed repairs | H authors and reviewers | Central targeted PASS | merged | H source workers and lead | Sanitizer163, timing148, C2 tracks/browser3 each, Runtime reason81 and render44 targeted PASS. | Appf0d434; Agent314a; Runtime1697 |
 | H C3 | Retain save and restart proof | H Luna and service | Matching one-head checkout | review | H-proof-c3-sampler | 28319: 1 PASS; five saves durable after restart. H owns acceptance; KEEP is prospective. | Runtime7636c4; Agent46b149 |
-| H candidate | Qualify frozen cutter | H lead and Sol | Full audit and matching source | review | H-sol-crosser-cutter-r5 | Candidate260 PASS and render-proof2 PASS. Final Agent lane is running; pinned-render is queued. H owns acceptance. | Private2dda329c03 |
+| H candidate | Qualify frozen cutter | H lead and Sol | Full audit and matching source | review | H-sol-crosser-cutter-r5 | Candidate260 PASS, render-proof2 PASS and pinned-element1 PASS. Broader Agent lane remains running. H owns final acceptance. | Private2dda329c03 |
+| H render control | Qualify no cutter control | H Luna and lead | Existing H qualification | review | H-crosser-L19 | Control9674: 1 FAIL,1 PASS; pinned control cache1 PASS. Cleanup failure sent to Main; candidate passes remain separate. | Agent314a6d2bbb |
 | H Runtime full | Qualify matched full results | H lead and Luna | Final head applicability | review | H-tests-runtime-final-r3 | Actual7448: 7412 PASS,48 FAIL,25 ERROR on Runtime1697 with Agent88a9. Older7385/75 prose is superseded. | Runtime1697f17510 |
 | H source packet | Retain independent documentary check | Luna and independent Luna | H final source qualification | review | rt-OPS-H-sprite-correction-check-2102 | [Checked packet](../../design/runtime-H-sprite-correction-publication-20261027T2106Z.json). Exact L15 acceptance FAIL remains; H owns fixes. | No source change |
 | H Runtime route | Retain route diagnosis | Luna and independent Luna | Source-map PASS | merged | rt-OPS-H-runtime-consumer-review-1711 | [Source PASS](../../design/runtime-H-runtime-consumer-independent-publication-20261027T171745Z.json). Import inferred; origin uncaptured. | No source change |
@@ -23,16 +24,18 @@ Runtime delivery is complete. H and D own follow-up implementation and acceptanc
 | D E14 | Accept editing on final H | D lead and workers | Accepted H merged forward | gated:H | lead-D-r5 | D owns final editing acceptance and guides after H. No Runtime worker is owed. | Later phase |
 | P perception | Retain phase gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START is absent. | Later phase |
 | Follow-up ZIP | Retain final archive gate | Main | P accepted | gated:P | No Runtime worker | Final follow-up archive on owner pins follows P. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Run guarded maintenance | Runtime manager | KEEP and lease guards | doing | Runtime manager | No eligible clean unheld worktree. Sweep and compact in progress; 456 starting KEEP markers recorded. | No source change |
+| OPS headroom | Run guarded maintenance | Runtime manager | KEEP and lease guards | merged | Runtime manager | Sweep and compact exit 0; nothing eligible to reclaim. All 456 starting KEEP hashes and modes exact. Headroom target unmet. | No source change |
 
-Blockers: H owns cutter safety audit, final integration, exact35-file Agent lane, both matched render proofs and full-suite qualification. R2 must not merge.
+Blockers: H owns final cutter integration, exact35-file Agent lane, matched render qualification including L19 control failure, and full-suite applicability. R2 must not merge.
 Blockers: D owns E14, final guides and acceptance after accepted H is merged forward; E6 supplemental and ripple/music checks remain.
 Next ready: None for Runtime. H and D managers own their independent work; P START is absent.
-live 0 / cap 6; ready-undispatched 0. Free 5168615424 bytes. Phase workers are separately managed.
+live 0 / cap 6; ready-undispatched 0. Free 5468340224 bytes. Phase workers are separately managed.
 
-Current pass evidence: [management pass](rounds/20261027T213705Z-pass.json). Runtime census exited 0 with 2723 rows and zero live workers; no Runtime worker request is pending. Inbox remains read through 1941813 bytes with no new items. Header is unchanged. H r11, D r5, cutter r5, L19 and words r8 remain active under their existing owners. P START is absent.
+Current pass evidence: [management pass](rounds/20261027T213705Z-pass.json). Two Runtime census passes each exited 0 with 2723 rows and zero live Runtime workers; no Runtime worker request is pending. Inbox remains read through 1941813 bytes with no new items. Header is unchanged. H r11, D r5 and cutter r5 show recent activity. P START is absent.
 
-Guarded maintenance is in progress. No ended clean unheld worktree is eligible for recycling. Two historical Runtime worktrees are dirty and remain untouched. All 456 starting KEEP markers were recorded before cleanup. Sweep and compact results and final KEEP conservation will be recorded before this pass closes. The 15 GB target remains unmet; no protected source, raw evidence, hub or delivery archive was removed.
+Guarded sweep and compact each exited 0: removed 0 temp directories, packed 0 scratch or test directories and compressed 0 logs. No ended clean unheld worktree is eligible for recycling. Two historical Runtime worktrees are dirty and remain untouched. All 456 starting KEEP hashes and modes remain exact. The 15 GB target remains unmet; no protected source, raw evidence, hub or delivery archive was removed.
+
+H L19 ended with a control render failure: service9674 reports 1 failed and 1 passed on no-cutter Agent314a; pinned control has a same-tree cache PASS. Candidate r5 render-proof7797 and pinned-element20985 are separate PASS results. [Peer note](../../design/peer-runtime-to-orchestrator-20261027T214430Z-H-control-render-result.md) carries the control failure to existing Main/H qualification owners. No new writer, reviewer or body was dispatched. Broader r5 Agent service22211 remains running; no phase acceptance is inferred.
 
 The sprite packet retains11 byte-exact files and independent documentary PASS. Exact L15 source1c3a2ce725 acceptance remains FAIL for the0.0.13 matrix and SSR/managed caller paths; original causality is UNKNOWN. L16 receives no retroactive L15 credit. Reviewer2053 overwrote author2048 outputs; absent pre-overwrite originals are not claimed available. Separate2059 correction and2102 check remain independently retained.
 
