@@ -57,7 +57,7 @@ def _js_round(value: float) -> int:
 
 
 def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps: float,
-                       *, chapters: Iterable[Chapter] | None = None) -> str | None:
+                       chapters: Iterable[Chapter] | None = None) -> str | None:
     """Explain why cutting changes the renderer's frame interval or source phase."""
 
     for field_name in ("entrance", "exit", "continuous", "animation", "animations", "effects", "transition",
@@ -87,15 +87,16 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
     cursor = original_placement
     cutter = _cutter_for(clip)
     chapter_rows = sorted(chapters or [], key=lambda row: row.start_ms)
-    projected_piece_starts: list[int] = []
+    projected_piece_starts: list[int | None] = []
+    projected_pieces: list[dict[str, Any] | None] = []
     for index, start in enumerate(starts):
         piece_end = starts[index + 1] if index + 1 < len(starts) else source_start + clip_duration(clip)
         chapter = next((row for row in chapter_rows
                         if row.start_ms / 1000.0 <= start + 1e-9
                         and start < row.end_ms / 1000.0 - 1e-9), None)
         if chapter is None:
-            chapter_start = 0 if not chapter_rows else chapter_rows[-1].start_ms
-            chapter_end = _js_round(piece_end * 1000)
+            chapter_start = _js_round(start * 1000)
+            chapter_end = math.ceil(piece_end * 1000)
             if chapter_end <= chapter_start:
                 chapter_end = chapter_start + 1
             chapter = Chapter("", chapter_start, chapter_end)
@@ -116,14 +117,29 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
             path="cut-safety",
         )
         if projected is None:
-            return f"renderer projection drops cut piece at {start:g} s"
+            projected_piece_starts.append(None)
+            projected_pieces.append(None)
+            continue
         piece_start_frame = _js_round(_num(projected.get("at")) * fps)
         projected_piece_starts.append(piece_start_frame)
+        projected_pieces.append(projected)
         piece_duration_frames = max(1, _js_round(clip_duration(projected) * fps))
         piece_end_frame = piece_start_frame + piece_duration_frames
         if piece_start_frame != cursor or piece_end_frame > original_end:
             return f"renderer frame interval differs after cut at {start:g} s"
         cursor = piece_end_frame
+    if any(piece is None for piece in projected_pieces):
+        duration_only_sprite = (_clip_kind(clip) == "am-sprite" and clip.get("duration") is not None
+                                and clip.get("hold") is None and clip.get("to") is None)
+        if duration_only_sprite and all(piece is None for piece in projected_pieces):
+            # Duration-only sprites are not admitted by the shot projection.
+            # Keeping their cut pieces in the shot preserves that empty render
+            # result and lets flatten rejoin the authored source unchanged.
+            return None
+        missing_index = next(i for i, piece in enumerate(projected_pieces) if piece is None)
+        boundary = starts[missing_index + 1] if missing_index + 1 < len(starts) else starts[missing_index]
+        return f"renderer frame interval differs after cut at {boundary:g} s"
+    assert all(frame is not None for frame in projected_piece_starts)
     if cuts and cursor != original_end:
         return f"renderer frame interval differs after cut at {cuts[-1]:g} s"
 
@@ -131,16 +147,16 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
         source_from = _num(clip.get("from"))
         speed = _num(clip.get("speed"), 1.0) or 1.0
         original_trim = _js_round(max(0.0, source_from) * fps)
-        for cut_index, start in enumerate(cuts, 1):
-            elapsed = start - source_start
-            piece_from = source_from + elapsed * speed
+        for piece_index, piece_start in enumerate(projected_piece_starts):
+            assert piece_start is not None and projected_pieces[piece_index] is not None
+            piece_from = _num(projected_pieces[piece_index].get("from"))
             piece_trim = _js_round(max(0.0, piece_from) * fps)
-            piece_placement = projected_piece_starts[cut_index]
-            if abs(piece_from * fps - round(piece_from * fps)) > 1e-7:
-                return f"fractional renderer source offset after cut at {start:g} s"
+            piece_placement = piece_start
+            if piece_index and abs(piece_from * fps - round(piece_from * fps)) > 1e-7:
+                return f"fractional renderer source offset at piece {starts[piece_index]:g} s"
             expected_trim = original_trim + (piece_placement - original_placement) * speed
             if abs(piece_trim - expected_trim) > 1e-7:
-                return f"continuous renderer source phase differs after cut at {start:g} s"
+                return f"continuous renderer source phase differs at piece {starts[piece_index]:g} s"
     if _clip_kind(clip) == "am-sprite" and cuts:
         params = clip.get("params") if isinstance(clip.get("params"), Mapping) else {}
         prior_clock = params.get("sourceClock") if isinstance(params.get("sourceClock"), Mapping) else {}
@@ -427,7 +443,8 @@ def _piece_marker(clip: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return marker if isinstance(marker, Mapping) else None
 
 
-def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float) -> list[dict[str, Any]]:
+def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float,
+                   chapters: Iterable[Chapter] | None = None) -> list[dict[str, Any]]:
     """Restore complete, unchanged cutter groups; leave incomplete or edited pieces alone."""
     groups: dict[str, list[dict[str, Any]]] = {}
     for clip in clips:
@@ -496,12 +513,18 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
                 original.pop("app", None)
         cutter = _cutter_for(original)
         valid = cutter is not None
+        chapter_rows = sorted(chapters or [], key=lambda row: row.start_ms)
         piece_chapters = []
         for piece, start, length in zip(pieces, starts, lengths):
-            piece_chapter_start = start - _num(piece.get("at"))
-            piece_chapters.append(Chapter("", _js_round(piece_chapter_start * 1000),
-                                          _js_round((piece_chapter_start + length) * 1000)))
-        if valid and _cut_safety_reason(original, starts[1:], fps, chapters=piece_chapters):
+            chapter = next((row for row in chapter_rows
+                            if row.start_ms / 1000.0 <= start + 1e-9
+                            and start < row.end_ms / 1000.0 - 1e-9), None)
+            if chapter is None:
+                piece_chapter_start = start - _num(piece.get("at"))
+                chapter = Chapter("", _js_round(piece_chapter_start * 1000),
+                                  _js_round((piece_chapter_start + length) * 1000))
+            piece_chapters.append(chapter)
+        if valid and _cut_safety_reason(original, starts[1:], fps, piece_chapters):
             continue
         expected_pieces = []
         for piece, start, length in zip(pieces, starts, lengths):
@@ -635,7 +658,9 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
             ids.add(str(value.get("id")))
             value["at"] = _r(_num(value.get("at")) + start)
             clips.append(value)
-    clips = _rejoin_pieces(clips, 0.0, fps)
+    chapter_windows = [Chapter(_shot_name(view["shots"][str(row["shot_id"])]), _row_start(row),
+                               _row_start(row) + _num(row.get("duration_ms"))) for row in rows]
+    clips = _rejoin_pieces(clips, 0.0, fps, chapters=chapter_windows)
     clips.sort(key=lambda clip: (clip.get("app", {}).get("astrid", {}).get(_ORDER_MARKER, float("inf")),
                                  _num(clip.get("at"))))
     for clip in clips:
@@ -823,8 +848,7 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                 if hi - lo > 1e-9:
                     segments.append((chapter, lo, hi))
             if len(segments) > 1:
-                unsafe = _cut_safety_reason(clip, (lo for _, lo, _ in segments[1:]), fps,
-                                            chapters=chapters)
+                unsafe = _cut_safety_reason(clip, (lo for _, lo, _ in segments[1:]), fps, chapters)
                 if unsafe:
                     can_cut = False
                     why = f"{why}; {unsafe}" if why else unsafe
@@ -1243,9 +1267,10 @@ def _active_stack(bundle: Mapping[str, Any]) -> list[tuple[tuple[str, str, str],
         provenance = clip_app.get("astrid_shot_composition")
         source_id = marker.get("id") if isinstance(marker, Mapping) else (
             provenance.get("source_clip_id") if isinstance(provenance, Mapping) else clip.get("id"))
-        start = _num(clip.get("at"))
-        end = start + clip_duration(clip)
-        rows_by_track.setdefault(track_id, []).append((logical_track, str(source_id), definition_signature, start, end))
+        start_frame = _js_round(_num(clip.get("at")) * fps)
+        duration_frames = max(1, _js_round(clip_duration(clip) * fps))
+        rows_by_track.setdefault(track_id, []).append(
+            (logical_track, str(source_id), definition_signature, start_frame, start_frame + duration_frames))
     stacks = []
     for frame in range(frame_count):
         t = frame / fps
@@ -1259,8 +1284,8 @@ def _active_stack(bundle: Mapping[str, Any]) -> list[tuple[tuple[str, str, str],
                 active.append((f"@row:{row_track}", "", json.dumps(row_definition, sort_keys=True, default=str)
                                if row_definition is not None else "missing"))
         for track_id in ordered_ids:
-            for logical_track, source_id, definition_signature, start, end in rows_by_track.get(track_id, []):
-                if start <= t + 1e-9 and t < end - 1e-9:
+            for logical_track, source_id, definition_signature, start_frame, end_frame in rows_by_track.get(track_id, []):
+                if start_frame <= frame < end_frame:
                     active.append((logical_track, source_id, definition_signature))
         stacks.append(tuple(active))
     return stacks

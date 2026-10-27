@@ -144,6 +144,7 @@ def test_sprite_registered_ssr_preserves_drawing(sprite_ssr, tmp_path):
     assert hashlib.sha256(json.dumps(hashes).encode()).hexdigest() == "963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b"
 
 
+@pytest.mark.parametrize("host_project", ["0.0.13"], indirect=True)
 def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr, tmp_path):
     def strip_clip_identity(html):
         return re.sub(r' data-clip-id="[^"]*"', '', html)
