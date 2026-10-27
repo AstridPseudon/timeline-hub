@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T15:03:03Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T15:01:15.272104+00:00
+<!-- main | 2026-10-27T15:12:15Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
+# runtime board, 2026-10-27T15:04:20.045801+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -14,7 +14,7 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | C repair batch | Retain reviewed C corrections | C Luna and reviewers | Independent reviews and central checks | merged | C stale15 properties15 and waveform fix15 | Central45,10,45 PASS. Browser27831 three PASS; provider58 PASS. Original failures retained. | App c3a28be2b2 |
 | C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r2 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
 | H baseline | Use published baseline comparisons | Main Luna and H | BASELINES.md published | doing | diag-baselines-1030; lead-H-r2 | [Baselines](../../followups/leads/BASELINES.md): completed suites FAIL. Shotlayer20416 cancelled, no verdict. H owns final comparisons. | Owner and staging pins |
-| H one head | Complete final H qualification | H lead and workers | Review repairs merged | doing | lead-H-r2 | App sanitizer163 and Agent timing148 central PASS. C2 browser, final render proofs and full suites remain H-owned. | Agent88a9df; App2c5e28; Runtime6f0770 |
+| H one head | Complete final H qualification | H lead and workers | Review repairs merged | doing | lead-H-r2 | App163 and Agent148 targeted PASS. Final pinned element and render proofs PASS. C2 browser and full suite comparisons remain H owned. | Agent88a9df; App2c5e28; Runtime6f0770 |
 | H sanitation | Retain generated metadata repair | H Sol | Central targeted green | merged | H-fix-app-sanitizer-coverage-r3 | 163 central PASS; ESLint and diff PASS. Original sanitizer reproduced seven failures. H queued and merged repair. | App2c5e28ec73 |
 | H timing | Retain restored timing assertions | H Luna | Central targeted green | merged | H-fix-agent-collision-timing-r3 | 148 central PASS; Ruff and diff PASS. Shared fixture unchanged; restored consumer timing merged by H. | Agent88a9dfe985 |
 | H C2 fixture | Complete browser qualification | H Luna and service | Reload label remains failing | doing | H-fix-c2-seed-r3 | Latest C2 two PASS and one FAIL after seed fix; browser7926 running. Owner-pin comparison3330 failed seeding. Raw KEEP retained. | Candidate unmerged |
@@ -25,9 +25,9 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
 | OPS headroom | Complete guarded maintenance | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | [Maintenance](rounds/20261027T145154Z-maintenance.json): exits0; zero removals or packs; 93 original test KEEP hashes and modes unchanged. | No source change |
 
-Blockers: H owns remaining C2/browser qualification, final render proofs and full-suite comparisons. D is running in parallel; its final acceptance requires H final head. P awaits D and Main START.
+Blockers: H owns C2 browser qualification and full suite comparisons. Its final render proofs pass. D is running; its final acceptance requires H final head. P awaits D and Main START.
 Next ready: None for Runtime. H and D own their active workers and next tasks.
-live 0 / cap 3; ready-undispatched 0. Free 3135762432 bytes. Current followup physical disk policy applies; H and D workers are separately managed.
+live 0 / cap 3; ready-undispatched 0. Free 3289358336 bytes. Current followup physical disk policy applies; H and D workers are separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -37,4 +37,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T15:01:15.272104+00:00. Runtime checks about ten minutes apart found no live or pending worker. Inbox and header unchanged. H merged App sanitizer2c5e28 and Agent timing88a9df, with central163 and148 PASS respectively. C2 reached UI with two PASS and one reload-label FAIL; browser7926 remains active. H final render workers remain active. Main recorded D parallel START; lead-D-r1 started14:58:23Z and owns D tasks. P START absent. Guarded sweep/compact exits0, zero removals/packs/log compression; all93 pre-existing test KEEP hashes/modes unchanged. Six named H raw runs protected after observation this round. No eligible Runtime tree; three dirty trees untouched. Original delivery archive and proof tuples unchanged. No Runtime source edit, dispatch, merge or new safety refusal. [Latest evidence](rounds/20261027T150115Z-pass.json); [maintenance](rounds/20261027T145154Z-maintenance.json).
+Current pass: 2026-10-27T15:04:20.045801+00:00. Runtime has no live or pending task; the inbox has no new item and the header is unchanged. H owns the C2 reload-label repair and browser7926; its two final render workers ended exit0 with passing central proofs. H and D leads remain active. D implementation is running, with final acceptance gated on H. P START remains absent. Guarded maintenance is in progress; all five unprotected Runtime worktrees are dirty and untouched, so none is eligible for recycle. Three current H targeted raw runs received KEEP after observation, with no earlier custody claim. No Runtime source edit, dispatch, merge or new safety refusal. Original delivery and proof tuples unchanged. [Latest evidence](rounds/20261027T150420Z-pass.json); [maintenance preflight](rounds/20261027T150324Z-maintenance-preflight.json).
