@@ -195,6 +195,26 @@ def test_unselected_visualize_ignores_a_conflicting_draft(draft, capsys):
     assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
 
 
+def test_visualize_keeps_the_revision_pinned_when_head_advances(draft, capsys):
+    class AdvancingTimelines(FakeTimelines):
+        head = "rev-head"
+
+        def open_bundle(self, project, ref, revision_id=None):
+            result = super().open_bundle(project, ref, revision_id)
+            self.head = "rev-next"
+            return result
+
+    client = FakeClient()
+    client.timelines = AdvancingTimelines()
+
+    assert _visualize(["--json"], client) == 0
+    result = json.loads(capsys.readouterr().out)["data"]["outputs"]
+
+    assert client.timelines.head == "rev-next"
+    assert result["source_identity"] == {"kind": "revision", "revision_id": "rev-head"}
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
+
+
 def test_changed_cut_line_pages_explicitly():
     assert cli._changed_cuts_line([12, 13, 22]) == (
         "showing the 3 cuts you changed (12, 13, 22) · --every-cut for all cuts"
