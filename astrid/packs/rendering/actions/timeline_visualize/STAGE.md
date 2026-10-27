@@ -110,11 +110,17 @@ python3 -m astrid timelines visualize main --project demo --mode composed \
 python3 -m astrid timelines visualize main --project demo --frame 120
 ```
 
-When an exact managed render is available, the executor samples presentation
-frame numbers from that video with ffmpeg. Otherwise `auto` and `composed`
-capture only the planned frames through the same server-owned Remotion
-composition, media registry, fonts, effects, and rational frame clock; they do
-not create a full video. Capture uses a bounded content-addressed PNG cache
+Ordinary SDK/CLI output inspection defaults to composed capture: `auto` and
+`composed` capture only the planned frames through the server-owned Remotion
+composition, media registry, fonts, effects, and rational frame clock. This
+does not create a full video, and a matching managed render does not silently
+change the evidence source. In this route, `render_run` can pin the saved
+revision to inspect; it does not make the rendered video the frame source.
+Render-backed extraction is a separate explicitly admitted managed-filmstrip
+request: it samples presentation frame numbers from the selected managed
+video with ffmpeg and records that run's provenance. A composed-capture error
+propagates instead of switching to render-backed extraction. Capture uses a
+bounded content-addressed PNG cache
 and one serialized worker that leases the pack host's Remotion frame owner;
 capture runs only as a host task. The host keeps that owner warm for 45 s
 after its last capture (300 s with `ASTRID_REMOTION_WARM_MEMORY_BUDGET_BYTES`
