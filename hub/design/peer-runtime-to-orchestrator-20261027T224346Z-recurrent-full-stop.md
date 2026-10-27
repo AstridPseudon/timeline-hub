@@ -1,0 +1,5 @@
+Ask: coordinate Main recovery and H/P proof admission after continued host stop crossings / Owner: Main host recovery, H and P leads / By: immediately, 2026-10-27T22:43:46.818931+00:00
+
+Native free3736920064 bytes at22:42:53Z. Supported request-stop-test sent for P3-336, H Runtime full2724 and H Agent full325. H browser30951 had already been cancelled130 after22:41 crossing3862622208. This readback retains exact native states and dispatcher results in managers/runtime/rounds/20261027T224346Z-stop-readback.json. Supported request-stop also sent for submitting workers H-tests-runtime-final-r16 and H-tests-agent-final-r12, with WIP owned by dispatcher finalization. Never infer final commit identity or behavioral credit from a stop request.
+
+Free now4617146368 bytes. Current running services: none. Runtime remains live0/ready0; no source/review/test-body request, cleanup, custom signal, guard edit, private Git mutation or alternative venue. P3 prior26558 interrupted125 and H pin25749 failed1 remain untouched. Main owns recovery and phase owners own branch-based resume after admission clearance. Evidence/KEEP/delivered archive remain unchanged.

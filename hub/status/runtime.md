@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T22:40:02Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- main | 2026-10-27T22:46:00Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
 # runtime board, 2026-10-27T22:37:34.990377+00:00
 
 Runtime delivery is complete. H, D and P own follow-up implementation and qualification. Runtime has no ready source task.
@@ -26,9 +26,9 @@ Runtime delivery is complete. H, D and P own follow-up implementation and qualif
 | P deferred | Retain broader stopped scope | Main and P lead | Later scope | gated:scope | No Runtime worker | P4 P6 P7 and catalog remain stopped. Combined final Astra review covers D and critical P. | Retained branches |
 | Follow-up ZIP | Retain archive gate | Main | D and critical P acceptance | gated:P | No Runtime worker | New archive follows accepted owner pins; delivered archive remains unchanged. | Later phase |
 | OPS headroom | Retain guarded maintenance result | Runtime manager | Main recovery | gated:disk | Runtime manager | Prior sweep and compact reclaimed 0; 456 starting KEEP hashes and modes exact. No maintenance under retained hold. | No source change |
-| OPS disk stop | Retain operational stop history | Runtime manager and Main | Main recovery and admission | gated:disk | Main and phase owners | Seven native services cancelled 130; three workers STOPPED and ended 0. Original completed PASS and FAIL results retained. | No source change |
+| OPS disk stop | Retain operational stop history | Runtime manager and Main | Main recovery and admission | gated:disk | Main and phase owners | Prior seven cancellations retained; four new cancellations and two submitting-worker stops are documented in current readback. | No source change |
 
-Blockers: Main owns host recovery and admission after repeated 4 GB crossings. Free 4579627008 bytes at this pass; Runtime retains its hold and starts no source or test body.
+Blockers: Main owns host recovery and admission after repeated 4 GB crossings. Free 4617146368 bytes at current readback; Runtime retains its hold and starts no source or test body.
 Blockers: H owns final full suites, render proofs and correct browser Runtime pairing. Matched C3 is reported PASS; browser 7434 is native PASS with wrong Runtime applicability.
 Blockers: D owns E14 acceptance, H forward merge and final guides. P owns P1 package-lane readiness, P3 and final critical-slice acceptance after D. No Runtime source request is ready.
 Next ready: None for Runtime.
@@ -36,8 +36,10 @@ live 0 / cap 0; ready-undispatched 0. No new Runtime worker, test body or cleanu
 
 Current evidence: [management pass](rounds/20261027T223734Z-pass.json). Inbox read through 1941813 bytes, unchanged. [Prior board](rounds/20261027T223734Z-prior-status.md) retains historical detail and exact stop receipts.
 
-Native browser 7434 is now pass, exit 0. H explicitly reports its Runtime 95d checkout mismatch, so this does not qualify final one-head browser behavior. P3 service 26558 is running at this readback; phase owners retain custody. P's description of the original P5 stop as a memory safeguard does not change the recorded disk-stop reason. All cancellation receipts and finished native outcomes stay unchanged.
+Native browser 7434 is now pass, exit 0. H explicitly reports its Runtime 95d checkout mismatch, so this does not qualify final one-head browser behavior. P3 26558 ended interrupted 125; later P3 336 received the supported disk-stop cancellation. Phase owners retain custody. P's description of the original P5 stop as a memory safeguard does not change the recorded disk-stop reason. All cancellation receipts and finished native outcomes stay unchanged.
 
 Delivered archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes. Previously verified sidecar SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`.
 
 Delivered tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 635f4de0. Bases: Runtime fa9cd546 / Agent 64197afa / App fc24f849 / Composition 67b8aa3d. Recipient patch and bundle checks passed at their documented scope. Historical PENDING prose, whitespace findings, known gaps and monitoring limits remain disclosed. This is no full-suite or global behavior PASS. Deferred App candidate remains uninstalled.
+
+Current stop evidence: [native readback](rounds/20261027T224346Z-stop-readback.json); [Main notice](../../design/peer-runtime-to-orchestrator-20261027T224346Z-recurrent-full-stop.md). H browser30951 and P3-336, H Runtime2724 and H Agent325 keep their exact native cancellation states. New worker stop receipts are distinct from service cancellation. Running services: none. Prior independent accepted artifacts and raw outcomes remain unchanged.

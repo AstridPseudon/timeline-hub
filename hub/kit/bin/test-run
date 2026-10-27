@@ -105,11 +105,7 @@ if [[ "$CMD" == "agent=match-target "* ]]; then
 fi
 matching_agent_sha() {
   local base ref
-  if [ "${target#integration:}" != "$target" ]; then
-    base=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
-  else
-    base=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
-  fi
+  base=$(matching_target_base)
   case "$base" in
     tl/one-head) ref=refs/heads/tl/one-head ;;
     origin/*) ref="refs/remotes/$base" ;;
@@ -120,6 +116,45 @@ matching_agent_sha() {
     ref=refs/remotes/origin/staging/timeline-v2.1
   fi
   git -C /home/user/work/agent rev-parse --verify "$ref^{commit}"
+}
+matching_target_base() {
+  local base
+  if [ "${target#integration:}" != "$target" ]; then
+    base=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
+  else
+    base=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+  fi
+  printf '%s' "$base"
+}
+matching_runtime_sha() {
+  local base ref sha
+  base=$(matching_target_base)
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -n "$ref" ] && git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}"
+    return
+  fi
+  sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json"
+}
+runtime_target_reason() {
+  local base ref
+  base=$(matching_target_base)
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -n "$ref" ] && git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    printf 'target-branch:%s' "$base"
+  else
+    printf 'app-runtime-lock:target-branch-%s-unavailable' "${base:-unset}"
+  fi
 }
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; SELECTORS=; set -f; for f in $files; do
   [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"
@@ -161,11 +196,32 @@ if [ -z "$RUN" ]; then
   # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
   EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
   for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
-  [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  MATCH_AGENT_SHA=
   if [ "$AGENT_ROUTE" = match-target ]; then
     MATCH_AGENT_SHA=$(matching_agent_sha) || bad "matching Agent source unavailable for target $target"
-    EXT+=" agent-match-target=$MATCH_AGENT_SHA"
   fi
+  MATCH_RUNTIME_SHA=
+  MATCH_RUNTIME_REASON=
+  case "$repo:$suite" in
+    app:browser-toolchain|app:browser-journey|app:c2-e2e-three-products|app:c2-e2e-three-products-env)
+      MATCH_RUNTIME_SHA=$(matching_runtime_sha)
+      [[ "$MATCH_RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || bad "matching Runtime source unavailable for target $target and App lock"
+      MATCH_RUNTIME_REASON=$(runtime_target_reason)
+      ;;
+  esac
+  if [ -n "$EXT" ]; then
+    EXT=$(for o in agent runtime app composition; do
+      [ "$o" = "$repo" ] && continue
+      case "$o:$AGENT_ROUTE:$MATCH_RUNTIME_SHA" in
+        agent:match-target:*) dep_sha=$MATCH_AGENT_SHA ;;
+        runtime:*:????????????????????????????????????????) dep_sha=$MATCH_RUNTIME_SHA ;;
+        *) dep_sha=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null) ;;
+      esac
+      echo "$o=$dep_sha"
+    done | tr '\n' ' ')
+  fi
+  [ -n "$MATCH_AGENT_SHA" ] && EXT+=" agent-match-target=$MATCH_AGENT_SHA"
+  [ -n "$MATCH_RUNTIME_SHA" ] && EXT+=" runtime-match-target=$MATCH_RUNTIME_SHA runtime-match-reason=$MATCH_RUNTIME_REASON"
   KIT_KEY=
   case "$suite" in browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
     KIT_KEY=$(sha256sum "$SELF_DIR/test-run" "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
