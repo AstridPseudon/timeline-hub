@@ -8,6 +8,43 @@ SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
 bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
 alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+finalize_stale_run() {
+  local stale_dir=$1 stale_id=${1##*/} pid rc=125 st=error target repo suite tree key
+  [ "$(cat "$stale_dir/status" 2>/dev/null)" = running ] || return
+  pid=$(cat "$stale_dir/running" 2>/dev/null) || return
+  kill -0 "$pid" 2>/dev/null && return
+  ps -eo comm=,pid=,args= | awk -v id="$stale_id" -v self="$$" -v parent="$PPID" '$2 != self && $2 != parent && $1 ~ /^(pytest|node|npm|timeout|python([0-9]+(\.[0-9]+)?)?)$/ && index($0, id) {found=1} END {exit found}' && : || return
+  target=$(sed -n 's/^target=//p' "$stale_dir/request")
+  repo=$(sed -n 's/^repo=//p' "$stale_dir/request")
+  suite=$(sed -n 's/^suite=//p' "$stale_dir/request")
+  tree=$(sed -n 's/^tree=//p' "$stale_dir/snap")
+  key=$(sed -n 's/^key=//p' "$stale_dir/snap")
+  if grep -aqE '[1-9][0-9]* failed|[1-9][0-9]* errors|^ERROR ' "$stale_dir/log.txt" 2>/dev/null; then
+    rc=1; st=fail
+  elif grep -aqE '[0-9]+ passed|Tests +[1-9][0-9]*|collected [1-9][0-9]*' "$stale_dir/log.txt" 2>/dev/null; then
+    rc=0; st=pass
+  fi
+  {
+    echo "test $stale_id: $st exit=$rc — $suite on $target ($repo tree $tree; recovered after runner death)"
+    echo "cmd: stale runner finalized from existing log"
+    echo "counts: $(grep -aE '[0-9]+ (passed|failed|errors)|Tests +[0-9]|^# (pass|fail) ' "$stale_dir/log.txt" 2>/dev/null | tail -3 | tr '\n' ' ')"
+    echo "--- last 60 lines of $stale_dir/log.txt ---"
+    tail -60 "$stale_dir/log.txt" 2>/dev/null
+  } > "$stale_dir/summary"
+  echo "$rc" > "$stale_dir/exit"
+  echo "$st" > "$stale_dir/status"
+  [ "$rc" = 0 -o "$rc" = 1 ] && [ ! -f "$stale_dir/EXIT-MISMATCH" ] && [ -n "$key" ] && echo "$stale_id" > "$C/$key"
+  unlink "$stale_dir/running" 2>/dev/null || :
+  [ -n "$key" ] && unlink "$C/$key.running" 2>/dev/null || :
+}
+reconcile_stale_runs() {
+  local stale_dir
+  for stale_dir in "$O"/tests/*; do
+    [ -d "$stale_dir" ] && [ -f "$stale_dir/status" ] && [ -f "$stale_dir/running" ] || continue
+    finalize_stale_run "$stale_dir"
+  done
+}
+reconcile_stale_runs
 . $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
 [ -n "${private_tmp:-}" ] && { [ -d "$private_tmp" ] && [ "$(stat -c '%a %U' "$private_tmp")" = "700 root" ] || bad "private tmp $private_tmp missing or not 0700 root"; export TMPDIR=$private_tmp TMP=$private_tmp TEMP=$private_tmp; }
 case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
@@ -32,14 +69,15 @@ recycle_recreated_worktree() {
 trap recycle_recreated_worktree EXIT
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
-OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; SELECTORS=; set -f; for f in $files; do
   [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"
   # Python lanes receive changed source and fixture paths; pytest gets test selectors only.
   case $repo in
-    agent|runtime) case $f in tests/*.py|tests/*.py::*) CMD+=" $f";; esac;;
+    agent|runtime) case $f in tests/*.py|tests/*.py::*) CMD+=" $f"; SELECTORS+=" $f";; *) FILTERED+=" $f";; esac;;
     *) CMD+=" $f";;
   esac
 done; set +f
+[ "$suite" = targeted ] && [ "$repo" = runtime ] && [ -n "$files" ] && [ -z "$SELECTORS" ] && bad "targeted runtime run has no pytest selectors after filtering; no source-to-test mapping convention is registered; filtered changed paths:$FILTERED"
 HV=light; case $suite in full*|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
@@ -328,6 +366,30 @@ case $repo in
     [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/$COMPOSITION_ARCHIVE" ] || bad "staging Composition archive missing"
     mkdir -p "$SNAP/node_modules/@banodoco/timeline-composition"
     tar -xzf "$SNAP/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/node_modules/@banodoco/timeline-composition"
+    ;;
+  agent)
+    # Agent's staging Remotion install is read-only; make a snapshot-local peer
+    # overlay and extract this snapshot's pinned Composition archive into it.
+    REMOTION_NM=/home/user/work/runtimes/agent-remotion-0013/node_modules
+    [ -d "$REMOTION_NM" ] || bad "staging Remotion peer install missing: $REMOTION_NM"
+    mkdir -p "$SNAP/remotion/node_modules"
+    for module in "$REMOTION_NM"/.[!.]* "$REMOTION_NM"/*; do
+      [ -e "$module" ] || continue
+      name=$(basename "$module")
+      if [[ $name = @* && -d $module ]]; then
+        mkdir -p "$SNAP/remotion/node_modules/$name"
+        for scoped in "$module"/.[!.]* "$module"/*; do
+          [ -e "$scoped" ] || continue
+          ln -s "$(readlink -f "$scoped")" "$SNAP/remotion/node_modules/$name/$(basename "$scoped")"
+        done
+      else
+        ln -s "$(readlink -f "$module")" "$SNAP/remotion/node_modules/$name"
+      fi
+    done
+    COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/remotion/package.json")
+    [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/remotion/$COMPOSITION_ARCHIVE" ] || bad "staging Remotion Composition archive missing"
+    mkdir -p "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
+    tar -xzf "$SNAP/remotion/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
     ;;
   composition) [ -e "$SNAP/node_modules" ] || ln -s "$(readlink -f "$NM")" "$SNAP/node_modules";;
 esac
