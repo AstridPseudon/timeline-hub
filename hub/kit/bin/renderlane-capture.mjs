@@ -28,7 +28,37 @@ import {Player} from '@remotion/player';
 import {TimelineRenderer} from '../src/tools/video-editor/compositions/TimelineRenderer.tsx';
 import {INSTALLED_ASTRID_ELEMENT_HOST} from '../src/tools/video-editor/runtime/astrid-element-components.tsx';
 import {resolveTimelineConfig} from '../src/tools/video-editor/lib/config-utils.ts';
-import config from './config.json';
+import fixture from '../src/tools/video-editor/data/shotComposition.fixture.json';
+import {createShotCompositionAdapter} from '../src/tools/video-editor/data/shotCompositionAdapter.ts';
+import {projectCanonicalComposition} from '../src/tools/video-editor/data/shotCompositionProjection.ts';
+const standin = structuredClone(fixture);
+standin.occurrences = [standin.occurrences[0], standin.occurrences[3]].map((occurrence, index) => ({
+  ...occurrence,
+  at_ms: 23867 + index * 2500, duration_ms: 2500,
+}));
+const prepared = createShotCompositionAdapter({load: async () => standin}).prepare(standin);
+const projected = projectCanonicalComposition(prepared, {
+  output: {resolution: '640x360', fps: 30, file: 'standin.mp4'},
+  tracks: [
+    {id: 'picture', kind: 'visual', app: {group: {id: 'occ-first', sourceTrack: 'picture'}}},
+    {id: 'type', kind: 'visual'},
+    {id: 'audio', kind: 'audio'},
+  ],
+  clips: [{id: 'loose-still', clipType: 'media', track: 'type', at: 23.867, hold: 5, asset: 'lower-still'}],
+  registry: {assets: {}},
+}).config;
+if (!projected.clips.filter(clip => clip.id.startsWith('occ-')).every(clip => clip.app?.canonicalTiming)) {
+  throw Error('App canonical projection omitted canonicalTiming on a shot clip');
+}
+const imageFiles = ['intro-1.jpg', 'intro-3.jpg', 'intro-5.jpg', 'intro-2.jpg', 'intro-4.jpg'];
+const assets = {};
+const clips = projected.clips.map((clip, index) => {
+  const asset = 'standin-' + index;
+  assets[asset] = {file: imageFiles[index], type: 'image/jpeg'};
+  return {...clip, asset, assetEntry: undefined};
+});
+const config = {...projected, clips, registry: {assets}};
+window.projectedConfig = config;
 const resolved = await resolveTimelineConfig(config, config.registry, async file => new URL('/'+file, location.origin).href);
 const ref = createRef();
 const Component = () => <TimelineRenderer config={resolved} astridElementHost={INSTALLED_ASTRID_ELEMENT_HOST}/>;
@@ -60,43 +90,11 @@ try {
   server = await createServer({
     configFile: join(root, 'config/vite/vite.config.ts'),
     cacheDir: join(harness, 'vite-cache'),
+    ssr: {external: ['react', 'react-dom', 'remotion']},
     optimizeDeps: {entries: [join(harness, 'index.html')]},
     server: {host: '127.0.0.1', port: 0},
   });
   await server.listen();
-  const {createShotCompositionAdapter} = await server.ssrLoadModule('/src/tools/video-editor/data/shotCompositionAdapter.ts');
-  const {projectCanonicalComposition} = await server.ssrLoadModule('/src/tools/video-editor/data/shotCompositionProjection.ts');
-  const fixture = JSON.parse(await readFile(join(root, 'src/tools/video-editor/data/shotComposition.fixture.json'), 'utf8'));
-  fixture.occurrences = [fixture.occurrences[0], fixture.occurrences[3]].map((occurrence, index) => ({
-    ...occurrence,
-    occurrence_id: index === 0 ? 'occ-first' : 'occ-second',
-    ordinal: index,
-    at_ms: 23867 + index * 2500,
-    duration_ms: 2500,
-  }));
-  const prepared = createShotCompositionAdapter({load: async () => fixture}).prepare(fixture);
-  const projected = projectCanonicalComposition(prepared, {
-    output: {resolution: '640x360', fps: 30, file: 'standin.mp4'},
-    tracks: [
-      {id: 'picture', kind: 'visual', app: {group: {id: 'occ-first', sourceTrack: 'picture'}}},
-      {id: 'type', kind: 'visual'},
-      {id: 'audio', kind: 'audio'},
-    ],
-    clips: [{id: 'loose-still', clipType: 'media', track: 'type', at: 23.867, hold: 5, asset: 'lower-still'}],
-    registry: {assets: {}},
-  }).config;
-  assert(projected.clips.filter(clip => clip.id.startsWith('occ-')).every(clip => clip.app?.canonicalTiming),
-    'App canonical projection must provide canonicalTiming for every shot clip');
-  const imageFiles = ['intro-1.jpg', 'intro-3.jpg', 'intro-5.jpg', 'intro-2.jpg', 'intro-4.jpg'];
-  const assets = {};
-  const projectedClips = projected.clips.map((clip, index) => {
-    const asset = `standin-${index}`;
-    assets[asset] = {file: imageFiles[index], type: 'image/jpeg'};
-    return {...clip, asset, assetEntry: undefined};
-  });
-  config = {...projected, clips: projectedClips, registry: {assets}};
-  await writeFile(join(harness, 'config.json'), JSON.stringify(config));
-  await writeFile(join(output, 'config.json'), JSON.stringify(config, null, 2));
   const address = server.httpServer.address();
   const url = 'http://127.0.0.1:' + address.port + '/.renderlane/index.html';
   console.log('Vite listening: ' + url);
@@ -107,6 +105,9 @@ try {
   page.on('pageerror', e => {errors.push(e.message); console.error('preview pageerror: ' + e.message)});
   await page.goto(url);
   await page.waitForFunction(() => window.standinReady === true, undefined, {timeout: 120000});
+  config = await page.evaluate(() => window.projectedConfig);
+  await writeFile(join(harness, 'config.json'), JSON.stringify(config));
+  await writeFile(join(output, 'config.json'), JSON.stringify(config, null, 2));
   const serveUrl = await bundle({
     entryPoint: join(harness, 'export.tsx'), publicDir: join(root, 'public'), enableCaching: false,
     webpackOverride: config => ({...config, resolve: {...config.resolve, alias: {...config.resolve?.alias,
