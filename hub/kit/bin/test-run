@@ -11,9 +11,25 @@ alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/de
 . $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
 [ -n "${private_tmp:-}" ] && { [ -d "$private_tmp" ] && [ "$(stat -c '%a %U' "$private_tmp")" = "700 root" ] || bad "private tmp $private_tmp missing or not 0700 root"; export TMPDIR=$private_tmp TMP=$private_tmp TEMP=$private_tmp; }
 case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
+RECREATED=0; DEFER_RECREATED=0; RECREATED_MARKER=$D/recreated-worktree
+[ -f "$RECREATED_MARKER" ] && RECREATED=1
 if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
-  git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; fi
+  if git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; then
+    RECREATED=1; touch "$RECREATED_MARKER"
+  fi
+fi
 [ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+recycle_recreated_worktree() {
+  [ "$RECREATED" = 1 ] && [ "$DEFER_RECREATED" = 0 ] && [ -z "$LEASED" ] || return
+  [ "$W" = "/home/user/work/wt/$target" ] || return
+  WD=$O/workers/$target; [ -d "$WD" ] || return
+  [ ! -f "$WD/running" ] && [ ! -f "$WD/KEEP" ] || return
+  grep -lqsw -- "$target" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && return
+  STATUS=$(git -C "$W" status --porcelain 2>/dev/null) || return
+  [ -z "$STATUS" ] || return
+  git -C /home/user/work/$repo worktree remove "$W" 2>/dev/null && { touch "$WD/recycled"; rm "$RECREATED_MARKER" 2>/dev/null || :; }
+}
+trap recycle_recreated_worktree EXIT
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do
@@ -64,7 +80,7 @@ if [ -z "$RUN" ]; then
   [ "$AVAILABLE_BYTES" -le 4500000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 4500000000 bytes)" | tee "$D/why"; exit 3; }
   { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$suite" != agent-core-full ] && [ -z "$MEASURED_FLOOR" ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)" | tee "$D/why"; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
-  setsid nohup "$0" --run "$ID" > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+  DEFER_RECREATED=1; setsid nohup "$0" --run "$ID" > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
 fi
 # Every heavy body owns a durable trace.  The sampler is the child of this
 # exact body and carries both the queued ID and this body's /proc start tick.
@@ -98,6 +114,7 @@ finish_trace() {
     stop_trace
     [ "$?" -ne 0 ] && [ "$rc" -eq 0 ] && rc=125
   fi
+  recycle_recreated_worktree
   exit "$rc"
 }
 if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then

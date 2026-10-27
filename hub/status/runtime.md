@@ -1,5 +1,5 @@
-<!-- main | 2026-10-26T23:53:40Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-26T23:52:46.884873+00:00
+<!-- main | 2026-10-26T23:58:38Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-26T23:55:10.557146+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -100,11 +100,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
-| OPS follow-up alert | Report disk and stuck runner | Manager receiving | Main Hour 2 and A status | doing | Main diag-testlane2-2345 | [Near-stop peer alert](../../design/peer-runtime-to-main-20261026T235155Z-followup-disk-and-runner.md). Main owns recovery; no Runtime repair. | No source change |
+| OPS follow-up alert | Track runner repair and recovered disk | Manager receiving | Main Hour 2 and A status | doing | Main diag-testlane2-2345 | [Near-stop peer alert](../../design/peer-runtime-to-main-20261026T235155Z-followup-disk-and-runner.md). Main owns recovery; no Runtime repair. | No source change |
 
 Blockers: Main owns current test-run repair and disk recovery; existing diag-testlane2-2345 retained and near-stop peer alert sent. No active Runtime or ZIP task is blocked. D130 and all protected targets remain held.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 4377194496 bytes. Below new-dispatch floors; Main owns disk recovery. All Runtime trees remain KEEP or dirty.
+live 0 / cap 3; ready-undispatched 0. Free 5627396096 bytes. Main owns recovery; no new Runtime task. All Runtime trees remain KEEP or dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -115,4 +115,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Recheck complete at 2026-10-26T23:52:46.884873+00:00. Ten-minute interval completed. INBOX, HEADER and five owner boards unchanged. A/B/C statuses advanced under Main Hour 2: C3 step 1 approved and started, B parity correction queued, A boundary review pending. Lead A reports a stuck test wrapper; Main diag-testlane2-2345 owns repair. Disk near the stop was reported by peer note; no duplicate Runtime action. Full bin/workers rt- exit 0, 2717 rows, no running row. All 36 Runtime trees remain 31 KEEP and 5 dirty, no eligible recycle. Delivered ZIP and sidecar hash exact. No product, test, kit, pin, Git, cleanup, hub or daemon mutation. [Pass evidence](rounds/20261026T235226Z-pass.json).
+Current pass: Recheck complete at 2026-10-26T23:55:10.557146+00:00. INBOX, HEADER and five owner boards unchanged. Deployed leads retain follow-up execution; B fixture is ready for its own review, C reviews are prepared. Main owns runner repair; free disk recovered during readback. Full bin/workers rt- exit 0; no running row. All 36 Runtime trees remain 31 KEEP and 5 dirty, with no eligible recycle. Delivered archive and sidecar hash exact. No product, test, kit, pin, Git, cleanup, hub or daemon mutation. [Pass evidence](rounds/20261026T235510Z-pass.json).
