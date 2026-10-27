@@ -172,6 +172,9 @@ def _seconds(raw: Any, fps: float, label: str) -> float:
         value, unit = float(match.group(1)), match.group(2).lower() or "s"
     else:
         raise ClipFieldError(f"{label} must be a duration like 8f, 0.4s or 0.4")
+    if unit == "f" and (isinstance(fps, bool) or not isinstance(fps, (int, float))
+                         or not math.isfinite(float(fps)) or fps <= 0):
+        raise ClipFieldError(f"{label} frame duration requires a positive finite fps")
     seconds = value / fps if unit == "f" else value
     if not math.isfinite(seconds) or seconds <= 0:
         raise ClipFieldError(f"{label} must be a positive duration; got {raw!r}")
@@ -179,6 +182,8 @@ def _seconds(raw: Any, fps: float, label: str) -> float:
 
 
 def _frames(raw: Any, fps: float, label: str) -> int:
+    if isinstance(fps, bool) or not isinstance(fps, (int, float)) or not math.isfinite(float(fps)) or fps <= 0:
+        raise ClipFieldError(f"{label} frame conversion requires a positive finite fps")
     seconds = _seconds(raw, fps, label)
     match = _DUR_RE.fullmatch(raw) if isinstance(raw, str) else None
     if match and match.group(2).lower() == "f":
@@ -283,9 +288,10 @@ def _params(spec: FieldSpec, raw: Any) -> dict[str, Any] | None:
 
 def _stored_easing(value: Mapping[str, Any]) -> str | None:
     params = value.get("params")
-    if not isinstance(params, Mapping) or "easing" not in params:
+    raw = params.get("easing") if isinstance(params, Mapping) else value.get("easing")
+    if raw is None:
         return None
-    name = _easing_name(str(params["easing"]))
+    name = _easing_name(str(raw))
     return None if name == "linear" else name
 
 
@@ -293,31 +299,44 @@ def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() == "none"):
         return None
     if isinstance(raw, Mapping):
-        extra = set(raw) - {"type", "duration", "intensity", "params"}
+        extra = set(raw) - {"id", "type", "duration", "durationFrames", "params"}
         if extra:
-            raise ClipFieldError(f"{spec.name} has unknown key {sorted(extra)[0]!r}; allowed: type, duration")
-        name = raw.get("type")
-        duration = None if raw.get("duration") is None else _seconds(raw["duration"], fps, f"{spec.name}.duration")
-        extras = {key: raw[key] for key in ("intensity", "params") if key in raw}
+            raise ClipFieldError(f"{spec.name} has unsupported key {sorted(extra)[0]!r}")
+        names = [raw[key] for key in ("id", "type") if key in raw]
+        if len(names) == 2 and names[0] != names[1]:
+            raise ClipFieldError(f"{spec.name} id and type must agree")
+        if "duration" in raw and "durationFrames" in raw:
+            raise ClipFieldError(f"{spec.name} must use duration seconds or durationFrames, not both")
+        name = names[0] if names else None
+        if "durationFrames" in raw:
+            duration_frames = raw["durationFrames"]
+            if (isinstance(duration_frames, bool) or not isinstance(duration_frames, (int, float))
+                    or not math.isfinite(float(duration_frames)) or float(duration_frames) <= 0
+                    or not float(duration_frames).is_integer()):
+                raise ClipFieldError(f"{spec.name}.durationFrames must be a positive whole frame count")
+        else:
+            duration_frames = None if raw.get("duration") is None else _frames(raw["duration"], fps, f"{spec.name}.duration")
+        extras = {"params": raw["params"]} if "params" in raw else {}
     elif isinstance(raw, str):
         tokens, easing = _take_ease(spec, raw.split())
         if not tokens or len(tokens) > 2:
             raise ClipFieldError(f"{spec.name} {raw!r} must be '<animation> <duration> [ease=E]', e.g. {spec.write!r}")
         name = tokens[0]
-        duration = _seconds(tokens[1], fps, f"{spec.name} duration") if len(tokens) == 2 else None
+        duration_frames = _frames(tokens[1], fps, f"{spec.name} duration") if len(tokens) == 2 else None
         extras = {} if easing is None else {"params": {"easing": easing}}
     else:
         raise ClipFieldError(f"{spec.name} must be 'none' or '<animation> <duration>', e.g. {spec.write!r}")
     allowed = _animation_ids(spec.phase or "entrance")
     if name not in allowed:
         raise ClipFieldError(f"{spec.name} {name!r} is not a {spec.phase} animation; allowed: {', '.join(allowed)}")
-    value: dict[str, Any] = {"type": name}
-    if duration is not None:
-        value["duration"] = duration
-    if "intensity" in extras:
-        value["intensity"] = extras["intensity"]
+    value: dict[str, Any] = {"id": name}
+    if duration_frames is not None:
+        value["durationFrames"] = duration_frames
     if "params" in extras:
         params = _params(spec, extras["params"])
+        unsupported = set(params or {}) - {"easing"}
+        if unsupported:
+            raise ClipFieldError(f"{spec.name}.params key {sorted(unsupported)[0]!r} is not supported by the installed animations")
         if params:
             value["params"] = params
     return value
@@ -337,9 +356,9 @@ def _visual_fade_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
             tokens = tokens[1:]
         if len(tokens) > 1:
             raise ClipFieldError(f"{spec.name} {raw!r} must be a duration, e.g. {spec.write} or '{spec.write} ease=out'")
-        value: dict[str, Any] = {"type": kind}
+        value: dict[str, Any] = {"id": kind}
         if tokens:
-            value["duration"] = _seconds(tokens[0], fps, f"{spec.name} duration")
+            value["durationFrames"] = _frames(tokens[0], fps, f"{spec.name} duration")
         if easing is not None:
             params = _params(spec, {"easing": easing})
             if params:
@@ -381,13 +400,27 @@ def _transition_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() in ("cut", "none")):
         return None
     if isinstance(raw, Mapping):
-        name = raw.get("id", raw.get("type"))
+        extra = set(raw) - {"id", "type", "duration", "durationFrames"}
+        if extra:
+            raise ClipFieldError(f"transition has unsupported key {sorted(extra)[0]!r}")
+        names = [raw[key] for key in ("id", "type") if key in raw]
+        normalized_names = [words.get(name, name) for name in names]
+        if len(normalized_names) == 2 and normalized_names[0] != normalized_names[1]:
+            raise ClipFieldError("transition id and type must agree")
+        if "duration" in raw and "durationFrames" in raw:
+            raise ClipFieldError("transition must use duration seconds or durationFrames, not both")
+        name = normalized_names[0] if normalized_names else None
         if name not in words and name not in stored_ids:
             raise ClipFieldError(f"transition {name!r} is unknown; allowed: {', '.join(words)}")
         stored_id = words.get(name, name)
         value: dict[str, Any] = {"id": stored_id}
         if raw.get("durationFrames") is not None:
-            value["durationFrames"] = int(round(float(raw["durationFrames"])))
+            frames = raw["durationFrames"]
+            if (isinstance(frames, bool) or not isinstance(frames, (int, float))
+                    or not math.isfinite(float(frames)) or float(frames) <= 0
+                    or not float(frames).is_integer()):
+                raise ClipFieldError("transition.durationFrames must be a positive whole frame count")
+            value["durationFrames"] = int(frames)
         elif raw.get("duration") is not None:
             value["durationFrames"] = _frames(raw["duration"], fps, "transition duration")
         return value
@@ -524,7 +557,10 @@ def _human(spec: FieldSpec, value: Any, fps: float) -> str | None:
     if spec.kind == "fade":
         if not isinstance(value, Mapping):
             return _fmt_seconds(float(value), fps)
-        parts = [] if value.get("duration") is None else [_fmt_seconds(float(value["duration"]), fps)]
+        frames = value.get("durationFrames")
+        parts = [] if frames is None else [_fmt_seconds(float(frames) / fps, fps)]
+        if frames is None and value.get("duration") is not None:
+            parts.append(_fmt_seconds(float(value["duration"]), fps))
         easing = _stored_easing(value)
         if easing:
             parts.append(f"ease={easing}")
@@ -532,8 +568,11 @@ def _human(spec: FieldSpec, value: Any, fps: float) -> str | None:
     if spec.kind == "animation":
         if not isinstance(value, Mapping):
             return str(value)
-        parts = [str(value.get("type"))]
-        if value.get("duration") is not None:
+        parts = [str(value.get("id", value.get("type")))]
+        frames = value.get("durationFrames")
+        if frames is not None:
+            parts.append(_fmt_seconds(float(frames) / fps, fps))
+        elif value.get("duration") is not None:
             parts.append(_fmt_seconds(float(value["duration"]), fps))
         easing = _stored_easing(value)
         if easing:
