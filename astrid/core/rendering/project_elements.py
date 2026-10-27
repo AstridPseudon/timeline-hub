@@ -60,11 +60,40 @@ def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, 
     return {key: ref for key, ref in refs.items() if not _is_builtin_reference(ref)}
 
 
+def _clip_contexts(
+    config: Mapping[str, Any], reference: Mapping[str, str]
+) -> tuple[str, ...]:
+    contexts = []
+    for index, clip in enumerate(config.get("clips", [])):
+        ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
+        if not isinstance(ref, Mapping):
+            continue
+        if not all(ref.get(key) == reference[key] for key in ("packId", "kind", "id", "revision")):
+            continue
+        context = f"$.clips[{index}]"
+        clip_id = clip.get("id")
+        if isinstance(clip_id, str) and clip_id:
+            context += f" (id={clip_id!r})"
+        contexts.append(context)
+    return tuple(contexts)
+
+
+def _snapshot_label(config: Mapping[str, Any], reference: Mapping[str, str]) -> str:
+    label = (
+        f"{reference['packId']}/{reference['kind']}/"
+        f"{reference['id']}@{reference['revision']}"
+    )
+    contexts = _clip_contexts(config, reference)
+    if contexts:
+        label += f" for clip {'; '.join(contexts)}"
+    return label
+
+
 def require_project_snapshots(config: Mapping[str, Any]) -> None:
     selected = {selection_key(row["reference"]) for row in selections(config)}
-    for key in _project_references(config):
+    for key, ref in _project_references(config).items():
         if key not in selected:
-            raise ValueError(f"Project element snapshot missing for {key[0]}/{key[1]}/{key[2]}@{key[3]}")
+            raise ValueError(f"Project element snapshot missing for {_snapshot_label(config, ref)}")
 
 
 def resolve_project_elements(config: Mapping[str, Any], *, project: str, client: Any) -> dict[str, Any]:
@@ -89,7 +118,7 @@ def resolve_project_elements(config: Mapping[str, Any], *, project: str, client:
     objects = {}
     selected = []
     for ref in refs.values():
-        label = f"{ref['packId']}/{ref['kind']}/{ref['id']}@{ref['revision']}"
+        label = _snapshot_label(result, ref)
         owner = ref["packId"]
         if owner not in documents:
             _, row = project_packs._read_document(client, realm, project)
@@ -137,9 +166,15 @@ def stage_project_elements(
     roots = []
     for selected in selections(config):
         ref = selected["reference"]
-        descriptor = project_packs.admitted_element_snapshot_descriptor(
-            selected["realm"], selected["project"], ref,
-            selected["verified"], selected["snapshot"])
+        label = _snapshot_label(config, ref)
+        try:
+            descriptor = project_packs.admitted_element_snapshot_descriptor(
+                selected["realm"], selected["project"], ref,
+                selected["verified"], selected["snapshot"])
+        except ValueError as exc:
+            raise ValueError(
+                f"Project element snapshot digest mismatch or invalid source for {label}: {exc}"
+            ) from exc
         snapshot = selected["snapshot"]
         files, _ = project_packs._snapshot_object_resources(
             {key: snapshot[key] for key in ("object_id", "digest", "size", "media_type")},
@@ -157,7 +192,7 @@ def stage_project_elements(
         exact = [item for item in elements if item.id == ref["id"]
                  and item.kind == ref["kind"] + "s" and item.root.is_relative_to(pack_root)]
         if len(exact) != 1:
-            raise ValueError(f"Staged project element snapshot is unavailable: {ref}")
+            raise ValueError(f"Staged project element snapshot is unavailable for {label}: {ref}")
         element = exact[0]
         metadata = {**element.metadata, "render_revision": descriptor["revision"],
                     "render_key": key, "render_import_scope": f"pack-{key}-elements"}
