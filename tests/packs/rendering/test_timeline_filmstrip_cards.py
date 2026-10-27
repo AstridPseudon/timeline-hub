@@ -55,6 +55,66 @@ def test_explicit_interval_does_not_inject_clip_first_or_shot_midpoint():
     assert all(card['sample_reasons'] == ['interval'] for card in cards)
 
 
+def test_windowed_samples_include_transition_and_fade_boundary_and_interior_moments():
+    clip = dict(
+        id='effected', kind='video', at=0, duration=4,
+        transition_projection={'status': 'resolved', 'transition': {'id': 'cross-fade'},
+                               'start': [1, 1], 'end': [2, 1]},
+        timed_changes=[{'kind': 'fade_in', 'start': [1, 1], 'end': [2, 1]}],
+    )
+    index = plan_filmstrip(snapshot(clips=[clip]), {'range': [1, 2], 'every': 2})
+    frames = {card['frame']: card for card in index['cards']}
+
+    assert {24, 35, 47}.issubset(frames)
+    assert all('event_moment' in frames[frame]['sample_reasons'] for frame in (24, 35, 47))
+    assert index['coverage']['event_moments']['event_count'] == 2
+    assert index['coverage']['event_moments']['omitted_event_moment_count'] == 0
+    assert index['coverage']['event_moments']['clipped_event_count'] == 0
+
+    focused_clip = {**clip, 'at': 1, 'duration': 3}
+    focused = plan_filmstrip(snapshot(clips=[focused_clip]),
+                             {'clip': 'effected', 'range': [0.9, 2], 'every': 2})
+    assert 23 in {card['frame'] for card in focused['cards']}
+
+
+def test_overview_discloses_event_omissions_and_window_clipping():
+    clip = dict(
+        id='late-effect', kind='video', at=0, duration=4,
+        timed_changes=[{'kind': 'fade_out', 'start': [1, 1], 'end': [2, 1]}],
+    )
+    index = plan_filmstrip(snapshot(clips=[clip]), {'max_frames': 2})
+    coverage = index['coverage']['event_moments']
+
+    assert index['sampling']['overview'] is True
+    assert coverage['event_count'] == 1
+    assert coverage['omitted_event_moment_count'] > 0
+    assert coverage['omitted_event_count'] == 1
+
+    clipped = plan_filmstrip(snapshot(clips=[clip]), {'range': [1.5, 2.5], 'every': 0.5})
+    clipped_coverage = clipped['coverage']['event_moments']
+    assert clipped_coverage['clipped_event_count'] == 1
+    assert clipped_coverage['omissions'][0]['clipped'] is True
+
+    unresolved = plan_filmstrip(snapshot(clips=[dict(
+        id='unresolved', kind='video', at=0, duration=4,
+        transition_projection={'status': 'unresolved', 'transition': 'cross-fade',
+                               'reason': 'transition timing unavailable'},
+    )]), {'range': [0, 1]})
+    unresolved_event = unresolved['coverage']['event_moments']['omissions'][0]
+    assert unresolved_event['status'] == 'unresolved'
+    assert unresolved_event['reason'] == 'transition timing unavailable'
+
+
+def test_at_remains_one_exact_frame_inside_an_effect():
+    clip = dict(id='effected', kind='video', at=0, duration=4,
+                timed_changes=[{'kind': 'fade_in', 'start': [1, 1], 'end': [2, 1]}])
+    index = plan_filmstrip(snapshot(clips=[clip]), {'at': 1.25})
+
+    assert [card['frame'] for card in index['cards']] == [30]
+    assert index['sampling']['requested_at'] == 1.25
+    assert index['sampling']['resolved_at_frame'] == 30
+
+
 def test_explicit_half_second_is_not_adaptive_overview():
     options = filmstrip_options({'every': 0.5})
     index = plan_filmstrip(snapshot(duration_frames=240), options)

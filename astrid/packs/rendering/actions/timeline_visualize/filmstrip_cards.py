@@ -676,7 +676,80 @@ def _boundary_index(snapshot, clips, spans, total, fps):
     return entries
 
 
-def _full_overview(snapshot, clips, spans, total, fps, limit):
+def _event_moments(clips, fps):
+    """Return boundary and interior frames for the existing timing projection."""
+    events = []
+
+    def add(clip, kind, start, end, *, status='resolved', reason=None):
+        try:
+            start, end = _q(start), _q(end)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return
+        if end <= start:
+            return
+        start_frame = math.floor(start * fps)
+        end_frame = math.ceil(end * fps)
+        points = {}
+        for frame, role in ((start_frame - 1, 'before'), (start_frame, 'start'),
+                            ((start_frame + end_frame - 1) // 2, 'interior'),
+                            (end_frame - 1, 'end_inclusive'), (end_frame, 'after')):
+            points.setdefault(frame, []).append(role)
+        events.append({
+            'id': f"{clip.get('id')}:{kind}:{start}:{end}",
+            'clip_id': str(clip.get('id')), 'kind': kind,
+            'start_frame': start_frame, 'end_frame': end_frame,
+            'status': status, 'reason': reason,
+            'moments': [{'frame': frame, 'roles': roles} for frame, roles in sorted(points.items())],
+        })
+
+    for clip in clips:
+        transition = clip.get('transition_projection')
+        if isinstance(transition, Mapping):
+            if transition.get('status') == 'resolved' and transition.get('start') is not None and transition.get('end') is not None:
+                declaration = transition.get('transition')
+                transition_id = declaration.get('id') if isinstance(declaration, Mapping) else declaration
+                add(clip, f"transition:{transition_id or 'transition'}",
+                    transition['start'], transition['end'])
+            else:
+                events.append({'id': f"{clip.get('id')}:transition", 'clip_id': str(clip.get('id')),
+                               'kind': 'transition', 'status': 'unresolved',
+                               'reason': transition.get('reason', 'transition timing unavailable'), 'moments': []})
+        for change in clip.get('timed_changes') or []:
+            if not isinstance(change, Mapping) or change.get('start') is None or change.get('end') is None:
+                continue
+            add(clip, str(change.get('kind') or 'effect'), change['start'], change['end'])
+    return events
+
+
+def _event_coverage(events, reasons, *, first, stop):
+    selected_frames = set(reasons)
+    rows = []
+    sampled_moments = omitted_moments = clipped = omitted_events = 0
+    for event in events:
+        moments = event.get('moments') or []
+        if event.get('status') != 'resolved':
+            omitted_events += 1
+            rows.append({key: event.get(key) for key in ('id', 'clip_id', 'kind', 'status', 'reason')})
+            continue
+        inside = [moment for moment in moments if first <= moment['frame'] < stop]
+        sampled = [moment for moment in inside if moment['frame'] in selected_frames]
+        missing = len(inside) - len(sampled)
+        clipped_here = event['start_frame'] < first or event['end_frame'] > stop
+        sampled_moments += len(sampled)
+        omitted_moments += missing
+        clipped += int(clipped_here)
+        if missing or clipped_here:
+            omitted_events += 1
+        if missing or clipped_here:
+            rows.append({'id': event['id'], 'clip_id': event['clip_id'], 'kind': event['kind'],
+                         'sampled_moments': len(sampled), 'omitted_moments': missing,
+                         'clipped': clipped_here, 'requested_window_frames': [first, stop]})
+    return {'event_count': len(events), 'sampled_event_moment_count': sampled_moments,
+            'omitted_event_moment_count': omitted_moments, 'omitted_event_count': omitted_events,
+            'clipped_event_count': clipped, 'omissions': rows}
+
+
+def _full_overview(snapshot, clips, spans, total, fps, limit, events=()):
     """Plan a bounded full-render overview while retaining boundary evidence."""
     entries = _boundary_index(snapshot, clips, spans, total, fps)
     reasons = {}
@@ -699,6 +772,11 @@ def _full_overview(snapshot, clips, spans, total, fps, limit):
     mandatory_count = len(reasons)
     if mandatory_count > limit:
         raise ValueError(f'Overview requires {mandatory_count} mandatory frames but max_frames is {limit}.')
+
+    event_frames = sorted({moment['frame'] for event in events for moment in event.get('moments', [])
+                           if 0 <= moment['frame'] < total})
+    for frame in _spread(event_frames, min(len(event_frames), limit - len(reasons))):
+        add(frame, 'event_moment')
 
     boundary_frames = [entry['frame'] for entry in entries if entry['frame'] not in reasons]
     remaining = limit - len(reasons)
@@ -827,6 +905,7 @@ def plan_filmstrip(
         raise ValueError('Requested window contains no rendered frames.')
     clips = snapshot.get('clips', [])
     spans = {id(c): _frame_span(c, fps) for c in clips}
+    event_moments = _event_moments(clips, fps)
     selected = clips
     for key in ('clip', 'occurrence', 'shot', 'asset'):
         value = options.get(key)
@@ -896,7 +975,8 @@ def plan_filmstrip(
         add(resolved_at_frame, 'exact_time')
     elif is_full_overview:
         overview_limit = min(limit, OVERVIEW_MAX_CARDS)
-        reasons, boundary_index, coverage = _full_overview(snapshot, clips, spans, total, fps, overview_limit)
+        reasons, boundary_index, coverage = _full_overview(
+            snapshot, clips, spans, total, fps, overview_limit, event_moments)
     elif mode == 'interval':
         # Jump directly into selected clip windows; never scan an entire movie
         # to discover a short filtered clip near its end.
@@ -918,6 +998,21 @@ def plan_filmstrip(
                     raise ValueError(f'Filmstrip exceeds {limit} sample candidates; use a coarser --every or a narrower --range.')
                 add(frame, 'interval')
                 k += 1
+    if requested_frame is None and resolved_at_frame is None and not is_full_overview:
+        # Event moments supplement the requested window's samples. If the
+        # caller's frame budget is already full, coverage reports the omissions.
+        selected_ids = {str(clip.get('id')) for clip in selected}
+        for event in event_moments:
+            if filtered and event.get('clip_id') not in selected_ids:
+                continue
+            for moment in event.get('moments', []):
+                frame = moment['frame']
+                if not first <= frame < stop:
+                    continue
+                if frame in reasons:
+                    reasons[frame].add('event_moment')
+                elif len(reasons) < limit:
+                    reasons[frame] = {'event_moment'}
     picture = picture_cut_frames(snapshot, fps, total)
     if requested_frame is None and resolved_at_frame is None and not is_full_overview and motion_cut is None:
         # Interval sampling is a strict periodic grid.  Boundary neighbors are
@@ -972,6 +1067,20 @@ def plan_filmstrip(
         contact_info = {'tiles': tiles, 'cap': CONTACT_MAX_TILES, 'sample': mode, 'thinned_from': thinned_from}
         if len(reasons) > tiles:
             contact_info['sequence_steps'] = len(reasons) - tiles
+    relevant_events = []
+    for event in event_moments:
+        clip = next((c for c in clips if str(c.get('id')) == event.get('clip_id')), None)
+        if clip is None:
+            continue
+        clip_start, clip_end = spans[id(clip)]
+        if clip_end <= first or clip_start >= stop:
+            continue
+        if filtered and clip not in selected:
+            continue
+        if event.get('status') == 'resolved':
+            if event['end_frame'] <= first or event['start_frame'] >= stop:
+                continue
+        relevant_events.append(event)
     if boundary_index is None:
         boundary_index = _boundary_index(snapshot, clips, spans, total, fps)
         selected = set(reasons)
@@ -989,6 +1098,7 @@ def plan_filmstrip(
             'all_boundaries_sampled': all(entry['selected'] for entry in boundary_index),
             'not_promised': ['every fast-cut boundary is sampled'] if not all(entry['selected'] for entry in boundary_index) else [],
         }
+    coverage['event_moments'] = _event_coverage(relevant_events, reasons, first=first, stop=stop)
     cards = []
     def cut_of(frame):
         for cut in picture:
@@ -1836,6 +1946,7 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
             duration_seconds=duration, show_output='output' in components,
             thinned_from=(index.get('contact') or {}).get('thinned_from'), overlay=overlay, audio=audio,
             revision_label=revision_label,
+            event_coverage=(index.get('coverage') or {}).get('event_moments'),
         )}
         if audio is not None:
             index['motion_findings'] = contact_silence_findings(audio)
@@ -1908,6 +2019,21 @@ def build_filmstrip_pack(*, out_root: Path, video_path: Path | None = None, snap
         f'Revision: `{revision_text}`', f"Render: `{snapshot['render_run_id']}`", '',
         'Scripts are segment-level, not word-aligned. “No script” does not assert acoustic silence.', '',
     ]
+    event_coverage = (index.get('coverage') or {}).get('event_moments') or {}
+    if event_coverage.get('event_count'):
+        md += [
+            (f"Event moments: {event_coverage.get('sampled_event_moment_count', 0)} sampled; "
+             f"{event_coverage.get('omitted_event_moment_count', 0)} omitted; "
+             f"{event_coverage.get('clipped_event_count', 0)} clipped to the requested window."),
+            'See `frame-index.json` for omitted event details; inspect a specific instant with `--at`.', '',
+        ]
+        for omission in event_coverage.get('omissions') or []:
+            if omission.get('omitted_moments') or omission.get('status') != 'resolved' or omission.get('clipped'):
+                detail = omission.get('reason') or f"{omission.get('omitted_moments', 0)} moments omitted"
+                if omission.get('clipped'):
+                    detail += ' (clipped at requested-window edge)'
+                md.append(f"- {omission.get('kind', 'event')} on `{omission.get('clip_id', 'unknown clip')}`: {html.escape(str(detail))}")
+        md.append('')
     for card in cards:
         md += [f"## {card['id']}", '', f"![{card['time_label']}]({card['image']})", ''] + [html.escape(line) + '  ' for line in _lines(card)] + ['', '```sh', card['actions']['focus_command'], '```', '']
     Path(paths['markdown']).write_text('\n'.join(md), encoding='utf-8')
