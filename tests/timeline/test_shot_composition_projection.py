@@ -52,12 +52,7 @@ def test_occurrence_timing_is_media_specific_and_matches_shared_projection_vecto
         if clip.get("shot_occurrence_id") == "occ-1"
     }
 
-    # Keep the shared fixture frozen; child declarations now win kind collisions.
-    expected_clips = {
-        **vectors["expected"],
-        "collision-parent-kind-wins": {"at": 0, "from": 0.125, "to": 2.125, "timeline_duration": 2},
-    }
-    for clip_id, expected in expected_clips.items():
+    for clip_id, expected in vectors["expected"].items():
         clip = clips[clip_id]
         assert clip["at"] == pytest.approx(expected["at"]), clip_id
         assert clip["from"] == pytest.approx(expected["from"]), clip_id
@@ -70,6 +65,9 @@ def test_occurrence_timing_is_media_specific_and_matches_shared_projection_vecto
     assert clips["audio-track-inherited"]["app"]["astrid_shot_composition"]["source_offset"] == 350
     assert clips["audio-track-inherited"]["app"]["astrid_shot_composition"]["speed"] == 1.5
     assert projected.config["clips"][0] == vectors["parent_clip"]
+    tracks = {track["id"]: track for track in projected.config["tracks"]}
+    assert all(clip["track"] in tracks for clip in projected.config["clips"])
+    assert tracks[clips["collision-parent-kind-wins"]["track"]]["kind"] == "audio"
     assert timeline["clips"] == vectors["clips"]
     assert projected.registry["assets"]["lane-audio-source"]["type"] == "audio"
 
