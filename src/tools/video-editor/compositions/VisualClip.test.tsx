@@ -10,7 +10,7 @@ import {
   useTransitionRegistryContext,
   type TransitionRegistryRecord,
 } from '@/tools/video-editor/transitions/registry/index.ts';
-import { VisualClip } from '@/tools/video-editor/compositions/VisualClip.tsx';
+import { VisualClip, VisualClipSequence } from '@/tools/video-editor/compositions/VisualClip.tsx';
 import type { ResolvedTimelineClip, TrackDefinition } from '@/tools/video-editor/types/index.ts';
 import type { RenderMaterialRef } from '@astrid/editor-sdk';
 import type { ShaderEffectRegistryRecord, ShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/types.ts';
@@ -98,6 +98,15 @@ function mediaClip(overrides?: Partial<ResolvedTimelineClip>): ResolvedTimelineC
     ...overrides,
   };
 }
+
+it('ends a transition preroll sequence at the authored clip boundary', () => {
+  const predecessor = mediaClip({ id: 'previous', at: 0 });
+  const clip = mediaClip({ id: 'incoming', at: 1, transition: { type: 'crossfade', duration: 0.2 } });
+  render(<VisualClipSequence clip={clip} track={track} fps={30} predecessor={predecessor} />);
+  const sequence = screen.getByTestId('sequence');
+  expect(sequence.getAttribute('from')).toBe('24');
+  expect(sequence.getAttribute('durationinframes')).toBe('36');
+});
 
 function makeTransitionRecord(
   transitionId: string,

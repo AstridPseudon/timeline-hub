@@ -26,7 +26,7 @@ import {
   wrapWithClipEffects,
   wrapWithEffect,
 } from '@/tools/video-editor/effects';
-import { resolveAnimationReferences } from '@banodoco/timeline-composition/theme-api';
+import { composeClipAnimationPhase, resolveAnimationReferences, useTheme } from '@banodoco/timeline-composition/theme-api';
 import type { EffectComponentProps } from '@/tools/video-editor/effects/entrances';
 import { DynamicEffectRegistry } from '@/tools/video-editor/effects/DynamicEffectRegistry';
 import { EffectErrorBoundary } from '@/tools/video-editor/effects/EffectErrorBoundary';
@@ -125,6 +125,30 @@ describe('DynamicEffectRegistry', () => {
     expect(screen.getByText('preview content')).toBeInTheDocument();
     expect(fills.some((element) => element.style.transform.includes('translateY')
       || element.style.transform.includes('scale'))).toBe(true);
+  });
+
+  it.each([
+    ['fade exit', 'exit', { id: 'fade', durationFrames: 12 }],
+    ['slide-up exit', 'exit', { type: 'slide-up', duration: 0.4 }],
+    ['fade entrance', 'entrance', { id: 'fade', durationFrames: 12, easing: 'step' }],
+    ['fade-up entrance', 'entrance', { type: 'fade-up', duration: 0.4, params: { easing: 'ease-in' } }],
+    ['scale-in entrance', 'entrance', { id: 'scale-in' }],
+  ] as const)('matches installed phase markup for %s across its window', (_name, phase, reference) => {
+    const clip = { id: 'phase-test', [phase]: reference } as unknown as ResolvedTimelineClip;
+    const Expected: FC = () => {
+      const theme = useTheme();
+      return <>{composeClipAnimationPhase({ clip: clip as never, fps: 30, theme, phase,
+        reference, clipFrames: 60, children: <span>content</span> }, remotionState.frame)}</>;
+    };
+    const frames = phase === 'exit' ? [0, 47, 48, 54, 59, 60] : [0, 4, 8, 12, 30];
+    for (const frame of frames) {
+      remotionState.frame = frame;
+      const preview = render(<>{wrapWithClipEffects(<span>content</span>, clip, 60, 30)}</>);
+      const expected = render(<Expected />);
+      expect(preview.container.innerHTML, `frame ${frame}`).toBe(expected.container.innerHTML);
+      preview.unmount();
+      expected.unmount();
+    }
   });
 
   it('does not synthesize type-on text or a clip-path for top-level type-on', () => {

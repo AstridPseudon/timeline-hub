@@ -646,9 +646,7 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
     ? transitionReferenceFrames(clip.transition, fps)
     : 0;
   const from = Math.max(0, secondsToFrames(clip.at, fps) - transitionFrames);
-  // Extend by transitionFrames so the clip isn't cut short when `from` is
-  // pulled back for a transition-in, plus 1 overlap frame so the outgoing
-  // clip stays mounted while the next clip's <Video> element loads.
+  // Extend by the actual preroll so the clip ends at its authored boundary.
   const canonicalTiming = clip.app?.canonicalTiming as
     | { occurrenceStartMs?: unknown; occurrenceDurationMs?: unknown }
     | undefined;
@@ -660,10 +658,11 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
   // Transition-in pre-roll changes `from`, and the legacy overlap frame
   // extends the visual past a canonical occurrence's excluded end. Canonical
   // clips therefore end at the actual half-open boundary after expansion.
+  const prerollFrames = secondsToFrames(clip.at, fps) - from;
   const effectiveDuration = canonicalEndMs === undefined
-    ? durationInFrames + transitionFrames + 1
+    ? durationInFrames + prerollFrames
     : Math.max(0, Math.min(
-        durationInFrames + transitionFrames,
+        durationInFrames + prerollFrames,
         Math.ceil((canonicalEndMs / 1000) * fps) - from,
       ));
 

@@ -1,11 +1,11 @@
 import type { FC, ReactNode } from 'react';
 import { useCurrentFrame } from 'remotion';
 import {
-  composeAnimations,
+  composeClipAnimationPhase,
+  normalizeAnimationRefs,
   resolveAnimationReferences,
   useTheme,
   type AnimationPhase,
-  type AnimationReferenceList,
 } from '@banodoco/timeline-composition/theme-api';
 import { secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { DynamicEffectRegistry } from '@/tools/video-editor/effects/DynamicEffectRegistry.ts';
@@ -186,6 +186,7 @@ type ClipAnimation = {
   type?: string;
   duration?: number;
   durationFrames?: number;
+  easing?: string;
   params?: Record<string, unknown>;
 };
 
@@ -194,18 +195,9 @@ export const resolvePreviewAnimationReference = (
   phase: AnimationPhase,
   fps: number,
 ) => {
-  const durationFrames = animation.durationFrames
-    ?? (typeof animation.duration === 'number' ? secondsToFrames(animation.duration, fps) : undefined);
-  const params = animation.params ?? {};
-  const easing = typeof params.easing === 'string' ? params.easing : undefined;
-  const id = animation.id ?? animation.type;
-  if (!id) throw new Error('Preview animation references require an id or type');
-  return resolveAnimationReferences([{
-    id,
-    ...(durationFrames === undefined ? {} : { durationFrames }),
-    ...(easing === undefined ? {} : { easing }),
-    params: { ...params, ...(easing === undefined ? {} : { easing }) },
-  }], phase);
+  const refs = normalizeAnimationRefs(animation, fps);
+  if (!refs) throw new Error('Preview animation references require an id or type');
+  return resolveAnimationReferences(refs, phase);
 };
 
 const PackageAnimation: FC<{
@@ -218,23 +210,15 @@ const PackageAnimation: FC<{
 }> = ({ content, clip, animation, durationInFrames, fps, phase }) => {
   const frame = useCurrentFrame();
   const theme = useTheme();
-  const resolved = resolvePreviewAnimationReference(animation, phase, fps);
-  const refs: AnimationReferenceList = [{
-    ...resolved[0],
-  }];
-  const phaseStartFrame = phase === 'exit'
-    ? Math.max(0, durationInFrames - resolved[0].durationFrames)
-    : 0;
-
-  return <>{composeAnimations({
+  return <>{composeClipAnimationPhase({
     clip: clip as never,
-    refs,
+    reference: animation,
     phase,
-    content,
+    children: content,
     theme,
     fps,
-    elapsedFrames: Math.max(0, frame - phaseStartFrame),
-  })}</>;
+    clipFrames: durationInFrames,
+  }, frame)}</>;
 };
 
 type PackageAnimationResolution = 'supported' | 'wrong-phase' | 'unknown';
@@ -252,7 +236,8 @@ const resolvePackageAnimation = (
     // in the wrong phase is intentionally not reinterpreted as another phase.
     if (error instanceof Error && (error.message.startsWith('Unknown animation id')
       || error.message.startsWith('Preview animation references'))) return 'unknown';
-    return 'wrong-phase';
+    if (error instanceof Error && /^Animation '.+' is phase /.test(error.message)) return 'wrong-phase';
+    throw error;
   }
 };
 
@@ -301,7 +286,7 @@ export const wrapWithClipEffects = (
     ? entranceRecord?.component
       ?? (legacyRegistry && entranceType ? lookupEffect(entranceEffects, entranceType) : null)
     : null;
-  if (entranceAnimation && packageEntrance === 'supported' && entranceAnimation.type !== 'type-on') {
+  if (entranceAnimation && packageEntrance === 'supported' && entranceType !== 'type-on') {
     wrapped = <PackageAnimation
       content={wrapped}
       clip={clip}
@@ -335,7 +320,7 @@ export const wrapWithClipEffects = (
     ? exitRecord?.component
       ?? (legacyRegistry && exitType ? lookupEffect(exitEffects, exitType) : null)
     : null;
-  if (exitAnimation && packageExit === 'supported' && exitAnimation.type !== 'type-on') {
+  if (exitAnimation && packageExit === 'supported' && exitType !== 'type-on') {
     wrapped = <PackageAnimation
       content={wrapped}
       clip={clip}
