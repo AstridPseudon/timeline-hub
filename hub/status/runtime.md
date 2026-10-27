@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T06:56:29Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T06:53:54.086566+00:00
+<!-- main | 2026-10-27T07:01:35Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T06:59:03.356561+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -139,15 +139,15 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C acceptance audit | Receive independent C rejection | Luna | Staging and browser evidence; artifact cleanup | review | diag-accept-C-0610 | Auditor REJECT: staging NOTRUN; new-track and modal browser bodies unverified; Runtime root report.md artifact requires C worker cleanup. | C project branches |
 
-| C browser lane | Retain actual correction failures | Main and C Luna | Existing C repair owner | doing | C browser corrections fix11; Main0610 terminal | Actual15487:1 PASS2 FAIL. Kit5695/31638/24493/26531 pass original gallery only. New-track and parent Undo remain open under C. | No Runtime change |
+| C browser lane | Retain correction review and proof wait | C Luna and reviewer | Existing C lead r11 | review | C review browser finalize11 | Original15487:1 PASS2 FAIL retained. Finalize author browser NOTRUN due hosted-build OOM. Independent review active; no acceptance inferred. | No Runtime change |
 
 | A ready merge | Receive passed independent service | Main and A manager | Actual25125 PASS | review | A lead r15 ended; Main next round | A25125 exit0. Reviewer worker ended before test completion; Main owns normal next lead round and acceptance. No duplicate Runtime lead. | A candidate |
 
 | C kit report scope | Receive bounded browser host repair | Main Luna | Main0610 terminal | review | diag-browserlane-0610 | Four PASS runs execute original gallery case only. [Scope handoff](../../design/peer-runtime-to-orchestrator-20261027T065036Z-browser-report-scope-and-A-ready.md). C15487 correction failures remain. | Kit only |
 
-Blockers: Main owns the next A manager round for actual25125 PASS, A and B acceptance, and the terminal browser-report scope. C lead r11 owns38 C-only full failures, two actual15487 failures and Runtime report.md cleanup. H/D/P acceptance and START gates remain closed. D130 holds.
+Blockers: Main owns the next A manager round for actual25125 PASS, A and B acceptance, and the terminal browser-report scope. C lead r11 owns the full-suite comparison, independent finalize11 review, correction browser proof and Runtime report.md cleanup. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5757394944 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep exit0 removed0; compact exit0 packed0 and gzipped0. Protected originals retained; current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5508390912 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact completed this round, both exit0 and no removal/compression. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -158,4 +158,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:53:54.086566+00:00. Runtime census exit0 live0 ready0. Inbox/header unchanged. A independent25125 PASS needs its existing manager merge; Main next-round ownership sent. Main browserlane0610 terminal report names new-track/modal proof, but all four actual PASS logs execute only the original gallery case. Actual15487 remains1 PASS2 FAIL; existing C fix11 active since06:39:54Z. No acceptance or REG closure inferred. H/D/P START absent. Guarded maintenance removed and compressed nothing; no refusal. [Gate update](../../design/peer-runtime-to-orchestrator-20261027T065036Z-browser-report-scope-and-A-ready.md); [pass evidence](rounds/20261027T065354Z-pass.json).
+Current pass: 2026-10-27T06:59:03.356561+00:00. Two fresh Runtime worker censuses exit0 live0 ready0 this round. Inbox/header unchanged. Actual independent A25125 PASS awaits normal A manager merge and Main acceptance; next lead round remains Main-owned. Main browserlane0610 four PASS runs execute only original gallery, not correction purposes. C fix11 and finalize11 terminal; finalize browser NOTRUN due Node heap OOM. Existing independent C review browser finalize11 now active under C r11; original15487 failures retained. H/D/P START absent. No eligible Runtime recycle or refusal; guarded sweep and compact removed/compressed nothing. [Gate update](../../design/peer-runtime-to-orchestrator-20261027T065036Z-browser-report-scope-and-A-ready.md); [pass evidence](rounds/20261027T065903Z-pass.json).
