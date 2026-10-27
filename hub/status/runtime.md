@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T04:15:12Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
-# runtime board, 2026-10-27T04:09:22.186043+00:00
+<!-- main | 2026-10-27T04:19:58Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-27T04:16:48.925338+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,7 +96,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner 02:20 stand-in decision | doing | Existing A B C proof owners | B audit corrections merged. Main kit terminal 03:30; A host tests and B pixel parity fail. C adjustment owns HTTP 422 after drag. No overall acceptance. | Delivered ZIP unchanged |
+| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner stand-in decision | doing | Existing A B C proof owners | C browser proof reviewed PASS and merged. A render repair active; B parity source blocked with Main investigation active. No overall acceptance. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
@@ -108,9 +108,10 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive C browser repair and proof | C Luna | Actual 422 after drag | doing | C-C2-browser-adjust-9 started 04:01:26 | Prior fix reached drag, then HTTP 422 on V3 versus plate and V2. Existing C owner targets an existing track; full save reload undo still pending. | App 1d65fbe134 base |
+| C2 browser journey | Retain reviewed browser save reload undo | C Luna | Actual central proof and review | merged | C-C2-browser-adjust-9; independent review9 | Author23909 and reviewer29959: one browser test PASS each. Integrated tree313f84c equals reviewed tree. B-parent ancestry remains separate. | App26d9f9eb45 |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
+| B5 visual parity | Receive whole path export investigation | Main Luna and B lead | Source worker returned BLOCKED | doing | diag-deep-bexport-0415 started04:13:38 | Source20727 failed all seven pairs; no product diff. Canvas color and end frame differ; actual Agent export path remains to be qualified. | Agent1566 unchanged |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -122,11 +123,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive real render and open host failures | Main Sol and A Luna | Main terminal03:30 | blocked:main | diag-renderlane-0310 terminal; A owner next | Native MP4 and still rendered. Actual21155 exit1: worker context and fixture helper failures. No accepted parity proof. | No Runtime change |
+| A stand-in environment | Receive render host repair | A Luna and Main | Render fixture and context failures | doing | A-T3-renderlane-fix-r10 started04:10:16 | Test-only repair active; central request queued. Prior21155 exit1 remains disclosed. No accepted parity proof. | No Runtime change |
 
-Blockers: A host tests and B pixel parity remain with Main and the existing leads. C-C2-browser-adjust-9 owns the HTTP 422 follow-up; App B-parent ancestry remains open. B audit blocker clear. D130 holds.
+Blockers: A render parity awaits its active repair and proof. B parity remains with Main investigator diag-deep-bexport-0415 and B lead. C browser proof is merged; required App B-parent ancestry remains open. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5462446080 bytes. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Sweep and compact exited 0 with no removal, packing or log compression. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5518696448 bytes. Runtime trees: 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep removed 0; compact packed 0 and compressed 1 old log. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +138,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T04:09:22.186043+00:00. Inbox, HEADER, pipeline and A/B boards unchanged. C board records the existing-track adjustment after the first fix reached drag then HTTP 422; actual C-C2-browser-adjust-9 remains active. Census 2717 rows is unchanged; no running Runtime worker, new assignment or ready task. Every blocked row rechecked against its owner board. Browser save reload undo proof and B-parent ancestry remain open; A host tests and B pixel parity remain with Main and existing leads. H/D/P START absent. All 36 Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Guarded sweep and compact exited 0: removed 0, packed 0 and compressed 0 logs; stderr empty. No refusal, duplicate worker, body or review. [Pass evidence](rounds/20261027T040922Z-pass.json).
+Current pass: 2026-10-27T04:16:48.925338+00:00. Inbox and HEADER unchanged. Every blocked owner row rechecked. Actual C browser author and independent services both PASS; normal merge26d9f9eb45 has the exact reviewed tree313f84c. Prior required App B parent still is not an ancestor. A render repair active. B parity author returned BLOCKED with no product diff; Main read-only investigator is active. No Runtime worker or ready assignment. H/D/P START absent. All36 Runtime trees remain31 KEEP or5 dirty. Maintenance exited0, no stderr: sweep0, packed0, compressed1 old log. No refusal or duplicate dispatch. [Pass evidence](rounds/20261027T041648Z-pass.json).
