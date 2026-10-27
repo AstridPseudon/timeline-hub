@@ -84,7 +84,7 @@ const p=await b.newPage(); await p.setContent('<title>central browser proof</tit
 if(await p.title()!=='central browser proof') throw Error('page failed');
 console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().catch(e=>{console.error(e);process.exitCode=1});
 """]
-        elif lane == "browser-journey":
+        elif lane == "browser-journey" or (lane == "preview-vs-export" and selectors):
             agent, runtime = matching_sources()
             env.update(
                 ASTRID_RUNTIME_CHECKOUT=runtime,

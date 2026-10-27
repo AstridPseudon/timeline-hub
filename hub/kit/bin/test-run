@@ -29,8 +29,7 @@ finalize_stale_run() {
   last_line=$(awk 'NF { line=$0 } END { print line }' "$stale_dir/log.txt" 2>/dev/null)
   tail_log=$(tail -20 "$stale_dir/log.txt" 2>/dev/null)
   complete=0
-  if [[ "$last_line" =~ ^[[:space:]]*[1-9][0-9]*[[:space:]]+passed([,[:space:]].*)?[[:space:]]+in[[:space:]]+[0-9.]+s[[:space:]]*$ ]] &&
-     ! grep -aqE '(^|[^0-9])[1-9][0-9]* failed\b|(^|[^0-9])[1-9][0-9]* errors\b|^ERROR ' "$stale_dir/log.txt"; then
+  if [[ "$last_line" =~ ^[[:space:]]*[0-9]+[[:space:]]+(passed|failed|error|errors|skipped|xfailed)(,.*)?[[:space:]]+in[[:space:]]+[0-9.]+s[[:space:]]*$ ]]; then
     complete=1
   elif [[ "$last_line" =~ ^[[:space:]]*Duration[[:space:]] ]] &&
        grep -aqE '^ *Test Files +.*[1-9][0-9]* passed.*\([0-9]+\)' <<< "$tail_log" &&
@@ -44,7 +43,11 @@ finalize_stale_run() {
     complete=1
   fi
   if [ "$complete" = 1 ] && [ -f "$stale_dir/exit" ] && [[ "$recorded_rc" =~ ^[0-9]+$ ]]; then
-    if [ "$rc" -eq 0 ]; then st=pass; else st=fail; fi
+    if [ "$rc" -eq 0 ] && ! grep -aqE '(^|[^0-9])[1-9][0-9]* (failed|errors)\b' "$stale_dir/log.txt"; then
+      st=pass
+    else
+      st=fail; [ "$rc" -eq 0 ] && rc=1
+    fi
   else
     st=interrupted; rc=125
   fi
