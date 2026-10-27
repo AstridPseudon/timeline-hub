@@ -7,6 +7,9 @@ import json
 import pytest
 
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.timeline_commit import CommitRejected
+from runtime_protocol.timeline_commit_auth import command_output
+from runtime_protocol.timeline_commit_validation import digest
 
 pytest_plugins = ("test_timeline_commit_authentication",)
 
@@ -123,3 +126,37 @@ def test_admission_step_rejects_forged_intermediate_authority(created_child_publ
     assert error.value.details is not None
     assert error.value.details["reason"] == "invalid_records"
     assert document() == before == source
+
+
+@pytest.mark.parametrize("path", [["clips"], ["config", "clips"]])
+def test_command_output_requires_exact_clip_observation_and_preserves_order(path):
+    before = [
+        {"id": "clip-a", "track": "V1", "extension": {"keep": [1, None]}},
+        {"id": "clip-b", "track": "V2", "extension": {"keep": [2, None]}},
+    ]
+    after = [copy.deepcopy(before[1]), copy.deepcopy(before[0])]
+    payload = {"config": {"clips": copy.deepcopy(before)}, "clips": copy.deepcopy(before)}
+    boundary = {"parent": {"revision_id": "parent-before", "content_digest": digest(payload),
+                            "payload": payload}}
+    record = {"ordinal": 0, "writes": [{
+        "ref": "parent", "path": path,
+        "before": {"state": "present", "value": copy.deepcopy(before)},
+        "after": {"state": "present", "value": copy.deepcopy(after)},
+    }], "derived_writes": [], "created": []}
+    projected = copy.deepcopy(payload)
+    projected["config"]["clips"] = copy.deepcopy(after)
+    projected["clips"] = copy.deepcopy(after)
+    following = {"bindings": [{"physical_ref": "parent", "revision_id": "parent-after",
+                                "content_digest": digest(projected),
+                                "boundary": {"phase": "input"}}], "reads": []}
+
+    output = command_output(boundary, record, following)
+
+    assert output["parent"]["revision_id"] == "parent-after"
+    assert output["parent"]["payload"]["config"]["clips"] == after
+    assert output["parent"]["payload"]["clips"] == after
+
+    forged = copy.deepcopy(record)
+    forged["writes"][0]["before"]["value"][0]["extension"]["keep"][0] = 9
+    with pytest.raises(CommitRejected, match="different input observation"):
+        command_output(boundary, forged, following)
