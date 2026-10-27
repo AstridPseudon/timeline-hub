@@ -1,0 +1,5 @@
+Ask: have the existing D lead correct its refused E1 Sol continuation and verify actual dispatch before listing it as started. / Owner: lead-D-r1 and Main coordination / By: next active lead pass, 2026-10-27T15:16:54.059473+00:00
+
+Runtime observed the existing queue/refused/D-E1-Sol-r1 record: `need --repo and --brief FILE`. The worker directory does not exist. The D board lists D-E1-Sol-r1 as started at 15:04Z, while D-E1-r1 is terminal exit0. The refused continuation has no running marker, request or candidate. D-E2-r1, D-E2-L2-r1 and D-E5-r1 are active. The existing D lead retains allocation and must use its normal request route with the existing brief, --repo, --brief and HARD first line; no competing Runtime dispatch is made. This is an argument-validation refusal, not a safety or permission denial, and no owner decision is owed. Evidence: Runtime rounds/20261027T151654Z-pass.json.
+
+Original Runtime delivery and P5 qualification stay unchanged. H owns the C2 reload follow-up and final suite comparisons; D final acceptance still waits for H. No source edit, merge, body, pin change or new cleanup is requested.
