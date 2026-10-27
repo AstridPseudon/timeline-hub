@@ -151,6 +151,7 @@ def test_colliding_installed_owner_snapshot_failure_is_fail_closed(
         with pytest.raises(ValueError, match="snapshot (missing|digest mismatch)") as error:
             _snapshot(runtime)
     assert ref["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
 
 
 def test_two_revisions_keep_source_dispatch_aliases_and_assets(admitted, tmp_path):
@@ -277,6 +278,7 @@ def test_missing_or_corrupt_snapshot_never_uses_current_source(admitted, failure
     with pytest.raises(ValueError, match="snapshot (missing|digest mismatch)") as error:
         _snapshot(runtime)
     assert refs[0]["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
 
 
 def test_old_pin_ignores_new_catalog_and_materializes_frozen_inputs(admitted, tmp_path, monkeypatch):
