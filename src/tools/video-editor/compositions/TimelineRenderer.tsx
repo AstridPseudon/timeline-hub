@@ -4,6 +4,7 @@ import { Component, createContext, memo, useContext, useMemo, useSyncExternalSto
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
 import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
+import { transitionReferenceFrames } from '@/tools/video-editor/lib/transition-reference.ts';
 import { BUILTIN_CLIP_TYPES } from '@/sdk/video/timeline/clipTypes.ts';
 import { clipSourceTime } from '../clip-types/sourceTime';
 import {
@@ -416,7 +417,7 @@ const AstridAnimationPreviewSequence: FC<{
     : undefined;
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
-    ? secondsToFrames(clip.transition.duration, fps)
+    ? transitionReferenceFrames(clip.transition, fps)
     : 0;
   const from = Math.max(0, secondsToFrames(clip.at, fps) - transitionFrames);
   const effectiveDuration = durationInFrames + transitionFrames + 1;

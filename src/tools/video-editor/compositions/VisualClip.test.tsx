@@ -441,6 +441,44 @@ describe('VisualClip transition rendering', () => {
     expect(style.overflow).toBe('hidden');
   });
 
+  it('renders canonical package transition references with frame durations', async () => {
+    const { container } = render(
+      <VisualClip
+        clip={mediaClip({ transition: { id: 'cross-fade', durationFrames: 15 } as never })}
+        track={track}
+        fps={30}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="missing-transition-placeholder"]')).toBeNull();
+    });
+    const transitionFill = screen.getAllByTestId('absolute-fill').find((node) => {
+      const style = node.getAttribute('data-style') ?? '';
+      return style.includes('opacity');
+    });
+    expect(transitionFill).toBeDefined();
+  });
+
+  it('renders canonical package transition references with frame durations', async () => {
+    const { container } = render(
+      <VisualClip
+        clip={mediaClip({ transition: { id: 'cross-fade', durationFrames: 15 } as never })}
+        track={track}
+        fps={30}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-testid="missing-transition-placeholder"]')).toBeNull();
+    });
+    const transitionFill = screen.getAllByTestId('absolute-fill').find((node) => {
+      const style = node.getAttribute('data-style') ?? '';
+      return style.includes('opacity');
+    });
+    expect(transitionFill).toBeDefined();
+  });
+
   it('resolves and renders built-in wipe transition', async () => {
     render(
       <TransitionRegistryProvider>

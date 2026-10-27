@@ -13,6 +13,7 @@ import {
   secondsToFrames,
 } from '@/tools/video-editor/lib/config-utils.ts';
 import { wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
+import { transitionReferenceFrames, transitionReferenceId } from '@/tools/video-editor/lib/transition-reference.ts';
 import {
   useOptionalEffectRegistryContext,
   type EffectRegistrySnapshot,
@@ -557,11 +558,13 @@ export const VisualClip: FC<VisualClipProps> = ({
 
   let transitionStyle: CSSProperties | undefined;
   if (clip.transition) {
-    const record = resolveTransition(clip.transition.type, mergedTransitionSnapshot);
+    const transitionType = transitionReferenceId(clip.transition) ?? 'unknown';
+    const transitionFrames = transitionReferenceFrames(clip.transition, fps);
+    const record = resolveTransition(transitionType, mergedTransitionSnapshot);
     if (record) {
       const transitionProgress = interpolate(
         frame,
-        [0, Math.max(1, secondsToFrames(clip.transition.duration, fps))],
+        [0, Math.max(1, transitionFrames)],
         [0, 1],
         {
           extrapolateLeft: 'clamp',
@@ -583,7 +586,7 @@ export const VisualClip: FC<VisualClipProps> = ({
       // Transition ID not found in catalog — render diagnostic placeholder
       // and skip the clip content wrapper (the clip still renders, but
       // without transition styling). No crossfade fallback.
-      return <MissingTransitionBody clipId={clip.id} transitionType={clip.transition.type} />;
+      return <MissingTransitionBody clipId={clip.id} transitionType={transitionType} />;
     }
   }
 
@@ -640,7 +643,7 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
 }) => {
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
-    ? secondsToFrames(clip.transition.duration, fps)
+    ? transitionReferenceFrames(clip.transition, fps)
     : 0;
   const from = Math.max(0, secondsToFrames(clip.at, fps) - transitionFrames);
   // Extend by transitionFrames so the clip isn't cut short when `from` is

@@ -10,6 +10,7 @@ import { validateAndCoerceParams } from '@/tools/video-editor/effects/validatePa
 import {
   BounceEntrance,
   FadeEntrance,
+  FadeUpEntrance,
   FlipEntrance,
   MeteoriteEntrance,
   PulseEntrance,
@@ -17,6 +18,8 @@ import {
   SlideLeftEntrance,
   SlideRightEntrance,
   SlideUpEntrance,
+  ScaleInEntrance,
+  TypeOnEntrance,
   ZoomInEntrance,
   ZoomSpinEntrance,
   type EffectComponentProps,
@@ -34,6 +37,7 @@ import {
   FlipExit,
   ShrinkExit,
   SlideDownExit,
+  SlideUpExit,
   ZoomOutExit,
 } from '@/tools/video-editor/effects/exits.tsx';
 import type { ParameterSchema, ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
@@ -49,6 +53,9 @@ export const entranceEffects: Record<string, ClipEffectComponent> = {
   'zoom-spin': ZoomSpinEntrance,
   pulse: PulseEntrance,
   fade: FadeEntrance,
+  'fade-up': FadeUpEntrance,
+  'scale-in': ScaleInEntrance,
+  'type-on': TypeOnEntrance,
   flip: FlipEntrance,
   bounce: BounceEntrance,
   meteorite: MeteoriteEntrance,
@@ -59,6 +66,7 @@ export const exitEffects: Record<string, ClipEffectComponent> = {
   'zoom-out': ZoomOutExit,
   flip: FlipExit,
   'fade-out': FadeOutExit,
+  'slide-up': SlideUpExit,
   shrink: ShrinkExit,
   dissolve: DissolveExit,
 };
@@ -76,9 +84,9 @@ export const exitEffectTypes = Object.keys(exitEffects);
 export const continuousEffectTypes = Object.keys(continuousEffects);
 
 const allBuiltInEffects: Record<string, ClipEffectComponent> = {
-  ...entranceEffects,
   ...exitEffects,
   ...continuousEffects,
+  ...entranceEffects,
 };
 
 let effectRegistry: DynamicEffectRegistry | null = null;
@@ -151,13 +159,15 @@ type WrapWithEffectConfig = {
   effectFrames?: number;
   intensity?: number;
   params?: Record<string, unknown>;
+  easing?: string;
+  text?: string;
   schema?: ParameterSchema;
 };
 
 export const wrapWithEffect = (
   content: ReactNode,
   EffectComponent: ClipEffectComponent,
-  { effectName, durationInFrames, effectFrames, intensity, params, schema }: WrapWithEffectConfig,
+  { effectName, durationInFrames, effectFrames, intensity, params, schema, easing, text }: WrapWithEffectConfig,
 ): ReactNode => {
   return (
     <EffectErrorBoundary effectName={effectName} fallback={content}>
@@ -166,6 +176,8 @@ export const wrapWithEffect = (
         effectFrames={effectFrames}
         intensity={intensity}
         params={validateAndCoerceParams(params, schema)}
+        easing={easing}
+        text={text}
       >
         {content}
       </EffectComponent>
@@ -183,7 +195,23 @@ export const wrapWithClipEffects = (
   let wrapped = content;
   const legacyRegistry = effectRegistrySnapshot ? null : getEffectRegistry();
 
-  const continuousEffect = clip.continuous;
+  const normalizeAnimation = (value: unknown) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const reference = value as { type?: unknown; id?: unknown; duration?: unknown; durationFrames?: unknown; params?: unknown; easing?: unknown };
+    const type = typeof reference.id === 'string' ? reference.id : reference.type;
+    if (typeof type !== 'string') return undefined;
+    const duration = typeof reference.durationFrames === 'number'
+      ? reference.durationFrames / fps
+      : typeof reference.duration === 'number' ? reference.duration : 0.4;
+    const params = reference.params && typeof reference.params === 'object' && !Array.isArray(reference.params)
+      ? reference.params as Record<string, unknown>
+      : {};
+    const easing = typeof reference.easing === 'string' ? reference.easing
+      : typeof params.easing === 'string' ? params.easing : undefined;
+    return { type, duration, params, easing };
+  };
+
+  const continuousEffect = normalizeAnimation(clip.continuous);
   const continuousRecord = continuousEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, continuousEffect.type)
     : undefined;
@@ -205,7 +233,7 @@ export const wrapWithClipEffects = (
     });
   }
 
-  const entranceEffect = clip.entrance;
+  const entranceEffect = normalizeAnimation(clip.entrance);
   const entranceRecord = entranceEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, entranceEffect.type)
     : undefined;
@@ -220,16 +248,20 @@ export const wrapWithClipEffects = (
       effectFrames: secondsToFrames(entranceEffect!.duration ?? 0.4, fps),
       intensity: entranceEffect!.intensity,
       params: entranceEffect!.params,
+      easing: entranceEffect!.easing,
+      text: typeof clip.text?.content === 'string' ? clip.text.content : undefined,
       schema: entranceRecord?.schema ?? legacyRegistry?.getSchema(entranceEffect!.type),
     });
   }
 
-  const exitEffect = clip.exit;
-  const exitRecord = exitEffect && effectRegistrySnapshot
+  const exitEffect = normalizeAnimation(clip.exit);
+  const exitRecord = exitEffect && exitEffect.type !== 'fade' && exitEffect.type !== 'slide-up' && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, exitEffect.type)
     : undefined;
   const exit = exitEffect
-    ? exitRecord?.component
+    ? exitEffect.type === 'fade' ? FadeOutExit
+      : exitEffect.type === 'slide-up' ? SlideUpExit
+      : exitRecord?.component
       ?? (legacyRegistry ? lookupEffect(exitEffects, exitEffect.type) : null)
     : null;
   if (exit) {
@@ -239,6 +271,7 @@ export const wrapWithClipEffects = (
       effectFrames: secondsToFrames(exitEffect!.duration ?? 0.4, fps),
       intensity: exitEffect!.intensity,
       params: exitEffect!.params,
+      easing: exitEffect!.easing,
       schema: exitRecord?.schema ?? legacyRegistry?.getSchema(exitEffect!.type),
     });
   }
