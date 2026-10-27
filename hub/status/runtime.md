@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T19:26:36Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-27T19:19:43.363059+00:00
+<!-- main | 2026-10-27T19:32:48Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T19:30:30.702785+00:00
 
 Original Runtime delivery is complete. H and D retain ownership of active follow-up work.
 
@@ -14,7 +14,7 @@ Original Runtime delivery is complete. H and D retain ownership of active follow
 | H C3 sampler | Qualify save and restart proof | H Luna and service | Matching one-head checkout | review | H-proof-c3-sampler | 28319: 1 PASS, five saves durable after restart. Handler296 to402ms. H owns acceptance; raw KEEP is prospective. | Runtime7636c4; Agent46b149 |
 | H Runtime full | Qualify Runtime full results | H lead and Luna | Actual matched-lane run | review | H-tests-runtime-final-r3 | 7448: 7412 PASS,48 FAIL,25 ERROR. Bad IDs match baseline by name; report binds Runtime1697 to Agent88a9. | Runtime1697f17510 |
 | H Runtime route | Retain source route diagnosis | Luna and independent Luna | Independent source-map PASS | merged | rt-OPS-H-runtime-consumer-review-1711 | [Source PASS](../../design/runtime-H-runtime-consumer-independent-publication-20261027T171745Z.json); historical import inferred, no origin capture. | No source change |
-| H audit | Complete authorized crosser cutter | H Sol and Luna splits | Corrected nonempty SSR proof | doing | lead-H-r9; H-sol-crosser-cutter-r2; H-crosser-L6-proof | L3 central70 PASS. L4 remains unqualified; L6 repairs nonempty SSR, speed duration and pose assertions. H owns final qualification. | L3 d63e4fe25f |
+| H audit | Complete authorized crosser cutter | H Sol and Luna splits | Corrected nonempty SSR proof | doing | lead-H-r9; H-sol-crosser-cutter-r2; H-crosser-L6-proof; H-crosser-App | L6 central395 now86 PASS. H reviews sparse-pose edge and renderer scope; final35-file/full qualification pending. L4 unqualified. | L3 d63e4fe25f |
 | H App full | Qualify final App full results | H lead and Luna | Final source run complete | review | H-tests-app-final-r4 | 1449:20036 PASS,10 FAIL; all failed names and schema digest match owner pin. Changed mounted cases PASS. H owns acceptance. | App11de9b8a1a |
 | H Agent lanes | Requalify after crosser repair | H lead and Sol | Authorized cutter merged | blocked:H | H-sol-crosser-cutter; H manager | Prior910 PASS,41 FAIL;22 new restructure failures. Recheck35 files and full suite after the repair. | Agent314a6d2bbb |
 | H and D continuity | Keep phase managers moving | Luna leads and Opus wording | Phase work remains open | doing | lead-H-r9; lead-D-r3; D-T1-words-r4 | H9 and D3 active. D wording merged with125 docs PASS; baseline hygiene failure retained. Wording r4 active; E14 awaits H. | Draft3469debbdf |
@@ -26,10 +26,10 @@ Original Runtime delivery is complete. H and D retain ownership of active follow
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive on owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
 | OPS headroom | Retain guarded maintenance | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | All357 starting KEEP hashes and modes exact. Sweep0; compact0 directories and0 logs. Five dirty legacy worktrees intact. | No source change |
 
-Blockers: H owns L6 proof correction, final cutter qualification and its Main renderer-scope question. L4 is unqualified; no equivalent-render PASS.
-Blockers: D owns E14, final guides and acceptance after accepted H is merged forward. E13 combined and paired checks are green at their recorded scopes.
-Next ready: None for Runtime. H owns L6 proof correction; D E14 is gated on accepted H. P and the follow-up ZIP remain gated.
-live 0 / cap 3; ready-undispatched 0. Free 2789199872 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
+Blockers: H owns complete L6 proof, final cutter qualification and its Main renderer-scope question. Selected86 PASS does not close integrated qualification; sparse-pose review and L4 limits remain.
+Blockers: D owns E14, final guides and acceptance after accepted H is merged forward. Wording r4 is active; combined453 and paired2 PASS remain scoped.
+Next ready: None for Runtime. H owns final L6 and cutter qualification; D E14 is gated on accepted H. P and the follow-up ZIP remain gated.
+live 0 / cap 3; ready-undispatched 0. Free 2499821568 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
 
 Earlier detailed board: [preserved status](rounds/20261027T174711Z-prior-status.md). Full historical delivery rows: [historical board](rounds/20261027T114133Z-prior-status.md). Every original failure, proof tuple, custody limit, refusal, raw KEEP hold and deferred source remains unchanged.
 
@@ -37,6 +37,6 @@ Delivered archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timel
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled. Four recipient patch and bundle checks passed within documented scope. Historical PENDING prose, whitespace findings and monitor limits remain disclosed; this is not a full-suite or global behavior PASS.
 
-Current pass evidence: [management pass](rounds/20261027T190945Z-pass.json). Runtime inbox remains at1941564 bytes with no new items. The Runtime worker census has2719 historical rows and no active Runtime task. H round9 owns Sol and L6 proof correction; L4 is unqualified and the renderer-scope question stays H owned. D round3 owns wording r4; E14 stays gated on accepted H. Guarded recycle preserved five dirty legacy worktrees. Sweep and compact finished with zero eligible directories or logs. All357 starting KEEP hashes and modes are exact. Next scheduled pass follows a600second wait. Delivered ZIP matches its original sidecar. No product edit, new test request or safety refusal.
+Current pass evidence: [management pass](rounds/20261027T192921Z-pass.json). Runtime inbox has no new bytes after1941564; header is unchanged. Worker census retains2719 historical rows and no active Runtime task. H now reports86 selected tests PASS at395 on candidate794b83bb8b; its Sol still reviews a sparse-pose edge and final cutter qualification remains pending. Prior isolated20949 and full395 raw data have prospective KEEP holds added now, with no historical custody claim. D wording r4 remains active; E14 still waits for accepted H. Guarded recycle preserved all five dirty legacy worktrees. Sweep is active; compact and final KEEP verification follow. Delivered archive matches its original sidecar. No Runtime product edit, test request, safety refusal or P START.
 
-Round handoff: Runtime has no ready source work. H owns L6 and final cutter qualification; D owns provisional wording r4 and waits for accepted H before E14 and final acceptance. P and the follow-up ZIP remain gated. Original delivery and all historical proof limitations are unchanged.
+Round handoff: Runtime has no ready source work. H owns complete L6, App crosser work and final cutter qualification. D owns provisional wording r4 and waits for accepted H before E14 and final acceptance. P and the follow-up ZIP remain gated. Original delivery and all historical proof limitations are unchanged.
