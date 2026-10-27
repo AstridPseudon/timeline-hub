@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T13:54:40Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T13:51:34.382820+00:00
+<!-- main | 2026-10-27T14:02:25Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T14:00:14.634828+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -14,15 +14,15 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | C repair batch | Retain reviewed C corrections | C Luna and reviewers | Independent reviews and central checks | merged | C stale15 properties15 and waveform fix15 | Central45,10,45 PASS. Browser27831 three PASS; provider58 PASS. Original failures retained. | App c3a28be2b2 |
 | C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r1 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
 | H baseline | Retain comparison inputs | Main Luna and service | Existing baseline service results | doing | diag-baselines-1030 | Owner 14843, 32136 and 2657 FAIL. Staging28624 FAIL after31491 error125. Shotlayer20416 running. Main owns BASELINES.md. | Owner and staging pins |
-| H one head | Repair round two findings | H Luna Sol and Astra | Main START recorded | doing | lead-H-r1; H-fix-agent-collision-r2 | [Round two](../../workers/H-review-r2/report.md): two projection blockers; final proofs open. Agent repair active. Targeted Agent145 and Runtime36 PASS. | Runtimef232 / Agent91f97 / Appf656 |
+| H one head | Repair round two findings | H Luna Sol and Astra | Main START recorded | doing | lead-H-r1; H collision workers | Agent validation 148 PASS; Runtime final fixture 4 PASS after three failures. App correction and final proofs remain open. | H owns current tips |
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | Sweep and compact exit 0, no stderr. No removal or packing; one old log compressed. Census found no eligible recycle across 49 trees. | No source change |
+| OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | Sweep and compact exit 0, no stderr. No removal, packing or log compression. No eligible recycle across 50 trees. | No source change |
 
-Blockers: H owns two projection blockers, round three and final proofs. Main owns BASELINES.md and browser lane repair. Shotlayer Agent20416 running. D waits H acceptance and START; P waits D.
+Blockers: H owns App projection correction, round three and final proofs. Main owns BASELINES.md and browser lane repair. Shotlayer Agent20416 running. D waits H acceptance and START; P waits D.
 Next ready: None for Runtime. Existing lead-H-r1 owns all consolidation and remaining B/C work; no duplicate dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 4370518016 bytes. No Runtime task is ready. H is separately managed.
+live 0 / cap 0; ready-undispatched 0. Free 4148506624 bytes. No Runtime task is ready. H is separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -32,4 +32,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T13:51:34.382820+00:00. Two passes completed with the ten-minute interval. Runtime worker check: 2717 rows, live 0, ready 0. Inbox and header unchanged. H round-two review finished: two projection blockers and final qualification open; sole H Agent collision repair active. Main staging Agent28624 ended FAIL; shotlayer Agent20416 now running. BASELINES.md absent; browser lane remains Main-owned. D/P START absent. Eleven tracked raw records remain KEEP. New markers on H targeted24600 and Main shotlayer20416 were added after observation, with no creation-time claim. Final census across 49 trees found no eligible clean ended nonKEEP recycle. Sweep and compact exit 0, no stderr: no removal or packing, one old log compressed losslessly. No product edit, dispatch, merge, new refusal or escalation. [Pass evidence](rounds/20261027T135134Z-pass.json); [cleanup census](rounds/20261027T135033Z-cleanup-census.json); [sweep](rounds/20261027T133623Z-sweep.json); [compact](rounds/20261027T133808Z-compact.json).
+Current pass: 2026-10-27T14:00:14.634828+00:00. Runtime worker check found 2717 rows, live 0 and ready 0. Inbox and header unchanged. H collision Agent validation 148 PASS and final Runtime fixture 4 PASS; prior fixture failures remain. App repair active. Main baseline and browser owners continue; BASELINES.md absent and D/P START absent. Forty-five H test records received prospective KEEP markers this pass, with no creation-time claim. Census across 50 trees found no eligible recycle. Sweep and compact exit 0 without stderr or removals. No product edit, dispatch, merge, new refusal or escalation. [Pass evidence](rounds/20261027T140014Z-pass.json).
