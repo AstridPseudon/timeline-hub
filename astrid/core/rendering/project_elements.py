@@ -46,7 +46,9 @@ def _is_builtin_reference(reference: Mapping[str, str]) -> bool:
     )
 
 
-def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, str], dict[str, str]]:
+def _project_references(
+    config: Mapping[str, Any], *, project_pack_owners: set[str] = frozenset()
+) -> dict[tuple[str, str, str, str], dict[str, str]]:
     refs = {}
     for clip in config.get("clips", []):
         ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
@@ -57,7 +59,42 @@ def _project_references(config: Mapping[str, Any]) -> dict[tuple[str, str, str, 
             refs[selection_key(ref)] = dict(ref)
     if not refs:
         return refs
-    return {key: ref for key, ref in refs.items() if not _is_builtin_reference(ref)}
+    selected = {selection_key(row["reference"]) for row in selections(config)}
+    return {
+        key: ref for key, ref in refs.items()
+        if key in selected
+        or ref["packId"] in project_pack_owners
+        or not _is_builtin_reference(ref)
+    }
+
+
+def _project_pack_owners(
+    config: Mapping[str, Any], *, client: Any, realm: str, project: str,
+) -> set[str]:
+    """Identify project owners before catalog identity can hide their refs."""
+    owners = set()
+    documents = getattr(client, "documents", None)
+    for clip in config.get("clips", []):
+        ref = clip.get("elementRef") if isinstance(clip, Mapping) else None
+        if not (
+            isinstance(ref, Mapping)
+            and all(isinstance(ref.get(key), str) and ref[key]
+                    for key in ("packId", "kind", "id", "revision"))
+            and not ref["revision"].startswith("draft-")
+        ):
+            continue
+        owner = ref["packId"]
+        if not _is_builtin_reference(ref):
+            owners.add(owner)
+            continue
+        if documents is None:
+            continue
+        _, row = project_packs._read_document(client, realm, project)
+        if row is None or row["content"]["pack_id"] != owner:
+            _, row = project_packs._read_document(client, realm, project, owner)
+        if row is not None and row["content"]["pack_id"] == owner:
+            owners.add(owner)
+    return owners
 
 
 def _clip_contexts(
@@ -108,19 +145,27 @@ def resolve_project_elements(config: Mapping[str, Any], *, project: str, client:
     app = result.get("app")
     if isinstance(app, dict):
         app.pop(CARRIER, None)  # Authored data cannot nominate executable inputs.
-    refs = _project_references(result)
+    document_service = getattr(client, "documents", None)
+    realm = document_service._identity()["realm_id"] if document_service is not None else None
+    refs = _project_references(
+        result,
+        project_pack_owners=_project_pack_owners(
+            result, client=client, realm=realm, project=project,
+        ),
+    )
     if not refs:
         return result
+    if realm is None:
+        raise ValueError("Project element snapshot missing for rendered project reference")
 
-    realm = client.documents._identity()["realm_id"]
-    reader = getattr(client.documents, "_client", client)
-    documents = {}
+    reader = getattr(document_service, "_client", client)
+    verified_documents = {}
     objects = {}
     selected = []
     for ref in refs.values():
         label = _snapshot_label(result, ref)
         owner = ref["packId"]
-        if owner not in documents:
+        if owner not in verified_documents:
             _, row = project_packs._read_document(client, realm, project)
             if row is None or row["content"]["pack_id"] != owner:
                 _, row = project_packs._read_document(client, realm, project, owner)
@@ -129,10 +174,10 @@ def resolve_project_elements(config: Mapping[str, Any], *, project: str, client:
             pin = {"document_id": row["document_id"], "version": row["version"],
                    "content_digest": project_packs._json_digest(row["content"])}
             try:
-                documents[owner] = reader.get_project_verified_document(project, pin)
+                verified_documents[owner] = reader.get_project_verified_document(project, pin)
             except Exception as exc:
                 raise ValueError(f"Project element snapshot missing for {label}: {exc}") from exc
-        verified = documents[owner]
+        verified = verified_documents[owner]
         admissions = verified["document"]["content"]["admissions"]
         matches = [row for row in admissions if all(row.get(key) == ref[key]
                    for key in ("id", "kind", "revision"))]

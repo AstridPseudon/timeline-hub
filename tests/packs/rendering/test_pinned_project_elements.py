@@ -88,8 +88,8 @@ def _snapshot(runtime):
     return managed.resolve_managed_render_snapshot(project_ref="demo", timeline_ref="main", client=runtime)
 
 
-def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source"):
-    """Model an installed/local owner whose current catalog lacks this pin."""
+def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source", *, exact=False):
+    """Model an installed/local owner with a selected current catalog revision."""
     from astrid.core.pack import discovery
 
     monkeypatch.setattr(
@@ -97,7 +97,7 @@ def _patch_colliding_installed_owner(monkeypatch, ref, source_kind="source"):
         "discover_pack_metadata",
         lambda **_: (SimpleNamespace(id=ref["packId"], source_kind=source_kind),),
     )
-    current_revision = "sha256:" + "0" * 64
+    current_revision = ref["revision"] if exact else "sha256:" + "0" * 64
     monkeypatch.setattr(
         catalog,
         "list_element_descriptors",
@@ -152,6 +152,53 @@ def test_colliding_installed_owner_snapshot_failure_is_fail_closed(
             _snapshot(runtime)
     assert ref["revision"] in str(error.value)
     assert "$.clips[0]" in str(error.value)
+
+
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_exact_catalog_identity_collision_missing_admission_is_fail_closed(
+    admitted, monkeypatch, source_kind,
+):
+    runtime, refs, reads = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    row = next(iter(runtime.documents.rows.values()))
+    row["content"]["admissions"] = [
+        admission for admission in row["content"]["admissions"]
+        if admission["revision"] != ref["revision"]
+    ]
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind, exact=True)
+        with pytest.raises(ValueError, match="snapshot missing") as error:
+            _snapshot(runtime)
+    assert ref["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
+    assert len(reads["documents"]) == 1
+    assert reads["objects"] == []
+
+
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_exact_catalog_identity_collision_owner_document_fails_closed(
+    admitted, monkeypatch, source_kind,
+):
+    runtime, refs, reads = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    row = next(iter(runtime.documents.rows.values()))
+    original = runtime.get_project_verified_document_object
+
+    def corrupt_snapshot(*args):
+        snapshot = original(*args)
+        return {**snapshot, "bytes_base64": base64.b64encode(b"corrupt").decode()}
+
+    runtime.get_project_verified_document_object = corrupt_snapshot
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind, exact=True)
+        with pytest.raises(ValueError, match="snapshot (missing|digest mismatch)") as error:
+            _snapshot(runtime)
+    assert ref["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
+    assert len(reads["documents"]) == 1
+    assert reads["objects"] == [row["content"]["admissions"][0]["snapshot_object"]["object_id"]]
 
 
 def test_two_revisions_keep_source_dispatch_aliases_and_assets(admitted, tmp_path):
@@ -312,6 +359,12 @@ def test_frozen_source_is_rechecked_before_staging(admitted, tmp_path):
 
 def test_builtin_pin_does_not_fetch_project_snapshot():
     runtime = _Runtime()
+    runtime.documents = SimpleNamespace(
+        _identity=lambda: {"realm_id": "realm"},
+        show=lambda *_args, **_kwargs: SimpleNamespace(
+            ok=False, data=None, error=SimpleNamespace(code="not_found"),
+        ),
+    )
     descriptor = catalog.list_element_descriptors("effects")[0]
     runtime.timeline["config"] = {
         "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
