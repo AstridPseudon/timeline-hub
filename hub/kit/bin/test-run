@@ -126,8 +126,13 @@ matching_target_base() {
   fi
   printf '%s' "$base"
 }
+runtime_lock_sha() {
+  local lock="$1/runtime.lock.json"
+  [ -f "$lock" ] || return 1
+  sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$lock"
+}
 matching_runtime_sha() {
-  local base ref sha
+  local base ref
   base=$(matching_target_base)
   case "$base" in
     tl/one-head) ref=refs/heads/tl/one-head ;;
@@ -139,7 +144,7 @@ matching_runtime_sha() {
     git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}"
     return
   fi
-  sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json"
+  runtime_lock_sha "$W"
 }
 runtime_target_reason() {
   local base ref
@@ -569,7 +574,7 @@ if [ "$repo" = runtime ]; then
   CMD=${CMD//\/home\/user\/work\/agent/$ASTRID_AGENT_SOURCE}
 fi
 if [ $repo = agent ]; then
-  RUNTIME_SHA=$(sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json")
+  RUNTIME_SHA=$(runtime_lock_sha "$SNAP")
   RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
   if [ -z "$RUNTIME_SOURCE" ]; then
     RUNTIME_SOURCE=/home/user/work/wt-int/runtime-${RUNTIME_SHA:0:12}
