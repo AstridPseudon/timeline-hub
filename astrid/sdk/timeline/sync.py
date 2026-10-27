@@ -468,15 +468,37 @@ class TimelineSession:
         if flight is None:
             return None
         body = json.loads(flight['body'])
-        if (flight['path'] != self.path or flight['key'] != key
+        logical_key = flight.get('logical_key', flight['key'])
+        if (flight['path'] != self.path or logical_key != key
                 or body['project_id'] != self.project_id or body['timeline_id'] != self.timeline_id
                 or body.get('dry_run', False) != dry_run or body['source'] != {'via': via}
                 or not matches(body)):
             raise TimelineEditError('idempotency key belongs to another edit; use a fresh key for new intent')
         result = _response(self.client.timelines.commit(
-            self.project_id, self.timeline_id, body, idempotency_key=key))
+            self.project_id, self.timeline_id, body, idempotency_key=flight['key']))
         data, receipt = _ack(result, body, flight, self.identity)
         return self._present(result, data, receipt, imports=flight.get('imports', ()))
+
+    def resolve_acknowledged(self, key, *, dry_run=False, via='python'):
+        """Return a keyed function's acknowledged receipt without evaluating it.
+
+        The logical key is bound to the final accepted attempt, even when the
+        function was reevaluated after conflicts. This is a read-only replay:
+        it does not move the local base to the historical receipt.
+        """
+        if key is None:
+            return None
+        if not isinstance(key, str) or not key.strip():
+            raise TimelineEditError('idempotency key must be nonempty')
+        with self.outbox.locked():
+            state = self._state()
+            flight = copy.deepcopy(state.get('acknowledged', {}).get(key))
+        if flight is None:
+            return None
+        evaluation = flight.get('evaluation')
+        if not isinstance(evaluation, dict) or evaluation.get('kind') != 'function':
+            raise TimelineEditError('idempotency key belongs to another edit; use a fresh key for new intent')
+        return self.retry(key, matches=lambda body: True, dry_run=dry_run, via=via)
 
     def undo(self, publications, *, steps=None, idempotency_key=None, dry_run=False, via="python"):
         publications = list(publications)
@@ -570,8 +592,13 @@ class TimelineSession:
                     raise TimelineEditError("retry the original in-flight request before another edit")
                 if state["flight"]["count"] != len(state["pending"]):
                     raise TimelineEditError("pending dependent commands require revalidation before recomputing")
-                if idempotency_key is not None and idempotency_key == state["flight"]["key"]:
-                    raise TimelineEditError("recomputed intent requires a fresh idempotency key")
+                previous_logical_key = state["flight"].get("logical_key")
+                if previous_logical_key is None and state["flight"].get("explicit_key"):
+                    previous_logical_key = state["flight"]["key"]
+                if previous_logical_key is not None:
+                    if idempotency_key != previous_logical_key:
+                        raise TimelineEditError("conflict reevaluation must preserve its original idempotency key")
+                    state["next_logical_key"] = previous_logical_key
             state["base"] = _pin(base or state["base"])
             state["pending"] = copy.deepcopy(commands)
             state["flight"] = None
@@ -599,15 +626,41 @@ class TimelineSession:
                 if 'rationale' in state:
                     body['rationale'] = state['rationale']
                 body.update(copy.deepcopy(state.get("commit_options", {})))
-                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                logical_key = state.pop("next_logical_key", None)
+                conflict_retry = logical_key is not None
+                if logical_key is None and idempotency_key is not None:
+                    logical_key = idempotency_key
+                key = (f"timeline-edit-{uuid.uuid4().hex}"
+                       if conflict_retry
+                       else idempotency_key if idempotency_key is not None
+                       else f"timeline-edit-{uuid.uuid4().hex}")
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
                           "count": len(state["pending"]), "fence": uuid.uuid4().hex,
-                          "explicit_key": idempotency_key is not None}
+                          "explicit_key": logical_key is not None}
+                if logical_key is not None:
+                    flight["logical_key"] = logical_key
+                if state.get("evaluation") is not None:
+                    flight["evaluation"] = copy.deepcopy(state["evaluation"])
+                    cache = state["evaluation"].get("media_cache", {})
+                    if isinstance(cache, dict):
+                        imports, seen = [], set()
+                        for entry in cache.values():
+                            if not isinstance(entry, dict):
+                                continue
+                            for item in entry.get("imports", ()):
+                                if not isinstance(item, dict):
+                                    continue
+                                object_id = item.get("object_id")
+                                if object_id not in seen:
+                                    seen.add(object_id)
+                                    imports.append(copy.deepcopy(item))
+                        flight["imports"] = imports
                 if 'media_input' in state:
                     flight['media_input'] = copy.deepcopy(state['media_input'])
-                    flight['imports'] = copy.deepcopy(state.get('media_imports', []))
+                    flight['imports'] = [*flight.get('imports', ()),
+                                         *copy.deepcopy(state.get('media_imports', []))]
                 state["flight"] = flight
                 self.outbox.write(state)
             body = self._flight_body(state, flight, idempotency_key, dry_run)
@@ -665,7 +718,9 @@ class TimelineSession:
                     state["preview_key"] = flight["key"]
                 else:
                     if flight.get('explicit_key', idempotency_key is not None):
-                        state.setdefault('acknowledged', {})[flight['key']] = copy.deepcopy(flight)
+                        acknowledged = state.setdefault('acknowledged', {})
+                        logical_key = flight.get('logical_key', flight['key'])
+                        acknowledged[logical_key] = copy.deepcopy(flight)
                     state["base"] = _pin({"revision_id": data["accepted_revision_id"],
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
@@ -709,7 +764,7 @@ class TimelineSession:
                      and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
                      and body["base_revision_id"] == state["base"]["revision_id"]
                      and body["base_publication_id"] == state["base"]["publication_id"]
-                     and (key is None or key == flight["key"])
+                     and (key is None or key == flight.get("logical_key", flight["key"]))
                      and body.get("dry_run", False) == dry_run)
         except (KeyError, TypeError, ValueError) as exc:
             raise TimelineEditError("invalid in-flight request; original intent retained") from exc
