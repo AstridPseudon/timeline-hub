@@ -52,7 +52,7 @@ def _cutter_for(clip: Mapping[str, Any]):
 
 
 def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps: float) -> str | None:
-    """Explain why a boundary cut would reset a supported clip clock or source sample."""
+    """Explain why cutting changes the renderer's frame interval or source phase."""
     def js_round(value: float) -> int:
         # The pinned renderer uses JavaScript Math.round (ties go toward +infinity).
         return math.floor(value + 0.5)
@@ -70,30 +70,42 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
                 return f"params.{field_name} timing restarts at a chapter cut"
         if _clip_kind(clip) != "am-sprite" and params.get("keyframes") not in (None, [], {}, ""):
             return "params.keyframes timing restarts at a chapter cut"
-    if _clip_kind(clip) in {"media", "video"}:
+    source_start = _num(clip.get("at"))
+    original_placement = js_round(source_start * fps)
+    original_duration = max(1, js_round(clip_duration(clip) * fps))
+    original_end = original_placement + original_duration
+    cuts = sorted(set(cut_starts))
+    starts = [source_start, *cuts]
+
+    # Remotion rounds each Sequence start and its duration separately. A cut
+    # therefore has to cover the same contiguous frame interval as the source.
+    cursor = original_placement
+    for index, start in enumerate(starts):
+        piece_end = starts[index + 1] if index + 1 < len(starts) else source_start + clip_duration(clip)
+        piece_start_frame = js_round(start * fps)
+        piece_duration = max(0.0, _r(piece_end - start))
+        piece_duration_frames = max(1, js_round(piece_duration * fps))
+        piece_end_frame = piece_start_frame + piece_duration_frames
+        if piece_start_frame != cursor or piece_end_frame > original_end:
+            return f"renderer frame interval differs after cut at {start:g} s"
+        cursor = piece_end_frame
+    if cuts and cursor != original_end:
+        return f"renderer frame interval differs after cut at {cuts[-1]:g} s"
+
+    if _clip_kind(clip) in {"media", "video"} and cuts:
         source_from = _num(clip.get("from"))
         speed = _num(clip.get("speed"), 1.0) or 1.0
-        source_start = _num(clip.get("at"))
-        original_trim = js_round(source_from * fps)
-        original_placement = js_round(source_start * fps)
-        original_end = js_round((source_start + clip_duration(clip)) * fps)
-        starts = sorted(set(cut_starts))
-        for index, start in enumerate(starts):
+        original_trim = js_round(max(0.0, source_from) * fps)
+        for start in cuts:
             elapsed = start - source_start
             piece_from = source_from + elapsed * speed
-            piece_trim = js_round(piece_from * fps)
+            piece_trim = js_round(max(0.0, piece_from) * fps)
             piece_placement = js_round(start * fps)
-            # Check every frame that the later piece would render. Its trim is
-            # rounded independently, and its local frame clock starts at the
-            # rounded piece placement (the renderer's Sequence clock).
-            piece_end = starts[index + 1] if index + 1 < len(starts) else source_start + clip_duration(clip)
-            first = max(original_placement, piece_placement)
-            last = min(original_end, js_round(piece_end * fps))
-            for frame in range(first, last):
-                original_sample = original_trim + js_round((frame - original_placement) * speed)
-                piece_sample = piece_trim + js_round((frame - piece_placement) * speed)
-                if original_sample != piece_sample:
-                    return f"renderer source sample at frame {frame} differs after cut at {start:g} s"
+            if abs(piece_from * fps - round(piece_from * fps)) > 1e-7:
+                return f"fractional renderer source offset after cut at {start:g} s"
+            expected_trim = original_trim + (piece_placement - original_placement) * speed
+            if abs(piece_trim - expected_trim) > 1e-7:
+                return f"continuous renderer source phase differs after cut at {start:g} s"
     return None
 
 
