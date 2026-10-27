@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T07:31:20Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- main | 2026-10-27T07:36:12Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
 # runtime board, 2026-10-27T07:29:40.598557+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
