@@ -177,6 +177,22 @@ def test_transition_unknown_name_refused():
         cf.coerce("transition", "swirl 8f")
 
 
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        ({"id": "fade", "type": "cross-fade", "durationFrames": 8}, "id and type must agree"),
+        ({"id": "fade", "duration": 0.2, "durationFrames": 8}, "not both"),
+        ({"id": "fade", "durationFrames": float("nan")}, "positive whole frame"),
+        ({"id": "fade", "durationFrames": 8.5}, "positive whole frame"),
+        ({"id": "fade", "durationFrames": 8, "params": {"curve": "out"}}, "params are not supported"),
+        ({"id": "fade", "unsupported": True}, "unknown key"),
+    ],
+)
+def test_transition_reference_conflicts_and_unsupported_values_refuse(value, message):
+    with pytest.raises(ClipFieldError, match=message):
+        cf.coerce("transition", value)
+
+
 def test_bad_duration_forms_refused():
     with pytest.raises(ClipFieldError, match="duration"):
         cf.coerce("fade_in", "soon")

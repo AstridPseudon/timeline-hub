@@ -172,6 +172,9 @@ def _seconds(raw: Any, fps: float, label: str) -> float:
         value, unit = float(match.group(1)), match.group(2).lower() or "s"
     else:
         raise ClipFieldError(f"{label} must be a duration like 8f, 0.4s or 0.4")
+    if unit == "f" and (isinstance(fps, bool) or not isinstance(fps, (int, float))
+                        or not math.isfinite(float(fps)) or fps <= 0):
+        raise ClipFieldError(f"{label} frame duration requires a positive finite fps")
     seconds = value / fps if unit == "f" else value
     if not math.isfinite(seconds) or seconds <= 0:
         raise ClipFieldError(f"{label} must be a positive duration; got {raw!r}")
@@ -381,15 +384,31 @@ def _transition_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() in ("cut", "none")):
         return None
     if isinstance(raw, Mapping):
-        name = raw.get("id", raw.get("type"))
+        extra = set(raw) - {"id", "type", "duration", "durationFrames", "params"}
+        if extra:
+            raise ClipFieldError(f"transition has unknown key {sorted(extra)[0]!r}")
+        names = [raw[key] for key in ("id", "type") if key in raw]
+        normalized_names = [words.get(name, name) for name in names]
+        if len(normalized_names) == 2 and normalized_names[0] != normalized_names[1]:
+            raise ClipFieldError("transition id and type must agree")
+        if "duration" in raw and "durationFrames" in raw:
+            raise ClipFieldError("transition must use duration seconds or durationFrames, not both")
+        name = normalized_names[0] if normalized_names else None
         if name not in words and name not in stored_ids:
             raise ClipFieldError(f"transition {name!r} is unknown; allowed: {', '.join(words)}")
         stored_id = words.get(name, name)
         value: dict[str, Any] = {"id": stored_id}
         if raw.get("durationFrames") is not None:
-            value["durationFrames"] = int(round(float(raw["durationFrames"])))
+            duration_frames = raw["durationFrames"]
+            if (isinstance(duration_frames, bool) or not isinstance(duration_frames, (int, float))
+                    or not math.isfinite(float(duration_frames)) or float(duration_frames) <= 0
+                    or not float(duration_frames).is_integer()):
+                raise ClipFieldError("transition.durationFrames must be a positive whole frame count")
+            value["durationFrames"] = int(duration_frames)
         elif raw.get("duration") is not None:
             value["durationFrames"] = _frames(raw["duration"], fps, "transition duration")
+        if raw.get("params") not in (None, {}):
+            raise ClipFieldError("transition params are not supported by the selected transition")
         return value
     if not isinstance(raw, str):
         raise ClipFieldError(f"transition must be e.g. {spec.write!r} or cut")
