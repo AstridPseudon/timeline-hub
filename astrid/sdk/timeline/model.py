@@ -282,7 +282,7 @@ class Clip(_Suggest):
         for moving media. It refuses timing dependencies or animation and any
         parent transitions. The command also refuses ID collisions atomically.
         """
-        if self.shot_id != "parent":
+        if self.shot_id not in (PARENT_SHOT, "parent"):
             raise TimelineEditError("split is available for attached parent media clips")
         command = getattr(self, "_command", None)
         if callable(command):
@@ -291,7 +291,8 @@ class Clip(_Suggest):
         if callable(stage):
             stage({"schema_version": 1, "op": "clip.split", "version": "1",
                    "select": f"parent/clip:{self.id}",
-                   "args": {"on": at, "right_id": id}}, label="Split clip")
+                   "args": {"on": at, "right_id": id},
+                   "created": [f"parent/clip:{id}"]}, label="Split clip")
             return self
         raise TimelineEditError("split is available for attached parent media clips")
 
