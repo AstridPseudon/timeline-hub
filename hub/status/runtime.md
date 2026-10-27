@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T11:09:51Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
-# runtime board, 2026-10-27T11:00:23.293980+00:00
+<!-- main | 2026-10-27T11:14:58Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T11:14:47.393120+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -135,7 +135,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | C2 full App comparison | Await B forward and final comparisons | B and C Luna leads | Reviewed B policy and B READY | blocked:B | B lead18; C lead16 after B READY | C own repairs merged c3a28be2b2. After B READY, forward App/Runtime; compare App full with staging and run one Runtime full on matching Agent. | C App c3a28 / Runtime28f44 |
 
 
-| B acceptance audit | Receive reopened B policy repair | Main and B Luna lead | Main10:12 and10:30 scope | doing | Owning B lead18 and independent reviews | Central comparison 21773 is running. Renewed READY still absent; visual transform policy, compile classification and full App/Agent acceptance remain with B. | B project branches |
+| B acceptance audit | Receive reopened B policy and fixture return | Main and B Luna lead | Main10:30 and11:10 scope | doing | Owning B lead18 and independent reviews | Main11:10 requires original scalar fixtures after narrower visual policy. Comparison21773 still running; App and Agent acceptance remain open. | B project branches |
 
 | C acceptance audit | Receive reviewed C repair batch | C Luna lead | Independent reviews and central checks | merged | C stale15; properties15; waveform fix15 | All three merged with central45,10,45 PASS. Superseded waveform review FAIL retained. B forward and full comparison remain. | App c3a28be2b2 |
 
@@ -151,9 +151,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
 | B transform decision | Receive Main visual-only refusal policy | Main and B lead | Recorded Main10:30 decision | merged | Main notes; owning B lead18 | Accept no-op transforms; refuse opacity or geometry changes in both App and Agent. Existing fixture-only review does not qualify the new policy. | Decision only |
 
-Blockers: B lead owns Main10:30 visual-only transform policy, compile classification and App/Agent comparisons. C waits B READY, then App/Runtime forwards and full comparisons. A ACCEPTED; C own repairs merged. H/D/P START absent. D130 holds.
+| B policy dispatch wait | Flag independent source work waiting | B Luna lead | Main10:30 and11:10 decisions | doing | Owning lead B18 | [Peer handoff](../../design/peer-runtime-to-orchestrator-20261027T111426Z-B-policy-dispatch-wait.md). No policy task queued; full21773 still running. | No Runtime change |
+
+Blockers: B lead owns narrower visual transform policy, restoration of staging scalar fixtures and App/Agent comparisons. C waits B READY, then App/Runtime forwards and full comparisons. A ACCEPTED; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5344595968 bytes. Runtime trees: 36; overlapping holds include 31 KEEP, 5 dirty and 6 without ended markers. No eligible recycle. Sweep and compact exit 0: removed 0, packed 0, compressed 0. No refusals. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5300891648 bytes. Runtime trees: 36; overlapping holds include 31 KEEP, 5 dirty and 6 without ended markers. No eligible recycle. Sweep and compact exit 0: removed 0, packed 0, compressed 0. No refusals. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -164,4 +166,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T11:00:23.293980+00:00. Worker check exit 0; all 2717 rows unchanged, live 0 and ready 0. Inbox/header and A/B/C boards unchanged. B lead18 remains active with central comparison 21773 running; no terminal acceptance inferred. C lead16 owns App/Runtime forwards and full comparisons after renewed B READY. A accepted; H/D/P START absent. No eligible Runtime recycle. Guarded sweep and compact exit 0 with no recovery or refusal. [Pass evidence](rounds/20261027T110023Z-pass.json).
+Current pass: 2026-10-27T11:14:47.393120+00:00. Worker check exit 0; all 2717 rows unchanged, live 0 and ready 0. Inbox and header unchanged. A accepted; B18 still polls actual Agent full21773, with no new B policy author queued. Peer handoff records independent ready source work waiting under Main10:30 and11:10. C16 remains held for renewed B READY. H/D/P START absent. Runtime census36:31 KEEP,5 dirty,6 without ended markers; no eligible recycle. Guarded sweep in progress; compact follows it. No refusal. [Pass evidence](rounds/20261027T111447Z-pass.json).

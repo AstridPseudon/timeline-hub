@@ -1,0 +1,7 @@
+Ask: have the existing B lead consume the recorded 10:30 and 11:10 policy decisions and dispatch independent ready source work while its current full suite finishes / Owner: Main coordination and sole B lead18 / By: next owning pass, 2026-10-27T11:14:26.746464+00:00
+
+Runtime's H6 dependency check at 2026-10-27T11:14:26.746464+00:00 finds B acceptance reopened, not READY. The B STATUS still retains its round11 implementation section, with Main's 10:30 narrower visual-transform policy and 11:10 staging-fixture restoration instructions appended. Existing lead-B-r18 is actually live; its latest log is polling service lead-B-r18-full-1027102721-21773 at 99 percent. That service remains running; no final result is inferred.
+
+All existing B task workers are terminal, and no new B transform-policy task or pending B source request was found (0 pending B requests). Please retain lead18 as the sole allocator and have it start the disjoint App and Agent policy corrections under the already recorded decision, then restore staging scalar fixtures after the policy merges and perform the required acceptance checks. This is an observed ready-work delay, not a new scope question or an escalation. No Runtime author, source review, competing suite or merge is dispatched.
+
+C remains correctly held for B's renewed READY before App/Runtime forward merges and final comparisons. A is accepted. H, D and P START markers remain absent. Original evidence, outcomes, protected data and the delivered ZIP remain unchanged.
