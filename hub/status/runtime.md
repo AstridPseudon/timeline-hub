@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T07:11:35Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
-# runtime board, 2026-10-27T07:03:33.614991+00:00
+<!-- main | 2026-10-27T07:16:31Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-27T07:12:44.403886+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -128,26 +128,26 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive usable pinned render lane | Main Sol and Luna | Main05:12 named lane release | merged | diag-renderlane2-0440 | Main records generic host1 PASS and named lane usable. Original9312 cleanup failure retained; A-owned proof is separate and not accepted. | No Runtime change |
 
-| A stand-in proof | Receive independent render PASS | A Luna | A merge and Main acceptance | review | Author r13; independent r13 | Author26842 PASS; fresh independent25125 one PASS107.91s. Code review PASS. A owns normal merge; no acceptance inferred. | A candidate |
+| A stand-in proof | Retain independently qualified render proof | A Luna | Owning normal merge complete | merged | Author r13; independent r13; lead r16 | Author26842 PASS; independent25125 one PASS107.91s. A records source merged0b10dd6e80 and stand-in milestone ready. Main acceptance separate. | A0b10dd6e80 |
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
 | C2 full App comparison | Receive actual staging comparison | C and Main Luna | Same-kind per-ID join | review | C full10; staging11b terminal | Staging4499:19939 PASS32 FAIL plus collection. Author lists38 C-only and29 baseline-only failures. Common failures retained; no REG closure inferred. | C App1a02991e0e |
 
 
-| B acceptance audit | Receive independent B acceptance verdict | Luna | Main acceptance | review | diag-accept-B-0610 | Auditor ACCEPT, no must fix; stand-in export and same4 conformance failures qualified. Main acceptance remains separate. | B project branches |
+| B acceptance audit | Receive recorded B acceptance | Main and independent Luna | Main header07:15 | merged | diag-accept-B-0610; Main | Auditor ACCEPT, no must fix; Main now records B ACCEPTED. Stand-in scope and same four conformance baseline failures preserved. | B project branches |
 
 | C acceptance audit | Receive independent C rejection | Luna | Staging and browser evidence; artifact cleanup | review | diag-accept-C-0610 | Auditor REJECT: staging NOTRUN; new-track and modal browser bodies unverified; Runtime root report.md artifact requires C worker cleanup. | C project branches |
 
-| C browser lane | Retain independent failure and active correction | C Luna and reviewer | Existing C lead r11 | review | Independent finalize11; geometry11 | Actual28159:2 PASS1 FAIL, new-track target false. Harness completed; existing geometry11 owns correction. Original15487 and author OOM retained. | C private candidate |
+| C browser lane | Receive actual three-case author PASS | C Luna and reviewer | Existing C lead r11 | review | Isolation11 terminal; independent isolation11 active | Actual27831:3 PASS exit0. Independent source review and normal merge owed; original28159 and geometry24085 failures retained with raw KEEP. | C private candidate |
 
-| A ready merge | Receive passed independent service | Main and A manager | Actual25125 PASS | review | A lead r15 ended; Main next round | A25125 exit0. Reviewer worker ended before test completion; Main owns normal next lead round and acceptance. No duplicate Runtime lead. | A candidate |
+| A ready merge | Receive owning normal proof merge | A Luna manager | Actual25125 PASS | merged | Owning lead A r16 | A board records normal0b10dd6e80 merge. Stale next-round wait cleared; Main acceptance remains separate. | A0b10dd6e80 |
 
 | C kit report scope | Receive bounded browser host repair | Main Luna | Main0610 terminal | review | diag-browserlane-0610 | Four PASS runs execute original gallery case only. [Scope handoff](../../design/peer-runtime-to-orchestrator-20261027T065036Z-browser-report-scope-and-A-ready.md). C15487 correction failures remain. | Kit only |
 
-Blockers: Main owns the next A manager round for actual25125 PASS and A/B acceptance. C lead r11 owns the full-suite join, new-track geometry correction, independent review and Runtime report.md cleanup. H/D/P START and acceptance gates remain closed. D130 holds.
+Blockers: Main owns A acceptance and staging comparison diag-acceptC-base-0715. C lead r11 owns independent isolation review, normal merge and Runtime report.md cleanup. B accepted; H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5372383232 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep exit0; compact still running. Follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5491314688 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact exit0;0 dirs removed or packed;1 old worker log compressed. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -158,4 +158,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T07:03:33.614991+00:00. Runtime census exit0, live0, ready0. Inbox/header unchanged. C independent28159 now FAIL:2 PASS1 FAIL; new-track targetedNewTrack false, modal and original gallery pass. Existing C geometry11 started07:01:21 and owns correction; actual24085 running. Raw28159 KEEP added prospectively. Main notified of changed gate; no competing Runtime worker. A25125 remains PASS awaiting owning normal merge and Main acceptance; B independent ACCEPT awaits Main. H/D/P START absent. Guarded sweep exit0; compact pending; no eligible Runtime tree. [Pass evidence](rounds/20261027T070333Z-pass.json).
+Current pass: 2026-10-27T07:12:44.403886+00:00. Second Runtime census exit0, live0, ready0. Inbox unchanged. New header records B ACCEPTED; A normal0b10dd6e80 merge clears the stale next-round wait. C actual27831 author3PASS exit0; owning independent isolation11 active. Previous28159 new-track failure and geometry24085 identity collision remain with prospective raw KEEP. Main owns new staging comparison; C owns cleanup and final review/merge. H/D/P START absent. Guarded sweep/compact completed exit0,0 dirs removed or packed,1 old log compressed; no eligible Runtime tree or refusal. [Gate update](../../design/peer-runtime-to-orchestrator-20261027T071201Z-A-merged-C-author-browser-PASS.md); [pass evidence](rounds/20261027T071244Z-pass.json).

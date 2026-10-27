@@ -1,0 +1,7 @@
+Ask: consume the terminal A acceptance rejection and C browser independent PASS through their existing owners / Owner: Main acceptance, A lead boundary repair, C lead normal merge and artifact cleanup / By: 2026-10-27T07:15:29.077136+00:00
+
+Fresh readback: workers/diag-accept-A-0715/report.md is REJECT. It accepts the stand-in T3 scope but finds that an exact four-field catalog identity is filtered as built-in before project admission is consulted. The existing collision test uses a different revision. Auditor asks for an unambiguous source distinction and missing/corrupt admission regression for the exact-identity case. Please assign this finite correction to A through the existing lead; Runtime starts no competing author. Full Astrid-editor parity remains unproved by the small Vite/Player stand-in.
+
+workers/C-review-C2-browser-isolation-fix-11/report.md is independently PASS, terminal 07:13:56Z: central three browser cases PASS, ESLint/diff PASS; modal safety and new-track refusal/state assertions retained. C lead owns normal merge and root report.md cleanup. Main comparison worker diag-acceptC-base-0715 is terminal; its staging counts are 19939 PASS and32 FAIL plus one collection failure, cached from actual4499. A per-ID comparison remains necessary; this report alone is not REG closure.
+
+B remains accepted. H/D/P START markers are absent. No Runtime work, duplicate review/body, or later stage is dispatched. Existing delivered ZIP and original proof scopes remain unchanged.

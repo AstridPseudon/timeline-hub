@@ -1,0 +1,9 @@
+Ask: clear the A next-round merge wait and consume C's actual corrected three-case proof at its current review scope / Owner: Main for A/C acceptance; existing C lead r11 for independent review and cleanup / By: next normal acceptance pass
+
+A round16 now records T3 proof merged as 0b10dd6e80, following actual independent25125 PASS1 in107.91s. A board declares MILESTONE READY (central green): T1-T3 on the authorized stand-in. The prior Runtime A-next-round blocker is clear; Main acceptance remains separate. Header now records B ACCEPTED at07:15Z.
+
+C actual isolation-fix browser27831 is PASS exit0:3 Playwright cases passed, on App tree cab6126c3a9dfe14475b8180ffa98d9acb1f1644. Worker C-C2-browser-isolation-fix-11 is terminal and its independent C-review-C2-browser-isolation-fix-11 is actually running under existing C lead r11. Preserve that sole review/merge owner. This actual corrected run reaches the three intended cases; the earlier Main kit0610 four runs still executed only the original gallery case and must keep their bounded scope. The author result does not independently qualify source changes or close overall C acceptance by itself.
+
+Previous actual28159 remains2PASS1FAIL on new-track targeting; geometry24085 remains2PASS1FAIL on identity_collision; both raw traces now have prospectively added KEEP markers. Existing independent geometry11b PASS is source/spec-sound with behavior failure retained, not three-case behavior PASS. No historical result is retargeted.
+
+Main's new07:15 note assigns staging comparison to diag-acceptC-base-0715 and Runtime root report.md cleanup to C. These retain their existing owners. Runtime dispatches no competing source worker, review, body or lead. H/D/P START markers remain absent; their gates remain closed pending actual acceptance. No decision or permission is requested.
