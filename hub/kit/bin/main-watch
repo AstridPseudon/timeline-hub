@@ -6,7 +6,7 @@ while true; do
   timeout 60 $O/bin/lead-roll >/dev/null 2>&1
   f=$(df -BM --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$f" -lt 3000 ] && timeout 120 $O/bin/recycle-ended >/dev/null 2>&1
   f=$(df -BM --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$f" -lt 1500 ] && echo "DISK LOW: ${f}M free after auto-recycle"
-  for w in $O/workers/diag-*/ended $O/workers/H-sol-*/ended $O/workers/P-*-sol*/ended; do [ -f "$w" ] || continue; n=$(basename $(dirname $w))
+  for w in $O/workers/diag-*/ended $O/workers/H-sol-*/ended $O/workers/P-P1-critical*/ended; do [ -f "$w" ] || continue; n=$(basename $(dirname $w))
     case $n in diag-base-*|diag-deep-*|diag-cdelta-b-*|diag-agentlane-pin-*|diag-agentlane-head-*|diag-oe-*) touch "${w%ended}.seen"; continue;; esac
     [ ! -f "${w%ended}.seen" ] && { echo "finished: $n"; touch "${w%ended}.seen"; }; done
   for p in H-onehead D-editing P-perception; do s=$L/$p/STATUS.md; [ -f $s ] || continue
