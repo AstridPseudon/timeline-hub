@@ -17,6 +17,21 @@ for n in sorted(os.listdir('/home/user/work/wt')):
     repo=[l.split('=',1)[1].strip() for l in open(wd+'/meta') if l.startswith('repo=')][0]
     if subprocess.run(['git','-C',f'/home/user/work/{repo}','worktree','remove',wt],capture_output=True).returncode==0:
         open(wd+'/recycled','a').close(); done.append(wt)
+# 27 Oct 20:20Z: also drop idle detached lane checkouts in /home/user/work/wt-int (agent-<sha>, runtime-<sha>); test-run recreates them on demand
+import re
+inuse=set()
+for pid in os.listdir('/proc'):
+    if not pid.isdigit(): continue
+    try:
+        inuse.add(os.readlink(f'/proc/{pid}/cwd'))
+        for f in ('cmdline','environ'):
+            inuse.update(re.findall(r'/home/user/work/wt-int/[A-Za-z0-9._-]+', open(f'/proc/{pid}/{f}','rb').read().replace(b'\0',b' ').decode(errors='ignore')))
+    except Exception: pass
+W='/home/user/work/wt-int'
+for n in sorted(os.listdir(W)) if os.path.isdir(W) else []:
+    if not re.fullmatch(r'(agent|runtime|app)-[0-9a-f]{12}', n): continue
+    if any(u==f'{W}/{n}' or u.startswith(f'{W}/{n}/') for u in inuse): continue
+    if subprocess.run(['git','-C',f'/home/user/work/{n.split("-")[0]}','worktree','remove','--force',f'{W}/{n}'],capture_output=True).returncode==0: done.append(f'{W}/{n}')
 if done:
     open(O+'/design/deletion-ledger.md','a').write(f"- {datetime.datetime.now(datetime.UTC):%Y-%m-%dT%H:%MZ} recycle-ended (keepalive, low disk): git worktree remove (non-force) " + ", ".join(done) + "\n")
 print(len(done))
