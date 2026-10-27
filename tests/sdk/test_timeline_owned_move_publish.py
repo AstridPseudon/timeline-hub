@@ -12,6 +12,7 @@ from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.model import Clip
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -22,6 +23,21 @@ from tests.sdk.test_timeline_sync import connected, open_session  # noqa: F401
 
 def state(connected):
     return json.loads(connected[2].read_bytes())
+
+
+def test_friendly_split_stages_native_command_for_function_commit():
+    calls = []
+
+    class StagingTimeline:
+        def command(self, command, *, label):
+            calls.append((copy.deepcopy(command), label))
+
+    clip = Clip(StagingTimeline(), 'parent', {'id': 'clip-a', 'clipType': 'media'})
+    assert clip.split(2, id='right') is clip
+    assert calls == [({
+        'schema_version': 1, 'op': 'clip.split', 'version': '1',
+        'select': 'parent/clip:clip-a', 'args': {'on': 2, 'right_id': 'right'},
+    }, 'Split clip')]
 
 
 def test_parent_publish_rebases_original_capture_reloads_and_undoes(connected):

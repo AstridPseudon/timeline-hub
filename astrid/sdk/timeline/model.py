@@ -256,6 +256,28 @@ class Clip(_Suggest):
         return f"<Clip {self.address} {self.element} {what} {self.start:.3f}–{self.end:.3f} s{anchor}>"
 
     # edits ---------------------------------------------------------------
+    def split(self, at: Any, *, id: str) -> "Clip":
+        """Split an attached parent media clip at absolute timeline seconds.
+
+        ``id`` is the stable identity of the right half; the original clip ID
+        stays on the left. This uses the native split command, which requires
+        registry-backed media, an interior cut, and an explicit source window
+        for moving media. It refuses timing dependencies or animation and any
+        parent transitions. The command also refuses ID collisions atomically.
+        """
+        if self.shot_id != "parent":
+            raise TimelineEditError("split is available for attached parent media clips")
+        command = getattr(self, "_command", None)
+        if callable(command):
+            return command("clip.split", {"on": at, "right_id": id})
+        stage = getattr(self._tl, "command", None)
+        if callable(stage):
+            stage({"schema_version": 1, "op": "clip.split", "version": "1",
+                   "select": f"parent/clip:{self.id}",
+                   "args": {"on": at, "right_id": id}}, label="Split clip")
+            return self
+        raise TimelineEditError("split is available for attached parent media clips")
+
     def on(self, moment: Any) -> "Clip":
         """Start on a moment: ``"viral"``, ``after "Astrid"``, ``beat 2 after "Astrid"``, ``c22``, ``+0.8s``.
 

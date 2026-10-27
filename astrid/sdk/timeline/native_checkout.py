@@ -519,15 +519,5 @@ class AttachedClip(Clip):
             _held()
         return self._command('clip.delete', {})
 
-    def split(self, on, *, id):
-        """Split this attached parent media clip at absolute timeline seconds.
-
-        The caller reserves ``id`` once; the native command keeps that identity
-        in the durable outbox for retries, reloads, and inverse/redo.
-        """
-        if self.shot_id != 'parent':
-            _held()
-        return self._command('clip.split', {'on': on, 'right_id': id})
-
     until = end_at = slip = keep = remove_layer = _held
     set_look = tag = move_to_cut = set_track = swap_asset = set_beats = keyframe_at = _held

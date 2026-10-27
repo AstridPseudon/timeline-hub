@@ -10,11 +10,13 @@ import pytest
 
 from astrid.core.receipts.canonical import canonical_json
 from astrid.core.receipts.contract import CommandReceipt
+from astrid.core.timeline.duration import clip_timeline_duration
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, create_runtime_commit_service
 from astrid.sdk.timeline.commit_session import Timeline
+from astrid.sdk.timeline.model import Clip
 from astrid.sdk.timeline.outbox import Outbox
 from astrid.sdk.timeline.sync import TimelineSession
 from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm
@@ -138,6 +140,30 @@ def test_arrange_composes_with_free_edits_and_another_arrangement(arranged_sessi
     assert rows['occ-01']['placement']['start_ms'] == 4000
     assert rows['occ-00']['placement']['start_ms'] == 5350
     undone = tl.undo(publications=[result['receipt']['receipt_id']])
+    assert undone['data']['canonical_document'] == original
+
+
+def test_split_in_one_function_commit_and_immediate_undo(arranged_session):
+    tl, realm, calls = arranged_session
+    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
+
+    def split(t):
+        row = next(c for c in t.bundle['parent']['clips'] if c['id'] == 'clip-a')
+        clip = Clip(t, 'parent', row)
+        clip.split(81, id='right')
+
+    result = tl.commit(split)
+
+    assert len(calls) == len(realm.accepted) == 1
+    assert [command['op'] for command in calls[0]['commands']] == ['clip.split']
+    payload = result['data']['canonical_document']['parent_revision']['payload']
+    left, right = payload['clips'][:2]
+    assert [left['id'], right['id']] == ['clip-a', 'right']
+    assert (left['at'], left['hold']) == (80, 1)
+    assert (right['at'], right['hold']) == (81, 1)
+    assert clip_timeline_duration(left) == clip_timeline_duration(right) == 1
+    undone = tl.undo(publications=[result['receipt']['receipt_id']])
+    assert len(calls) == len(realm.accepted) == 2
     assert undone['data']['canonical_document'] == original
 
 
