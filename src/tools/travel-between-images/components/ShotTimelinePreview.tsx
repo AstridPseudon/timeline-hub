@@ -424,6 +424,7 @@ export function ShotTimelinePreview({
 }: ShotTimelinePreviewProps) {
   const [editorSessionToken] = useState(createShotTimelineEditorSessionToken);
   const [currentComposition, setCurrentComposition] = useState(composition);
+  const initialTimelineDataHeadRef = useRef(composition.headRevisionId);
   const suppliedCompositionIsUsable = composition.projectId.length > 0
     && composition.parentDocumentId.length > 0
     && composition.occurrences.some((candidate) => candidate.occurrenceId === occurrenceId);
@@ -671,7 +672,9 @@ export function ShotTimelinePreview({
           timelineEditability={timelineEditability}
           extensionHostEnabled={false}
           onSaveStatusChange={handleSaveStatusChange}
-          initialTimelineData={initialTimelineData}
+          initialTimelineData={currentComposition.headRevisionId === initialTimelineDataHeadRef.current
+            ? initialTimelineData
+            : undefined}
         >
           <ShotTimelineEditorSurface
             config={projection.config}
