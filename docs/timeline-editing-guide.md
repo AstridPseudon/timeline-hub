@@ -332,8 +332,11 @@ preview as reserved.
 
 Structure and timing can be read back; appearance cannot. Unless the person
 asks for frames or a render, give them the editor link and the times to check,
-and say the look is unverified. The link's timeline id is the `timeline_id`
-that `timelines list --project <project> --json` prints. When they ask, the frame commands are in
+and say the look is unverified. The link is
+`https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`:
+`<project-id>` is the `project_id` that `projects show <project> --json` prints
+(`<project>` may be the slug), and `<timeline-id>` is the `timeline_id` that
+`timelines list --project <project> --json` prints. When they ask, the frame commands are in
 [render, inspect, transfer and worlds](../astrid/packs/rendering/docs/references/render-inspect-transfer.md).
 The final perception guidance (project P) will replace this section.
 
