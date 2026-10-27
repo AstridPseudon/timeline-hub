@@ -686,6 +686,14 @@ class RequestCommitPort:
             self.__sequential_capture = None
 
     def accept(self, prepared):
+        from .timeline_commit_execution import current_commit_timing
+        timing = current_commit_timing()
+        if timing is None:
+            return self._accept(prepared)
+        with timing.stage("port_store_accept"):
+            return self._accept(prepared)
+
+    def _accept(self, prepared):
         from .timeline_commit import StaleHead
         try:
             if self.__request.get("dry_run", False):
