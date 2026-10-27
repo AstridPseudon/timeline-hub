@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T05:10:08Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
-# runtime board, 2026-10-27T05:00:22.425329+00:00
+<!-- main | 2026-10-27T05:20:17Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T05:15:13.743555+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,14 +104,14 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive measured central sampler | C Sol and Luna | Independent central sampler review | merged | C-C3-runtime-sampler-8; review PASS | Central 2349: 1 PASS, five saves and durable replays. Total 183–264 ms. Synthetic fixture does not justify optimizing the reported 20 seconds. | Runtime 0e238fa008 |
 
-| C2 B forward | Receive required B ancestry and recovery fix | C Luna and B lead | B recovery fix and current tips | blocked:C | Existing C forward owner; Main corrections | Required9c2c40 App ancestor still absent at26d9. Main requires latest B App11fa and Runtime9c95 or successors after recovery fix. | App26d9 / Runtime0e238 |
+| C2 B forward | Receive B ancestry and recovery repair | C and B Luna | B recovery fix and current tips | blocked:B | B-recovery-sanitize-9; C forward10 and review | B recovery author active. C App forward active; Runtime forward done with review active. Final B recovery adoption and C acceptance remain open. | Project branches |
 
 | C2 save and fork | Retain bounded provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Central58 PASS retained. Browser new-track drop422 remains open under Main correction; source tests do not qualify that live path. | App98784a1d |
 
 | C2 browser journey | Retain historical browser run with correction | C Luna and Main | Restore meaningful assertion | review | C-C2-browser-adjust-9; Main corrections | Original author23909 and reviewer29959 PASS retained. Main finds weakened main-timeline assertion; C must restore it and rerun. No current C2 acceptance. | App26d9f9eb45 |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
-| B5 visual parity | Receive completed whole-path findings | Main Luna and B lead | Recorded Main corrections | blocked:B | diag-deep-bexport-0415 terminal; B lead | [Findings](../../workers/diag-deep-bexport-0415/evidence/findings.md). Main assigns recovery fix, Agent export proof and staging comparison; no parity product fix. | Agent1566 unchanged |
+| B5 visual parity | Receive projection export proof | B Sol and Luna | Main05:12 bounded acceptance scope | doing | B-agent-export-proof-9; fixture c298029 reviewed | Fixture pin merged with central4 PASS. Real Agent export and staging conformance remain owed; Main excludes small renderer pixel differences from B. | B branches |
 
 | C2 safety and new track | Receive recorded browser repair scope | C Luna and Main | B recovery fix first | blocked:C | Existing C lead | Main authorizes provider new-track handling after B, meaningful parent-timeline assertion, nonmodal safety and full App staging comparison. | No Runtime change |
 
@@ -125,13 +125,15 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive blocked real render proof | A Luna and Main | Managed session cleanup | blocked:main | A-T3-proof-standin-r11; Main diag-renderlane2-0440 | Actual9312 exited1 after198s; cleanup failed before stand-in export. No MP4, Vite captures or parity metrics. Kit smoke is separate. | A source retained |
+| A stand-in environment | Receive usable pinned render lane | Main Sol and Luna | Main05:12 named lane release | merged | diag-renderlane2-0440 | Main records generic host1 PASS and named lane usable. Original9312 cleanup failure retained; A-owned proof is separate and not accepted. | No Runtime change |
+
+| A stand-in proof | Receive actual pinned-element proof | A Luna | Named lane available | doing | A-T3-proof-standin-r13 | A05:10 dispatched own integration test for real export, two revisions, fail-closed snapshots and local Vite comparison. No result or acceptance yet. | A branch |
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-Blockers: Main and A own managed session cleanup blocking the real pinned-element proof; kit smoke is separate. A snapshot errors are merged and central68 PASS. B recovery fix and Agent export proof belong to B. C assertion, new-track handling, parent safety and B ancestry belong to C. D130 holds.
+Blockers: A owns the real pinned-element proof; Main cleared the old lane blocker. B owns recovery normalization, real Agent export and staging comparison. C owns assertion, new-track and parent-safety corrections after B. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6344171520 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed with no reclamation. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 4403580928 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Last sweep and compact completed04:59; current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -142,4 +144,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T05:00:22.425329+00:00. Inbox, HEADER and A B C boards unchanged. Runtime census2717 has no live worker or new completion. A actual9312 remains blocked at managed-session cleanup before stand-in MP4/Vite/parity; Main diag-renderlane2-0440 owns render-lane repair. Main04:51 also owns shared App checkout investigation diag-sharedapp-0450. B recovery/export/staging and C assertion/new-track/parent-safety corrections remain with existing leads. H/D/P START absent. Guarded sweep and compact reclaimed nothing; all36 Runtime trees remain protected or dirty. No ready Runtime work is waiting. [Pass evidence](rounds/20261027T045518Z-pass.json).
+Current pass: 2026-10-27T05:15:13.743555+00:00. Inbox and HEADER unchanged; current RUNBOOK, PIPELINE and A B C boards consumed. Runtime census 2717 has no live worker or changed row. B fixture pin is independently reviewed, merged and central4 PASS; B recovery/export and C assertion/forward corrections remain with original leads. A owns actual pinned-element proof. H/D/P START absent. No eligible Runtime recycle or ready Runtime task. [Pass evidence](rounds/20261027T051513Z-pass.json).
