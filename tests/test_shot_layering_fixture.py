@@ -10,7 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "conformance/fixtures/shot-layering-v1.json"
-FIXTURE_SHA256 = "7ed1d614a287eecafc20f5bd9908233e4015c608a5e5c075f4e9440058f71f45"
+FIXTURE_SHA256 = "4900be369f31bd03736b7eadaf2f8595a7ce48df5218296d405162cb13cfc16c"
 REQUIRED_CASES = {
     "child-audio-parent-visual",
     "child-visual-parent-audio",
@@ -144,6 +144,35 @@ def test_shared_fixture_preserves_settled_layering_semantics() -> None:
         "code": "timeline-patch/target-not-found",
         "message": "shot-layering: track \"picture\" not found — placing occurrence \"occ-missing\" at top of stack",
     }]
+
+    audio_child = cases["child-audio-parent-visual"]["expected"]
+    assert "clip_timing" not in audio_child
+    assert audio_child["track_order"] == ["picture", "shared", "music", "occ-collision~shared"]
+    assert audio_child["group_tracks"] == []
+    assert audio_child["clip_tracks"] == {
+        "parent-clip": "shared",
+        "trim-inherited": "occ-collision~shared",
+        "hold-inherited": "occ-collision~shared",
+        "trim-child-speed": "occ-collision~shared",
+        "hold-child-speed": "occ-collision~shared",
+        "compatible-audio": "music",
+    }
+
+    visual_child = cases["child-visual-parent-audio"]["expected"]
+    assert "clip_timing" not in visual_child
+    assert visual_child["track_order"] == ["occ-collision~shared", "picture", "shared", "music"]
+    assert visual_child["group_tracks"] == [{
+        "id": "occ-collision~shared",
+        "app": {"group": {"id": "occ-collision", "sourceTrack": "shared"}},
+    }]
+    assert visual_child["clip_tracks"] == {
+        "parent-clip": "shared",
+        "trim-inherited": "occ-collision~shared",
+        "hold-inherited": "occ-collision~shared",
+        "trim-child-speed": "occ-collision~shared",
+        "hold-child-speed": "occ-collision~shared",
+        "compatible-audio": "music",
+    }
 
 
 def test_shared_fixture_groups_source_role_visual_track() -> None:
