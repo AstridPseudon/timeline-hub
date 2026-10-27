@@ -80,23 +80,55 @@ describe('canonical shot-composition downstream projection', () => {
       .toEqual([0, 0]);
   });
 
-  it('uses a child visual declaration over an inherited parent audio declaration with the same ID', () => {
-    const child = withOccurrenceRevision(prepared, 0, (timeline) => ({
-      ...timeline,
-      tracks: [{ id: 'video', kind: 'visual', label: 'Child' }],
-      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, from: 0, to: 2 }],
-    }));
-    const composition = { ...child, occurrences: [{
-      ...child.occurrences[0], sourceOffsetMs: 350, speed: 1.5,
-    }] };
-    const projection = projectCanonicalComposition(composition, {
-      output: { resolution: '1920x1080', fps: 30, file: 'collision.mp4' },
-      tracks: [{ id: 'video', kind: 'audio', label: 'Parent' }], clips: [], registry: {},
-    });
-    expect(projection.config.clips[0]).toMatchObject({
-      id: 'occ-1:collision', track: 'occ-1~video', from: 0.35, to: 2.35, speed: 1.5,
-    });
-  });
+  it.each([undefined, 'visual', 'audio'] as const)(
+    'keeps reused child IDs compatible against parent kind %s in either occurrence order',
+    (parentKind) => {
+      const fallbackKind = parentKind ?? 'visual';
+      const childKind = fallbackKind === 'visual' ? 'audio' : 'visual';
+      let composition = withOccurrenceRevision(prepared, 0, () => ({
+        tracks: [],
+        clips: [{ id: 'fallback', asset: 'alpha-image', clipType: 'media', track: 'shared', at: 0, from: 0, to: 2 }],
+      }));
+      composition = withOccurrenceRevision(composition, 1, () => ({
+        tracks: [{ id: 'shared', kind: childKind, label: 'Child' }],
+        clips: [{ id: 'declared', asset: 'alpha-image', clipType: 'media', track: 'shared', at: 0, from: 0, to: 2 }],
+      }));
+      const occurrences = composition.occurrences.slice(0, 2).map((occurrence) => ({
+        ...occurrence, trackId: 'picture', sourceOffsetMs: 350, speed: 1.5,
+      }));
+      const base: ResolvedTimelineConfig = {
+        output: { resolution: '1920x1080', fps: 30, file: 'collision.mp4' },
+        tracks: [
+          { id: 'picture', kind: 'visual', label: 'Shots' },
+          ...(parentKind ? [{ id: 'shared', kind: parentKind, label: 'Parent' }] : []),
+        ],
+        clips: [], registry: {},
+      };
+      const before = JSON.stringify({ composition, base });
+      for (const ordered of [occurrences, [...occurrences].reverse()]) {
+        const projection = projectCanonicalComposition({ ...composition, occurrences: ordered }, base);
+        expect(projection.warnings).toEqual([]);
+        expect(projection.config.clips).toHaveLength(2);
+        for (const clip of projection.config.clips) {
+          const kind = clip.id === 'occ-1:fallback' ? fallbackKind : childKind;
+          const track = projection.config.tracks.find((entry) => entry.id === clip.track);
+          expect(track, clip.id).toBeDefined();
+          expect(track?.kind, clip.id).toBe(kind);
+          expect({ from: clip.from, to: clip.to, speed: clip.speed }).toEqual(kind === 'audio'
+            ? { from: 0, to: 2, speed: undefined }
+            : { from: 0.35, to: 2.35, speed: 1.5 });
+          if (kind === 'visual') {
+            expect(track?.app?.group).toMatchObject({ sourceTrack: 'shared' });
+          }
+        }
+        if (parentKind) {
+          expect(projection.config.tracks.find((track) => track.id === 'shared'))
+            .toMatchObject({ kind: parentKind, label: 'Parent' });
+        }
+      }
+      expect(JSON.stringify({ composition, base })).toBe(before);
+    },
+  );
 
   it.each([
     { transform: { opacity: 0.5 } },
@@ -168,6 +200,7 @@ describe('canonical shot-composition downstream projection', () => {
         ...(expected.hold === undefined ? {} : { hold: expected.hold }),
         ...(expected.speed === undefined ? {} : { speed: expected.speed }),
       });
+      expect(clip.speed).toBe(expected.speed);
       expect(getClipTimelineDuration(clip)).toBeCloseTo(expected.timeline_duration, 6);
     }
     expect(projected.get('audio-track-inherited')?.speed).toBeUndefined();

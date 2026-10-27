@@ -310,22 +310,52 @@ function groupedTracksFor(
   baseConfig?: ResolvedTimelineConfig | null,
   occurrences: readonly CanonicalShotOccurrence[] = composition.occurrences,
   warnings: CanonicalProjectionWarning[] = [],
-): TrackDefinition[] {
+): { tracks: TrackDefinition[]; occurrenceTrackIds: Map<string, Map<string, string>> } {
+  const parentTracks = baseConfig?.tracks ?? [];
+  const occurrenceTrackIds = new Map<string, Map<string, string>>();
   // Merge audio with the existing neighbour rule before inserting visual blocks.
   const tracks = [...(baseConfig?.tracks ?? [])];
   const trackIds = new Set(tracks.map((track) => track.id));
   for (const occurrence of occurrences) {
     const timeline = childTimeline(occurrence);
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
+    const trackMapping = new Map<string, string>();
+    occurrenceTrackIds.set(occurrence.occurrenceId, trackMapping);
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
       const id = text(track?.id);
-      if (!id || trackIds.has(id) || track?.kind !== 'audio') continue;
+      if (!id) continue;
+      const parentTrack = parentTracks.find((entry) => entry.id === id);
+      trackMapping.set(id, track?.kind === 'audio' && (!parentTrack || parentTrack.kind === 'audio')
+        ? id : `${occurrence.occurrenceId}~${id}`);
+    }
+    // Resolve undeclared lanes against the immutable parent context. Another
+    // occurrence's declarations must not change this occurrence's visual group.
+    for (const rawClip of Array.isArray(timeline.clips) ? timeline.clips : []) {
+      const clip = record(rawClip);
+      if (!clip) continue;
+      const id = text(clip.track) ?? occurrence.trackId ?? 'video';
+      if (!trackMapping.has(id)) {
+        trackMapping.set(id, parentTracks.some((track) => track.id === id && track.kind === 'audio')
+          ? id : `${occurrence.occurrenceId}~${id}`);
+      }
+    }
+    for (const rawTrack of rawTracks) {
+      const track = record(rawTrack);
+      const id = text(track?.id);
+      if (!id || track?.kind !== 'audio') continue;
+      const projectedId = trackMapping.get(id)!;
+      if (trackIds.has(projectedId)) continue;
       if (trackRole({
         id,
         role: track?.role as TrackDefinition['role'],
       }) === 'source') continue;
-      const definition = { ...track, id, kind: 'audio', label: text(track?.label) ?? id } as TrackDefinition;
+      const definition = { ...track, id: projectedId, kind: 'audio', label: text(track?.label) ?? id } as TrackDefinition;
+      if (projectedId !== id) {
+        tracks.push(definition);
+        trackIds.add(projectedId);
+        continue;
+      }
       const shotTrackOrder = rawTracks.map((raw) => text(record(raw)?.id)).filter((value): value is string => Boolean(value));
       const position = shotTrackOrder.indexOf(id);
       let insertAt = tracks.length;
@@ -348,6 +378,7 @@ function groupedTracksFor(
   for (const occurrence of occurrences) {
     const timeline = childTimeline(occurrence);
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
+    const trackMapping = occurrenceTrackIds.get(occurrence.occurrenceId)!;
     const visualTracks: TrackDefinition[] = [];
     const sourceIds = new Set<string>();
     const addVisual = (id: string, track: JsonObject = {}): void => {
@@ -355,7 +386,7 @@ function groupedTracksFor(
       sourceIds.add(id);
       visualTracks.push({
         ...track,
-        id: `${occurrence.occurrenceId}~${id}`,
+        id: trackMapping.get(id)!,
         kind: 'visual',
         label: text(track.label) ?? id,
         app: { ...record(track.app), group: { id: occurrence.occurrenceId, sourceTrack: id } },
@@ -374,7 +405,7 @@ function groupedTracksFor(
       if (!clip) continue;
       const id = text(clip.track) ?? occurrence.trackId ?? 'video';
       if (!rawTracks.some((raw) => text(record(raw)?.id) === id)
-        && !tracks.some((track) => track.id === id && track.kind === 'audio')) addVisual(id);
+        && trackMapping.get(id) !== id) addVisual(id);
     }
     if (visualTracks.length === 0) continue;
     const row = occurrence.trackId ?? 'video';
@@ -392,7 +423,10 @@ function groupedTracksFor(
     ...(blocks.get(null) ?? []),
     ...tracks.flatMap((track) => [...(blocks.get(track.id) ?? []), track]),
   ];
-  return grouped.length > 0 ? grouped : [{ id: 'video', kind: 'visual', label: 'Video' }];
+  return {
+    tracks: grouped.length > 0 ? grouped : [{ id: 'video', kind: 'visual', label: 'Video' }],
+    occurrenceTrackIds,
+  };
 }
 
 function isAudioClip(
@@ -407,10 +441,8 @@ function isAudioClip(
   const childTrack = (Array.isArray(timeline.tracks) ? timeline.tracks : [])
     .map(record)
     .find((track) => track?.id === trackId);
-  // A declared child visual belongs to its occurrence block even if an
-  // inherited audio lane uses the same ID. Keep inherited lane precedence
-  // for the other kinds, as required by the shared playback fixture.
-  const track = childTrack?.kind === 'visual' ? childTrack : parentTrack ?? childTrack;
+  // Child declarations control playback in both collision directions.
+  const track = childTrack ?? parentTrack;
   if (track?.kind === 'audio' || track?.kind === 'visual') return track.kind === 'audio';
 
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? text(rawClip.type);
@@ -439,7 +471,7 @@ function projectClip(
   registry: Record<string, ResolvedAssetRegistryEntry>,
   clampToOccurrenceDuration: boolean,
   storedOccurrenceDurationMs: number,
-  audioTrackIds: ReadonlySet<string>,
+  trackMapping: ReadonlyMap<string, string>,
 ): TimelineClip | null {
   assertSupportedChildClip(rawClip, occurrence);
   const rawClipId = text(rawClip.id) ?? null;
@@ -493,7 +525,7 @@ function projectClip(
   const hasAuthoredGain = [rawClip.gain, rawClip.volume, occurrence.gain]
     .some((value) => typeof value === 'number' && Number.isFinite(value));
   const sourceTrack = text(rawClip.track) ?? occurrence.trackId ?? 'video';
-  const track = audioTrackIds.has(sourceTrack) ? sourceTrack : `${occurrence.occurrenceId}~${sourceTrack}`;
+  const track = trackMapping.get(sourceTrack)!;
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
   const asset = text(rawClip.asset_id) ?? text(rawClip.asset);
   const params = record(rawClip.params);
@@ -620,7 +652,7 @@ export function projectCanonicalComposition(
   const clipIdentities = new Map<string, CanonicalProjectedClipIdentity>();
   const occurrenceIdentities = new Map<string, CanonicalClipIdentity>();
   const warnings: CanonicalProjectionWarning[] = [];
-  const outputTracks = groupedTracksFor(composition, outputBaseConfig, outputOccurrences, warnings);
+  const { tracks: outputTracks, occurrenceTrackIds } = groupedTracksFor(composition, outputBaseConfig, outputOccurrences, warnings);
   const { registry, assetAliases } = assetRegistryFor(composition, outputBaseConfig, outputOccurrences);
 
   for (const occurrence of outputOccurrences) {
@@ -651,14 +683,6 @@ export function projectCanonicalComposition(
     );
     const effectiveOccurrence = { ...occurrence, durationMs: effectiveDurationMs };
     const rawClips = Array.isArray(timeline.clips) ? timeline.clips : [];
-    const childTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
-    const childTrackIds = new Set(childTracks.map((track) => text(record(track)?.id)));
-    const audioTrackIds = new Set([
-      ...childTracks.filter((track) => record(track)?.kind === 'audio')
-        .flatMap((track) => text(record(track)?.id) ?? []),
-      ...(outputBaseConfig?.tracks ?? []).filter((track) => track.kind === 'audio' && !childTrackIds.has(track.id))
-        .map((track) => track.id),
-    ]);
     if (rawClips.length === 0) {
       throw new CanonicalCompositionProjectionError(
         'blank_child_output',
@@ -678,7 +702,7 @@ export function projectCanonicalComposition(
           registry,
           options.clampToOccurrenceDuration !== false,
           occurrence.durationMs,
-          audioTrackIds,
+          occurrenceTrackIds.get(occurrence.occurrenceId)!,
         );
         if (projected) {
           if (Array.isArray(timeline.effects) && timeline.effects.length > 0) {

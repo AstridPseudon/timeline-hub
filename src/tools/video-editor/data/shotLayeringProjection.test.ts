@@ -8,11 +8,12 @@ import { createShotCompositionAdapter } from './shotCompositionAdapter.ts';
 import { CanonicalCompositionProjectionError, projectCanonicalComposition } from './shotCompositionProjection.ts';
 import { projectOutputTimelineConfig } from './timelineOutputProjection.ts';
 import { coversFrame, visualSeamSourceTrack } from './visualSeamCoverage.ts';
+import { getClipTimelineDuration } from '@/tools/video-editor/lib/config-utils.ts';
 import type { ResolvedTimelineConfig, TimelineClip } from '@/tools/video-editor/types/index.ts';
 
 // Exact Runtime role-parity fixture bytes, shared with Agent.
 const canonicalPath = 'conformance/fixtures/shot-layering-v1.json';
-const canonicalSha256 = '7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56';
+const canonicalSha256 = '7ed1d614a287eecafc20f5bd9908233e4015c608a5e5c075f4e9440058f71f45';
 
 type LayeringCase = typeof layeringFixture.cases[number];
 
@@ -93,6 +94,33 @@ describe('shared Runtime shot-layering projection cases', () => {
       const clip = config.clips.find((entry) => entry.id === id || projection.clipIdentities.get(entry.id)?.rawClipId === id);
       expect(clip?.track, id).toBe(track);
     }
+    // Every emitted clip needs a render lane, including undeclared legacy lanes.
+    for (const clip of config.clips) {
+      expect(config.tracks.find((track) => track.id === clip.track), clip.id).toBeDefined();
+    }
+    if ('track_kinds' in testCase.expected) {
+      expect(Object.fromEntries(config.tracks.map((track) => [track.id, track.kind])))
+        .toEqual(testCase.expected.track_kinds);
+    }
+    if ('clip_timing' in testCase.expected) {
+      for (const [id, expected] of Object.entries(testCase.expected.clip_timing)) {
+        const clip = config.clips.find((entry) => projection.clipIdentities.get(entry.id)?.rawClipId === id)!;
+        expect({ at: clip.at, from: clip.from, to: clip.to, hold: clip.hold, speed: clip.speed }).toEqual({
+          at: expected.at, from: expected.from,
+          to: 'to' in expected ? expected.to : undefined,
+          hold: 'hold' in expected ? expected.hold : undefined,
+          speed: 'speed' in expected ? expected.speed : undefined,
+        });
+        expect(getClipTimelineDuration(clip)).toBeCloseTo(expected.timeline_duration, 6);
+        expect(clip.app?.canonicalTiming).toMatchObject({ sourceOffsetMs: 350, occurrenceSpeed: 1.5 });
+        const track = config.tracks.find((entry) => entry.id === clip.track)!;
+        const occurrence = testCase.input.occurrences[0];
+        const childTrack = testCase.input.shot_revisions[0].internal_timeline_revision.timeline.tracks
+          .find((entry) => entry.id === (id === 'compatible-audio' ? 'music' : 'shared'))!;
+        expect(track.kind).toBe(childTrack.kind);
+        expect(clip.id).toBe(`${occurrence.occurrence_id}:${id}`);
+      }
+    }
     for (const occurrence of testCase.input.occurrences) {
       const shot = testCase.input.shot_revisions.find((revision) => revision.shot_id === occurrence.shot_id && revision.revision_id === occurrence.revision_id)!;
       const timeline = shot.internal_timeline_revision.timeline;
@@ -101,7 +129,10 @@ describe('shared Runtime shot-layering projection cases', () => {
       expect(indices).toEqual(indices.map((_, index) => indices[0] + index));
       for (const rawClip of timeline.clips) {
         const clip = config.clips.find((entry) => entry.id === `${occurrence.occurrence_id}:${rawClip.id}`)!;
-        expect(clip).toMatchObject({ at: (occurrence.at_ms + rawClip.at_ms) / 1000, hold: rawClip.duration_ms / 1000 });
+        expect(clip.at).toBe((occurrence.at_ms + rawClip.at_ms) / 1000);
+        if (!('clip_timing' in testCase.expected)) {
+          expect(clip.hold).toBe(rawClip.duration_ms / 1000);
+        }
         if (rawClip.track === 'audio') {
           expect(clip.track).toBe('audio');
           expect(clip.volume).toBeUndefined();
