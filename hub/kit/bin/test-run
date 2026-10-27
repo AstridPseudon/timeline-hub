@@ -113,6 +113,9 @@ if [ -z "$RUN" ]; then
     ;;
   esac
   KEY=$(echo "$repo $TREE $suite $files $CMD $EXT${KIT_KEY:+ $KIT_KEY}" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  # Serialize admission through runner registration so concurrent dispatchers
+  # cannot both pass the heavy-slot check before either writes its running PID.
+  exec 9>"$O/tests/.admission.lock"; flock -x 9
   if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
     cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
     basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
@@ -127,7 +130,7 @@ if [ -z "$RUN" ]; then
   [ "$AVAILABLE_BYTES" -le 800000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 800000000 bytes)" | tee "$D/why"; exit 3; }
   { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$suite" != agent-core-full ] && [ -z "$MEASURED_FLOOR" ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)" | tee "$D/why"; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
-  DEFER_RECREATED=1; setsid nohup "$0" --run "$ID" > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+  DEFER_RECREATED=1; setsid nohup "$0" --run "$ID" 9>&- > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
 fi
 # Every heavy body owns a durable trace.  The sampler is the child of this
 # exact body and carries both the queued ID and this body's /proc start tick.
