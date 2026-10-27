@@ -118,7 +118,7 @@ try {
   const composition = await selectComposition({serveUrl, id: 'StandinTimeline', browserExecutable});
   console.log('Remotion browser launched; composition=' + composition.id);
   const captures = [];
-  // Include both transparent windows as well as all five requested stills.
+  // Capture overlap and gap windows without sampling a clip's excluded end frame.
   for (const seconds of [23.9, 24.5, 25, 26, 27.5, 28.7, 28.8]) {
     const frame = Math.round(seconds * 30);
     assert.equal(await page.evaluate(f => window.seekStandin(f), frame), frame);
@@ -135,7 +135,10 @@ try {
     captures.push(item);
     console.log(JSON.stringify(item));
   }
-  const manifest = {statement: "proof on a stand-in, not the owner's film", captures, errors,
+  const manifest = {statement: "proof on a stand-in, not the owner's film",
+    projection: 'App projectCanonicalComposition over shotComposition.fixture.json',
+    canonicalTimingClipIds: config.clips.filter(clip => clip.app?.canonicalTiming).map(clip => clip.id),
+    previewBackground: '#050814', captures, errors,
     composition: JSON.parse(await readFile(join(root, 'node_modules/@banodoco/timeline-composition/package.json'))).version};
   await writeFile(join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   assert.deepEqual(errors, []);
