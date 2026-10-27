@@ -12,6 +12,7 @@ from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_auth import (
     _coherent_materialization,
+    _inverse_stage_restore_clip_order,
     command_output,
     site,
     validate_claims,
@@ -20,6 +21,49 @@ from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
 service = port_tests.service
+
+
+def test_inverse_stage_restores_clip_order_from_exact_source_selection():
+    rows = [
+        {"id": "first", "asset": "a", "extension": {"opaque": [None, {"keep": True}]}},
+        {"id": "last", "asset": "b", "effects": [{"type": "fade"}]},
+    ]
+    boundary = {"parent": {"payload": {"config": {"clips": copy.deepcopy(rows)},
+                                         "clips": copy.deepcopy(rows)}}}
+    command = {"selections": [{"key": "collection.clips", "owner": "parent",
+                                "query_version": 1, "policy": "guard-membership",
+                                "members": ["parent/clip:last", "parent/clip:first"],
+                                "order": ["parent/clip:last", "parent/clip:first"],
+                                "boundaries": ["parent/clip:last", "parent/clip:first"]}]}
+
+    _inverse_stage_restore_clip_order(boundary, command)
+
+    expected = [rows[1], rows[0]]
+    assert boundary["parent"]["payload"]["config"]["clips"] == expected
+    assert boundary["parent"]["payload"]["clips"] == expected
+
+
+@pytest.mark.parametrize("mutation", ["duplicate", "missing", "extra-row", "order-proof"])
+def test_inverse_stage_rejects_clip_order_selection_not_covering_exact_rows(mutation):
+    rows = [{"id": "first", "asset": "a"}, {"id": "last", "asset": "b"}]
+    order = ["parent/clip:last", "parent/clip:first"]
+    boundaries = list(order)
+    if mutation == "duplicate":
+        order[1] = order[0]
+    elif mutation == "missing":
+        order.pop()
+    elif mutation == "extra-row":
+        rows.append({"id": "extra", "asset": "c"})
+    else:
+        boundaries.reverse()
+    boundary = {"parent": {"payload": {"config": {"clips": copy.deepcopy(rows)}}}}
+    command = {"selections": [{"key": "collection.clips", "owner": "parent",
+                                "query_version": 1, "policy": "guard-membership",
+                                "members": ["parent/clip:last", "parent/clip:first"],
+                                "order": order, "boundaries": boundaries}]}
+
+    with pytest.raises(CommitRejected):
+        _inverse_stage_restore_clip_order(boundary, command)
 
 
 def _claim_case(*, op="timeline.inverse", submitted_created=None, include_created=False,

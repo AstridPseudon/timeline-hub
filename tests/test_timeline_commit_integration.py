@@ -270,6 +270,59 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     editing.assert_baseline()
 
 
+@pytest.mark.parametrize("deleted_index", [0, -1])
+def test_real_reordered_clip_delete_undo_restores_exact_order(editing, deleted_index):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from astrid.sdk.timeline.commands import execute
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    target = clips[deleted_index]["id"]
+    change = {"op": "list.move", "ref": "parent", "path": ["clips"],
+              "before": {"state": "present", "value": copy.deepcopy(clips[-1])},
+              "id": clips[-1]["id"], "order_before": [row["id"] for row in clips], "after_id": None}
+    reorder = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    staged = execute(editing.agent.bundle(original), [reorder])
+    deletion = capture_clip_delete(staged.bundle, "parent/clip:" + target)
+    body = editing.body([reorder, deletion])
+    body["steps"] = [
+        {"id": "order", "label": "Order", "intent": "", "tags": [],
+         "command_ordinals": [0], "patch": [change], "reads": []},
+        {"id": "delete", "label": "Delete", "intent": "", "tags": [],
+         "command_ordinals": [1], "patch": [], "reads": []},
+    ]
+
+    forward = editing.commit(body, "ordered-delete-forward-" + str(deleted_index))
+    inverse_body = editing.body([inverse(forward["receipt"]["receipt_id"])])
+    restored = editing.commit(inverse_body, "ordered-delete-undo-" + str(deleted_index))
+
+    assert restored["data"]["canonical_document"] == original
+
+
+def test_real_same_step_multi_delete_undo_restores_each_command_order(editing):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from astrid.sdk.timeline.commands import execute
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    staged = editing.agent.bundle(original)
+    commands = []
+    for target in (clips[0]["id"], clips[-1]["id"]):
+        deletion = capture_clip_delete(staged, "parent/clip:" + target)
+        commands.append(deletion)
+        staged = execute(staged, [deletion]).bundle
+    body = editing.body(commands)
+    body["steps"] = [{"id": "delete-both", "label": "Delete both", "intent": "", "tags": [],
+                       "command_ordinals": [0, 1], "patch": [], "reads": []}]
+
+    forward = editing.commit(body, "same-step-multi-delete-forward")
+    inverse_body = editing.body([inverse(forward["receipt"]["receipt_id"])])
+    restored = editing.commit(inverse_body, "same-step-multi-delete-undo")
+
+    assert restored["data"]["canonical_document"] == original
+
+
 def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_path, monkeypatch):
     world = _start_door(film, tmp_path)
     try:
