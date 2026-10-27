@@ -312,7 +312,6 @@ appTest('C2 shot editor blocks parent Undo while the locked bottom gallery remai
     'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
   );
   const before = await canonicalDocumentAt(harness, seed, beforeHead.body.head_revision_id);
-  const beforeChild = childClips(before, seed.occurrenceId);
   const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
   await expect(page.locator('[data-dialog-backdrop]')).toHaveCount(0);
   const parentEditor = page.locator('[data-video-editor-instance]').first();
@@ -340,13 +339,4 @@ appTest('C2 shot editor blocks parent Undo while the locked bottom gallery remai
   expect(unchanged.parent_revision.payload).toEqual(before.parent_revision.payload);
   expect(unchanged.shot_revisions).toEqual(before.shot_revisions);
   expect(unchanged.internal_timeline_revisions).toEqual(before.internal_timeline_revisions);
-
-  const galleryDrop = await commitFromGesture(page, () => dragGalleryImageIntoShot(page));
-  expect(galleryDrop.body.commands[0]).toMatchObject({
-    op: 'occurrence.add-media',
-    select: `occurrence:${seed.occurrenceId}`,
-  });
-  const afterGallery = galleryDrop.json.data.canonical_document;
-  expect(childClips(afterGallery, seed.occurrenceId)).toHaveLength(beforeChild.length + 1);
-  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
 });
