@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T00:38:52Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 11m -->
-# runtime board, 2026-10-27T00:27:31.246693+00:00
+<!-- main | 2026-10-27T00:43:16Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T00:41:27.491756+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,7 +104,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main owns shared dependency repair, sandbox input receiving and B milestone acceptance. No Runtime task blocked. C2 sequencing and C3 observed timing sample remain with Main and C. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 6324248576 bytes. Main owns follow-ups; no new Runtime task. All Runtime trees remain KEEP or dirty.
+live 0 / cap 3; ready-undispatched 0. Free 6488907776 bytes. Main owns follow-ups; no new Runtime task. All Runtime trees remain KEEP or dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -115,4 +115,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Completed at 2026-10-27T00:27:31.246693+00:00. Ten-minute interval complete. INBOX, HEADER, five owner boards and deployed A B C boards rechecked unchanged; no new Runtime ask. Normal bin/workers rt- exit 0: 2717 rows, no running row. B awaits Main milestone merge; A needs sandbox timeline, admitted snapshot and shared Remotion dependency; C2 sequencing and C3 observed timing stay with Main and C. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Delivered ZIP and sidecar hash exact. No product, test, kit, pin, Git, cleanup, hub or daemon mutation. [Pass evidence](rounds/20261027T002658Z-pass.json).
+Current pass: Initial check completed at 2026-10-27T00:41:27.491756+00:00. INBOX, HEADER, five owner boards and deployed A B C boards are unchanged; no new Runtime ask. Normal bin/workers rt- exit 0: 2717 rows, no running row. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Archive and sidecar hashes match. Main owns follow-up acceptance, sandbox inputs and dependency repair; C2 sequencing and C3 observed timing stay with Main and C. Next pass follows the ten-minute interval. [Pass evidence](rounds/20261027T004127Z-pass.json).
