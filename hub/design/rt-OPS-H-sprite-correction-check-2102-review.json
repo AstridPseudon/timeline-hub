@@ -1,0 +1,81 @@
+{
+  "packet": "OPS H",
+  "verdict": "PASS",
+  "scope": "documentary authenticity, coordinates, and scope only",
+  "l15_product_acceptance": "FAIL_UNCHANGED",
+  "exact_causal_case": "UNKNOWN",
+  "inputs": {
+    "correction_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-H-sprite-return-2059/evidence/correction.json",
+    "author_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-H-sprite-wholepath-2048",
+    "reviewer_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-H-sprite-wholepath-2048/evidence/review.json",
+    "reviewer_json_sha256": "bbb6c75a9a1a338ab68b27c9ebc9d026afb53146b0d9aa8690a6535d972c741b",
+    "current_author_custody_files": {
+      "report.md": "53d3a69d345ab3200561eb33296daaafff0774b0baeb69b90f91ab8b5bcb1e4e",
+      "evidence/findings.md": "7ef0b086bc6a2e624d3182dc7a030ae68d1174977fad4274ce6f1570d9db7d83",
+      "evidence/source-map.json": "e5b5f003bb820fe6d4bcdb9fceba6cfc0fb18de63e589b1bfad813fbf4ee07e5",
+      "evidence/validation.md": "b81453e068567ef25627a293c8235b68b010477634117875727ea4f0bca70d0e",
+      "evidence/handoff.md": "54d8775bab0a4268f9858deb5d52340d955ab2eceaa1e8fe7f39e1a9afe852ca"
+    },
+    "raw_worker_logs": {
+      "rt-OPS-H-sprite-wholepath-2048/log.txt": "da9775c04d0e1b56db4b5111e6d16cfce7c8c3ac4a759faee394bb3ebaa8ff70",
+      "rt-OPS-H-sprite-review-2053/log.txt": "5bb1940de8dc6f2d8f8e509edbcf7eafc9da78ccf9a8390e45d0ceccc25fb4d2"
+    }
+  },
+  "l15_identity": {
+    "commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+    "parent": "a92c91fa8e7338098cc2f75d1adedcacc8d34447",
+    "refs": [
+      "refs/heads/tl/H-crosser-L15",
+      "refs/heads/tl/H-crosser-L16"
+    ],
+    "l16_worktree": {
+      "path": "/home/user/work/wt/H-crosser-L16",
+      "head": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+      "status": "dirty separate WIP",
+      "changed": [
+        "astrid/sdk/timeline_restructure.py",
+        "tests/packs/rendering/test_sprite_scene_capability.py",
+        "tests/sdk/test_timeline_restructure_render_frames.py"
+      ],
+      "l15_credit": "none"
+    }
+  },
+  "source_hashes": {
+    "astrid/sdk/timeline_restructure.py": "2cb4e8a9bd3bcc61647a2b392ad34a3954b226933322a3374a8389104c820477",
+    "tests/packs/rendering/test_sprite_scene_capability.py": "97fae0c73016e04ad34bc1c87a168b84baa32743298737bfb576169c6c8fd9bb",
+    "astrid/packs/rendering/actions/render/managed_timeline.py": "4536b7b50928cf0b16015550015e1c481744348e98466f75cc4294d2d9f87260",
+    "tests/packs/rendering/test_restructure_crosser_equivalence.py": "3012a1e7ab81d2bbde9f6498e81aaeb93c1e05f39b86b1ed49d1cda744304ced",
+    "remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738"
+  },
+  "coordinates": {
+    "restructure": "astrid/sdk/timeline_restructure.py:59-166,816-916",
+    "sprite_test": "tests/packs/rendering/test_sprite_scene_capability.py:14,32,147-195,198-227",
+    "managed_caller": "astrid/packs/rendering/actions/render/managed_timeline.py:962-981,1133-1158",
+    "sibling": "tests/packs/rendering/test_restructure_crosser_equivalence.py:17,30-50,186-190"
+  },
+  "retained_runs": {
+    "H-crosser-L15-targeted-1027203902-22278": {
+      "sha256": "4a63b5e8ec0fdb6012c727c931377024285ba3d574b8f2f2c0608099273e1c82",
+      "result": "86 passed, 1 failed",
+      "failure": "test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam[0.0.13]"
+    },
+    "H-crosser-L15-targeted-1027204128-16353": {
+      "sha256": "150edf7c203f6565d0687306a5028021a30e1bf3c9f7149414120178fc68c0f1",
+      "result": "86 passed, 1 failed",
+      "failure": "test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam; intervals[0]"
+    },
+    "H-crosser-L15-targeted-1027204414-23676": {
+      "sha256": "b86beddcee1fea43ab1ea519e8c8b0444503179e1e1aea48630bef2ddb752c73",
+      "result": "87 passed",
+      "credit": "no broad production 0.0.13 matrix credit"
+    }
+  },
+  "scope_findings": {
+    "broad_marker": "missing from the broad cross-seam test; present only on the separate half-frame fallback test",
+    "caller_gap": "project_shot_composition in the modified sprite helper is separate from managed production project_runtime_parent_composition",
+    "fallback": "source-consistent intact <row>-over path; no rendered behavior credit",
+    "causality": "UNKNOWN because retained logs omit case tuple, plan reason, fallback identity/track, and rendered comparison",
+    "custody": "current author files are post-review overwritten files; historical author preimage is unavailable and was not reconstructed",
+    "contract": "test-service envelopes are not v2 commit request/reply bodies"
+  }
+}

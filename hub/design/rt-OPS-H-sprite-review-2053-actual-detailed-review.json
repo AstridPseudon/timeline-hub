@@ -1,0 +1,16 @@
+{
+  "worker": "rt-OPS-H-sprite-review-2053",
+  "verdict": "FAIL",
+  "scope": "exact committed L15 source and retained targeted evidence",
+  "findings": [
+    {"id": "source-custody", "status": "PASS", "summary": "Git/blob and retained-log hashes reproduce; author tree is clean."},
+    {"id": "production-source-path", "status": "PASS", "summary": "Managed rendering calls project_runtime_parent_composition and serializes its projection."},
+    {"id": "ssr-production-proof", "status": "FAIL", "summary": "Modified sprite SSR test builds props with project_shot_composition, not the managed runtime projection caller."},
+    {"id": "empty-interval-causality", "status": "UNKNOWN", "summary": "Both failures observe intervals == []; logs omit case tuple, plan reason, fallback identity, and rendered fallback comparison."},
+    {"id": "fallback-design", "status": "PASS", "summary": "L15 source implements the authorized intact -over fallback; no behavior credit."},
+    {"id": "production-0.0.13-matrix", "status": "FAIL", "summary": "L15 removes 0.0.13 from the broad SSR matrix; 87 passes do not cover that broad matrix on the production artifact."},
+    {"id": "l16-separation", "status": "PASS", "summary": "Dirty current L16 WIP is recorded separately and receives no L15 credit."},
+    {"id": "static-validation", "status": "PASS", "summary": "ast.parse and diff checks pass; no behavior suites were run."}
+  ],
+  "operational_note": "Test-service request files are suite envelopes, not commit-v2 request/reply payloads."
+}

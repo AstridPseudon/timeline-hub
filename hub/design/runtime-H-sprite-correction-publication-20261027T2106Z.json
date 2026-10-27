@@ -1,0 +1,88 @@
+{
+  "published_at": "2026-10-27T21:06:13.012403+00:00",
+  "documentary_verdict": "PASS",
+  "independent_check": "rt-OPS-H-sprite-correction-check-2102",
+  "source_acceptance": "FAIL for exact L15 only; no L16 retargeting or behavior credit",
+  "custody": "Reviewer overwrote original author output; those preimages remain unavailable. Current files and both raw logs retained; correction is a new immutable derivative, not a restoration.",
+  "product_changes": false,
+  "new_test_requests": false,
+  "files": [
+    {
+      "source": "workers/rt-OPS-H-sprite-return-2059/report.md",
+      "published": "design/rt-OPS-H-sprite-return-2059-report.md",
+      "sha256": "4bdccd1a51d6da0da917f8f8a50e65072a56bb9e0f9af4dac95d7a4945c33e1c",
+      "bytes": 680,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-return-2059/evidence/correction.json",
+      "published": "design/rt-OPS-H-sprite-return-2059-correction.json",
+      "sha256": "3569fcb4cdd54d4d6403376f517b65f3e4fd82f7f2eb6c47912c86eb16e38303",
+      "bytes": 6480,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-return-2059/evidence/findings.md",
+      "published": "design/rt-OPS-H-sprite-return-2059-findings.md",
+      "sha256": "f00b5c9db2e6a084a5b1a5241ec838b19bfd9aa5ffb439c7bb22831e15471908",
+      "bytes": 3413,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-return-2059/evidence/validation.md",
+      "published": "design/rt-OPS-H-sprite-return-2059-validation.md",
+      "sha256": "4332c18485fc65261bc9b0c3513dc07d337b24dd7a5b05c906e4177a7f4522da",
+      "bytes": 3371,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-return-2059/evidence/handoff.md",
+      "published": "design/rt-OPS-H-sprite-return-2059-handoff.md",
+      "sha256": "e81b1370bb68d1d6fc000bcd07fd9a27dbed460b5ed1c095502ccf5e483aa269",
+      "bytes": 1163,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-correction-check-2102/report.md",
+      "published": "design/rt-OPS-H-sprite-correction-check-2102-report.md",
+      "sha256": "531bedbdad25e5b5119842a0e4eb6e9a648d3710a273716671937a787f9b413e",
+      "bytes": 784,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-correction-check-2102/evidence/review.json",
+      "published": "design/rt-OPS-H-sprite-correction-check-2102-review.json",
+      "sha256": "8404b370210bcf3ee5ecacf7d9744743cf01696c70a4afafbff2ef5c80a14f81",
+      "bytes": 4808,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-correction-check-2102/evidence/findings.md",
+      "published": "design/rt-OPS-H-sprite-correction-check-2102-findings.md",
+      "sha256": "1923fed900b2b041bccc946ef9a7b7251f068571b39e52241ada6b4d0c7ef173",
+      "bytes": 2269,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-correction-check-2102/evidence/validation.md",
+      "published": "design/rt-OPS-H-sprite-correction-check-2102-validation.md",
+      "sha256": "534030d713e6d2897283b4f3768718d7265bbc3ac10e886a6f885ea6d990ed2f",
+      "bytes": 2304,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-review-2053/report.md",
+      "published": "design/rt-OPS-H-sprite-review-2053-report.md",
+      "sha256": "7bf9033200435aad143c3698cc9129597e1ef92a34cd15b9e920a5a1be38b331",
+      "bytes": 989,
+      "source_mode": "0o644"
+    },
+    {
+      "source": "workers/rt-OPS-H-sprite-wholepath-2048/evidence/review.json",
+      "published": "design/rt-OPS-H-sprite-review-2053-actual-detailed-review.json",
+      "sha256": "bbb6c75a9a1a338ab68b27c9ebc9d026afb53146b0d9aa8690a6535d972c741b",
+      "bytes": 1531,
+      "source_mode": "0o644"
+    }
+  ]
+}

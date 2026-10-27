@@ -1,0 +1,126 @@
+{
+  "packet": "OPS H",
+  "packet_version": 1,
+  "worker": "rt-OPS-H-sprite-return-2059",
+  "scope": "bounded documentary return after the rt-OPS-H-sprite-review-2053 FAIL",
+  "verdict": {
+    "packet_authenticity_and_scope": "PASS",
+    "evidence_validity": "PASS",
+    "l15_product_acceptance": "FAIL",
+    "exact_causal_case": "UNKNOWN"
+  },
+  "base": {
+    "branch": "tl/rt-OPS-H-sprite-wholepath-2048",
+    "source_commit": "a92c91fa8e7338098cc2f75d1adedcacc8d34447",
+    "l15_commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+    "l15_parent": "a92c91fa8e7338098cc2f75d1adedcacc8d34447"
+  },
+  "controlling_coordinates": {
+    "plan": "PLAN.md §3 P2/F",
+    "pipeline": "followups/PIPELINE.md",
+    "h_board": "followups/leads/H-onehead/STATUS.md and managers/runtime/STATUS.md",
+    "shot_layering": "design/shot-layering-PLAN.md §§4.2, 7",
+    "commit_contract": "design/commit-v2.md §§1-4"
+  },
+  "source_coordinates": [
+    {
+      "path": "astrid/sdk/timeline_restructure.py",
+      "commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+      "sha256": "2cb4e8a9bd3bcc61647a2b392ad34a3954b226933322a3374a8389104c820477",
+      "coordinates": "59-166, 816-916",
+      "finding": "L15 projects cut pieces through renderer normalization; when unsafe, it retains the intact clip on a generated <row>-over track and records the over marker. This is source-consistent with shot-layering §§4.2/7, not rendered behavior proof."
+    },
+    {
+      "path": "tests/packs/rendering/test_sprite_scene_capability.py",
+      "commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+      "sha256": "97fae0c73016e04ad34bc1c87a168b84baa32743298737bfb576169c6c8fd9bb",
+      "coordinates": "14, 32, 147-195, 198-227",
+      "finding": "The modified helper uses project_shot_composition at 14 and 32. The broad cross-seam test begins at 147 without the production 0.0.13 marker; the marker is instead on the separate half-frame fallback test at 198. The broad assertion indexes intervals[0] at 183."
+    },
+    {
+      "path": "astrid/packs/rendering/actions/render/managed_timeline.py",
+      "commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+      "sha256": "4536b7b50928cf0b16015550015e1c481744348e98466f75cc4294d2d9f87260",
+      "coordinates": "962-981, 1133-1158",
+      "finding": "The managed production render path calls project_runtime_parent_composition and serializes the resulting projected config. This source path is separate from the modified sprite SSR helper."
+    },
+    {
+      "path": "tests/packs/rendering/test_restructure_crosser_equivalence.py",
+      "commit": "1c3a2ce725c1afbaafa01e91fd2f8c5479a61ac4",
+      "sha256": "3012a1e7ab81d2bbde9f6498e81aaeb93c1e05f39b86b1ed49d1cda744304ced",
+      "coordinates": "17, 30-50, 186-190",
+      "finding": "A separate sibling uses project_runtime_parent_composition and checks unsafe crossers on the over row; its evidence cannot be transferred to the modified broad sprite test."
+    }
+  ],
+  "retained_runs": [
+    {
+      "id": "H-crosser-L15-targeted-1027203902-22278",
+      "log_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/H-crosser-L15-targeted-1027203902-22278/log.txt",
+      "log_sha256": "4a63b5e8ec0fdb6012c727c931377024285ba3d574b8f2f2c0608099273e1c82",
+      "result": "86 passed, 1 failed",
+      "coordinate": "test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam[0.0.13]; intervals[0]"
+    },
+    {
+      "id": "H-crosser-L15-targeted-1027204128-16353",
+      "log_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/H-crosser-L15-targeted-1027204128-16353/log.txt",
+      "log_sha256": "150edf7c203f6565d0687306a5028021a30e1bf3c9f7149414120178fc68c0f1",
+      "result": "86 passed, 1 failed",
+      "coordinate": "test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam; intervals[0]"
+    },
+    {
+      "id": "H-crosser-L15-targeted-1027204414-23676",
+      "log_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/H-crosser-L15-targeted-1027204414-23676/log.txt",
+      "log_sha256": "b86beddcee1fea43ab1ea519e8c8b0444503179e1e1aea48630bef2ddb752c73",
+      "result": "87 passed",
+      "coordinate": "retained current L15 run; broad production 0.0.13 matrix is not established"
+    }
+  ],
+  "review": {
+    "worker": "rt-OPS-H-sprite-review-2053",
+    "json_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-H-sprite-wholepath-2048/evidence/review.json",
+    "json_sha256": "bbb6c75a9a1a338ab68b27c9ebc9d026afb53146b0d9aa8690a6535d972c741b",
+    "verdict": "FAIL",
+    "authenticity": "actual author-root evidence/review.json; read-only input",
+    "findings": {
+      "source_custody": "PASS",
+      "production_source_path": "PASS",
+      "ssr_production_proof": "FAIL",
+      "empty_interval_causality": "UNKNOWN",
+      "fallback_design": "PASS without behavior credit",
+      "production_0.0.13_matrix": "FAIL",
+      "l16_separation": "PASS",
+      "static_validation": "PASS"
+    }
+  },
+  "production_marker": {
+    "fixture_coordinate": "tests/packs/rendering/test_scene_host.py:51-57",
+    "default_version": "0.0.12",
+    "required_broad_matrix_version": "0.0.13",
+    "artifact": "remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz",
+    "artifact_sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "l15_issue": "broad SSR marker removed; half-frame fallback marker added"
+  },
+  "custody": {
+    "author_output_paths_overwritten_by_reviewer": [
+      "report.md",
+      "evidence/findings.md",
+      "evidence/source-map.json",
+      "evidence/validation.md",
+      "evidence/handoff.md"
+    ],
+    "reviewer_added_at_author_root": "evidence/review.json",
+    "preserve_current_author_files": true,
+    "preserve_raw_worker_logs": true,
+    "historical_author_preimage": "unavailable except where exact retained raw bytes support it; no preimage reconstructed",
+    "l16_path": "/home/user/work/wt/H-crosser-L16",
+    "l16_status": "dirty separate H-owned WIP; no L15 credit and no retargeting"
+  },
+  "ownership": {
+    "repair_and_integration": "H",
+    "new_desired_behavior": false,
+    "product_change": false,
+    "commit_expected": false
+  },
+  "operational_boundary": "Test-service request files are operational suite envelopes, not commit-v2 request/reply bodies. No v2 behavior is inferred from them."
+}
+
