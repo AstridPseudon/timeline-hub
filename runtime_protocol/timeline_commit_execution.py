@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import secrets
 import sys
 import threading
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from functools import wraps
 
 from .errors import ProtocolError, RuntimeErrorBase
 from .timeline_commit_store import detached, reject, request_identity, scope
@@ -28,6 +31,20 @@ _SAFE_REASON_RE = re.compile(r"^(?:[a-z_]+|catchall:[A-Za-z0-9_.<>:-]{1,256})$")
 _IDEMPOTENCY_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$")
 _PUBLIC_REQUEST_ID = ContextVar("timeline_public_request_id", default=None)
 _IDEMPOTENCY_KEY = ContextVar("timeline_idempotency_key", default=None)
+_COMMIT_TIMING = ContextVar("timeline_commit_timing", default=None)
+_LOGGER = logging.getLogger(__name__)
+_TIMING_FIELDS = (
+    "handler",
+    "service_admission",
+    "initial_replay_lookup",
+    "provider_commit",
+    "port_store_accept",
+    "close",
+    "durable_reconciliation",
+    "wire_response",
+    "total",
+)
+_MAX_TIMING_MS = 24 * 60 * 60 * 1000
 
 
 def _new_request_id():
@@ -85,6 +102,125 @@ def current_public_request_id():
 
 def current_idempotency_key():
     return _IDEMPOTENCY_KEY.get()
+
+
+@dataclass
+class CommitTiming:
+    """Request-local, source-only timing data for one timeline commit.
+
+    This is deliberately kept out of the commit context and response envelope:
+    timings must never affect request identity, replay, or durable receipts.
+    The fixed field set and millisecond cap keep the debug record bounded.
+    """
+
+    request_id: str | None = None
+    stages: dict = field(default_factory=dict)
+    _started: dict = field(default_factory=dict)
+    outcome: str = "unknown"
+    emitted: bool = False
+
+    def set_request_id(self, request_id):
+        if request_id is not None:
+            self.request_id = _validated_request_id(request_id)
+
+    def begin(self, name):
+        if name in _TIMING_FIELDS:
+            self._started[name] = time.monotonic_ns()
+
+    def end(self, name):
+        started = self._started.pop(name, None)
+        if started is None:
+            return
+        elapsed = max(0, time.monotonic_ns() - started)
+        self.stages[name] = min(_MAX_TIMING_MS, int(round(elapsed / 1_000_000)))
+
+    @contextmanager
+    def stage(self, name):
+        self.begin(name)
+        try:
+            yield
+        finally:
+            self.end(name)
+
+    def mark_outcome(self, result):
+        if self.outcome == "replay":
+            return
+        if isinstance(result, dict):
+            if result.get("receipt") is not None:
+                self.outcome = result.get("data", {}).get("status", "accepted")
+            elif result.get("details", {}).get("status") in {"conflict", "refused", "invalid"}:
+                self.outcome = result["details"]["status"]
+
+    def mark_replay(self, result):
+        self.mark_outcome(result)
+        self.outcome = "replay"
+
+    def finish(self):
+        for name in tuple(self._started):
+            self.end(name)
+        values = {name: int(self.stages.get(name, 0)) for name in _TIMING_FIELDS}
+        values["total"] = min(_MAX_TIMING_MS, max(values["total"], values["handler"]))
+        return values
+
+    def emit(self):
+        if self.emitted:
+            return
+        self.emitted = True
+        payload = {
+            "event": "timeline_commit_timing",
+            "request_id": _validated_request_id(self.request_id),
+            "outcome": self.outcome,
+            "timings_ms": self.finish(),
+        }
+        public_hash = _public_request_id_hash(current_public_request_id())
+        if public_hash is not None:
+            payload["public_request_id_hash"] = public_hash
+        key_hash = _idempotency_key_hash(current_idempotency_key())
+        if key_hash is not None:
+            payload["idempotency_key_sha256"] = key_hash
+        # Successful timing records are DEBUG-only: operators can opt in for a
+        # bounded sample without turning every commit into an info log.
+        line = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+        if len((line + "\n").encode("utf-8")) <= _MAX_DIAGNOSTIC_BYTES:
+            _LOGGER.debug("runtime.timeline_commit.timing %s", line)
+
+
+def current_commit_timing():
+    return _COMMIT_TIMING.get()
+
+
+def start_commit_timing(request_id=None):
+    timing = CommitTiming(request_id=request_id)
+    timing.begin("total")
+    return timing, _COMMIT_TIMING.set(timing)
+
+
+def finish_commit_timing(timing, token):
+    try:
+        timing.emit()
+    finally:
+        _COMMIT_TIMING.reset(token)
+
+
+def timed_timeline_commit(function):
+    """Keep direct service callers observable without changing the contract."""
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        timing = current_commit_timing()
+        token = None
+        if timing is None:
+            timing, token = start_commit_timing()
+        try:
+            result = function(*args, **kwargs)
+            timing.mark_outcome(result)
+            return result
+        except BaseException:
+            timing.outcome = "failure"
+            raise
+        finally:
+            if token is not None:
+                finish_commit_timing(timing, token)
+    return wrapped
 
 
 def _safe_metadata(value, pattern):
@@ -364,11 +500,24 @@ class CommitExecutionCoordinator:
 
     def execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
                 public_request_id=None, idempotency_key=None):
+        timing = current_commit_timing()
+        token = None
+        if timing is None:
+            timing, token = start_commit_timing(diagnostic_request_id)
         with self.commit_store.verification_scope():
-            return self._execute(context, provider, port_factory, authorize=authorize,
-                                 diagnostic_request_id=diagnostic_request_id,
-                                 public_request_id=public_request_id,
-                                 idempotency_key=idempotency_key)
+            try:
+                result = self._execute(context, provider, port_factory, authorize=authorize,
+                                       diagnostic_request_id=diagnostic_request_id,
+                                       public_request_id=public_request_id,
+                                       idempotency_key=idempotency_key)
+                timing.mark_outcome(result)
+                return result
+            except BaseException:
+                timing.outcome = "failure"
+                raise
+            finally:
+                if token is not None:
+                    finish_commit_timing(timing, token)
 
     def _execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None,
                  public_request_id=None, idempotency_key=None):
@@ -378,41 +527,67 @@ class CommitExecutionCoordinator:
         # There is intentionally no optimistic dependency/head read here. Even
         # callers with an earlier cache miss repeat this lookup after waiting.
         with self._execution(context) as acquired:
-            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
-                                  public_request_id=public_request_id,
-                                  idempotency_key=idempotency_key)
+            timing = current_commit_timing()
+            if timing is not None:
+                timing.begin("initial_replay_lookup")
+            try:
+                replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
+                                      public_request_id=public_request_id,
+                                      idempotency_key=idempotency_key)
+            finally:
+                if timing is not None:
+                    timing.end("initial_replay_lookup")
             if replay is not None:
+                if timing is not None:
+                    timing.mark_replay(replay)
                 return replay
             if not acquired:
                 reject("idempotency_mismatch")
             outcome = error = port = None
             try:
-                port = port_factory(detached(context))
-                provider_context = detached(port._provider_context()) if hasattr(port, "_provider_context") else detached(context)
-                if any(provider_context[k] != context[k] for k in ("invocation", "idempotency_key", "request_hash", "realm_id", "publisher")):
-                    raise ProtocolError("request port changed invocation identity")
+                if timing is not None:
+                    timing.begin("provider_commit")
                 try:
-                    outcome = detached(provider.commit(provider_context, port))
-                except BaseException as exc:
-                    if _is_unattributed_history_refusal(exc):
-                        exc.__dict__["_diagnostic_reason"] = "provider_history_guard"
-                    raise
-                if hasattr(port, "verify_outcome"):
-                    port.verify_outcome(outcome)
+                    port = port_factory(detached(context))
+                    provider_context = detached(port._provider_context()) if hasattr(port, "_provider_context") else detached(context)
+                    if any(provider_context[k] != context[k] for k in ("invocation", "idempotency_key", "request_hash", "realm_id", "publisher")):
+                        raise ProtocolError("request port changed invocation identity")
+                    try:
+                        outcome = detached(provider.commit(provider_context, port))
+                    except BaseException as exc:
+                        if _is_unattributed_history_refusal(exc):
+                            exc.__dict__["_diagnostic_reason"] = "provider_history_guard"
+                        raise
+                    if hasattr(port, "verify_outcome"):
+                        port.verify_outcome(outcome)
+                finally:
+                    if timing is not None:
+                        timing.end("provider_commit")
             except BaseException as exc:
                 error = exc
             finally:
                 if port is not None:
+                    if timing is not None:
+                        timing.begin("close")
                     try:
                         port.close()
                     except BaseException as exc:
                         if error is None:
                             error = exc
+                    finally:
+                        if timing is not None:
+                            timing.end("close")
             # No provider completion, including a close/hook exception, can
             # supersede a committed winner. A failed read is an unknown outcome.
-            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
-                                  public_request_id=public_request_id,
-                                  idempotency_key=idempotency_key)
+            if timing is not None:
+                timing.begin("durable_reconciliation")
+            try:
+                replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id,
+                                      public_request_id=public_request_id,
+                                      idempotency_key=idempotency_key)
+            finally:
+                if timing is not None:
+                    timing.end("durable_reconciliation")
             if replay is not None:
                 return replay
             if error is not None:
