@@ -259,6 +259,20 @@ class Timeline(Checkout):
     def publish(self, *args, **kwargs):
         raise TimelineEditError("use commit(label) to publish a Runtime timeline")
 
+    def duplicate(self, *, as_):
+        """Create a named copy of this timeline, returning setup and copy results separately."""
+        from astrid.sdk.timeline_duplicate import _duplicate_key, duplicate_timeline
+
+        if not isinstance(as_, str) or not as_.strip():
+            raise TimelineEditError("duplicate requires a nonempty destination name")
+        return duplicate_timeline(
+            self.session.project_id,
+            self.session.timeline_id,
+            slug=as_,
+            client=self.session.client,
+            idempotency_key=_duplicate_key(self.session.project_id, self.session.timeline_id, as_),
+        )
+
 
 def open(project=None, timeline=None, *, client=None, outbox_path=None):
     """Open a Runtime head, retaining any durable request awaiting reconciliation.

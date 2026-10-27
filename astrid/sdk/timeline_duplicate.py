@@ -12,6 +12,7 @@ Pure parts (``id_map``, ``copy_content``) take and return plain dicts; only
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import uuid
 from collections.abc import Iterable, Mapping
@@ -34,6 +35,12 @@ class _CopyOutcomeUnknown(TimelineEditError):
     """The durable copy flight must be reconciled before destination cleanup."""
 
 
+def _duplicate_key(project: str, source: str, slug: str) -> str:
+    """Return the stable operation key used by the friendly duplicate facade."""
+    identity = json.dumps([project, source, slug], ensure_ascii=False, separators=(",", ":"))
+    return "timeline-duplicate-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()
+
+
 def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, label: str,
                    client: Any, idempotency_key: str) -> dict[str, Any]:
     """Submit the authenticated copy through the normal durable command session."""
@@ -42,24 +49,31 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
     session = open_timeline(project, timeline, client=client)
     with session.session.outbox.locked():
         state = session.session._state()
-    try:
-        if state["pending"] or state["flight"] is not None:
-            result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
-        else:
-            result = session.session.submit(
-                [copy.deepcopy(desired["_duplicate_command"])], label=label, merge="atomic", reads=[],
-                steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
-                        "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
-                expected_state=state, idempotency_key=idempotency_key)
-            session._accepted(result)
-    except Exception as exc:
-        with session.session.outbox.locked():
-            pending = session.session._state()
-        if pending["flight"] is not None and not pending.get("conflict"):
-            raise _CopyOutcomeUnknown(
-                f"copy outcome is unknown for timeline {timeline!r}; destination and pending request "
-                "retained; reopen with timeline.open(...).session.flush() to retry the exact request") from exc
-        raise
+    replay = session.session.retry(
+        idempotency_key,
+        matches=lambda body: body.get("commands") == [desired["_duplicate_command"]],
+    )
+    if replay is not None:
+        result = replay
+    else:
+        try:
+            if state["pending"] or state["flight"] is not None:
+                result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+            else:
+                result = session.session.submit(
+                    [copy.deepcopy(desired["_duplicate_command"])], label=label, merge="atomic", reads=[],
+                    steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
+                            "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
+                    expected_state=state, idempotency_key=idempotency_key)
+                session._accepted(result)
+        except Exception as exc:
+            with session.session.outbox.locked():
+                pending = session.session._state()
+            if pending["flight"] is not None and not pending.get("conflict"):
+                raise _CopyOutcomeUnknown(
+                    f"copy outcome is unknown for timeline {timeline!r}; destination and pending request "
+                    "retained; reopen with timeline.open(...).session.flush() to retry the exact request") from exc
+            raise
     return {"old_head": result["data"].get("previous_revision_id"),
             "new_head": result["data"].get("accepted_revision_id"),
             "receipt": result.get("receipt")}
@@ -261,22 +275,25 @@ def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, An
 
 
 def duplicate_timeline(project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None = None, name: str | None = None,
-                       revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
+                       revision_id: str | None = None, client: Any = None,
+                       idempotency_key: str | None = None) -> dict[str, Any]:
     """Create a timeline with a copy of ``source``'s head (new shot ids) and publish it.
 
     Returns ``{"timeline_id", "slug", "source", "shots", "old_head", "new_head", "notes"}``.
     If the copy fails after the timeline exists, the error names that timeline so it can be archived.
     """
     if client is not None:
-        return _duplicate(client, project, source, slug=slug, name=name, revision_id=revision_id)
+        return _duplicate(client, project, source, slug=slug, name=name, revision_id=revision_id,
+                          idempotency_key=idempotency_key)
     from astrid.sdk import AstridClient
 
     with AstridClient.open_from_launcher(start_pack_host=False) as opened:
-        return _duplicate(opened, project, source, slug=slug, name=name, revision_id=revision_id)
+        return _duplicate(opened, project, source, slug=slug, name=name, revision_id=revision_id,
+                          idempotency_key=idempotency_key)
 
 
 def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path, *, slug: str | None, name: str | None,
-               revision_id: str | None) -> dict[str, Any]:
+               revision_id: str | None, idempotency_key: str | None = None) -> dict[str, Any]:
     is_file_source = isinstance(source, (Mapping, Path))
     if isinstance(source, str):
         try:
@@ -313,12 +330,15 @@ def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
+    operation_key = idempotency_key or ("dup-" + uuid.uuid4().hex)
+    create_key = f"{operation_key}-destination"
+    copy_key = f"{operation_key}-copy"
     created = client.timelines.create_empty(
         project=project,
         timeline_id=slug or None,
         **({"name": name} if name is not None else {}),
         config=copy.deepcopy(dict((src.bundle.get("parent") or {}).get("config") or {})),
-        idempotency_key=f"dup-{uuid.uuid4().hex}",
+        idempotency_key=create_key,
     )
     if not created.ok:
         error = getattr(created.error, "message", created.error)
@@ -356,15 +376,20 @@ def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path
             id_map(list(dict.fromkeys(str(row["shot_id"]) for row in content["placements"])), slug or new_id),
             id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
         receipt = _commit_bundle(project, new_id, bundle, label=f"duplicate of {source}",
-                                 client=client, idempotency_key=f"dup-{uuid.uuid4().hex}")
+                                 client=client, idempotency_key=copy_key)
     except _CopyOutcomeUnknown:
         raise
     except Exception as exc:
+        if idempotency_key is not None:
+            raise TimelineEditError(f"{exc} (destination setup is retained for retry: {new_id!r})") from exc
         archived = client.timelines.archive(project, new_id)  # all or nothing: the empty timeline goes too
         if getattr(archived, "ok", False):
             raise TimelineEditError(f"{exc} (nothing kept: the new timeline {new_id!r} was archived again)") from exc
         raise TimelineEditError(f"{exc} (the empty timeline {new_id!r} was created and could not be archived: "
                                 f"`timelines archive {new_id} --project {project}`)") from exc
+    setup_receipt = created.receipt
+    if hasattr(setup_receipt, "as_dict"):
+        setup_receipt = setup_receipt.as_dict()
     return {
         "timeline_id": new_id,
         "slug": slug,
@@ -372,5 +397,7 @@ def _duplicate(client: Any, project: str, source: str | Mapping[str, Any] | Path
         "shots": len(bundle["shots"]),
         "old_head": receipt.get("old_head"),
         "new_head": receipt.get("new_head"),
+        "destination_setup": {"timeline_id": new_id, "idempotency_key": create_key, "receipt": setup_receipt},
+        "copy_receipt": receipt.get("receipt") or receipt,
         "notes": list(dst.notes),
     }
