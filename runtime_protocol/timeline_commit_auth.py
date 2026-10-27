@@ -2400,6 +2400,25 @@ def _command_manifest(manifest, record):
     return result
 
 
+def _observation_site(boundary, ref, path):
+    """Resolve a recorder capture to its physical field without folding mirrors.
+
+    SDK parent writes can observe both the legacy top-level collection and its
+    config mirror in one command. Native clip aliases use the top-level
+    collection when it exists; the explicit config path remains independent.
+    """
+    path = list(path)
+    if ref == "parent":
+        return ref, path
+    if ref.startswith("parent/clip:"):
+        payload = boundary["parent"]["payload"]
+        root = (["clips"] if isinstance(payload.get("clips"), list)
+                else ["config", "clips"])
+        identity = ref.removeprefix("parent/clip:")
+        return "parent", [*root, "id:" + identity, *path]
+    return native_site(boundary, ref, path)
+
+
 def command_output(boundary, record, following, *, accepted=None, identity_scope=None,
                    manifest=None, previous_manifest=None, step_ordinal=None,
                    command_ordinal=None):
@@ -2413,7 +2432,15 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
                        if accepted is not None else set())
     created_roots = {item.get("ref") for item in record.get("created", [])
                      if re.fullmatch(r"(?:shot|occurrence):[^/]+", item.get("ref", ""))}
+    captures = [*record["writes"], *record["derived_writes"]]
+    separate_clip_mirrors = (
+        any(capture.get("ref") == "parent" and capture.get("path") == ["clips"]
+            for capture in captures)
+        and any(capture.get("ref") == "parent" and capture.get("path") == ["config", "clips"]
+                for capture in captures)
+    )
     derived_mirrors = {}
+    clip_mirror_observations = {}
     for capture, is_derived in [*((capture, False) for capture in record["writes"]),
                                 *((capture, True) for capture in record["derived_writes"])]:
         capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
@@ -2422,7 +2449,12 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
             # The authored aggregate root was installed above through its
             # physical closure images; it has no direct Runtime image site.
             continue
-        ref, path = native_site(result, capture["ref"], capture["path"])
+        clip_capture = (capture.get("ref") == "parent"
+                        and capture.get("path") in (["clips"], ["config", "clips"]))
+        native_clip_capture = capture.get("ref", "").startswith("parent/clip:")
+        ref, path = (_observation_site(result, capture["ref"], capture["path"])
+                     if native_clip_capture or (separate_clip_mirrors and clip_capture)
+                     else native_site(result, capture["ref"], capture["path"]))
         capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
         creation_exemption_applied = (
             capture.get("ref") in created_roots & projected_roots and not capture.get("path")
@@ -2438,26 +2470,37 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
         )
         payload = result[ref]["payload"]
         path = stored_path(payload, ref, path)
-        derived_mirror_site = (ref, tuple(path))
+        observation_site = (ref, tuple(path))
         chains_derived_mirror = (
-            is_derived and "cause" in capture and ref == "parent"
-            and capture["cause"] == record.get("ordinal")
+            not separate_clip_mirrors and is_derived and "cause" in capture
+            and ref == "parent" and capture["cause"] == record.get("ordinal")
             and tuple(path) in {("config", "clips"), ("clips",)}
         )
-        if chains_derived_mirror and derived_mirror_site in derived_mirrors:
-            expected_before = derived_mirrors[derived_mirror_site]
+        chains_clip_mirror = (
+            separate_clip_mirrors and is_derived and "cause" in capture
+            and capture["cause"] == record.get("ordinal") and clip_capture
+            and observation_site in clip_mirror_observations
+        )
+        if chains_clip_mirror:
+            expected_before = clip_mirror_observations[observation_site]
+        elif chains_derived_mirror and observation_site in derived_mirrors:
+            expected_before = derived_mirrors[observation_site]
         else:
-            before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
-            expected_before = location(before_payload, path, absent_items=True)
+            input_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
+            expected_before = location(input_payload, path, absent_items=True)
         require(value_equal(expected_before, capture["before"]),
                 "provider intermediate command has a different input observation")
         result[ref]["payload"] = project_observation(payload, path, capture["after"])
+        if separate_clip_mirrors and clip_capture:
+            clip_mirror_observations[observation_site] = copy.deepcopy(capture["after"])
         if chains_derived_mirror:
-            derived_mirrors[derived_mirror_site] = copy.deepcopy(capture["after"])
+            derived_mirrors[observation_site] = copy.deepcopy(capture["after"])
         if ref == "parent":
             for mirror in ("clips", "registry"):
                 projected = result[ref]["payload"]
-                if mirror in projected and mirror in projected.get("config", {}):
+                if (mirror in projected and mirror in projected.get("config", {})
+                        and not ((separate_clip_mirrors or native_clip_capture)
+                                 and mirror == "clips")):
                     projected[mirror] = copy.deepcopy(projected["config"][mirror])
         result[ref]["content_digest"] = digest(result[ref]["payload"])
     for ref, image in list(result.items()):
