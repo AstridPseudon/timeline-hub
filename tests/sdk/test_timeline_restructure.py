@@ -175,19 +175,21 @@ def test_split_fallback_id_does_not_overwrite_an_existing_shot():
     assert_equivalent(flat, stored)
 
 
-def test_split_stores_chapters_as_shots_and_music_and_crossers_on_the_film():
+def test_split_stores_cuttable_crossers_in_shots_and_music_on_the_film():
     stored = split(flat_film())
     assert [(r["placement"]["start_ms"], r["duration_ms"]) for r in stored["placements"]] == [(0, 4000), (4000, 4000), (8000, 4000)]
     shots = [stored["shots"][r["shot_id"]] for r in stored["placements"]]
     assert [s["payload"]["name"] for s in shots] == ["01 ONE", "02 TWO", "03 THREE"]
-    assert clip_ids(shots[0]) == {"p1"} and clip_ids(shots[1]) == {"p2", "inside", "vo2"} and clip_ids(shots[2]) == {"p3", "late"}
-    assert {c["id"] for c in stored["parent"]["clips"]} == {"cross", "bed"}  # crosser and music
+    assert clip_ids(shots[0]) == {"p1", _stable_id("chapter-piece", "t", "cross", "01 ONE", 0, 0)}
+    assert clip_ids(shots[1]) == {"p2", "inside", "vo2", _stable_id("chapter-piece", "t", "cross", "02 TWO", 4000, 1)}
+    assert clip_ids(shots[2]) == {"p3", "late"}
+    assert {c["id"] for c in stored["parent"]["clips"]} == {"bed"}  # music remains film-level
     assert "clips" not in stored["parent"]["config"]  # one list only (Runtime 409s on two differing lists)
     assert stored["parent"]["config"]["tracks"][0]["id"] == "picture"
     assert [t["id"] for t in stored["parent"]["config"]["tracks"]] == ["picture", "type", "sprite", "plate", "vo", "music"]
     inside = next(c for c in shots[1]["internal_timeline"]["clips"] if c["id"] == "inside")
     assert inside["at"] == pytest.approx(1.0)  # chapter-relative
-    assert set(stored["parent"]["registry"]["assets"]) == {"R", "Q"}  # film clips' assets (+ none unused)
+    assert set(stored["parent"]["registry"]["assets"]) == {"Q"}  # only the music asset remains film-level
     assert set(shots[1]["internal_timeline"]["registry"]["assets"]) == {"P", "R", "U"}
     assert STRUCTURE_KEY not in stored
 

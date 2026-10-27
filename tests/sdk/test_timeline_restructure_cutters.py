@@ -28,7 +28,7 @@ def test_speeded_media_crossing_multiple_walls_advances_source_and_keeps_window(
     assert pieces == _clips_by_source(plan(flat).chapters, "media-cross")
 
 
-def test_still_and_text_crossers_are_cut_while_am_types_keep_legacy_hoisting():
+def test_still_and_text_crossers_are_cut_while_am_types_use_over_row_fallback():
     flat = flat_film()
     clips = flat["shots"]["film"]["internal_timeline"]["clips"]
     clips.extend([
@@ -49,7 +49,21 @@ def test_still_and_text_crossers_are_cut_while_am_types_keep_legacy_hoisting():
     assert [(clip["at"], clip["hold"], clip["params"]) for clip in texts] == [
         (3.5, 0.5, {"text": "Hello", "style": {"font": "serif"}}),
         (0.0, 0.5, {"text": "Hello", "style": {"font": "serif"}})]
-    assert "element-cross" in {clip["id"] for clip in planned.film_clips}
+    element = next(clip for clip in planned.film_clips if clip["id"] == "element-cross")
+    assert element["track"] == "picture-over"
+    assert element["app"]["astrid"]["timeline_restructure_over"] == {"track": "type", "row": "picture"}
+
+
+def test_clip_type_projection_alias_is_cut_like_cliptype():
+    flat = flat_film()
+    flat["shots"]["film"]["internal_timeline"]["clips"].append({
+        "id": "alias-cross", "clip_type": "image", "track": "type", "asset": "R",
+        "at": 3.5, "hold": 1.0,
+    })
+    planned = plan(flat)
+    pieces = _clips_by_source(planned.chapters, "alias-cross")
+    assert len(pieces) == 2
+    assert {piece["clip_type"] for piece in pieces} == {"image"}
 
 
 def test_media_crosser_clips_at_film_end():

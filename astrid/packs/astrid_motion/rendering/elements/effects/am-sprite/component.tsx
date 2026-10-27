@@ -32,6 +32,8 @@ type Params = {
   flipX?: boolean;
   keyframes?: Keyframe[];
   stepFrames?: 2 | 3;
+  /** Source clip-local frame for a piece cut from an existing sprite clip. */
+  frameOffset?: number;
   enter?: 'stamp' | 'slideIn' | 'cut';
   slideFrom?: 'left' | 'right' | 'top' | 'bottom';
   slideDistance?: number;
@@ -54,7 +56,9 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   const params = narrowParams<Params>(raw);
   const scale = integerIn(params.scale, 1, 24, 6);
   const stepFrames = integerIn(params.stepFrames, 2, 3, 2);
-  const sf = stepStart(frame, stepFrames);
+  const frameOffset = integerIn(params.frameOffset, 0, 10000000, 0);
+  const sourceFrame = frame + frameOffset;
+  const sf = stepStart(sourceFrame, stepFrames) - frameOffset;
 
   // Active keyframe: the last one at or before this step. Keyframes apply
   // as held poses, so the sprite never interpolates between them.
@@ -76,14 +80,14 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   const enter = oneOf(params.enter, ENTERS, 'cut');
   if (enter === 'stamp') {
     // 2-frame flicker (on, off) then land 1 px lower on frame 2.
-    if (frame < 2) {
-      visible = frame === 0;
+    if (sourceFrame < 2) {
+      visible = sourceFrame === 0;
       dy = -1;
     }
   } else if (enter === 'slideIn') {
     const side = oneOf(params.slideFrom, SIDES, 'left');
     const distance = Math.max(0, finiteNumber(params.slideDistance, 24));
-    const k = Math.min(SLIDE_STEPS, Math.floor(frame / stepFrames));
+    const k = Math.min(SLIDE_STEPS, Math.floor(sourceFrame / stepFrames));
     const remaining = Math.round((distance * (SLIDE_STEPS - k)) / SLIDE_STEPS);
     if (side === 'left') dx = -remaining;
     if (side === 'right') dx = remaining;
@@ -101,7 +105,7 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   const frames = params.frames;
   let index = 0;
   if (frames && frames.count >= 1 && frames.fps > 0) {
-    const tick = Math.floor((frame * frames.fps) / fps);
+    const tick = Math.floor((sourceFrame * frames.fps) / fps);
     const seq = Array.isArray(frames.sequence) ? frames.sequence.filter((n) => Number.isFinite(n)) : [];
     index = seq.length > 0
       ? Math.round(seq[tick % seq.length])
@@ -162,7 +166,7 @@ function AmSprite(props: ElementComponentProps): ReactElement | null {
   if (silOn) filters.push('brightness(0)');
   if (ol) {
     const pulse = Math.max(0, Math.round(finiteNumber(ol.pulse, 0)));
-    const wide = pulse > 0 && Math.floor(frame / pulse) % 2 === 1;
+    const wide = pulse > 0 && Math.floor((frame + frameOffset) / pulse) % 2 === 1;
     const w = Math.max(1, Math.round(finiteNumber(ol.px, 1))) + (wide ? 1 : 0);
     const c = typeof ol.color === 'string' ? ol.color : '#ED6B23';
     filters.push(`drop-shadow(${w}px 0 0 ${c})`, `drop-shadow(-${w}px 0 0 ${c})`, `drop-shadow(0 ${w}px 0 ${c})`, `drop-shadow(0 -${w}px 0 ${c})`);
