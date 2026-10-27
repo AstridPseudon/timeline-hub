@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T07:26:33Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# runtime board, 2026-10-27T07:17:11.129405+00:00
+<!-- main | 2026-10-27T07:31:20Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T07:29:40.598557+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -150,7 +150,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | C current artifact cleanup | Receive exact current branch deletion | C Luna and reviewer | Independent cleanup12 PASS | merged | C author cleanup12; review cleanup12 | Normal28f44 removes only root report.md. Manager readback confirms absence; historical review11 remains separate. | Runtime28f44ab578 |
 Blockers: Main owns A exact catalog identity rejection and C per ID acceptance comparison. Current C Runtime report.md cleanup is independently PASS and merged28f44. B accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6045581312 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact exit0;0 dirs removed or packed;0 logs compressed. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 6213545984 bytes. Runtime trees:36;31 KEEP and5 dirty; no eligible recycle. This pass sweep and compact exit0;0 dirs removed or packed;2 old logs compressed. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -161,4 +161,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T07:17:11.129405+00:00. Runtime workers exit0, live0 and ready0; inbox unchanged. A audit0715 is terminal REJECT for exact catalog identity bypassing retained project admission; existing Main/A owner notified. C independent isolation11 PASS and normal9a94c24e93 recorded; C cleanup review11 active. Main staging reader0715 terminal; per ID classification remains open. H/D/P START absent. Sweep and compact exit0;0 dirs removed or packed;0 logs compressed, no refusal. [Gate note](../../design/peer-runtime-to-orchestrator-20261027T071529Z-A-audit-reject-C-review-PASS.md); [pass evidence](rounds/20261027T071711Z-pass.json).
+Current pass: 2026-10-27T07:29:40.598557+00:00. Second census exit0, live0 and ready0. Inbox and header unchanged. A acceptance audit0715 REJECT remains open for exact catalog identity bypassing retained project admission; existing Main/A owner notified. C browser isolation11 independent PASS and App9a94c24e93 merge retained. Current C Runtime artifact cleanup12 independently PASS and normal28f44ab578 merged; manager confirms root report.md absent, superseding the historical-review scope gap without rewriting it. Main owns remaining C per ID comparison, with38 tip only failures still unclassified. B accepted; H/D/P START absent. Sweep and compact exit0,0 dirs removed or packed,2 old logs compressed; no refusal or eligible recycle. [Current gate handoff](../../design/peer-runtime-to-orchestrator-20261027T072147Z-C-current-cleanup-cleared.md); [pass evidence](rounds/20261027T072458Z-pass.json).
