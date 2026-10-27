@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T13:09:09Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T13:07:38.858341+00:00
+<!-- main | 2026-10-27T13:16:23Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
+# runtime board, 2026-10-27T13:10:03.865820+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -18,11 +18,11 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Run guarded maintenance | Runtime manager | Guard census and supported tools | doing | Runtime manager | Census: no eligible recycle. Sweep exit 0, no removal or stderr. Compaction in progress. | No source change |
+| OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | Sweep and compact exit 0. No removal, packing or stderr. Census: no eligible recycle. | No source change |
 
 Blockers: H owns whole-delivery review, exact-head proofs, compile classification and full comparisons. Main owns BASELINES.md and browser lane repair. Owner baseline runs FAIL; staging Agent28624 running. D waits H acceptance and START; P waits D.
 Next ready: None for Runtime. Existing lead-H-r1 owns all consolidation and remaining B/C work; no duplicate dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 4457172992 bytes. No Runtime task is ready. H is separately managed.
+live 0 / cap 0; ready-undispatched 0. Free 4452859904 bytes. No Runtime task is ready. H is separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -32,4 +32,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T13:07:38.858341+00:00. Runtime census exit 0: 2717 rows unchanged, live 0, ready 0. Inbox and header unchanged. H owns its active independent review; its three protected targeted test records now PASS. H reports both final Agent render proofs PASS. Baseline worker and raw test log are advancing; BASELINES.md is pending. Main browser repair retains its owner. D/P START absent. Cleanup census found no eligible tree across 42 existing worktrees; Runtime retains 31 KEEP and 5 dirty trees. Sweep exit 0, no removals or stderr; compact is running. All nine named raw records remain KEEP, no new marker or creation-time claim. No product edit, dispatch, merge, new refusal or escalation. [Pass evidence](rounds/20261027T130738Z-pass.json); [cleanup census](rounds/20261027T130053Z-cleanup-census.json).
+Current pass: 2026-10-27T13:10:03.865820+00:00. Two Runtime worker checks exit 0: 2717 rows unchanged, live 0, ready 0. Inbox and header unchanged. H retains all remaining B/C work and its active independent review; its three protected targeted test records PASS. Both final Agent render proofs PASS per H. Baseline worker and raw test log are advancing; Main owns BASELINES.md and browser repair. BASELINES.md absent, staging Agent28624 running. D/P START absent. Nine named raw records remain KEEP; no new marker or creation-time claim. Census found no eligible recycle across 42 trees; Runtime retains 31 KEEP and 5 dirty trees. Sweep and compact exit 0, zero removals, packing or compressed logs; no stderr. Disk remains below source admission; prior headroom peer note remains current. No product edit, dispatch, merge, new refusal or escalation. [Pass evidence](rounds/20261027T131003Z-pass.json); [cleanup census](rounds/20261027T130053Z-cleanup-census.json); [sweep](rounds/20261027T130102Z-sweep.json); [compact](rounds/20261027T130352Z-compact.json).
