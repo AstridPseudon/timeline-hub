@@ -98,6 +98,29 @@ recycle_recreated_worktree() {
 trap recycle_recreated_worktree EXIT
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
 BASE_CMD=$CMD
+AGENT_ROUTE=pinned
+if [[ "$CMD" == "agent=match-target "* ]]; then
+  AGENT_ROUTE=match-target
+  CMD=${CMD#agent=match-target }
+fi
+matching_agent_sha() {
+  local base ref
+  if [ "${target#integration:}" != "$target" ]; then
+    base=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
+  else
+    base=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+  fi
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -z "$ref" ] || ! git -C /home/user/work/agent rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    ref=refs/remotes/origin/staging/timeline-v2.1
+  fi
+  git -C /home/user/work/agent rev-parse --verify "$ref^{commit}"
+}
 OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; SELECTORS=; set -f; for f in $files; do
   [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"
   # Python lanes receive changed source and fixture paths; pytest gets test selectors only.
@@ -133,6 +156,10 @@ if [ -z "$RUN" ]; then
   EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
   for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
+  if [ "$AGENT_ROUTE" = match-target ]; then
+    MATCH_AGENT_SHA=$(matching_agent_sha) || bad "matching Agent source unavailable for target $target"
+    EXT+=" agent-match-target=$MATCH_AGENT_SHA"
+  fi
   KIT_KEY=
   case "$suite" in browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
     KIT_KEY=$(sha256sum "$SELF_DIR/test-run" "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
@@ -462,25 +489,14 @@ fi
 export ASTRID_TEST_BASE
 if [ "$repo" = runtime ]; then
   AGENT_PIN=$SNAP/tests/astrid-agent.pin
-  if [ -f "$AGENT_PIN" ]; then
+  if [ "$AGENT_ROUTE" = match-target ]; then
+    AGENT_SHA=$(matching_agent_sha) || { echo "matching Agent source unavailable for Runtime target $target" >&2; exit 1; }
+  elif [ -f "$AGENT_PIN" ]; then
     AGENT_SHA=$(tr -d '[:space:]' < "$AGENT_PIN")
     [[ "$AGENT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid Agent commit pin in $AGENT_PIN" >&2; exit 1; }
     git -C /home/user/work/agent rev-parse --verify "$AGENT_SHA^{commit}" >/dev/null 2>&1 || { echo "pinned Agent commit unavailable for runtime target $target: $AGENT_SHA" >&2; exit 1; }
   else
-    AGENT_BASE=
-    if [ "${target#integration:}" = "$target" ] && [ -f "$O/workers/$target/meta" ]; then
-      AGENT_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
-    fi
-    case "$AGENT_BASE" in
-      tl/one-head) AGENT_REF=refs/heads/tl/one-head ;;
-      origin/*) AGENT_REF="refs/remotes/$AGENT_BASE" ;;
-      tl/*) AGENT_REF="refs/heads/$AGENT_BASE" ;;
-      *) AGENT_REF= ;;
-    esac
-    if [ -z "$AGENT_REF" ] || ! git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}" >/dev/null 2>&1; then
-      AGENT_REF=refs/remotes/origin/staging/timeline-v2.1
-    fi
-    AGENT_SHA=$(git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}") || { echo "matching Agent source unavailable for runtime target $target (base $AGENT_BASE)" >&2; exit 1; }
+    AGENT_SHA=$(matching_agent_sha) || { echo "matching Agent source unavailable for Runtime target $target" >&2; exit 1; }
   fi
   ASTRID_AGENT_SOURCE=/home/user/work/wt-int/agent-${AGENT_SHA:0:12}
   if [ -d "$ASTRID_AGENT_SOURCE" ]; then

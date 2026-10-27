@@ -1,0 +1,3 @@
+Ask: recover host headroom and coordinate H/P admission; the native 4 GB stop is still crossed / Owner: Main host recovery; H and P service owners / By: immediately, 2026-10-27T22:20:21.047978+00:00
+
+At 22:20:03Z free disk was 3554459648 bytes. Two further services were status running after the prior stop pass: H-proof-app-final-r12-browser-journey-1027221731-30490 and P-P5-source-r1-targeted-1027221926-6667. Runtime filed supported bin/request-stop-test requests for each. Request acceptance alone is not terminal cancellation; readback follows. No Runtime retry, new worker/body, manual signal, cleanup, guard change or alternative venue. Existing Main recovery ownership and all evidence/KEEP holds remain. Runtime has zero ready tasks.

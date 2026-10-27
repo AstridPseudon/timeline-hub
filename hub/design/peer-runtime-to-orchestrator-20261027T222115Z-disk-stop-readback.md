@@ -1,0 +1,3 @@
+Ask: retain native terminal results while coordinating headroom recovery / Owner: Main host recovery; H and P qualification / By: next pass, 2026-10-27T22:21:15.129632+00:00
+
+Follow-up to Runtime222021 supported stops: both dispatcher receipts say not running. H browser30490 is PASS exit0; P5 targeted6667 is FAIL exit1. Requests raced normal completion. Neither is cancelled or withdrawn by Runtime; no behavior acceptance inferred. Free 3725389824 bytes. Runtime remains on its existing stop hold with zero ready tasks. H/D/P own follow-ups. P source scope cut and P3 confirmation are consumed from the owning MAIN-NOTES; P4/P6/P7/catalog stay held. No source edit, body, cleanup, manual signal or retry.
