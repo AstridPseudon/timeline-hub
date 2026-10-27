@@ -277,6 +277,13 @@ describe('shot popup A3 save ingress', () => {
         'occurrence.fork', kind === 'add' ? 'occurrence.add-media' : 'occurrence.swap-media',
       ]);
       expect(request.commands[0].select).toBe('occurrence:occ-3');
+      expect(request.commands[1].select).not.toContain('occ-3:');
+      if (kind === 'add') {
+        const row = request.commands[1].args.row as Record<string, unknown>;
+        expect(row.id).toBe('popup-added-a3');
+        expect(row.track).not.toContain('~');
+        expect(row).not.toHaveProperty('app.group');
+      }
       expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
       expect(provider.getTimelineDraftRecoveryMetadata()).toMatchObject({ baseHeadRevisionId: 'rev-a3-accepted' });
       expect(h.oldPublish).not.toHaveBeenCalled();
@@ -387,9 +394,16 @@ describe('shot popup A3 save ingress', () => {
       intent: { ownership: 'occurrence' }, created: [expect.stringMatching(/^shot:shot-fork-/)] });
     expect(request.commands[1]).toMatchObject({ select: kind === 'add' ? 'occurrence:occ-3' : 'occurrence:occ-3/clip:alpha-video-b',
       intent: { ownership: 'occurrence' } });
+    expect(request.commands[1].select).not.toContain('occ-3:');
     if (kind === 'add') expect(request.commands[1].created).toEqual([
       `occurrence:occ-3/clip:popup-added-a3`,
     ]);
+    if (kind === 'add') {
+      const row = request.commands[1].args.row as Record<string, unknown>;
+      expect(row.id).toBe('popup-added-a3');
+      expect(row.track).not.toContain('~');
+      expect(row).not.toHaveProperty('app.group');
+    }
     if (kind === 'swap') expect(request.commands[1].created).toEqual([]);
     expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
     expect(h.transport.getProjectMediaSelection).toHaveBeenCalled();

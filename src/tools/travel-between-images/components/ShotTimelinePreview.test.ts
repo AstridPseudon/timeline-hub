@@ -33,6 +33,24 @@ import {
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
+function authoredRecoveryClips(config: TimelineConfig, occurrenceId: string): TimelineConfig['clips'] {
+  const prefix = `${occurrenceId}:`;
+  const trackPrefix = `${occurrenceId}~`;
+  return config.clips.map((clip) => {
+    const { assetEntry: _assetEntry, ...withoutAssetEntry } = clip as typeof clip & { assetEntry?: unknown };
+    const app = clip.app ? { ...clip.app } : undefined;
+    for (const key of ['group', 'canonical', 'canonicalTiming', 'canonicalEffects']) {
+      if (app) Reflect.deleteProperty(app, key);
+    }
+    return {
+      ...withoutAssetEntry,
+      id: clip.id.startsWith(prefix) ? clip.id.slice(prefix.length) : clip.id,
+      track: clip.track.startsWith(trackPrefix) ? clip.track.slice(trackPrefix.length) : clip.track,
+      ...(app && Object.keys(app).length > 0 ? { app } : {}),
+    };
+  });
+}
+
 function setAlphaStartWithAuthoredPause(graph: typeof fixture, atMs: number): void {
   const revision = graph.shot_revisions.find((candidate) => candidate.shot_id === 'shot-alpha' && candidate.revision_id === 'rev-a')!;
   const clip = revision.internal_timeline_revision.timeline.clips[0]!;
@@ -807,6 +825,7 @@ describe('shot timeline popup persistence', () => {
       id: 'beta-video', label: 'Edited child clip', hold: 1.5,
     });
     expect(savedTimeline.tracks.every((track) => !track.id.includes('~'))).toBe(true);
+    expect(savedTimeline.clips.every((clip) => !clip.id.includes('occ-4:'))).toBe(true);
     expect(savedTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
     expect(savedTimeline.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
     expect(savedTimeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);
@@ -889,6 +908,7 @@ describe('shot timeline popup persistence', () => {
 
     const recoveryConfig = recovery!.draft.config as TimelineConfig;
     expect(recoveryConfig.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(recoveryConfig.clips.map((clip) => clip.id)).toEqual(['alpha-video', 'alpha-audio', 'new-child-clip']);
     expect(recoveryConfig.tracks?.every((track) => !track.app?.group)).toBe(true);
     expect(recoveryConfig.clips.find((clip) => clip.track === 'video')).toMatchObject({
       hold: 1.5,
@@ -897,6 +917,7 @@ describe('shot timeline popup persistence', () => {
     const reopened = createShotTimelineDataProvider(projected, composition, 'occ-1', adapter);
     const reloaded = await reopened.loadTimeline('shot-recovery-reload');
     expect(reloaded.config.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(reloaded.config.clips.map((clip) => clip.id)).toEqual(['alpha-video', 'alpha-audio', 'new-child-clip']);
     expect(reloaded.config.tracks?.every((track) => !track.app?.group)).toBe(true);
     expect(reloaded.config.clips.find((clip) => clip.track === 'video')).toMatchObject({
       hold: 1.5,
@@ -917,8 +938,12 @@ describe('shot timeline popup persistence', () => {
     expect(retryTimeline.clips.map((clip) => clip.id)).toEqual(recoveryTimeline.clips.map((clip) => clip.id));
     for (const timeline of [recoveryTimeline, recoveryConfig, reloaded.config, retryTimeline]) {
       expect(timeline.clips.map((clip) => clip.track)).toEqual(['video', 'audio', 'video']);
+      expect(timeline.clips.every((clip) => !clip.id.startsWith('occ-1:'))).toBe(true);
       expect(timeline.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
       expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);
+      expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'canonical'))).toBe(true);
+      expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'canonicalTiming'))).toBe(true);
+      expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'canonicalEffects'))).toBe(true);
       for (const clip of timeline.clips) {
         expect(clip.app).toMatchObject({ authoredClipMetadata: { preserve: [null, false, 7] } });
       }
@@ -1141,7 +1166,7 @@ describe('shot timeline popup persistence', () => {
 
       const reopened = createShotTimelineDataProvider(config, base, 'occ-1');
       const recoveredAgain = await reopened.loadTimeline('new-session');
-      expect((recoveredAgain.config as TimelineConfig).clips).toEqual(draftB.clips);
+      expect((recoveredAgain.config as TimelineConfig).clips).toEqual(authoredRecoveryClips(draftB, 'occ-1'));
       expect((recoveredAgain.config as TimelineConfig).app).toMatchObject({
         canonicalComposition: { headRevisionId: 'head-after-A' },
       });
@@ -1196,7 +1221,7 @@ describe('shot timeline popup persistence', () => {
     expect(recovered?.baseCanonicalGraph).toEqual(ackA.contract);
     const reopened = createShotTimelineDataProvider(config, ackA, 'occ-1', adapter);
     const reopenedConfig = (await reopened.loadTimeline('session-C')).config as TimelineConfig;
-    expect(reopenedConfig.clips).toEqual(draftB.clips);
+    expect(reopenedConfig.clips).toEqual(authoredRecoveryClips(draftB, 'occ-1'));
     await expect(reopened.saveTimeline('session-C', reopenedConfig, 1)).resolves.toBe(2);
     expect(publish.mock.calls[1]?.[0]).toMatchObject({ expectedHeadRevisionId: ackA.headRevisionId });
     expect(await loadTimelineDraft(recoveryKey)).toBeNull();
@@ -1246,7 +1271,7 @@ describe('shot timeline popup persistence', () => {
     const reopened = createShotTimelineDataProvider(config, ackA, 'occ-1', adapter);
     const loaded = await reopened.loadTimeline('session-C');
     const reconciled = loaded.config as TimelineConfig;
-    expect(reconciled.clips).toEqual(draftB.clips);
+    expect(reconciled.clips).toEqual(authoredRecoveryClips(draftB, 'occ-1'));
     expect(reconciled.app).toMatchObject({
       canonicalComposition: { headRevisionId: ackA.headRevisionId },
     });
@@ -1287,7 +1312,7 @@ describe('shot timeline popup persistence', () => {
     const publish = vi.fn().mockRejectedValue(Object.assign(new Error('stale canonical head'), { status: 409 }));
     const reopened = createShotTimelineDataProvider(config, external, 'occ-1', createShotCompositionAdapter({ load: vi.fn(), publish }));
     const recovered = await reopened.loadTimeline('fresh-session');
-    expect(recovered.config.clips).toEqual(draft.clips);
+    expect(recovered.config.clips).toEqual(authoredRecoveryClips(draft, 'occ-1'));
     await expect(reopened.saveTimeline('fresh-session', draft, 1)).rejects.toMatchObject({ status: 409 });
     expect(publish).toHaveBeenCalledWith(expect.objectContaining({ expectedHeadRevisionId: base.headRevisionId }));
     const persisted = (await loadTimelineDraft(recoveryKey))?.draft.config as TimelineConfig;
@@ -1295,9 +1320,7 @@ describe('shot timeline popup persistence', () => {
     const { tracks: _draftTracks, ...draftWithoutTracks } = draft;
     expect(persistedWithoutTracks).toEqual({
       ...draftWithoutTracks,
-      clips: draftWithoutTracks.clips.map((clip) => ({
-        ...clip, track: clip.track === 'occ-1~video' ? 'video' : clip.track,
-      })),
+      clips: authoredRecoveryClips(draft, 'occ-1'),
     });
     expect(persisted.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
     expect(persisted.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);

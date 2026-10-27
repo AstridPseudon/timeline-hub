@@ -297,9 +297,12 @@ function timelineSource(
   composition: PreparedShotComposition,
   occurrenceId: string,
 ): ShotTimelineSource {
+  const raw = rawChildRows(composition, occurrenceId, 'clips');
+  const projectedIdPrefix = `${occurrenceId}:`;
+  const hasExplicitProjectedClip = config.clips.some((clip) => clip.id.startsWith(projectedIdPrefix));
+  if (!hasExplicitProjectedClip && config.clips.some((clip) => raw.has(clip.id))) return 'shot-local';
   const projected = projectedClipCounterparts(composition, config.clips);
   if (config.clips.some((clip) => projected.has(clip.id))) return 'projection';
-  const raw = rawChildRows(composition, occurrenceId, 'clips');
   if (config.clips.some((clip) => raw.has(clip.id))) return 'shot-local';
   const prefix = `${occurrenceId}~`;
   if ((config.tracks ?? []).some((track) => track.id.startsWith(prefix))) return 'projection';
@@ -324,11 +327,40 @@ function authoredTracks(
 
 function authoredClipFields(clip: TimelineClip, occurrenceId: string): TimelineClip {
   const prefix = `${occurrenceId}~`;
-  const app = authoredRowApp(clip.app);
+  const app = object(clip.app);
+  const authoredApp = authoredRowApp(app);
   return {
     ...clip,
     track: clip.track.startsWith(prefix) ? clip.track.slice(prefix.length) : clip.track,
-    ...(app ? { app } : {}),
+    ...(authoredApp ? { app: authoredApp } : {}),
+  };
+}
+
+function stripProjectedClipFields(
+  clip: TimelineClip,
+  raw: Record<string, unknown> | null,
+): TimelineClip {
+  const app = object(clip.app);
+  const rawApp = object(raw?.app);
+  const authoredApp = app ? { ...app } : undefined;
+  if (authoredApp) {
+    for (const key of ['canonical', 'canonicalTiming', 'canonicalEffects']) {
+      if (rawApp && own(rawApp, key) && key !== 'canonicalEffects') {
+        Object.defineProperty(authoredApp, key, {
+          value: structuredClone(rawApp[key]),
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
+      } else {
+        Reflect.deleteProperty(authoredApp, key);
+      }
+    }
+  }
+  const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
+  return {
+    ...persistedClip,
+    ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
   };
 }
 
@@ -375,18 +407,21 @@ function createCanonicalTimeline(
   const clips = (config.clips ?? []).map((editorClip) => {
     // Apply to existing and newly authored clips on every save path, before
     // restoring identity and app collisions from the verified child bytes.
-    const clip = authoredClipFields(editorClip, occurrenceId);
-    const raw = counterparts.get(clip.id);
+    const projectedClip = authoredClipFields(editorClip, occurrenceId);
+    const raw = counterparts.get(projectedClip.id) ?? null;
     // A clip absent from the verified identity map is a newly authored editor
     // clip (existing projected clips are present with either a raw match or a
     // null value when their identity is ambiguous). Keep it intact so popup
     // add remains a normal authoring operation.
-    if (!raw && counterparts.has(clip.id)) {
+    if (!raw && counterparts.has(projectedClip.id)) {
       throw new Error('The shot draft has no unambiguous raw clip counterpart');
     }
+    const clip = stripProjectedClipFields(
+      raw ? { ...projectedClip, id: String(raw.id) } : projectedClip,
+      raw,
+    );
     if (!raw) {
-      const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
-      return persistedClip;
+      return clip;
     }
     const rawApp = raw.app as Record<string, unknown> | undefined;
     const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
@@ -399,9 +434,8 @@ function createCanonicalTimeline(
         } else Reflect.deleteProperty(app, key);
       }
     }
-    const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
     return {
-      ...persistedClip,
+      ...clip,
       id: String(raw.id),
       ...(app && typeof app === 'object' ? { app } : {}),
     };
@@ -433,26 +467,12 @@ function restoreRawAppCollisionsInRecoveryDraft(
     // its group hint in the child timeline draft.
     tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
     clips: config.clips.map((editorClip) => {
-      const clip = authoredClipFields(editorClip, occurrenceId);
-      const raw = counterparts.get(clip.id);
-      const app = object(clip.app);
-      const rawApp = raw ? object(raw.app) : null;
-      if (!raw || !app || !rawApp
-        || !['canonical', 'canonicalTiming'].some((key) => own(rawApp, key))) return clip;
-      const restoredApp = { ...app };
-      for (const key of ['canonical', 'canonicalTiming']) {
-        if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
-          Object.defineProperty(restoredApp, key, {
-            value: structuredClone(rawApp[key]),
-            enumerable: true,
-            configurable: true,
-            writable: true,
-          });
-        } else {
-          Reflect.deleteProperty(restoredApp, key);
-        }
-      }
-      return { ...clip, app: restoredApp };
+      const projectedClip = authoredClipFields(editorClip, occurrenceId);
+      const raw = counterparts.get(projectedClip.id) ?? null;
+      return stripProjectedClipFields(
+        raw ? { ...projectedClip, id: String(raw.id) } : projectedClip,
+        raw,
+      );
     }),
   };
 }
@@ -1504,9 +1524,13 @@ export function createShotTimelineDataProvider(
       }
       const recoveredConfig = recovery?.draft.config;
       if (recoveredConfig && typeof recoveredConfig === 'object' && !Array.isArray(recoveredConfig)) {
+        const authoredRecoveryConfig = restoreRawAppCollisionsInRecoveryDraft(
+          recoveredConfig as TimelineConfig,
+          composition,
+        );
         timelineConfig = recoveryBaseHeadRevisionId
-          ? reconcileConfigHeadRevision(recoveredConfig as TimelineConfig, recoveryBaseHeadRevisionId)
-          : recoveredConfig as TimelineConfig;
+          ? reconcileConfigHeadRevision(authoredRecoveryConfig, recoveryBaseHeadRevisionId)
+          : authoredRecoveryConfig;
       }
       if (recoveredConfig) {
         const identities = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false }).clipIdentities;
