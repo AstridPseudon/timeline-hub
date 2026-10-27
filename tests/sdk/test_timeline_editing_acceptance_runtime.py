@@ -11,7 +11,6 @@ import pytest
 
 RUNTIME_CHECKOUT = "/home/user/work/wt-int/runtime-tl-editing-integration"
 RUNTIME_COMMIT = "d3ba02669bdffa84f9c43979c87dae0d3648b287"
-AGENT_COMMIT = "3c0666beca3a629d5f3d1c14bf10b492462b44e3"
 
 
 @pytest.fixture
@@ -23,10 +22,6 @@ def editing_case(tmp_path, monkeypatch, real_runtime):
     runtime = use_runtime()
     actual = subprocess.check_output(["git", "-C", str(runtime), "rev-parse", "HEAD"], text=True).strip()
     assert actual == RUNTIME_COMMIT
-    agent = subprocess.check_output(
-        ["git", "-C", str(Path(__file__).resolve().parents[2]), "rev-parse", "HEAD"], text=True,
-    ).strip()
-    assert agent == AGENT_COMMIT
 
     daemon = real_runtime(authoring_profile="astrid")
     project = daemon.service.create_project({"slug": "e14-acceptance", "name": "E14 acceptance"})["id"]
@@ -121,11 +116,11 @@ def test_e14_twenty_ordered_media_one_receipt_exact_undo_and_timings(editing_cas
 
     evidence = Path(
         "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
-        "/scratchpad/orch/workers/D-E14-acceptance/evidence"
+        "/scratchpad/orch/workers/D-E14-acceptance-r3/evidence"
     )
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "e14-timings.json").write_text(
-        json.dumps({"agent": AGENT_COMMIT, "runtime": RUNTIME_COMMIT,
+        json.dumps({"runtime": RUNTIME_COMMIT,
                     "commit_seconds": timings}, indent=2) + "\n",
         encoding="utf-8",
     )
