@@ -105,18 +105,22 @@ verified file; an existing track of the wrong kind refuses.
 ## Helpers
 
 - **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio, at `at`
-  timeline seconds. `hold=N` holds a still for N seconds; without `hold` a
-  video or audio file plays its verified duration. `.trim(in, out)` then sets
-  the source window.
+  timeline seconds. With `hold=N` a still lasts N seconds and a video or
+  audio file plays source seconds 0 to N (a draft rule that E14 checks);
+  without `hold` a video or audio file plays its verified duration.
+  `.trim(in, out)` then sets the source window.
 - **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
   timeline seconds for `hold` seconds.
-- **`t.track(id, above=)`**, **`.rename(label)`**: create a track (above
-  `above`) or select the existing one (never a second), and label it.
+- **`t.track(id, above=)`**, **`.rename(label)`**: create a track or select
+  the existing one (never a second), place it above `above`, and label it.
+  `above=` moves an existing track too; committing that move is not yet
+  qualified against Runtime.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
   timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
   literal length on any clip; on video or audio the source window keeps its
   in-point and a length the file cannot fill is refused. A plain number given
-  to `on` is always timeline seconds. On a narrated film, where a clip belongs
+  to `on` is always timeline seconds. On a plain timeline it also clears any
+  moment string the clip had. On a narrated film, where a clip belongs
   to a cut, it is stored relative to that cut's start, so the clip follows
   its cut when the narration is re-flowed; to follow a word, give a moment
   string.
@@ -126,12 +130,15 @@ verified file; an existing track of the wrong kind refuses.
   explicit source window for moving media, and no timing anchors,
   animation or parent transitions.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
-  catalog key in place; the start stays.
+  catalog key in place; the start stays. From the source, pending E14
+  confirmation: an image or video keeps its length; an audio clip that played
+  its whole file plays the whole replacement file.
 - **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
 - **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order, from
   `at`, `gap` apart (both timeline seconds). It keeps
-  their ids, lengths and source windows, refuses unknown lengths and
-  collisions with occurrences you did not select, and never ripples.
+  their ids, lengths and source windows, leaves their old slots empty,
+  refuses unknown lengths and collisions with occurrences you did not select,
+  and never ripples.
 
 ## Words, beats and ripple
 
@@ -155,8 +162,11 @@ tl.commit(lambda t: t.close_gap(before=t.word("Meanwhile"), keep=0),
 ```
 
 Clips after the point move on every track, text included; picture spanning it
-is held longer or shortened; audio spanning a removed window is split so later
-sound stays in sync; clips wholly inside a removed window are deleted. On a
+is held longer or shortened; clips wholly inside a removed window are deleted.
+The **music bed** is any audio clip on a track named `music` or with a beat
+grid, and it is never split at the edit. Other audio spanning a removed window
+is split so later sound stays in sync, so a bed on `A1` without a beat grid is
+split even under `plays_on`. On a
 flat timeline a ripple refuses to move a clip that carries a moment string,
 animation or transition. Closing a hole on one track only is not supported.
 
@@ -169,7 +179,8 @@ the card then starts at 15 s and the film ends one card later.
 `"keep_end"` (default) cuts the bed at a bar with a crossfade so it still ends
 with the film; `"plays_on"`, as in `t.ripple_delete(4, 6, music="plays_on")`,
 leaves the bed exactly where it was, neither cut nor moved, so what follows
-moves against its beats. `close_gap` measures the silence from the end of the
+moves against its beats. E14 checks both modes at the accepted runtime.
+`close_gap` measures the silence from the end of the
 previous word. Within one function each call sees the previous one, so times
 after a ripple have already moved.
 
@@ -321,13 +332,16 @@ preview as reserved.
 
 Structure and timing can be read back; appearance cannot. Unless the person
 asks for frames or a render, give them the editor link and the times to check,
-and say the look is unverified. When they ask, the frame commands are in
+and say the look is unverified. The link's timeline id is the `timeline_id`
+that `timelines list --project <project> --json` prints. When they ask, the frame commands are in
 [render, inspect, transfer and worlds](../astrid/packs/rendering/docs/references/render-inspect-transfer.md).
 The final perception guidance (project P) will replace this section.
 
 ## Not possible yet
 
 - Public beat list (only beats near one word); a CLI word-anchor adapter.
+- Changing an existing clip's text in place (`clip.set(text=...)`): not
+  qualified; awaiting E14.
 - Ripple on one track only.
 - Grouping existing clips into a shot; regrouping beyond `timelines restructure`.
 - Cross-timeline transactions and group undo.
