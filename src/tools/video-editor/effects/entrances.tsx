@@ -1,5 +1,5 @@
-import { cloneElement, isValidElement, type FC, type ReactNode } from 'react';
-import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import type { FC, ReactNode } from 'react';
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 
 export type EffectComponentProps = {
   children: ReactNode;
@@ -7,31 +7,13 @@ export type EffectComponentProps = {
   effectFrames?: number;
   intensity?: number;
   params?: Record<string, unknown>;
-  easing?: string;
-  text?: string;
 };
 
-const getEasing = (value?: string) => {
-  if (value === undefined || value === 'linear') return Easing.linear;
-  if (value === 'in' || value === 'ease-in') return Easing.in(Easing.quad);
-  if (value === 'out' || value === 'ease-out') return Easing.out(Easing.quad);
-  if (value === 'in-out' || value === 'inout' || value === 'in_out' || value === 'ease-in-out') return Easing.inOut(Easing.quad);
-  if (value === 'step') return (progress: number) => progress < 1 ? 0 : 1;
-  throw new Error(`unknown motion easing ${value}`);
-};
-
-const getNormalizedProgress = (frame: number, durationInFrames: number, easing?: string): number => {
+const getNormalizedProgress = (frame: number, durationInFrames: number): number => {
   return interpolate(frame, [0, Math.max(1, durationInFrames)], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
-    easing: getEasing(easing),
   });
-};
-
-const getLookProgress = (frame: number, durationInFrames: number, fps: number, easing?: string): number => {
-  return easing === undefined
-    ? spring({ frame, fps, from: 0, to: 1, durationInFrames, config: { damping: 14, stiffness: 110 } })
-    : getNormalizedProgress(frame, durationInFrames, easing);
 };
 
 const withTransform = (transform: string, opacity = 1): React.CSSProperties => ({
@@ -92,64 +74,10 @@ export const PulseEntrance: FC<EffectComponentProps> = ({ children, effectFrames
   return <AbsoluteFill style={withTransform(`scale(${scale})`, progress)}>{children}</AbsoluteFill>;
 };
 
-export const FadeEntrance: FC<EffectComponentProps> = ({ children, effectFrames, easing, params }) => {
+export const FadeEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const duration = effectFrames ?? 12;
-  const resolvedEasing = easing ?? params?.easing as string | undefined;
-  const progress = resolvedEasing === undefined
-    ? spring({ frame, fps, from: 0, to: 1, durationInFrames: duration, config: { damping: 14, stiffness: 110 } })
-    : getNormalizedProgress(frame, duration, resolvedEasing);
+  const progress = getNormalizedProgress(frame, effectFrames ?? 12);
   return <AbsoluteFill style={withTransform('none', progress)}>{children}</AbsoluteFill>;
-};
-
-export const FadeUpEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params, easing }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const progress = getLookProgress(frame, effectFrames ?? 18, fps, easing ?? params?.easing as string | undefined);
-  const translateY = interpolate(progress, [0, 1], [40, 0]);
-  return <AbsoluteFill style={withTransform(`translateY(${translateY}px)`, progress)}>{children}</AbsoluteFill>;
-};
-
-export const ScaleInEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params, easing }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const progress = getLookProgress(frame, effectFrames ?? 18, fps, easing ?? params?.easing as string | undefined);
-  const scale = interpolate(progress, [0, 1], [0.85, 1]);
-  return <AbsoluteFill style={withTransform(`scale(${scale})`, progress)}>{children}</AbsoluteFill>;
-};
-
-export const TypeOnEntrance: FC<EffectComponentProps> = ({ children, effectFrames, params, text, easing }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  if (typeof text !== 'string' || text.length === 0 || !isValidElement(children)) return <>{children}</>;
-  const duration = effectFrames ?? 120;
-  const startFrame = typeof params?.startFrame === 'number' ? params.startFrame : 18;
-  const fraction = typeof params?.durationFraction === 'number' ? params.durationFraction : 0.55;
-  const endFrame = Math.max(startFrame + 1, Math.floor(duration * fraction));
-  const progress = getNormalizedProgress(frame - startFrame, endFrame - startFrame, easing ?? params?.easing as string | undefined);
-  const revealCount = Math.max(0, Math.min(text.length, Math.ceil(text.length * progress)));
-  const visibleText = text.slice(0, revealCount);
-  const hiddenTail = text.slice(revealCount);
-  const showCaret = params?.showCaret !== false && progress < 1;
-  const caretOpacity = showCaret ? (Math.floor(frame / Math.max(1, Math.round(fps / 3))) % 2 === 0 ? 1 : 0) : 0;
-  return (
-    cloneElement(children as React.ReactElement, {}, (
-      <span>
-        <span>{visibleText}</span>
-        <span aria-hidden="true" style={{
-          display: 'inline-block',
-          width: '0.05em',
-          marginLeft: showCaret ? '0.05em' : 0,
-          opacity: caretOpacity,
-          backgroundColor: 'currentColor',
-          height: '1em',
-          verticalAlign: '-0.15em',
-        }} />
-        <span style={{ opacity: 0 }}>{hiddenTail}</span>
-      </span>
-    ))
-  );
 };
 
 export const FlipEntrance: FC<EffectComponentProps> = ({ children, effectFrames }) => {

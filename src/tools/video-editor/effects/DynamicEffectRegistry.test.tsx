@@ -73,18 +73,6 @@ describe('DynamicEffectRegistry', () => {
     vi.restoreAllMocks();
   });
 
-  it.each([
-    ['legacy entrance shape', { type: 'fade-up', duration: 0.4, params: { easing: 'ease-in' } }, undefined],
-    ['package animation reference shape', { id: 'fade-up', durationFrames: 12, easing: 'ease-in' }, undefined],
-    ['canonical type-on reference', { id: 'type-on', durationFrames: 120, params: { startFrame: 0, durationFraction: 0.5, showCaret: false } }, { content: 'preview content' }],
-  ])('renders %s through the preview effect registry', (_name, entrance, text) => {
-    const clip = { id: 'preview-field', entrance, text } as unknown as ResolvedTimelineClip;
-    const { container } = render(<>{wrapWithClipEffects(<span>preview content</span>, clip, 60, 30)}</>);
-
-    expect(screen.getByText('preview content')).toBeInTheDocument();
-    expect(container.querySelector('[data-testid="missing-effect-placeholder"]')).toBeNull();
-  });
-
   it('prefers built-in effects over dynamic name collisions and resolves custom prefix lookups', async () => {
     const registry = new DynamicEffectRegistry({ fade: BuiltInFade });
     registry.register('fade', 'export default function Effect(){ return <div data-testid="dynamic-fade" />; }');

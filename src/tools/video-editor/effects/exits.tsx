@@ -1,15 +1,8 @@
 import type { FC } from 'react';
-import { AbsoluteFill, Easing, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import type { EffectComponentProps } from '@/tools/video-editor/effects/entrances.tsx';
 
-const getExitProgress = (frame: number, durationInFrames: number, effectFrames: number, easing?: string): number => {
-  const easingFunction = easing === undefined || easing === 'linear' ? Easing.linear
-    : easing === 'in' || easing === 'ease-in' ? Easing.in(Easing.quad)
-      : easing === 'out' || easing === 'ease-out' ? Easing.out(Easing.quad)
-        : easing === 'in-out' || easing === 'inout' || easing === 'in_out' || easing === 'ease-in-out'
-          ? Easing.inOut(Easing.quad)
-          : easing === 'step' ? (progress: number) => progress < 1 ? 0 : 1
-            : (() => { throw new Error(`unknown motion easing ${easing}`); })();
+const getExitProgress = (frame: number, durationInFrames: number, effectFrames: number): number => {
   return interpolate(
     frame,
     [Math.max(0, durationInFrames - effectFrames), durationInFrames],
@@ -17,7 +10,6 @@ const getExitProgress = (frame: number, durationInFrames: number, effectFrames: 
     {
       extrapolateLeft: 'clamp',
       extrapolateRight: 'clamp',
-      easing: easingFunction,
     },
   );
 };
@@ -28,13 +20,6 @@ export const SlideDownExit: FC<EffectComponentProps> = ({ children, durationInFr
   const translateY = interpolate(progress, [0, 1], [0, 120]);
   const opacity = interpolate(progress, [0, 1], [1, 0]);
   return <AbsoluteFill style={{ width: '100%', height: '100%', transform: `translateY(${translateY}px)`, opacity }}>{children}</AbsoluteFill>;
-};
-
-export const SlideUpExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames, easing, params }) => {
-  const frame = useCurrentFrame();
-  const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 12, easing ?? params?.easing as string | undefined);
-  const translateY = interpolate(progress, [0, 1], [0, -30]);
-  return <AbsoluteFill style={{ width: '100%', height: '100%', transform: `translateY(${translateY}px)`, opacity: 1 - progress }}>{children}</AbsoluteFill>;
 };
 
 export const ZoomOutExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames }) => {
@@ -59,9 +44,9 @@ export const FlipExit: FC<EffectComponentProps> = ({ children, durationInFrames,
   );
 };
 
-export const FadeOutExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames, easing, params }) => {
+export const FadeOutExit: FC<EffectComponentProps> = ({ children, durationInFrames, effectFrames }) => {
   const frame = useCurrentFrame();
-  const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 12, easing ?? params?.easing as string | undefined);
+  const progress = getExitProgress(frame, durationInFrames, effectFrames ?? 12);
   const opacity = interpolate(progress, [0, 1], [1, 0]);
   return <AbsoluteFill style={{ width: '100%', height: '100%', opacity }}>{children}</AbsoluteFill>;
 };
