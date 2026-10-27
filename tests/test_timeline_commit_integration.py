@@ -323,6 +323,90 @@ def test_real_same_step_multi_delete_undo_restores_each_command_order(editing):
     assert restored["data"]["canonical_document"] == original
 
 
+def test_real_delete_then_reorder_undo_restores_exact_order(editing):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from astrid.sdk.timeline.commands import execute
+
+    clips = editing.document()["parent_revision"]["payload"]["clips"]
+    extra = copy.deepcopy(clips[-1])
+    extra.update(id="parent-order-extra", at=max(row["at"] + row["hold"] for row in clips) + 1)
+    insert = {"op": "list.insert", "ref": "parent", "path": ["clips"],
+              "before": {"state": "absent"}, "id": extra["id"], "value": extra,
+              "order_before": [row["id"] for row in clips], "after_id": clips[-1]["id"]}
+    seed = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+            "args": {"changes": [insert]}, "created": ["parent/clip:" + extra["id"]]}
+    setup = editing.body([seed])
+    setup["steps"][0]["patch"] = [insert]
+    editing.commit(setup, "parent-after-order-setup")
+    original = editing.document()
+    baseline = editing.agent.bundle(original)
+    delete = capture_clip_delete(baseline, "parent/clip:" + clips[0]["id"])
+    staged = execute(baseline, [delete])
+    remaining = staged.bundle["parent"]["clips"]
+    change = {"op": "list.move", "ref": "parent", "path": ["clips"],
+              "before": {"state": "present", "value": copy.deepcopy(remaining[-1])},
+              "id": remaining[-1]["id"],
+              "order_before": [row["id"] for row in remaining], "after_id": None}
+    reorder = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    body = editing.body([delete, reorder])
+    body["steps"] = [
+        {"id": "delete", "label": "Mixed delete order", "intent": "", "tags": [],
+         "command_ordinals": [0], "patch": [], "reads": []},
+        {"id": "order", "label": "Mixed delete order", "intent": "", "tags": [],
+         "command_ordinals": [1], "patch": [change], "reads": []},
+    ]
+    forward = editing.commit(body, "parent-after-order-forward")
+    restored = editing.commit(
+        editing.body([inverse(forward["receipt"]["receipt_id"])]),
+        "parent-after-order-undo",
+    )
+
+    assert restored["data"]["canonical_document"] == original
+
+
+def test_real_inverse_refuses_well_hashed_wrong_clip_order(editing, monkeypatch):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from runtime_protocol.timeline_commit_auth import _authoring_parent_identity, images
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+    from runtime_protocol.timeline_commit_validation import digest
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    deletion = capture_clip_delete(editing.agent.bundle(original), "parent/clip:" + clips[0]["id"])
+    forward = editing.commit(editing.body([deletion]), "wrong-order-source-delete")
+    before_rows = rows(editing.service)
+    before_history = editing.history()
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def reverse_prepared(port, prepared):
+        value = copy.deepcopy(prepared)
+        document = value["canonical_document"]
+        payload = document["parent_revision"]["payload"]
+        payload["clips"].reverse()
+        payload["config"]["clips"].reverse()
+        document["parent_revision"]["content_digest"] = digest(payload)
+        document["parent_revision"]["revision_id"] = _authoring_parent_identity(
+            images(document), (document["project_id"], document["timeline_id"]),
+            document["dependency_manifest"],
+        )
+        value["document_digest"] = digest(document)
+        reached.append(value)
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", reverse_prepared)
+    with pytest.raises(RuntimeErrorBase) as error:
+        editing.commit(editing.body([inverse(forward["receipt"]["receipt_id"])]),
+                       "wrong-order-undo")
+
+    assert error.value.details is not None
+    assert error.value.details["reason"] == "invalid_records"
+    assert reached
+    assert rows(editing.service) == before_rows
+    assert editing.history() == before_history
+
+
 def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_path, monkeypatch):
     world = _start_door(film, tmp_path)
     try:

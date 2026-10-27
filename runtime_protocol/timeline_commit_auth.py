@@ -976,9 +976,8 @@ def _inverse_stage_restore_clip_order(boundary, command):
     restored = [by_id[identity] for identity in expected_ids]
     if isinstance(config_rows, list):
         config["clips"] = restored
-    if "clips" in payload:
+    if isinstance(payload_rows, list):
         payload["clips"] = copy.deepcopy(restored)
-    boundary["parent"]["content_digest"] = digest(payload)
 
 
 def _inverse_stage_root(boundary, ref):
@@ -1401,7 +1400,8 @@ def _inverse_stage_history(records, history):
             native_end += len(command_writes)
             structural_clip_write = any(
                 write["ref"].startswith("parent/clip:") and not write["path"]
-                and {write["before"].get("state"), write["after"].get("state")} == {"absent", "present"}
+                and write["before"].get("state") == "present"
+                and write["after"].get("state") == "absent"
                 for write in command.get("writes", []))
             if structural_clip_write:
                 selections = [selection for selection in command.get("selections", [])
