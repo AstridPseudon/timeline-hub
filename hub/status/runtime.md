@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T06:09:10Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T06:02:55.175732+00:00
+<!-- main | 2026-10-27T06:14:35Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T06:12:19.525040+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -132,11 +132,18 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-| C2 full App comparison | Receive bounded full App comparison | C Luna | Integrated three corrections | review | C full10 and compare10 terminal | Full27955:19957 PASS41 FAIL. Compare17018 matches41 on C26d9; staging inheritance unproved. Main notified0556. | C App1a02991e0e |
+| C2 full App comparison | Retain bounded C comparison; require staging | C and Main Luna | Actual staging full result | review | C full10 and compare10; Main audit0610 | Full27955:19957 PASS41 FAIL. Earlier C26d9 matches41; audit0610 REJECT says staging dispatch failed before a run. | C App1a02991e0e |
 
-Blockers: A owns the real pinned-element proof. C owns the full App staging comparison; earlier C-head comparison is narrower. Main owns acceptance. B reports milestone ready; Main acceptance remains pending. H/D/P acceptance and START gates remain closed. D130 holds.
+
+| B acceptance audit | Receive independent B acceptance verdict | Luna | Main acceptance | review | diag-accept-B-0610 | Auditor ACCEPT, no must fix; stand-in export and same4 conformance failures qualified. Main acceptance remains separate. | B project branches |
+
+| C acceptance audit | Receive independent C rejection | Luna | Staging and browser evidence; artifact cleanup | review | diag-accept-C-0610 | Auditor REJECT: staging NOTRUN; new-track and modal browser bodies unverified; Runtime root report.md artifact requires C worker cleanup. | C project branches |
+
+| C browser lane | Receive existing lane repair owner | Main Luna | Real browser-capable lane | doing | diag-browserlane-0610 | Actual worker active. C owns two browser journeys after repair. No Runtime duplicate or new body. | No Runtime change |
+
+Blockers: A owns the real pinned-element proof. Main owns B acceptance after auditor ACCEPT. C owns the staging comparison, two browser journeys and Runtime review-artifact cleanup after auditor REJECT; Main owns the active browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5832736768 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact06:02 completed: removed0 dirs,packed0 dirs and gzipped1 log. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5546176512 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact06:02 completed: removed0 dirs,packed0 dirs and gzipped1 log. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -147,4 +154,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:02:55.175732+00:00. First pass this round. Inbox, header and A B C boards unchanged from 05:59. Runtime census has zero live workers and no ready task. A original proof remains active; B and C await Main acceptance. C comparison remains narrower than staging, as already sent to Main05:56. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact06:02 complete: removed0 dirs,packed0 dirs,gzipped1 log; protected trees and data retained. [Pass evidence](rounds/20261027T060255Z-pass.json).
+Current pass: 2026-10-27T06:12:19.525040+00:00. Two passes this round. Runtime census2717 has zero live workers and no ready task. Inbox and header unchanged; Main added B/C acceptance notes. Actual B audit0610 ACCEPT and C audit0610 REJECT read; Main acceptance is separate. C staging dispatch never produced a run, two browser journeys remain unverified and Runtime root report.md needs C worker cleanup. Existing Main browserlane0610 active. [Main handoff](../../design/peer-runtime-to-main-20261027T061148Z-acceptance-audits.md) sent; no Runtime duplicate. A proof still active, fresh log. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Guarded sweep/compact06:02 removed0 dirs,packed0 dirs,gzipped1 log; protected data retained. [Pass evidence](rounds/20261027T061025Z-pass.json).

@@ -80,7 +80,7 @@ OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; 
   esac
 done; set +f
 [ "$suite" = targeted ] && [[ "$repo" = runtime || "$repo" = agent ]] && [ -n "$files" ] && [ -z "$SELECTORS" ] && bad "targeted $repo run has no pytest selectors after filtering; no source-to-test mapping convention is registered; filtered changed paths:$FILTERED"
-HV=light; case $suite in full*|browser-toolchain|browser-journey|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration|registered014-render-integration|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
+HV=light; case $suite in full*|browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration|registered014-render-integration|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
 MEASURED_FLOOR=
 RECEIPT=$D/recorded-measured-floor.json
 refuse() { echo "$*" | tee "$D/why"; exit 3; }
@@ -107,7 +107,7 @@ if [ -z "$RUN" ]; then
   for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
   KIT_KEY=
-  case "$suite" in browser-toolchain|browser-journey|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
+  case "$suite" in browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
     KIT_KEY=$(sha256sum "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
     KIT_KEY+=$(for dependency in agent runtime; do git -C /home/user/work/$dependency rev-parse HEAD; done)
     ;;
