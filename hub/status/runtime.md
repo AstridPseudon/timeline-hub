@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T14:02:25Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T14:00:14.634828+00:00
+<!-- main | 2026-10-27T14:09:12Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T14:08:35.032686+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -9,20 +9,21 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | P5 | Retain qualified 38 case proof | Luna and service | Independent applicability PASS | merged | 6934; reviews 0445 0513 0637 and ec0 | Original 38 PASS; final Agent source applicability qualified. Original proof tuple unchanged. | Runtime95d / Agentec0a |
 | F-final | Retain delivered archive | Luna and independent Luna | Main direct exit 0 and independent PASS | merged | rt-F-final-artifact-review-next | [Artifact PASS](../../design/runtime-F-final-artifact-independent-publication-1848.json); four patch and bundle trees match. | Final abac / ec0a / 95d / 635f |
 | A acceptance | Retain formal A acceptance | Main and Luna | Main 10:12 acceptance | merged | diag-accept-A2-0910 | ACCEPT; boundary closed. Stand-in scope and absent owner document caveat retained. | Agent c40faf2bc5 |
-| B policy | Hand transform policy to H | H Luna lead | Main transfer and H START | doing | lead-H-r1 | Agent correction merged at 5d929; App correction and fixture restoration at 09b97. Agent 95 and App 115 targeted tests passed. H owns final acceptance. | B tips handed to H |
-| B acceptance | Hand comparisons to H | H Luna lead and service | Main transfer and H START | doing | lead-H-r1; B full App16657 | App16657 cancelled exit 130 through supported stop-test; no suite verdict. Baseline32136 FAIL. H owns final comparisons. Raw runs stay KEEP. | B App b837346ee6 |
+| B policy | Hand transform policy to H | H Luna lead | Main transfer and H START | doing | lead-H-r2 | Agent correction merged at 5d929; App correction and fixture restoration at 09b97. Agent 95 and App 115 targeted tests passed. H owns final acceptance. | B tips handed to H |
+| B acceptance | Hand comparisons to H | H Luna lead and service | Main transfer and H START | doing | lead-H-r2; B full App16657 | App16657 cancelled exit 130 through supported stop-test; no suite verdict. Baseline32136 FAIL. H owns final comparisons. Raw runs stay KEEP. | B App b837346ee6 |
 | C repair batch | Retain reviewed C corrections | C Luna and reviewers | Independent reviews and central checks | merged | C stale15 properties15 and waveform fix15 | Central45,10,45 PASS. Browser27831 three PASS; provider58 PASS. Original failures retained. | App c3a28be2b2 |
-| C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r1 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
+| C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r2 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
 | H baseline | Retain comparison inputs | Main Luna and service | Existing baseline service results | doing | diag-baselines-1030 | Owner 14843, 32136 and 2657 FAIL. Staging28624 FAIL after31491 error125. Shotlayer20416 running. Main owns BASELINES.md. | Owner and staging pins |
-| H one head | Repair round two findings | H Luna Sol and Astra | Main START recorded | doing | lead-H-r1; H collision workers | Agent validation 148 PASS; Runtime final fixture 4 PASS after three failures. App correction and final proofs remain open. | H owns current tips |
+| H one head | Complete shared collision vectors | H Luna Sol and Astra | Main START recorded | doing | lead-H-r2; H-fix-collision-vectors-r2 | Agent 148 and Runtime 4 PASS, merged. App attempt 108 PASS and 2 FAIL; H owns vector correction and next review. | Agent d46aae; Runtime c8e648 |
+| H continuity | Keep H manager running | Luna | H round one ended | doing | lead-H-r2 | Round one timeout 124 retained. Supported lead-roll dispatched round two, confirmed started 14:03:50Z. | No source change |
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | Sweep and compact exit 0, no stderr. No removal, packing or log compression. No eligible recycle across 50 trees. | No source change |
+| OPS headroom | Run guarded maintenance | Runtime manager | Guard census and supported tools | doing | Runtime manager | Census: 49 trees, none eligible. Sweep and compact running. New H test KEEP added after observation. | No source change |
 
-Blockers: H owns App projection correction, round three and final proofs. Main owns BASELINES.md and browser lane repair. Shotlayer Agent20416 running. D waits H acceptance and START; P waits D.
-Next ready: None for Runtime. Existing lead-H-r1 owns all consolidation and remaining B/C work; no duplicate dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 4148506624 bytes. No Runtime task is ready. H is separately managed.
+Blockers: H owns shared vectors, App projection correction, round three and final proofs. Main owns BASELINES.md and ordered browser repair. Agent20416 running. D waits H acceptance and START; P waits D.
+Next ready: None for Runtime. Sole H lead-H-r2 is running and owns consolidation; no duplicate product dispatch.
+live 0 / cap 0; ready-undispatched 0. Free 4270821376 bytes. Runtime tasks are complete; H lead and task workers are separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -32,4 +33,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T14:00:14.634828+00:00. Runtime worker check found 2717 rows, live 0 and ready 0. Inbox and header unchanged. H collision Agent validation 148 PASS and final Runtime fixture 4 PASS; prior fixture failures remain. App repair active. Main baseline and browser owners continue; BASELINES.md absent and D/P START absent. Forty-five H test records received prospective KEEP markers this pass, with no creation-time claim. Census across 50 trees found no eligible recycle. Sweep and compact exit 0 without stderr or removals. No product edit, dispatch, merge, new refusal or escalation. [Pass evidence](rounds/20261027T140014Z-pass.json).
+Current pass: 2026-10-27T14:08:35.032686+00:00. Runtime census: 2717 records, live 0 and ready 0. Inbox and header unchanged. H round two has one live lead and sole Sol vector correction; Agent and Runtime prior fixes remain merged. App 108 PASS and 2 FAIL remain open. Main baseline suite progresses; browser repair intentionally waits for its ended marker. BASELINES.md and D/P START absent. Census found 49 trees and none eligible. Sweep and compact results pending. Existing preserved data and delivered ZIP remain untouched; new H raw KEEP added after observation. No product edit, duplicate author, Runtime merge, refusal or escalation. [Pass evidence](rounds/20261027T140835Z-pass.json).
