@@ -419,6 +419,29 @@ if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/hom
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
 TEST_PYTHONPATH=$SNAP
 ASTRID_RUNTIME_SOURCE=
+if [ "$repo" = runtime ]; then
+  AGENT_BASE=
+  if [ "${target#integration:}" = "$target" ] && [ -f "$O/workers/$target/meta" ]; then
+    AGENT_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+  fi
+  case "$AGENT_BASE" in
+    tl/one-head) AGENT_REF=refs/heads/tl/one-head ;;
+    origin/*) AGENT_REF="refs/remotes/$AGENT_BASE" ;;
+    tl/*) AGENT_REF="refs/heads/$AGENT_BASE" ;;
+    *) AGENT_REF= ;;
+  esac
+  if [ -z "$AGENT_REF" ] || ! git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}" >/dev/null 2>&1; then
+    AGENT_REF=refs/remotes/origin/staging/timeline-v2.1
+  fi
+  AGENT_SHA=$(git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}") || { echo "matching Agent source unavailable for runtime target $target (base $AGENT_BASE)" >&2; exit 1; }
+  ASTRID_AGENT_SOURCE=/home/user/work/wt-int/agent-${AGENT_SHA:0:12}
+  if [ -d "$ASTRID_AGENT_SOURCE" ]; then
+    [ "$(git -C "$ASTRID_AGENT_SOURCE" rev-parse HEAD 2>/dev/null)" = "$AGENT_SHA" ] || { echo "Agent source path has the wrong commit: $ASTRID_AGENT_SOURCE" >&2; exit 1; }
+  else
+    git -C /home/user/work/agent worktree add --detach "$ASTRID_AGENT_SOURCE" "$AGENT_SHA" >/dev/null || exit 1
+  fi
+  CMD=${CMD//\/home\/user\/work\/agent/$ASTRID_AGENT_SOURCE}
+fi
 if [ $repo = agent ]; then
   RUNTIME_SHA=$(sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json")
   RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
@@ -427,11 +450,13 @@ if [ $repo = agent ]; then
   export ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE
 fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
-  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
+  SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
+  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 "$SUITE_TIMEOUT" nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
   SUITE_PID=$!; printf '%s\n' "$SUITE_PID" >&"$BENCH_CONTROL_FD"; exec {BENCH_CONTROL_FD}>&-
   wait "$SUITE_PID"; RC=$?
 else
-( cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
+( cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" timeout -k 60 "$SUITE_TIMEOUT" nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
 fi
 [ -n "$LEASED" ] && exit "$RC"
 fi
