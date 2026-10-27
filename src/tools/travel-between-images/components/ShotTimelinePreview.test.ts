@@ -813,6 +813,139 @@ describe('shot timeline popup persistence', () => {
     });
   });
 
+  it('saves one gallery clip from the loaded shot-local config with authored IDs and tracks', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const publish = vi.fn(async (request: { graph: typeof fixture }) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-4')!;
+    const projected = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const provider = createShotTimelineDataProvider(projected, composition, 'occ-4', adapter);
+
+    const loaded = await provider.loadTimeline('shot-gallery-save');
+    expect(loaded.config.app).toMatchObject({ canonicalComposition: { occurrenceIds: ['occ-4'] } });
+    expect(loaded.config.clips.map((clip) => clip.id)).toEqual(['beta-video']);
+    expect(loaded.config.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
+
+    const nextConfig = {
+      ...loaded.config,
+      clips: [...loaded.config.clips, {
+        id: 'gallery-drop-clip',
+        track: 'video',
+        clipType: 'media',
+        at: 1.2,
+        hold: 0.5,
+        asset: 'gallery-image',
+      }],
+    };
+    await provider.saveTimeline('shot-gallery-save', nextConfig, loaded.configVersion);
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    const saved = publish.mock.calls[0]![0].graph;
+    const savedOccurrence = saved.occurrences.find((item) => item.occurrence_id === 'occ-4')!;
+    const savedRevision = saved.shot_revisions.find((item) => (
+      item.shot_id === savedOccurrence.shot_id && item.revision_id === savedOccurrence.revision_id
+    ))!;
+    const savedTimeline = savedRevision.internal_timeline_revision.timeline;
+    expect(savedTimeline.clips).toHaveLength(2);
+    expect(savedTimeline.clips.find((clip) => clip.id === 'gallery-drop-clip')).toMatchObject({
+      id: 'gallery-drop-clip', track: 'video', asset: 'gallery-image',
+    });
+    expect(savedTimeline.tracks.map((track) => track.id)).toEqual(['video', 'audio']);
+    expect(savedTimeline.clips.every((clip) => !clip.app?.group)).toBe(true);
+    expect(savedTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+  });
+
+  it('persists a gallery clip on a bare authored new track', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const publish = vi.fn(async (request: { graph: typeof fixture }) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-4')!;
+    const projected = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const provider = createShotTimelineDataProvider(projected, composition, 'occ-4', adapter);
+    const loaded = await provider.loadTimeline('shot-gallery-new-track');
+    const nextConfig = {
+      ...loaded.config,
+      tracks: [...(loaded.config.tracks ?? []), { id: 'overlay', kind: 'visual' as const, label: 'Overlay' }],
+      clips: [...loaded.config.clips, {
+        id: 'gallery-new-track-clip',
+        track: 'overlay',
+        clipType: 'media',
+        at: 1.2,
+        hold: 0.5,
+        asset: 'gallery-image',
+      }],
+    };
+
+    await provider.saveTimeline('shot-gallery-new-track', nextConfig, loaded.configVersion);
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    const saved = publish.mock.calls[0]![0].graph;
+    const savedOccurrence = saved.occurrences.find((item) => item.occurrence_id === 'occ-4')!;
+    const savedRevision = saved.shot_revisions.find((item) => (
+      item.shot_id === savedOccurrence.shot_id && item.revision_id === savedOccurrence.revision_id
+    ))!;
+    const savedTimeline = savedRevision.internal_timeline_revision.timeline;
+    expect(savedTimeline.clips.filter((clip) => clip.id === 'gallery-new-track-clip')).toHaveLength(1);
+    expect(savedTimeline.clips.find((clip) => clip.id === 'gallery-new-track-clip')).toMatchObject({ track: 'overlay' });
+    expect(savedTimeline.tracks.map((track) => track.id)).toEqual(['video', 'audio', 'overlay']);
+    expect(savedTimeline.clips.every((clip) => !clip.app?.group)).toBe(true);
+    expect(savedTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+  });
+
+  it('forks a shared shot for one gallery clip while leaving the other occurrence unchanged', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+    const publish = vi.fn(async (request: { graph: typeof fixture }) => request.graph);
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
+    const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-1')!;
+    const sibling = composition.occurrences.find((candidate) => candidate.occurrenceId === 'occ-2')!;
+    const projected = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+    const provider = createShotTimelineDataProvider(projected, composition, 'occ-1', adapter);
+    const loaded = await provider.loadTimeline('shot-gallery-shared');
+    expect(loaded.config.app).toMatchObject({ canonicalComposition: { occurrenceIds: ['occ-1'] } });
+
+    const nextConfig = {
+      ...loaded.config,
+      clips: [...loaded.config.clips, {
+        id: 'gallery-shared-clip',
+        track: 'video',
+        clipType: 'media',
+        at: 2,
+        hold: 0.5,
+        asset: 'gallery-image',
+      }],
+    };
+    await provider.saveTimeline('shot-gallery-shared', nextConfig, loaded.configVersion);
+
+    expect(publish).toHaveBeenCalledTimes(1);
+    const saved = publish.mock.calls[0]![0].graph;
+    const savedOccurrence = saved.occurrences.find((item) => item.occurrence_id === 'occ-1')!;
+    const savedSibling = saved.occurrences.find((item) => item.occurrence_id === 'occ-2')!;
+    expect(savedOccurrence.shot_id).not.toBe(occurrence.shotId);
+    expect(savedOccurrence.revision_id).not.toBe(occurrence.revisionId);
+    expect(savedSibling.shot_id).toBe(sibling.shotId);
+    expect(savedSibling.revision_id).toBe(sibling.revisionId);
+
+    const forkRevision = saved.shot_revisions.find((item) => (
+      item.shot_id === savedOccurrence.shot_id && item.revision_id === savedOccurrence.revision_id
+    ))!;
+    const forkTimeline = forkRevision.internal_timeline_revision.timeline;
+    expect(forkTimeline.clips).toHaveLength(3);
+    expect(forkTimeline.clips.filter((clip) => String(clip.id).endsWith(':gallery-shared-clip'))).toHaveLength(1);
+    expect(forkTimeline.clips.find((clip) => String(clip.id).endsWith(':gallery-shared-clip'))).toMatchObject({ track: 'video', asset: 'gallery-image' });
+    expect(forkTimeline.clips.every((clip) => !clip.app?.group)).toBe(true);
+    expect(forkTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+
+    const originalSiblingRevision = fixture.shot_revisions.find((item) => (
+      item.shot_id === sibling.shotId && item.revision_id === sibling.revisionId
+    ))!;
+    const persistedSiblingRevision = saved.shot_revisions.find((item) => (
+      item.shot_id === savedSibling.shot_id && item.revision_id === savedSibling.revision_id
+    ))!;
+    expect(persistedSiblingRevision.internal_timeline_revision.timeline).toEqual(
+      originalSiblingRevision.internal_timeline_revision.timeline,
+    );
+  });
+
   it('sanitizes projected tracks in durable recovery and retry bytes', async () => {
     resetFakeIndexedDB();
     const graph = structuredClone(fixture);
