@@ -6049,6 +6049,15 @@
                 "duration": {
                   "type": "number"
                 },
+                "durationFrames": {
+                  "type": "number"
+                },
+                "easing": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
                 "intensity": {
                   "type": "number"
                 },
@@ -6067,6 +6076,15 @@
               "properties": {
                 "duration": {
                   "type": "number"
+                },
+                "durationFrames": {
+                  "type": "number"
+                },
+                "easing": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
                 },
                 "intensity": {
                   "type": "number"

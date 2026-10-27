@@ -270,6 +270,39 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     editing.assert_baseline()
 
 
+def test_visual_candidate_is_refused_before_publication_when_builtin_phase_is_unsupported(editing, monkeypatch):
+    from runtime_protocol.timeline_commit_auth import _authoring_parent_identity, images
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+    from runtime_protocol.timeline_commit_validation import digest
+
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    accept = RequestCommitPort.accept
+
+    def add_unsupported_visual_ref(port, prepared):
+        candidate = copy.deepcopy(prepared)
+        document = candidate["canonical_document"]
+        payload = document["parent_revision"]["payload"]
+        target = next(clip for clip in payload["clips"] if clip["id"] == "music-bed")
+        target["entrance"] = {"id": "slide-up", "durationFrames": 12}
+        mirror = next(clip for clip in payload["config"]["clips"] if clip["id"] == "music-bed")
+        mirror["entrance"] = {"id": "slide-up", "durationFrames": 12}
+        document["parent_revision"]["content_digest"] = digest(payload)
+        document["parent_revision"]["revision_id"] = _authoring_parent_identity(
+            images(document), (document["project_id"], document["timeline_id"]),
+            document["dependency_manifest"],
+        )
+        candidate["document_digest"] = digest(document)
+        return accept(port, candidate)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", add_unsupported_visual_ref)
+    with pytest.raises(RuntimeErrorBase, match="not supported in entrance"):
+        editing.commit(editing.body([editing.move("music-bed", 1)]), "unsupported-visual-ref")
+
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
+
+
 @pytest.mark.parametrize("deleted_index", [0, -1])
 def test_real_reordered_clip_delete_undo_restores_exact_order(editing, deleted_index):
     from astrid.sdk.timeline.capture import capture_clip_delete

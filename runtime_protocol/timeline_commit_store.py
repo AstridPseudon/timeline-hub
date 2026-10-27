@@ -1500,6 +1500,8 @@ class TimelineCommitStore:
         if prepared["document_digest"] != digest(document):
             reject("invalid_closure", "whole-document digest mismatch", status=422)
         self._validate_closure(document)
+        from .timeline_visual_fields import validate_timeline_visual_fields
+        validate_timeline_visual_fields(document)
         records = prepared["records"]
         commands = records["commands"]
         if not commands or [r["ordinal"] for r in commands] != list(range(len(commands))):
