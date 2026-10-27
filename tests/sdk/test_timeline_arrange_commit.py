@@ -122,6 +122,38 @@ def test_arrange_twenty_in_one_function_commit_and_exact_undo(arranged_session, 
     assert undone['data']['canonical_document'] == original
 
 
+def test_sequential_twenty_occurrence_setup_then_function_arrange_and_exact_undo(arranged_session):
+    tl, realm, calls = arranged_session
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+    from_bundle = copy.deepcopy(tl.bundle)
+    births = []
+    for index in range(20):
+        command = capture_occurrence_create(
+            from_bundle, f'new-occ-{index:02d}', f'new-shot-{index:02d}',
+            name=f'New shot {index:02d}', track='picture', on=index * 3, duration=2)
+        births.append(command)
+        from_bundle = execute(from_bundle, [command]).bundle
+
+    setup = tl.commit(births, label='Create twenty occurrences')
+    assert setup['receipt']['receipt_id']
+    assert len(calls) == len(realm.accepted) == 1
+    before_arrange = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    order = [f'new-occ-{index:02d}' for index in reversed(range(20))]
+
+    arranged = tl.commit(lambda t: t.arrange(order, at=200, gap=0.25), label='Arrange occurrences')
+    assert len(calls) == len(realm.accepted) == 2
+    after = arranged['data']['canonical_document']['parent_revision']['payload']['occurrences']
+    arranged_rows = [row for row in after if row['occurrence_id'] in set(order)]
+    assert [row['occurrence_id'] for row in arranged_rows] == order
+    assert [row['placement']['start_ms'] for row in arranged_rows] == [200000 + i * 2250 for i in range(20)]
+
+    undone = tl.undo(publications=[arranged['receipt']['receipt_id']])
+    assert len(calls) == len(realm.accepted) == 3
+    assert undone['data']['canonical_document'] == before_arrange
+
+
 def test_arrange_composes_with_free_edits_and_another_arrangement(arranged_session):
     tl, realm, calls = arranged_session
     original = copy.deepcopy(realm.documents[realm.head['revision_id']])
