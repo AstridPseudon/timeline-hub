@@ -115,7 +115,7 @@ def capture_clip_set(bundle, select, *, values=None, clear=()):
     return _capture(bundle, 'clip.set', select, values, clear)
 
 
-def clip_set_element(ctx, command):
+def _clip_element(ctx, command, *, allow_initial=False):
     ref = _target(ctx, command, 'clip')
     ctx.select('element.targets', ref.rsplit('/', 1)[0])
     for key in ('clipType', 'hold', 'asset', 'file', 'src', 'source', 'from', 'to'):
@@ -123,11 +123,20 @@ def clip_set_element(ctx, command):
     element = command['args']['elementRef']
     selected, alias = ctx.read(ref, ['elementRef']), ctx.read(ref, ['element_ref'])
     before = selected if selected is not None else alias
-    if not isinstance(before, dict):
+    row = ctx.state.entity(ref)
+    initial_discord = (
+        allow_initial
+        and ctx.read(ref, ['clipType']) == 'am-discord'
+        and 'elementRef' not in row
+        and 'element_ref' not in row
+    )
+    if not isinstance(before, dict) and not initial_discord:
         raise CommandError('clip.set-element requires an existing element ref', ref=ref)
-    if (any(before.get(key) != element[key] for key in ('id', 'kind'))
+    if isinstance(before, dict) and (any(before.get(key) != element[key] for key in ('id', 'kind'))
             or before.get('packId') is not None and before['packId'] != element.get('packId')):
         raise CommandError('clip.set-element must keep the element id and kind and pack owner', ref=ref)
+    if allow_initial and not element.get('packId'):
+        raise CommandError('clip.place-element requires an admitted project-pack element', ref=ref)
     if element.get('packId'):
         _selected_schema(ctx, command, ref, element)
     elif 'schema_source' in command['args']:
@@ -135,6 +144,11 @@ def clip_set_element(ctx, command):
     ctx.write(ref, ['elementRef'], element)
     if 'element_ref' in ctx.state.entity(ref):
         ctx.clear(ref, ['element_ref'])
+
+
+def clip_set_element(ctx, command):
+    ref = command['select']
+    _clip_element(ctx, command, allow_initial=isinstance(ref, str) and ref.startswith('occurrence:'))
 
 
 def capture_clip_set_element(bundle, select, *, element, schema_source=None,

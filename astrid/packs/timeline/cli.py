@@ -1345,6 +1345,20 @@ def _cmd_update_element(parsed: argparse.Namespace) -> int:
     return print_result(result,as_json=parsed.json)
 
 
+def _cmd_place_element(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.place_element(
+        parsed.project,
+        parsed.ref,
+        realm=parsed.realm,
+        target=parsed.target,
+        element={'packId': parsed.pack, 'id': parsed.element,
+                 'kind': parsed.kind, 'revision': parsed.revision},
+        expected_head=parsed.expected_head,
+        idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=parsed.json)
+
+
 def _cmd_replace_parent_media(parsed: argparse.Namespace) -> int:
     result = parsed.client.timelines.replace_parent_media(
         parsed.project,
@@ -2475,6 +2489,24 @@ def _configure_update_element(subparser: argparse.ArgumentParser) -> None:
     _add_idempotency_key(subparser)
     _add_json_flag(subparser)
     subparser.set_defaults(handler=_cmd_update_element)
+
+
+def _configure_place_element(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument('ref', help='Exact target timeline ID or slug.')
+    subparser.add_argument('--realm', required=True,
+                           help='Canonical realm used by the configured project-pack admission.')
+    subparser.add_argument('--target', required=True,
+                           help='Exact occurrence shot clip: occurrence:<occurrence-id>/clip:<clip-id>.')
+    subparser.add_argument('--pack', required=True, help='Admitted project-pack owner (packId).')
+    subparser.add_argument('--element', required=True, help='Admitted element id.')
+    subparser.add_argument('--kind', choices=['effect'], default='effect')
+    subparser.add_argument('--revision', required=True, help='Exact admitted element revision.')
+    subparser.add_argument('--expected-head', required=True,
+                           help='Exact parent-composition revision; stale heads fail closed.')
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_place_element)
 
 
 def _configure_replace_parent_media(subparser: argparse.ArgumentParser) -> None:
@@ -3935,6 +3967,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     ),
     CommandSpec("elements",help="Inspect exact saved effect refs, editable pack files and admission/publication commands.",configure=_configure_elements),
     CommandSpec("update-element",help="Update the same parent effect from an admitted file pack using exact-head CAS.",configure=_configure_update_element),
+    CommandSpec("place-element",help="Place an admitted project-pack element on an occurrence shot clip using exact-head CAS.",configure=_configure_place_element),
     CommandSpec(
         "replace-parent-media",
         help="Atomically replace one clip in an exact canonical parent-composition closure.",
