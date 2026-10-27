@@ -8,6 +8,7 @@ import pytest
 
 from astrid.core.element.schema import load_element_definition
 from astrid.sdk.timeline_restructure import describe, differences, flatten, plan, split
+from astrid.core.timeline.cuts import clip_duration
 from tests.sdk.test_timeline_restructure import flat_film, published
 
 
@@ -29,13 +30,19 @@ def test_sprite_pieces_preserve_animation_params_and_carry_the_source_clock():
               if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "sprite-cross"]
 
     assert len(pieces) == 3
+    intervals = sorted((chapter.start_ms / 1000 + piece["at"],
+                        chapter.start_ms / 1000 + piece["at"] + clip_duration(piece))
+                       for chapter in planned.chapters for piece in chapter.clips
+                       if piece.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "sprite-cross")
+    assert intervals[0][0] == pytest.approx(3.6333333333333333)
+    assert intervals[-1][1] == pytest.approx(8.633333333333333)
+    assert all(left[1] == pytest.approx(right[0]) for left, right in zip(intervals, intervals[1:]))
     second = pieces[1]
     params = second["params"]
     assert params["sourceClock"] == {"offsetFrames": 11, "speed": 1.0}
     assert second["speed"] == 1.0
-    assert (params["x"], params["y"], params["flipX"]) == (1, 2, False)
-    assert params["keyframes"] == [{"frame": 2, "x": 4}, {"frame": 8, "y": 9},
-                                    {"frame": 11, "flipX": True}, {"frame": 30, "x": 12}]
+    assert (params["x"], params["y"], params["flipX"]) == (4, 9, False)
+    assert params["keyframes"] == [{"frame": 0, "flipX": True}, {"frame": 19, "x": 12}]
     assert params["blinkAt"] == [10, 18, 40]
     assert params["silhouette"] == {"until": 35}
     assert params["frames"] == {"frameWidth": 16, "frameHeight": 16, "count": 4, "fps": 8}
@@ -82,13 +89,45 @@ def test_sprite_phase_advances_at_clip_speed():
     flat = flat_film()
     flat["shots"]["film"]["internal_timeline"]["clips"].append({
         "id": "fast-sprite", "clipType": "am-sprite", "track": "sprite", "asset": "R",
-        "at": 3.5, "hold": 2.0, "speed": 2.0, "params": {"x": 4, "y": 7},
+        "at": 3.5, "hold": 4.0, "speed": 2.0, "params": {"x": 4, "y": 7},
     })
     planned = plan(flat)
     pieces = [c for chapter in planned.chapters for c in chapter.clips
               if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "fast-sprite"]
     assert pieces[1]["params"]["sourceClock"] == {"offsetFrames": 15, "speed": 2.0}
     assert pieces[1]["speed"] == 1.0
+    intervals = sorted((chapter.start_ms / 1000 + piece["at"],
+                        chapter.start_ms / 1000 + piece["at"] + clip_duration(piece))
+                       for chapter in planned.chapters for piece in chapter.clips
+                       if piece.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "fast-sprite")
+    assert intervals[0][0] == pytest.approx(3.5)
+    assert intervals[-1][1] == pytest.approx(5.5)
+    assert all(left[1] == pytest.approx(right[0]) for left, right in zip(intervals, intervals[1:]))
+
+
+@pytest.mark.parametrize("field", ["keyframes", "sourceClock"])
+def test_edited_later_sprite_piece_is_not_rejoined(field):
+    flat = flat_film()
+    flat["shots"]["film"]["internal_timeline"]["clips"].append({
+        "id": "edited-sprite", "clipType": "am-sprite", "track": "sprite", "at": 3.5,
+        "hold": 5.0, "params": {"x": 1, "y": 2, "keyframes": [{"frame": 30, "x": 9}]},
+    })
+    stored = split(flat)
+    candidates = [clip for shot in stored["shots"].values()
+                  for clip in shot["internal_timeline"]["clips"]
+                  if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "edited-sprite"]
+    later = next(clip for clip in candidates
+                 if clip["app"]["astrid"]["timeline_restructure_piece"]["index"] == 1)
+    if field == "sourceClock":
+        later["params"]["sourceClock"]["offsetFrames"] += 1
+    else:
+        later["params"]["keyframes"][0]["frame"] += 1
+
+    flattened = flatten(stored)
+    clips = [clip for shot in flattened["shots"].values() for clip in shot["internal_timeline"]["clips"]]
+    assert all(clip["id"] != "edited-sprite" for clip in clips)
+    assert any(clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "edited-sprite"
+               for clip in clips)
 
 
 @pytest.mark.parametrize(("speed", "phase"), [(0.5, 7), (1.5, 22), (2.0, 30)])

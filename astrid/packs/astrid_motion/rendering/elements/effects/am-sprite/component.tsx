@@ -65,6 +65,10 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
     : frame;
   const sourceFrame = animationFrame + frameOffset;
   const sf = stepStart(sourceFrame, stepFrames) - frameOffset;
+  const keyframeOrigin = clock && Number.isFinite(clock.offsetFrames) && Number.isFinite(clock.speed) && clock.speed > 0
+    ? Math.floor(clock.offsetFrames * clock.speed)
+    : 0;
+  const keyframeStep = sf - keyframeOrigin;
 
   // Active keyframe: the last one at or before this step. Keyframes apply
   // as held poses, so the sprite never interpolates between them.
@@ -73,7 +77,7 @@ const spriteAt = (raw: unknown, assetEntry: ElementComponentProps['assetEntry'],
   let flipX = params.flipX === true;
   const keyframes = [...(params.keyframes ?? [])].sort((a, b) => a.frame - b.frame);
   for (const key of keyframes) {
-    if (key.frame <= sf) {
+    if (key.frame <= keyframeStep) {
       x = finiteNumber(key.x, x);
       y = finiteNumber(key.y, y);
       flipX = key.flipX ?? flipX;

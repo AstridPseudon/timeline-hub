@@ -87,8 +87,42 @@ def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chap
     params = copy.deepcopy(dict(clip.get("params") or {})) if isinstance(clip.get("params"), Mapping) else {}
     speed = _num(clip.get("speed"), 1.0) or 1.0
     offset = max(0, int(round(start * fps)) - int(round(_num(clip.get("at")) * fps)))
-    params["sourceClock"] = {"offsetFrames": offset, "speed": speed}
+    prior_clock = params.get("sourceClock") if isinstance(params.get("sourceClock"), Mapping) else {}
+    prior_offset = _num(prior_clock.get("offsetFrames"))
+    prior_speed = _num(prior_clock.get("speed"), 1.0) or 1.0
+    # Sprite keyframes are stored on each piece's local clock. Preserve the pose
+    # already active at this cut as the piece's initial pose; later keys remain
+    # pending until their original activation step.
+    frame_offset = _num(params.get("frameOffset"))
+    step = max(1, int(_num(params.get("stepFrames"), 2)))
+    source_phase = offset * prior_speed * speed
+    source_cut = math.floor((source_phase + frame_offset) / step) * step - frame_offset
+    pose = {key: params[key] for key in ("x", "y", "flipX") if key in params}
+    has_keyframes = isinstance(params.get("keyframes"), list)
+    future = []
+    for key in params.get("keyframes", []) if has_keyframes else []:
+        if not isinstance(key, Mapping):
+            continue
+        if _num(key.get("frame"), -1) <= source_cut:
+            for field in ("x", "y", "flipX"):
+                if field in key:
+                    pose[field] = key[field]
+        else:
+            shifted = copy.deepcopy(dict(key))
+            shifted["frame"] = int(_num(key.get("frame")) - math.floor(source_phase))
+            future.append(shifted)
+    params.update(pose)
+    if has_keyframes:
+        params["keyframes"] = future
+    clock_offset = offset if not prior_clock else (prior_offset + offset) / speed
+    params["sourceClock"] = {"offsetFrames": _r(clock_offset),
+                              "speed": prior_speed * speed}
     value["speed"] = 1.0
+    # _cut_clip computed length using the original speed; pieces now run at 1x.
+    if "hold" in value:
+        value["hold"] = _r((end - start))
+    if "from" in value and "to" in value:
+        value["to"] = _r(_num(value["from"]) + (end - start))
     value["params"] = params
     return value
 

@@ -130,7 +130,7 @@ schema:
       - speed
       properties:
         offsetFrames:
-          type: integer
+          type: number
           minimum: 0
         speed:
           type: number
