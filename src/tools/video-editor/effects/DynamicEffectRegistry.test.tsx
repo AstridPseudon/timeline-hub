@@ -21,10 +21,12 @@ import * as effectsModule from '@/tools/video-editor/effects';
 import {
   entranceEffects,
   getEffectRegistry,
+  resolvePreviewAnimationReference,
   replaceEffectRegistry,
   wrapWithClipEffects,
   wrapWithEffect,
 } from '@/tools/video-editor/effects';
+import { resolveAnimationReferences } from '@banodoco/timeline-composition/theme-api';
 import type { EffectComponentProps } from '@/tools/video-editor/effects/entrances';
 import { DynamicEffectRegistry } from '@/tools/video-editor/effects/DynamicEffectRegistry';
 import { EffectErrorBoundary } from '@/tools/video-editor/effects/EffectErrorBoundary';
@@ -68,6 +70,7 @@ describe('DynamicEffectRegistry', () => {
   });
 
   afterEach(() => {
+    remotionState.frame = 0;
     localStorage.clear();
     replaceEffectRegistry(new DynamicEffectRegistry({}));
     vi.restoreAllMocks();
@@ -84,6 +87,77 @@ describe('DynamicEffectRegistry', () => {
     expect(FadeComponent).toBe(BuiltInFade);
     expect(CustomComponent).toBeDefined();
     expect(registry.getCode('custom:test')).toContain('custom-test');
+  });
+
+  it.each([
+    ['fade entrance', 'fade', 'entrance', { type: 'fade', duration: 0.4 }],
+    ['fade exit', 'fade', 'exit', { id: 'fade', durationFrames: 12 }],
+    ['fade-up entrance', 'fade-up', 'entrance', { type: 'fade-up' }],
+    ['scale-in entrance', 'scale-in', 'entrance', { id: 'scale-in', durationFrames: 20 }],
+    ['slide-left entrance', 'slide-left', 'entrance', { type: 'slide-left', duration: 0.5 }],
+    ['slide-up exit', 'slide-up', 'exit', { id: 'slide-up' }],
+    ['type-on entrance', 'type-on', 'entrance', { id: 'type-on', durationFrames: 120 }],
+  ] as const)(
+    'resolves %s through the installed package exactly as the preview adapter does',
+    (_name, id, phase, reference) => {
+      const [fromPreview] = resolvePreviewAnimationReference(reference, phase, 30);
+      const [fromPackage] = resolveAnimationReferences([{
+        id,
+        ...('durationFrames' in reference ? { durationFrames: reference.durationFrames } : {}),
+        ...('duration' in reference ? { durationFrames: Math.round(reference.duration * 30) } : {}),
+      }], phase);
+
+      expect(fromPreview.id).toBe(fromPackage.id);
+      expect(fromPreview.phase).toBe(fromPackage.phase);
+      expect(fromPreview.durationFrames).toBe(fromPackage.durationFrames);
+      expect(fromPreview.kind).toBe(fromPackage.kind);
+    },
+  );
+
+  it.each([
+    ['legacy entrance shape', { type: 'fade-up', duration: 0.4, params: { easing: 'ease-in' } }, undefined],
+    ['package animation reference shape', { id: 'fade-up', durationFrames: 12, params: { easing: 'step' } }, undefined],
+  ])('draws %s through the installed package animation component', (_name, entrance) => {
+    const clip = { id: 'preview-field', entrance } as unknown as ResolvedTimelineClip;
+    const { container } = render(<>{wrapWithClipEffects(<span>preview content</span>, clip, 60, 30)}</>);
+    const fills = Array.from(container.querySelectorAll('[style]')) as HTMLElement[];
+
+    expect(screen.getByText('preview content')).toBeInTheDocument();
+    expect(fills.some((element) => element.style.transform.includes('translateY')
+      || element.style.transform.includes('scale'))).toBe(true);
+  });
+
+  it('does not synthesize type-on text or a clip-path for top-level type-on', () => {
+    const clip = {
+      id: 'preview-field',
+      text: { content: 'Visible text' },
+      entrance: { id: 'type-on', durationFrames: 120 },
+    } as unknown as ResolvedTimelineClip;
+    const { container } = render(<>{wrapWithClipEffects(<span>Visible text</span>, clip, 60, 30)}</>);
+
+    expect(screen.getByText('Visible text')).toBeInTheDocument();
+    expect(container.querySelector('[style*="clip-path"]')).toBeNull();
+    expect(container.textContent).toBe('Visible text');
+  });
+
+  it('runs the package exit clock only over the final resolved duration', () => {
+    const clip = {
+      id: 'preview-field',
+      exit: { id: 'slide-up' },
+    } as unknown as ResolvedTimelineClip;
+    remotionState.frame = 48;
+    const view = render(<>{wrapWithClipEffects(<span>preview content</span>, clip, 60, 30)}</>);
+    const getAnimationStyle = () => {
+      const element = view.container.querySelector('[style*="translateY"]') as HTMLElement | null;
+      return element?.style;
+    };
+
+    expect(getAnimationStyle()?.transform).toBe('translateY(0px)');
+    expect(getAnimationStyle()?.opacity).toBe('1');
+    remotionState.frame = 60;
+    view.rerender(<>{wrapWithClipEffects(<span>preview content</span>, clip, 60, 30)}</>);
+    expect(getAnimationStyle()?.transform).toBe('translateY(-30px)');
+    expect(getAnimationStyle()?.opacity).toBe('0');
   });
 
   it('returns a compile error overlay instead of throwing for invalid custom code', async () => {

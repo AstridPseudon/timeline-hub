@@ -18,7 +18,8 @@ export const transitionReferenceFrames = (value: unknown, fps: number): number =
   if (typeof reference.durationFrames === 'number' && Number.isFinite(reference.durationFrames)) {
     return Math.max(0, reference.durationFrames);
   }
-  return typeof reference.duration === 'number' && Number.isFinite(reference.duration)
-    ? Math.max(0, Math.round(reference.duration * fps))
-    : 0;
+  if (typeof reference.duration === 'number' && Number.isFinite(reference.duration)) {
+    return Math.max(0, Math.round(reference.duration * fps));
+  }
+  return 8;
 };

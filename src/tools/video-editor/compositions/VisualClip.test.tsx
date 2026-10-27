@@ -460,24 +460,25 @@ describe('VisualClip transition rendering', () => {
     expect(transitionFill).toBeDefined();
   });
 
-  it('renders canonical package transition references with frame durations', async () => {
-    const { container } = render(
-      <VisualClip
-        clip={mediaClip({ transition: { id: 'cross-fade', durationFrames: 15 } as never })}
-        track={track}
-        fps={30}
-      />,
-    );
+  it.each(['fade', 'cross-fade'])(
+    'renders %s from the incoming clip transition reference',
+    async (id) => {
+      const incoming = mediaClip({
+        id: 'incoming',
+        transition: { id, durationFrames: 8 } as never,
+      });
+      const { container } = render(
+        <VisualClip clip={incoming} track={track} fps={30} predecessor={mediaClip({ id: 'outgoing' })} />,
+      );
 
-    await waitFor(() => {
+      await waitFor(() => expect(screen.getByTestId('image-asset')).toBeInTheDocument());
+      expect(screen.getAllByTestId('absolute-fill').some((node) => {
+        const style = JSON.parse(node.getAttribute('data-style') ?? '{}') as Record<string, unknown>;
+        return typeof style.opacity === 'number';
+      })).toBe(true);
       expect(container.querySelector('[data-testid="missing-transition-placeholder"]')).toBeNull();
-    });
-    const transitionFill = screen.getAllByTestId('absolute-fill').find((node) => {
-      const style = node.getAttribute('data-style') ?? '';
-      return style.includes('opacity');
-    });
-    expect(transitionFill).toBeDefined();
-  });
+    },
+  );
 
   it('resolves and renders built-in wipe transition', async () => {
     render(
