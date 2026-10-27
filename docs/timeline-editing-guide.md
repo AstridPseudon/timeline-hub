@@ -164,10 +164,20 @@ in [the editing front door](../astrid/packs/rendering/docs/references/editing.md
 A word said more than once must name its line and number, as `timelines words
 <timeline> <word>` prints them. Beats are reachable through moment strings;
 `timelines words <timeline> <word> --beats` prints the beats near one word.
-There is no full beat list.
+There is no full beat list. `beat 2 after "Astrid"` counts from the word's
+start: beat 1 is the first beat after it, and a beat on the word's own frame
+is skipped. Beats come from the music clip's beat grid. With no grid, or fewer
+beats than asked for, the moment is refused ("there is no beat 2 after …");
+tell the person rather than choosing a time.
 
-Ripple helpers work on flat timelines inside a function, one commit and one
-undo each:
+Ripple helpers are for flat timelines, where `tl.bundle["placements"]` is
+empty. On a narrated film (one with shot occurrences) they are not a supported
+step: do not call them; tell the person what you would open or remove and ask
+how to proceed. Changing the narration itself (inserting or removing a line)
+is the separate re-flow path in [the editing front
+door](../astrid/packs/rendering/docs/references/editing.md#the-narration-re-flow),
+which edits a detached draft. On a flat timeline each helper runs inside a
+function, one commit and one undo each:
 
 ```python
 tl.commit(lambda t: t.insert_time(4, 2), label="Open 2 s at 4 s")
@@ -202,8 +212,8 @@ and makes what follows move against its beats. Both modes are supported
 choices. Only a bed that begins at or inside the edit is unsettled, in either
 mode: E14 tests that case (including a bed that begins at the window's start
 under `plays_on`), and what it does today is not yet the intended behavior. Do
-not promise such a bed stays whole; read the bed's clips back after the
-commit and tell the person what changed.
+not promise such a bed stays whole: preview the edit and ask the person, then
+read the bed's clips back after the commit and tell the person what changed.
 `close_gap` measures the silence from the end of the
 previous word. Within one function each call sees the previous one, so times
 after a ripple have already moved.
@@ -375,7 +385,7 @@ The final perception guidance (project P) will replace this section.
 - Public beat list (only beats near one word); a CLI word-anchor adapter.
 - Changing an existing clip's text in place (`clip.set(text=...)`): not
   qualified; awaiting E14.
-- Ripple on one track only.
+- Ripple on one track only, and the ripple helpers on a narrated film.
 - Grouping existing clips into a shot; regrouping beyond `timelines restructure`.
 - Cross-timeline transactions and group undo.
 - Aspect-ratio variants.
