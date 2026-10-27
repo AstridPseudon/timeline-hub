@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T10:01:46Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T10:01:16.411442+00:00
+<!-- main | 2026-10-27T10:07:04Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T10:06:36.645468+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -151,7 +151,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
 Blockers: Main owns formal A acceptance after independent ACCEPT. C classifier is terminal: B35 fixture or expectation, C1 pending expectation, C2 ClipAction regressions; Main owns release and assignments. H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5917425664 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep removed 0; compact packed 0 dirs and compressed 0 old logs, both exit 0. No refusals. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5917360128 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. This round sweep removed 0; compact packed 0 dirs and compressed 0 logs, both exit 0. No refusals. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -162,4 +162,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T10:01:16.411442+00:00. Worker check exit 0; all 2717 rows unchanged, live 0 and ready 0. Inbox, header and A/B/C boards unchanged. A independent ACCEPT retains its boundary caveat. Main classifier terminal; prior 09:30 handoff retained, Main 09:12 edits HOLD remains. H/D/P START absent. No eligible Runtime recycle. This round sweep and compact completed exit 0 with nothing eligible. No refusals. Scheduled recheck about 10:06Z. [Pass evidence](rounds/20261027T095535Z-pass.json).
+Current pass: 2026-10-27T10:06:36.645468+00:00. Scheduled recheck complete: worker check exit 0, all 2717 rows unchanged, live 0 and ready 0. Inbox, header and A/B/C boards unchanged. A independent ACCEPT retains its boundary caveat. Main classifier terminal; prior 09:30 handoff retained, Main 09:12 edits HOLD remains. H/D/P START absent. No eligible Runtime recycle. This round sweep and compact completed exit 0 with nothing eligible. No refusals. Next check about 10:16Z. [Pass evidence](rounds/20261027T100551Z-pass.json).
