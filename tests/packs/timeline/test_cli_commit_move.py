@@ -98,6 +98,24 @@ def test_move_dispatch_matches_python_capture_and_reports_immutable_revision(com
     assert output["receipt"]["receipt_id"] == "pub1"
 
 
+def test_native_import_disclosure_preserves_canonical_receipt(command, capsys):
+    from astrid.packs.timeline.cli_native import _commit_envelope
+
+    run, generated = command
+    assert run('edit', 't', '--project', 'p', '--clip', 'parent/clip:a',
+               '--on', '5', '--idempotency-key', 'import-disclosure', '--json') == 0
+    capsys.readouterr()
+    raw = copy.deepcopy(generated.accepted['import-disclosure'][1])
+    raw['imports'] = [{'object_id': 'sha256:' + 'a' * 64, 'catalog_write': True,
+                       'retained_on_undo': True}]
+    before = copy.deepcopy(raw)
+    result = _commit_envelope(raw, 'import-disclosure').as_dict()
+    assert result['data']['imports'] == raw['imports']
+    assert result['receipt'] == raw['receipt']
+    assert result['idempotency_key'] == 'import-disclosure'
+    assert raw == before
+
+
 def test_ordinary_edit_literal_move_uses_commit_outbox(command, capsys):
     run, generated = command
     assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0

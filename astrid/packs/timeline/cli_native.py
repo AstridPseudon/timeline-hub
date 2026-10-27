@@ -73,6 +73,7 @@ def _commit_envelope(raw: Mapping[str, object], key: str) -> DomainResult:
 
     receipt = raw.get("receipt")
     data = raw.get("data")
+    committed = None
     if isinstance(receipt, Mapping):
         committed = CommandReceipt.from_dict(dict(receipt))
         if isinstance(committed.result, Mapping):
@@ -80,12 +81,13 @@ def _commit_envelope(raw: Mapping[str, object], key: str) -> DomainResult:
             if isinstance(data, Mapping):
                 # ``TimelineSession.flush`` adds these presentation fields
                 # after Runtime's canonical result is sealed in the receipt.
-                for key in ("accepted_publication_id", "show_command"):
-                    if key in data:
-                        enriched[key] = data[key]
+                for field in ("accepted_publication_id", "show_command"):
+                    if field in data:
+                        enriched[field] = data[field]
             data = enriched
-        return DomainResult.success(data, receipt=committed, idempotency_key=key)
-    return DomainResult.success(data, idempotency_key=key)
+    if isinstance(data, Mapping) and raw.get('imports'):
+        data = {**data, 'imports': copy.deepcopy(raw['imports'])}
+    return DomainResult.success(data, receipt=committed, idempotency_key=key)
 
 
 def _detached_document(parsed):
@@ -292,8 +294,8 @@ def dispatch_ordinary_edit(parsed):
 
 def commit_add_media(session, parsed, options):
     from astrid.packs.timeline.cli import _parse_set
-    from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline import store
+    from astrid.sdk.timeline._common import TimelineEditError
 
     accepted = {'project', 'ref', 'add_layer', 'layer_asset', 'on', 'for_seconds', 'until',
                 'track', 'clip_id', 'layer', 'set_values', 'dry_run', 'idempotency_key', 'json', 'no_sweep'}
@@ -322,7 +324,7 @@ def commit_add_media(session, parsed, options):
         raise TimelineEditError('set media identity and timing with --id, --track, --on and --for')
     if parsed.layer:
         values['label'] = parsed.layer
-    return session.add_media(parsed.layer_asset, on=on, duration=duration, track=parsed.track or 'V1',
+    return session.add_media(parsed.layer_asset, on=on, duration=duration, track=parsed.track,
                              clip_id=parsed.clip_id, values=values, **options)
 
 
@@ -481,7 +483,6 @@ def _verify_commit_selection(session, parsed):
 
 
 def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
-    from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
@@ -521,9 +522,7 @@ def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
                     "preview only; no publication accepted" if parsed.dry_run else "no change (the sheet matches its original export)"))
         else:
             result = session.move(parsed.clip, parsed.on, **options)
-        receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
-        shown = DomainResult.success(result["data"], receipt=receipt,
-                                     idempotency_key=result["idempotency_key"])
+        shown = _commit_envelope(result, result["idempotency_key"])
     except Exception as exc:  # noqa: BLE001 - preserve pending work and render transport/semantic failures
         message = str(exc) + (f"; edited sheet kept at {parsed.sheet_file}" if sheet else "")
         if isinstance(exc, CommitConflict):
